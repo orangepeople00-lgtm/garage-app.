@@ -205,20 +205,19 @@ body.estimator-mode .estimator-exit{display:block}
 
 
 <div id="viewerBg" class="modalbg"><div class="modal" style="width:min(1050px,97vw);height:min(88vh,900px)">
- <div class="modalhead" style="gap:10px;flex-wrap:wrap">
-   <h3 id="viewerTitle" style="min-width:0;flex:1">Paperwork</h3>
-   <div id="viewerImageControls" style="display:flex!important;align-items:center;gap:7px;flex:0 0 auto">
-     <button type="button" onclick="zoomViewer(-0.25)" title="Zoom out" style="width:44px;height:40px;border:2px solid #2563eb;border-radius:8px;background:#fff;color:#14233c;font-size:27px;font-weight:1000;line-height:1;cursor:pointer">−</button>
-     <span id="viewerZoomLabel" style="min-width:52px;text-align:center;font-size:13px;font-weight:1000;color:#14233c">100%</span>
-     <button type="button" onclick="zoomViewer(0.25)" title="Zoom in" style="width:44px;height:40px;border:2px solid #2563eb;border-radius:8px;background:#fff;color:#14233c;font-size:27px;font-weight:1000;line-height:1;cursor:pointer">+</button>
-     <button type="button" onclick="resetViewerZoom()" style="height:40px;padding:0 12px;border:2px solid #2563eb;border-radius:8px;background:#fff;color:#14233c;font-weight:1000;cursor:pointer">Fit</button>
+ <div class="modalhead" style="gap:8px;flex-wrap:nowrap">
+   <h3 id="viewerTitle" style="min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Paperwork</h3>
+   <div id="photoZoomToolbar" style="display:flex!important;visibility:visible!important;opacity:1!important;align-items:center;gap:6px;flex:0 0 auto">
+     <button id="photoZoomOut" type="button" onclick="photoZoom(-0.25)" style="width:44px;height:40px;border:2px solid #2563eb;border-radius:8px;background:#fff;color:#14233c;font-size:27px;font-weight:1000;line-height:1;cursor:pointer">−</button>
+     <span id="photoZoomLabel" style="min-width:48px;text-align:center;font-weight:1000;color:#14233c;font-size:13px">100%</span>
+     <button id="photoZoomIn" type="button" onclick="photoZoom(0.25)" style="width:44px;height:40px;border:2px solid #2563eb;border-radius:8px;background:#fff;color:#14233c;font-size:27px;font-weight:1000;line-height:1;cursor:pointer">+</button>
+     <button id="photoZoomFit" type="button" onclick="photoZoomFit()" style="height:40px;padding:0 11px;border:2px solid #2563eb;border-radius:8px;background:#fff;color:#14233c;font-weight:1000;cursor:pointer">FIT</button>
    </div>
-   <span style="font-size:10px;font-weight:900;color:#64748b;white-space:nowrap">Zoom v3</span>
    <button class="btn light sm" onclick="closeViewer()">✕</button>
  </div>
- <div class="body" id="viewerBody" style="height:calc(100% - 66px);padding:8px;background:#e5e7eb;overflow:hidden;position:relative;touch-action:none;cursor:default">
-   <div id="viewerPanHint" style="display:none;position:absolute;z-index:49;top:10px;left:50%;transform:translateX(-50%);padding:6px 10px;border-radius:999px;background:rgba(20,35,60,.82);color:white;font-size:12px;font-weight:800;pointer-events:none">Zoom in, then drag photo to move around</div>
-   <img id="viewerImage" alt="" draggable="false" style="display:none;position:absolute;left:50%;top:50%;max-width:none;max-height:none;width:auto;height:auto;object-fit:contain;object-position:center center;transform-origin:center center;user-select:none;-webkit-user-drag:none">
+ <div class="body" id="viewerBody" style="height:calc(100% - 66px);padding:8px;background:#e5e7eb;overflow:hidden;position:relative;touch-action:none">
+   <div id="photoZoomHint" style="display:none;position:absolute;left:50%;top:10px;transform:translateX(-50%);z-index:20;background:rgba(20,35,60,.84);color:#fff;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:800;pointer-events:none;white-space:nowrap">Zoom in, then drag photo</div>
+   <img id="viewerImage" alt="" draggable="false" style="display:none;position:absolute;left:50%;top:50%;max-width:none;max-height:none;width:auto;height:auto;transform-origin:center center;user-select:none;-webkit-user-drag:none">
    <iframe id="viewerFrame" style="display:none;width:100%;height:100%;border:0;border-radius:8px;background:#f8fafc"></iframe>
  </div>
 </div></div>
@@ -475,155 +474,80 @@ async function uploadSelectedPaperwork(jobId,inputId){
 }
 async function uploadDoc(jobId){const files=[...$('docFile').files];if(!files.length)return alert('Choose at least one file first.');const {data:{user}}=await sb.auth.getUser();for(const file of files){const er=await uploadPaperworkFile({file,jobId,type:$('docType').value,user});if(er)return alert(er.message)}if(manager())await sb.from('job_activity').insert({job_id:jobId,actor_id:user.id,action:'Paperwork uploaded',details:{count:files.length,type:$('docType').value}});await refresh();await openDrawer(jobId)}
 let viewerObjectUrl=null;
-let viewerZoom=1,viewerPanX=0,viewerPanY=0,viewerDragging=false,viewerDragX=0,viewerDragY=0,viewerStartPanX=0,viewerStartPanY=0;
-function updateViewerImageTransform(){
- const img=$('viewerImage'),body=$('viewerBody');
- if(!img||!body||img.style.display==='none')return;
- const bw=Math.max(1,body.clientWidth-16),bh=Math.max(1,body.clientHeight-16);
- const naturalW=img.naturalWidth||bw,naturalH=img.naturalHeight||bh;
- const fit=Math.min(bw/naturalW,bh/naturalH,1);
- const scale=fit*viewerZoom;
- img.style.width=naturalW+'px';
- img.style.height=naturalH+'px';
- img.style.transform=`translate(-50%,-50%) translate(${viewerPanX}px,${viewerPanY}px) scale(${scale})`;
- const label=$('viewerZoomLabel');
- if(label)label.textContent=Math.round(viewerZoom*100)+'%';
- body.style.cursor=viewerZoom>1?'grab':'default';
+let photoZoomLevel=1,photoPanX=0,photoPanY=0,photoDragging=false,photoDragStartX=0,photoDragStartY=0,photoPanStartX=0,photoPanStartY=0;
+function renderPhotoZoom(){
+ const img=$('viewerImage'),body=$('viewerBody'),label=$('photoZoomLabel');
+ if(!img||img.style.display==='none'||!img.naturalWidth||!body)return;
+ const fit=Math.min(Math.max(1,body.clientWidth-16)/img.naturalWidth,Math.max(1,body.clientHeight-16)/img.naturalHeight,1);
+ const scale=fit*photoZoomLevel;
+ img.style.width=img.naturalWidth+'px';img.style.height=img.naturalHeight+'px';
+ img.style.transform=`translate(-50%,-50%) translate(${photoPanX}px,${photoPanY}px) scale(${scale})`;
+ if(label)label.textContent=Math.round(photoZoomLevel*100)+'%';
+ body.style.cursor=photoZoomLevel>1?'grab':'default';
 }
-function zoomViewer(delta,clientX=null,clientY=null){
- if(!$('viewerImage')||$('viewerImage').style.display==='none')return;
- const old=viewerZoom;
- viewerZoom=Math.min(5,Math.max(0.5,viewerZoom+delta));
- if(clientX!==null&&clientY!==null&&viewerZoom!==old){
-   const body=$('viewerBody'),r=body.getBoundingClientRect();
-   const px=clientX-(r.left+r.width/2)-viewerPanX;
-   const py=clientY-(r.top+r.height/2)-viewerPanY;
-   const ratio=viewerZoom/old;
-   viewerPanX-=px*(ratio-1);
-   viewerPanY-=py*(ratio-1);
- }
- if(viewerZoom<=1){viewerPanX=0;viewerPanY=0}
- updateViewerImageTransform();
+function photoZoom(delta){
+ const img=$('viewerImage');if(!img||img.style.display==='none')return;
+ photoZoomLevel=Math.min(5,Math.max(.5,photoZoomLevel+delta));
+ if(photoZoomLevel<=1){photoPanX=0;photoPanY=0}
+ renderPhotoZoom();
 }
-function resetViewerZoom(){if(!$('viewerImage')||$('viewerImage').style.display==='none')return;viewerZoom=1;viewerPanX=0;viewerPanY=0;updateViewerImageTransform()}
-function startViewerPan(e){
- if(viewerZoom<=1)return;
- viewerDragging=true;
- const p=e.touches?e.touches[0]:e;
- viewerDragX=p.clientX;viewerDragY=p.clientY;
- viewerStartPanX=viewerPanX;viewerStartPanY=viewerPanY;
- const body=$('viewerBody');if(body)body.style.cursor='grabbing';
- e.preventDefault();
+function photoZoomFit(){
+ const img=$('viewerImage');if(!img||img.style.display==='none')return;
+ photoZoomLevel=1;photoPanX=0;photoPanY=0;renderPhotoZoom();
 }
-function moveViewerPan(e){
- if(!viewerDragging)return;
- const p=e.touches?e.touches[0]:e;
- viewerPanX=viewerStartPanX+(p.clientX-viewerDragX);
- viewerPanY=viewerStartPanY+(p.clientY-viewerDragY);
- updateViewerImageTransform();
- e.preventDefault();
+function photoPoint(e){return e.touches?e.touches[0]:e}
+function startPhotoPan(e){
+ if(photoZoomLevel<=1||$('viewerImage').style.display==='none')return;
+ const p=photoPoint(e);photoDragging=true;photoDragStartX=p.clientX;photoDragStartY=p.clientY;photoPanStartX=photoPanX;photoPanStartY=photoPanY;
+ $('viewerBody').style.cursor='grabbing';e.preventDefault();
 }
-function endViewerPan(){viewerDragging=false;const body=$('viewerBody');if(body)body.style.cursor=viewerZoom>1?'grab':'default'}
-function installViewerInteractions(){
- const body=$('viewerBody');
- if(!body||body.dataset.zoomReady)return;
- body.dataset.zoomReady='1';
- body.addEventListener('mousedown',startViewerPan);
- window.addEventListener('mousemove',moveViewerPan);
- window.addEventListener('mouseup',endViewerPan);
- body.addEventListener('touchstart',startViewerPan,{passive:false});
- body.addEventListener('touchmove',moveViewerPan,{passive:false});
- body.addEventListener('touchend',endViewerPan,{passive:true});
- body.addEventListener('wheel',e=>{
-   if($('viewerImage').style.display==='none')return;
-   e.preventDefault();
-   zoomViewer(e.deltaY<0?0.25:-0.25,e.clientX,e.clientY);
- },{passive:false});
+function movePhotoPan(e){
+ if(!photoDragging)return;
+ const p=photoPoint(e);photoPanX=photoPanStartX+(p.clientX-photoDragStartX);photoPanY=photoPanStartY+(p.clientY-photoDragStartY);renderPhotoZoom();e.preventDefault();
+}
+function endPhotoPan(){photoDragging=false;if($('viewerBody'))$('viewerBody').style.cursor=photoZoomLevel>1?'grab':'default'}
+function installPhotoZoom(){
+ const body=$('viewerBody');if(!body||body.dataset.zoomInstalled==='1')return;
+ body.dataset.zoomInstalled='1';
+ body.addEventListener('mousedown',startPhotoPan);
+ window.addEventListener('mousemove',movePhotoPan);
+ window.addEventListener('mouseup',endPhotoPan);
+ body.addEventListener('touchstart',startPhotoPan,{passive:false});
+ body.addEventListener('touchmove',movePhotoPan,{passive:false});
+ body.addEventListener('touchend',endPhotoPan,{passive:true});
+ body.addEventListener('wheel',e=>{if($('viewerImage').style.display==='none')return;e.preventDefault();photoZoom(e.deltaY<0?.25:-.25)},{passive:false});
 }
 async function viewDoc(path,name){
- const pop=window.open('','_blank');
- if(!pop){alert('Please allow pop-ups for this site.');return}
- pop.document.write('<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><title>Loading...</title></head><body style="font-family:Arial;padding:24px">Loading paperwork...</body></html>');
- pop.document.close();
-
  const {data,error}=await sb.storage.from('job-documents').download(path);
- if(error){pop.close();return alert(error.message)}
- const mime=(data.type||'').toLowerCase();
- const isImage=mime.startsWith('image/');
- const objectUrl=URL.createObjectURL(data);
-
- if(!isImage){
-   pop.location.href=objectUrl;
-   setTimeout(()=>URL.revokeObjectURL(objectUrl),120000);
-   return;
+ if(error)return alert(error.message);
+ if(viewerObjectUrl)URL.revokeObjectURL(viewerObjectUrl);
+ viewerObjectUrl=URL.createObjectURL(data);
+ const ext=(name||'').split('.').pop().toLowerCase();
+ const isImage=['jpg','jpeg','png','gif','webp','bmp','heic','heif'].includes(ext) || (data.type||'').startsWith('image/');
+ $('viewerTitle').textContent=name;
+ const frame=$('viewerFrame');
+ const img=$('viewerImage');
+ if(isImage){
+   frame.style.display='none';
+   frame.src='about:blank';
+   img.style.display='block';
+   photoZoomLevel=1;photoPanX=0;photoPanY=0;
+   $('photoZoomLabel').textContent='100%';
+   $('photoZoomHint').style.display='block';
+   installPhotoZoom();
+   img.onload=()=>renderPhotoZoom();
+   img.src=viewerObjectUrl;
+ }else{
+   img.style.display='none';
+   img.removeAttribute('src');
+   $('photoZoomHint').style.display='none';
+   $('photoZoomLabel').textContent='100%';
+   frame.style.display='block';
+   frame.src=viewerObjectUrl;
  }
-
- const safeName=String(name||'Paperwork Photo').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
- pop.document.open();
- pop.document.write(`<!doctype html><html><head>
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5,user-scalable=yes">
-<title>${safeName}</title>
-<style>
-*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:Arial,sans-serif;background:#dfe5ec}
-#app{height:100%;display:flex;flex-direction:column}
-#tools{display:flex!important;visibility:visible!important;opacity:1!important;align-items:center;justify-content:center;gap:8px;min-height:64px;padding:9px;background:#fff;border-bottom:3px solid #2563eb;z-index:999999;flex:0 0 auto}
-#tools button{display:inline-block!important;visibility:visible!important;opacity:1!important;min-width:54px;height:46px;border:2px solid #2563eb;border-radius:9px;background:#fff;color:#0f172a;font-size:28px;font-weight:900;line-height:1}
-#tools .fit{font-size:15px;padding:0 14px}.pct{min-width:58px;text-align:center;font-size:14px;font-weight:900;color:#0f172a}
-#stage{position:relative;flex:1;min-height:0;overflow:hidden;touch-action:none}
-#photo{position:absolute;left:50%;top:50%;max-width:none;max-height:none;transform-origin:center center;user-select:none;-webkit-user-drag:none}
-#hint{position:absolute;top:9px;left:50%;transform:translateX(-50%);z-index:10;background:rgba(15,23,42,.82);color:#fff;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:800;white-space:nowrap;pointer-events:none}
-@media(max-width:600px){#tools{min-height:60px;padding:7px;gap:6px}#tools button{min-width:48px;height:44px}.pct{min-width:48px}}
-</style></head><body>
-<div id="app">
- <div id="tools">
-   <button id="minus" type="button" aria-label="Zoom out">−</button>
-   <span class="pct" id="pct">100%</span>
-   <button id="plus" type="button" aria-label="Zoom in">+</button>
-   <button id="fit" class="fit" type="button">FIT</button>
- </div>
- <div id="stage"><div id="hint">Zoom in, then drag the picture</div><img id="photo" src="${objectUrl}" alt=""></div>
-</div>
-<script>
-const stage=document.getElementById('stage'),img=document.getElementById('photo'),pct=document.getElementById('pct');
-let zoom=1,panX=0,panY=0,drag=false,sx=0,sy=0,spx=0,spy=0;
-function draw(){
- if(!img.naturalWidth)return;
- const fw=Math.max(1,stage.clientWidth-16),fh=Math.max(1,stage.clientHeight-16);
- const base=Math.min(fw/img.naturalWidth,fh/img.naturalHeight,1);
- img.style.width=img.naturalWidth+'px';img.style.height=img.naturalHeight+'px';
- img.style.transform='translate(-50%,-50%) translate('+panX+'px,'+panY+'px) scale('+(base*zoom)+')';
- pct.textContent=Math.round(zoom*100)+'%';
- stage.style.cursor=zoom>1?'grab':'default';
+ $('viewerBg').classList.add('show')
 }
-function z(d){
- zoom=Math.min(5,Math.max(.5,zoom+d));
- if(zoom<=1){panX=0;panY=0}
- draw();
-}
-document.getElementById('minus').addEventListener('click',()=>z(-.25));
-document.getElementById('plus').addEventListener('click',()=>z(.25));
-document.getElementById('fit').addEventListener('click',()=>{zoom=1;panX=0;panY=0;draw()});
-function pt(e){return e.touches?e.touches[0]:e}
-function down(e){if(zoom<=1)return;const p=pt(e);drag=true;sx=p.clientX;sy=p.clientY;spx=panX;spy=panY;e.preventDefault()}
-function move(e){if(!drag)return;const p=pt(e);panX=spx+p.clientX-sx;panY=spy+p.clientY-sy;draw();e.preventDefault()}
-function up(){drag=false}
-stage.addEventListener('mousedown',down);window.addEventListener('mousemove',move);window.addEventListener('mouseup',up);
-stage.addEventListener('touchstart',down,{passive:false});stage.addEventListener('touchmove',move,{passive:false});stage.addEventListener('touchend',up);
-stage.addEventListener('wheel',e=>{e.preventDefault();z(e.deltaY<0?.25:-.25)},{passive:false});
-img.addEventListener('load',draw);window.addEventListener('resize',draw);
-<\/script></body></html>`);
- pop.document.close();
- setTimeout(()=>URL.revokeObjectURL(objectUrl),120000);
-}function closeViewer(){
- $('viewerBg').classList.remove('show');
- $('viewerFrame').src='about:blank';
- $('viewerFrame').style.display='none';
- $('viewerImage').removeAttribute('src');
- $('viewerImage').style.display='none';
- if($('viewerPanHint'))$('viewerPanHint').style.display='none';
- viewerZoom=1;viewerPanX=0;viewerPanY=0;viewerDragging=false;
- if(viewerObjectUrl){URL.revokeObjectURL(viewerObjectUrl);viewerObjectUrl=null}
-}
+function closeViewer(){$('viewerBg').classList.remove('show');$('viewerFrame').src='about:blank';$('viewerFrame').style.display='none';$('viewerImage').removeAttribute('src');$('viewerImage').style.display='none';$('photoZoomHint').style.display='none';photoZoomLevel=1;photoPanX=0;photoPanY=0;photoDragging=false;$('photoZoomLabel').textContent='100%';if(viewerObjectUrl){URL.revokeObjectURL(viewerObjectUrl);viewerObjectUrl=null}}
 sb.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_OUT')return;if(session&&profile===null)boot()});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&profile)refresh()});setInterval(()=>{if(profile)refresh()},15000);
 (async()=>{const {data:{session}}=await sb.auth.getSession();if(session)boot()})();

@@ -2732,7 +2732,6 @@
                 if (doorType === 'party') addSpec('Party Door', "6' x 7' Steel Door");
                 else if (doorType === 'french') addSpec('French Door', 'French Door Allowance');
                 addSpec('Service Door', '1 x 36"x80" Steel Door with Deadbolt Lock');
-                addSpec('Service Door Location', serviceLocLabel);
                 addSpec('Window Type', windowType === 'none' ? 'None' : `${windowType === 'sliding' ? 'Sliding Window' : 'Single Hung Window'}${windowQty > 0 ? ` (${windowQty})` : ''}`);
                 addSpec('Floor', '4" Thick Reinforced with Steel Wire Mesh Rated 4,000 PSI');
                 addSpec('Apron', checked('newConcrete') && apronDepth > 0 ? `${width}' x ${apronDepth}' New Concrete Apron` : 'None');
@@ -2844,10 +2843,10 @@
             const extraDoorHint = addlDoorCount > 0 ? `<rect x="448" y="277" width="42" height="125" rx="2" fill="#ececec" stroke="#d5d5d5" stroke-width="3"/>` : '';
             const gutterMarkup = hasGutters ? `<path d="M108 210 L512 210 L631 174" fill="none" stroke="#e8e8e8" stroke-width="7"/><path d="M628 174 L628 356" fill="none" stroke="#e8e8e8" stroke-width="5"/>` : '';
 
-            const realGaragePhoto = `<img src="garage_115.jpg" alt="">`;
-            const gableGaragePhoto = `<img src="garage_010.jpg" alt="">`;
+            const realGaragePhoto = `<img src="images/basic_hip_no_gutters.png" alt="">`;
+            const gableGaragePhoto = `<img src="images/basic_gable_no_gutters.png" alt="">`;
             const matchedGaragePhoto = getExteriorPhotoMatch().photo;
-            const fallbackGaragePhoto = isGable ? 'garage_010.jpg' : 'garage_115.jpg';
+            const fallbackGaragePhoto = approvedBasicGaragePhoto(roofType, hasGutters);
             const selectedGaragePhoto = matchedGaragePhoto && matchedGaragePhoto.src ? matchedGaragePhoto.src : fallbackGaragePhoto;
             // The estimate sheet opens in a new browser document. Use an absolute image URL so
             // GitHub Pages can load the selected garage photo inside the printed estimate sheet.

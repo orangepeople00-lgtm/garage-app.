@@ -137,6 +137,20 @@ body.estimator-mode .estimator-exit{display:block}
    <div class="field"><label>Garage Size</label><input id="f_garage_size"></div>
    <div class="field"><label>Contract Price</label><input id="f_price" type="number" step=".01"></div><div class="field"><label>Deposit</label><input id="f_deposit" type="number" step=".01"></div>
   </div></div>
+  <div class="formsec"><h4>Contract & Paperwork</h4>
+   <div class="scan-paperwork-box">
+    <div class="scan-paperwork-title">📎 Add Paperwork While Creating This Job</div>
+    <div class="scan-paperwork-help">Sam or Randy can attach the contract or other paperwork before saving the job. On a phone, use the camera button. Multiple selected files are saved under the paperwork type chosen below.</div>
+    <div class="scan-actions">
+     <div class="field"><label>Paperwork Type</label><select id="f_doc_type"><option>Contract</option><option>Deposit Check / Proof of Payment</option><option>Plat of Survey</option><option>Demolition Sheet</option><option>Concrete Sheet</option><option>Permit</option><option>Inspection</option><option>Photo</option><option>Other</option></select></div>
+     <button type="button" class="btn primary scan-btn" onclick="managerJobCamera()">📷 Scan with Camera</button>
+     <button type="button" class="btn light scan-btn" onclick="managerJobChooseFiles()">Choose PDF / Photos</button>
+     <input id="f_doc_camera" type="file" accept="image/*" capture="environment" style="display:none" onchange="showManagerJobFiles('f_doc_camera')">
+     <input id="f_doc_files" type="file" multiple accept=".pdf,image/*" style="display:none" onchange="showManagerJobFiles('f_doc_files')">
+    </div>
+    <div id="f_doc_selected" class="small muted" style="margin-top:8px">No paperwork selected.</div>
+   </div>
+  </div>
   <div class="formsec"><h4>Management Controls</h4><div class="grid">
    <div class="field"><label>Priority</label><select id="f_priority"><option>Low</option><option selected>Normal</option><option>High</option><option>Urgent</option></select></div>
    <div class="field"><label>Job On Hold?</label><select id="f_hold_status"><option value="false">No</option><option value="true">Yes</option></select></div>
@@ -353,9 +367,38 @@ async function rejectRequest(id){if(!manager()||!confirm('Reject this sold-job r
 function syncDemoRequirement(){const req=$('f_demolition_required')?.value!=='false';if(!req&&$('f_demo_status'))$('f_demo_status').value='N/A';else if(req&&$('f_demo_status')?.value==='N/A')$('f_demo_status').value='Pending'}
 function syncExtrasRequirement(){const req=$('f_extras_required')?.value==='true';if(!req&&$('f_extras_status'))$('f_extras_status').value='N/A';else if(req&&$('f_extras_status')?.value==='N/A')$('f_extras_status').value='Pending'}
 const fields=['customer','job_number','salesman_username','sold_date','address','city','phone','garage_size','price','deposit','priority','hold_status','hold_reason','hold_notes','deposit_status','deposit_date','permit_status','permit_date','demolition_required','demo_status','scheduled_demo','demo_crew','demo_date','concrete_scheduled','concrete_crew','concrete_status','concrete_poured','concrete_ready','carpentry_scheduled','carpentry_crew','carpentry_status','built_date','electric_status','electric_date','electric_crew','extras_required','extras_status','extras_scheduled','extras_complete_date','extras_notes','inspection_status','inspection_date','inspection_type','final_payment','completed_date','notes'];
-function openJobForm(id=null){if(!manager())return;openJobId=id;$('jobFormTitle').textContent=id?'Edit Job':'Add Job';$('deleteJobBtn').classList.toggle('hidden',!id);fields.forEach(k=>{const e=$('f_'+k);if(e)e.value=''});$('f_id').value=id||'';$('f_city').value='Chicago';$('f_priority').value='Normal';$('f_hold_status').value='false';$('f_salesman_username').value='ramsey';$('f_sold_date').value=todayISO();$('f_permit_status').value='Not Submitted';$('f_demolition_required').value='true';$('f_demo_status').value='Pending';$('f_concrete_status').value='Pending';$('f_carpentry_status').value='Pending';$('f_electric_status').value='Pending';$('f_extras_required').value='false';$('f_extras_status').value='N/A';if(id){const j=jobs.find(x=>x.id===id);fields.forEach(k=>{const e=$('f_'+k);if(e)e.value=(['hold_status','demolition_required','extras_required'].includes(k)?String(!!j[k]):(j[k]??''))})}syncDemoRequirement();syncExtrasRequirement();$('jobBg').classList.add('show')}
+function managerJobCamera(){const e=$('f_doc_camera');if(!e)return;e.value='';e.click()}
+function managerJobChooseFiles(){const e=$('f_doc_files');if(!e)return;e.value='';e.click()}
+function showManagerJobFiles(inputId){
+ const files=[...($(inputId)?.files||[])],box=$('f_doc_selected');
+ if(!box)return;
+ box.textContent=files.length?`${files.length} file${files.length===1?'':'s'} selected: `+files.map(f=>f.name).join(', '):'No paperwork selected.';
+}
+function resetManagerJobPaperwork(){
+ if($('f_doc_camera'))$('f_doc_camera').value='';
+ if($('f_doc_files'))$('f_doc_files').value='';
+ if($('f_doc_type'))$('f_doc_type').value='Contract';
+ if($('f_doc_selected'))$('f_doc_selected').textContent='No paperwork selected.';
+}
+async function uploadManagerJobPaperwork(jobId,user){
+ const type=$('f_doc_type')?.value||'Contract';
+ const camera=[...($('f_doc_camera')?.files||[])];
+ const chosen=[...($('f_doc_files')?.files||[])];
+ const files=[...camera,...chosen];
+ if(!files.length)return null;
+ for(const file of files){
+  const er=await uploadPaperworkFile({file,jobId,type,user});
+  if(er)return er;
+ }
+ await sb.from('job_activity').insert({job_id:jobId,actor_id:user.id,action:'Paperwork uploaded',details:{count:files.length,type,method:camera.length?'add-job camera/file':'add-job file'}});
+ return null;
+}
+function openJobForm(id=null){if(!manager())return;openJobId=id;resetManagerJobPaperwork();$('jobFormTitle').textContent=id?'Edit Job':'Add Job';$('deleteJobBtn').classList.toggle('hidden',!id);fields.forEach(k=>{const e=$('f_'+k);if(e)e.value=''});$('f_id').value=id||'';$('f_city').value='Chicago';$('f_priority').value='Normal';$('f_hold_status').value='false';$('f_salesman_username').value='ramsey';$('f_sold_date').value=todayISO();$('f_permit_status').value='Not Submitted';$('f_demolition_required').value='true';$('f_demo_status').value='Pending';$('f_concrete_status').value='Pending';$('f_carpentry_status').value='Pending';$('f_electric_status').value='Pending';$('f_extras_required').value='false';$('f_extras_status').value='N/A';if(id){const j=jobs.find(x=>x.id===id);fields.forEach(k=>{const e=$('f_'+k);if(e)e.value=(['hold_status','demolition_required','extras_required'].includes(k)?String(!!j[k]):(j[k]??''))})}syncDemoRequirement();syncExtrasRequirement();$('jobBg').classList.add('show')}
 function closeJobForm(){$('jobBg').classList.remove('show');openJobId=null}
-async function saveJob(e){e.preventDefault();if(!manager())return;const {data:{user}}=await sb.auth.getUser();const rec={};fields.forEach(k=>{let v=$('f_'+k).value;if(['sold_date','deposit_date','permit_date','scheduled_demo','demo_date','concrete_scheduled','concrete_poured','concrete_ready','carpentry_scheduled','built_date','electric_date','extras_scheduled','extras_complete_date','inspection_date','completed_date'].includes(k))v=v||null;if(['price','deposit'].includes(k))v=Number(v)||0;if(['hold_status','demolition_required','extras_required'].includes(k))v=v==='true';rec[k]=v});if(rec.demolition_required===false)rec.demo_status='N/A';else if(rec.demo_status==='N/A')rec.demo_status='Pending';if(rec.extras_required===false)rec.extras_status='N/A';else if(rec.extras_status==='N/A')rec.extras_status='Pending';let id=$('f_id').value,err;if(id){({error:err}=await sb.from('jobs').update(rec).eq('id',id));if(!err)await sb.from('job_activity').insert({job_id:id,actor_id:user.id,action:'Job updated',details:{status:status({...jobs.find(x=>x.id===id),...rec})}})}else{rec.created_by=user.id;const res=await sb.from('jobs').insert(rec).select().single();err=res.error;id=res.data?.id;if(id)await sb.from('job_activity').insert({job_id:id,actor_id:user.id,action:'Job created',details:{}})}if(err)return alert(err.message);closeJobForm();await refresh()}
+async function saveJob(e){e.preventDefault();if(!manager())return;const {data:{user}}=await sb.auth.getUser();const rec={};fields.forEach(k=>{let v=$('f_'+k).value;if(['sold_date','deposit_date','permit_date','scheduled_demo','demo_date','concrete_scheduled','concrete_poured','concrete_ready','carpentry_scheduled','built_date','electric_date','extras_scheduled','extras_complete_date','inspection_date','completed_date'].includes(k))v=v||null;if(['price','deposit'].includes(k))v=Number(v)||0;if(['hold_status','demolition_required','extras_required'].includes(k))v=v==='true';rec[k]=v});if(rec.demolition_required===false)rec.demo_status='N/A';else if(rec.demo_status==='N/A')rec.demo_status='Pending';if(rec.extras_required===false)rec.extras_status='N/A';else if(rec.extras_status==='N/A')rec.extras_status='Pending';let id=$('f_id').value,err;if(id){({error:err}=await sb.from('jobs').update(rec).eq('id',id));if(!err)await sb.from('job_activity').insert({job_id:id,actor_id:user.id,action:'Job updated',details:{status:status({...jobs.find(x=>x.id===id),...rec})}})}else{rec.created_by=user.id;const res=await sb.from('jobs').insert(rec).select().single();err=res.error;id=res.data?.id;if(id)await sb.from('job_activity').insert({job_id:id,actor_id:user.id,action:'Job created',details:{}})}if(err)return alert(err.message);
+ const uploadErr=await uploadManagerJobPaperwork(id,user);
+ if(uploadErr)return alert('Job was saved, but paperwork upload failed: '+uploadErr.message);
+ closeJobForm();await refresh()}
 async function deleteJob(){if(!manager()||!openJobId||!confirm('Move this job to Trash? It will disappear for everyone, but Sam or Randy can restore it later.'))return;const {data:{user}}=await sb.auth.getUser();const id=openJobId;const {error}=await sb.from('jobs').update({deleted_at:new Date().toISOString(),deleted_by:user.id}).eq('id',id);if(error)return alert(error.message);await sb.from('job_activity').insert({job_id:id,actor_id:user.id,action:'Job moved to Trash',details:{}});closeJobForm();closeDrawer();await refresh()}
 async function restoreJob(id){if(!manager()||!confirm('Restore this job for everyone?'))return;const {data:{user}}=await sb.auth.getUser();const {error}=await sb.from('jobs').update({deleted_at:null,deleted_by:null}).eq('id',id);if(error)return alert(error.message);await sb.from('job_activity').insert({job_id:id,actor_id:user.id,action:'Job restored from Trash',details:{}});await refresh()}
 async function permanentlyDeleteJob(id){if(!manager()||!confirm('PERMANENTLY delete this job? This cannot be undone.'))return;const {error}=await sb.from('jobs').delete().eq('id',id);if(error)return alert(error.message);await refresh()}

@@ -425,7 +425,7 @@ async function openDrawer(id){openJobId=id;const j=jobs.find(x=>x.id===id);if(!j
 <div class="card"><h4>Job Information</h4>${info('Salesman',DISPLAY[j.salesman_username]||j.salesman_username)}${info('Phone',j.phone)}${info('Garage',j.garage_size)}${info('Job Age',jobAgeLabel(j))}${info('Contract',money(j.price))}${info('Deposit',money(j.deposit))}${info('Priority',j.priority)}</div>
 <div class="card"><h4>Next Action</h4><div style="font-size:18px;font-weight:900">${esc(next(j))}</div><div class="sub">Current stage: ${esc(status(j))}</div></div>
 <div class="card full"><h4>Key Dates</h4><div class="grid">${ibox('Demo Scheduled',fmt(j.scheduled_demo))}${ibox('Demo Crew',j.demo_crew||'—')}${ibox('Concrete Scheduled',fmt(j.concrete_scheduled))}${ibox('Concrete Crew',j.concrete_crew||'—')}${ibox('Concrete Poured',fmt(j.concrete_poured))}${ibox('Carpentry Scheduled',fmt(j.carpentry_scheduled))}${ibox('Carpentry Crew',j.carpentry_crew||'—')}${ibox('Garage Built',fmt(j.built_date))}${ibox('Electric',fmt(j.electric_date))}${ibox('Electric Crew',j.electric_crew||'—')}${ibox('Inspection',fmt(j.inspection_date))}</div></div>
-<div class="card full"><h4>Contract & Paperwork <span style="font-size:11px;background:#dc2626;color:#fff;padding:3px 7px;border-radius:999px;margin-left:6px">DELETE ENABLED</span></h4>${!docs.some(x=>x.document_type==='Contract')?`<div style="margin-bottom:10px;padding:12px;border:2px solid #b91c1c;background:#fef2f2;color:#b91c1c;font-size:19px;font-weight:1000;text-align:center;border-radius:9px">MISSING PAPERWORK</div>`:''}<div class="scan-paperwork-box"><div class="scan-paperwork-title">📷 Scan / Upload Paperwork</div><div class="scan-paperwork-help">On a phone, tap <b>Scan with Camera</b> to photograph handwritten paperwork. You can also choose an existing PDF or photo. Pick the paperwork type first so it is filed correctly under this customer.</div><div class="scan-actions"><div class="field"><label>Paperwork Type</label><select id="docType"><option>Contract</option><option>Deposit Check / Proof of Payment</option><option>Plat of Survey</option><option>Demolition Sheet</option><option>Concrete Sheet</option><option>Permit</option><option>Inspection</option><option>Photo</option><option>Other</option></select></div><button class="btn primary scan-btn" onclick="startPaperworkScan('${j.id}')">📷 Scan with Camera</button><button class="btn light scan-btn" onclick="choosePaperworkFiles('${j.id}')">Choose PDF / Photos</button><input id="docCameraFile" type="file" accept="image/*" capture="environment" style="display:none" onchange="uploadSelectedPaperwork('${j.id}','docCameraFile')"><input id="docFile" type="file" multiple accept=".pdf,image/*" style="display:none" onchange="uploadSelectedPaperwork('${j.id}','docFile')"></div></div><div class="list">${docs.length?docs.map(x=>`<div class="rowbox" style="display:block!important">
+<div class="card full"><h4>Contract & Paperwork <span style="font-size:11px;background:#dc2626;color:#fff;padding:3px 7px;border-radius:999px;margin-left:6px">IMAGE DELETE FIXED</span></h4>${!docs.some(x=>x.document_type==='Contract')?`<div style="margin-bottom:10px;padding:12px;border:2px solid #b91c1c;background:#fef2f2;color:#b91c1c;font-size:19px;font-weight:1000;text-align:center;border-radius:9px">MISSING PAPERWORK</div>`:''}<div class="scan-paperwork-box"><div class="scan-paperwork-title">📷 Scan / Upload Paperwork</div><div class="scan-paperwork-help">On a phone, tap <b>Scan with Camera</b> to photograph handwritten paperwork. You can also choose an existing PDF or photo. Pick the paperwork type first so it is filed correctly under this customer.</div><div class="scan-actions"><div class="field"><label>Paperwork Type</label><select id="docType"><option>Contract</option><option>Deposit Check / Proof of Payment</option><option>Plat of Survey</option><option>Demolition Sheet</option><option>Concrete Sheet</option><option>Permit</option><option>Inspection</option><option>Photo</option><option>Other</option></select></div><button class="btn primary scan-btn" onclick="startPaperworkScan('${j.id}')">📷 Scan with Camera</button><button class="btn light scan-btn" onclick="choosePaperworkFiles('${j.id}')">Choose PDF / Photos</button><input id="docCameraFile" type="file" accept="image/*" capture="environment" style="display:none" onchange="uploadSelectedPaperwork('${j.id}','docCameraFile')"><input id="docFile" type="file" multiple accept=".pdf,image/*" style="display:none" onchange="uploadSelectedPaperwork('${j.id}','docFile')"></div></div><div class="list">${docs.length?docs.map(x=>`<div class="rowbox" style="display:block!important">
   <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap">
     <div style="min-width:0;flex:1 1 260px">
       <strong style="display:block;word-break:break-word">${esc(x.document_type||'Document')}: ${esc(x.file_name)}</strong>
@@ -492,14 +492,23 @@ async function deleteJobDocument(docId,jobId){
    if(error||!data)return alert('Unable to find that uploaded file.');
    doc=data;
  }
- if(!confirm(`Delete "${doc.file_name}"?\n\nThis permanently removes the uploaded file from this job.`))return;
 
- // Remove the database row first so the file disappears from the job immediately.
- const {error:dbError}=await sb.from('job_documents').delete().eq('id',doc.id);
- if(dbError)return alert('Delete failed: '+dbError.message);
+ if(!confirm(`Delete "${doc.file_name}"?\n\nThis permanently removes the uploaded image/file from this job.`))return;
 
- // Then remove the actual stored file.
+ // Delete the actual file FIRST.
+ // Database RLS and Storage RLS now both allow managers and the original uploader.
  const {error:storageError}=await sb.storage.from('job-documents').remove([doc.storage_path]);
+ if(storageError){
+   console.error('Storage delete failed:',storageError);
+   return alert('Could not delete the uploaded image/file: '+storageError.message);
+ }
+
+ // Then delete its database record.
+ const {error:dbError}=await sb.from('job_documents').delete().eq('id',doc.id);
+ if(dbError){
+   console.error('Database delete failed:',dbError);
+   return alert('The file was removed, but its list entry could not be deleted: '+dbError.message);
+ }
 
  try{
    const {data:{user}}=await sb.auth.getUser();
@@ -511,13 +520,9 @@ async function deleteJobDocument(docId,jobId){
        details:{file_name:doc.file_name,document_type:doc.document_type||'Document'}
      });
    }
- }catch(e){}
+ }catch(e){console.warn(e)}
 
  documents=documents.filter(d=>d.id!==doc.id);
-
- if(storageError){
-   console.warn('Database record deleted but storage cleanup returned:',storageError);
- }
 
  await refresh();
  if(jobId)await openDrawer(jobId);

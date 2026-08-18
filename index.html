@@ -362,6 +362,14 @@ function estimateHistorySummary(e){
   ['Estimate',money(e.estimate_price)],['Created',new Date(e.created_at).toLocaleString()]
  ].map(x=>`<div style="margin:9px 0"><div class="small muted" style="font-weight:900;text-transform:uppercase">${esc(x[0])}</div><div style="font-weight:800">${esc(x[1])}</div></div>`).join('')+(s.notes?`<div style="margin-top:12px"><div class="small muted" style="font-weight:900;text-transform:uppercase">Estimate Notes</div><div style="white-space:pre-wrap">${esc(s.notes)}</div></div>`:'');
 }
+async function deleteEstimateHistory(id,customer){
+ if(!manager())return alert('Only Sam or Randy can delete saved estimates.');
+ if(!confirm(`Delete saved estimate for "${customer}"?\n\nThis removes it from Estimate History.`))return;
+ const {error}=await sb.from('estimate_history').delete().eq('id',id);
+ if(error)return alert('Could not delete estimate: '+error.message);
+ estimateHistory=estimateHistory.filter(e=>e.id!==id);
+ renderEstimateHistory();
+}
 function viewEstimateHistory(id){
  const e=estimateHistory.find(x=>x.id===id);if(!e)return;
  const w=window.open('','_blank','width=850,height=900');if(!w)return alert('Your browser blocked the popup. Please allow popups and try again.');
@@ -371,7 +379,7 @@ function renderEstimateHistory(){
  const rows=$('estimateHistoryRows');if(!rows)return;
  const q=($('estimateHistorySearch')?.value||'').trim().toLowerCase(),sf=$('estimateHistorySalesFilter')?.value||'';
  const a=estimateHistory.filter(e=>!sf||e.salesman_username===sf).filter(e=>!q||[e.customer,e.address,e.city,e.garage_size,e.roof_type,DISPLAY[e.salesman_username]||e.salesman_username].some(v=>String(v||'').toLowerCase().includes(q)));
- rows.innerHTML=a.length?a.map(e=>`<tr><td>${new Date(e.created_at).toLocaleDateString()}<div class="sub">${new Date(e.created_at).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}</div></td><td><strong>${esc(e.customer)}</strong></td><td>${esc(DISPLAY[e.salesman_username]||e.salesman_username)}</td><td>${esc(e.address||'')}<div class="sub">${esc(e.city||'')}</div></td><td>${esc(e.garage_size||'—')}</td><td>${esc(e.roof_type||'—')}</td><td><strong>${money(e.estimate_price)}</strong></td><td><button class="btn light sm" onclick="viewEstimateHistory('${e.id}')">View / Print</button></td></tr>`).join(''):`<tr><td colspan="8" style="text-align:center;padding:35px;color:#6f7a8d">No saved estimates yet.</td></tr>`;
+ rows.innerHTML=a.length?a.map(e=>`<tr><td>${new Date(e.created_at).toLocaleDateString()}<div class="sub">${new Date(e.created_at).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}</div></td><td><strong>${esc(e.customer)}</strong></td><td>${esc(DISPLAY[e.salesman_username]||e.salesman_username)}</td><td>${esc(e.address||'')}<div class="sub">${esc(e.city||'')}</div></td><td>${esc(e.garage_size||'—')}</td><td>${esc(e.roof_type||'—')}</td><td><strong>${money(e.estimate_price)}</strong></td><td><div style="display:flex;gap:6px;align-items:center;justify-content:flex-end"><button class="btn light sm" onclick="viewEstimateHistory('${e.id}')">View / Print</button>${manager()?`<button type="button" title="Delete estimate" aria-label="Delete estimate" onclick="deleteEstimateHistory('${e.id}','${esc(e.customer||'Estimate')}')" style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border:1px solid #dc2626;border-radius:8px;background:#fff;color:#dc2626;font-size:18px;font-weight:1000;cursor:pointer;line-height:1">×</button>`:''}</div></td></tr>`).join(''):`<tr><td colspan="8" style="text-align:center;padding:35px;color:#6f7a8d">No saved estimates yet.</td></tr>`;
 }
 
 function renderCompleted(){const a=jobs.filter(j=>status(j)==='Completed').sort((x,y)=>(y.completed_date||'').localeCompare(x.completed_date||''));$('completedRows').innerHTML=a.length?a.map(j=>`<tr><td><strong>${esc(j.customer)}</strong></td><td>${esc(DISPLAY[j.salesman_username]||j.salesman_username)}</td><td>${esc(j.address||'')} ${esc(j.city||'')}</td><td>${esc(j.garage_size||'')}</td><td>${fmt(j.completed_date)}</td><td><span class="pill ${tone(j.final_payment)}">${esc(j.final_payment)}</span></td><td><button class="btn light sm" onclick="openDrawer('${j.id}')">Open</button></td></tr>`).join(''):`<tr><td colspan="7" style="text-align:center;padding:35px;color:#6f7a8d">No completed jobs yet.</td></tr>`}

@@ -2545,7 +2545,7 @@
             window.open('https://chatgpt.com/','_blank','noopener');
         }
 
-        function printEstimateSheet() {
+        async function printEstimateSheet() {
             const customerName = (document.getElementById('customerName').value || '').trim();
             const customerAddress = (document.getElementById('customerAddress').value || '').trim();
 
@@ -2794,7 +2794,29 @@
             const selectedGaragePhotoUrl = new URL(selectedGaragePhoto, document.baseURI).href;
             const selectedGaragePhotoFile = selectedGaragePhoto.replace(/^.*\//, '');
             const selectedGaragePhotoFolderUrl = new URL('images/' + selectedGaragePhotoFile, document.baseURI).href;
-            const garageSvg = `<div class="photo-config photo-only"><img src="${selectedGaragePhotoUrl}" onerror="this.onerror=null;this.src='${selectedGaragePhotoFolderUrl}'" alt=""></div>`;
+
+            // Embed the selected exterior photo directly into the estimate popup as a data URL.
+            // This avoids broken image paths when the estimate opens in a separate window and
+            // works whether GitHub has the garage photos in the repo root or /images folder.
+            const blobToDataUrl = blob => new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+            });
+            let embeddedGaragePhoto = '';
+            for (const candidate of [selectedGaragePhotoUrl, selectedGaragePhotoFolderUrl]) {
+                try {
+                    const response = await fetch(candidate, { cache: 'no-store' });
+                    if (!response.ok) continue;
+                    const blob = await response.blob();
+                    if (!blob.type.startsWith('image/')) continue;
+                    embeddedGaragePhoto = await blobToDataUrl(blob);
+                    if (embeddedGaragePhoto) break;
+                } catch (e) {}
+            }
+            const garagePhotoSrc = embeddedGaragePhoto || selectedGaragePhotoUrl;
+            const garageSvg = `<div class="photo-config photo-only"><img src="${garagePhotoSrc}" alt=""></div>`;
 
             const sheetHtml = `<!DOCTYPE html>
 <html lang="en">

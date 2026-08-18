@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Absolute Garage Builders — Production</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--navy:#14233c;--blue:#2563eb;--bg:#f3f5f8;--panel:#fff;--ink:#172033;--muted:#6f7a8d;--line:#dfe4eb;--green:#15803d;--yellow:#b45309;--red:#b91c1c;--shadow:0 10px 28px rgba(15,23,42,.08)}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--ink)}button,input,select,textarea{font:inherit}button{cursor:pointer}
+header{background:var(--navy);color:#fff;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:14px;position:sticky;top:0;z-index:25;box-shadow:0 2px 12px #0003}
+.brand{display:flex;gap:11px;align-items:center}.logo{width:42px;height:42px;border-radius:10px;background:#fff;color:var(--navy);display:grid;place-items:center;font-weight:900;font-size:21px}.brand h1{margin:0;font-size:18px}.brand p{margin:2px 0 0;color:#cbd5e1;font-size:12px}
+.actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.user{font-size:12px;background:#223451;border:1px solid #46566f;padding:8px 10px;border-radius:9px}
+.btn{border:0;border-radius:9px;padding:10px 13px;font-weight:800}.primary{background:var(--blue);color:#fff}.light{background:#fff;border:1px solid var(--line);color:var(--navy)}.dark{background:#223451;color:#fff}.danger{background:var(--red);color:#fff}.sm{padding:7px 9px;font-size:12px}
+main{max-width:1500px;margin:auto;padding:22px}.titlebar{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}.titlebar h2{margin:0 0 4px;font-size:27px}.muted{color:var(--muted)}.small{font-size:11px}
+.tabs{display:flex;gap:7px;margin:16px 0;flex-wrap:wrap}.tab{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 12px;font-weight:800;font-size:12px}.tab.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+.stats{display:grid;grid-template-columns:repeat(7,minmax(120px,1fr));gap:10px;margin:15px 0}.stat{background:#fff;border:1px solid var(--line);border-radius:13px;padding:14px}.stat .n{font-size:25px;font-weight:900}.stat .l{font-size:11px;color:var(--muted);font-weight:800;margin-top:5px}.stat.alert .n{color:var(--red)}
+.card{background:#fff;border:1px solid var(--line);border-radius:13px;padding:14px;box-shadow:0 2px 10px #0f172a08}.card h3,.card h4{margin:0 0 11px}
+.toolbar{display:grid;grid-template-columns:2fr 1fr 1fr 1fr auto;gap:9px;margin-bottom:12px}.field{display:flex;flex-direction:column;gap:5px}.field label{font-size:10px;text-transform:uppercase;letter-spacing:.04em;font-weight:900;color:var(--muted)}input,select,textarea{border:1px solid #ccd5e1;border-radius:8px;padding:9px 10px;background:#fff;outline:none}input:focus,select:focus,textarea:focus{border-color:#8cb1ff;box-shadow:0 0 0 3px #dbeafe}
+.table{overflow:auto;background:#fff;border:1px solid var(--line);border-radius:13px;box-shadow:var(--shadow)}table{width:100%;border-collapse:collapse;min-width:1200px}th,td{padding:11px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}th{background:#f8fafc;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:.04em;position:sticky;top:70px;z-index:4}td{font-size:12px}.cust{font-weight:900;font-size:13px}.sub{font-size:10px;color:var(--muted);margin-top:3px}
+.pill{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:5px 8px;font-size:10px;font-weight:900}.pill:before{content:"";width:6px;height:6px;background:currentColor;border-radius:50%}.green{background:#ecfdf3;color:var(--green)}.blue{background:#eff6ff;color:#1d4ed8}.yellow{background:#fff7ed;color:var(--yellow)}.red{background:#fef2f2;color:var(--red)}.gray{background:#f1f5f9;color:#64748b}
+.overdue{color:var(--red);font-weight:900}.hold{color:var(--red);font-weight:900}.hidden{display:none!important}
+.modalbg{position:fixed;inset:0;background:#0f172a70;z-index:60;display:none}.modalbg.show{display:block}.modal{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(1080px,96vw);max-height:92vh;overflow:auto;background:#fff;border-radius:16px;box-shadow:0 25px 70px #0f172a55}.modal.sm-modal{width:min(440px,94vw)}
+.modalhead,.modalfoot{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:16px 18px;background:#fff;position:sticky;z-index:4}.modalhead{top:0;border-bottom:1px solid var(--line)}.modalfoot{bottom:0;border-top:1px solid var(--line)}.modalhead h3{margin:0}.body{padding:17px}
+.formsec{border:1px solid var(--line);border-radius:12px;padding:13px;margin-bottom:13px}.formsec h4{margin:0 0 10px}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}.span2{grid-column:span 2}.span4{grid-column:1/-1}
+.drawerbg{position:fixed;inset:0;background:#0f172a70;z-index:50;display:none}.drawerbg.show{display:block}.drawer{position:absolute;right:0;top:0;height:100%;width:min(780px,95vw);background:#f8fafc;overflow:auto;box-shadow:-18px 0 45px #0f172a44}.drawerhead{background:#fff;border-bottom:1px solid var(--line);padding:18px;position:sticky;top:0;z-index:4}.drawergrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:13px}.full{grid-column:1/-1}
+.timeline{display:flex;overflow:auto;padding:3px 0 8px}.step{min-width:100px;text-align:center;position:relative}.step:before{content:"";position:absolute;top:13px;left:-50%;right:50%;height:3px;background:#dce3eb}.step:first-child:before{display:none}.circle{width:27px;height:27px;margin:auto;border-radius:50%;display:grid;place-items:center;background:#e2e8f0;font-size:11px;font-weight:900;position:relative;z-index:2}.done .circle{background:#16a34a;color:#fff}.done:before{background:#16a34a}.current .circle{background:#2563eb;color:#fff}.stepname{font-size:9px;font-weight:900;margin-top:6px}.stepdate{font-size:9px;color:var(--muted);margin-top:2px}
+.list{display:grid;gap:7px}.rowbox{border:1px solid #edf1f6;background:#f8fafc;border-radius:9px;padding:9px}.split{display:flex;justify-content:space-between;gap:10px;align-items:center}
+.loginbrand{text-align:center;margin-bottom:15px}.loginbrand .logo{margin:auto;background:var(--navy);color:#fff}.loginerr{color:var(--red);font-size:11px;margin-top:8px}
+.weekgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}.day{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px;min-height:135px}.day h4{margin:0 0 8px;font-size:12px}.event{border-left:3px solid #94a3b8;padding:5px 6px;margin:5px 0;background:#f8fafc;border-radius:5px;font-size:10px}.event strong{display:block}
+@media(max-width:1050px){.stats{grid-template-columns:repeat(3,1fr)}.toolbar{grid-template-columns:1fr 1fr}.grid{grid-template-columns:1fr 1fr}.weekgrid{grid-template-columns:1fr 1fr}.drawergrid{grid-template-columns:1fr}.full{grid-column:auto}}
+@media(max-width:650px){main{padding:11px}.brand p{display:none}.brand h1{font-size:14px}.stats{grid-template-columns:1fr 1fr}.toolbar,.grid,.weekgrid{grid-template-columns:1fr}.span2,.span4{grid-column:auto}.titlebar{flex-direction:column}}
+</style>
+</head>
+<body>
+<header>
+ <div class="brand"><div class="logo">A</div><div><h1>Absolute Garage Builders</h1><p>Production & Job Status</p></div></div>
+ <div class="actions">
+  <div id="userBadge" class="user hidden"></div>
+  <button id="requestBtn" class="btn primary hidden" onclick="openRequest()">+ Request Sold Job</button>
+  <button id="addBtn" class="btn primary hidden" onclick="openJobForm()">+ Add Job</button>
+  <button id="logoutBtn" class="btn dark hidden" onclick="logout()">Log Out</button>
+ </div>
+</header>
+
+<main id="appMain" class="hidden">
+ <div class="titlebar"><div><h2 id="pageTitle">Production Dashboard</h2><div id="subtitle" class="muted">Live shared office data</div></div><div id="syncState" class="small muted">Connected to online database</div></div>
+ <div class="tabs">
+  <button class="tab active" data-view="dashboard" onclick="setView('dashboard',this)">Dashboard</button>
+  <button class="tab" data-view="week" onclick="setView('week',this)">Today / This Week</button>
+  <button class="tab" data-view="calendar" onclick="setView('calendar',this)">Calendar</button>
+  <button class="tab" data-view="completed" onclick="setView('completed',this)">Completed Archive</button>
+ </div>
+
+ <div class="stats" id="stats"></div>
+
+ <div id="managerRequests" class="card hidden" style="margin-bottom:12px"><h3 class="split"><span>Pending Sold-Job Requests</span><span id="pendingCount" class="pill yellow">0</span></h3><div id="requestList" class="list"></div></div>
+ <div id="salesRequests" class="card hidden" style="margin-bottom:12px"><h3>My Sold-Job Requests</h3><div id="myRequestList" class="list"></div></div>
+
+ <section id="dashboardView">
+  <div class="card toolbar">
+   <div class="field"><label>Search</label><input id="search" placeholder="Customer, address, city, job #" oninput="renderJobs()"></div>
+   <div id="salesFilterWrap" class="field"><label>Salesman</label><select id="salesFilter" onchange="renderJobs()"><option value="">All Salespeople</option></select></div>
+   <div class="field"><label>Status</label><select id="statusFilter" onchange="renderJobs()"><option value="">All Statuses</option></select></div>
+   <div class="field"><label>City</label><select id="cityFilter" onchange="renderJobs()"><option value="">All Cities</option></select></div>
+   <div class="field"><label>&nbsp;</label><button class="btn light" onclick="clearFilters()">Clear</button></div>
+  </div>
+  <div class="table"><table><thead><tr><th>Customer / Job</th><th>Salesman</th><th>Current Status</th><th>Permit</th><th>Concrete</th><th>Carpentry</th><th>Electric</th><th>Inspection</th><th>Next Step</th><th></th></tr></thead><tbody id="jobRows"></tbody></table></div>
+ </section>
+
+ <section id="weekView" class="hidden"><div id="weekContent"></div></section>
+ <section id="calendarView" class="hidden"><div class="card"><h3>Upcoming Production Calendar</h3><div id="calendarList" class="list"></div></div></section>
+ <section id="completedView" class="hidden"><div class="table"><table><thead><tr><th>Customer</th><th>Salesman</th><th>Address</th><th>Garage</th><th>Completed</th><th>Final Payment</th><th></th></tr></thead><tbody id="completedRows"></tbody></table></div></section>
+</main>
+
+<div id="loginBg" class="modalbg show">
+ <div class="modal sm-modal">
+  <div class="modalhead"><h3>Staff Login</h3></div>
+  <form onsubmit="login(event)"><div class="body">
+   <div class="loginbrand"><div class="logo">A</div><strong>Absolute Garage Builders</strong><div class="sub">Online Production Dashboard</div></div>
+   <div class="field"><label>Username</label><input id="loginUser" autocomplete="username" required></div><br>
+   <div class="field"><label>Password</label><input id="loginPass" type="password" autocomplete="current-password" required></div>
+   <div id="loginError" class="loginerr hidden">Incorrect username or password.</div>
+  </div><div class="modalfoot"><button class="btn primary" style="width:100%" type="submit">Log In</button></div></form>
+ </div>
+</div>
+
+<div id="jobBg" class="modalbg"><div class="modal">
+ <div class="modalhead"><h3 id="jobFormTitle">Add Job</h3><button class="btn light sm" onclick="closeJobForm()">✕</button></div>
+ <form onsubmit="saveJob(event)"><div class="body">
+  <input type="hidden" id="f_id">
+  <div class="formsec"><h4>Customer & Sale</h4><div class="grid">
+   <div class="field"><label>Customer</label><input id="f_customer" required></div><div class="field"><label>Job #</label><input id="f_job_number"></div>
+   <div class="field"><label>Salesman</label><select id="f_salesman_username"><option>ramsey</option><option>sam</option><option>wally</option><option>tom</option></select></div><div class="field"><label>Sold Date</label><input id="f_sold_date" type="date"></div>
+   <div class="field span2"><label>Address</label><input id="f_address"></div><div class="field"><label>City</label><input id="f_city"></div><div class="field"><label>Phone</label><input id="f_phone"></div>
+   <div class="field"><label>Garage Size</label><input id="f_garage_size"></div>
+   <div class="field"><label>Contract Price</label><input id="f_price" type="number" step=".01"></div><div class="field"><label>Deposit</label><input id="f_deposit" type="number" step=".01"></div>
+  </div></div>
+  <div class="formsec"><h4>Management Controls</h4><div class="grid">
+   <div class="field"><label>Priority</label><select id="f_priority"><option>Low</option><option selected>Normal</option><option>High</option><option>Urgent</option></select></div>
+   <div class="field"><label>Job On Hold?</label><select id="f_hold_status"><option value="false">No</option><option value="true">Yes</option></select></div>
+   <div class="field"><label>Hold Reason</label><select id="f_hold_reason"><option value=""></option><option>Waiting on Customer</option><option>Permit Issue</option><option>Weather</option><option>Concrete Issue</option><option>Material Delay</option><option>Payment Issue</option><option>Other</option></select></div>
+   <div class="field"><label>Hold Notes</label><input id="f_hold_notes"></div>
+  </div></div>
+  <div class="formsec"><h4>Deposit, Permit & Demo</h4><div class="grid">
+   <div class="field"><label>Deposit Status</label><select id="f_deposit_status"><option>Pending</option><option>Received</option></select></div><div class="field"><label>Deposit Date</label><input id="f_deposit_date" type="date"></div>
+   <div class="field"><label>Permit Status</label><select id="f_permit_status"><option>Not Submitted</option><option>Submitted</option><option>Corrections Needed</option><option>Approved</option><option>N/A</option></select></div><div class="field"><label>Permit Approved</label><input id="f_permit_date" type="date"></div>
+   <div class="field"><label>Demo Status</label><select id="f_demo_status"><option>Not Needed</option><option>Pending</option><option>Scheduled</option><option>Complete</option></select></div><div class="field"><label>Demo Scheduled</label><input id="f_scheduled_demo" type="date"></div><div class="field"><label>Demo Complete Date</label><input id="f_demo_date" type="date"></div>
+  </div></div>
+  <div class="formsec"><h4>Concrete</h4><div class="grid">
+   <div class="field"><label>Estimated Concrete</label><input id="f_concrete_est" type="date"></div><div class="field"><label>Scheduled Concrete</label><input id="f_concrete_scheduled" type="date"></div>
+   <div class="field"><label>Status</label><select id="f_concrete_status"><option>Pending</option><option>Scheduled</option><option>Poured</option><option>Existing Concrete</option><option>N/A</option></select></div><div class="field"><label>Poured Date</label><input id="f_concrete_poured" type="date"></div>
+   <div class="field"><label>Cure / Ready</label><input id="f_concrete_ready" type="date"></div>
+  </div></div>
+  <div class="formsec"><h4>Carpentry / Garage Build</h4><div class="grid">
+   <div class="field"><label>Estimated Carpentry</label><input id="f_carpentry_est" type="date"></div><div class="field"><label>Scheduled Carpentry</label><input id="f_carpentry_scheduled" type="date"></div>
+   <div class="field"><label>Status</label><select id="f_carpentry_status"><option>Pending</option><option>Scheduled</option><option>In Progress</option><option>Garage Built</option></select></div><div class="field"><label>Garage Built</label><input id="f_built_date" type="date"></div>
+  </div></div>
+  <div class="formsec"><h4>Electric, Inspection & Completion</h4><div class="grid">
+   <div class="field"><label>Electric Status</label><select id="f_electric_status"><option>Pending</option><option>Scheduled</option><option>In Progress</option><option>Complete</option><option>Not Included</option></select></div><div class="field"><label>Electric Date</label><input id="f_electric_date" type="date"></div>
+   <div class="field"><label>Inspection Status</label><select id="f_inspection_status"><option>Not Requested</option><option>Requested</option><option>Scheduled</option><option>Passed</option><option>Failed / Correction</option><option>N/A</option></select></div><div class="field"><label>Inspection Date</label><input id="f_inspection_date" type="date"></div>
+   <div class="field"><label>Inspection Type</label><input id="f_inspection_type" placeholder="Final / Electric / Other"></div><div class="field"><label>Final Payment</label><select id="f_final_payment"><option>Pending</option><option>Paid</option><option>N/A</option></select></div>
+   <div class="field"><label>Completed Date</label><input id="f_completed_date" type="date"></div><div class="field span4"><label>Office / Production Notes</label><textarea id="f_notes" rows="3"></textarea></div>
+  </div></div>
+ </div><div class="modalfoot"><button id="deleteJobBtn" type="button" class="btn danger hidden" onclick="deleteJob()">Delete Job</button><div style="margin-left:auto;display:flex;gap:8px"><button type="button" class="btn light" onclick="closeJobForm()">Cancel</button><button type="submit" class="btn primary">Save Job</button></div></div></form>
+</div></div>
+
+<div id="requestBg" class="modalbg"><div class="modal" style="width:min(760px,96vw)">
+ <div class="modalhead"><h3>Request to Add Sold Job</h3><button class="btn light sm" onclick="closeRequest()">✕</button></div>
+ <form onsubmit="submitRequest(event)"><div class="body"><div class="muted small" style="margin-bottom:12px">Randy Harley or Sam Barakat must approve this before it becomes an active production job.</div><div class="grid">
+  <div class="field span2"><label>Customer</label><input id="r_customer" required></div><div class="field"><label>Sold Date</label><input id="r_sold_date" type="date" required></div><div class="field"><label>Salesman</label><input id="r_salesman" readonly></div>
+  <div class="field span2"><label>Address</label><input id="r_address" required></div><div class="field"><label>City</label><input id="r_city" value="Chicago"></div><div class="field"><label>Phone</label><input id="r_phone"></div>
+  <div class="field"><label>Garage Size</label><input id="r_garage_size" required></div><div class="field"><label>Price</label><input id="r_price" type="number" step=".01"></div><div class="field"><label>Deposit</label><input id="r_deposit" type="number" step=".01"></div><div class="field"><label>Deposit Status</label><select id="r_deposit_status"><option>Pending</option><option>Received</option></select></div>
+  <div class="field span4"><label>Notes</label><textarea id="r_notes" rows="4"></textarea></div>
+  <div class="field span4"><label>Paperwork Uploads</label><div class="muted small" style="margin-bottom:7px">Upload the contract and any paperwork you already have. A contract is strongly required.</div><input id="r_files" type="file" multiple accept=".pdf,image/*"></div>
+  <div class="field span4"><label>Document Type For Selected Files</label><select id="r_doc_type"><option>Contract</option><option>Deposit Check / Proof of Payment</option><option>Plat of Survey</option><option>Demolition Sheet</option><option>Concrete Sheet</option><option>Permit</option><option>Inspection</option><option>Photo</option><option>Other</option></select></div>
+ </div></div><div class="modalfoot"><button type="button" class="btn light" onclick="closeRequest()">Cancel</button><button class="btn primary">Submit for Approval</button></div></form>
+</div></div>
+
+<div id="drawerBg" class="drawerbg" onclick="if(event.target===this)closeDrawer()"><aside class="drawer" onclick="event.stopPropagation()"><div id="drawerContent"></div></aside></div>
+
+
+<div id="viewerBg" class="modalbg"><div class="modal" style="width:min(1050px,97vw);height:min(88vh,900px)">
+ <div class="modalhead"><h3 id="viewerTitle">Paperwork</h3><button class="btn light sm" onclick="closeViewer()">✕</button></div>
+ <div class="body" style="height:calc(100% - 66px);padding:8px"><iframe id="viewerFrame" style="width:100%;height:100%;border:0;border-radius:8px;background:#f8fafc"></iframe></div>
+</div></div>
+
+<script>
+const SB_URL='https://iomcekniylxfptswcxoi.supabase.co';
+const SB_KEY='sb_publishable_G_ZAnQ_CoJjWsn8-HgduLw_IziPWEmn';
+const sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true}});
+const USER_EMAIL=u=>`${u.toLowerCase()}@absolute-garage.local`;
+const DISPLAY={randy:'Randy',sam:'Sam',ramsey:'Ramsey',wally:'Wally',tom:'Tom'};
+let profile=null,jobs=[],requests=[],documents=[],currentView='dashboard',openJobId=null;
+
+const $=id=>document.getElementById(id), esc=s=>(s??'').toString().replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+const todayISO=()=>new Date().toISOString().slice(0,10);
+const fmt=d=>d?new Date(d+'T12:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric',year:'2-digit'}):'—';
+const money=n=>Number(n)?new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(n):'—';
+const manager=()=>profile&&['owner','business_manager'].includes(profile.role);
+
+function roleName(){return profile?.role==='owner'?'Owner':profile?.role==='business_manager'?'Business Manager':'Salesman'}
+function status(j){
+ if(j.hold_status)return 'ON HOLD';
+ if(j.completed_date || (j.inspection_status==='Passed'&&j.final_payment==='Paid'))return 'Completed';
+ if(j.inspection_status==='Failed / Correction')return 'Inspection Correction';
+ if(['Requested','Scheduled'].includes(j.inspection_status))return 'Inspection';
+ if(['Scheduled','In Progress'].includes(j.electric_status))return 'Electric';
+ if(j.electric_status==='Complete' && j.inspection_status!=='Passed')return 'Ready for Inspection';
+ if(j.carpentry_status==='Garage Built')return j.electric_status==='Not Included'?'Ready for Inspection':'Electric';
+ if(j.carpentry_status==='In Progress')return 'Carpentry In Progress';
+ if(j.carpentry_status==='Scheduled')return 'Carpentry Scheduled';
+ if(['Poured','Existing Concrete','N/A'].includes(j.concrete_status))return 'Ready for Carpentry';
+ if(j.concrete_status==='Scheduled')return 'Concrete Scheduled';
+ if(j.demo_status==='Scheduled')return 'Demo Scheduled';
+ if(j.demo_status==='Pending')return 'Demo';
+ if(j.permit_status==='Approved')return 'Schedule Production';
+ if(j.permit_status==='Corrections Needed')return 'Permit Correction';
+ if(j.permit_status==='Submitted')return 'Permit Pending';
+ if(j.deposit_status!=='Received')return 'Deposit Pending';
+ return 'Sold';
+}
+function next(j){
+ if(j.hold_status)return `Resolve hold: ${j.hold_reason||'Review job'}`;
+ const m={'Completed':'Complete','Inspection Correction':'Fix inspection corrections','Inspection':'Complete inspection','Ready for Inspection':'Request inspection','Electric':'Complete electric','Carpentry In Progress':'Finish garage build','Carpentry Scheduled':'Build garage','Ready for Carpentry':'Schedule carpentry','Concrete Scheduled':'Pour concrete','Demo Scheduled':'Complete demo','Demo':'Schedule demo','Schedule Production':'Schedule demo / concrete','Permit Correction':'Resolve permit corrections','Permit Pending':'Permit approval','Deposit Pending':'Collect deposit','Sold':'Collect deposit / submit permit'};return m[status(j)]||'Review job'
+}
+function tone(s){if(s==='Completed'||['Paid','Approved','Complete','Poured','Garage Built','Passed','Existing Concrete','Not Included','N/A'].includes(s))return'green';if(s==='ON HOLD'||(s||'').includes('Correction')||(s||'').includes('Failed'))return'red';if((s||'').includes('Scheduled')||(s||'').includes('Progress')||['Electric','Inspection','Requested','Submitted'].includes(s))return'blue';return'yellow'}
+function overdue(j){
+ const t=todayISO(); if(j.completed_date||j.hold_status)return false;
+ return (j.concrete_scheduled&&j.concrete_scheduled<t&&!['Poured','Existing Concrete','N/A'].includes(j.concrete_status)) ||
+        (j.carpentry_scheduled&&j.carpentry_scheduled<t&&j.carpentry_status!=='Garage Built') ||
+        (j.inspection_date&&j.inspection_date<t&&!['Passed','N/A'].includes(j.inspection_status));
+}
+async function login(e){e.preventDefault();$('loginError').classList.add('hidden');const u=$('loginUser').value.trim().toLowerCase(),p=$('loginPass').value;const {error}=await sb.auth.signInWithPassword({email:USER_EMAIL(u),password:p});if(error){$('loginError').classList.remove('hidden');return}await boot()}
+async function logout(){await sb.auth.signOut();profile=null;jobs=[];requests=[];$('appMain').classList.add('hidden');$('loginBg').classList.add('show');$('loginPass').value=''}
+async function boot(){
+ const {data:{user}}=await sb.auth.getUser(); if(!user){$('loginBg').classList.add('show');return}
+ const {data:p,error}=await sb.from('staff_profiles').select('*').eq('id',user.id).single(); if(error||!p){await sb.auth.signOut();alert('This account is not configured for the Garage App.');return}
+ profile=p;$('loginBg').classList.remove('show');$('appMain').classList.remove('hidden');$('userBadge').classList.remove('hidden');$('logoutBtn').classList.remove('hidden');$('userBadge').textContent=`${p.display_name} • ${roleName()}`;
+ $('addBtn').classList.toggle('hidden',!manager());$('requestBtn').classList.toggle('hidden',manager());$('salesFilterWrap').classList.toggle('hidden',!manager());
+ $('subtitle').textContent=manager()?'All company jobs • live shared data':'Your sold jobs • live production status';
+ await refresh();
+}
+async function refresh(){
+ $('syncState').textContent='Syncing…';
+ const [{data:j,error:je},{data:r,error:re},{data:d,error:de}]=await Promise.all([sb.from('jobs').select('*').order('created_at',{ascending:false}),sb.from('job_requests').select('*').order('created_at',{ascending:false}),sb.from('job_documents').select('*').order('created_at',{ascending:false})]);
+ if(je)console.error(je);if(re)console.error(re);if(de)console.error(de);jobs=j||[];requests=r||[];documents=d||[];$('syncState').textContent='Connected • '+new Date().toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});populateFilters();renderAll();
+}
+function renderAll(){renderStats();renderRequests();renderJobs();renderWeek();renderCalendar();renderCompleted()}
+function renderStats(){const active=jobs.filter(j=>status(j)!=='Completed').length,p=jobs.filter(j=>['Submitted','Corrections Needed'].includes(j.permit_status)).length,c=jobs.filter(j=>j.concrete_status==='Scheduled').length,carp=jobs.filter(j=>['Scheduled','In Progress'].includes(j.carpentry_status)).length,h=jobs.filter(j=>j.hold_status).length,o=jobs.filter(overdue).length,done=jobs.filter(j=>status(j)==='Completed').length;$('stats').innerHTML=[['Active Jobs',active,''],['Permits Pending',p,''],['Concrete Scheduled',c,''],['Carpentry Active',carp,''],['On Hold',h,h?'alert':''],['Overdue',o,o?'alert':''],['Completed',done,'']].map(x=>`<div class="stat ${x[2]}"><div class="n">${x[1]}</div><div class="l">${x[0]}</div></div>`).join('')}
+function renderRequests(){
+ const pend=requests.filter(r=>r.status==='Pending');$('managerRequests').classList.toggle('hidden',!manager()||!pend.length);$('pendingCount').textContent=pend.length;
+ if(manager())$('requestList').innerHTML=pend.map(r=>{const hasContract=documents.some(d=>d.request_id===r.id&&d.document_type==='Contract');return `<div class="rowbox"><div class="split"><div><strong>${esc(r.customer)}</strong><div class="sub">${esc(r.salesman_username)} • ${esc(r.address||'')} • ${esc(r.garage_size||'')} • ${money(r.price)} • Deposit: ${esc(r.deposit_status||'Pending')}</div><div class="sub">${esc(r.notes||'')}</div></div><div style="display:flex;gap:6px"><button class="btn primary sm" onclick="approveRequest('${r.id}')">Approve</button><button class="btn light sm" onclick="rejectRequest('${r.id}')">Reject</button></div></div>${hasContract?'':`<div style="margin-top:10px;padding:12px;border:2px solid #b91c1c;background:#fef2f2;color:#b91c1c;font-size:19px;font-weight:1000;text-align:center;border-radius:9px">MISSING PAPERWORK</div>`}</div>`}).join('');
+ $('salesRequests').classList.toggle('hidden',manager()||!requests.length);if(!manager())$('myRequestList').innerHTML=requests.slice(0,8).map(r=>`<div class="rowbox split"><div><strong>${esc(r.customer)}</strong><div class="sub">${fmt(r.sold_date)} • ${esc(r.city||'')}</div></div><span class="pill ${r.status==='Approved'?'green':r.status==='Rejected'?'red':'yellow'}">${r.status}</span></div>`).join('')
+}
+function populateFilters(){const fill=(id,vals,label)=>{const e=$(id),v=e.value;e.innerHTML=`<option value="">${label}</option>`+[...new Set(vals.filter(Boolean))].sort().map(x=>`<option value="${esc(x)}">${esc(DISPLAY[x]||x)}</option>`).join('');e.value=v};fill('salesFilter',jobs.map(j=>j.salesman_username),'All Salespeople');fill('statusFilter',jobs.map(status),'All Statuses');fill('cityFilter',jobs.map(j=>j.city),'All Cities')}
+function filteredJobs(){const q=$('search').value.toLowerCase(),s=$('salesFilter').value,st=$('statusFilter').value,c=$('cityFilter').value;return jobs.filter(j=>status(j)!=='Completed'&&(!q||[j.customer,j.address,j.city,j.job_number,j.garage_size].join(' ').toLowerCase().includes(q))&&(!s||j.salesman_username===s)&&(!st||status(j)===st)&&(!c||j.city===c))}
+function renderJobs(){const rows=filteredJobs();$('jobRows').innerHTML=rows.length?rows.map(j=>`<tr><td><div class="cust">${esc(j.customer)}</div><div class="sub">${esc(j.job_number||'No job #')} • ${esc(j.city||'')} • ${esc(j.garage_size||'')}</div>${j.priority==='Urgent'||j.priority==='High'?`<div class="sub overdue">${j.priority} priority</div>`:''}</td><td><strong>${esc(DISPLAY[j.salesman_username]||j.salesman_username)}</strong></td><td><span class="pill ${tone(status(j))}">${esc(status(j))}</span>${j.hold_status?`<div class="sub hold">${esc(j.hold_reason||'On hold')}</div>`:''}${overdue(j)?'<div class="sub overdue">OVERDUE</div>':''}</td><td>${cell(j.permit_status,j.permit_date)}</td><td>${cell(j.concrete_status,j.concrete_poured||j.concrete_scheduled||j.concrete_est)}</td><td>${cell(j.carpentry_status,j.built_date||j.carpentry_scheduled||j.carpentry_est)}</td><td>${cell(j.electric_status,j.electric_date)}</td><td>${cell(j.inspection_status,j.inspection_date)}</td><td><strong>${esc(next(j))}</strong></td><td><button class="btn light sm" onclick="openDrawer('${j.id}')">Open</button></td></tr>`).join(''):`<tr><td colspan="10" style="text-align:center;padding:40px;color:#6f7a8d">No active jobs match these filters.</td></tr>`}
+function cell(s,d){return `<span class="pill ${tone(s)}">${esc(s||'—')}</span><div class="sub">${fmt(d)}</div>`}
+function clearFilters(){['search','salesFilter','statusFilter','cityFilter'].forEach(id=>$(id).value='');renderJobs()}
+function setView(v,btn){currentView=v;document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));btn.classList.add('active');['dashboard','week','calendar','completed'].forEach(x=>$(x+'View').classList.toggle('hidden',x!==v))}
+function renderWeek(){
+ const base=new Date();base.setHours(0,0,0,0);const days=[...Array(7)].map((_,i)=>{const d=new Date(base);d.setDate(base.getDate()+i);return d});
+ $('weekContent').innerHTML=`<div class="weekgrid">${days.map(d=>{const iso=d.toISOString().slice(0,10),events=[];jobs.forEach(j=>{[['Demo',j.scheduled_demo],['Concrete',j.concrete_scheduled],['Carpentry',j.carpentry_scheduled],['Electric',j.electric_date],['Inspection',j.inspection_date]].forEach(([type,date])=>{if(date===iso)events.push({type,j})})});return `<div class="day"><h4>${d.toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'})}</h4>${events.length?events.map(e=>`<div class="event"><strong>${e.type}: ${esc(e.j.customer)}</strong>${esc(DISPLAY[e.j.salesman_username]||e.j.salesman_username)} • ${esc(e.j.city||'')}</div>`).join(''):'<div class="sub">No scheduled work</div>'}</div>`}).join('')}</div>`
+}
+function renderCalendar(){const ev=[];jobs.forEach(j=>[['Demo',j.scheduled_demo],['Concrete',j.concrete_scheduled],['Carpentry',j.carpentry_scheduled],['Electric',j.electric_date],['Inspection',j.inspection_date]].forEach(([type,date])=>{if(date)ev.push({date,type,j})}));ev.sort((a,b)=>a.date.localeCompare(b.date));$('calendarList').innerHTML=ev.length?ev.map(e=>`<div class="rowbox split"><div><strong>${fmt(e.date)} — ${e.type}</strong><div class="sub">${esc(e.j.customer)} • ${esc(e.j.address||'')} ${esc(e.j.city||'')}</div></div><button class="btn light sm" onclick="openDrawer('${e.j.id}')">Open</button></div>`).join(''):'<div class="muted">No scheduled production dates yet.</div>'}
+function renderCompleted(){const a=jobs.filter(j=>status(j)==='Completed').sort((x,y)=>(y.completed_date||'').localeCompare(x.completed_date||''));$('completedRows').innerHTML=a.length?a.map(j=>`<tr><td><strong>${esc(j.customer)}</strong></td><td>${esc(DISPLAY[j.salesman_username]||j.salesman_username)}</td><td>${esc(j.address||'')} ${esc(j.city||'')}</td><td>${esc(j.garage_size||'')}</td><td>${fmt(j.completed_date)}</td><td><span class="pill ${tone(j.final_payment)}">${esc(j.final_payment)}</span></td><td><button class="btn light sm" onclick="openDrawer('${j.id}')">Open</button></td></tr>`).join(''):`<tr><td colspan="7" style="text-align:center;padding:35px;color:#6f7a8d">No completed jobs yet.</td></tr>`}
+function openRequest(){if(manager())return;$('r_customer').value='';$('r_sold_date').value=todayISO();$('r_salesman').value=DISPLAY[profile.username]||profile.username;$('r_address').value='';$('r_city').value='Chicago';$('r_phone').value='';$('r_garage_size').value='';$('r_price').value='';$('r_deposit').value='';$('r_deposit_status').value='Pending';$('r_files').value='';$('r_doc_type').value='Contract';$('r_notes').value='';$('requestBg').classList.add('show')}
+function closeRequest(){$('requestBg').classList.remove('show')}
+async function submitRequest(e){e.preventDefault();const {data:{user}}=await sb.auth.getUser();const rec={requested_by:user.id,salesman_username:profile.username,customer:$('r_customer').value.trim(),sold_date:$('r_sold_date').value||null,address:$('r_address').value.trim(),city:$('r_city').value.trim(),phone:$('r_phone').value.trim(),garage_size:$('r_garage_size').value.trim(),price:Number($('r_price').value)||0,deposit:Number($('r_deposit').value)||0,deposit_status:$('r_deposit_status').value,notes:$('r_notes').value.trim(),status:'Pending'};const {data:req,error}=await sb.from('job_requests').insert(rec).select().single();if(error)return alert(error.message);const files=[...$('r_files').files];for(const file of files){const er=await uploadPaperworkFile({file,requestId:req.id,type:$('r_doc_type').value,user});if(er){alert('Request saved, but one file failed: '+er.message);break}}closeRequest();await refresh();alert('Submitted to Randy and Sam for approval.')}
+async function approveRequest(id){if(!manager())return;const r=requests.find(x=>x.id===id);if(!r)return;const {data:{user}}=await sb.auth.getUser();const rec={customer:r.customer,salesman_username:r.salesman_username,sold_date:r.sold_date,address:r.address,city:r.city,phone:r.phone,garage_size:r.garage_size,price:r.price,deposit:r.deposit,deposit_status:r.deposit_status||'Pending',notes:r.notes?`Sales request notes: ${r.notes}`:'',created_by:user.id};const {data:j,error}=await sb.from('jobs').insert(rec).select().single();if(error)return alert(error.message);await sb.from('job_requests').update({status:'Approved',reviewed_by:user.id,reviewed_at:new Date().toISOString()}).eq('id',id);await sb.from('job_documents').update({job_id:j.id}).eq('request_id',id);await sb.from('job_activity').insert({job_id:j.id,actor_id:user.id,action:'Job request approved',details:{request_id:id}});await refresh()}
+async function rejectRequest(id){if(!manager()||!confirm('Reject this sold-job request?'))return;const {data:{user}}=await sb.auth.getUser();const {error}=await sb.from('job_requests').update({status:'Rejected',reviewed_by:user.id,reviewed_at:new Date().toISOString()}).eq('id',id);if(error)return alert(error.message);await refresh()}
+const fields=['customer','job_number','salesman_username','sold_date','address','city','phone','garage_size','price','deposit','priority','hold_status','hold_reason','hold_notes','deposit_status','deposit_date','permit_status','permit_date','demo_status','scheduled_demo','demo_date','concrete_est','concrete_scheduled','concrete_status','concrete_poured','concrete_ready','carpentry_est','carpentry_scheduled','carpentry_status','built_date','electric_status','electric_date','inspection_status','inspection_date','inspection_type','final_payment','completed_date','notes'];
+function openJobForm(id=null){if(!manager())return;openJobId=id;$('jobFormTitle').textContent=id?'Edit Job':'Add Job';$('deleteJobBtn').classList.toggle('hidden',!id);fields.forEach(k=>{const e=$('f_'+k);if(e)e.value=''});$('f_id').value=id||'';$('f_city').value='Chicago';$('f_priority').value='Normal';$('f_hold_status').value='false';$('f_salesman_username').value='ramsey';$('f_sold_date').value=todayISO();if(id){const j=jobs.find(x=>x.id===id);fields.forEach(k=>{const e=$('f_'+k);if(e)e.value=(k==='hold_status'?String(!!j[k]):(j[k]??''))})}$('jobBg').classList.add('show')}
+function closeJobForm(){$('jobBg').classList.remove('show');openJobId=null}
+async function saveJob(e){e.preventDefault();if(!manager())return;const {data:{user}}=await sb.auth.getUser();const rec={};fields.forEach(k=>{let v=$('f_'+k).value;if(['sold_date','deposit_date','permit_date','scheduled_demo','demo_date','concrete_est','concrete_scheduled','concrete_poured','concrete_ready','carpentry_est','carpentry_scheduled','built_date','electric_date','inspection_date','completed_date'].includes(k))v=v||null;if(['price','deposit'].includes(k))v=Number(v)||0;if(k==='hold_status')v=v==='true';rec[k]=v});let id=$('f_id').value,err;if(id){({error:err}=await sb.from('jobs').update(rec).eq('id',id));if(!err)await sb.from('job_activity').insert({job_id:id,actor_id:user.id,action:'Job updated',details:{status:status({...jobs.find(x=>x.id===id),...rec})}})}else{rec.created_by=user.id;const res=await sb.from('jobs').insert(rec).select().single();err=res.error;id=res.data?.id;if(id)await sb.from('job_activity').insert({job_id:id,actor_id:user.id,action:'Job created',details:{}})}if(err)return alert(err.message);closeJobForm();await refresh()}
+async function deleteJob(){if(!manager()||!openJobId||!confirm('Delete this job permanently?'))return;const {error}=await sb.from('jobs').delete().eq('id',openJobId);if(error)return alert(error.message);closeJobForm();closeDrawer();await refresh()}
+async function openDrawer(id){openJobId=id;const j=jobs.find(x=>x.id===id);if(!j)return;const [a,d]=await Promise.all([sb.from('job_activity').select('*').eq('job_id',id).order('created_at',{ascending:false}).limit(30),sb.from('job_documents').select('*').eq('job_id',id).order('created_at',{ascending:false})]);const activity=a.data||[],docs=d.data||[];const tl=[['Sold',!!j.sold_date,j.sold_date],['Deposit',j.deposit_status==='Received',j.deposit_date],['Permit',['Approved','N/A'].includes(j.permit_status),j.permit_date],['Concrete',['Poured','Existing Concrete','N/A'].includes(j.concrete_status),j.concrete_poured||j.concrete_scheduled],['Carpentry',j.carpentry_status==='Garage Built',j.built_date||j.carpentry_scheduled],['Electric',['Complete','Not Included'].includes(j.electric_status),j.electric_date],['Inspection',['Passed','N/A'].includes(j.inspection_status),j.inspection_date],['Complete',!!j.completed_date,j.completed_date]];let first=tl.findIndex(x=>!x[1]);$('drawerContent').innerHTML=`<div class="drawerhead"><div class="split"><div><div class="sub">${esc(j.job_number||'')}</div><h2 style="margin:0">${esc(j.customer)}</h2><div class="sub">${esc(j.address||'')} ${esc(j.city||'')}</div></div><div style="display:flex;gap:6px">${manager()?`<button class="btn light sm" onclick="closeDrawer();openJobForm('${j.id}')">Edit</button>`:''}<button class="btn light sm" onclick="closeDrawer()">✕</button></div></div><div style="margin-top:9px"><span class="pill ${tone(status(j))}">${esc(status(j))}</span> ${j.hold_status?`<span class="pill red">${esc(j.hold_reason||'Hold')}</span>`:''}</div></div>
+<div class="drawergrid">
+<div class="card full"><h4>Production Timeline</h4><div class="timeline">${tl.map((x,i)=>`<div class="step ${x[1]?'done':i===first?'current':''}"><div class="circle">${x[1]?'✓':i+1}</div><div class="stepname">${x[0]}</div><div class="stepdate">${fmt(x[2])}</div></div>`).join('')}</div></div>
+<div class="card"><h4>Job Information</h4>${info('Salesman',DISPLAY[j.salesman_username]||j.salesman_username)}${info('Garage',j.garage_size)}${info('Contract',money(j.price))}${info('Deposit',money(j.deposit))}${info('Priority',j.priority)}</div>
+<div class="card"><h4>Next Action</h4><div style="font-size:18px;font-weight:900">${esc(next(j))}</div><div class="sub">Current stage: ${esc(status(j))}</div></div>
+<div class="card full"><h4>Key Dates</h4><div class="grid">${ibox('Concrete Est.',fmt(j.concrete_est))}${ibox('Concrete Scheduled',fmt(j.concrete_scheduled))}${ibox('Concrete Poured',fmt(j.concrete_poured))}${ibox('Carpentry Est.',fmt(j.carpentry_est))}${ibox('Carpentry Scheduled',fmt(j.carpentry_scheduled))}${ibox('Garage Built',fmt(j.built_date))}${ibox('Electric',fmt(j.electric_date))}${ibox('Inspection',fmt(j.inspection_date))}</div></div>
+<div class="card full"><h4>Contract & Paperwork</h4>${!docs.some(x=>x.document_type==='Contract')?`<div style="margin-bottom:10px;padding:12px;border:2px solid #b91c1c;background:#fef2f2;color:#b91c1c;font-size:19px;font-weight:1000;text-align:center;border-radius:9px">MISSING PAPERWORK</div>`:''}<div style="display:flex;gap:7px;margin-bottom:9px;flex-wrap:wrap"><input id="docFile" type="file" multiple accept=".pdf,image/*"><select id="docType"><option>Contract</option><option>Deposit Check / Proof of Payment</option><option>Plat of Survey</option><option>Demolition Sheet</option><option>Concrete Sheet</option><option>Permit</option><option>Inspection</option><option>Photo</option><option>Other</option></select><button class="btn primary sm" onclick="uploadDoc('${j.id}')">Upload Paperwork</button></div><div class="list">${docs.length?docs.map(x=>`<div class="rowbox split"><div><strong>${esc(x.document_type||'Document')}: ${esc(x.file_name)}</strong><div class="sub">${new Date(x.created_at).toLocaleString()}</div></div><button class="btn light sm" onclick="viewDoc('${esc(x.storage_path)}','${esc(x.file_name)}')">Pop Up</button></div>`).join(''):'<div class="muted small">No paperwork uploaded yet.</div>'}</div></div>
+<div class="card full"><h4>Activity History</h4><div class="list">${activity.length?activity.map(x=>`<div class="rowbox"><strong>${esc(x.action)}</strong><div class="sub">${new Date(x.created_at).toLocaleString()}</div></div>`).join(''):'<div class="muted small">No activity recorded yet.</div>'}</div></div>
+<div class="card full"><h4>Notes</h4><div style="white-space:pre-wrap">${esc(j.notes||'No notes.')}</div></div>
+</div>`;$('drawerBg').classList.add('show')}
+function info(l,v){return `<div style="margin:8px 0"><div class="small muted" style="font-weight:900;text-transform:uppercase">${l}</div><div style="font-weight:800">${esc(v||'—')}</div></div>`}function ibox(l,v){return `<div><div class="small muted" style="font-weight:900;text-transform:uppercase">${l}</div><div style="font-weight:800">${esc(v)}</div></div>`}
+function closeDrawer(){$('drawerBg').classList.remove('show');openJobId=null}
+async function uploadPaperworkFile({file,jobId=null,requestId=null,type,user}){const safe=file.name.replace(/[^a-zA-Z0-9._-]/g,'_'),ctx=jobId?`jobs/${jobId}`:`requests/${requestId}`,path=`${user.id}/${ctx}/${Date.now()}-${safe}`;let res=await sb.storage.from('job-documents').upload(path,file,{upsert:false});if(res.error)return res.error;res=await sb.from('job_documents').insert({job_id:jobId,request_id:requestId,uploaded_by:user.id,file_name:file.name,storage_path:path,document_type:type});if(res.error)return res.error;return null}
+async function uploadDoc(jobId){const files=[...$('docFile').files];if(!files.length)return alert('Choose at least one file first.');const {data:{user}}=await sb.auth.getUser();for(const file of files){const er=await uploadPaperworkFile({file,jobId,type:$('docType').value,user});if(er)return alert(er.message)}if(manager())await sb.from('job_activity').insert({job_id:jobId,actor_id:user.id,action:'Paperwork uploaded',details:{count:files.length,type:$('docType').value}});await refresh();await openDrawer(jobId)}
+let viewerObjectUrl=null;
+async function viewDoc(path,name){const {data,error}=await sb.storage.from('job-documents').download(path);if(error)return alert(error.message);if(viewerObjectUrl)URL.revokeObjectURL(viewerObjectUrl);viewerObjectUrl=URL.createObjectURL(data);$('viewerTitle').textContent=name;$('viewerFrame').src=viewerObjectUrl;$('viewerBg').classList.add('show')}
+function closeViewer(){$('viewerBg').classList.remove('show');$('viewerFrame').src='about:blank';if(viewerObjectUrl){URL.revokeObjectURL(viewerObjectUrl);viewerObjectUrl=null}}
+sb.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_OUT')return;if(session&&profile===null)boot()});
+(async()=>{const {data:{session}}=await sb.auth.getSession();if(session)boot()})();
+</script>
+</body></html>

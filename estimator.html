@@ -1142,7 +1142,7 @@
                             <i class="fa-solid fa-file-invoice"></i>
                             <span>PRINT CUSTOMER ESTIMATE SHEET</span>
                         </div>
-                        <p class="text-xs text-zinc-500 mt-1">Standard ABG project estimate layout • Salesman-specific rules • Approved saved exterior photos only; roof style is locked and hip/gable can never cross-match • Internal cost and profit are not printed</p>
+                        <p class="text-xs text-zinc-500 mt-1">Standard ABG project estimate layout • Salesman-specific rules • Garage example photo reflects the selected roof style and configuration • Internal cost and profit are not printed</p>
                     </div>
                 </div>
 
@@ -2380,11 +2380,7 @@
             const img=document.getElementById('photoLibraryPreview');
             const status=document.getElementById('photoMatchStatus');
             if(img&&m.photo) img.src=m.photo.src;
-            if(status&&m.photo) {
-                const mat=m.photo.siding==='hardie'?'HardieBoard / cement board':'vinyl siding';
-                const loc=m.photo.serviceLoc==='front'?`front service door (${m.photo.frontSide||'right'} of overhead door)`:m.photo.serviceLoc==='right'?'service door on RIGHT WALL':'service door hidden (left/back selection)';
-                status.textContent=`Closest photo match: ${m.photo.roof} roof • ${mat} • ${m.photo.color||'neutral'} • ${m.photo.doorWindows?'door windows':'solid door'} • ${loc}`;
-            }
+            if(status) status.textContent='';
             return m.photo;
         }
 
@@ -2449,7 +2445,7 @@
         function refreshExteriorPreview() {
             const status = document.getElementById('aiExteriorStatus');
             const wrap = document.getElementById('aiExteriorPreviewWrap');
-            if (status) status.textContent = 'Approved saved garage photos only. New images are not generated.';
+            if (status) status.textContent = '';
             if (wrap) wrap.classList.add('hidden');
         }
 
@@ -2782,9 +2778,9 @@
             const realGaragePhoto = `<img src="images/garage_115.jpg" alt="Real detached garage exterior example">`;
             const gableGaragePhoto = `<img src="images/garage_010.jpg" alt="Real gable-roof detached garage exterior example">`;
             const matchedGaragePhoto = getExteriorPhotoMatch().photo;
-            const garageSvg = matchedGaragePhoto
-                ? `<div class="photo-config photo-only"><img src="${matchedGaragePhoto.src}" alt="Closest matching approved garage exterior example"></div>`
-                : `<div class="photo-config photo-only" style="min-height:170px;display:flex;align-items:center;justify-content:center;border:1px dashed #cbd5e1;color:#64748b;font-size:12px;text-align:center;padding:18px;">No approved matching garage example photo is currently saved for these selections.</div>`;
+            const fallbackGaragePhoto = isGable ? 'images/garage_010.jpg' : 'images/garage_115.jpg';
+            const selectedGaragePhoto = matchedGaragePhoto && matchedGaragePhoto.src ? matchedGaragePhoto.src : fallbackGaragePhoto;
+            const garageSvg = `<div class="photo-config photo-only"><img src="${selectedGaragePhoto}" alt="Garage exterior example"></div>`;
 
             const sheetHtml = `<!DOCTYPE html>
 <html lang="en">

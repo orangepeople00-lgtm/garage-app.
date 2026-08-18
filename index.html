@@ -38,6 +38,9 @@ main{max-width:1500px;margin:auto;padding:22px}.titlebar{display:flex;justify-co
 .scan-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:end}
 .scan-actions .field{min-width:180px;flex:1}
 .scan-btn{font-size:15px;padding:11px 15px}
+.manager-paperwork-top{border:3px solid #2563eb!important;background:#f8fbff!important;box-shadow:0 4px 18px #2563eb18}
+.manager-paperwork-top h4{color:#1d4ed8}
+.build-badge{font-size:10px;font-weight:900;color:#64748b;margin-left:8px}
 .job-age{display:inline-block;margin-top:6px;font-weight:900;color:#475569}
 .estimate-history-toolbar{grid-template-columns:2fr 1fr auto}
 @media(max-width:800px){.estimate-history-toolbar{grid-template-columns:1fr}}
@@ -127,20 +130,13 @@ body.estimator-mode .estimator-exit{display:block}
 </div>
 
 <div id="jobBg" class="modalbg"><div class="modal">
- <div class="modalhead"><h3 id="jobFormTitle">Add Job</h3><button class="btn light sm" onclick="closeJobForm()">✕</button></div>
+ <div class="modalhead"><h3 id="jobFormTitle">Add Job</h3><span class="build-badge">Paperwork Upload v2</span><button class="btn light sm" onclick="closeJobForm()">✕</button></div>
  <form onsubmit="saveJob(event)"><div class="body">
   <input type="hidden" id="f_id">
-  <div class="formsec"><h4>Customer & Sale</h4><div class="grid">
-   <div class="field"><label>Customer</label><input id="f_customer" required></div><div class="field"><label>Job #</label><input id="f_job_number"></div>
-   <div class="field"><label>Salesman</label><select id="f_salesman_username"><option>ramsey</option><option>sam</option><option>wally</option><option>tom</option></select></div><div class="field"><label>Sold Date</label><input id="f_sold_date" type="date"></div>
-   <div class="field span2"><label>Address</label><input id="f_address"></div><div class="field"><label>City</label><input id="f_city"></div><div class="field"><label>Phone</label><input id="f_phone"></div>
-   <div class="field"><label>Garage Size</label><input id="f_garage_size"></div>
-   <div class="field"><label>Contract Price</label><input id="f_price" type="number" step=".01"></div><div class="field"><label>Deposit</label><input id="f_deposit" type="number" step=".01"></div>
-  </div></div>
-  <div class="formsec"><h4>Contract & Paperwork</h4>
+  <div class="formsec manager-paperwork-top"><h4 style="font-size:18px">📄 ATTACH CONTRACT / PAPERWORK</h4>
    <div class="scan-paperwork-box">
-    <div class="scan-paperwork-title">📎 Add Paperwork While Creating This Job</div>
-    <div class="scan-paperwork-help">Sam or Randy can attach the contract or other paperwork before saving the job. On a phone, use the camera button. Multiple selected files are saved under the paperwork type chosen below.</div>
+    <div class="scan-paperwork-title" style="font-size:16px">Upload or scan files BEFORE you save the job</div>
+    <div class="scan-paperwork-help">For Sam and Randy: choose the paperwork type, then scan with the phone camera or choose a PDF/photo. The files will be attached to this customer when you press Save Job.</div>
     <div class="scan-actions">
      <div class="field"><label>Paperwork Type</label><select id="f_doc_type"><option>Contract</option><option>Deposit Check / Proof of Payment</option><option>Plat of Survey</option><option>Demolition Sheet</option><option>Concrete Sheet</option><option>Permit</option><option>Inspection</option><option>Photo</option><option>Other</option></select></div>
      <button type="button" class="btn primary scan-btn" onclick="managerJobCamera()">📷 Scan with Camera</button>
@@ -151,6 +147,13 @@ body.estimator-mode .estimator-exit{display:block}
     <div id="f_doc_selected" class="small muted" style="margin-top:8px">No paperwork selected.</div>
    </div>
   </div>
+  <div class="formsec"><h4>Customer & Sale</h4><div class="grid">
+   <div class="field"><label>Customer</label><input id="f_customer" required></div><div class="field"><label>Job #</label><input id="f_job_number"></div>
+   <div class="field"><label>Salesman</label><select id="f_salesman_username"><option>ramsey</option><option>sam</option><option>wally</option><option>tom</option></select></div><div class="field"><label>Sold Date</label><input id="f_sold_date" type="date"></div>
+   <div class="field span2"><label>Address</label><input id="f_address"></div><div class="field"><label>City</label><input id="f_city"></div><div class="field"><label>Phone</label><input id="f_phone"></div>
+   <div class="field"><label>Garage Size</label><input id="f_garage_size"></div>
+   <div class="field"><label>Contract Price</label><input id="f_price" type="number" step=".01"></div><div class="field"><label>Deposit</label><input id="f_deposit" type="number" step=".01"></div>
+  </div></div>
   <div class="formsec"><h4>Management Controls</h4><div class="grid">
    <div class="field"><label>Priority</label><select id="f_priority"><option>Low</option><option selected>Normal</option><option>High</option><option>Urgent</option></select></div>
    <div class="field"><label>Job On Hold?</label><select id="f_hold_status"><option value="false">No</option><option value="true">Yes</option></select></div>
@@ -393,7 +396,7 @@ async function uploadManagerJobPaperwork(jobId,user){
  await sb.from('job_activity').insert({job_id:jobId,actor_id:user.id,action:'Paperwork uploaded',details:{count:files.length,type,method:camera.length?'add-job camera/file':'add-job file'}});
  return null;
 }
-function openJobForm(id=null){if(!manager())return;openJobId=id;resetManagerJobPaperwork();$('jobFormTitle').textContent=id?'Edit Job':'Add Job';$('deleteJobBtn').classList.toggle('hidden',!id);fields.forEach(k=>{const e=$('f_'+k);if(e)e.value=''});$('f_id').value=id||'';$('f_city').value='Chicago';$('f_priority').value='Normal';$('f_hold_status').value='false';$('f_salesman_username').value='ramsey';$('f_sold_date').value=todayISO();$('f_permit_status').value='Not Submitted';$('f_demolition_required').value='true';$('f_demo_status').value='Pending';$('f_concrete_status').value='Pending';$('f_carpentry_status').value='Pending';$('f_electric_status').value='Pending';$('f_extras_required').value='false';$('f_extras_status').value='N/A';if(id){const j=jobs.find(x=>x.id===id);fields.forEach(k=>{const e=$('f_'+k);if(e)e.value=(['hold_status','demolition_required','extras_required'].includes(k)?String(!!j[k]):(j[k]??''))})}syncDemoRequirement();syncExtrasRequirement();$('jobBg').classList.add('show')}
+function openJobForm(id=null){if(!manager())return;openJobId=id;resetManagerJobPaperwork();$('jobFormTitle').textContent=id?'Edit Job — Attach Paperwork':'Add Job — Attach Paperwork';$('deleteJobBtn').classList.toggle('hidden',!id);fields.forEach(k=>{const e=$('f_'+k);if(e)e.value=''});$('f_id').value=id||'';$('f_city').value='Chicago';$('f_priority').value='Normal';$('f_hold_status').value='false';$('f_salesman_username').value='ramsey';$('f_sold_date').value=todayISO();$('f_permit_status').value='Not Submitted';$('f_demolition_required').value='true';$('f_demo_status').value='Pending';$('f_concrete_status').value='Pending';$('f_carpentry_status').value='Pending';$('f_electric_status').value='Pending';$('f_extras_required').value='false';$('f_extras_status').value='N/A';if(id){const j=jobs.find(x=>x.id===id);fields.forEach(k=>{const e=$('f_'+k);if(e)e.value=(['hold_status','demolition_required','extras_required'].includes(k)?String(!!j[k]):(j[k]??''))})}syncDemoRequirement();syncExtrasRequirement();$('jobBg').classList.add('show')}
 function closeJobForm(){$('jobBg').classList.remove('show');openJobId=null}
 async function saveJob(e){e.preventDefault();if(!manager())return;const {data:{user}}=await sb.auth.getUser();const rec={};fields.forEach(k=>{let v=$('f_'+k).value;if(['sold_date','deposit_date','permit_date','scheduled_demo','demo_date','concrete_scheduled','concrete_poured','concrete_ready','carpentry_scheduled','built_date','electric_date','extras_scheduled','extras_complete_date','inspection_date','completed_date'].includes(k))v=v||null;if(['price','deposit'].includes(k))v=Number(v)||0;if(['hold_status','demolition_required','extras_required'].includes(k))v=v==='true';rec[k]=v});if(rec.demolition_required===false)rec.demo_status='N/A';else if(rec.demo_status==='N/A')rec.demo_status='Pending';if(rec.extras_required===false)rec.extras_status='N/A';else if(rec.extras_status==='N/A')rec.extras_status='Pending';let id=$('f_id').value,err;if(id){({error:err}=await sb.from('jobs').update(rec).eq('id',id));if(!err)await sb.from('job_activity').insert({job_id:id,actor_id:user.id,action:'Job updated',details:{status:status({...jobs.find(x=>x.id===id),...rec})}})}else{rec.created_by=user.id;const res=await sb.from('jobs').insert(rec).select().single();err=res.error;id=res.data?.id;if(id)await sb.from('job_activity').insert({job_id:id,actor_id:user.id,action:'Job created',details:{}})}if(err)return alert(err.message);
  const uploadErr=await uploadManagerJobPaperwork(id,user);

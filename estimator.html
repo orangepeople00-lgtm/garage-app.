@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Absolute Garage Builders • Quick Estimator</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600&amp;display=swap');
@@ -1969,6 +1970,29 @@
             tom:    { name:'Tom', title:'Sales Consultant', phone:'708-334-9470', email:'', tagline:'', wally:false }
         };
 
+
+        const GARAGE_SB_URL='https://iomcekniylxfptswcxoi.supabase.co';
+        const GARAGE_SB_KEY='sb_publishable_G_ZAnQ_CoJjWsn8-HgduLw_IziPWEmn';
+        const garageSb=window.supabase.createClient(GARAGE_SB_URL,GARAGE_SB_KEY,{auth:{persistSession:true,autoRefreshToken:true}});
+        function estimateNumberFromText(text){
+            const n=Number(String(text||'').replace(/[^0-9.-]/g,''));
+            return Number.isFinite(n)?n:0;
+        }
+        async function saveEstimateHistoryRecord(data){
+            try{
+                const {data:{user}}=await garageSb.auth.getUser();
+                if(!user)return;
+                const {data:staff,error:pe}=await garageSb.from('staff_profiles').select('username').eq('id',user.id).single();
+                if(pe||!staff?.username)return;
+                const {error}=await garageSb.from('estimate_history').insert({
+                    created_by:user.id,salesman_username:staff.username,customer:data.customer,address:data.address||'',city:data.city||'',
+                    garage_size:data.garage_size||'',roof_type:data.roof_type||'',wall_height:data.wall_height||'',siding:data.siding||'',
+                    estimate_price:Number(data.estimate_price)||0,estimate_snapshot:data.snapshot||{}
+                });
+                if(error)console.error('Estimate history save failed:',error);
+            }catch(err){console.error('Estimate history save failed:',err)}
+        }
+
         function getSalesmanProfile() {
             const key = (document.getElementById('salesman') || {}).value || 'ramsey';
             return SALESMEN[key] || SALESMEN.ramsey;
@@ -2545,7 +2569,7 @@
             window.open('https://chatgpt.com/','_blank','noopener');
         }
 
-        async function printEstimateSheet() {
+        async function printEstimateSheet(saveToHistory = true) {
             const customerName = (document.getElementById('customerName').value || '').trim();
             const customerAddress = (document.getElementById('customerAddress').value || '').trim();
 
@@ -2791,8 +2815,11 @@
             const selectedGaragePhoto = matchedGaragePhoto && matchedGaragePhoto.src ? matchedGaragePhoto.src : fallbackGaragePhoto;
             // The estimate sheet opens in a new browser document. Use an absolute image URL so
             // GitHub Pages can load the selected garage photo inside the printed estimate sheet.
-            const selectedGaragePhotoUrl = new URL(selectedGaragePhoto, document.baseURI).href;
             const selectedGaragePhotoFile = selectedGaragePhoto.replace(/^.*\//, '');
+            // Try BOTH layouts. On the live GitHub repo the garage image files may be uploaded
+            // directly beside estimator.html, while the packaged download keeps them in /images.
+            const selectedGaragePhotoOriginalUrl = new URL(selectedGaragePhoto, document.baseURI).href;
+            const selectedGaragePhotoRootUrl = new URL(selectedGaragePhotoFile, document.baseURI).href;
             const selectedGaragePhotoFolderUrl = new URL('images/' + selectedGaragePhotoFile, document.baseURI).href;
 
             // Embed the selected exterior photo directly into the estimate popup as a data URL.
@@ -2805,7 +2832,7 @@
                 reader.readAsDataURL(blob);
             });
             let embeddedGaragePhoto = '';
-            for (const candidate of [selectedGaragePhotoUrl, selectedGaragePhotoFolderUrl]) {
+            for (const candidate of [...new Set([selectedGaragePhotoOriginalUrl, selectedGaragePhotoRootUrl, selectedGaragePhotoFolderUrl])]) {
                 try {
                     const response = await fetch(candidate, { cache: 'no-store' });
                     if (!response.ok) continue;
@@ -2815,7 +2842,7 @@
                     if (embeddedGaragePhoto) break;
                 } catch (e) {}
             }
-            const garagePhotoSrc = embeddedGaragePhoto || selectedGaragePhotoUrl;
+            const garagePhotoSrc = embeddedGaragePhoto || selectedGaragePhotoRootUrl;
             const garageSvg = `<div class="photo-config photo-only"><img src="${garagePhotoSrc}" alt=""></div>`;
 
             const sheetHtml = `<!DOCTYPE html>
@@ -2992,7 +3019,7 @@ function applyPopupChange(){
   if(!window.opener || !window.opener.applyLocalEstimateChange){document.getElementById('popupChangeStatus').textContent='The estimator window is no longer available.';return;}
   const msg=window.opener.applyLocalEstimateChange(q);
   document.getElementById('popupChangeStatus').textContent=msg+' Rebuilding…';
-  setTimeout(()=>{ window.opener.printEstimateSheet(); window.close(); },120);
+  setTimeout(()=>{ window.opener.printEstimateSheet(false); window.close(); },120);
 }
 async function openPopupChatGPT(){
   if(window.opener && window.opener.copyEstimateForChatGPT) await window.opener.copyEstimateForChatGPT();
@@ -3013,6 +3040,31 @@ async function openPopupChatGPT(){
             printWindow.document.write(sheetHtml);
             printWindow.document.close();
             printWindow.focus();
+
+            if (saveToHistory) {
+                const sidingLabel = `${selectedText('sidingType') || sidingType}${sidingColor ? ' - ' + sidingColor : ''}`;
+                saveEstimateHistoryRecord({
+                    customer: customerName,
+                    address: customerAddress,
+                    city,
+                    garage_size: `${width}' x ${depth}'`,
+                    roof_type: roofType === 'gable' ? 'Gable' : 'Hip',
+                    wall_height: `${wallHeight}'`,
+                    siding: sidingLabel,
+                    estimate_price: estimateNumberFromText(quote),
+                    snapshot: {
+                        estimate_salesman: salesmanName,
+                        pitch: `${pitch}/12`,
+                        overhead_door: `${overheadDoorWidth}' x ${overheadDoorHeight}' ${overheadDoorStyleText}`,
+                        service_door: selectedText('doorType') || doorType || '',
+                        gutters: checked('gutters'),
+                        aluminum_soffit_fascia: checked('aluminumSoffit'),
+                        demolition: checked('demoExisting'),
+                        new_concrete: checked('newConcrete'),
+                        notes: notes.join('\n')
+                    }
+                });
+            }
         }
 
 

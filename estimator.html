@@ -376,7 +376,19 @@
         }
         .back-production-btn:hover { background:#223451; }
         @media print { .back-production-btn { display:none!important; } }
-    </style>
+    
+@media (max-width:640px){
+  .print-action{
+    width:100%!important;
+    min-height:54px!important;
+    font-size:16px!important;
+    touch-action:manipulation!important;
+    position:relative!important;
+    z-index:30!important;
+  }
+}
+
+</style>
 </head>
 <body class="bg-zinc-950 text-zinc-200"><div style="position:fixed;bottom:10px;right:10px;z-index:999999;background:#dc2626;color:#fff;padding:6px 10px;border-radius:8px;font:900 11px Arial">ESTIMATOR UPDATE V2</div><a id="backToProductionBtn" class="back-production-btn" href="index.html?v=20260818v2">← Back to Production</a>
     <div class="max-w-[1280px] mx-auto">
@@ -2602,6 +2614,18 @@
         }
 
         async function printEstimateSheet(saveToHistory = true) {
+            // MOBILE CREATE FIX: open the estimate window immediately from the tap.
+            let estimateWindow = null;
+            try {
+                estimateWindow = window.open('', '_blank');
+                if (estimateWindow) {
+                    estimateWindow.document.write(`<!doctype html><html><head><title>Preparing Estimate...</title><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="font-family:Arial,sans-serif;padding:24px"><h2>Preparing estimate...</h2><p>Please wait a moment.</p></body></html>`);
+                    estimateWindow.document.close();
+                }
+            } catch (e) {
+                console.warn('Could not pre-open estimate window', e);
+            }
+
             const customerName = (document.getElementById('customerName').value || '').trim();
             const customerAddress = (document.getElementById('customerAddress').value || '').trim();
 
@@ -3075,7 +3099,7 @@ async function openPopupChatGPT(){
 </body>
 </html>`;
 
-            const printWindow = window.open('', '_blank', 'width=1000,height=1000');
+            const printWindow = estimateWindow || window.open('', '_blank');
             if (!printWindow) {
                 alert('Your browser blocked the estimate sheet popup. Please allow popups for this page and try again.');
                 return;

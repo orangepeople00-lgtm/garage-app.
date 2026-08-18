@@ -461,7 +461,24 @@ async function uploadSelectedPaperwork(jobId,inputId){
 }
 async function uploadDoc(jobId){const files=[...$('docFile').files];if(!files.length)return alert('Choose at least one file first.');const {data:{user}}=await sb.auth.getUser();for(const file of files){const er=await uploadPaperworkFile({file,jobId,type:$('docType').value,user});if(er)return alert(er.message)}if(manager())await sb.from('job_activity').insert({job_id:jobId,actor_id:user.id,action:'Paperwork uploaded',details:{count:files.length,type:$('docType').value}});await refresh();await openDrawer(jobId)}
 let viewerObjectUrl=null;
-async function viewDoc(path,name){const {data,error}=await sb.storage.from('job-documents').download(path);if(error)return alert(error.message);if(viewerObjectUrl)URL.revokeObjectURL(viewerObjectUrl);viewerObjectUrl=URL.createObjectURL(data);$('viewerTitle').textContent=name;$('viewerFrame').src=viewerObjectUrl;$('viewerBg').classList.add('show')}
+async function viewDoc(path,name){
+ const {data,error}=await sb.storage.from('job-documents').download(path);
+ if(error)return alert(error.message);
+ if(viewerObjectUrl)URL.revokeObjectURL(viewerObjectUrl);
+ viewerObjectUrl=URL.createObjectURL(data);
+ const ext=(name||'').split('.').pop().toLowerCase();
+ const isImage=['jpg','jpeg','png','gif','webp','bmp','heic','heif'].includes(ext);
+ $('viewerTitle').textContent=name;
+ const frame=$('viewerFrame');
+ if(isImage){
+   frame.removeAttribute('src');
+   frame.srcdoc=`<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;background:#eef2f7;overflow:auto}body{display:flex;align-items:center;justify-content:center;padding:16px}img{display:block;max-width:100%;max-height:calc(100vh - 32px);width:auto;height:auto;object-fit:contain;box-shadow:0 2px 14px rgba(0,0,0,.18);background:white}</style></head><body><img src="${viewerObjectUrl}" alt=""></body></html>`;
+ }else{
+   frame.removeAttribute('srcdoc');
+   frame.src=viewerObjectUrl;
+ }
+ $('viewerBg').classList.add('show')
+}
 function closeViewer(){$('viewerBg').classList.remove('show');$('viewerFrame').src='about:blank';if(viewerObjectUrl){URL.revokeObjectURL(viewerObjectUrl);viewerObjectUrl=null}}
 sb.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_OUT')return;if(session&&profile===null)boot()});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&profile)refresh()});setInterval(()=>{if(profile)refresh()},15000);

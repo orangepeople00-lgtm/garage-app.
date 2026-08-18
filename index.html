@@ -206,16 +206,17 @@ body.estimator-mode .estimator-exit{display:block}
 
 <div id="viewerBg" class="modalbg"><div class="modal" style="width:min(1050px,97vw);height:min(88vh,900px)">
  <div class="modalhead" style="gap:10px;flex-wrap:wrap">
-   <h3 id="viewerTitle" style="min-width:0;flex:1">Paperwork</h3>
-   <div id="viewerImageControls" style="display:none;align-items:center;gap:6px;flex-wrap:wrap">
-     <button class="btn light sm" type="button" onclick="zoomViewer(-0.25)">−</button>
-     <span id="viewerZoomLabel" style="min-width:52px;text-align:center;font-weight:900;font-size:12px">100%</span>
-     <button class="btn light sm" type="button" onclick="zoomViewer(0.25)">+</button>
-     <button class="btn light sm" type="button" onclick="resetViewerZoom()">Fit</button>
-   </div>
+   <h3 id="viewerTitle" style="min-width:0;flex:1">Paperwork</h3><span id="viewerZoomVersion" style="font-size:10px;font-weight:900;color:#64748b">Zoom Viewer v2</span>
    <button class="btn light sm" onclick="closeViewer()">✕</button>
  </div>
  <div class="body" id="viewerBody" style="height:calc(100% - 66px);padding:8px;background:#e5e7eb;overflow:hidden;position:relative;touch-action:none;cursor:default">
+   <div id="viewerImageControls" style="display:none;position:absolute;z-index:50;left:50%;bottom:16px;transform:translateX(-50%);align-items:center;gap:8px;padding:8px 10px;border-radius:12px;background:rgba(255,255,255,.96);box-shadow:0 4px 18px rgba(0,0,0,.28);border:1px solid #cbd5e1">
+     <button type="button" onclick="zoomViewer(-0.25)" aria-label="Zoom out" style="width:46px;height:42px;border:1px solid #94a3b8;border-radius:9px;background:white;font-size:28px;font-weight:900;line-height:1;cursor:pointer">−</button>
+     <span id="viewerZoomLabel" style="min-width:58px;text-align:center;font-weight:1000;font-size:14px;color:#14233c">100%</span>
+     <button type="button" onclick="zoomViewer(0.25)" aria-label="Zoom in" style="width:46px;height:42px;border:1px solid #94a3b8;border-radius:9px;background:white;font-size:28px;font-weight:900;line-height:1;cursor:pointer">+</button>
+     <button type="button" onclick="resetViewerZoom()" style="height:42px;padding:0 14px;border:1px solid #94a3b8;border-radius:9px;background:white;font-weight:900;cursor:pointer">Fit</button>
+   </div>
+   <div id="viewerPanHint" style="display:none;position:absolute;z-index:49;top:10px;left:50%;transform:translateX(-50%);padding:6px 10px;border-radius:999px;background:rgba(20,35,60,.82);color:white;font-size:12px;font-weight:800;pointer-events:none">Zoom in, then drag photo to move around</div>
    <img id="viewerImage" alt="" draggable="false" style="display:none;position:absolute;left:50%;top:50%;max-width:none;max-height:none;width:auto;height:auto;object-fit:contain;object-position:center center;transform-origin:center center;user-select:none;-webkit-user-drag:none">
    <iframe id="viewerFrame" style="display:none;width:100%;height:100%;border:0;border-radius:8px;background:#f8fafc"></iframe>
  </div>
@@ -553,12 +554,14 @@ async function viewDoc(path,name){
    frame.style.display='none';
    frame.src='about:blank';
    controls.style.display='flex';
+   if($('viewerPanHint'))$('viewerPanHint').style.display='block';
    viewerZoom=1;viewerPanX=0;viewerPanY=0;
    img.style.display='block';
    img.onload=()=>requestAnimationFrame(updateViewerImageTransform);
    img.src=viewerObjectUrl;
  }else{
    controls.style.display='none';
+   if($('viewerPanHint'))$('viewerPanHint').style.display='none';
    img.style.display='none';
    img.removeAttribute('src');
    frame.style.display='block';
@@ -573,6 +576,7 @@ function closeViewer(){
  $('viewerImage').removeAttribute('src');
  $('viewerImage').style.display='none';
  $('viewerImageControls').style.display='none';
+ if($('viewerPanHint'))$('viewerPanHint').style.display='none';
  viewerZoom=1;viewerPanX=0;viewerPanY=0;viewerDragging=false;
  if(viewerObjectUrl){URL.revokeObjectURL(viewerObjectUrl);viewerObjectUrl=null}
 }

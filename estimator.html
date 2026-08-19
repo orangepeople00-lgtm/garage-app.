@@ -1261,7 +1261,7 @@
                         <input type="text" id="customerAddress" placeholder="Enter customer address"
                                class="calc-input w-full bg-zinc-950 border border-zinc-700 text-white rounded-2xl px-4 py-3 text-sm focus:border-blue-500">
                     </div>
-                    <button type="button" onclick="printEstimateSheet()"
+                    <button type="button" onclick="safePrintEstimateSheet()"
                             class="print-action px-5 py-3 text-sm font-semibold bg-green-700 hover:bg-green-600 active:bg-green-800 transition-all rounded-2xl flex items-center justify-center gap-x-2 text-white">
                         <i class="fa-solid fa-file-invoice"></i>
                         <span>Create / View Estimate Sheet</span>
@@ -2751,6 +2751,15 @@
             return hasGutters ? 'images/basic_hip_gutters.png' : 'images/basic_hip_no_gutters.png';
         }
 
+        async function safePrintEstimateSheet(saveToHistory = true) {
+            try {
+                await printEstimateSheet(saveToHistory);
+            } catch (err) {
+                console.error('Estimate sheet error:', err);
+                alert('Estimate sheet could not open: ' + (err && err.message ? err.message : String(err)));
+            }
+        }
+
         async function printEstimateSheet(saveToHistory = true) {
             const customerName = (document.getElementById('customerName').value || '').trim();
             const customerAddress = (document.getElementById('customerAddress').value || '').trim();
@@ -2797,6 +2806,14 @@
             const sidingColor = selectedText(sidingColorId) || 'White';
             const sidingHex = val(sidingColorId) || '#F5F5F5';
             const apronDepth = Number(val('apronDepth') || 0);
+
+            // Estimate-sheet runtime values. These must be defined inside printEstimateSheet;
+            // calculateEstimate() has its own local copies that are not visible here.
+            const concreteThickness = Number(val('concreteThickness') || 4);
+            const retainType = val('retainType') || 'none';
+            const retainInches = Number(val('retainWallHeight') || 0);
+            const frostProtectedFooting = checked('frostProtectedFooting');
+
             const quote = document.getElementById('customerQuote').textContent;
             const today = new Date().toLocaleDateString('en-US', { month:'2-digit', day:'2-digit', year:'numeric' });
 
@@ -3213,7 +3230,7 @@ function applyPopupChange(){
   if(!window.opener || !window.opener.applyLocalEstimateChange){document.getElementById('popupChangeStatus').textContent='The estimator window is no longer available.';return;}
   const msg=window.opener.applyLocalEstimateChange(q);
   document.getElementById('popupChangeStatus').textContent=msg+' Rebuilding…';
-  setTimeout(()=>{ window.opener.printEstimateSheet(false); window.close(); },120);
+  setTimeout(()=>{ window.opener.safePrintEstimateSheet(false); window.close(); },120);
 }
 async function openPopupChatGPT(){
   if(window.opener && window.opener.copyEstimateForChatGPT) await window.opener.copyEstimateForChatGPT();

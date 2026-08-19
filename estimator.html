@@ -865,7 +865,7 @@
                                     <option value="1" selected>1 Opener</option><option value="2">2 Openers</option>
                                 </select>
                                 <select id="openerType" onchange="calculateEstimate()" class="calc-input w-full mt-2 bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm">
-                                    <option value="2200" selected>LiftMaster 2200 — 3/4HP Opener</option>
+                                    <option value="2200" selected>LiftMaster 2220 — 3/4HP Opener</option>
                                     <option value="8500">LiftMaster 8500 Wall Mount JackShaft Opener (+$400)</option>
                                 </select>
                             </div>
@@ -2908,7 +2908,7 @@
                 addSpec('Roof Style', `${roofLabel} - ${pitch} Pitch with Vents`);
                 addSpec('Roofing', 'Architectural Shingles + 15lbs Felt Paper');
                 addSpec('Roof Sheathing', '1/2"');
-                addSpec('Overhang', checked('gutters') ? 'Seamless Gutters 4 Sides - 2 Down Spouts' : '" "');
+                addSpec('Overhang', checked('gutters') ? (roofType === 'gable' ? 'Seamless Gutters 2 Sides - 2 Down Spouts' : 'Seamless Gutters 4 Sides - 2 Down Spouts') : '" "');
                 addSpec('Eaves', '6" Eaves - Boxed 4 Sides');
                 addSpec('Rafters', '2x6 16" O.C.');
                 addSpec('Wall Height', `${wallHeight}'`);
@@ -2921,7 +2921,7 @@
                 addSpec('Overhead Door', `${overheadDoorWidth}' x ${overheadDoorHeight}' ${overheadDoorStyleText} Door`);
                 const openerQtyPrint=parseInt(val('openerQty'))||1;
                 const openerTypePrint=val('openerType')||'2200';
-                const openerNamePrint=openerTypePrint==='8500'?'LiftMaster 8500 Wall Mount JackShaft Opener':'LiftMaster 2200 3/4HP Opener';
+                const openerNamePrint=openerTypePrint==='8500'?'LiftMaster 8500 Wall Mount JackShaft Opener':'LiftMaster 2220 3/4HP Opener';
                 addSpec('Opener', `${openerQtyPrint > 1 ? '('+openerQtyPrint+') ' : ''}${openerNamePrint}`);
 
                 if (doorType === 'party') {
@@ -2946,7 +2946,7 @@
                 addSpec('Siding', `${sidingType === 'hardie' ? 'Hardieboard / Cement Board Siding' : 'Premium Vinyl Siding'} - ${sidingColor}`);
                 addSpec('Double Wall', '1/2" Plywood or Choice');
                 addSpec('Eaves', '4 Sides Boxed');
-                addSpec('Overhang', checked('gutters') ? 'Seamless Gutters 4 Sides - 2 Down Spouts' : '" "');
+                addSpec('Overhang', checked('gutters') ? (roofType === 'gable' ? 'Seamless Gutters 2 Sides - 2 Down Spouts' : 'Seamless Gutters 4 Sides - 2 Down Spouts') : '" "');
                 addSpec('Cross Ties', '2x6 48 O.C');
                 addSpec('Roofing', 'Architectural Shingles + 15lbs Felt Paper');
                 addSpec('Studs', `${wallHeight >= 10 ? '2x6' : '2x4'} 16" O.C.`);
@@ -2955,7 +2955,7 @@
                 addSpec('Overhead Door', `${overheadDoorWidth}' x ${overheadDoorHeight}' ${overheadDoorStyleText} Door`);
                 const openerQtyPrint=parseInt(val('openerQty'))||1;
                 const openerTypePrint=val('openerType')||'2200';
-                const openerNamePrint=openerTypePrint==='8500'?'LiftMaster 8500 Wall Mount JackShaft Opener':'LiftMaster 2200 3/4HP Opener';
+                const openerNamePrint=openerTypePrint==='8500'?'LiftMaster 8500 Wall Mount JackShaft Opener':'LiftMaster 2220 3/4HP Opener';
                 addSpec('Opener', `${openerQtyPrint > 1 ? '('+openerQtyPrint+') ' : ''}${openerNamePrint}`);
                 if (doorType === 'party') addSpec('Party Door', "6' x 7' Steel Door");
                 else if (doorType === 'french') addSpec('French Door', 'French Door Allowance');
@@ -3032,7 +3032,7 @@
             if (Number(val('extraWindows') || 0) > 0) notes.push(`${val('extraWindows')} additional window${Number(val('extraWindows')) > 1 ? 's' : ''} included.`);
             if (checked('evCharger')) notes.push('EV charger provision included.');
             if (checked('threeWaySwitch')) notes.push('3-way switch included.');
-            if (checked('gutters')) notes.push('Seamless gutters on 4 sides with 2 downspouts included.');
+            if (checked('gutters')) notes.push(roofType === 'gable' ? 'Seamless gutters on 2 sides with 2 downspouts included.' : 'Seamless gutters on 4 sides with 2 downspouts included.');
             if (checked('aluminumSoffit')) notes.push('Aluminum soffit and fascia included.');
             if (Number(val('firewallWalls') || 0) > 0) notes.push(`${val('firewallWalls')} firewall wall${Number(val('firewallWalls')) > 1 ? 's' : ''} included.`);
             if (checked('hurricaneTies')) notes.push('Hurricane ties included.');

@@ -603,8 +603,8 @@
                                     <label class="text-xs text-zinc-400 block mb-1">Concrete Thickness</label>
                                     <select id="concreteThickness" onchange="calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm">
                                         <option value="4" selected>4" Standard</option>
-                                        <option value="5">5" Thick (+$1/sq ft)</option>
-                                        <option value="6">6" Thick (+$4/sq ft)</option>
+                                        <option value="5">5" Thick (+$1.50/sq ft)</option>
+                                        <option value="6">6" Thick (+$3/sq ft)</option>
                                     </select>
                                 </div>
                             </div>
@@ -674,6 +674,14 @@
                                         <div class="flex items-center gap-2"><select id="extraConcrete1Type" onchange="calculateEstimate()" class="bg-zinc-900 border border-zinc-600 rounded-lg px-2 py-1 text-xs text-yellow-400 font-semibold"><option value="Pad">Pad</option><option value="Sidewalk">Sidewalk</option><option value="Driveway">Driveway</option><option value="Slab">Slab</option></select><span class="text-xs font-medium text-yellow-400">#1</span></div>
                                         <span id="patio1CalcNote" class="text-[10px] font-mono text-blue-300"></span>
                                     </div>
+                                    <div class="mb-2">
+                                        <label class="text-[10px] text-zinc-500 block mb-0.5">Concrete Thickness</label>
+                                        <select id="extraConcrete1Thickness" onchange="calculateEstimate()" class="w-full bg-zinc-900 border border-zinc-600 rounded-lg px-2 py-1.5 text-xs">
+                                            <option value="4" selected>4" Standard</option>
+                                            <option value="5">5" Thick (+$1.50/sq ft)</option>
+                                            <option value="6">6" Thick (+$3/sq ft)</option>
+                                        </select>
+                                    </div>
                                     <div class="grid grid-cols-5 gap-2 items-end">
                                         <div class="col-span-3">
                                             <label class="text-[10px] text-zinc-500 block mb-0.5">Length (ft) — uses garage front width</label>
@@ -704,6 +712,14 @@
                                     <div class="flex items-center justify-between mb-1.5">
                                         <div class="flex items-center gap-2"><select id="extraConcrete2Type" onchange="calculateEstimate()" class="bg-zinc-900 border border-zinc-600 rounded-lg px-2 py-1 text-xs text-yellow-400 font-semibold"><option value="Pad">Pad</option><option value="Sidewalk">Sidewalk</option><option value="Driveway">Driveway</option><option value="Slab">Slab</option></select><span class="text-xs font-medium text-yellow-400">#2</span></div>
                                         <span id="patio2CalcNote" class="text-[10px] font-mono text-blue-300"></span>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="text-[10px] text-zinc-500 block mb-0.5">Concrete Thickness</label>
+                                        <select id="extraConcrete2Thickness" onchange="calculateEstimate()" class="w-full bg-zinc-900 border border-zinc-600 rounded-lg px-2 py-1.5 text-xs">
+                                            <option value="4" selected>4" Standard</option>
+                                            <option value="5">5" Thick (+$1.50/sq ft)</option>
+                                            <option value="6">6" Thick (+$3/sq ft)</option>
+                                        </select>
                                     </div>
                                     <div class="grid grid-cols-5 gap-2 items-end">
                                         <div class="col-span-3">
@@ -1442,7 +1458,9 @@
             // Concrete
             const newConcrete = document.getElementById('newConcrete').checked;
             const apronDepth = parseFloat(document.getElementById('apronDepth').value) || 0;
-            const fiveInch = document.getElementById('fiveInch').checked;
+            const concreteThickness = Number(document.getElementById('concreteThickness').value || 4);
+            const fiveInch = concreteThickness === 5;
+            const sixInch = concreteThickness === 6;
             const excavationQty = Math.max(0, parseFloat(document.getElementById('excavation').value) || 0);
             const excavation = excavationQty * 500;
             
@@ -1605,6 +1623,8 @@
             // Calculate patio areas (custom dims override length calc)
             const patio1Area = patio1CustomArea > 0 ? patio1CustomArea : (width * patio1Length);
             const patio2Area = patio2CustomArea > 0 ? patio2CustomArea : (width * patio2Length);
+            const extraConcrete1Thickness = Number(document.getElementById('extraConcrete1Thickness').value || 4);
+            const extraConcrete2Thickness = Number(document.getElementById('extraConcrete2Thickness').value || 4);
             const totalExtraPatioArea = patio1Area + patio2Area;
             
             const totalConcreteArea = slabArea + apronArea + totalExtraPatioArea;
@@ -1612,8 +1632,12 @@
             const concreteCost = totalConcreteArea * 8.5;
             // Grass prep ONLY on additional/unrelated concrete pads/patios (not garage slab/apron)
             const prepCost = (totalExtraPatioArea > 0) ? (totalExtraPatioArea * 1) : 0;
-            const fiveInchCost = fiveInch ? (totalConcreteArea * 1) : 0;
-            const sixInchCost = sixInch ? (totalConcreteArea * 4) : 0;
+            const garageConcreteArea = slabArea + apronArea;
+            const fiveInchCost = fiveInch ? (garageConcreteArea * 1.5) : 0;
+            const sixInchCost = sixInch ? (garageConcreteArea * 3) : 0;
+            const extraConcrete1ThicknessCost = patio1Area * (extraConcrete1Thickness === 5 ? 1.5 : extraConcrete1Thickness === 6 ? 3 : 0);
+            const extraConcrete2ThicknessCost = patio2Area * (extraConcrete2Thickness === 5 ? 1.5 : extraConcrete2Thickness === 6 ? 3 : 0);
+            const extraConcreteThicknessCost = extraConcrete1ThicknessCost + extraConcrete2ThicknessCost;
             
             // Demolition (preset or custom slab + demo apron always added; additional removal separate)
             let calculatedOldConcrete = 0;
@@ -1734,6 +1758,7 @@
                 prepCost + 
                 fiveInchCost + 
                 sixInchCost +
+                extraConcreteThicknessCost +
                 demoCost + 
                 removalCost + 
                 additionalRemovalCost + 
@@ -1762,7 +1787,7 @@
             updateBreakdown({
                 width, depth, floorArea, totalConcreteArea, apronArea, slabArea, totalExtraPatioArea,
                 packageCost, framingCost, wallHeightSurcharge, roofUpgrade, pitchSurcharge, pitchStr, electricalCost, overheadCost, sideDoorCost, sideDoorLabel,
-                concreteCost, prepCost, fiveInchCost, sixInchCost, concreteThickness, excavation,
+                concreteCost, prepCost, fiveInchCost, sixInchCost, concreteThickness, garageConcreteArea, extraConcrete1Thickness, extraConcrete2Thickness, extraConcrete1ThicknessCost, extraConcrete2ThicknessCost, extraConcreteThicknessCost, patio1Area, patio2Area, excavation,
                 demoCost, removalCost, additionalRemovalCost, additionalRemovalArea, epaCost,
                 footingCost, rodsCost, retainCost, retainRate, retainType, frostFootingCost, perimeterLf,
                 gutterCost, gutterFt, hasGutters,
@@ -1881,10 +1906,18 @@
                     lines.push({ label: `Grass / site prep for additional pads/patios (${data.totalExtraPatioArea} sq ft × $1.00)`, amount: data.prepCost, section: 'concrete' });
                 }
                 if (data.fiveInchCost > 0) {
-                    lines.push({ label: `5-inch concrete upgrade (${data.totalConcreteArea} sq ft × $1.00)`, amount: data.fiveInchCost, section: 'concrete' });
+                    lines.push({ label: `5-inch garage concrete upgrade (${data.garageConcreteArea} sq ft × $1.50)`, amount: data.fiveInchCost, section: 'concrete' });
                 }
                 if (data.sixInchCost > 0) {
-                    lines.push({ label: `6-inch concrete upgrade (${data.totalConcreteArea} sq ft × $4.00)`, amount: data.sixInchCost, section: 'concrete' });
+                    lines.push({ label: `6-inch garage concrete upgrade (${data.garageConcreteArea} sq ft × $3.00)`, amount: data.sixInchCost, section: 'concrete' });
+                }
+                if (data.extraConcrete1ThicknessCost > 0) {
+                    const rate=data.extraConcrete1Thickness===5?1.5:3;
+                    lines.push({ label: `Extra concrete #1 — ${data.extraConcrete1Thickness}" (${data.patio1Area} sq ft × $${rate.toFixed(2)})`, amount: data.extraConcrete1ThicknessCost, section: 'concrete' });
+                }
+                if (data.extraConcrete2ThicknessCost > 0) {
+                    const rate=data.extraConcrete2Thickness===5?1.5:3;
+                    lines.push({ label: `Extra concrete #2 — ${data.extraConcrete2Thickness}" (${data.patio2Area} sq ft × $${rate.toFixed(2)})`, amount: data.extraConcrete2ThicknessCost, section: 'concrete' });
                 }
             }
             if (data.excavation > 0) {
@@ -2841,7 +2874,7 @@
                 addSpec('Floor', `${concreteThickness}" Thick Reinforced with Steel Wire Mesh Rated 4,000 PSI`);
                 addSpec('Apron', checked('newConcrete') && apronDepth > 0 ? `${width}' x ${apronDepth}' New Concrete Apron` : 'None');
                 addSpec('Perimeter Curb', 'Water Ledge');
-                addSpec('Retaining Wall', Number(val('retainWall') || 0) > 0 ? `${val('retainWall')}" Overall` : 'Build Up Included');
+                addSpec('Retaining Wall', retainType !== 'none' ? `${retainType === 'standard' ? 'Standard' : retainType === 'reverse' ? 'Reverse' : '4 Sided'} Retaining Wall - ${retainInches}" Overall` : 'Build Up Included');
                 addSpec('Building Codes', 'YES');
                 addSpec('Building Permits', 'YES - Included');
                 addSpec('Bottom Plates', 'Treated');
@@ -3317,10 +3350,12 @@ async function openPopupChatGPT(){
             
             document.getElementById('newConcrete').checked = true;
             document.getElementById('apronDepth').value = '3';
-            document.getElementById('fiveInch').checked = false;
-            document.getElementById('excavation').checked = false;
+            document.getElementById('concreteThickness').value = '4';
+            document.getElementById('excavation').value = '1';
             
             // Patios
+            document.getElementById('extraConcrete1Thickness').value = '4';
+            document.getElementById('extraConcrete2Thickness').value = '4';
             document.getElementById('extraPatio1Length').value = '0';
             document.getElementById('extraPatio1Custom').value = '';
             document.getElementById('extraPatio2Length').value = '0';
@@ -3357,7 +3392,8 @@ async function openPopupChatGPT(){
             document.getElementById('extraLights').value = '0';
             document.getElementById('extraWindows').value = '0';
             
-            document.getElementById('retainWall').value = '0';
+            document.getElementById('retainType').value = 'none';
+            document.getElementById('retainWallHeight').value = '8';
             document.getElementById('gutters').checked = false;
             document.getElementById('aluminumSoffit').checked = false;
             document.getElementById('sidingType').value = 'vinyl';

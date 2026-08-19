@@ -604,11 +604,10 @@
                                     <span class="text-xs">5" thick upgrade (+$1/sq ft)</span>
                                 </label>
                             </div>
-                            <div class="flex items-end">
-                                <label class="flex items-center cursor-pointer text-sm">
-                                    <input type="checkbox" id="excavation" onchange="calculateEstimate()" class="accent-blue-500 w-4 h-4 mr-2">
-                                    <span class="text-xs">Excavation / stone (+$500)</span>
-                                </label>
+                            <div>
+                                <label class="text-xs text-zinc-400 block mb-1">Excavation / Stone Quantity</label>
+                                <input type="number" id="excavation" value="1" min="0" step="1" oninput="calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm">
+                                <div class="text-[10px] text-zinc-500 mt-0.5">Manual quantity • default 1 • $500 each</div>
                             </div>
                         </div>
 
@@ -810,6 +809,7 @@
                                 <select id="overheadDoorWidth" onchange="calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm">
                                     <option value="8">8'</option>
                                     <option value="9">9'</option>
+                                    <option value="10">10\'</option>
                                     <option value="16" selected>16' (standard)</option>
                                     <option value="18">18'</option>
                                 </select>
@@ -1410,7 +1410,8 @@
             const newConcrete = document.getElementById('newConcrete').checked;
             const apronDepth = parseFloat(document.getElementById('apronDepth').value) || 0;
             const fiveInch = document.getElementById('fiveInch').checked;
-            const excavation = document.getElementById('excavation').checked ? 500 : 0;
+            const excavationQty = Math.max(0, parseFloat(document.getElementById('excavation').value) || 0);
+            const excavation = excavationQty * 500;
             
             // Two extra patios
             const patio1Length = parseInt(document.getElementById('extraPatio1Length').value) || 0;

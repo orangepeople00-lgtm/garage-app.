@@ -2752,20 +2752,54 @@
         }
 
         async function safePrintEstimateSheet(saveToHistory = true) {
+            const customerName = (document.getElementById('customerName')?.value || '').trim();
+            const customerAddress = (document.getElementById('customerAddress')?.value || '').trim();
+
+            if (!customerName || !customerAddress) {
+                alert('Please enter the customer name and customer address before creating the estimate.');
+                return;
+            }
+
+            // IMPORTANT: Open the estimate window immediately inside the actual click event.
+            // This makes desktop/mobile browsers treat it as a user-requested popup.
+            const estimateWindow = window.open('', '_blank', 'width=1000,height=1000');
+            if (!estimateWindow) {
+                alert('Your browser blocked the estimate sheet. Please allow popups for this site and click Create / View Estimate Sheet again.');
+                return;
+            }
+
+            // Give immediate visual confirmation instead of a blank window.
+            estimateWindow.document.open();
+            estimateWindow.document.write(`<!doctype html><html><head><title>Opening Estimate</title></head>
+              <body style="font-family:Arial,sans-serif;padding:40px;text-align:center">
+                <h2>Opening estimate…</h2>
+                <p>Your estimate sheet is being prepared.</p>
+              </body></html>`);
+            estimateWindow.document.close();
+
             try {
-                await printEstimateSheet(saveToHistory);
+                await printEstimateSheet(saveToHistory, estimateWindow);
             } catch (err) {
                 console.error('Estimate sheet error:', err);
-                alert('Estimate sheet could not open: ' + (err && err.message ? err.message : String(err)));
+                try {
+                    estimateWindow.document.open();
+                    estimateWindow.document.write(`<!doctype html><html><body style="font-family:Arial,sans-serif;padding:30px">
+                      <h2>Estimate Sheet Error</h2>
+                      <p>${String(err && err.message ? err.message : err).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}</p>
+                    </body></html>`);
+                    estimateWindow.document.close();
+                } catch (_) {}
+                alert('Estimate sheet error: ' + (err && err.message ? err.message : String(err)));
             }
         }
 
-        async function printEstimateSheet(saveToHistory = true) {
+        async function printEstimateSheet(saveToHistory = true, estimateWindow = null) {
             const customerName = (document.getElementById('customerName').value || '').trim();
             const customerAddress = (document.getElementById('customerAddress').value || '').trim();
 
             if (!customerName || !customerAddress) {
-                alert('Please enter the customer name and customer address before printing.');
+                if (estimateWindow && !estimateWindow.closed) estimateWindow.close();
+                alert('Please enter the customer name and customer address before creating the estimate.');
                 return;
             }
 
@@ -3230,7 +3264,7 @@ function applyPopupChange(){
   if(!window.opener || !window.opener.applyLocalEstimateChange){document.getElementById('popupChangeStatus').textContent='The estimator window is no longer available.';return;}
   const msg=window.opener.applyLocalEstimateChange(q);
   document.getElementById('popupChangeStatus').textContent=msg+' Rebuilding…';
-  setTimeout(()=>{ window.opener.safePrintEstimateSheet(false); window.close(); },120);
+  setTimeout(()=>{ window.close(); window.opener.safePrintEstimateSheet(false); },120);
 }
 async function openPopupChatGPT(){
   if(window.opener && window.opener.copyEstimateForChatGPT) await window.opener.copyEstimateForChatGPT();
@@ -3242,9 +3276,9 @@ async function openPopupChatGPT(){
 </body>
 </html>`;
 
-            const printWindow = window.open('', '_blank', 'width=1000,height=1000');
+            const printWindow = estimateWindow || window.open('', '_blank', 'width=1000,height=1000');
             if (!printWindow) {
-                alert('Your browser blocked the estimate sheet popup. Please allow popups for this page and try again.');
+                alert('Your browser blocked the estimate sheet. Please allow popups for this site and try again.');
                 return;
             }
             printWindow.document.open();

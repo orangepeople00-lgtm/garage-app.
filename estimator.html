@@ -458,8 +458,10 @@
                                 <i class="fa-solid fa-arrows-alt-h w-3.5"></i> 
                                 <span>FRONT WIDTH (ft)</span>
                             </label>
-                            <select id="width" onchange="calculateEstimate()" 
+                            <select id="width" onchange="toggleCustomGarageSize(); calculateEstimate()" 
                                     class="calc-input w-full bg-zinc-950 border border-zinc-700 text-white rounded-2xl px-4 py-3 text-sm focus:border-blue-500">
+                                <option value="12">12 ft</option>
+                                <option value="14">14 ft</option>
                                 <option value="16">16 ft</option>
                                 <option value="18">18 ft</option>
                                 <option value="20" selected>20 ft</option>
@@ -473,6 +475,7 @@
                                 <option value="36">36 ft</option>
                                 <option value="38">38 ft</option>
                                 <option value="40">40 ft</option>
+                                <option value="custom">Custom / Manual</option>
                             </select>
                         </div>
                         <div>
@@ -480,8 +483,10 @@
                                 <i class="fa-solid fa-arrows-alt-v w-3.5"></i> 
                                 <span>SIDE DEPTH (ft)</span>
                             </label>
-                            <select id="depth" onchange="calculateEstimate()" 
+                            <select id="depth" onchange="toggleCustomGarageSize(); calculateEstimate()" 
                                     class="calc-input w-full bg-zinc-950 border border-zinc-700 text-white rounded-2xl px-4 py-3 text-sm focus:border-blue-500">
+                                <option value="12">12 ft</option>
+                                <option value="14">14 ft</option>
                                 <option value="16">16 ft</option>
                                 <option value="18">18 ft</option>
                                 <option value="20" selected>20 ft</option>
@@ -495,8 +500,13 @@
                                 <option value="36">36 ft</option>
                                 <option value="38">38 ft</option>
                                 <option value="40">40 ft</option>
+                                <option value="custom">Custom / Manual</option>
                             </select>
                         </div>
+                    </div>
+                    <div id="customGarageSizeWrap" class="hidden grid grid-cols-2 gap-3 mb-4 bg-zinc-950 border border-yellow-700/60 rounded-2xl p-3">
+                        <div><label class="text-xs text-yellow-400 block mb-1">CUSTOM WIDTH (ft)</label><input id="customWidth" type="number" min="1" step="0.5" placeholder="e.g. 21" oninput="calculateEstimate()" class="calc-input w-full bg-zinc-900 border border-zinc-600 rounded-xl px-3 py-2"></div>
+                        <div><label class="text-xs text-yellow-400 block mb-1">CUSTOM DEPTH (ft)</label><input id="customDepth" type="number" min="1" step="0.5" placeholder="e.g. 25" oninput="calculateEstimate()" class="calc-input w-full bg-zinc-900 border border-zinc-600 rounded-xl px-3 py-2"></div>
                     </div>
 
                     <!-- Wall Height -->
@@ -612,7 +622,7 @@
                                 <!-- Patio 1 -->
                                 <div class="bg-zinc-950 border border-zinc-700 rounded-xl p-3">
                                     <div class="flex items-center justify-between mb-1.5">
-                                        <span class="text-xs font-medium text-yellow-400">Patio / Pad #1</span>
+                                        <div class="flex items-center gap-2"><select id="extraConcrete1Type" onchange="calculateEstimate()" class="bg-zinc-900 border border-zinc-600 rounded-lg px-2 py-1 text-xs text-yellow-400 font-semibold"><option value="Pad">Pad</option><option value="Sidewalk">Sidewalk</option><option value="Driveway">Driveway</option><option value="Slab">Slab</option></select><span class="text-xs font-medium text-yellow-400">#1</span></div>
                                         <span id="patio1CalcNote" class="text-[10px] font-mono text-blue-300"></span>
                                     </div>
                                     <div class="grid grid-cols-5 gap-2 items-end">
@@ -643,7 +653,7 @@
                                 <!-- Patio 2 -->
                                 <div class="bg-zinc-950 border border-zinc-700 rounded-xl p-3">
                                     <div class="flex items-center justify-between mb-1.5">
-                                        <span class="text-xs font-medium text-yellow-400">Patio / Pad #2</span>
+                                        <div class="flex items-center gap-2"><select id="extraConcrete2Type" onchange="calculateEstimate()" class="bg-zinc-900 border border-zinc-600 rounded-lg px-2 py-1 text-xs text-yellow-400 font-semibold"><option value="Pad">Pad</option><option value="Sidewalk">Sidewalk</option><option value="Driveway">Driveway</option><option value="Slab">Slab</option></select><span class="text-xs font-medium text-yellow-400">#2</span></div>
                                         <span id="patio2CalcNote" class="text-[10px] font-mono text-blue-300"></span>
                                     </div>
                                     <div class="grid grid-cols-5 gap-2 items-end">
@@ -725,6 +735,9 @@
                                 <input type="text" id="additionalRemovalDims" value="" placeholder="10x5" oninput="calculateEstimate()" 
                                        class="calc-input w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-sm">
                                 <div class="text-[9px] text-zinc-500 mt-0.5">Parsed LxW × $2/sq ft (removal + haul away)</div>
+                                <label class="text-xs text-zinc-400 block mt-3 mb-1">Additional Pad Removal #2</label>
+                                <input type="text" id="additionalRemovalDims2" value="" placeholder="10x5" oninput="calculateEstimate()" class="calc-input w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-sm">
+                                <div class="text-[9px] text-zinc-500 mt-0.5">Second separate pad / concrete removal area</div>
                             </div>
                             <div class="md:col-span-4 flex items-end">
                                 <label class="flex items-center cursor-pointer text-sm w-full">
@@ -775,9 +788,13 @@
                             </div>
                             <div>
                                 <label class="text-xs text-zinc-400 block mb-1">Additional openers (opener only)</label>
-                                <input type="number" id="addlOpeners" value="0" min="0" max="3" step="1" 
-                                       oninput="calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm">
-                                <div class="text-[10px] text-zinc-500 mt-0.5">Each @ $400</div>
+                                <select id="openerQty" onchange="calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm">
+                                    <option value="1" selected>1 Opener</option><option value="2">2 Openers</option>
+                                </select>
+                                <select id="openerType" onchange="calculateEstimate()" class="calc-input w-full mt-2 bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm">
+                                    <option value="2200" selected>LiftMaster 2200 — 3/4HP Opener</option>
+                                    <option value="8500">LiftMaster 8500 Wall Mount JackShaft Opener (+$400)</option>
+                                </select>
                             </div>
                             <div>
                                 <label class="text-xs text-zinc-400 block mb-1">Main overhead door height</label>
@@ -848,6 +865,15 @@
                                            oninput="calculateEstimate()" class="calc-input flex-1 bg-transparent px-3 py-2 text-sm outline-none">
                                     <span class="pr-3 text-xs text-zinc-500">$</span>
                                 </div>
+                            </div>
+                            <div>
+                                <label class="text-xs text-zinc-400 block mb-1">Electric SubPanel</label>
+                                <select id="electricSubpanel" onchange="calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm">
+                                    <option value="0" selected>None</option>
+                                    <option value="1000">30 Amp (+$1,000)</option>
+                                    <option value="1200">60 Amp (+$1,200)</option>
+                                    <option value="3000">100 Amp (+$3,000)</option>
+                                </select>
                             </div>
                             <div>
                                 <label class="flex items-center text-sm cursor-pointer mt-5">
@@ -1101,6 +1127,7 @@
                                     <select id="profitMode" onchange="onProfitModeChange()" class="calc-input w-full bg-zinc-950 border border-zinc-700 text-white rounded-xl px-3 py-2 text-sm">
                                         <option value="percent" selected>Profit Percentage</option>
                                         <option value="amount">Profit Dollar Amount</option>
+                                        <option value="total">Total Project Price</option>
                                     </select>
                                 </div>
                                 <div>
@@ -1343,10 +1370,27 @@
         }
 
         // Main calculation engine
+        function getGarageDimensions(){
+            const wEl=document.getElementById('width'), dEl=document.getElementById('depth');
+            const customW=parseFloat(document.getElementById('customWidth')?.value)||0;
+            const customD=parseFloat(document.getElementById('customDepth')?.value)||0;
+            return {
+                width: wEl?.value==='custom' ? (customW||20) : (parseFloat(wEl?.value)||20),
+                depth: dEl?.value==='custom' ? (customD||20) : (parseFloat(dEl?.value)||20)
+            };
+        }
+        function toggleCustomGarageSize(){
+            const wrap=document.getElementById('customGarageSizeWrap');
+            if(!wrap)return;
+            const custom=document.getElementById('width')?.value==='custom'||document.getElementById('depth')?.value==='custom';
+            wrap.classList.toggle('hidden',!custom);
+        }
+
         function calculateEstimate() {
             const city = document.getElementById('city').value;
-            const width = parseFloat(document.getElementById('width').value) || 20;
-            const depth = parseFloat(document.getElementById('depth').value) || 20;
+            const garageDims=getGarageDimensions();
+            const width=garageDims.width;
+            const depth=garageDims.depth;
             let wallHeight = parseInt(document.getElementById('wallHeight').value) || 8;
             const roofType = document.getElementById('roofType').value;
             const eaveDir = document.getElementById('eaveDir').value;
@@ -1387,7 +1431,9 @@
                 return parseFloat(str) || 0; // fallback if just number
             }
             const patio1CustomArea = parseDims(patio1CustomStr);
+            const patio1Type=document.getElementById('extraConcrete1Type').value||'Pad';
             const patio2CustomArea = parseDims(patio2CustomStr);
+            const patio2Type=document.getElementById('extraConcrete2Type').value||'Pad';
             
             // Demolition
             const demo = document.getElementById('demoExisting').checked;
@@ -1397,15 +1443,20 @@
             const oldConcreteOverrideArea = parseDims(oldConcreteOverrideStr); // reuse parser, treats as LxW or number
             const additionalRemovalStr = document.getElementById('additionalRemovalDims').value.trim();
             const additionalRemovalArea = parseDims(additionalRemovalStr);
+            const additionalRemovalStr2=document.getElementById('additionalRemovalDims2').value.trim();
+            const additionalRemovalArea2=parseDims(additionalRemovalStr2);
             const epaChecked = document.getElementById('epaFee').checked;
             
             // Doors
             const doorType = document.getElementById('doorType').value;
             const addlOverheadDoors = parseInt(document.getElementById('addlOverheadDoors').value) || 0;
-            const addlOpeners = parseInt(document.getElementById('addlOpeners').value) || 0;
+            const openerQty=parseInt(document.getElementById('openerQty').value)||1;
+            const openerType=document.getElementById('openerType').value||'2200';
+            const addlOpeners=Math.max(0,openerQty-1);
             
             // Electrical
             const elecBase = parseFloat(document.getElementById('elecBase').value) || 1500;
+            const electricSubpanel = parseFloat(document.getElementById('electricSubpanel').value) || 0;
             const ev = document.getElementById('evCharger').checked ? 1000 : 0;
             const threeWay = document.getElementById('threeWaySwitch').checked ? 200 : 0;
             const extraLights = parseInt(document.getElementById('extraLights').value) || 0;
@@ -1493,11 +1544,12 @@
             // Electrical
             const extraLightsCost = extraLights * 150;
             const extraWindowsCost = extraWindows * 300;
-            const electricalCost = elecBase + ev + threeWay + extraLightsCost;
+            const electricalCost = elecBase + ev + threeWay + extraLightsCost + electricSubpanel;
             
             // Overhead doors (base 16x7 @1200 + upgrade for taller + additional)
             const overheadUpgrade = Math.max(0, overheadDoorHeight - 7) * 250;
-            const overheadCost = 1200 + overheadUpgrade + (addlOverheadDoors * 800) + (addlOpeners * 450);
+            const opener8500Upgrade = openerType === '8500' ? (openerQty * 400) : 0;
+            const overheadCost = 1200 + overheadUpgrade + (addlOverheadDoors * 800) + (addlOpeners * 450) + opener8500Upgrade;
             
             // Side door
             let sideDoorCost = 0;
@@ -1564,7 +1616,7 @@
 
             const demoCost = demo ? 1300 : 0;
             const removalCost = demo ? ((demoSlabArea + demoApronArea) * 1.5) : 0;
-            const additionalRemovalCost = additionalRemovalArea * 2;
+            const additionalRemovalCost = (additionalRemovalArea + additionalRemovalArea2) * 2;
 
             // Custom extras total
             let extrasTotal = 0;
@@ -1675,7 +1727,7 @@
                 soffitCost, soffitFt, hasSoffit,
                 firewall, hurricane, wheeling, arlingtonSurvey, andrewPermit, hardieSidingCost, sidingType, wallHeight, overheadDoorHeight, sidingAreaNet, hardieSheets, extrasTotal,
                 permitCost, internalTotal, customerQuote, profitAmount, profitMode: profitSettings.mode, profitValue: profitSettings.value,
-                city, roofType, doorType, ev, threeWay, extraLights, extraLightsCost, extraWindows, extraWindowsCost,
+                city, roofType, doorType, ev, threeWay, extraLights, extraLightsCost, extraWindows, extraWindowsCost, opener8500Upgrade, openerType, openerQty,
                 newConcrete, fiveInch, demo, retainInches, addlOverheadDoors, addlOpeners,
                 patio1Area, patio2Area, demoSlabPreset, demoApronDepth, calculatedOldConcrete,
                 demoSlabArea, demoSlabWidth, demoApronArea
@@ -1924,7 +1976,7 @@
             const mode = modeEl ? modeEl.value : 'percent';
             let value = valueEl ? parseFloat(valueEl.value) : 24.75;
             if (!Number.isFinite(value) || value < 0) value = 0;
-            const profitAmount = mode === 'amount' ? value : internalTotal * (value / 100);
+            const profitAmount = mode === 'total' ? Math.max(0,value-internalTotal) : (mode === 'amount' ? value : internalTotal * (value / 100));
             return { mode, value, profitAmount };
         }
 
@@ -1947,25 +1999,14 @@
         }
 
         function onProfitModeChange() {
-            const mode = document.getElementById('profitMode').value;
-            const value = document.getElementById('profitValue');
-            const label = document.getElementById('profitValueLabel');
-            const unit = document.getElementById('profitUnit');
-            if (mode === 'amount') {
-                const internalText = ((document.getElementById('internalTotal') || {}).textContent || '').replace(/[^0-9.]/g, '');
-                const internal = parseFloat(internalText) || 0;
-                const currentPct = parseFloat(value.value) || 0;
-                value.value = (internal * currentPct / 100).toFixed(2);
-                value.step = '100'; label.textContent = 'PROFIT AMOUNT'; unit.textContent = '$';
-            } else {
-                const internalText = ((document.getElementById('internalTotal') || {}).textContent || '').replace(/[^0-9.]/g, '');
-                const internal = parseFloat(internalText) || 0;
-                const currentAmt = parseFloat(value.value) || 0;
-                value.value = internal > 0 ? ((currentAmt / internal) * 100).toFixed(2) : '24.75';
-                value.step = '0.25'; label.textContent = 'PROFIT %'; unit.textContent = '%';
-            }
-            syncProfitSliderToValue();
-            calculateEstimate();
+            const mode=document.getElementById('profitMode').value;
+            const value=document.getElementById('profitValue'), label=document.getElementById('profitValueLabel'), unit=document.getElementById('profitUnit');
+            const internal=parseFloat(((document.getElementById('internalTotal')||{}).textContent||'').replace(/[^0-9.]/g,''))||0;
+            const current=parseFloat(value.value)||0;
+            if(mode==='amount'){ value.value=(internal*current/100).toFixed(2); value.step='100'; label.textContent='PROFIT AMOUNT'; unit.textContent='$'; }
+            else if(mode==='total'){ const pct=(document.getElementById('profitEffectivePercent')?.textContent||'24.75').replace('%',''); value.value=(internal*(1+(parseFloat(pct)||24.75)/100)).toFixed(2); value.step='100'; label.textContent='TOTAL PROJECT PRICE'; unit.textContent='$'; }
+            else { value.value=internal>0?((current/internal)*100).toFixed(2):'24.75'; value.step='0.25'; label.textContent='PROFIT %'; unit.textContent='%'; }
+            syncProfitSliderToValue(); calculateEstimate();
         }
 
         function onProfitValueInput() {
@@ -2456,8 +2497,9 @@
                 const el = document.getElementById(id);
                 return el && el.options && el.selectedIndex >= 0 ? el.options[el.selectedIndex].text : '';
             };
-            const width = Number(val('width') || 20);
-            const depth = Number(val('depth') || 20);
+            const garageDims=getGarageDimensions();
+            const width=garageDims.width;
+            const depth=garageDims.depth;
             const wallHeight = Number(val('wallHeight') || 8);
             const roofType = val('roofType') === 'gable' ? 'gable roof' : 'hip roof';
             const pitch = val('pitch') || '4/12';
@@ -2705,7 +2747,10 @@
                 addSpec('Headers', 'Double LVL Headers');
                 addSpec('Cross Ties', '2x6 48 O.C.');
                 addSpec('Overhead Door', `${overheadDoorWidth}' x ${overheadDoorHeight}' ${overheadDoorStyleText} Door`);
-                addSpec('Opener', 'LiftMaster 3/4HP Opener');
+                const openerQtyPrint=parseInt(val('openerQty'))||1;
+                const openerTypePrint=val('openerType')||'2200';
+                const openerNamePrint=openerTypePrint==='8500'?'LiftMaster 8500 Wall Mount JackShaft Opener':'LiftMaster 2200 3/4HP Opener';
+                addSpec('Opener', `${openerQtyPrint > 1 ? '('+openerQtyPrint+') ' : ''}${openerNamePrint}`);
 
                 if (doorType === 'party') {
                     addSpec('Party Door', "6' x 7' Steel Door");
@@ -2736,7 +2781,10 @@
                 addSpec('Rafters', '2x6 16" O.C.');
                 addSpec('Headers', '2 LVL Headers');
                 addSpec('Overhead Door', `${overheadDoorWidth}' x ${overheadDoorHeight}' ${overheadDoorStyleText} Door`);
-                addSpec('Opener', 'LiftMaster 3/4HP Opener');
+                const openerQtyPrint=parseInt(val('openerQty'))||1;
+                const openerTypePrint=val('openerType')||'2200';
+                const openerNamePrint=openerTypePrint==='8500'?'LiftMaster 8500 Wall Mount JackShaft Opener':'LiftMaster 2200 3/4HP Opener';
+                addSpec('Opener', `${openerQtyPrint > 1 ? '('+openerQtyPrint+') ' : ''}${openerNamePrint}`);
                 if (doorType === 'party') addSpec('Party Door', "6' x 7' Steel Door");
                 else if (doorType === 'french') addSpec('French Door', 'French Door Allowance');
                 addSpec('Service Door', '1 x 36"x80" Steel Door with Deadbolt Lock');
@@ -2748,6 +2796,12 @@
                 addSpec('Building Codes', 'YES');
                 addSpec('Building Permits', 'YES - Included');
                 addSpec('Bottom Plates', 'Treated');
+            }
+
+            const subpanelPrint=Number(val('electricSubpanel')||0);
+            if(subpanelPrint){
+                const amp=subpanelPrint===1000?'30 Amp':subpanelPrint===1200?'60 Amp':'100 Amp';
+                addSpec('Electric SubPanel', amp);
             }
 
             const specRows = specs.map(([item, details]) => `
@@ -2777,13 +2831,15 @@
             }
 
             const p1Custom = val('extraPatio1Custom').trim();
+            const p1Type=val('extraConcrete1Type')||'Pad';
             const p2Custom = val('extraPatio2Custom').trim();
+            const p2Type=val('extraConcrete2Type')||'Pad';
             const p1Len = Number(val('extraPatio1Length') || 0);
             const p2Len = Number(val('extraPatio2Length') || 0);
-            if (p1Custom) notes.push(`Additional concrete patio / pad: ${prettyDims(p1Custom)}.`);
-            else if (p1Len > 0) notes.push(`Additional concrete patio / pad: ${width}' x ${p1Len}'.`);
-            if (p2Custom) notes.push(`Additional concrete patio / pad: ${prettyDims(p2Custom)}.`);
-            else if (p2Len > 0) notes.push(`Additional concrete patio / pad: ${width}' x ${p2Len}'.`);
+            if (p1Custom) notes.push(`Additional concrete ${p1Type.toLowerCase()}: ${prettyDims(p1Custom)}.`);
+            else if (p1Len > 0) notes.push(`Additional concrete ${p1Type.toLowerCase()}: ${width}' x ${p1Len}'.`);
+            if (p2Custom) notes.push(`Additional concrete ${p2Type.toLowerCase()}: ${prettyDims(p2Custom)}.`);
+            else if (p2Len > 0) notes.push(`Additional concrete ${p2Type.toLowerCase()}: ${width}' x ${p2Len}'.`);
 
             if (salesman.wally) {
                 const wRoof = roofType === 'gable' ? (val('eaveDir') === 'sides' ? 'reverse-gable' : 'gable') : 'hip';

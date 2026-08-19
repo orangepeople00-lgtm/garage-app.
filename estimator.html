@@ -1515,8 +1515,8 @@
             const extraWindows = parseInt(document.getElementById('extraWindows').value) || 0;
             
             // Structural
-            const retainType = val('retainType') || 'none';
-            const retainInches = Number(val('retainWallHeight') || 0);
+            const retainType = document.getElementById('retainType').value || 'none';
+            const retainInches = Number(document.getElementById('retainWallHeight').value || 0);
             const hasGutters = document.getElementById('gutters').checked;
             const hasSoffit = document.getElementById('aluminumSoffit').checked;
             const firewallWalls = parseInt(document.getElementById('firewallWalls').value) || 0;

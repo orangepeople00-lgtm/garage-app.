@@ -1340,10 +1340,11 @@
             const wheelingContainer = document.getElementById('wheelingContainer');
             const arlingtonContainer = document.getElementById('arlingtonContainer');
             
-            if (city === 'Chicago') {
-                chicagoDiv.classList.remove('hidden');
-            } else {
-                chicagoDiv.classList.add('hidden');
+            // Footing & Rods now lives permanently in the Concrete section.
+            // chicagoOptions may not exist anymore, so never let city changes stop the calculator.
+            if (chicagoDiv) {
+                if (city === 'Chicago') chicagoDiv.classList.remove('hidden');
+                else chicagoDiv.classList.add('hidden');
             }
             
             // Pre-check Wheeling if city is Wheeling
@@ -1433,6 +1434,23 @@
             if(!wrap)return;
             const custom=document.getElementById('width')?.value==='custom'||document.getElementById('depth')?.value==='custom';
             wrap.classList.toggle('hidden',!custom);
+        }
+
+
+        function safeCalculateEstimate() {
+            try {
+                calculateEstimate();
+                return true;
+            } catch (err) {
+                console.error('[Estimator calculation error]', err);
+                const internal = document.getElementById('internalTotal');
+                const quote = document.getElementById('customerQuote');
+                const breakdown = document.getElementById('breakdown');
+                if (internal) internal.textContent = 'Calculation Error';
+                if (quote) quote.textContent = 'Calculation Error';
+                if (breakdown) breakdown.innerHTML = '<div class="text-red-400 p-3 text-sm">Calculator error. Please refresh or report this screen.</div>';
+                return false;
+            }
         }
 
         function calculateEstimate() {
@@ -3426,7 +3444,8 @@ async function openPopupChatGPT(){
             
             // UI visibility
             document.getElementById('gableConfig').classList.add('hidden');
-            document.getElementById('chicagoOptions').classList.add('hidden');
+            const chicagoOptionsEl = document.getElementById('chicagoOptions');
+            if (chicagoOptionsEl) chicagoOptionsEl.classList.add('hidden');
             
             if (runCalc) {
                 calculateEstimate();
@@ -3437,12 +3456,13 @@ async function openPopupChatGPT(){
         function attachListeners() {
             const ids = [
                 'city', 'width', 'depth', 'wallHeight', 'roofType', 'eaveDir', 'pitch',
-                'newConcrete', 'apronDepth', 'fiveInch', 'excavation',
-                'extraPatio1Length', 'extraPatio1Custom', 'extraPatio2Length', 'extraPatio2Custom',
+                'newConcrete', 'apronDepth', 'concreteThickness', 'excavation',
+                'extraConcrete1Type', 'extraConcrete1Thickness', 'extraPatio1Length', 'extraPatio1Custom',
+                'extraConcrete2Type', 'extraConcrete2Thickness', 'extraPatio2Length', 'extraPatio2Custom',
                 'demoExisting', 'demoSlabPreset', 'demoApronDepth', 'oldConcreteOverride', 'additionalRemovalDims', 'epaFee',
                 'doorType', 'serviceDoorLocation', 'serviceDoorFrontSide', 'addlOverheadDoors', 'addlOpeners', 'overheadDoorHeight', 'overheadDoorWidth', 'overheadDoorStyle', 'doorOffset',
                 'elecBase', 'evCharger', 'threeWaySwitch', 'extraLights', 'extraWindows', 'windowType', 'windowQty', 'windowPlacement', 'salesman',
-                'retainWall', 'gutters', 'aluminumSoffit', 'sidingType', 'vinylColor', 'hardieColor',
+                'retainType', 'retainWallHeight', 'frostProtectedFooting', 'gutters', 'aluminumSoffit', 'sidingType', 'vinylColor', 'hardieColor',
                 'firewallWalls', 'hurricaneTies', 'wheelingCharge', 'arlingtonSurvey', 'andrewPermit', 'forceFootingChicago'
             ];
             
@@ -3501,7 +3521,7 @@ async function openPopupChatGPT(){
             
             // First calculation
             setTimeout(() => {
-                calculateEstimate();
+                safeCalculateEstimate();
             }, 80);
             
             // Easter egg / tip
@@ -3525,12 +3545,12 @@ async function openPopupChatGPT(){
         // an individual inline handler is removed or a new field is added later.
         document.addEventListener('change', function(e) {
             if (e.target && e.target.closest && e.target.closest('select, input')) {
-                try { calculateEstimate(); } catch (err) { console.error('[Estimator calculation error]', err); }
+                safeCalculateEstimate();
             }
         });
         document.addEventListener('input', function(e) {
             if (e.target && e.target.matches && e.target.matches('input')) {
-                try { calculateEstimate(); } catch (err) { console.error('[Estimator calculation error]', err); }
+                safeCalculateEstimate();
             }
         });
 

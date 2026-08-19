@@ -599,10 +599,14 @@
                                 </select>
                             </div>
                             <div class="flex items-end">
-                                <label class="flex items-center cursor-pointer text-sm">
-                                    <input type="checkbox" id="fiveInch" onchange="calculateEstimate()" class="accent-blue-500 w-4 h-4 mr-2">
-                                    <span class="text-xs">5" thick upgrade (+$1/sq ft)</span>
-                                </label>
+                                <div>
+                                    <label class="text-xs text-zinc-400 block mb-1">Concrete Thickness</label>
+                                    <select id="concreteThickness" onchange="calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm">
+                                        <option value="4" selected>4" Standard</option>
+                                        <option value="5">5" Thick (+$1/sq ft)</option>
+                                        <option value="6">6" Thick (+$4/sq ft)</option>
+                                    </select>
+                                </div>
                             </div>
                             <div>
                                 <label class="text-xs text-zinc-400 block mb-1">Excavation / Stone Quantity</label>
@@ -620,6 +624,40 @@
                                     <option value="10">10 Loads — $5,000</option>
                                 </select>
                                 <div class="text-[10px] text-zinc-500 mt-0.5">Excavation / stone loads • default 1 • $500 per load</div>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 pt-4 border-t border-zinc-700">
+                            <div class="text-xs font-semibold text-zinc-400 mb-2">FOOTING &amp; RODS</div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <label class="flex items-center cursor-pointer px-4 py-2.5 bg-zinc-950 border border-zinc-700 rounded-2xl">
+                                    <input type="checkbox" id="forceFootingChicago" onchange="calculateEstimate()" class="accent-blue-500 w-4 h-4 mr-2">
+                                    <span>Footing &amp; Rods</span>
+                                </label>
+                                <label class="flex items-center cursor-pointer px-4 py-2.5 bg-zinc-950 border border-zinc-700 rounded-2xl">
+                                    <input type="checkbox" id="frostProtectedFooting" onchange="calculateEstimate()" class="accent-blue-500 w-4 h-4 mr-2">
+                                    <span>42" Frost Protected Footing (+$200/linear ft)</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 pt-4 border-t border-zinc-700">
+                            <div class="text-xs font-semibold text-zinc-400 mb-2">RETAINING WALL</div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="text-xs text-zinc-400 block mb-1">Type</label>
+                                    <select id="retainType" onchange="calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm">
+                                        <option value="none">None</option>
+                                        <option value="standard">Standard Retaining Wall — $60/in above 8"</option>
+                                        <option value="reverse">Reverse Retaining Wall — $90/in above 8"</option>
+                                        <option value="four">4 Sided Retaining Wall — $115/in above 8"</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-xs text-zinc-400 block mb-1">Overall Retaining Wall Height</label>
+                                    <input id="retainWallHeight" type="number" value="8" min="0" step="1" oninput="calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm" placeholder='Height in inches'>
+                                    <div class="text-[10px] text-zinc-500 mt-0.5">Retaining wall charge applies only to inches above 8".</div>
+                                </div>
                             </div>
                         </div>
 
@@ -952,19 +990,7 @@
                         </div>
                         
                         <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-                            <!-- Retaining Wall -->
-                            <div>
-                                <label class="text-xs text-zinc-400 block mb-1">Retaining wall height</label>
-                                <select id="retainWall" onchange="calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2 text-sm">
-                                    <option value="0">None</option>
-                                    <option value="6">6 inch (included)</option>
-                                    <option value="8">8 inch (included)</option>
-                                    <option value="10">10 inch (+$190)</option>
-                                    <option value="12">12 inch (+$380)</option>
-                                    <option value="16">16 inch (+$760)</option>
-                                    <option value="24">24 inch (+$1,520)</option>
-                                </select>
-                            </div>
+                            
                             
                             <!-- Gutters -->
                             <div class="flex items-end">
@@ -1093,13 +1119,7 @@
                             </label>
                         </div>
                         
-                        <!-- Chicago specific -->
-                        <div id="chicagoOptions" class="hidden mt-3 col-span-2 md:col-span-3">
-                            <label class="flex items-center cursor-pointer text-xs px-3 py-2 bg-amber-950/30 border border-amber-900/50 rounded-2xl w-fit">
-                                <input type="checkbox" id="forceFootingChicago" onchange="calculateEstimate()" class="accent-blue-500 w-4 h-4 mr-2">
-                                <span class="text-amber-300">Add footings &amp; rods in Chicago (normally not included)</span>
-                            </label>
-                        </div>
+                        
                     </div>
                 </div>
 
@@ -1477,7 +1497,8 @@
             const extraWindows = parseInt(document.getElementById('extraWindows').value) || 0;
             
             // Structural
-            const retainInches = parseInt(document.getElementById('retainWall').value) || 0;
+            const retainType = val('retainType') || 'none';
+            const retainInches = Number(val('retainWallHeight') || 0);
             const hasGutters = document.getElementById('gutters').checked;
             const hasSoffit = document.getElementById('aluminumSoffit').checked;
             const firewallWalls = parseInt(document.getElementById('firewallWalls').value) || 0;
@@ -1488,6 +1509,7 @@
             const andrewPermit = document.getElementById('andrewPermit').checked ? 850 : 0;
             const sidingType = document.getElementById('sidingType').value;
             const forceFootingChicago = document.getElementById('forceFootingChicago').checked;
+            const frostProtectedFooting = document.getElementById('frostProtectedFooting').checked;
 
             // Auto-upgrade wall height if overhead door is taller (min wall height = door height + 1 ft)
             if (overheadDoorHeight >= 8 && wallHeight < overheadDoorHeight + 1) {
@@ -1591,6 +1613,7 @@
             // Grass prep ONLY on additional/unrelated concrete pads/patios (not garage slab/apron)
             const prepCost = (totalExtraPatioArea > 0) ? (totalExtraPatioArea * 1) : 0;
             const fiveInchCost = fiveInch ? (totalConcreteArea * 1) : 0;
+            const sixInchCost = sixInch ? (totalConcreteArea * 4) : 0;
             
             // Demolition (preset or custom slab + demo apron always added; additional removal separate)
             let calculatedOldConcrete = 0;
@@ -1656,7 +1679,10 @@
             }
             
             // Retaining wall
-            const retainCost = retainInches > 8 ? (retainInches - 8) * 95 : 0;
+            const perimeterLf = 2 * (width + depth);
+            const retainRate = retainType === 'standard' ? 60 : retainType === 'reverse' ? 90 : retainType === 'four' ? 115 : 0;
+            const retainCost = retainRate > 0 && retainInches > 8 ? (retainInches - 8) * retainRate : 0;
+            const frostFootingCost = frostProtectedFooting ? perimeterLf * 200 : 0;
             
             // Gutters
             let gutterCost = 0;
@@ -1707,6 +1733,7 @@
                 concreteCost + 
                 prepCost + 
                 fiveInchCost + 
+                sixInchCost +
                 demoCost + 
                 removalCost + 
                 additionalRemovalCost + 
@@ -1714,6 +1741,7 @@
                 footingCost + 
                 rodsCost + 
                 retainCost + 
+                frostFootingCost +
                 gutterCost + 
                 soffitCost + 
                 firewall + 
@@ -1734,15 +1762,15 @@
             updateBreakdown({
                 width, depth, floorArea, totalConcreteArea, apronArea, slabArea, totalExtraPatioArea,
                 packageCost, framingCost, wallHeightSurcharge, roofUpgrade, pitchSurcharge, pitchStr, electricalCost, overheadCost, sideDoorCost, sideDoorLabel,
-                concreteCost, prepCost, fiveInchCost, excavation,
+                concreteCost, prepCost, fiveInchCost, sixInchCost, concreteThickness, excavation,
                 demoCost, removalCost, additionalRemovalCost, additionalRemovalArea, epaCost,
-                footingCost, rodsCost, retainCost,
+                footingCost, rodsCost, retainCost, retainRate, retainType, frostFootingCost, perimeterLf,
                 gutterCost, gutterFt, hasGutters,
                 soffitCost, soffitFt, hasSoffit,
                 firewall, hurricane, wheeling, arlingtonSurvey, andrewPermit, hardieSidingCost, sidingType, wallHeight, overheadDoorHeight, sidingAreaNet, hardieSheets, extrasTotal,
                 permitCost, internalTotal, customerQuote, profitAmount, profitMode: profitSettings.mode, profitValue: profitSettings.value,
                 city, roofType, doorType, ev, threeWay, extraLights, extraLightsCost, extraWindows, extraWindowsCost, opener8500Upgrade, openerType, openerQty,
-                newConcrete, fiveInch, demo, retainInches, addlOverheadDoors, addlOpeners,
+                newConcrete, fiveInch, sixInch, demo, retainInches, addlOverheadDoors, addlOpeners,
                 patio1Area, patio2Area, demoSlabPreset, demoApronDepth, calculatedOldConcrete,
                 demoSlabArea, demoSlabWidth, demoApronArea
             });
@@ -1853,7 +1881,10 @@
                     lines.push({ label: `Grass / site prep for additional pads/patios (${data.totalExtraPatioArea} sq ft × $1.00)`, amount: data.prepCost, section: 'concrete' });
                 }
                 if (data.fiveInchCost > 0) {
-                    lines.push({ label: '5-inch concrete upgrade', amount: data.fiveInchCost, section: 'concrete' });
+                    lines.push({ label: `5-inch concrete upgrade (${data.totalConcreteArea} sq ft × $1.00)`, amount: data.fiveInchCost, section: 'concrete' });
+                }
+                if (data.sixInchCost > 0) {
+                    lines.push({ label: `6-inch concrete upgrade (${data.totalConcreteArea} sq ft × $4.00)`, amount: data.sixInchCost, section: 'concrete' });
                 }
             }
             if (data.excavation > 0) {
@@ -1885,7 +1916,11 @@
                 lines.push({ label: 'Footing rods / rebar', amount: data.rodsCost, section: 'structural' });
             }
             if (data.retainCost > 0) {
-                lines.push({ label: `Retaining wall (${data.retainInches} inch × $95)`, amount: data.retainCost, section: 'structural' });
+                const retainName=data.retainType==='standard'?'Standard Retaining Wall':data.retainType==='reverse'?'Reverse Retaining Wall':'4 Sided Retaining Wall';
+                lines.push({ label: `${retainName} (${Math.max(0,data.retainInches-8)} in above 8" × $${data.retainRate})`, amount: data.retainCost, section: 'concrete' });
+            }
+            if (data.frostFootingCost > 0) {
+                lines.push({ label: `42" Frost Protected Footing (${data.perimeterLf} lf × $200)`, amount: data.frostFootingCost, section: 'concrete' });
             }
             if (data.gutterCost > 0) {
                 lines.push({ label: `Gutters (${data.gutterFt.toFixed(0)} lf × $10)`, amount: data.gutterCost, section: 'structural' });
@@ -2778,7 +2813,7 @@
                 addSpec('Floor', `New ${width}' x ${depth}' - 4" Reinforced Concrete Slab, 4,000 PSI`);
                 addSpec('Apron', checked('newConcrete') && apronDepth > 0 ? `${apronDepth}'` : 'None');
                 addSpec('Perimeter Curb', 'Water Ledge, Included');
-                addSpec('Retaining Wall', 'Included as Needed');
+                addSpec('Retaining Wall', frostProtectedFooting ? '42" Frost Protected Footing' : retainType !== 'none' ? `${retainType === 'standard' ? 'Standard' : retainType === 'reverse' ? 'Reverse' : '4 Sided'} Retaining Wall - ${retainInches}" Overall` : 'Included as Needed');
                 addSpec('Building Permits', 'Included ($550 Value)');
             } else {
                 // Standard ABG estimate-sheet format for Ramsey, Samer and Tom.
@@ -2803,7 +2838,7 @@
                 else if (doorType === 'french') addSpec('French Door', 'French Door Allowance');
                 addSpec('Service Door', '1 x 36"x80" Steel Door with Deadbolt Lock');
                 addSpec('Window Type', windowType === 'none' ? 'None' : `${windowType === 'sliding' ? 'Sliding Window' : 'Single Hung Window'}${windowQty > 0 ? ` (${windowQty})` : ''}`);
-                addSpec('Floor', '4" Thick Reinforced with Steel Wire Mesh Rated 4,000 PSI');
+                addSpec('Floor', `${concreteThickness}" Thick Reinforced with Steel Wire Mesh Rated 4,000 PSI`);
                 addSpec('Apron', checked('newConcrete') && apronDepth > 0 ? `${width}' x ${apronDepth}' New Concrete Apron` : 'None');
                 addSpec('Perimeter Curb', 'Water Ledge');
                 addSpec('Retaining Wall', Number(val('retainWall') || 0) > 0 ? `${val('retainWall')}" Overall` : 'Build Up Included');
@@ -2878,7 +2913,7 @@
             if (checked('aluminumSoffit')) notes.push('Aluminum soffit and fascia included.');
             if (Number(val('firewallWalls') || 0) > 0) notes.push(`${val('firewallWalls')} firewall wall${Number(val('firewallWalls')) > 1 ? 's' : ''} included.`);
             if (checked('hurricaneTies')) notes.push('Hurricane ties included.');
-            if (checked('fiveInch')) notes.push('5" concrete thickness upgrade included.');
+            if ((Number(val('concreteThickness')||4)===5)) notes.push('5" concrete thickness upgrade included.');
             if (checked('excavation')) notes.push('Excavation and stone base included.');
             if (val('additionalRemovalDims').trim()) notes.push(`Additional concrete removal: ${prettyDims(val('additionalRemovalDims'))}.`);
 
@@ -3338,6 +3373,7 @@ async function openPopupChatGPT(){
             document.getElementById('arlingtonSurvey').checked = false;
             document.getElementById('andrewPermit').checked = false;
             document.getElementById('forceFootingChicago').checked = false;
+            document.getElementById('frostProtectedFooting').checked = false;
             const customerNameEl = document.getElementById('customerName');
             const customerAddressEl = document.getElementById('customerAddress');
             if (customerNameEl) customerNameEl.value = '';

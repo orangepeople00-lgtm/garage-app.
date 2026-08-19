@@ -619,8 +619,8 @@
                             <div>
                                 <label class="text-xs text-zinc-400 block mb-1">Excavation / Stone Quantity</label>
                                 <select id="excavation" onchange="calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm">
-                                    <option value="0">0 Loads — $0</option>
-                                    <option value="1" selected>1 Load — $500</option>
+                                    <option value="0" selected>0 Loads — $0</option>
+                                    <option value="1">1 Load — $500</option>
                                     <option value="2">2 Loads — $1,000</option>
                                     <option value="3">3 Loads — $1,500</option>
                                     <option value="4">4 Loads — $2,000</option>
@@ -631,7 +631,7 @@
                                     <option value="9">9 Loads — $4,500</option>
                                     <option value="10">10 Loads — $5,000</option>
                                 </select>
-                                <div class="text-[10px] text-zinc-500 mt-0.5">Excavation / stone loads • default 1 • $500 per load</div>
+                                <div class="text-[10px] text-zinc-500 mt-0.5">Excavation / stone loads • default 0 • $500 per load</div>
                             </div>
                         </div>
 
@@ -1355,6 +1355,14 @@
                 else chicagoDiv.classList.add('hidden');
             }
             
+            // Suburb default: visibly check Footing & Rods.
+            // It remains enabled so it can be manually unchecked for existing-slab/no-concrete jobs.
+            const footingCheckbox = document.getElementById('forceFootingChicago');
+            if (footingCheckbox) {
+                footingCheckbox.checked = city !== 'Chicago';
+                footingCheckbox.disabled = false;
+            }
+
             // Pre-check Wheeling if city is Wheeling
             if (city === 'Wheeling') {
                 document.getElementById('wheelingCharge').checked = true;
@@ -1546,7 +1554,7 @@
             const hasGutters = document.getElementById('gutters').checked;
             const hasSoffit = document.getElementById('aluminumSoffit').checked;
             const firewallWalls = parseInt(document.getElementById('firewallWalls').value) || 0;
-            const firewall = firewallWalls * 600;
+            const firewall = firewallWalls * 800;
             const hurricane = document.getElementById('hurricaneTies').checked ? 300 : 0;
             const wheeling = (city === 'Wheeling' && document.getElementById('wheelingCharge').checked) ? 500 : 0;
             const arlingtonSurvey = (city === 'Arlington Heights' && document.getElementById('arlingtonSurvey').checked) ? 2500 : 0;
@@ -1721,8 +1729,10 @@
             // Footing & rods
             let footingCost = 0;
             let rodsCost = 0;
-            const isOutsideChicago = city !== 'Chicago';
-            if (isOutsideChicago || forceFootingChicago) {
+            // Footing charge follows the visible checkbox only.
+            // Suburbs auto-check it in onCityChange(), but the user may uncheck it
+            // for an existing slab / no-new-concrete job without being charged.
+            if (forceFootingChicago) {
                 const perimeter = 2 * (width + depth);
                 footingCost = perimeter * 40;
                 rodsCost = 300;
@@ -1767,8 +1777,8 @@
                 soffitCost = Math.round(soffitFt * 10.75 * 100) / 100;
             }
             
-            // Permit always included
-            const permitCost = 550;
+            // Chicago includes the $550 permit allowance. Suburb permit fees are paid by customer.
+            const permitCost = city === 'Chicago' ? 550 : 0;
             
             // === INTERNAL TOTAL ===
             const internalTotal = 
@@ -2861,7 +2871,7 @@
 
             const salesman = getSalesmanProfile();
             const salesmanName = salesman.name;
-            const salesmanTitle = salesman.title;
+            const salesmanTitle = 'Sales Manager/Consultant';
             const salesmanPhone = salesman.phone;
             const salesmanEmail = salesman.email;
             const salesmanTagline = salesman.tagline;
@@ -3112,7 +3122,7 @@
     .brand-tag { font-size: 8.5px; margin-top: 7px; font-weight: 700; color: #fff; white-space: nowrap; }
     .sales-block { background: #ffc400; color: #061d4b; padding: 16px 20px 12px 26px; clip-path: polygon(8% 0,100% 0,100% 100%,0 100%); display: grid; grid-template-columns: 1fr auto; gap: 8px 14px; align-content: center; }
     .sales-name { font-size: 18px; font-weight: 900; text-transform: uppercase; }
-    .sales-title { font-size: 12px; font-weight: 700; margin-top: 1px; }
+    .sales-title { font-size: 18px; font-weight: 900; margin-top: 1px; }
     .sales-contact { font-size: 11px; line-height: 1.7; font-weight: 700; }
     .license { font-size: 8px; font-weight: 800; text-transform: uppercase; }
     .license strong { display: block; font-size: 17px; line-height: 1.15; margin-top: 3px; }
@@ -3206,7 +3216,7 @@
             <div>
                 <div class="sales-name">${esc(salesmanName)}</div>
                 <div class="sales-title">${esc(salesmanTitle)}</div>
-                <div class="sales-contact">${salesmanPhone ? `☎ ${esc(salesmanPhone)}` : ''}${salesmanPhone && salesmanEmail ? '<br>' : ''}${salesmanEmail ? `✉ ${esc(salesmanEmail)}` : ''}${salesmanTagline ? `<br><span style="font-size:8px;font-weight:800">${esc(salesmanTagline)}</span>` : ''}</div>
+                <div class="sales-contact">${salesmanPhone ? `☎ ${esc(salesmanPhone)}` : ''}${salesmanPhone && salesmanEmail ? '<br>' : ''}${salesmanEmail ? `✉ ${esc(salesmanEmail)}` : ''}${salesmanTagline ? `<br><span style="font-size:11px;font-weight:700">${esc(salesmanTagline)}</span>` : ''}</div>
             </div>
             <div class="license">ROOFING LICENSE NUMBER:<strong>104.016731<br>105.006803</strong></div>
         </div>
@@ -3410,7 +3420,7 @@ async function openPopupChatGPT(){
                 document.getElementById('demoApronDepth').value = '3';
                 document.getElementById('oldConcreteOverride').value = '';
                 document.getElementById('wheelingCharge').checked = true;
-                // Footing & rods added automatically because not Chicago
+                // Footing & rods checkbox is auto-selected by onCityChange() for suburbs
             }
             
             onCityChange();
@@ -3436,7 +3446,7 @@ async function openPopupChatGPT(){
             document.getElementById('newConcrete').checked = true;
             document.getElementById('apronDepth').value = '3';
             document.getElementById('concreteThickness').value = '4';
-            document.getElementById('excavation').value = '1';
+            document.getElementById('excavation').value = '0';
             
             // Patios
             document.getElementById('extraConcrete1Thickness').value = '4';

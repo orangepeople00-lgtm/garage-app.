@@ -2820,6 +2820,8 @@
                 ? `Centered - ${returnFmt(doorPosition.leftReturn)}' Left Return / ${returnFmt(doorPosition.rightReturn)}' Right Return`
                 : `${Math.abs(doorOffset)}' ${doorOffset < 0 ? 'Left' : 'Right'} of Center - ${returnFmt(doorPosition.leftReturn)}' Left Return / ${returnFmt(doorPosition.rightReturn)}' Right Return`;
 
+            const isSuburb = String(city || '').trim().toLowerCase() !== 'chicago';
+
             if (salesman.wally) {
                 // WALLY B MASTER PROPOSAL FORMAT
                 // Source of truth: finalized Kathleen Gomoka Wally B proposal.
@@ -2865,7 +2867,7 @@
                 addSpec('Apron', checked('newConcrete') && apronDepth > 0 ? `${apronDepth}'` : 'None');
                 addSpec('Perimeter Curb', 'Water Ledge, Included');
                 addSpec('Retaining Wall', frostProtectedFooting ? '42" Frost Protected Footing' : retainType !== 'none' ? `${retainType === 'standard' ? 'Standard' : retainType === 'reverse' ? 'Reverse' : '4 Sided'} Retaining Wall - ${retainInches}" Overall` : 'Included as Needed');
-                addSpec('Building Permits', 'Included ($550 Value)');
+                addSpec('Building Permits', isSuburb ? 'Absolute will file for and secure all permits. Customer pays all fees.' : 'Included ($550 Value)');
             } else {
                 // Standard ABG estimate-sheet format for Ramsey, Samer and Tom.
                 addSpec('Garage Size', `${width}' x ${depth}'`);
@@ -2894,7 +2896,7 @@
                 addSpec('Perimeter Curb', 'Water Ledge');
                 addSpec('Retaining Wall', retainType !== 'none' ? `${retainType === 'standard' ? 'Standard' : retainType === 'reverse' ? 'Reverse' : '4 Sided'} Retaining Wall - ${retainInches}" Overall` : 'Build Up Included');
                 addSpec('Building Codes', 'YES');
-                addSpec('Building Permits', 'YES - Included');
+                addSpec('Building Permits', isSuburb ? 'Absolute will file for and secure all permits. Customer pays all fees.' : 'YES - Included');
                 addSpec('Bottom Plates', 'Treated');
             }
 
@@ -2909,6 +2911,28 @@
             `).join('');
 
             const notes = [];
+
+            // Every estimate starts with the new garage scope first.
+            const noteRoof = roofType === 'gable'
+                ? (val('eaveDir') === 'sides' ? 'reverse gable' : 'gable')
+                : 'hip';
+            const concreteOpening = checked('newConcrete')
+                ? ` with new reinforced concrete${apronDepth > 0 ? ` and ${apronDepth}' full-width apron` : ''}`
+                : '';
+            notes.push(`Build new ${width}' x ${depth}' ${noteRoof} roof garage${concreteOpening}.`);
+
+            // Additional concrete follows the main garage/concrete scope.
+            const p1Custom = val('extraPatio1Custom').trim();
+            const p1Type=val('extraConcrete1Type')||'Pad';
+            const p2Custom = val('extraPatio2Custom').trim();
+            const p2Type=val('extraConcrete2Type')||'Pad';
+            const p1Len = Number(val('extraPatio1Length') || 0);
+            const p2Len = Number(val('extraPatio2Length') || 0);
+            if (p1Custom) notes.push(`Additional concrete ${p1Type.toLowerCase()}: ${prettyDims(p1Custom)}.`);
+            else if (p1Len > 0) notes.push(`Additional concrete ${p1Type.toLowerCase()}: ${width}' x ${p1Len}'.`);
+            if (p2Custom) notes.push(`Additional concrete ${p2Type.toLowerCase()}: ${prettyDims(p2Custom)}.`);
+            else if (p2Len > 0) notes.push(`Additional concrete ${p2Type.toLowerCase()}: ${width}' x ${p2Len}'.`);
+
             if (checked('demoExisting')) {
                 let demoDesc = 'Demolition of existing garage and concrete removal included.';
                 const demoPreset = val('demoSlabPreset');
@@ -2926,30 +2950,9 @@
                 notes.push(demoDesc);
             }
 
-            if (checked('newConcrete') && !salesman.wally) {
-                notes.push(`Install new 4,000 PSI reinforced concrete floor${apronDepth > 0 ? ` and new ${width}' x ${apronDepth}' apron` : ''}.`);
-            }
-
-            const p1Custom = val('extraPatio1Custom').trim();
-            const p1Type=val('extraConcrete1Type')||'Pad';
-            const p2Custom = val('extraPatio2Custom').trim();
-            const p2Type=val('extraConcrete2Type')||'Pad';
-            const p1Len = Number(val('extraPatio1Length') || 0);
-            const p2Len = Number(val('extraPatio2Length') || 0);
-            if (p1Custom) notes.push(`Additional concrete ${p1Type.toLowerCase()}: ${prettyDims(p1Custom)}.`);
-            else if (p1Len > 0) notes.push(`Additional concrete ${p1Type.toLowerCase()}: ${width}' x ${p1Len}'.`);
-            if (p2Custom) notes.push(`Additional concrete ${p2Type.toLowerCase()}: ${prettyDims(p2Custom)}.`);
-            else if (p2Len > 0) notes.push(`Additional concrete ${p2Type.toLowerCase()}: ${width}' x ${p2Len}'.`);
-
-            if (salesman.wally) {
-                const wRoof = roofType === 'gable' ? (val('eaveDir') === 'sides' ? 'reverse-gable' : 'gable') : 'hip';
-                notes.push(`Build new ${width}' x ${depth}' ${wRoof}-roof garage with new reinforced concrete floor${apronDepth > 0 ? ` and ${apronDepth}' full-width apron` : ''}.`);
-                notes.push('Electric includes 2 lights, 2 outlets, switches, and 1 coach light by service door.');
-                notes.push('Two additional exterior outlets included.');
-            } else {
-                notes.push(`Build new ${width}' x ${depth}' ${roofType === 'gable' ? 'gable' : 'hip'}-roof garage with ${sidingType === 'hardie' ? 'Hardieboard / cement board siding' : 'premium vinyl siding'}.`);
-                notes.push('Electric Includes: 2 Interior Lights, 2 Outlets, Switches, and LiftMaster 3/4HP Opener Fully Installed with Remotes.');
-            }
+            // Standard electric inclusion wording for all salespeople.
+            notes.push('Electric Includes; 2 INT. Lights, 2 INT. Outlets, 2 INT. Switches, 1 EXT. Light, and Connection to Existing Home Electrical System.');
+            if (salesman.wally) notes.push('Two additional exterior outlets included.');
 
             if (doorType === 'party') notes.push('Quote Includes Party Door.');
             if (doorType === 'french') notes.push('Quote Includes French Door.');
@@ -2976,9 +2979,9 @@
             extraDesc.forEach(text => notes.push(text));
 
             if (salesman.wally) {
-                notes.push(`${city} permit, materials, taxes, demolition cleanup, and debris removal included.`);
+                notes.push('Permit, materials, taxes, demolition, cleanup, and debris removal included.');
             } else {
-                notes.push(`${city} building permit, materials, applicable taxes, and normal job-site cleanup included.`);
+                notes.push('Permit, materials, taxes, demolition, cleanup, and debris removal included.');
                 notes.push('Built to meet applicable local building codes.');
             }
 
@@ -3072,6 +3075,7 @@
     .total-box { margin-top: 8px; border:1px solid #b9c2d0; }
     .total-label { background:#ffc400; font-weight:900; text-align:center; font-size:12px; padding:4px; }
     .total-price { background:#061d4b; color:#ffc400; font-weight:900; text-align:center; font-size:34px; line-height:1; padding:8px 4px 10px; letter-spacing:.5px; white-space:nowrap; }
+    .suburb-price-disclaimer { background:#fff; color:#26354f; border-top:1px solid #b9c2d0; padding:7px 8px; font-size:7.7px; line-height:1.25; font-weight:700; text-align:left; }
 
     .panel-title { background:#061d4b; color:#fff; text-align:center; font-size:12px; font-weight:900; padding:5px 4px; letter-spacing:.2px; }
     .exterior { border:1px solid #b9c2d0; overflow:hidden; height: 3.72in; background:#dbeaf4; }
@@ -3165,6 +3169,7 @@
             <div class="total-box">
                 <div class="total-label">TOTAL PROJECT PRICE</div>
                 <div class="total-price">${esc(quote)}</div>
+                ${isSuburb ? `<div class="suburb-price-disclaimer">Estimate does not include any required civil engineering, stormwater grading plan, or any required surveys, based on village / city approval as outlined herein.</div>` : ''}
             </div>
         </div>
         <div class="right">

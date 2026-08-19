@@ -376,7 +376,15 @@
         }
         .back-production-btn:hover { background:#223451; }
         @media print { .back-production-btn { display:none!important; } }
-    </style>
+    
+    .estimate-notes-page .notes-list { font-weight:800; line-height:1.35; }
+    .estimate-notes-page.notes-1 .notes-list { font-size:21px; }
+    .estimate-notes-page.notes-2 .notes-list { font-size:19px; }
+    .estimate-notes-page.notes-few .notes-list { font-size:17px; }
+    .estimate-notes-page.notes-medium .notes-list { font-size:14px; }
+    .estimate-notes-page.notes-many .notes-list { font-size:11.5px; }
+    .estimate-notes-page .notes-list li { margin-bottom:.8em; }
+</style>
 </head>
 <body class="bg-zinc-950 text-zinc-200"><div style="position:fixed;bottom:8px;left:8px;z-index:999999;background:#166534;color:white;padding:4px 7px;border-radius:6px;font:800 9px Arial">CLEAN ESTIMATOR BUILD</div><div style="position:fixed;bottom:10px;right:10px;z-index:999999;background:#dc2626;color:#fff;padding:6px 10px;border-radius:8px;font:900 11px Arial">ESTIMATOR UPDATE V2</div><a id="backToProductionBtn" class="back-production-btn" href="index.html?v=20260818v2">← Back to Production</a>
     <div class="max-w-[1280px] mx-auto">
@@ -2889,12 +2897,13 @@
                 addSpec('Garage Size', `${width}' x ${depth}'`);
                 addSpec('Roof Style', `${roofLabel} - ${pitch} Pitch with Vents`);
                 addSpec('Roofing', 'Architectural Shingles + 15lbs Felt Paper + 1/2" Sheathing');
+            if (salesman.wally) addSpec('Roof Sheathing', '1/2"');
                 addSpec('Overhang', checked('gutters') ? 'Seamless Gutters 4 Sides - 2 Down Spouts' : '" "');
                 addSpec('Eaves', '6" Eaves - 4 Sides Boxed');
                 addSpec('Rafters', '2x6 16" O.C.');
                 addSpec('Wall Height', `${wallHeight}'`);
                 addSpec('Siding', sidingType === 'hardie' ? hardieWally : vinylWally);
-                addSpec('Double Wall', '1/2" Sheathing');
+                addSpec(salesman.wally ? 'Wall Sheathing' : 'Double Wall', salesman.wally ? '1/2"' : '1/2" Sheathing');
                 addSpec('Studs', `${wallHeight >= 10 ? '2x6' : '2x4'} 16" O.C.`);
                 addSpec('Bottom Plates', 'Treated');
                 addSpec('Headers', 'Double LVL Headers');
@@ -2926,7 +2935,7 @@
                 addSpec('Roof Style', `${roofType === 'gable' ? ((val('eaveDir') === 'sides' ? 'Reverse Gable' : 'Standard Gable')) : 'Hip'} - ${pitch} Pitch with Vents`);
                 addSpec('Siding', `${sidingType === 'hardie' ? 'Hardieboard / Cement Board Siding' : 'Premium Vinyl Siding'} - ${sidingColor}`);
                 addSpec('Double Wall', '1/2" Plywood or Choice');
-                addSpec('Eaves', '4 Sides Boxed');
+                addSpec('Eaves', salesman.wally ? '6" Eaves - Boxed 4 Sides' : '4 Sides Boxed');
                 addSpec('Overhang', checked('gutters') ? 'Seamless Gutters 4 Sides - 2 Down Spouts' : '" "');
                 addSpec('Cross Ties', '2x6 48 O.C');
                 addSpec('Roofing', 'Architectural Shingles + 15lbs Felt Paper');
@@ -3003,7 +3012,6 @@
 
             // Standard electric inclusion wording for all salespeople.
             notes.push('Electric Includes; 2 INT. Lights, 2 INT. Outlets, 2 INT. Switches, 1 EXT. Light, and Connection to Existing Home Electrical System.');
-            if (salesman.wally) notes.push('Two additional exterior outlets included.');
 
             if (doorType === 'party') notes.push('Quote Includes Party Door.');
             if (doorType === 'french') notes.push('Quote Includes French Door.');
@@ -3078,6 +3086,9 @@
             // Load the approved garage image directly. No fetch/base64 wait before opening.
             const garagePhotoSrc = selectedGaragePhotoOriginalUrl;
             const garageSvg = `<div class="photo-config photo-only"><img src="${garagePhotoSrc}" alt=""></div>`;
+
+            const notesCount = notes.length;
+            const notesClass = notesCount <= 1 ? 'notes-1' : notesCount === 2 ? 'notes-2' : notesCount <= 4 ? 'notes-few' : notesCount <= 7 ? 'notes-medium' : 'notes-many';
 
             const sheetHtml = `<!DOCTYPE html>
 <html lang="en">
@@ -3227,7 +3238,7 @@
             <div class="panel-title exterior-title">EXTERIOR VIEW (EXAMPLE)</div>
             <div class="exterior">${garageSvg}</div>
             <div class="notes-panel">
-                <div class="panel-title">NOTES / INCLUSIONS</div>
+                <div class="panel-title estimate-notes-page ${notesClass}">NOTES / INCLUSIONS</div>
                 <ul class="notes">${notesHtml}</ul>
             </div>
         </div>

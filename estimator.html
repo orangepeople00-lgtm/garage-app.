@@ -2307,7 +2307,12 @@
                     // Recover dimensions from the saved sheet/notes where possible; James Young's saved demo/removal scope
                     // establishes the intended 22' front width and the project record is restored as 22' x 24'.
                     if(!dims && String(e.customer||'').trim().toLowerCase()==='james young'){
-                        dims=['22 x 24','22','24'];
+                        // The old James record literally stored NaN x NaN, so preserve manual-entry mode
+                        // rather than inventing dimensions that were not saved.
+                        setEstimatorField('width','custom');
+                        setEstimatorField('depth','custom');
+                        setEstimatorField('customWidth','');
+                        setEstimatorField('customDepth','');
                     }
                     if(dims){
                         const w=String(Number(dims[1])),d=String(Number(dims[2]));
@@ -2341,10 +2346,31 @@
                     const hurricane=/Hurricane ties included/i.test(legacyNotes);
                     if(hurricane)setEstimatorField('hurricaneTies',true);
 
+                    // For legacy records, keep custom scope lines from the original saved sheet in Additional Notes.
+                    // This prevents special instructions from disappearing when the old record had no calculator_state.
+                    const genericLines=legacyNotes.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+                    const customScopeLines=genericLines.filter(line=>{
+                        return !/^Build new /i.test(line)
+                            && !/^Demolish and remove /i.test(line)
+                            && !/^Electric Includes/i.test(line)
+                            && !/^Electric includes/i.test(line)
+                            && !/^Seamless gutters/i.test(line)
+                            && !/^Additional concrete (pad|sidewalk|driveway|slab)\s*:/i.test(line)
+                            && !/^Additional concrete removal:/i.test(line)
+                            && !/^Permit,/i.test(line)
+                            && !/^Built to meet /i.test(line)
+                            && !/^Other Suburb permit/i.test(line);
+                    });
+                    if(customScopeLines.length){
+                        const existing=String(document.getElementById('additionalEstimateNotes')?.value||'').trim();
+                        const merged=[...new Set([...(existing?existing.split(/\r?\n/):[]),...customScopeLines])].filter(Boolean);
+                        setEstimatorField('additionalEstimateNotes',merged.join('\n'));
+                    }
+
                     if(String(e.customer||'').trim().toLowerCase()==='james young'){
                         setEstimatorField('pitch','6/12');
                         setEstimatorField('gutters',true);
-                        setEstimatorField('electricSubpanel','100');
+                        setEstimatorField('electricSubpanel','3000');
                         setEstimatorField('additionalRemovalDims','22x4');
                         setEstimatorField('demoSlabPreset','custom');
                         setEstimatorField('oldConcreteOverride','18x22');
@@ -2358,9 +2384,12 @@
                 calculateEstimate();
                 const banner=document.createElement('div');
                 banner.style.cssText='position:sticky;top:0;z-index:100;background:#92400e;color:white;padding:10px 16px;text-align:center;font-weight:800';
+                const isJamesLegacy=!state&&String(e.customer||'').trim().toLowerCase()==='james young';
                 banner.textContent=state
                     ? 'Editing saved estimate — all saved calculator selections were restored. Creating the estimate sheet will update this history record.'
-                    : 'Editing older saved estimate — saved specifications were restored from the estimate record and notes. Review before saving; this will update the same history record.';
+                    : isJamesLegacy
+                        ? 'Editing older James Young estimate — saved specifications and custom notes were restored. The original manual garage dimensions and changed Electric base cost were never stored in this old record, so verify those two fields before saving.'
+                        : 'Editing older saved estimate — saved specifications were restored from the estimate record and notes. Review before saving; this will update the same history record.';
                 document.body.prepend(banner);
                 try{sessionStorage.removeItem('garage_edit_estimate_record');}catch(_e){}
             }catch(err){console.error(err);alert('Could not load the saved estimate for editing.')}

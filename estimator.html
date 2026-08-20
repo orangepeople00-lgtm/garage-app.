@@ -2221,10 +2221,14 @@
             extraLights:'Extra Lights',extraWindows:'Extra Windows',windowType:'Window Type',windowQty:'Window Quantity',
             gutters:'Gutters',aluminumSoffit:'Aluminum Soffit / Fascia',sidingType:'Siding Type',vinylColor:'Vinyl Color',
             hardieColor:'Hardie Color',firewallWalls:'Firewall Walls',hurricaneTies:'Hurricane Ties',
-            profitMode:'Pricing Method',profitValue:'Pricing Input',additionalEstimateNotes:'Additional Notes',
+            profitMode:'Pricing Method',profitValue:'Pricing Input',additionalEstimateNotes:'Additional Notes',customExtras:'Custom Extras',
             salesman:'Salesman',customerName:'Customer Name',customerAddress:'Customer Address'
         };
         function formatEstimateChangeValue(key,value){
+            if(key==='customExtras'){
+                if(!Array.isArray(value)||!value.length)return 'None';
+                return value.map(x=>`${x.description||'Custom Extra'}${x.cost?` ($${x.cost})`:''}`).join('; ');
+            }
             if(value===true)return 'Yes';
             if(value===false)return 'No';
             if(value===null||value===undefined||value==='')return 'None';
@@ -2268,6 +2272,10 @@
                 if(['estimateChangeRequest','popupChangeRequest'].includes(el.id))return;
                 state[el.id]=(el.type==='checkbox'||el.type==='radio')?!!el.checked:el.value;
             });
+            state.customExtras=[...document.querySelectorAll('#extrasContainer > div')].map(row=>({
+                description:String(row.querySelector('.extra-desc')?.value||''),
+                cost:String(row.querySelector('.extra-cost')?.value||'')
+            })).filter(x=>x.description||x.cost);
             return state;
         }
 
@@ -2275,6 +2283,21 @@
             const el=document.getElementById(id); if(!el||value===undefined||value===null)return;
             if(el.type==='checkbox'||el.type==='radio') el.checked=!!value;
             else el.value=String(value);
+        }
+
+        function restoreCustomExtras(items){
+            const container=document.getElementById('extrasContainer');
+            if(!container)return;
+            container.innerHTML='';
+            (Array.isArray(items)?items:[]).forEach(item=>{
+                addExtraRow();
+                const row=container.lastElementChild;
+                if(!row)return;
+                const desc=row.querySelector('.extra-desc');
+                const cost=row.querySelector('.extra-cost');
+                if(desc)desc.value=String(item?.description||'');
+                if(cost)cost.value=String(item?.cost||'');
+            });
         }
 
         async function loadEstimateForEditing(){
@@ -2295,7 +2318,11 @@
                 const s=e.estimate_snapshot||{};
                 const state=s.calculator_state||null;
                 if(state){
-                    Object.entries(state).forEach(([key,value])=>setEstimatorField(key,value));
+                    Object.entries(state).forEach(([key,value])=>{
+                        if(key==='customExtras')return;
+                        setEstimatorField(key,value);
+                    });
+                    restoreCustomExtras(state.customExtras||[]);
                 }else{
                     // Older saved estimates did not contain every calculator control.
                     // Restore everything that can be recovered safely without guessing.
@@ -2365,6 +2392,7 @@
                         const existing=String(document.getElementById('additionalEstimateNotes')?.value||'').trim();
                         const merged=[...new Set([...(existing?existing.split(/\r?\n/):[]),...customScopeLines])].filter(Boolean);
                         setEstimatorField('additionalEstimateNotes',merged.join('\n'));
+                        restoreCustomExtras(customScopeLines.map(description=>({description,cost:''})));
                     }
 
                     if(String(e.customer||'').trim().toLowerCase()==='james young'){

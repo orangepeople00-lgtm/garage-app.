@@ -2166,6 +2166,24 @@
                 const editId=new URLSearchParams(location.search).get('editEstimate');
                 let error=null;
                 if(editId){
+                    const prevResult=await garageSb.from('estimate_history').select('*').eq('id',editId).single();
+                    const previous=prevResult.data||null;
+                    const previousSnapshot=(previous&&previous.estimate_snapshot)||{};
+                    const previousState=previousSnapshot.calculator_state||{};
+                    const nextState=(record.estimate_snapshot&&record.estimate_snapshot.calculator_state)||{};
+                    const changes=describeEstimateChanges(previousState,nextState,previous,record);
+                    const revisionHistory=Array.isArray(previousSnapshot.revision_history)?previousSnapshot.revision_history.slice():[];
+                    if(changes.length){
+                        revisionHistory.push({
+                            timestamp:new Date().toISOString(),
+                            editor_username:staff.username,
+                            changes
+                        });
+                    }
+                    record.estimate_snapshot={
+                        ...(record.estimate_snapshot||{}),
+                        revision_history:revisionHistory
+                    };
                     const result=await garageSb.from('estimate_history').update(record).eq('id',editId);
                     error=result.error;
                 }else{
@@ -2187,6 +2205,61 @@
                 const target=map[staff.username];
                 if(target && Array.from(select.options).some(o=>o.value===target)) select.value=target;
             }catch(e){console.warn('Could not auto-select signed-in salesman',e)}
+        }
+
+        const ESTIMATE_FIELD_LABELS={
+            city:'City',width:'Garage Width',depth:'Garage Depth',customWidth:'Custom Garage Width',customDepth:'Custom Garage Depth',
+            wallHeight:'Wall Height',roofType:'Roof Style',eaveDir:'Gable Eaves',pitch:'Roof Pitch',
+            newConcrete:'New Concrete',apronDepth:'Apron Depth',concreteThickness:'Concrete Thickness',excavation:'Excavation / Stone Loads',
+            frostProtectedFooting:'42" Frost Protected Footing',retainType:'Retaining Wall Type',retainWallHeight:'Retaining Wall Height',
+            demoExisting:'Demolition',demoSlabPreset:'Demo Garage / Slab Size',demoApronDepth:'Demo Apron Depth',
+            oldConcreteOverride:'Custom Demo Dimensions',additionalRemovalDims:'Additional Concrete Removal',
+            doorType:'Service Door',serviceDoorLocation:'Service Door Location',addlOverheadDoors:'Additional Overhead Doors',
+            openerQty:'Opener Quantity',openerType:'Opener Type',overheadDoorHeight:'Overhead Door Height',
+            overheadDoorWidth:'Overhead Door Width',overheadDoorStyle:'Overhead Door Style',
+            elecBase:'Electric',electricSubpanel:'Electrical Subpanel',evCharger:'EV Charger',threeWaySwitch:'3-Way Switch',
+            extraLights:'Extra Lights',extraWindows:'Extra Windows',windowType:'Window Type',windowQty:'Window Quantity',
+            gutters:'Gutters',aluminumSoffit:'Aluminum Soffit / Fascia',sidingType:'Siding Type',vinylColor:'Vinyl Color',
+            hardieColor:'Hardie Color',firewallWalls:'Firewall Walls',hurricaneTies:'Hurricane Ties',
+            profitMode:'Pricing Method',profitValue:'Pricing Input',additionalEstimateNotes:'Additional Notes',
+            salesman:'Salesman',customerName:'Customer Name',customerAddress:'Customer Address'
+        };
+        function formatEstimateChangeValue(key,value){
+            if(value===true)return 'Yes';
+            if(value===false)return 'No';
+            if(value===null||value===undefined||value==='')return 'None';
+            const footKeys=['width','depth','customWidth','customDepth','wallHeight','apronDepth','demoApronDepth','overheadDoorHeight','overheadDoorWidth'];
+            if(footKeys.includes(key) && !String(value).includes("'"))return `${value}'`;
+            return String(value);
+        }
+        function describeEstimateChanges(previousState,nextState,previousRecord,nextRecord){
+            const changes=[];
+            const keys=new Set([...Object.keys(previousState||{}),...Object.keys(nextState||{})]);
+            keys.forEach(key=>{
+                if(['estimateChangeRequest','popupChangeRequest'].includes(key))return;
+                const before=previousState?previousState[key]:undefined;
+                const after=nextState?nextState[key]:undefined;
+                if(String(before??'')===String(after??''))return;
+                const label=ESTIMATE_FIELD_LABELS[key]||key.replace(/([A-Z])/g,' $1').replace(/^./,c=>c.toUpperCase());
+                changes.push(`${label}: ${formatEstimateChangeValue(key,before)} → ${formatEstimateChangeValue(key,after)}`);
+            });
+            if(!Object.keys(previousState||{}).length && previousRecord){
+                const recordPairs=[
+                    ['Garage Size',previousRecord.garage_size,nextRecord.garage_size],
+                    ['Roof Style',previousRecord.roof_type,nextRecord.roof_type],
+                    ['Wall Height',previousRecord.wall_height,nextRecord.wall_height],
+                    ['Siding',previousRecord.siding,nextRecord.siding],
+                    ['Estimate Price',previousRecord.estimate_price,nextRecord.estimate_price]
+                ];
+                recordPairs.forEach(([label,before,after])=>{
+                    if(String(before??'')!==String(after??'')){
+                        const b=label==='Estimate Price'?`$${Number(before||0).toLocaleString()}`:String(before??'None');
+                        const a=label==='Estimate Price'?`$${Number(after||0).toLocaleString()}`:String(after??'None');
+                        changes.push(`${label}: ${b} → ${a}`);
+                    }
+                });
+            }
+            return [...new Set(changes)];
         }
 
         function captureEstimatorState(){

@@ -2158,11 +2158,20 @@
                 if(!user)return;
                 const {data:staff,error:pe}=await garageSb.from('staff_profiles').select('username').eq('id',user.id).single();
                 if(pe||!staff?.username)return;
-                const {error}=await garageSb.from('estimate_history').insert({
+                const record={
                     created_by:user.id,salesman_username:staff.username,customer:data.customer,address:data.address||'',city:data.city||'',
                     garage_size:data.garage_size||'',roof_type:data.roof_type||'',wall_height:data.wall_height||'',siding:data.siding||'',
                     estimate_price:Number(data.estimate_price)||0,estimate_snapshot:data.snapshot||{}
-                });
+                };
+                const editId=new URLSearchParams(location.search).get('editEstimate');
+                let error=null;
+                if(editId){
+                    const result=await garageSb.from('estimate_history').update(record).eq('id',editId);
+                    error=result.error;
+                }else{
+                    const result=await garageSb.from('estimate_history').insert(record);
+                    error=result.error;
+                }
                 if(error)console.error('Estimate history save failed:',error);
             }catch(err){console.error('Estimate history save failed:',err)}
         }
@@ -2178,6 +2187,64 @@
                 const target=map[staff.username];
                 if(target && Array.from(select.options).some(o=>o.value===target)) select.value=target;
             }catch(e){console.warn('Could not auto-select signed-in salesman',e)}
+        }
+
+        function captureEstimatorState(){
+            const state={};
+            document.querySelectorAll('input[id],select[id],textarea[id]').forEach(el=>{
+                if(['estimateChangeRequest','popupChangeRequest'].includes(el.id))return;
+                state[el.id]=(el.type==='checkbox'||el.type==='radio')?!!el.checked:el.value;
+            });
+            return state;
+        }
+
+        function setEstimatorField(id,value){
+            const el=document.getElementById(id); if(!el||value===undefined||value===null)return;
+            if(el.type==='checkbox'||el.type==='radio') el.checked=!!value;
+            else el.value=String(value);
+        }
+
+        async function loadEstimateForEditing(){
+            const id=new URLSearchParams(location.search).get('editEstimate');
+            if(!id)return;
+            try{
+                const {data:e,error}=await garageSb.from('estimate_history').select('*').eq('id',id).single();
+                if(error||!e)return alert('Could not load the saved estimate for editing.');
+                const s=e.estimate_snapshot||{};
+                const state=s.calculator_state||null;
+                if(state){
+                    Object.entries(state).forEach(([key,value])=>setEstimatorField(key,value));
+                }else{
+                    // Older saved estimates did not contain every calculator control.
+                    // Restore everything that can be recovered safely without guessing.
+                    setEstimatorField('customerName',e.customer||'');
+                    setEstimatorField('customerAddress',e.address||'');
+                    setEstimatorField('city',e.city||'Chicago');
+                    const dims=String(e.garage_size||'').match(/([0-9.]+)\D+[x×]\D*([0-9.]+)/i);
+                    if(dims){
+                        const w=String(Number(dims[1])),d=String(Number(dims[2]));
+                        const wSel=document.getElementById('width'),dSel=document.getElementById('depth');
+                        if(wSel&&Array.from(wSel.options).some(o=>o.value===w))wSel.value=w; else {setEstimatorField('width','custom');setEstimatorField('customWidth',w)}
+                        if(dSel&&Array.from(dSel.options).some(o=>o.value===d))dSel.value=d; else {setEstimatorField('depth','custom');setEstimatorField('customDepth',d)}
+                    }
+                    setEstimatorField('roofType',String(e.roof_type||'').toLowerCase().includes('gable')?'gable':'hip');
+                    const wh=parseFloat(e.wall_height); if(Number.isFinite(wh))setEstimatorField('wallHeight',wh);
+                    setEstimatorField('gutters',!!s.gutters);
+                    setEstimatorField('aluminumSoffit',!!s.aluminum_soffit_fascia);
+                    setEstimatorField('demoExisting',!!s.demolition);
+                    setEstimatorField('newConcrete',!!s.new_concrete);
+                    if(s.additional_notes)setEstimatorField('additionalEstimateNotes',s.additional_notes);
+                    if(s.pricing_mode)setEstimatorField('profitMode',s.pricing_mode);
+                    if(Number.isFinite(Number(s.pricing_input)))setEstimatorField('profitValue',s.pricing_input);
+                }
+                toggleCustomGarageSize();
+                updateRoofOptions();
+                calculateEstimate();
+                const banner=document.createElement('div');
+                banner.style.cssText='position:sticky;top:0;z-index:100;background:#92400e;color:white;padding:10px 16px;text-align:center;font-weight:800';
+                banner.textContent='Editing saved estimate — creating the estimate sheet will update this history record instead of making a duplicate.';
+                document.body.prepend(banner);
+            }catch(err){console.error(err);alert('Could not load the saved estimate for editing.')}
         }
 
         function getSalesmanProfile() {
@@ -3323,6 +3390,7 @@ async function openPopupChatGPT(){
                     estimate_price: estimateNumberFromText(quote),
                     snapshot: {
                         estimate_salesman: salesmanName,
+                        calculator_state: captureEstimatorState(),
                         internal_cost: estimateNumberFromText(document.getElementById('internalTotal')?.textContent || '0'),
                         final_project_price: estimateNumberFromText(document.getElementById('customerQuote')?.textContent || quote || '0'),
                         pricing_mode: (document.getElementById('profitMode')?.value || 'percent'),
@@ -3651,6 +3719,7 @@ async function openPopupChatGPT(){
             initApp();
         }
 
-    </script>
+    window.addEventListener('load',()=>setTimeout(loadEstimateForEditing,250));
+</script>
 </body>
 </html>

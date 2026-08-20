@@ -2171,7 +2171,12 @@
                     const previousSnapshot=(previous&&previous.estimate_snapshot)||{};
                     const previousState=previousSnapshot.calculator_state||{};
                     const nextState=(record.estimate_snapshot&&record.estimate_snapshot.calculator_state)||{};
-                    const revisionHistory=Array.isArray(previousSnapshot.revision_history)?previousSnapshot.revision_history.slice():[];
+                    const revisionHistory=(Array.isArray(previousSnapshot.revision_history)?previousSnapshot.revision_history.slice():[]).filter(r=>{
+                        const cs=Array.isArray(r?.changes)?r.changes:[];
+                        if(!cs.length)return false;
+                        const bootstrap=cs.filter(c=>/:\s*(?:None|NaN(?:'\s*x\s*NaN')?)\s*→/i.test(String(c||''))).length;
+                        return !(bootstrap>0 && bootstrap>=Math.max(1,Math.ceil(cs.length*0.5)));
+                    });
 
                     // The first time an estimate is edited, establish its ORIGINAL baseline.
                     // For modern records this is the exact calculator state saved when first created.
@@ -3484,9 +3489,15 @@
     .exterior img { object-fit: cover; object-position: center; }
     .exterior-title { margin-bottom: 6px; }
     .notes-panel { border:1px solid #9ba9be; margin-top:8px; min-height: 2.38in; }
-    .notes { list-style:none; margin:0; padding:7px 11px 6px 27px; font-size:8.15px; line-height:1.15; color:#1d2a40; }
-    .notes li { position:relative; margin:0 0 5px; font-weight:700; overflow-wrap:anywhere; }
+    .notes { list-style:none; margin:0; padding:9px 12px 7px 29px; font-size:10.5px; line-height:1.28; color:#14213a; font-weight:800; }
+    .notes li { position:relative; margin:0 0 7px; font-weight:800; overflow-wrap:anywhere; }
     .notes li:before { content:'✓'; position:absolute; left:-18px; top:-1px; width:11px; height:11px; border:1px solid #7e8ba0; color:#f3b900; font-size:11px; line-height:10px; font-weight:900; text-align:center; }
+    .notes-panel .panel-title { font-size:13px; font-weight:900; letter-spacing:.04em; }
+    .notes-panel .estimate-notes-page.notes-1 + .notes { font-size:16px; line-height:1.38; }
+    .notes-panel .estimate-notes-page.notes-2 + .notes { font-size:14.5px; line-height:1.36; }
+    .notes-panel .estimate-notes-page.notes-few + .notes { font-size:12.5px; line-height:1.32; }
+    .notes-panel .estimate-notes-page.notes-medium + .notes { font-size:11px; line-height:1.28; }
+    .notes-panel .estimate-notes-page.notes-many + .notes { font-size:10px; line-height:1.22; }
 
     .footer { height:.52in; background:#061d4b; color:#ffc400; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:900; margin-top:8px; position:relative; }
     .footer:before, .footer:after { content:""; width:78px; height:2px; background:#ffc400; margin:0 18px; }

@@ -422,7 +422,17 @@ function next(j){
   'Completed':'Complete'
  };return m[status(j)]||'Review job'
 }
-function tone(s){if(s==='Completed'||['Paid','Approved','Complete','Poured','Garage Built','Passed','Not Included','N/A'].includes(s))return'green';if(s==='ON HOLD'||(s||'').includes('Correction')||(s||'').includes('Failed'))return'red';if((s||'').includes('Scheduled')||(s||'').includes('Progress')||['Electric','Inspection','Requested','Submitted'].includes(s))return'blue';return'yellow'}
+function tone(s){
+ const v=String(s||'').trim();
+ // Workflow color rules: Pending = green; not applied/submitted/started = red; Scheduled = blue.
+ if(/scheduled/i.test(v))return'blue';
+ if(/pending/i.test(v))return'green';
+ if(/not\s+(applied|submitted|started)/i.test(v))return'red';
+ if(v==='Completed'||['Paid','Approved','Complete','Poured','Garage Built','Passed','Not Included','N/A'].includes(v))return'green';
+ if(v==='ON HOLD'||/Correction|Failed/i.test(v))return'red';
+ if(/Progress/i.test(v)||['Electric','Inspection','Requested','Submitted','Applied/Submitted'].includes(v))return'blue';
+ return'yellow';
+}
 function overdue(j){
  const t=todayISO(); if(j.completed_date||j.hold_status)return false;
  return (j.concrete_scheduled&&j.concrete_scheduled<t&&!['Poured','N/A'].includes(j.concrete_status)) ||

@@ -3999,27 +3999,29 @@ async function downloadEstimatePdf(){
     }
     if(typeof window.html2pdf!=='function') throw new Error('PDF library did not load.');
 
-    // Build a dedicated export copy at the browser's true CSS Letter width
-    // (8.5in = 816px at 96dpi). Do not alter its column widths or flex/grid
-    // structure; that was what caused side text to be cropped in the last build.
+    // Create an isolated export copy. The key fix here is that we measure the
+    // clone's ACTUAL rendered width after layout instead of assuming 816px.
+    // Some estimate content can make the grid's real scroll width wider than
+    // 8.5in; capturing only 816px was cutting off both sides.
     exportHost=document.createElement('div');
     exportHost.id='pdfExportHost';
-    exportHost.style.cssText='position:fixed;left:-10000px;top:0;width:816px;background:#fff;z-index:-1;overflow:visible;';
+    exportHost.style.cssText='position:absolute;left:-20000px;top:0;background:#fff;overflow:visible;';
     document.body.appendChild(exportHost);
 
     const clone=sheet.cloneNode(true);
     clone.id='pdfExportSheet';
-    clone.style.setProperty('width','816px','important');
-    clone.style.setProperty('min-width','816px','important');
-    clone.style.setProperty('max-width','816px','important');
+    clone.style.setProperty('width','8.5in','important');
+    clone.style.setProperty('min-width','8.5in','important');
+    clone.style.setProperty('max-width','none','important');
     clone.style.setProperty('height','auto','important');
-    clone.style.setProperty('min-height','1056px','important');
+    clone.style.setProperty('min-height','11in','important');
     clone.style.setProperty('max-height','none','important');
     clone.style.setProperty('overflow','visible','important');
     clone.style.setProperty('margin','0','important');
+    exportHost.appendChild(clone);
 
-    // Keep the original estimate layout exactly, but let vertical sections grow
-    // so every note and the project price are present in the captured image.
+    // Allow the lower half to grow naturally so Notes, Project Price,
+    // disclaimers and footer are all included.
     const main=clone.querySelector('.main');
     if(main){
       main.style.setProperty('height','auto','important');
@@ -4032,8 +4034,6 @@ async function downloadEstimatePdf(){
       el.style.setProperty('overflow','visible','important');
     });
 
-    exportHost.appendChild(clone);
-
     const imgs=[...clone.querySelectorAll('img')];
     await Promise.all(imgs.map(img=>{
       if(img.complete) return Promise.resolve();
@@ -4045,12 +4045,29 @@ async function downloadEstimatePdf(){
     }));
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
 
-    const fullWidth=816;
-    const fullHeight=Math.ceil(Math.max(
-      clone.scrollHeight,
-      clone.offsetHeight,
-      clone.getBoundingClientRect().height
+    // Capture the TRUE bounding box. Include scrollWidth/scrollHeight so even
+    // text or table content extending beyond the nominal sheet is not lost.
+    const rect=clone.getBoundingClientRect();
+    const fullWidth=Math.ceil(Math.max(
+      rect.width,
+      clone.scrollWidth,
+      ...[...clone.querySelectorAll('*')].map(el=>{
+        const r=el.getBoundingClientRect();
+        return r.right-rect.left;
+      })
     ));
+    const fullHeight=Math.ceil(Math.max(
+      rect.height,
+      clone.scrollHeight,
+      ...[...clone.querySelectorAll('*')].map(el=>{
+        const r=el.getBoundingClientRect();
+        return r.bottom-rect.top;
+      })
+    ));
+
+    // Make the export host exactly match the measured content bounds.
+    exportHost.style.width=fullWidth+'px';
+    exportHost.style.height=fullHeight+'px';
 
     const worker=window.html2pdf().set({
       margin:0,
@@ -4063,6 +4080,8 @@ async function downloadEstimatePdf(){
         logging:false,
         scrollX:0,
         scrollY:0,
+        x:0,
+        y:0,
         width:fullWidth,
         height:fullHeight,
         windowWidth:fullWidth,
@@ -4076,25 +4095,19 @@ async function downloadEstimatePdf(){
     const imgData=canvas.toDataURL('image/jpeg',0.99);
 
     await worker.toPdf().get('pdf').then(function(pdf){
-      // Keep exactly one Letter page.
+      // Keep exactly one 8.5x11 Letter page and fit the COMPLETE measured
+      // estimate inside it. 0.12in margins protect all four edges without
+      // making the estimate unnecessarily narrow.
       let count=pdf.internal.getNumberOfPages();
       while(count>1){ pdf.deletePage(count); count--; }
 
-      // Use a PRINT-SAFE inset on all four sides. This is intentionally slightly
-      // smaller than edge-to-edge Letter so no letters/words can be cut off by
-      // the PDF viewer or a normal home/office printer.
       const pageW=8.5, pageH=11;
-      const safeX=0.20, safeY=0.20;
-      const safeW=pageW-(safeX*2);
-      const safeH=pageH-(safeY*2);
-      const ratio=canvas.width/canvas.height;
-
-      let drawW=safeW;
-      let drawH=drawW/ratio;
-      if(drawH>safeH){
-        drawH=safeH;
-        drawW=drawH*ratio;
-      }
+      const marginX=0.12, marginY=0.12;
+      const maxW=pageW-(marginX*2);
+      const maxH=pageH-(marginY*2);
+      const scale=Math.min(maxW/canvas.width,maxH/canvas.height);
+      const drawW=canvas.width*scale;
+      const drawH=canvas.height*scale;
       const x=(pageW-drawW)/2;
       const y=(pageH-drawH)/2;
 

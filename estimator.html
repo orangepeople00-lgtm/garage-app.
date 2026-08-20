@@ -3987,10 +3987,6 @@
 async function downloadEstimatePdf(){
   const sheet=document.querySelector('.sheet');
   if(!sheet)return;
-  if(typeof html2pdf==='undefined'){
-    alert('PDF download is still loading. Please try again in a moment.');
-    return;
-  }
 
   const filename=(document.title||'Absolute Garage Builders Estimate').replace(/[\\/:*?"<>|]+/g,'-')+'.pdf';
   const original={
@@ -3998,12 +3994,13 @@ async function downloadEstimatePdf(){
     height:sheet.style.height,
     minHeight:sheet.style.minHeight,
     maxHeight:sheet.style.maxHeight,
-    overflow:sheet.style.overflow
+    overflow:sheet.style.overflow,
+    transform:sheet.style.transform,
+    transformOrigin:sheet.style.transformOrigin
   };
 
-  // Keep the source estimate at an exact Letter-page size. html2pdf's worker
-  // already includes the compatible canvas/PDF libraries, so do not depend on
-  // separate global html2canvas or jsPDF objects.
+  // The visible estimate is designed as one Letter page. Lock it to that size
+  // before export so the PDF renderer cannot flow the footer onto page two.
   sheet.style.width='8.5in';
   sheet.style.height='11in';
   sheet.style.minHeight='11in';
@@ -4012,38 +4009,57 @@ async function downloadEstimatePdf(){
 
   try{
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
-    await html2pdf().set({
-      margin:0,
-      filename,
-      pagebreak:{mode:['avoid-all','css','legacy']},
+
+    // html2pdf is loaded by the estimate popup itself. Wait briefly if the CDN
+    // script is still finishing instead of immediately failing.
+    let tries=0;
+    while(typeof window.html2pdf!=='function' && tries<40){
+      await new Promise(r=>setTimeout(r,100));
+      tries++;
+    }
+    if(typeof window.html2pdf!=='function'){
+      throw new Error('PDF library did not load.');
+    }
+
+    const worker=window.html2pdf().set({
+      margin:[0,0,0,0],
+      filename:filename,
       image:{type:'jpeg',quality:0.98},
       html2canvas:{
-        scale:2,
+        scale:1.5,
         useCORS:true,
         allowTaint:true,
         backgroundColor:'#ffffff',
         logging:false,
         scrollX:0,
-        scrollY:0,
-        windowWidth:sheet.scrollWidth,
-        windowHeight:sheet.scrollHeight
+        scrollY:0
       },
       jsPDF:{
         unit:'in',
-        format:[8.5,11],
+        format:'letter',
         orientation:'portrait',
         compress:true
-      }
-    }).from(sheet).save();
+      },
+      pagebreak:{mode:['css','legacy']}
+    }).from(sheet);
+
+    // Render first, then explicitly trim any accidental overflow page.
+    await worker.toPdf().get('pdf').then(function(pdf){
+      const count=pdf.internal.getNumberOfPages();
+      for(let page=count;page>1;page--) pdf.deletePage(page);
+    }).save();
+
   }catch(err){
-    console.error('PDF download failed',err);
-    alert('Could not download the estimate PDF. Please try again.');
+    console.error('PDF download failed:',err);
+    alert('Could not download the estimate PDF. '+(err&&err.message?err.message:'Please try again.'));
   }finally{
     sheet.style.width=original.width;
     sheet.style.height=original.height;
     sheet.style.minHeight=original.minHeight;
     sheet.style.maxHeight=original.maxHeight;
     sheet.style.overflow=original.overflow;
+    sheet.style.transform=original.transform;
+    sheet.style.transformOrigin=original.transformOrigin;
   }
 }
 function applyPopupChange(){

@@ -566,24 +566,38 @@ function renderAllPersonalCalendars(){
 }
 
 function clearEstimateHistoryFilters(){if($('estimateHistorySearch'))$('estimateHistorySearch').value='';if($('estimateHistorySalesFilter'))$('estimateHistorySalesFilter').value='';renderEstimateHistory()}
-function estimatePricingDecision(e){
- const s=e.estimate_snapshot||{};
- const salesman=DISPLAY[e.salesman_username]||e.salesman_username||s.estimate_salesman||'Salesman';
- const mode=s.pricing_mode,raw=Number(s.pricing_input),internal=Number(s.internal_cost),finalPrice=Number(s.final_project_price||e.estimate_price),profit=Number(s.profit_amount);
- if(!mode||!Number.isFinite(internal)||internal<=0)return {available:false,decision:'Pricing method was not saved on this older estimate.'};
- let decision='';
- if(mode==='total')decision=`${salesman} decided the project price by inputting a custom Total Project Price of ${money(Number.isFinite(raw)?raw:finalPrice)}.`;
- else if(mode==='amount')decision=`${salesman} decided the project price by inputting ${money(Number.isFinite(raw)?raw:profit)} profit.`;
- else decision=`${salesman} decided the project price by inputting ${Number.isFinite(raw)?raw.toLocaleString('en-US',{maximumFractionDigits:2}):'0'}% profit.`;
- return {available:true,internal,finalPrice:Number.isFinite(finalPrice)?finalPrice:null,profit:Number.isFinite(profit)?profit:null,decision};
+function estimatePricingAccess(e){
+ const own=!!(profile&&e&&e.salesman_username===profile.username);
+ return {own,canSeeInternal:own||privateAccessManager(),canSeeMethod:privateAccessManager()};
 }
-function estimateInternalPricingHtml(e){
- if(!privateAccessManager())return '';
- const p=estimatePricingDecision(e);
- return `<div style="margin-top:14px;padding:14px 16px;border:2px solid #0f274b;border-radius:10px;background:#f3f7fc">
- <div style="font-size:12px;font-weight:900;letter-spacing:.05em;color:#0f274b;text-transform:uppercase;margin-bottom:9px">Internal Pricing — Sam & Ramsey Only</div>
- ${p.available?`<div style="font-size:17px;font-weight:900;margin-bottom:5px">Internal Cost: ${money(p.internal)}</div><div style="font-size:15px;font-weight:800;margin-bottom:5px">Final Project Price: ${money(p.finalPrice)}</div><div style="font-size:14px;line-height:1.45">${esc(p.decision)}</div>`:`<div style="font-size:14px;color:#6b7280">${esc(p.decision)}</div>`}
- </div>`;
+function estimatePricingDetails(e){
+ const s=e.estimate_snapshot||{};
+ const access=estimatePricingAccess(e);
+ if(!access.canSeeInternal)return '';
+ const internal=Number(s.internal_cost);
+ const finalPrice=Number(s.final_project_price||e.estimate_price);
+ const mode=s.pricing_mode;
+ const input=Number(s.pricing_input);
+ const profit=Number(s.profit_amount);
+ const salesman=DISPLAY[e.salesman_username]||e.salesman_username||s.estimate_salesman||'Salesman';
+ let html='<div style="margin-top:14px;padding:14px 16px;border:2px solid #0f274b;border-radius:10px;background:#f3f7fc">';
+ html+='<div style="font-size:12px;font-weight:900;letter-spacing:.05em;color:#0f274b;text-transform:uppercase;margin-bottom:9px">Internal Pricing</div>';
+ if(Number.isFinite(internal)&&internal>0){
+   html+=`<div style="font-size:17px;font-weight:900;margin-bottom:5px">Internal Cost: ${money(internal)}</div>`;
+   if(access.canSeeMethod){
+     html+=`<div style="font-size:15px;font-weight:800;margin-bottom:5px">Final Project Price: ${money(finalPrice)}</div>`;
+     let decision='';
+     if(mode==='total') decision=`${salesman} decided the project price by inputting a custom Total Project Price of ${money(Number.isFinite(input)?input:finalPrice)}.`;
+     else if(mode==='amount') decision=`${salesman} decided the project price by inputting ${money(Number.isFinite(input)?input:profit)} profit.`;
+     else if(mode==='percent') decision=`${salesman} decided the project price by inputting ${Number.isFinite(input)?input.toLocaleString('en-US',{maximumFractionDigits:2}):'0'}% profit.`;
+     else decision='The pricing method was not saved on this estimate.';
+     html+=`<div style="font-size:14px;line-height:1.45">${esc(decision)}</div>`;
+   }
+ }else{
+   html+='<div style="font-size:14px;color:#6b7280">Internal cost was not saved on this older estimate.</div>';
+ }
+ html+='</div>';
+ return html;
 }
 function estimateHistorySummary(e){
  const s=e.estimate_snapshot||{};
@@ -592,7 +606,7 @@ function estimateHistorySummary(e){
   ['Salesman',DISPLAY[e.salesman_username]||e.salesman_username||'—'],['Garage',e.garage_size||'—'],
   ['Roof',e.roof_type||'—'],['Wall Height',e.wall_height||'—'],['Siding',e.siding||'—'],
   ['Estimate',money(e.estimate_price)],['Created',new Date(e.created_at).toLocaleString()]
- ].map(x=>`<div style="margin:9px 0"><div class="small muted" style="font-weight:900;text-transform:uppercase">${esc(x[0])}</div><div style="font-weight:800">${esc(x[1])}</div></div>`).join('')+(s.notes?`<div style="margin-top:12px"><div class="small muted" style="font-weight:900;text-transform:uppercase">Estimate Notes</div><div style="white-space:pre-wrap">${esc(s.notes)}</div></div>`:'')+estimateInternalPricingHtml(e);
+ ].map(x=>`<div style="margin:9px 0"><div class="small muted" style="font-weight:900;text-transform:uppercase">${esc(x[0])}</div><div style="font-weight:800">${esc(x[1])}</div></div>`).join('')+(s.notes?`<div style="margin-top:12px"><div class="small muted" style="font-weight:900;text-transform:uppercase">Estimate Notes</div><div style="white-space:pre-wrap">${esc(s.notes)}</div></div>`:'')+estimatePricingDetails(e);
 }
 async function deleteEstimateHistory(id,customer){
  const estimate=estimateHistory.find(e=>e.id===id);
@@ -612,7 +626,7 @@ function viewEstimateHistory(id){
  const snap=e.estimate_snapshot||{},savedSheet=snap.sheet_html||'';
  const w=window.open('','_blank','width=1100,height=1000');if(!w)return alert('Your browser blocked the popup. Please allow popups and try again.');
  const hasSheet=!!savedSheet;
- w.document.write(`<!doctype html><html><head><title>${esc(e.customer)} - Estimate History</title><style>body{font-family:Arial,sans-serif;margin:0;background:#e9eef5;color:#172033}.top{position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid #cbd5e1;padding:14px 18px}.head{max-width:1050px;margin:auto;display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap}h1{font-size:20px;margin:0;color:#14233c}.muted{color:#64748b}.small{font-size:11px}.summary{max-width:1050px;margin:14px auto;background:#fff;border:1px solid #dbe2ea;border-radius:12px;padding:16px}.summary h3{margin:0 0 10px}.summary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px 18px;font-size:12px}.frame-wrap{max-width:1050px;margin:14px auto 30px;background:#d7dde6;padding:12px;border-radius:12px}iframe{width:100%;height:1250px;border:0;background:#fff;border-radius:6px}button{padding:9px 13px;border:0;border-radius:8px;font-weight:800;cursor:pointer;background:#14233c;color:#fff}@media(max-width:700px){.summary-grid{grid-template-columns:1fr 1fr}.frame-wrap{padding:4px;margin:8px}.summary{margin:8px}iframe{height:1050px}}</style></head><body><div class="top"><div class="head"><div><h1>${esc(e.customer)}</h1><div class="muted small">Saved ${new Date(e.created_at).toLocaleString()} • Created by ${esc(DISPLAY[e.salesman_username]||e.salesman_username)}</div></div><button onclick="window.close()">Close</button></div></div><div class="summary"><h3>Estimate Summary</h3><div class="summary-grid"><div><b>Price</b><br>${money(e.estimate_price)}</div><div><b>Garage</b><br>${esc(e.garage_size||'—')}</div><div><b>Roof</b><br>${esc(e.roof_type||'—')}</div><div><b>Wall Height</b><br>${esc(e.wall_height||'—')}</div><div><b>Address</b><br>${esc(e.address||'—')}</div><div><b>City</b><br>${esc(e.city||'—')}</div><div><b>Siding</b><br>${esc(e.siding||'—')}</div><div><b>Salesperson</b><br>${esc(DISPLAY[e.salesman_username]||e.salesman_username)}</div></div></div>${hasSheet?`<div class="frame-wrap"><iframe id="savedEstimateFrame" title="Saved Estimate Sheet"></iframe></div>`:`<div class="summary"><b>Older estimate record:</b> this was saved before full estimate-sheet snapshots were enabled.<div style="margin-top:12px">${estimateHistorySummary(e)}</div></div>`}</body></html>`);
+ w.document.write(`<!doctype html><html><head><title>${esc(e.customer)} - Estimate History</title><style>body{font-family:Arial,sans-serif;margin:0;background:#e9eef5;color:#172033}.top{position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid #cbd5e1;padding:14px 18px}.head{max-width:1050px;margin:auto;display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap}h1{font-size:20px;margin:0;color:#14233c}.muted{color:#64748b}.small{font-size:11px}.summary{max-width:1050px;margin:14px auto;background:#fff;border:1px solid #dbe2ea;border-radius:12px;padding:16px}.summary h3{margin:0 0 10px}.summary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px 18px;font-size:12px}.frame-wrap{max-width:1050px;margin:14px auto 30px;background:#d7dde6;padding:12px;border-radius:12px}iframe{width:100%;height:1250px;border:0;background:#fff;border-radius:6px}button{padding:9px 13px;border:0;border-radius:8px;font-weight:800;cursor:pointer;background:#14233c;color:#fff}@media(max-width:700px){.summary-grid{grid-template-columns:1fr 1fr}.frame-wrap{padding:4px;margin:8px}.summary{margin:8px}iframe{height:1050px}}</style></head><body><div class="top"><div class="head"><div><h1>${esc(e.customer)}</h1><div class="muted small">Saved ${new Date(e.created_at).toLocaleString()} • Created by ${esc(DISPLAY[e.salesman_username]||e.salesman_username)}</div></div><button onclick="window.close()">Close</button></div></div><div class="summary"><h3>Estimate Summary</h3><div class="summary-grid"><div><b>Price</b><br>${money(e.estimate_price)}</div><div><b>Garage</b><br>${esc(e.garage_size||'—')}</div><div><b>Roof</b><br>${esc(e.roof_type||'—')}</div><div><b>Wall Height</b><br>${esc(e.wall_height||'—')}</div><div><b>Address</b><br>${esc(e.address||'—')}</div><div><b>City</b><br>${esc(e.city||'—')}</div><div><b>Siding</b><br>${esc(e.siding||'—')}</div><div><b>Salesperson</b><br>${esc(DISPLAY[e.salesman_username]||e.salesman_username)}</div></div><div style="margin-top:12px">${estimatePricingDetails(e)}</div></div>${hasSheet?`<div class="frame-wrap"><iframe id="savedEstimateFrame" title="Saved Estimate Sheet"></iframe></div>`:`<div class="summary"><b>Older estimate record:</b> this was saved before full estimate-sheet snapshots were enabled.<div style="margin-top:12px">${estimateHistorySummary(e)}</div></div>`}</body></html>`);
  w.document.close();
  if(hasSheet){const frame=w.document.getElementById('savedEstimateFrame');if(frame)frame.srcdoc=savedSheet}
  w.focus();

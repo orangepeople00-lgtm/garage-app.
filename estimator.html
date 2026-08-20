@@ -3316,6 +3316,14 @@ async function openPopupChatGPT(){
                     estimate_price: estimateNumberFromText(quote),
                     snapshot: {
                         estimate_salesman: salesmanName,
+                        internal_cost: estimateNumberFromText(document.getElementById('internalTotal')?.textContent || '0'),
+                        final_project_price: estimateNumberFromText(document.getElementById('customerQuote')?.textContent || quote || '0'),
+                        pricing_mode: (document.getElementById('profitMode')?.value || 'percent'),
+                        pricing_input: Number(document.getElementById('profitValue')?.value || 0),
+                        profit_amount: Math.max(0,
+                            estimateNumberFromText(document.getElementById('customerQuote')?.textContent || quote || '0') -
+                            estimateNumberFromText(document.getElementById('internalTotal')?.textContent || '0')
+                        ),
                         pitch: `${pitch}/12`,
                         overhead_door: `${overheadDoorWidth}' x ${overheadDoorHeight}' ${overheadDoorStyleText}`,
                         service_door: selectedText('doorType') || doorType || '',

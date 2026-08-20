@@ -3,7 +3,8 @@
 <head><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Absolute Garage Builders • Quick Estimator</title>
+    <!-- GARAGE APP BUILD: 2026-08-20 FULL AUDIT FIX -->
+<title>Absolute Garage Builders • Quick Estimator</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -594,6 +595,34 @@
                             <div id="manualEavesWrap" class="hidden mt-2">
                                 <input id="manualEavesSize" type="number" min="1" step="0.5" placeholder="Eaves inches" oninput="calculateEstimate()"
                                        class="calc-input w-full bg-zinc-900 border border-zinc-600 rounded-xl px-3 py-2 text-sm">
+                                <div class="text-[10px] text-zinc-500 mt-1">Manual eaves 8&quot; or larger add $1,200.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Roof Patio Section -->
+                    <div class="mb-6 border border-emerald-900/70 rounded-2xl p-5 bg-emerald-950/20">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="section-header flex items-center gap-x-2"><i class="fa-solid fa-house-chimney-window"></i><span>ROOF PATIO</span></div>
+                            <label class="flex items-center cursor-pointer"><input type="checkbox" id="roofPatioEnabled" onchange="toggleRoofPatio(); calculateEstimate()" class="accent-emerald-500 w-4 h-4"><span class="ml-2 text-xs font-medium text-zinc-300">Add Roof Patio</span></label>
+                        </div>
+                        <div id="roofPatioOptions" class="hidden">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                <div><label class="text-xs text-zinc-400 block mb-1">Roof Patio Depth</label>
+                                    <select id="roofPatioDepth" onchange="toggleManualRoofPatio(); calculateEstimate()" class="calc-input w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-sm">
+                                        <option value="4">4 ft</option><option value="6" selected>6 ft</option><option value="8">8 ft</option><option value="10">10 ft</option><option value="manual">Manual Entry</option>
+                                    </select>
+                                    <div id="manualRoofPatioWrap" class="hidden mt-2"><input id="manualRoofPatioDepth" type="number" min="1" step="0.5" placeholder="Patio depth in feet" oninput="calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-xl px-3 py-2 text-sm"></div>
+                                </div>
+                                <div><label class="text-xs text-zinc-400 block mb-1">Location</label><div class="h-[42px] flex items-center px-3 bg-zinc-900 border border-zinc-700 rounded-xl"><label class="flex items-center cursor-pointer"><input type="checkbox" id="roofPatioSide" onchange="calculateEstimate()" class="accent-emerald-500 w-4 h-4"><span class="ml-2 text-sm">Side Roof Patio</span></label></div><div class="text-[10px] text-zinc-500 mt-1">Default is rear roof patio.</div></div>
+                                <div><label class="text-xs text-zinc-400 block mb-1">Calculated Size</label><div id="roofPatioSizeDisplay" class="h-[42px] flex items-center px-3 bg-zinc-950 border border-zinc-700 rounded-xl text-sm font-bold">—</div>
+                                    <div class="text-[10px] text-zinc-500 mt-1">Includes concrete, labor and materials; 4 support posts included in material cost.</div>
+                                    <div id="roofPatioChicagoWarning" class="hidden mt-2 rounded-xl border border-red-600 bg-red-950/50 px-3 py-2 text-xs font-extrabold text-red-300">
+                                        CHICAGO PERMIT WARNING: 8' is the maximum roof patio depth with a standard permit. A 10' roof patio requires a special permit.
+                                    </div>
+                                    <div id="chicagoStructureAreaWarning" class="hidden mt-2 rounded-xl border border-red-600 bg-red-950/50 px-3 py-2 text-xs font-extrabold text-red-300">
+                                        CHICAGO SIZE WARNING: Garage + roof patio exceeds Chicago's allowed detached-garage building area. Roof patio area counts; concrete pads do not count.<br><span class="text-[10px] font-medium">Usually the limit is 600 sq. ft., but Chicago allows an allowance up to 614 sq. ft.</span>
+                                    </div></div>
                             </div>
                         </div>
                     </div>
@@ -1366,7 +1395,6 @@
         // City change handler - show/hide Chicago options
         function onCityChange() {
             const city = document.getElementById('city').value;
-            const chicagoDiv = document.getElementById('chicagoOptions');
             const wheelingContainer = document.getElementById('wheelingContainer');
             const arlingtonContainer = document.getElementById('arlingtonContainer');
             
@@ -1501,6 +1529,24 @@
             return Number.isFinite(n)&&n>0?n:6;
         }
 
+        function toggleRoofPatio(){
+            const enabled=!!document.getElementById('roofPatioEnabled')?.checked;
+            document.getElementById('roofPatioOptions')?.classList.toggle('hidden',!enabled);
+            toggleManualRoofPatio();
+        }
+        function toggleManualRoofPatio(){
+            document.getElementById('manualRoofPatioWrap')?.classList.toggle('hidden',document.getElementById('roofPatioDepth')?.value!=='manual');
+        }
+        function getRoofPatioDepth(){
+            const sel=document.getElementById('roofPatioDepth');
+            if(!sel)return 6;
+            if(sel.value==='manual'){
+                const n=parseFloat(document.getElementById('manualRoofPatioDepth')?.value||'');
+                return Number.isFinite(n)&&n>0?n:0;
+            }
+            return Math.max(0,parseFloat(sel.value)||0);
+        }
+
         function calculateEstimate() {
             const city = document.getElementById('city').value;
             const garageDims=getGarageDimensions();
@@ -1511,7 +1557,38 @@
             const eaveDir = document.getElementById('eaveDir').value;
             const pitchStr = document.getElementById('pitch').value;
             const eavesInches = getEavesInches();
-            const eavesSurcharge = (eavesInches === 8 || eavesInches === 12) ? 1200 : 0;
+            const eavesSurcharge = eavesInches >= 8 ? 1200 : 0;
+            const roofPatioEnabled=!!document.getElementById('roofPatioEnabled')?.checked;
+            const roofPatioDepth=roofPatioEnabled?getRoofPatioDepth():0;
+            const roofPatioSide=roofPatioEnabled&&!!document.getElementById('roofPatioSide')?.checked;
+            const roofPatioSpan=roofPatioSide?depth:width;
+            const roofPatioArea=roofPatioEnabled?roofPatioSpan*roofPatioDepth:0;
+            const roofPatioConcreteCost=roofPatioArea*8.5;
+            const roofPatioLaborCost=roofPatioArea*6;
+            const roofPatioMaterialUnits=roofPatioEnabled?Math.ceil(roofPatioDepth/2):0;
+            const roofPatioMaterialCost=roofPatioMaterialUnits*550;
+            const roofPatioPostCount=roofPatioEnabled?4:0;
+            const roofPatioPostCost=0; // Four support posts are included in the $550-per-2-ft material charge.
+            const roofPatioTotalCost=roofPatioConcreteCost+roofPatioLaborCost+roofPatioMaterialCost;
+            const roofPatioSizeDisplay=document.getElementById('roofPatioSizeDisplay');
+            if(roofPatioSizeDisplay)roofPatioSizeDisplay.textContent=roofPatioEnabled&&roofPatioDepth>0?`${roofPatioSpan}' x ${roofPatioDepth}' ${roofPatioSide?'Side':'Rear'} Roof Patio`:'—';
+            const roofPatioChicagoWarning=document.getElementById('roofPatioChicagoWarning');
+            if(roofPatioChicagoWarning){
+                roofPatioChicagoWarning.classList.toggle('hidden',!(roofPatioEnabled&&city==='Chicago'&&roofPatioDepth>8));
+            }
+            const chicagoStructureAreaWarning=document.getElementById('chicagoStructureAreaWarning');
+            if(chicagoStructureAreaWarning){
+                const chicagoStructureArea=(width*depth)+roofPatioArea;
+                const chicagoAreaActive=city==='Chicago'&&chicagoStructureArea>600;
+                chicagoStructureAreaWarning.classList.toggle('hidden',!chicagoAreaActive);
+                if(city==='Chicago'&&chicagoStructureArea>614){
+                    chicagoStructureAreaWarning.className='mt-2 rounded-xl border border-red-600 bg-red-950/50 px-3 py-2 text-xs font-extrabold text-red-300';
+                    chicagoStructureAreaWarning.innerHTML=`CHICAGO SIZE WARNING: Garage + roof patio = ${chicagoStructureArea.toFixed(0)} sq. ft. This exceeds Chicago's 614 sq. ft. allowance. Roof patio area counts; concrete pads do not count.`;
+                }else if(city==='Chicago'&&chicagoStructureArea>=601&&chicagoStructureArea<=614){
+                    chicagoStructureAreaWarning.className='mt-2 rounded-xl border border-red-700/70 bg-red-950/30 px-2 py-1 text-[10px] font-bold text-red-400';
+                    chicagoStructureAreaWarning.textContent='600 square foot max limit — allowance up to 614 from City of Chicago.';
+                }
+            }
             const overheadDoorHeight = parseInt(document.getElementById('overheadDoorHeight').value) || 7;
             if (overheadDoorHeight > 7) {
                 const requiredWallHeight = overheadDoorHeight + 1;
@@ -1819,7 +1896,8 @@
                 wallHeightSurcharge +
                 roofUpgrade + 
                 pitchSurcharge +
-                eavesSurcharge + 
+                eavesSurcharge +
+                roofPatioTotalCost +
                 electricalCost + 
                 overheadCost + 
                 sideDoorCost + 
@@ -1855,7 +1933,9 @@
             // === UPDATE UI ===
             updateBreakdown({
                 width, depth, floorArea, totalConcreteArea, apronArea, slabArea, totalExtraPatioArea,
-                packageCost, framingCost, wallHeightSurcharge, roofUpgrade, pitchSurcharge, pitchStr, eavesInches, eavesSurcharge, electricalCost, overheadCost, sideDoorCost, sideDoorLabel,
+                packageCost, framingCost, wallHeightSurcharge, roofUpgrade, pitchSurcharge, pitchStr, eavesInches, eavesSurcharge,
+                roofPatioEnabled, roofPatioDepth, roofPatioSide, roofPatioSpan, roofPatioArea, roofPatioConcreteCost, roofPatioLaborCost, roofPatioMaterialUnits, roofPatioMaterialCost, roofPatioPostCount, roofPatioPostCost, roofPatioTotalCost,
+                electricalCost, overheadCost, sideDoorCost, sideDoorLabel,
                 concreteCost, prepCost, fiveInchCost, sixInchCost, concreteThickness, garageConcreteArea, extraConcrete1Thickness, extraConcrete2Thickness, extraConcrete1ThicknessCost, extraConcrete2ThicknessCost, extraConcreteThicknessCost, patio1Area, patio2Area, excavation,
                 demoCost, removalCost, additionalRemovalCost, additionalRemovalArea, epaCost,
                 footingCost, rodsCost, retainCost, retainRate, retainType, frostFootingCost, perimeterLf,
@@ -1938,6 +2018,12 @@
             }
             if (data.eavesSurcharge > 0) {
                 lines.push({ label: `Eaves upgrade (${data.eavesInches}")`, amount: data.eavesSurcharge, section: 'core' });
+            }
+            if(data.roofPatioEnabled&&data.roofPatioArea>0){
+                const loc=data.roofPatioSide?'Side':'Rear';
+                lines.push({label:`${loc} roof patio concrete (${data.roofPatioSpan}×${data.roofPatioDepth} = ${data.roofPatioArea} sq ft × $8.50)`,amount:data.roofPatioConcreteCost,section:'core'});
+                lines.push({label:`${loc} roof patio labor (${data.roofPatioArea} sq ft × $6.00)`,amount:data.roofPatioLaborCost,section:'core'});
+                lines.push({label:`Roof patio materials (${data.roofPatioMaterialUnits} × $550 per 2 ft; includes 4 support posts)`,amount:data.roofPatioMaterialCost,section:'core'});
             }
             if (data.wallHeightSurcharge > 0) {
                 lines.push({ label: `Wall height surcharge (${data.wallHeight} ft)`, amount: data.wallHeightSurcharge, section: 'core' });
@@ -2273,7 +2359,7 @@
 
         const ESTIMATE_FIELD_LABELS={
             city:'City',width:'Garage Width',depth:'Garage Depth',customWidth:'Custom Garage Width',customDepth:'Custom Garage Depth',
-            wallHeight:'Wall Height',roofType:'Roof Style',eaveDir:'Gable Eaves',pitch:'Roof Pitch',eavesSize:'Eaves',manualEavesSize:'Manual Eaves Size',
+            wallHeight:'Wall Height',roofType:'Roof Style',eaveDir:'Gable Eaves',pitch:'Roof Pitch',eavesSize:'Eaves',manualEavesSize:'Manual Eaves Size',roofPatioEnabled:'Roof Patio',roofPatioDepth:'Roof Patio Depth',manualRoofPatioDepth:'Manual Roof Patio Depth',roofPatioSide:'Side Roof Patio',
             newConcrete:'New Concrete',apronDepth:'Apron Depth',concreteThickness:'Concrete Thickness',excavation:'Excavation / Stone Loads',
             frostProtectedFooting:'42" Frost Protected Footing',retainType:'Retaining Wall Type',retainWallHeight:'Retaining Wall Height',
             demoExisting:'Demolition',demoSlabPreset:'Demo Garage / Slab Size',demoApronDepth:'Demo Apron Depth',
@@ -2296,7 +2382,8 @@
             if(value===true)return 'Yes';
             if(value===false)return 'No';
             if(value===null||value===undefined||value==='')return 'None';
-            const footKeys=['width','depth','customWidth','customDepth','wallHeight','apronDepth','demoApronDepth','overheadDoorHeight','overheadDoorWidth','manualEavesSize'];
+            if(key==='manualEavesSize' && !String(value).includes('"'))return `${value}"`;
+            const footKeys=['width','depth','customWidth','customDepth','wallHeight','apronDepth','demoApronDepth','overheadDoorHeight','overheadDoorWidth','roofPatioDepth','manualRoofPatioDepth'];
             if(footKeys.includes(key) && !String(value).includes("'"))return `${value}'`;
             return String(value);
         }
@@ -2311,7 +2398,7 @@
             }
             if(typeof value==='boolean')return value?'true':'false';
             let s=String(value).trim();
-            if(['width','depth','customWidth','customDepth','wallHeight','apronDepth','demoApronDepth','overheadDoorHeight','overheadDoorWidth','manualEavesSize'].includes(key)){
+            if(['width','depth','customWidth','customDepth','wallHeight','apronDepth','demoApronDepth','overheadDoorHeight','overheadDoorWidth','manualEavesSize','roofPatioDepth','manualRoofPatioDepth'].includes(key)){
                 s=s.replace(/[′’'"]/g,'').trim();
                 const n=Number(s);
                 if(Number.isFinite(n))return String(n);
@@ -2967,10 +3054,6 @@
 
         function updateExteriorLibraryPreview() {
             const m=getExteriorPhotoMatch();
-            const img=document.getElementById('photoLibraryPreview');
-            const status=document.getElementById('photoMatchStatus');
-            if(img&&m.photo) img.src=m.photo.src;
-            if(status) status.textContent='';
             return m.photo;
         }
 
@@ -3273,10 +3356,11 @@
                 // Exact Wally row order.
                 addSpec('Garage Size', `${width}' x ${depth}'`);
                 addSpec('Roof Style', `${roofLabel} - ${pitch} Pitch with Vents`);
-                addSpec('Roofing', 'Architectural Shingles + 15lbs Felt Paper + 1/2" Sheathing');
-            if (salesman.wally) addSpec('Roof Sheathing', '1/2"');
+                addSpec('Roofing', 'Architectural Shingles + 15lbs Felt Paper');
+                addSpec('Roof Sheathing', '1/2"');
                 addSpec('Overhang', checked('gutters') ? (roofType === 'gable' ? 'Seamless Gutters 2 Sides - 2 Down Spouts' : 'Seamless Gutters 4 Sides - 2 Down Spouts') : '" "');
-                addSpec('Eaves', `${getEavesInches()}" Eaves - 4 Sides Boxed`);
+                addSpec('Eaves', `${getEavesInches()}" Eaves - Boxed 4 Sides`);
+                if(checked('roofPatioEnabled')){const d=getRoofPatioDepth(),side=checked('roofPatioSide'),span=side?depth:width;addSpec('Roof Patio',`${span}' x ${d}' ${side?'Side':'Rear'} Roof Patio - 4 Support Posts`);}
                 addSpec('Rafters', '2x6 16" O.C.');
                 addSpec('Wall Height', `${wallHeight}'`);
                 addSpec('Siding', sidingType === 'hardie' ? hardieWally : vinylWally);
@@ -3288,7 +3372,7 @@
                 addSpec('Overhead Door', `${overheadDoorWidth}' x ${overheadDoorHeight}' ${overheadDoorStyleText} Door`);
                 const openerQtyPrint=parseInt(val('openerQty'))||1;
                 const openerTypePrint=val('openerType')||'2200';
-                const openerNamePrint=openerTypePrint==='8500'?'LiftMaster 8500 Wall Mount JackShaft Opener':'LiftMaster 2200 3/4HP Opener';
+                const openerNamePrint=openerTypePrint==='8500'?'LiftMaster 8500 Wall Mount JackShaft Opener':'LiftMaster 2220 3/4HP Opener';
                 addSpec('Opener', `${openerQtyPrint > 1 ? '('+openerQtyPrint+') ' : ''}${openerNamePrint}`);
 
                 if (doorType === 'party') {
@@ -3313,6 +3397,7 @@
                 addSpec('Siding', `${sidingType === 'hardie' ? 'Hardieboard / Cement Board Siding' : 'Premium Vinyl Siding'} - ${sidingColor}`);
                 addSpec('Double Wall', '1/2" Plywood or Choice');
                 addSpec('Eaves', `${getEavesInches()}" Eaves - 4 Sides Boxed`);
+                if(checked('roofPatioEnabled')){const d=getRoofPatioDepth(),side=checked('roofPatioSide'),span=side?depth:width;addSpec('Roof Patio',`${span}' x ${d}' ${side?'Side':'Rear'} Roof Patio - 4 Support Posts`);}
                 addSpec('Overhang', checked('gutters') ? (roofType === 'gable' ? 'Seamless Gutters 2 Sides - 2 Down Spouts' : 'Seamless Gutters 4 Sides - 2 Down Spouts') : '" "');
                 addSpec('Cross Ties', '2x6 48 O.C');
                 addSpec('Roofing', 'Architectural Shingles + 15lbs Felt Paper');
@@ -3322,7 +3407,7 @@
                 addSpec('Overhead Door', `${overheadDoorWidth}' x ${overheadDoorHeight}' ${overheadDoorStyleText} Door`);
                 const openerQtyPrint=parseInt(val('openerQty'))||1;
                 const openerTypePrint=val('openerType')||'2200';
-                const openerNamePrint=openerTypePrint==='8500'?'LiftMaster 8500 Wall Mount JackShaft Opener':'LiftMaster 2200 3/4HP Opener';
+                const openerNamePrint=openerTypePrint==='8500'?'LiftMaster 8500 Wall Mount JackShaft Opener':'LiftMaster 2220 3/4HP Opener';
                 addSpec('Opener', `${openerQtyPrint > 1 ? '('+openerQtyPrint+') ' : ''}${openerNamePrint}`);
                 if (doorType === 'party') addSpec('Party Door', "6' x 7' Steel Door");
                 else if (doorType === 'french') addSpec('French Door', 'French Door Allowance');
@@ -3357,6 +3442,7 @@
                 ? ` with new reinforced concrete${apronDepth > 0 ? ` and ${apronDepth}' full-width apron` : ''}`
                 : '';
             notes.push(`Build new ${width}' x ${depth}' ${noteRoof} roof garage${concreteOpening}.`);
+            if(checked('roofPatioEnabled')){const d=getRoofPatioDepth(),side=checked('roofPatioSide'),span=side?depth:width;notes.push(`${span}' x ${d}' ${side?'side':'rear'} roof patio with new reinforced concrete and four support posts included.`);}
 
             // Additional concrete follows the main garage/concrete scope.
             const p1Custom = val('extraPatio1Custom').trim();
@@ -3836,6 +3922,11 @@ async function openPopupChatGPT(){
             const manualEaves=document.getElementById('manualEavesSize'); if(manualEaves)manualEaves.value='';
             toggleManualEaves();
             
+            const roofPatioEnabledEl=document.getElementById('roofPatioEnabled'); if(roofPatioEnabledEl)roofPatioEnabledEl.checked=false;
+            const roofPatioDepthEl=document.getElementById('roofPatioDepth'); if(roofPatioDepthEl)roofPatioDepthEl.value='6';
+            const manualRoofPatioDepthEl=document.getElementById('manualRoofPatioDepth'); if(manualRoofPatioDepthEl)manualRoofPatioDepthEl.value='';
+            const roofPatioSideEl=document.getElementById('roofPatioSide'); if(roofPatioSideEl)roofPatioSideEl.checked=false;
+            toggleRoofPatio();
             document.getElementById('newConcrete').checked = true;
             document.getElementById('apronDepth').value = '3';
             document.getElementById('concreteThickness').value = '4';
@@ -3862,7 +3953,6 @@ async function openPopupChatGPT(){
             const sdf = document.getElementById('serviceDoorFrontSide'); if (sdf) sdf.value = 'right';
             toggleServiceDoorLocationFields();
             document.getElementById('addlOverheadDoors').value = '0';
-            document.getElementById('addlOpeners').value = '0';
             document.getElementById('wallHeight').value = '8';
             document.getElementById('overheadDoorHeight').value = '7';
             const odw = document.getElementById('overheadDoorWidth'); if (odw) odw.value = '16';
@@ -3930,7 +4020,7 @@ async function openPopupChatGPT(){
                 'extraConcrete1Type', 'extraConcrete1Thickness', 'extraPatio1Length', 'extraPatio1Custom',
                 'extraConcrete2Type', 'extraConcrete2Thickness', 'extraPatio2Length', 'extraPatio2Custom',
                 'demoExisting', 'demoSlabPreset', 'demoApronDepth', 'oldConcreteOverride', 'additionalRemovalDims', 'epaFee',
-                'doorType', 'serviceDoorLocation', 'serviceDoorFrontSide', 'addlOverheadDoors', 'addlOpeners', 'overheadDoorHeight', 'overheadDoorWidth', 'overheadDoorStyle', 'doorOffset',
+                'doorType', 'serviceDoorLocation', 'serviceDoorFrontSide', 'addlOverheadDoors', 'overheadDoorHeight', 'overheadDoorWidth', 'overheadDoorStyle', 'doorOffset',
                 'elecBase', 'evCharger', 'threeWaySwitch', 'extraLights', 'extraWindows', 'windowType', 'windowQty', 'windowPlacement', 'salesman',
                 'retainType', 'retainWallHeight', 'frostProtectedFooting', 'gutters', 'aluminumSoffit', 'sidingType', 'vinylColor', 'hardieColor',
                 'firewallWalls', 'hurricaneTies', 'wheelingCharge', 'arlingtonSurvey', 'andrewPermit', 'forceFootingChicago'

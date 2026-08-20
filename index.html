@@ -566,6 +566,25 @@ function renderAllPersonalCalendars(){
 }
 
 function clearEstimateHistoryFilters(){if($('estimateHistorySearch'))$('estimateHistorySearch').value='';if($('estimateHistorySalesFilter'))$('estimateHistorySalesFilter').value='';renderEstimateHistory()}
+function estimatePricingDecision(e){
+ const s=e.estimate_snapshot||{};
+ const salesman=DISPLAY[e.salesman_username]||e.salesman_username||s.estimate_salesman||'Salesman';
+ const mode=s.pricing_mode,raw=Number(s.pricing_input),internal=Number(s.internal_cost),finalPrice=Number(s.final_project_price||e.estimate_price),profit=Number(s.profit_amount);
+ if(!mode||!Number.isFinite(internal)||internal<=0)return {available:false,decision:'Pricing method was not saved on this older estimate.'};
+ let decision='';
+ if(mode==='total')decision=`${salesman} decided the project price by inputting a custom Total Project Price of ${money(Number.isFinite(raw)?raw:finalPrice)}.`;
+ else if(mode==='amount')decision=`${salesman} decided the project price by inputting ${money(Number.isFinite(raw)?raw:profit)} profit.`;
+ else decision=`${salesman} decided the project price by inputting ${Number.isFinite(raw)?raw.toLocaleString('en-US',{maximumFractionDigits:2}):'0'}% profit.`;
+ return {available:true,internal,finalPrice:Number.isFinite(finalPrice)?finalPrice:null,profit:Number.isFinite(profit)?profit:null,decision};
+}
+function estimateInternalPricingHtml(e){
+ if(!privateAccessManager())return '';
+ const p=estimatePricingDecision(e);
+ return `<div style="margin-top:14px;padding:14px 16px;border:2px solid #0f274b;border-radius:10px;background:#f3f7fc">
+ <div style="font-size:12px;font-weight:900;letter-spacing:.05em;color:#0f274b;text-transform:uppercase;margin-bottom:9px">Internal Pricing — Sam & Ramsey Only</div>
+ ${p.available?`<div style="font-size:17px;font-weight:900;margin-bottom:5px">Internal Cost: ${money(p.internal)}</div><div style="font-size:15px;font-weight:800;margin-bottom:5px">Final Project Price: ${money(p.finalPrice)}</div><div style="font-size:14px;line-height:1.45">${esc(p.decision)}</div>`:`<div style="font-size:14px;color:#6b7280">${esc(p.decision)}</div>`}
+ </div>`;
+}
 function estimateHistorySummary(e){
  const s=e.estimate_snapshot||{};
  return [
@@ -573,7 +592,7 @@ function estimateHistorySummary(e){
   ['Salesman',DISPLAY[e.salesman_username]||e.salesman_username||'—'],['Garage',e.garage_size||'—'],
   ['Roof',e.roof_type||'—'],['Wall Height',e.wall_height||'—'],['Siding',e.siding||'—'],
   ['Estimate',money(e.estimate_price)],['Created',new Date(e.created_at).toLocaleString()]
- ].map(x=>`<div style="margin:9px 0"><div class="small muted" style="font-weight:900;text-transform:uppercase">${esc(x[0])}</div><div style="font-weight:800">${esc(x[1])}</div></div>`).join('')+(s.notes?`<div style="margin-top:12px"><div class="small muted" style="font-weight:900;text-transform:uppercase">Estimate Notes</div><div style="white-space:pre-wrap">${esc(s.notes)}</div></div>`:'');
+ ].map(x=>`<div style="margin:9px 0"><div class="small muted" style="font-weight:900;text-transform:uppercase">${esc(x[0])}</div><div style="font-weight:800">${esc(x[1])}</div></div>`).join('')+(s.notes?`<div style="margin-top:12px"><div class="small muted" style="font-weight:900;text-transform:uppercase">Estimate Notes</div><div style="white-space:pre-wrap">${esc(s.notes)}</div></div>`:'')+estimateInternalPricingHtml(e);
 }
 async function deleteEstimateHistory(id,customer){
  const estimate=estimateHistory.find(e=>e.id===id);

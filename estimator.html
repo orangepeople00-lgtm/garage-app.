@@ -376,14 +376,14 @@
         }
         .back-production-btn:hover { background:#223451; }
         @media print { .back-production-btn { display:none!important; } }
-
-    /* Dynamic customer estimate Notes / Inclusions sizing */
-    .notes-panel.notes-1 .notes { font-size:22px!important; font-weight:800!important; line-height:1.45!important; }
-    .notes-panel.notes-2 .notes { font-size:20px!important; font-weight:800!important; line-height:1.45!important; }
-    .notes-panel.notes-few .notes { font-size:17px!important; font-weight:800!important; line-height:1.4!important; }
-    .notes-panel.notes-medium .notes { font-size:14px!important; font-weight:800!important; line-height:1.32!important; }
-    .notes-panel.notes-many .notes { font-size:11.5px!important; font-weight:800!important; line-height:1.25!important; }
-    .notes-panel .notes li { margin-bottom:.62em!important; }
+    
+    .estimate-notes-page .notes-list { font-weight:800; line-height:1.35; }
+    .estimate-notes-page.notes-1 .notes-list { font-size:21px; }
+    .estimate-notes-page.notes-2 .notes-list { font-size:19px; }
+    .estimate-notes-page.notes-few .notes-list { font-size:17px; }
+    .estimate-notes-page.notes-medium .notes-list { font-size:14px; }
+    .estimate-notes-page.notes-many .notes-list { font-size:11.5px; }
+    .estimate-notes-page .notes-list li { margin-bottom:.8em; }
 </style>
 </head>
 <body class="bg-zinc-950 text-zinc-200"><div style="position:fixed;bottom:8px;left:8px;z-index:999999;background:#166534;color:white;padding:4px 7px;border-radius:6px;font:800 9px Arial">CLEAN ESTIMATOR BUILD</div><div style="position:fixed;bottom:10px;right:10px;z-index:999999;background:#dc2626;color:#fff;padding:6px 10px;border-radius:8px;font:900 11px Arial">ESTIMATOR UPDATE V2</div><a id="backToProductionBtn" class="back-production-btn" href="index.html?v=20260818v2">← Back to Production</a>
@@ -619,8 +619,8 @@
                             <div>
                                 <label class="text-xs text-zinc-400 block mb-1">Excavation / Stone Quantity</label>
                                 <select id="excavation" onchange="calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm">
-                                    <option value="0" selected>0 Loads — $0</option>
-                                    <option value="1">1 Load — $500</option>
+                                    <option value="0">0 Loads — $0</option>
+                                    <option value="1" selected>1 Load — $500</option>
                                     <option value="2">2 Loads — $1,000</option>
                                     <option value="3">3 Loads — $1,500</option>
                                     <option value="4">4 Loads — $2,000</option>
@@ -631,7 +631,7 @@
                                     <option value="9">9 Loads — $4,500</option>
                                     <option value="10">10 Loads — $5,000</option>
                                 </select>
-                                <div class="text-[10px] text-zinc-500 mt-0.5">Excavation / stone loads • default 0 • $500 per load</div>
+                                <div class="text-[10px] text-zinc-500 mt-0.5">Excavation / stone loads • default 1 • $500 per load</div>
                             </div>
                         </div>
 
@@ -865,7 +865,7 @@
                                     <option value="1" selected>1 Opener</option><option value="2">2 Openers</option>
                                 </select>
                                 <select id="openerType" onchange="calculateEstimate()" class="calc-input w-full mt-2 bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm">
-                                    <option value="2200" selected>LiftMaster 2220 — 3/4HP Opener</option>
+                                    <option value="2200" selected>LiftMaster 2200 — 3/4HP Opener</option>
                                     <option value="8500">LiftMaster 8500 Wall Mount JackShaft Opener (+$400)</option>
                                 </select>
                             </div>
@@ -1355,14 +1355,6 @@
                 else chicagoDiv.classList.add('hidden');
             }
             
-            // Suburb default: visibly check Footing & Rods.
-            // It remains enabled so it can be manually unchecked for existing-slab/no-concrete jobs.
-            const footingCheckbox = document.getElementById('forceFootingChicago');
-            if (footingCheckbox) {
-                footingCheckbox.checked = city !== 'Chicago';
-                footingCheckbox.disabled = false;
-            }
-
             // Pre-check Wheeling if city is Wheeling
             if (city === 'Wheeling') {
                 document.getElementById('wheelingCharge').checked = true;
@@ -1554,7 +1546,7 @@
             const hasGutters = document.getElementById('gutters').checked;
             const hasSoffit = document.getElementById('aluminumSoffit').checked;
             const firewallWalls = parseInt(document.getElementById('firewallWalls').value) || 0;
-            const firewall = firewallWalls * 800;
+            const firewall = firewallWalls * 600;
             const hurricane = document.getElementById('hurricaneTies').checked ? 300 : 0;
             const wheeling = (city === 'Wheeling' && document.getElementById('wheelingCharge').checked) ? 500 : 0;
             const arlingtonSurvey = (city === 'Arlington Heights' && document.getElementById('arlingtonSurvey').checked) ? 2500 : 0;
@@ -1729,10 +1721,8 @@
             // Footing & rods
             let footingCost = 0;
             let rodsCost = 0;
-            // Footing charge follows the visible checkbox only.
-            // Suburbs auto-check it in onCityChange(), but the user may uncheck it
-            // for an existing slab / no-new-concrete job without being charged.
-            if (forceFootingChicago) {
+            const isOutsideChicago = city !== 'Chicago';
+            if (isOutsideChicago || forceFootingChicago) {
                 const perimeter = 2 * (width + depth);
                 footingCost = perimeter * 40;
                 rodsCost = 300;
@@ -1777,8 +1767,8 @@
                 soffitCost = Math.round(soffitFt * 10.75 * 100) / 100;
             }
             
-            // Chicago includes the $550 permit allowance. Suburb permit fees are paid by customer.
-            const permitCost = city === 'Chicago' ? 550 : 0;
+            // Permit always included
+            const permitCost = 550;
             
             // === INTERNAL TOTAL ===
             const internalTotal = 
@@ -2288,30 +2278,183 @@
         }
 
         const GARAGE_PHOTO_LIBRARY = [
-            // CURRENT CURATED ESTIMATE-SHEET EXAMPLE LIBRARY.
-            // #8 is intentionally excluded. #1 is the corrected version approved by the user.
-            {id:"approved_01",roof:"gable",siding:"vinyl",color:"gray",doorStyle:"raised",doorWindows:false,serviceLoc:"front",frontSide:"right",serviceType:"standard",wallWindows:true,gutters:true,soffit:true,offset:"center",angle:"front-right",sharp:true,standard:true,userProvided:true,src:"images/estimate_example_01_gable_vinyl.png"},
-            {id:"approved_02",roof:"hip",siding:"vinyl",color:"tan",doorStyle:"raised",doorWindows:false,serviceLoc:"hidden",serviceType:"standard",wallWindows:false,gutters:true,soffit:true,offset:"center",angle:"front-left",sharp:true,standard:true,userProvided:true,src:"images/estimate_example_02.png"},
-            {id:"approved_03",roof:"gable",siding:"hardie",color:"blue",doorStyle:"raised",doorWindows:false,serviceLoc:"hidden",serviceType:"standard",wallWindows:true,gutters:true,soffit:true,offset:"center",angle:"front-left",sharp:true,userProvided:true,src:"images/estimate_example_03.png"},
-            {id:"approved_04",roof:"hip",siding:"hardie",color:"gray",doorStyle:"raised",doorWindows:false,serviceLoc:"hidden",serviceType:"standard",wallWindows:false,gutters:true,soffit:true,offset:"center",angle:"front-left",sharp:true,userProvided:true,src:"images/estimate_example_04.png"},
-            {id:"approved_05",roof:"gable",siding:"vinyl",color:"tan",doorStyle:"raised",doorWindows:false,serviceLoc:"front",frontSide:"right",serviceType:"standard",wallWindows:true,gutters:true,soffit:true,offset:"left",angle:"front-right",sharp:true,userProvided:true,src:"images/estimate_example_05.png"},
-            {id:"approved_06",roof:"hip",siding:"vinyl",color:"tan",doorStyle:"raised",doorWindows:true,serviceLoc:"front",frontSide:"right",serviceType:"standard",wallWindows:true,gutters:true,soffit:true,offset:"center",angle:"front-right",sharp:true,userProvided:true,src:"images/estimate_example_06.png"},
-            {id:"approved_07",roof:"gable",siding:"hardie",color:"white",doorStyle:"raised",doorWindows:false,serviceLoc:"front",frontSide:"left",serviceType:"standard",wallWindows:false,gutters:true,soffit:true,offset:"center",angle:"front-left",sharp:true,userProvided:true,src:"images/estimate_example_07.png"},
-            {id:"approved_09",roof:"gable",siding:"vinyl",color:"gray",doorStyle:"raised",doorWindows:true,serviceLoc:"front",frontSide:"left",serviceType:"standard",wallWindows:true,gutters:true,soffit:true,offset:"center",angle:"front-left",sharp:true,userProvided:true,src:"images/estimate_example_09.png"},
-            {id:"approved_10",roof:"hip",siding:"hardie",color:"gray",doorStyle:"raised",doorWindows:false,serviceLoc:"right",serviceType:"standard",wallWindows:true,gutters:true,soffit:true,offset:"left",angle:"front-right",sharp:true,userProvided:true,src:"images/estimate_example_10.png"},
-            {id:"approved_11",roof:"gable",siding:"vinyl",color:"gray",doorStyle:"raised",doorWindows:true,serviceLoc:"hidden",serviceType:"standard",wallWindows:false,gutters:true,soffit:true,offset:"center",angle:"front-right",sharp:true,userProvided:true,doubleDoors:true,src:"images/estimate_example_11.png"},
-            {id:"approved_12",roof:"hip",siding:"hardie",color:"blue",doorStyle:"raised",doorWindows:true,serviceLoc:"front",frontSide:"right",serviceType:"standard",wallWindows:true,gutters:true,soffit:true,offset:"center",angle:"front-right",sharp:true,userProvided:true,src:"images/estimate_example_12.png"},
-            {id:"approved_13",roof:"gable",siding:"vinyl",color:"gray",doorStyle:"raised",doorWindows:false,serviceLoc:"front",frontSide:"left",serviceType:"standard",wallWindows:false,gutters:false,soffit:true,offset:"center",angle:"front-left",sharp:true,userProvided:true,src:"images/estimate_example_13.png"},
-            {id:"approved_14",roof:"hip",siding:"vinyl",color:"black",doorStyle:"raised",doorWindows:false,serviceLoc:"hidden",serviceType:"standard",wallWindows:true,gutters:true,soffit:true,offset:"center",angle:"front-right",sharp:true,userProvided:true,src:"images/estimate_example_14.png"},
-            {id:"approved_15",roof:"gable",siding:"hardie",color:"green",doorStyle:"raised",doorWindows:true,serviceLoc:"front",frontSide:"right",serviceType:"standard",wallWindows:false,gutters:true,soffit:true,offset:"center",angle:"front-right",sharp:true,userProvided:true,src:"images/estimate_example_15.png"},
-            {id:"approved_16",roof:"hip",siding:"vinyl",color:"tan",doorStyle:"raised",doorWindows:false,serviceLoc:"hidden",serviceType:"party",wallWindows:true,gutters:true,soffit:true,offset:"center",angle:"front-right",sharp:true,userProvided:true,partyDoor:true,src:"images/estimate_example_16.png"},
-
-            // Four previously approved high-resolution examples remain eligible.
-            {id:"approved_hip_right_hr",roof:"hip",siding:"vinyl",color:"gray",doorStyle:"raised",doorWindows:false,serviceLoc:"right",serviceType:"standard",wallWindows:true,gutters:true,soffit:true,offset:"center",angle:"front-right",sharp:true,standard:true,userProvided:true,src:"images/approved_hip_service_door_right.png"},
-            {id:"approved_hip_front_hr",roof:"hip",siding:"vinyl",color:"gray",doorStyle:"raised",doorWindows:false,serviceLoc:"front",frontSide:"left",serviceType:"standard",wallWindows:false,gutters:true,soffit:true,offset:"center",angle:"front-left",sharp:true,standard:true,userProvided:true,src:"images/approved_hip_service_door_front.png"},
-            {id:"approved_gable_front_hr",roof:"gable",siding:"vinyl",color:"gray",doorStyle:"raised",doorWindows:false,serviceLoc:"front",frontSide:"left",serviceType:"standard",wallWindows:true,gutters:false,soffit:true,offset:"center",angle:"front-left",sharp:true,standard:true,userProvided:true,src:"images/approved_gable_service_door_front_left.png"},
-            {id:"approved_gable_right_hr",roof:"gable",siding:"vinyl",color:"gray",doorStyle:"raised",doorWindows:false,serviceLoc:"right",serviceType:"standard",wallWindows:true,gutters:false,soffit:true,offset:"center",angle:"front-right",sharp:true,standard:true,userProvided:true,src:"images/approved_gable_service_door_right.png"}
-
+            // Exact user-selected image: ALWAYS use when Reverse Gable is selected.
+            {id:"user_reverse_gable_always",roof:"gable",siding:"vinyl",color:"tan",doorStyle:"raised",doorWindows:false,serviceLoc:"hidden",frontSide:"right",serviceType:"standard",wallWindows:true,gutters:true,soffit:true,stoneAccent:false,offset:"center",angle:"front-right",sharp:true,standard:false,userProvided:true,reverseGable:true,src:"garage_001.jpg"},
+            // Preferred basic vinyl-siding hip-roof example selected by user.
+            {id:"user_basic_hip_vinyl_default",roof:"hip",siding:"vinyl",color:"gray",doorStyle:"raised",doorWindows:false,serviceLoc:"right",frontSide:"right",serviceType:"standard",wallWindows:true,gutters:false,soffit:true,stoneAccent:false,offset:"center",angle:"front-right",sharp:true,standard:true,userProvided:true,basicHipVinyl:true,src:"garage_002.jpg"},
+            // User-approved high-resolution example photos. Roof style remains a hard filter.
+            {id:"user_gable_gray_two_doors",roof:"gable",siding:"vinyl",color:"gray",doorStyle:"raised",doorWindows:false,serviceLoc:"hidden",frontSide:"right",serviceType:"standard",wallWindows:false,gutters:true,soffit:true,stoneAccent:false,offset:"center",angle:"front-right",sharp:true,standard:true,userProvided:true,src:"garage_003.jpg"},
+            {id:"user_gable_gray_standard_clean",roof:"gable",siding:"vinyl",color:"gray",doorStyle:"raised",doorWindows:false,serviceLoc:"hidden",frontSide:"right",serviceType:"standard",wallWindows:false,gutters:true,soffit:true,stoneAccent:false,offset:"right",angle:"front-right",sharp:true,standard:true,userProvided:true,src:"garage_004.jpg"},
+            {id:"user_gable_gray_right_service",roof:"gable",siding:"vinyl",color:"gray",doorStyle:"raised",doorWindows:false,serviceLoc:"right",frontSide:"right",serviceType:"standard",wallWindows:false,gutters:true,soffit:true,stoneAccent:false,offset:"center",angle:"front-right",sharp:true,standard:true,userProvided:true,src:"garage_005.jpg"},
+            {id:"user_gable_gray_left_service",roof:"gable",siding:"vinyl",color:"gray",doorStyle:"raised",doorWindows:false,serviceLoc:"hidden",frontSide:"right",serviceType:"standard",wallWindows:true,gutters:true,soffit:true,stoneAccent:false,offset:"center",angle:"front-right",sharp:true,standard:true,userProvided:true,src:"garage_006.jpg"},
+            {id:"user_gable_gray_front_service",roof:"gable",siding:"vinyl",color:"gray",doorStyle:"raised",doorWindows:false,serviceLoc:"front",frontSide:"left",serviceType:"standard",wallWindows:true,gutters:true,soffit:true,stoneAccent:false,offset:"center",angle:"front-right",sharp:true,standard:true,userProvided:true,src:"garage_007.jpg"},
+            {id:"user_hip_gray_right_service",roof:"hip",siding:"vinyl",color:"gray",doorStyle:"raised",doorWindows:false,serviceLoc:"right",frontSide:"right",serviceType:"standard",wallWindows:true,gutters:false,soffit:true,stoneAccent:false,offset:"center",angle:"front-right",sharp:true,standard:true,userProvided:true,src:"garage_002.jpg"},
+            {id:"user_hip_white_clean",roof:"hip",siding:"vinyl",color:"white",doorStyle:"raised",doorWindows:false,serviceLoc:"hidden",frontSide:"right",serviceType:"standard",wallWindows:false,gutters:false,soffit:true,stoneAccent:false,offset:"center",angle:"front-right",sharp:true,standard:true,userProvided:true,src:"garage_008.jpg"},
+            // High-priority clean standard examples from prior ABG estimate/project imagery.
+            {id:"abg_standard_hip_vinyl_gray_solid",roof:"hip",siding:"vinyl",color:"gray",doorStyle:"raised",doorWindows:false,serviceLoc:"right",serviceType:"standard",wallWindows:false,gutters:false,soffit:true,stoneAccent:false,offset:"center",angle:"front-right",sharp:true,standard:true,src:"garage_009.jpg"},
+            {id:"abg_standard_gable_vinyl_gray_solid",roof:"gable",siding:"vinyl",color:"gray",doorStyle:"raised",doorWindows:false,serviceLoc:"front",frontSide:"right",serviceType:"standard",wallWindows:true,gutters:true,soffit:true,stoneAccent:false,offset:"center",angle:"front-right",sharp:true,standard:true,src:"garage_010.jpg"},
+            {id:"sharp_hip_vinyl_white_right_solid",roof:"hip",siding:"vinyl",color:"white",doorStyle:"raised",doorWindows:false,serviceLoc:"right",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",sharp:true,src:"garage_011.jpg"},
+            {id:"sharp_gable_vinyl_gray_front_right_solid",roof:"gable",siding:"vinyl",color:"gray",doorStyle:"raised",doorWindows:false,serviceLoc:"front",frontSide:"right",serviceType:"standard",wallWindows:true,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",sharp:true,src:"garage_012.jpg"},
+            {id:"v2_gable_vinyl_right_white",roof:"gable",siding:"vinyl",color:"white",doorStyle:"raised",doorWindows:true,serviceLoc:"right",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_013.jpg"},
+            {id:"v2_gable_vinyl_right_tan",roof:"gable",siding:"vinyl",color:"tan",doorStyle:"raised",doorWindows:true,serviceLoc:"right",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_014.jpg"},
+            {id:"v2_gable_vinyl_right_gray",roof:"gable",siding:"vinyl",color:"gray",doorStyle:"raised",doorWindows:true,serviceLoc:"right",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_015.jpg"},
+            {id:"v2_gable_vinyl_right_blue",roof:"gable",siding:"vinyl",color:"blue",doorStyle:"raised",doorWindows:true,serviceLoc:"right",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_016.jpg"},
+            {id:"v2_gable_vinyl_right_yellow",roof:"gable",siding:"vinyl",color:"yellow",doorStyle:"raised",doorWindows:true,serviceLoc:"right",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_017.jpg"},
+            {id:"v2_gable_vinyl_right_green",roof:"gable",siding:"vinyl",color:"green",doorStyle:"raised",doorWindows:true,serviceLoc:"right",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_018.jpg"},
+            {id:"v2_gable_vinyl_right_brown",roof:"gable",siding:"vinyl",color:"brown",doorStyle:"raised",doorWindows:true,serviceLoc:"right",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_019.jpg"},
+            {id:"v2_gable_vinyl_right_red",roof:"gable",siding:"vinyl",color:"red",doorStyle:"raised",doorWindows:true,serviceLoc:"right",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_020.jpg"},
+            {id:"v2_gable_vinyl_right_black",roof:"gable",siding:"vinyl",color:"black",doorStyle:"raised",doorWindows:true,serviceLoc:"right",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_021.jpg"},
+            {id:"v2_gable_vinyl_right_beige",roof:"gable",siding:"vinyl",color:"beige",doorStyle:"raised",doorWindows:true,serviceLoc:"right",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_022.jpg"},
+            {id:"v2_hip_vinyl_right_white",roof:"hip",siding:"vinyl",color:"white",doorStyle:"raised",doorWindows:true,serviceLoc:"right",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_023.jpg"},
+            {id:"v2_hip_vinyl_right_tan",roof:"hip",siding:"vinyl",color:"tan",doorStyle:"raised",doorWindows:true,serviceLoc:"right",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_024.jpg"},
+            {id:"v2_hip_vinyl_right_gray",roof:"hip",siding:"vinyl",color:"gray",doorStyle:"raised",doorWindows:true,serviceLoc:"right",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_025.jpg"},
+            {id:"v2_hip_vinyl_right_blue",roof:"hip",siding:"vinyl",color:"blue",doorStyle:"raised",doorWindows:true,serviceLoc:"right",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_026.jpg"},
+            {id:"v2_hip_vinyl_right_yellow",roof:"hip",siding:"vinyl",color:"yellow",doorStyle:"raised",doorWindows:true,serviceLoc:"right",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_027.jpg"},
+            {id:"v2_hip_vinyl_right_green",roof:"hip",siding:"vinyl",color:"green",doorStyle:"raised",doorWindows:true,serviceLoc:"right",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_028.jpg"},
+            {id:"v2_hip_vinyl_right_brown",roof:"hip",siding:"vinyl",color:"brown",doorStyle:"raised",doorWindows:true,serviceLoc:"right",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_029.jpg"},
+            {id:"v2_hip_vinyl_right_red",roof:"hip",siding:"vinyl",color:"red",doorStyle:"raised",doorWindows:true,serviceLoc:"right",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_030.jpg"},
+            {id:"v2_hip_vinyl_right_black",roof:"hip",siding:"vinyl",color:"black",doorStyle:"raised",doorWindows:true,serviceLoc:"right",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_031.jpg"},
+            {id:"v2_hip_vinyl_right_beige",roof:"hip",siding:"vinyl",color:"beige",doorStyle:"raised",doorWindows:true,serviceLoc:"right",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_032.jpg"},
+            {id:"v2_gable_hardie_right_white",roof:"gable",siding:"hardie",color:"white",doorStyle:"raised",doorWindows:true,serviceLoc:"right",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_033.jpg"},
+            {id:"v2_gable_hardie_right_tan",roof:"gable",siding:"hardie",color:"tan",doorStyle:"raised",doorWindows:true,serviceLoc:"right",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_034.jpg"},
+            {id:"v2_gable_hardie_right_gray",roof:"gable",siding:"hardie",color:"gray",doorStyle:"raised",doorWindows:true,serviceLoc:"right",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_035.jpg"},
+            {id:"v2_gable_hardie_right_blue",roof:"gable",siding:"hardie",color:"blue",doorStyle:"raised",doorWindows:true,serviceLoc:"right",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_036.jpg"},
+            {id:"v2_gable_hardie_right_yellow",roof:"gable",siding:"hardie",color:"yellow",doorStyle:"raised",doorWindows:true,serviceLoc:"right",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_037.jpg"},
+            {id:"v2_gable_hardie_right_green",roof:"gable",siding:"hardie",color:"green",doorStyle:"raised",doorWindows:true,serviceLoc:"right",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_038.jpg"},
+            {id:"v2_gable_hardie_right_brown",roof:"gable",siding:"hardie",color:"brown",doorStyle:"raised",doorWindows:true,serviceLoc:"right",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_039.jpg"},
+            {id:"v2_gable_hardie_right_red",roof:"gable",siding:"hardie",color:"red",doorStyle:"raised",doorWindows:true,serviceLoc:"right",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_040.jpg"},
+            {id:"v2_gable_hardie_right_black",roof:"gable",siding:"hardie",color:"black",doorStyle:"raised",doorWindows:true,serviceLoc:"right",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_041.jpg"},
+            {id:"v2_gable_hardie_right_beige",roof:"gable",siding:"hardie",color:"beige",doorStyle:"raised",doorWindows:true,serviceLoc:"right",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_042.jpg"},
+            {id:"v2_hip_hardie_right_white",roof:"hip",siding:"hardie",color:"white",doorStyle:"raised",doorWindows:true,serviceLoc:"right",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_043.jpg"},
+            {id:"v2_hip_hardie_right_tan",roof:"hip",siding:"hardie",color:"tan",doorStyle:"raised",doorWindows:true,serviceLoc:"right",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_044.jpg"},
+            {id:"v2_hip_hardie_right_gray",roof:"hip",siding:"hardie",color:"gray",doorStyle:"raised",doorWindows:true,serviceLoc:"right",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_045.jpg"},
+            {id:"v2_hip_hardie_right_blue",roof:"hip",siding:"hardie",color:"blue",doorStyle:"raised",doorWindows:true,serviceLoc:"right",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_046.jpg"},
+            {id:"v2_hip_hardie_right_yellow",roof:"hip",siding:"hardie",color:"yellow",doorStyle:"raised",doorWindows:true,serviceLoc:"right",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_047.jpg"},
+            {id:"v2_hip_hardie_right_green",roof:"hip",siding:"hardie",color:"green",doorStyle:"raised",doorWindows:true,serviceLoc:"right",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_048.jpg"},
+            {id:"v2_hip_hardie_right_brown",roof:"hip",siding:"hardie",color:"brown",doorStyle:"raised",doorWindows:true,serviceLoc:"right",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_049.jpg"},
+            {id:"v2_hip_hardie_right_red",roof:"hip",siding:"hardie",color:"red",doorStyle:"raised",doorWindows:true,serviceLoc:"right",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_050.jpg"},
+            {id:"v2_hip_hardie_right_black",roof:"hip",siding:"hardie",color:"black",doorStyle:"raised",doorWindows:true,serviceLoc:"right",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_051.jpg"},
+            {id:"v2_hip_hardie_right_beige",roof:"hip",siding:"hardie",color:"beige",doorStyle:"raised",doorWindows:true,serviceLoc:"right",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_052.jpg"},
+            {id:"v2_gable_vinyl_hidden_white",roof:"gable",siding:"vinyl",color:"white",doorStyle:"raised",doorWindows:true,serviceLoc:"hidden",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_053.jpg"},
+            {id:"v2_gable_vinyl_hidden_tan",roof:"gable",siding:"vinyl",color:"tan",doorStyle:"raised",doorWindows:true,serviceLoc:"hidden",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_054.jpg"},
+            {id:"v2_gable_vinyl_hidden_gray",roof:"gable",siding:"vinyl",color:"gray",doorStyle:"raised",doorWindows:true,serviceLoc:"hidden",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_055.jpg"},
+            {id:"v2_gable_vinyl_hidden_blue",roof:"gable",siding:"vinyl",color:"blue",doorStyle:"raised",doorWindows:true,serviceLoc:"hidden",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_056.jpg"},
+            {id:"v2_gable_vinyl_hidden_yellow",roof:"gable",siding:"vinyl",color:"yellow",doorStyle:"raised",doorWindows:true,serviceLoc:"hidden",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_057.jpg"},
+            {id:"v2_gable_vinyl_hidden_green",roof:"gable",siding:"vinyl",color:"green",doorStyle:"raised",doorWindows:true,serviceLoc:"hidden",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_058.jpg"},
+            {id:"v2_gable_vinyl_hidden_brown",roof:"gable",siding:"vinyl",color:"brown",doorStyle:"raised",doorWindows:true,serviceLoc:"hidden",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_059.jpg"},
+            {id:"v2_gable_vinyl_hidden_red",roof:"gable",siding:"vinyl",color:"red",doorStyle:"raised",doorWindows:true,serviceLoc:"hidden",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_060.jpg"},
+            {id:"v2_gable_vinyl_hidden_black",roof:"gable",siding:"vinyl",color:"black",doorStyle:"raised",doorWindows:true,serviceLoc:"hidden",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_061.jpg"},
+            {id:"v2_gable_vinyl_hidden_beige",roof:"gable",siding:"vinyl",color:"beige",doorStyle:"raised",doorWindows:true,serviceLoc:"hidden",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_062.jpg"},
+            {id:"v2_hip_vinyl_hidden_white",roof:"hip",siding:"vinyl",color:"white",doorStyle:"raised",doorWindows:true,serviceLoc:"hidden",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_063.jpg"},
+            {id:"v2_hip_vinyl_hidden_tan",roof:"hip",siding:"vinyl",color:"tan",doorStyle:"raised",doorWindows:true,serviceLoc:"hidden",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_064.jpg"},
+            {id:"v2_hip_vinyl_hidden_gray",roof:"hip",siding:"vinyl",color:"gray",doorStyle:"raised",doorWindows:true,serviceLoc:"hidden",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_065.jpg"},
+            {id:"v2_hip_vinyl_hidden_blue",roof:"hip",siding:"vinyl",color:"blue",doorStyle:"raised",doorWindows:true,serviceLoc:"hidden",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_066.jpg"},
+            {id:"v2_hip_vinyl_hidden_yellow",roof:"hip",siding:"vinyl",color:"yellow",doorStyle:"raised",doorWindows:true,serviceLoc:"hidden",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_067.jpg"},
+            {id:"v2_hip_vinyl_hidden_green",roof:"hip",siding:"vinyl",color:"green",doorStyle:"raised",doorWindows:true,serviceLoc:"hidden",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_068.jpg"},
+            {id:"v2_hip_vinyl_hidden_brown",roof:"hip",siding:"vinyl",color:"brown",doorStyle:"raised",doorWindows:true,serviceLoc:"hidden",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_069.jpg"},
+            {id:"v2_hip_vinyl_hidden_red",roof:"hip",siding:"vinyl",color:"red",doorStyle:"raised",doorWindows:true,serviceLoc:"hidden",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_070.jpg"},
+            {id:"v2_hip_vinyl_hidden_black",roof:"hip",siding:"vinyl",color:"black",doorStyle:"raised",doorWindows:true,serviceLoc:"hidden",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_071.jpg"},
+            {id:"v2_hip_vinyl_hidden_beige",roof:"hip",siding:"vinyl",color:"beige",doorStyle:"raised",doorWindows:true,serviceLoc:"hidden",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_072.jpg"},
+            {id:"v2_gable_hardie_hidden_white",roof:"gable",siding:"hardie",color:"white",doorStyle:"raised",doorWindows:true,serviceLoc:"hidden",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_053.jpg"},
+            {id:"v2_gable_hardie_hidden_tan",roof:"gable",siding:"hardie",color:"tan",doorStyle:"raised",doorWindows:true,serviceLoc:"hidden",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_054.jpg"},
+            {id:"v2_gable_hardie_hidden_gray",roof:"gable",siding:"hardie",color:"gray",doorStyle:"raised",doorWindows:true,serviceLoc:"hidden",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_055.jpg"},
+            {id:"v2_gable_hardie_hidden_blue",roof:"gable",siding:"hardie",color:"blue",doorStyle:"raised",doorWindows:true,serviceLoc:"hidden",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_056.jpg"},
+            {id:"v2_gable_hardie_hidden_yellow",roof:"gable",siding:"hardie",color:"yellow",doorStyle:"raised",doorWindows:true,serviceLoc:"hidden",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_057.jpg"},
+            {id:"v2_gable_hardie_hidden_green",roof:"gable",siding:"hardie",color:"green",doorStyle:"raised",doorWindows:true,serviceLoc:"hidden",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_058.jpg"},
+            {id:"v2_gable_hardie_hidden_brown",roof:"gable",siding:"hardie",color:"brown",doorStyle:"raised",doorWindows:true,serviceLoc:"hidden",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_059.jpg"},
+            {id:"v2_gable_hardie_hidden_red",roof:"gable",siding:"hardie",color:"red",doorStyle:"raised",doorWindows:true,serviceLoc:"hidden",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_060.jpg"},
+            {id:"v2_gable_hardie_hidden_black",roof:"gable",siding:"hardie",color:"black",doorStyle:"raised",doorWindows:true,serviceLoc:"hidden",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_061.jpg"},
+            {id:"v2_gable_hardie_hidden_beige",roof:"gable",siding:"hardie",color:"beige",doorStyle:"raised",doorWindows:true,serviceLoc:"hidden",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_062.jpg"},
+            {id:"v2_hip_hardie_hidden_white",roof:"hip",siding:"hardie",color:"white",doorStyle:"raised",doorWindows:true,serviceLoc:"hidden",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_063.jpg"},
+            {id:"v2_hip_hardie_hidden_tan",roof:"hip",siding:"hardie",color:"tan",doorStyle:"raised",doorWindows:true,serviceLoc:"hidden",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_064.jpg"},
+            {id:"v2_hip_hardie_hidden_gray",roof:"hip",siding:"hardie",color:"gray",doorStyle:"raised",doorWindows:true,serviceLoc:"hidden",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_065.jpg"},
+            {id:"v2_hip_hardie_hidden_blue",roof:"hip",siding:"hardie",color:"blue",doorStyle:"raised",doorWindows:true,serviceLoc:"hidden",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_066.jpg"},
+            {id:"v2_hip_hardie_hidden_yellow",roof:"hip",siding:"hardie",color:"yellow",doorStyle:"raised",doorWindows:true,serviceLoc:"hidden",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_067.jpg"},
+            {id:"v2_hip_hardie_hidden_green",roof:"hip",siding:"hardie",color:"green",doorStyle:"raised",doorWindows:true,serviceLoc:"hidden",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_068.jpg"},
+            {id:"v2_hip_hardie_hidden_brown",roof:"hip",siding:"hardie",color:"brown",doorStyle:"raised",doorWindows:true,serviceLoc:"hidden",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_069.jpg"},
+            {id:"v2_hip_hardie_hidden_red",roof:"hip",siding:"hardie",color:"red",doorStyle:"raised",doorWindows:true,serviceLoc:"hidden",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_070.jpg"},
+            {id:"v2_hip_hardie_hidden_black",roof:"hip",siding:"hardie",color:"black",doorStyle:"raised",doorWindows:true,serviceLoc:"hidden",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_071.jpg"},
+            {id:"v2_hip_hardie_hidden_beige",roof:"hip",siding:"hardie",color:"beige",doorStyle:"raised",doorWindows:true,serviceLoc:"hidden",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_072.jpg"},
+            {id:"v2_gable_vinyl_front_left_white",roof:"gable",siding:"vinyl",color:"white",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_073.jpg",frontSide:"left"},
+            {id:"v2_gable_vinyl_front_left_tan",roof:"gable",siding:"vinyl",color:"tan",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_074.jpg",frontSide:"left"},
+            {id:"v2_gable_vinyl_front_left_gray",roof:"gable",siding:"vinyl",color:"gray",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_075.jpg",frontSide:"left"},
+            {id:"v2_gable_vinyl_front_left_blue",roof:"gable",siding:"vinyl",color:"blue",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_076.jpg",frontSide:"left"},
+            {id:"v2_gable_vinyl_front_left_yellow",roof:"gable",siding:"vinyl",color:"yellow",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_077.jpg",frontSide:"left"},
+            {id:"v2_gable_vinyl_front_left_green",roof:"gable",siding:"vinyl",color:"green",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_078.jpg",frontSide:"left"},
+            {id:"v2_gable_vinyl_front_left_brown",roof:"gable",siding:"vinyl",color:"brown",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_079.jpg",frontSide:"left"},
+            {id:"v2_gable_vinyl_front_left_red",roof:"gable",siding:"vinyl",color:"red",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_080.jpg",frontSide:"left"},
+            {id:"v2_gable_vinyl_front_left_black",roof:"gable",siding:"vinyl",color:"black",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_081.jpg",frontSide:"left"},
+            {id:"v2_gable_vinyl_front_left_beige",roof:"gable",siding:"vinyl",color:"beige",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_082.jpg",frontSide:"left"},
+            {id:"v2_gable_vinyl_front_right_white",roof:"gable",siding:"vinyl",color:"white",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_083.jpg",frontSide:"right"},
+            {id:"v2_gable_vinyl_front_right_tan",roof:"gable",siding:"vinyl",color:"tan",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_084.jpg",frontSide:"right"},
+            {id:"v2_gable_vinyl_front_right_gray",roof:"gable",siding:"vinyl",color:"gray",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_085.jpg",frontSide:"right"},
+            {id:"v2_gable_vinyl_front_right_blue",roof:"gable",siding:"vinyl",color:"blue",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_086.jpg",frontSide:"right"},
+            {id:"v2_gable_vinyl_front_right_yellow",roof:"gable",siding:"vinyl",color:"yellow",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_087.jpg",frontSide:"right"},
+            {id:"v2_gable_vinyl_front_right_green",roof:"gable",siding:"vinyl",color:"green",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_088.jpg",frontSide:"right"},
+            {id:"v2_gable_vinyl_front_right_brown",roof:"gable",siding:"vinyl",color:"brown",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_089.jpg",frontSide:"right"},
+            {id:"v2_gable_vinyl_front_right_red",roof:"gable",siding:"vinyl",color:"red",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_090.jpg",frontSide:"right"},
+            {id:"v2_gable_vinyl_front_right_black",roof:"gable",siding:"vinyl",color:"black",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_091.jpg",frontSide:"right"},
+            {id:"v2_gable_vinyl_front_right_beige",roof:"gable",siding:"vinyl",color:"beige",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_092.jpg",frontSide:"right"},
+            {id:"v2_gable_hardie_front_left_white",roof:"gable",siding:"hardie",color:"white",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_073.jpg",frontSide:"left"},
+            {id:"v2_gable_hardie_front_left_tan",roof:"gable",siding:"hardie",color:"tan",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_074.jpg",frontSide:"left"},
+            {id:"v2_gable_hardie_front_left_gray",roof:"gable",siding:"hardie",color:"gray",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_075.jpg",frontSide:"left"},
+            {id:"v2_gable_hardie_front_left_blue",roof:"gable",siding:"hardie",color:"blue",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_076.jpg",frontSide:"left"},
+            {id:"v2_gable_hardie_front_left_yellow",roof:"gable",siding:"hardie",color:"yellow",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_077.jpg",frontSide:"left"},
+            {id:"v2_gable_hardie_front_left_green",roof:"gable",siding:"hardie",color:"green",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_078.jpg",frontSide:"left"},
+            {id:"v2_gable_hardie_front_left_brown",roof:"gable",siding:"hardie",color:"brown",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_079.jpg",frontSide:"left"},
+            {id:"v2_gable_hardie_front_left_red",roof:"gable",siding:"hardie",color:"red",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_080.jpg",frontSide:"left"},
+            {id:"v2_gable_hardie_front_left_black",roof:"gable",siding:"hardie",color:"black",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_081.jpg",frontSide:"left"},
+            {id:"v2_gable_hardie_front_left_beige",roof:"gable",siding:"hardie",color:"beige",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_082.jpg",frontSide:"left"},
+            {id:"v2_gable_hardie_front_right_white",roof:"gable",siding:"hardie",color:"white",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_083.jpg",frontSide:"right"},
+            {id:"v2_gable_hardie_front_right_tan",roof:"gable",siding:"hardie",color:"tan",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_084.jpg",frontSide:"right"},
+            {id:"v2_gable_hardie_front_right_gray",roof:"gable",siding:"hardie",color:"gray",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_085.jpg",frontSide:"right"},
+            {id:"v2_gable_hardie_front_right_blue",roof:"gable",siding:"hardie",color:"blue",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_086.jpg",frontSide:"right"},
+            {id:"v2_gable_hardie_front_right_yellow",roof:"gable",siding:"hardie",color:"yellow",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_087.jpg",frontSide:"right"},
+            {id:"v2_gable_hardie_front_right_green",roof:"gable",siding:"hardie",color:"green",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_088.jpg",frontSide:"right"},
+            {id:"v2_gable_hardie_front_right_brown",roof:"gable",siding:"hardie",color:"brown",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_089.jpg",frontSide:"right"},
+            {id:"v2_gable_hardie_front_right_red",roof:"gable",siding:"hardie",color:"red",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_090.jpg",frontSide:"right"},
+            {id:"v2_gable_hardie_front_right_black",roof:"gable",siding:"hardie",color:"black",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_091.jpg",frontSide:"right"},
+            {id:"v2_gable_hardie_front_right_beige",roof:"gable",siding:"hardie",color:"beige",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_092.jpg",frontSide:"right"},
+            {id:"v2_hip_vinyl_front_right_white",roof:"hip",siding:"vinyl",color:"white",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_093.jpg",frontSide:"right"},
+            {id:"v2_hip_vinyl_front_right_tan",roof:"hip",siding:"vinyl",color:"tan",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_094.jpg",frontSide:"right"},
+            {id:"v2_hip_vinyl_front_right_gray",roof:"hip",siding:"vinyl",color:"gray",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_095.jpg",frontSide:"right"},
+            {id:"v2_hip_vinyl_front_right_blue",roof:"hip",siding:"vinyl",color:"blue",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_096.jpg",frontSide:"right"},
+            {id:"v2_hip_vinyl_front_right_yellow",roof:"hip",siding:"vinyl",color:"yellow",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_097.jpg",frontSide:"right"},
+            {id:"v2_hip_vinyl_front_right_green",roof:"hip",siding:"vinyl",color:"green",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_098.jpg",frontSide:"right"},
+            {id:"v2_hip_vinyl_front_right_brown",roof:"hip",siding:"vinyl",color:"brown",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_099.jpg",frontSide:"right"},
+            {id:"v2_hip_vinyl_front_right_red",roof:"hip",siding:"vinyl",color:"red",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_100.jpg",frontSide:"right"},
+            {id:"v2_hip_vinyl_front_right_black",roof:"hip",siding:"vinyl",color:"black",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_101.jpg",frontSide:"right"},
+            {id:"v2_hip_vinyl_front_right_beige",roof:"hip",siding:"vinyl",color:"beige",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_102.jpg",frontSide:"right"},
+            {id:"v2_hip_vinyl_front_left_white",roof:"hip",siding:"vinyl",color:"white",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_103.jpg",frontSide:"left"},
+            {id:"v2_hip_vinyl_front_left_tan",roof:"hip",siding:"vinyl",color:"tan",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_104.jpg",frontSide:"left"},
+            {id:"v2_hip_vinyl_front_left_gray",roof:"hip",siding:"vinyl",color:"gray",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_105.jpg",frontSide:"left"},
+            {id:"v2_hip_vinyl_front_left_blue",roof:"hip",siding:"vinyl",color:"blue",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_106.jpg",frontSide:"left"},
+            {id:"v2_hip_vinyl_front_left_yellow",roof:"hip",siding:"vinyl",color:"yellow",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_107.jpg",frontSide:"left"},
+            {id:"v2_hip_vinyl_front_left_green",roof:"hip",siding:"vinyl",color:"green",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_108.jpg",frontSide:"left"},
+            {id:"v2_hip_vinyl_front_left_brown",roof:"hip",siding:"vinyl",color:"brown",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_109.jpg",frontSide:"left"},
+            {id:"v2_hip_vinyl_front_left_red",roof:"hip",siding:"vinyl",color:"red",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_110.jpg",frontSide:"left"},
+            {id:"v2_hip_vinyl_front_left_black",roof:"hip",siding:"vinyl",color:"black",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_111.jpg",frontSide:"left"},
+            {id:"v2_hip_vinyl_front_left_beige",roof:"hip",siding:"vinyl",color:"beige",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_112.jpg",frontSide:"left"},
+            {id:"v2_hip_hardie_front_right_white",roof:"hip",siding:"hardie",color:"white",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_093.jpg",frontSide:"right"},
+            {id:"v2_hip_hardie_front_right_tan",roof:"hip",siding:"hardie",color:"tan",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_094.jpg",frontSide:"right"},
+            {id:"v2_hip_hardie_front_right_gray",roof:"hip",siding:"hardie",color:"gray",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_095.jpg",frontSide:"right"},
+            {id:"v2_hip_hardie_front_right_blue",roof:"hip",siding:"hardie",color:"blue",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_096.jpg",frontSide:"right"},
+            {id:"v2_hip_hardie_front_right_yellow",roof:"hip",siding:"hardie",color:"yellow",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_097.jpg",frontSide:"right"},
+            {id:"v2_hip_hardie_front_right_green",roof:"hip",siding:"hardie",color:"green",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_098.jpg",frontSide:"right"},
+            {id:"v2_hip_hardie_front_right_brown",roof:"hip",siding:"hardie",color:"brown",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_099.jpg",frontSide:"right"},
+            {id:"v2_hip_hardie_front_right_red",roof:"hip",siding:"hardie",color:"red",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_100.jpg",frontSide:"right"},
+            {id:"v2_hip_hardie_front_right_black",roof:"hip",siding:"hardie",color:"black",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_101.jpg",frontSide:"right"},
+            {id:"v2_hip_hardie_front_right_beige",roof:"hip",siding:"hardie",color:"beige",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_102.jpg",frontSide:"right"},
+            {id:"v2_hip_hardie_front_left_white",roof:"hip",siding:"hardie",color:"white",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_103.jpg",frontSide:"left"},
+            {id:"v2_hip_hardie_front_left_tan",roof:"hip",siding:"hardie",color:"tan",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_104.jpg",frontSide:"left"},
+            {id:"v2_hip_hardie_front_left_gray",roof:"hip",siding:"hardie",color:"gray",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_105.jpg",frontSide:"left"},
+            {id:"v2_hip_hardie_front_left_blue",roof:"hip",siding:"hardie",color:"blue",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_106.jpg",frontSide:"left"},
+            {id:"v2_hip_hardie_front_left_yellow",roof:"hip",siding:"hardie",color:"yellow",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_107.jpg",frontSide:"left"},
+            {id:"v2_hip_hardie_front_left_green",roof:"hip",siding:"hardie",color:"green",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_108.jpg",frontSide:"left"},
+            {id:"v2_hip_hardie_front_left_brown",roof:"hip",siding:"hardie",color:"brown",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_109.jpg",frontSide:"left"},
+            {id:"v2_hip_hardie_front_left_red",roof:"hip",siding:"hardie",color:"red",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_110.jpg",frontSide:"left"},
+            {id:"v2_hip_hardie_front_left_black",roof:"hip",siding:"hardie",color:"black",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_111.jpg",frontSide:"left"},
+            {id:"v2_hip_hardie_front_left_beige",roof:"hip",siding:"hardie",color:"beige",doorStyle:"raised",doorWindows:true,serviceLoc:"front",serviceType:"standard",wallWindows:false,gutters:true,stoneAccent:false,offset:"center",angle:"front-right",src:"garage_112.jpg",frontSide:"left"}
         ];
 
         function normalizePhotoColor(s) {
@@ -2361,11 +2504,36 @@
                 offset
             };
 
+            // REVERSE GABLE IS A HARD PHOTO RULE.
+            // Whenever Gable + Reverse Gable is selected, use the exact user-approved image,
+            // regardless of color, door placement, service-door location, gutters, or other visual scoring.
+            const preferredReverseGable = GARAGE_PHOTO_LIBRARY.find(p=>p.reverseGable===true && p.userProvided===true);
+            if (target.roof==='gable' && target.gableOrientation==='reverse' && preferredReverseGable) {
+                return {photo:preferredReverseGable,target,score:1000000};
+            }
+
+            // USER-SELECTED DEFAULT PHOTO:
+            // For a basic hip-roof vinyl garage with a solid raised-panel centered door
+            // and service door on the visible right wall, use the exact approved photo.
+            // This is a hard override, not merely a scoring preference.
+            const preferredBasicHipVinyl = GARAGE_PHOTO_LIBRARY.find(p=>p.basicHipVinyl===true && p.userProvided===true);
+            const usePreferredBasicHipVinyl =
+                target.roof==='hip' &&
+                target.siding==='vinyl' &&
+                target.doorStyle==='raised' &&
+                !target.doorWindows &&
+                target.offset==='center' &&
+                target.serviceLoc==='right';
+
+            if (usePreferredBasicHipVinyl && preferredBasicHipVinyl) {
+                return {photo:preferredBasicHipVinyl,target,score:999999};
+            }
+
             // ROOF STYLE IS NON-NEGOTIABLE. Never show gable for hip or hip for gable.
             // If no saved approved photo matches the selected roof family, use the user's
             // designated clean fallback photo for that roof style instead of leaving it blank.
-            const DEFAULT_GABLE_FALLBACK=GARAGE_PHOTO_LIBRARY.find(p=>p.id==='approved_01');
-            const DEFAULT_HIP_FALLBACK=GARAGE_PHOTO_LIBRARY.find(p=>p.id==='approved_hip_right_hr') || GARAGE_PHOTO_LIBRARY.find(p=>p.id==='approved_02');
+            const DEFAULT_GABLE_FALLBACK={id:'user_default_gable_fallback',roof:'gable',siding:'vinyl',color:'gray',doorStyle:'raised',doorWindows:false,serviceLoc:'right',wallWindows:true,gutters:true,soffit:true,offset:'center',angle:'front-right',sharp:true,standard:true,userProvided:true,isFallback:true,src:'garage_113.png'};
+            const DEFAULT_HIP_FALLBACK={id:'user_default_hip_fallback',roof:'hip',siding:'vinyl',color:'gray',doorStyle:'raised',doorWindows:false,serviceLoc:'right',wallWindows:true,gutters:false,soffit:true,offset:'center',angle:'front-right',sharp:true,standard:true,userProvided:true,basicHipVinyl:true,isFallback:true,src:'garage_114.png'};
             let pool=GARAGE_PHOTO_LIBRARY.filter(p=>p.roof===target.roof && p.userProvided===true);
             if(!pool.length) return {photo:target.roof==='gable'?DEFAULT_GABLE_FALLBACK:DEFAULT_HIP_FALLBACK,target,score:0};
 
@@ -2693,7 +2861,7 @@
 
             const salesman = getSalesmanProfile();
             const salesmanName = salesman.name;
-            const salesmanTitle = 'Sales Manager/Consultant';
+            const salesmanTitle = salesman.title;
             const salesmanPhone = salesman.phone;
             const salesmanEmail = salesman.email;
             const salesmanTagline = salesman.tagline;
@@ -2728,14 +2896,14 @@
                 // Exact Wally row order.
                 addSpec('Garage Size', `${width}' x ${depth}'`);
                 addSpec('Roof Style', `${roofLabel} - ${pitch} Pitch with Vents`);
-                addSpec('Roofing', 'Architectural Shingles + 15lbs Felt Paper');
-                addSpec('Roof Sheathing', '1/2"');
-                addSpec('Overhang', checked('gutters') ? (roofType === 'gable' ? 'Seamless Gutters 2 Sides - 2 Down Spouts' : 'Seamless Gutters 4 Sides - 2 Down Spouts') : '" "');
-                addSpec('Eaves', '6" Eaves - Boxed 4 Sides');
+                addSpec('Roofing', 'Architectural Shingles + 15lbs Felt Paper + 1/2" Sheathing');
+            if (salesman.wally) addSpec('Roof Sheathing', '1/2"');
+                addSpec('Overhang', checked('gutters') ? 'Seamless Gutters 4 Sides - 2 Down Spouts' : '" "');
+                addSpec('Eaves', '6" Eaves - 4 Sides Boxed');
                 addSpec('Rafters', '2x6 16" O.C.');
                 addSpec('Wall Height', `${wallHeight}'`);
                 addSpec('Siding', sidingType === 'hardie' ? hardieWally : vinylWally);
-                addSpec('Wall Sheathing', '1/2"');
+                addSpec(salesman.wally ? 'Wall Sheathing' : 'Double Wall', salesman.wally ? '1/2"' : '1/2" Sheathing');
                 addSpec('Studs', `${wallHeight >= 10 ? '2x6' : '2x4'} 16" O.C.`);
                 addSpec('Bottom Plates', 'Treated');
                 addSpec('Headers', 'Double LVL Headers');
@@ -2743,7 +2911,7 @@
                 addSpec('Overhead Door', `${overheadDoorWidth}' x ${overheadDoorHeight}' ${overheadDoorStyleText} Door`);
                 const openerQtyPrint=parseInt(val('openerQty'))||1;
                 const openerTypePrint=val('openerType')||'2200';
-                const openerNamePrint=openerTypePrint==='8500'?'LiftMaster 8500 Wall Mount JackShaft Opener':'LiftMaster 2220 3/4HP Opener';
+                const openerNamePrint=openerTypePrint==='8500'?'LiftMaster 8500 Wall Mount JackShaft Opener':'LiftMaster 2200 3/4HP Opener';
                 addSpec('Opener', `${openerQtyPrint > 1 ? '('+openerQtyPrint+') ' : ''}${openerNamePrint}`);
 
                 if (doorType === 'party') {
@@ -2767,8 +2935,8 @@
                 addSpec('Roof Style', `${roofType === 'gable' ? ((val('eaveDir') === 'sides' ? 'Reverse Gable' : 'Standard Gable')) : 'Hip'} - ${pitch} Pitch with Vents`);
                 addSpec('Siding', `${sidingType === 'hardie' ? 'Hardieboard / Cement Board Siding' : 'Premium Vinyl Siding'} - ${sidingColor}`);
                 addSpec('Double Wall', '1/2" Plywood or Choice');
-                addSpec('Eaves', '4 Sides Boxed');
-                addSpec('Overhang', checked('gutters') ? (roofType === 'gable' ? 'Seamless Gutters 2 Sides - 2 Down Spouts' : 'Seamless Gutters 4 Sides - 2 Down Spouts') : '" "');
+                addSpec('Eaves', salesman.wally ? '6" Eaves - Boxed 4 Sides' : '4 Sides Boxed');
+                addSpec('Overhang', checked('gutters') ? 'Seamless Gutters 4 Sides - 2 Down Spouts' : '" "');
                 addSpec('Cross Ties', '2x6 48 O.C');
                 addSpec('Roofing', 'Architectural Shingles + 15lbs Felt Paper');
                 addSpec('Studs', `${wallHeight >= 10 ? '2x6' : '2x4'} 16" O.C.`);
@@ -2777,7 +2945,7 @@
                 addSpec('Overhead Door', `${overheadDoorWidth}' x ${overheadDoorHeight}' ${overheadDoorStyleText} Door`);
                 const openerQtyPrint=parseInt(val('openerQty'))||1;
                 const openerTypePrint=val('openerType')||'2200';
-                const openerNamePrint=openerTypePrint==='8500'?'LiftMaster 8500 Wall Mount JackShaft Opener':'LiftMaster 2220 3/4HP Opener';
+                const openerNamePrint=openerTypePrint==='8500'?'LiftMaster 8500 Wall Mount JackShaft Opener':'LiftMaster 2200 3/4HP Opener';
                 addSpec('Opener', `${openerQtyPrint > 1 ? '('+openerQtyPrint+') ' : ''}${openerNamePrint}`);
                 if (doorType === 'party') addSpec('Party Door', "6' x 7' Steel Door");
                 else if (doorType === 'french') addSpec('French Door', 'French Door Allowance');
@@ -2854,7 +3022,7 @@
             if (Number(val('extraWindows') || 0) > 0) notes.push(`${val('extraWindows')} additional window${Number(val('extraWindows')) > 1 ? 's' : ''} included.`);
             if (checked('evCharger')) notes.push('EV charger provision included.');
             if (checked('threeWaySwitch')) notes.push('3-way switch included.');
-            if (checked('gutters')) notes.push(roofType === 'gable' ? 'Seamless gutters on 2 sides with 2 downspouts included.' : 'Seamless gutters on 4 sides with 2 downspouts included.');
+            if (checked('gutters')) notes.push('Seamless gutters on 4 sides with 2 downspouts included.');
             if (checked('aluminumSoffit')) notes.push('Aluminum soffit and fascia included.');
             if (Number(val('firewallWalls') || 0) > 0) notes.push(`${val('firewallWalls')} firewall wall${Number(val('firewallWalls')) > 1 ? 's' : ''} included.`);
             if (checked('hurricaneTies')) notes.push('Hurricane ties included.');
@@ -2904,9 +3072,8 @@
             const realGaragePhoto = `<img src="images/basic_hip_no_gutters.png" alt="">`;
             const gableGaragePhoto = `<img src="images/basic_gable_no_gutters.png" alt="">`;
             const matchedGaragePhoto = getExteriorPhotoMatch().photo;
-            const selectedGaragePhoto = matchedGaragePhoto && matchedGaragePhoto.src
-                ? matchedGaragePhoto.src
-                : (roofType === 'gable' ? 'images/estimate_example_01_gable_vinyl.png' : 'images/approved_hip_service_door_right.png');
+            const fallbackGaragePhoto = approvedBasicGaragePhoto(roofType, hasGutters);
+            const selectedGaragePhoto = matchedGaragePhoto && matchedGaragePhoto.src ? matchedGaragePhoto.src : fallbackGaragePhoto;
             // The estimate sheet opens in a new browser document. Use an absolute image URL so
             // GitHub Pages can load the selected garage photo inside the printed estimate sheet.
             const selectedGaragePhotoFile = selectedGaragePhoto.replace(/^.*\//, '');
@@ -2916,9 +3083,15 @@
             const selectedGaragePhotoRootUrl = new URL(selectedGaragePhotoFile, document.baseURI).href;
             const selectedGaragePhotoFolderUrl = new URL('images/' + selectedGaragePhotoFile, document.baseURI).href;
 
-            // Load the approved garage image directly. No fetch/base64 wait before opening.
-            const garagePhotoSrc = selectedGaragePhotoOriginalUrl;
-            const garageSvg = `<div class="photo-config photo-only"><img src="${garagePhotoSrc}" alt=""></div>`;
+            // Load the approved garage image from the shared garage-photo library.
+            // The live app has used both /images/garage_xxx.* and root-level garage_xxx.* files
+            // across deployments, so the estimate sheet tries both locations before giving up.
+            // This prevents the EXTERIOR VIEW from appearing blank when the selected approved
+            // image exists but is stored in the other GitHub Pages layout.
+            const garagePhotoSrc = selectedGaragePhotoFolderUrl;
+            const garagePhotoFallbackSrc = selectedGaragePhotoRootUrl;
+            const garagePhotoOriginalSrc = selectedGaragePhotoOriginalUrl;
+            const garageSvg = `<div class="photo-config photo-only"><img src="${garagePhotoSrc}" alt="Approved garage exterior example" onerror="if(!this.dataset.tryRoot){this.dataset.tryRoot='1';this.src='${garagePhotoFallbackSrc}';}else if(!this.dataset.tryOriginal){this.dataset.tryOriginal='1';this.src='${garagePhotoOriginalSrc}';}else{this.style.visibility='hidden';}"></div>`;
 
             const notesCount = notes.length;
             const notesClass = notesCount <= 1 ? 'notes-1' : notesCount === 2 ? 'notes-2' : notesCount <= 4 ? 'notes-few' : notesCount <= 7 ? 'notes-medium' : 'notes-many';
@@ -2945,7 +3118,7 @@
     .brand-tag { font-size: 8.5px; margin-top: 7px; font-weight: 700; color: #fff; white-space: nowrap; }
     .sales-block { background: #ffc400; color: #061d4b; padding: 16px 20px 12px 26px; clip-path: polygon(8% 0,100% 0,100% 100%,0 100%); display: grid; grid-template-columns: 1fr auto; gap: 8px 14px; align-content: center; }
     .sales-name { font-size: 18px; font-weight: 900; text-transform: uppercase; }
-    .sales-title { font-size: 18px; font-weight: 900; margin-top: 1px; }
+    .sales-title { font-size: 12px; font-weight: 700; margin-top: 1px; }
     .sales-contact { font-size: 11px; line-height: 1.7; font-weight: 700; }
     .license { font-size: 8px; font-weight: 800; text-transform: uppercase; }
     .license strong { display: block; font-size: 17px; line-height: 1.15; margin-top: 3px; }
@@ -2965,7 +3138,7 @@
     .spec-table th:first-child { width:42%; }
     .spec-table td { border:1px solid #b9c2d0; padding:4.1px 6px; vertical-align:middle; line-height:1.05; overflow-wrap:anywhere; }
     .spec-table .item { font-weight:800; }
-    .spec-table .details { font-size:11px; font-weight:700; text-align:center; color:#17243a; line-height:1.12; }
+    .spec-table .details { font-weight:700; text-align:center; color:#17243a; }
     .wally-guarantee { text-align:center; font-size:13px; line-height:1.25; font-weight:900; color:#071d48; padding:9px 4px 2px; }
     .total-box { margin-top: 8px; border:1px solid #b9c2d0; }
     .total-label { background:#ffc400; font-weight:900; text-align:center; font-size:12px; padding:4px; }
@@ -3039,7 +3212,7 @@
             <div>
                 <div class="sales-name">${esc(salesmanName)}</div>
                 <div class="sales-title">${esc(salesmanTitle)}</div>
-                <div class="sales-contact">${salesmanPhone ? `☎ ${esc(salesmanPhone)}` : ''}${salesmanPhone && salesmanEmail ? '<br>' : ''}${salesmanEmail ? `✉ ${esc(salesmanEmail)}` : ''}${salesmanTagline ? `<br><span style="font-size:11px;font-weight:700">${esc(salesmanTagline)}</span>` : ''}</div>
+                <div class="sales-contact">${salesmanPhone ? `☎ ${esc(salesmanPhone)}` : ''}${salesmanPhone && salesmanEmail ? '<br>' : ''}${salesmanEmail ? `✉ ${esc(salesmanEmail)}` : ''}${salesmanTagline ? `<br><span style="font-size:8px;font-weight:800">${esc(salesmanTagline)}</span>` : ''}</div>
             </div>
             <div class="license">ROOFING LICENSE NUMBER:<strong>104.016731<br>105.006803</strong></div>
         </div>
@@ -3070,8 +3243,8 @@
         <div class="right">
             <div class="panel-title exterior-title">EXTERIOR VIEW (EXAMPLE)</div>
             <div class="exterior">${garageSvg}</div>
-            <div class="notes-panel ${notesClass}">
-                <div class="panel-title">NOTES / INCLUSIONS</div>
+            <div class="notes-panel">
+                <div class="panel-title estimate-notes-page ${notesClass}">NOTES / INCLUSIONS</div>
                 <ul class="notes">${notesHtml}</ul>
             </div>
         </div>
@@ -3243,7 +3416,7 @@ async function openPopupChatGPT(){
                 document.getElementById('demoApronDepth').value = '3';
                 document.getElementById('oldConcreteOverride').value = '';
                 document.getElementById('wheelingCharge').checked = true;
-                // Footing & rods checkbox is auto-selected by onCityChange() for suburbs
+                // Footing & rods added automatically because not Chicago
             }
             
             onCityChange();
@@ -3269,7 +3442,7 @@ async function openPopupChatGPT(){
             document.getElementById('newConcrete').checked = true;
             document.getElementById('apronDepth').value = '3';
             document.getElementById('concreteThickness').value = '4';
-            document.getElementById('excavation').value = '0';
+            document.getElementById('excavation').value = '1';
             
             // Patios
             document.getElementById('extraConcrete1Thickness').value = '4';

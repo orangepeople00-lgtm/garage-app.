@@ -613,7 +613,8 @@ function estimatePricingDetails(e){
  const revisions=(Array.isArray(s.revision_history)?s.revision_history:[]).filter(r=>Array.isArray(r.changes)&&r.changes.length);
  if(revisions.length){
    html+='<div style="margin-top:14px;padding-top:12px;border-top:1px solid #cbd5e1">';
-   html+='<div style="font-size:12px;font-weight:900;letter-spacing:.05em;color:#0f274b;text-transform:uppercase;margin-bottom:8px">Estimate Changes</div>';
+   html+='<div style="font-size:12px;font-weight:900;letter-spacing:.05em;color:#0f274b;text-transform:uppercase;margin-bottom:4px">Estimate Changes</div>';
+   html+='<div style="font-size:11px;color:#64748b;margin-bottom:8px">Only actual edits are shown. Original/default selections are not listed as changes.</div>';
    [...revisions].reverse().forEach(r=>{
      const when=r.timestamp?new Date(r.timestamp).toLocaleString():'Unknown time';
      const who=DISPLAY[r.editor_username]||r.editor_username||'User';

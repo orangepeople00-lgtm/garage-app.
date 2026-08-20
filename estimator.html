@@ -2171,8 +2171,25 @@
                     const previousSnapshot=(previous&&previous.estimate_snapshot)||{};
                     const previousState=previousSnapshot.calculator_state||{};
                     const nextState=(record.estimate_snapshot&&record.estimate_snapshot.calculator_state)||{};
-                    const changes=describeEstimateChanges(previousState,nextState,previous,record);
                     const revisionHistory=Array.isArray(previousSnapshot.revision_history)?previousSnapshot.revision_history.slice():[];
+
+                    // The first time an estimate is edited, establish its ORIGINAL baseline.
+                    // For modern records this is the exact calculator state saved when first created.
+                    // For legacy records, only fields that were genuinely stored on the original record
+                    // are eligible for change tracking; reconstructed/default UI values are not.
+                    const originalState=previousSnapshot.original_calculator_state
+                        || (Object.keys(previousState).length ? previousState : null);
+                    const originalRecord=previousSnapshot.original_record_baseline || {
+                        garage_size: previous?.garage_size ?? null,
+                        roof_type: previous?.roof_type ?? null,
+                        wall_height: previous?.wall_height ?? null,
+                        siding: previous?.siding ?? null,
+                        estimate_price: previous?.estimate_price ?? null
+                    };
+
+                    // Each revision is compared to the immediately prior saved version.
+                    // Missing/default fields are ignored by describeEstimateChanges.
+                    const changes=describeEstimateChanges(previousState,nextState,previous,record);
                     if(changes.length){
                         revisionHistory.push({
                             timestamp:new Date().toISOString(),
@@ -2182,6 +2199,8 @@
                     }
                     record.estimate_snapshot={
                         ...(record.estimate_snapshot||{}),
+                        original_calculator_state: originalState,
+                        original_record_baseline: originalRecord,
                         revision_history:revisionHistory
                     };
                     const result=await garageSb.from('estimate_history').update(record).eq('id',editId);

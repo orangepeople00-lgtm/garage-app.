@@ -619,8 +619,8 @@
                             <div>
                                 <label class="text-xs text-zinc-400 block mb-1">Excavation / Stone Quantity</label>
                                 <select id="excavation" onchange="calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm">
-                                    <option value="0">0 Loads — $0</option>
-                                    <option value="1" selected>1 Load — $500</option>
+                                    <option value="0" selected>0 Loads — $0</option>
+                                    <option value="1">1 Load — $500</option>
                                     <option value="2">2 Loads — $1,000</option>
                                     <option value="3">3 Loads — $1,500</option>
                                     <option value="4">4 Loads — $2,000</option>
@@ -631,7 +631,7 @@
                                     <option value="9">9 Loads — $4,500</option>
                                     <option value="10">10 Loads — $5,000</option>
                                 </select>
-                                <div class="text-[10px] text-zinc-500 mt-0.5">Excavation / stone loads • default 1 • $500 per load</div>
+                                <div class="text-[10px] text-zinc-500 mt-0.5">Excavation / stone loads • default 0 • $500 per load</div>
                             </div>
                         </div>
 
@@ -3450,7 +3450,7 @@ async function openPopupChatGPT(){
             document.getElementById('newConcrete').checked = true;
             document.getElementById('apronDepth').value = '3';
             document.getElementById('concreteThickness').value = '4';
-            document.getElementById('excavation').value = '1';
+            document.getElementById('excavation').value = '0';
             
             // Patios
             document.getElementById('extraConcrete1Thickness').value = '4';

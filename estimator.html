@@ -430,7 +430,7 @@
                     </div>
 
                     <!-- City & Size -->
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                         <!-- City -->
                         <div>
                             <label class="section-header block mb-1.5 flex items-center gap-x-2">
@@ -577,6 +577,24 @@
                                 <option value="10/12">10/12 (+$2,400)</option>
                                 <option value="12/12">12/12 (+$3,200)</option>
                             </select>
+                        </div>
+                        <div>
+                            <label class="section-header block mb-1.5 flex items-center gap-x-2">
+                                <i class="fa-solid fa-ruler-horizontal w-3.5"></i>
+                                <span>EAVES</span>
+                            </label>
+                            <select id="eavesSize" onchange="toggleManualEaves(); calculateEstimate()"
+                                    class="calc-input w-full bg-zinc-950 border border-zinc-700 text-white rounded-2xl px-4 py-3 text-sm focus:border-blue-500">
+                                <option value="4">4&quot;</option>
+                                <option value="6" selected>6&quot; (standard)</option>
+                                <option value="8">8&quot; (+$1,200)</option>
+                                <option value="12">12&quot; (+$1,200)</option>
+                                <option value="manual">Manual Entry</option>
+                            </select>
+                            <div id="manualEavesWrap" class="hidden mt-2">
+                                <input id="manualEavesSize" type="number" min="1" step="0.5" placeholder="Eaves inches" oninput="calculateEstimate()"
+                                       class="calc-input w-full bg-zinc-900 border border-zinc-600 rounded-xl px-3 py-2 text-sm">
+                            </div>
                         </div>
                     </div>
 
@@ -1467,6 +1485,22 @@
             }
         }
 
+        function toggleManualEaves(){
+            const sel=document.getElementById('eavesSize');
+            const wrap=document.getElementById('manualEavesWrap');
+            if(wrap)wrap.classList.toggle('hidden',!sel||sel.value!=='manual');
+        }
+        function getEavesInches(){
+            const sel=document.getElementById('eavesSize');
+            if(!sel)return 6;
+            if(sel.value==='manual'){
+                const n=parseFloat(document.getElementById('manualEavesSize')?.value||'');
+                return Number.isFinite(n)&&n>0?n:6;
+            }
+            const n=parseFloat(sel.value);
+            return Number.isFinite(n)&&n>0?n:6;
+        }
+
         function calculateEstimate() {
             const city = document.getElementById('city').value;
             const garageDims=getGarageDimensions();
@@ -1476,6 +1510,8 @@
             const roofType = document.getElementById('roofType').value;
             const eaveDir = document.getElementById('eaveDir').value;
             const pitchStr = document.getElementById('pitch').value;
+            const eavesInches = getEavesInches();
+            const eavesSurcharge = (eavesInches === 8 || eavesInches === 12) ? 1200 : 0;
             const overheadDoorHeight = parseInt(document.getElementById('overheadDoorHeight').value) || 7;
             if (overheadDoorHeight > 7) {
                 const requiredWallHeight = overheadDoorHeight + 1;
@@ -1782,7 +1818,8 @@
                 framingCost + 
                 wallHeightSurcharge +
                 roofUpgrade + 
-                pitchSurcharge + 
+                pitchSurcharge +
+                eavesSurcharge + 
                 electricalCost + 
                 overheadCost + 
                 sideDoorCost + 
@@ -1818,7 +1855,7 @@
             // === UPDATE UI ===
             updateBreakdown({
                 width, depth, floorArea, totalConcreteArea, apronArea, slabArea, totalExtraPatioArea,
-                packageCost, framingCost, wallHeightSurcharge, roofUpgrade, pitchSurcharge, pitchStr, electricalCost, overheadCost, sideDoorCost, sideDoorLabel,
+                packageCost, framingCost, wallHeightSurcharge, roofUpgrade, pitchSurcharge, pitchStr, eavesInches, eavesSurcharge, electricalCost, overheadCost, sideDoorCost, sideDoorLabel,
                 concreteCost, prepCost, fiveInchCost, sixInchCost, concreteThickness, garageConcreteArea, extraConcrete1Thickness, extraConcrete2Thickness, extraConcrete1ThicknessCost, extraConcrete2ThicknessCost, extraConcreteThicknessCost, patio1Area, patio2Area, excavation,
                 demoCost, removalCost, additionalRemovalCost, additionalRemovalArea, epaCost,
                 footingCost, rodsCost, retainCost, retainRate, retainType, frostFootingCost, perimeterLf,
@@ -1898,6 +1935,9 @@
             }
             if (data.pitchSurcharge > 0) {
                 lines.push({ label: `Roof pitch upgrade (${data.pitchStr || '4/12'})`, amount: data.pitchSurcharge, section: 'core' });
+            }
+            if (data.eavesSurcharge > 0) {
+                lines.push({ label: `Eaves upgrade (${data.eavesInches}")`, amount: data.eavesSurcharge, section: 'core' });
             }
             if (data.wallHeightSurcharge > 0) {
                 lines.push({ label: `Wall height surcharge (${data.wallHeight} ft)`, amount: data.wallHeightSurcharge, section: 'core' });
@@ -2233,7 +2273,7 @@
 
         const ESTIMATE_FIELD_LABELS={
             city:'City',width:'Garage Width',depth:'Garage Depth',customWidth:'Custom Garage Width',customDepth:'Custom Garage Depth',
-            wallHeight:'Wall Height',roofType:'Roof Style',eaveDir:'Gable Eaves',pitch:'Roof Pitch',
+            wallHeight:'Wall Height',roofType:'Roof Style',eaveDir:'Gable Eaves',pitch:'Roof Pitch',eavesSize:'Eaves',manualEavesSize:'Manual Eaves Size',
             newConcrete:'New Concrete',apronDepth:'Apron Depth',concreteThickness:'Concrete Thickness',excavation:'Excavation / Stone Loads',
             frostProtectedFooting:'42" Frost Protected Footing',retainType:'Retaining Wall Type',retainWallHeight:'Retaining Wall Height',
             demoExisting:'Demolition',demoSlabPreset:'Demo Garage / Slab Size',demoApronDepth:'Demo Apron Depth',
@@ -2256,7 +2296,7 @@
             if(value===true)return 'Yes';
             if(value===false)return 'No';
             if(value===null||value===undefined||value==='')return 'None';
-            const footKeys=['width','depth','customWidth','customDepth','wallHeight','apronDepth','demoApronDepth','overheadDoorHeight','overheadDoorWidth'];
+            const footKeys=['width','depth','customWidth','customDepth','wallHeight','apronDepth','demoApronDepth','overheadDoorHeight','overheadDoorWidth','manualEavesSize'];
             if(footKeys.includes(key) && !String(value).includes("'"))return `${value}'`;
             return String(value);
         }
@@ -2271,7 +2311,7 @@
             }
             if(typeof value==='boolean')return value?'true':'false';
             let s=String(value).trim();
-            if(['width','depth','customWidth','customDepth','wallHeight','apronDepth','demoApronDepth','overheadDoorHeight','overheadDoorWidth'].includes(key)){
+            if(['width','depth','customWidth','customDepth','wallHeight','apronDepth','demoApronDepth','overheadDoorHeight','overheadDoorWidth','manualEavesSize'].includes(key)){
                 s=s.replace(/[′’'"]/g,'').trim();
                 const n=Number(s);
                 if(Number.isFinite(n))return String(n);
@@ -3236,7 +3276,7 @@
                 addSpec('Roofing', 'Architectural Shingles + 15lbs Felt Paper + 1/2" Sheathing');
             if (salesman.wally) addSpec('Roof Sheathing', '1/2"');
                 addSpec('Overhang', checked('gutters') ? (roofType === 'gable' ? 'Seamless Gutters 2 Sides - 2 Down Spouts' : 'Seamless Gutters 4 Sides - 2 Down Spouts') : '" "');
-                addSpec('Eaves', '6" Eaves - 4 Sides Boxed');
+                addSpec('Eaves', `${getEavesInches()}" Eaves - 4 Sides Boxed`);
                 addSpec('Rafters', '2x6 16" O.C.');
                 addSpec('Wall Height', `${wallHeight}'`);
                 addSpec('Siding', sidingType === 'hardie' ? hardieWally : vinylWally);
@@ -3272,7 +3312,7 @@
                 addSpec('Roof Style', `${roofType === 'gable' ? ((val('eaveDir') === 'sides' ? 'Reverse Gable' : 'Standard Gable')) : 'Hip'} - ${pitch} Pitch with Vents`);
                 addSpec('Siding', `${sidingType === 'hardie' ? 'Hardieboard / Cement Board Siding' : 'Premium Vinyl Siding'} - ${sidingColor}`);
                 addSpec('Double Wall', '1/2" Plywood or Choice');
-                addSpec('Eaves', salesman.wally ? '6" Eaves - Boxed 4 Sides' : '4 Sides Boxed');
+                addSpec('Eaves', `${getEavesInches()}" Eaves - 4 Sides Boxed`);
                 addSpec('Overhang', checked('gutters') ? (roofType === 'gable' ? 'Seamless Gutters 2 Sides - 2 Down Spouts' : 'Seamless Gutters 4 Sides - 2 Down Spouts') : '" "');
                 addSpec('Cross Ties', '2x6 48 O.C');
                 addSpec('Roofing', 'Architectural Shingles + 15lbs Felt Paper');
@@ -3792,6 +3832,9 @@ async function openPopupChatGPT(){
             document.getElementById('roofType').value = 'hip';
             document.getElementById('eaveDir').value = 'front-back';
             document.getElementById('pitch').value = '6/12';
+            const eavesSel=document.getElementById('eavesSize'); if(eavesSel)eavesSel.value='6';
+            const manualEaves=document.getElementById('manualEavesSize'); if(manualEaves)manualEaves.value='';
+            toggleManualEaves();
             
             document.getElementById('newConcrete').checked = true;
             document.getElementById('apronDepth').value = '3';

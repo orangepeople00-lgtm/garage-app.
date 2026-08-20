@@ -512,9 +512,13 @@
                             </select>
                         </div>
                     </div>
-                    <div id="customGarageSizeWrap" class="hidden grid grid-cols-2 gap-3 mb-4 bg-zinc-950 border border-yellow-700/60 rounded-2xl p-3">
-                        <div><label class="text-xs text-yellow-400 block mb-1">CUSTOM WIDTH (ft)</label><input id="customWidth" type="number" min="1" step="0.5" placeholder="e.g. 21" oninput="calculateEstimate()" class="calc-input w-full bg-zinc-900 border border-zinc-600 rounded-xl px-3 py-2"></div>
-                        <div><label class="text-xs text-yellow-400 block mb-1">CUSTOM DEPTH (ft)</label><input id="customDepth" type="number" min="1" step="0.5" placeholder="e.g. 25" oninput="calculateEstimate()" class="calc-input w-full bg-zinc-900 border border-zinc-600 rounded-xl px-3 py-2"></div>
+                    <div id="customWidthWrap" class="hidden mb-3 bg-zinc-950 border border-yellow-700/60 rounded-2xl p-3">
+                        <label class="text-xs text-yellow-400 block mb-1">CUSTOM WIDTH (ft)</label>
+                        <input id="customWidth" type="number" min="1" step="0.5" placeholder="e.g. 21" oninput="calculateEstimate()" class="calc-input w-full bg-zinc-900 border border-zinc-600 rounded-xl px-3 py-2">
+                    </div>
+                    <div id="customDepthWrap" class="hidden mb-4 bg-zinc-950 border border-yellow-700/60 rounded-2xl p-3">
+                        <label class="text-xs text-yellow-400 block mb-1">CUSTOM DEPTH (ft)</label>
+                        <input id="customDepth" type="number" min="1" step="0.5" placeholder="e.g. 25" oninput="calculateEstimate()" class="calc-input w-full bg-zinc-900 border border-zinc-600 rounded-xl px-3 py-2">
                     </div>
 
                     <!-- Wall Height -->
@@ -1438,10 +1442,12 @@
             };
         }
         function toggleCustomGarageSize(){
-            const wrap=document.getElementById('customGarageSizeWrap');
-            if(!wrap)return;
-            const custom=document.getElementById('width')?.value==='custom'||document.getElementById('depth')?.value==='custom';
-            wrap.classList.toggle('hidden',!custom);
+            const widthWrap=document.getElementById('customWidthWrap');
+            const depthWrap=document.getElementById('customDepthWrap');
+            const widthCustom=document.getElementById('width')?.value==='custom';
+            const depthCustom=document.getElementById('depth')?.value==='custom';
+            if(widthWrap) widthWrap.classList.toggle('hidden',!widthCustom);
+            if(depthWrap) depthWrap.classList.toggle('hidden',!depthCustom);
         }
 
 
@@ -2285,7 +2291,6 @@
             // User-approved high-resolution example photos. Roof style remains a hard filter.
             {id:"user_gable_gray_two_doors",roof:"gable",siding:"vinyl",color:"gray",doorStyle:"raised",doorWindows:false,serviceLoc:"hidden",frontSide:"right",serviceType:"standard",wallWindows:false,gutters:true,soffit:true,stoneAccent:false,offset:"center",angle:"front-right",sharp:true,standard:true,userProvided:true,src:"garage_003.jpg"},
             {id:"user_gable_gray_standard_clean",roof:"gable",siding:"vinyl",color:"gray",doorStyle:"raised",doorWindows:false,serviceLoc:"hidden",frontSide:"right",serviceType:"standard",wallWindows:false,gutters:true,soffit:true,stoneAccent:false,offset:"right",angle:"front-right",sharp:true,standard:true,userProvided:true,src:"garage_004.jpg"},
-            {id:"user_gable_gray_right_service",roof:"gable",siding:"vinyl",color:"gray",doorStyle:"raised",doorWindows:false,serviceLoc:"right",frontSide:"right",serviceType:"standard",wallWindows:false,gutters:true,soffit:true,stoneAccent:false,offset:"center",angle:"front-right",sharp:true,standard:true,userProvided:true,src:"garage_005.jpg"},
             {id:"user_gable_gray_left_service",roof:"gable",siding:"vinyl",color:"gray",doorStyle:"raised",doorWindows:false,serviceLoc:"hidden",frontSide:"right",serviceType:"standard",wallWindows:true,gutters:true,soffit:true,stoneAccent:false,offset:"center",angle:"front-right",sharp:true,standard:true,userProvided:true,src:"garage_006.jpg"},
             {id:"user_gable_gray_front_service",roof:"gable",siding:"vinyl",color:"gray",doorStyle:"raised",doorWindows:false,serviceLoc:"front",frontSide:"left",serviceType:"standard",wallWindows:true,gutters:true,soffit:true,stoneAccent:false,offset:"center",angle:"front-right",sharp:true,standard:true,userProvided:true,src:"garage_007.jpg"},
             {id:"user_hip_gray_right_service",roof:"hip",siding:"vinyl",color:"gray",doorStyle:"raised",doorWindows:false,serviceLoc:"right",frontSide:"right",serviceType:"standard",wallWindows:true,gutters:false,soffit:true,stoneAccent:false,offset:"center",angle:"front-right",sharp:true,standard:true,userProvided:true,src:"garage_002.jpg"},
@@ -2829,8 +2834,9 @@
             const prettyDims = str => String(str || '').trim().replace(/\s/g, '').replace(/[x×]/i, "' x ") + (str ? "'" : '');
 
             const city = val('city');
-            const width = Number(val('width') || 20);
-            const depth = Number(val('depth') || 20);
+            const resolvedGarageDims = getGarageDimensions();
+            const width = Number(resolvedGarageDims.width);
+            const depth = Number(resolvedGarageDims.depth);
             const wallHeight = Number(val('wallHeight') || 8);
             const roofType = val('roofType');
             const pitch = val('pitch');
@@ -2898,7 +2904,7 @@
                 addSpec('Roof Style', `${roofLabel} - ${pitch} Pitch with Vents`);
                 addSpec('Roofing', 'Architectural Shingles + 15lbs Felt Paper + 1/2" Sheathing');
             if (salesman.wally) addSpec('Roof Sheathing', '1/2"');
-                addSpec('Overhang', checked('gutters') ? 'Seamless Gutters 4 Sides - 2 Down Spouts' : '" "');
+                addSpec('Overhang', checked('gutters') ? (roofType === 'gable' ? 'Seamless Gutters 2 Sides - 2 Down Spouts' : 'Seamless Gutters 4 Sides - 2 Down Spouts') : '" "');
                 addSpec('Eaves', '6" Eaves - 4 Sides Boxed');
                 addSpec('Rafters', '2x6 16" O.C.');
                 addSpec('Wall Height', `${wallHeight}'`);
@@ -2936,7 +2942,7 @@
                 addSpec('Siding', `${sidingType === 'hardie' ? 'Hardieboard / Cement Board Siding' : 'Premium Vinyl Siding'} - ${sidingColor}`);
                 addSpec('Double Wall', '1/2" Plywood or Choice');
                 addSpec('Eaves', salesman.wally ? '6" Eaves - Boxed 4 Sides' : '4 Sides Boxed');
-                addSpec('Overhang', checked('gutters') ? 'Seamless Gutters 4 Sides - 2 Down Spouts' : '" "');
+                addSpec('Overhang', checked('gutters') ? (roofType === 'gable' ? 'Seamless Gutters 2 Sides - 2 Down Spouts' : 'Seamless Gutters 4 Sides - 2 Down Spouts') : '" "');
                 addSpec('Cross Ties', '2x6 48 O.C');
                 addSpec('Roofing', 'Architectural Shingles + 15lbs Felt Paper');
                 addSpec('Studs', `${wallHeight >= 10 ? '2x6' : '2x4'} 16" O.C.`);
@@ -3022,7 +3028,7 @@
             if (Number(val('extraWindows') || 0) > 0) notes.push(`${val('extraWindows')} additional window${Number(val('extraWindows')) > 1 ? 's' : ''} included.`);
             if (checked('evCharger')) notes.push('EV charger provision included.');
             if (checked('threeWaySwitch')) notes.push('3-way switch included.');
-            if (checked('gutters')) notes.push('Seamless gutters on 4 sides with 2 downspouts included.');
+            if (checked('gutters')) notes.push(roofType === 'gable' ? 'Seamless Gutters 2 Sides - 2 Down Spouts included.' : 'Seamless Gutters 4 Sides - 2 Down Spouts included.');
             if (checked('aluminumSoffit')) notes.push('Aluminum soffit and fascia included.');
             if (Number(val('firewallWalls') || 0) > 0) notes.push(`${val('firewallWalls')} firewall wall${Number(val('firewallWalls')) > 1 ? 's' : ''} included.`);
             if (checked('hurricaneTies')) notes.push('Hurricane ties included.');
@@ -3345,8 +3351,9 @@ async function openPopupChatGPT(){
         // Copy estimate to clipboard
         function copyEstimate() {
             const city = document.getElementById('city').value;
-            const width = document.getElementById('width').value;
-            const depth = document.getElementById('depth').value;
+            const dims = getGarageDimensions();
+            const width = dims.width;
+            const depth = dims.depth;
             const roofType = document.getElementById('roofType').value;
             const internal = document.getElementById('internalTotal').textContent;
             const quote = document.getElementById('customerQuote').textContent;

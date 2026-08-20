@@ -3989,14 +3989,6 @@ async function downloadEstimatePdf(){
   if(!sheet)return;
 
   const filename=(document.title||'Absolute Garage Builders Estimate').replace(/[\\/:*?"<>|]+/g,'-')+'.pdf';
-  const original={
-    width:sheet.style.width,
-    height:sheet.style.height,
-    minHeight:sheet.style.minHeight,
-    maxHeight:sheet.style.maxHeight,
-    overflow:sheet.style.overflow,
-    display:sheet.style.display
-  };
   let exportHost=null;
 
   try{
@@ -4007,44 +3999,41 @@ async function downloadEstimatePdf(){
     }
     if(typeof window.html2pdf!=='function') throw new Error('PDF library did not load.');
 
-    // IMPORTANT: export a CLONE, not the live flex page. The live .sheet uses
-    // flex:1/min-height rules that can visually fit in the popup but html2canvas
-    // may measure shorter and crop the lower Notes / Project Price area.
+    // Build a dedicated export copy at the browser's true CSS Letter width
+    // (8.5in = 816px at 96dpi). Do not alter its column widths or flex/grid
+    // structure; that was what caused side text to be cropped in the last build.
     exportHost=document.createElement('div');
     exportHost.id='pdfExportHost';
-    exportHost.style.cssText='position:fixed;left:-10000px;top:0;width:816px;background:#fff;z-index:-1;';
+    exportHost.style.cssText='position:fixed;left:-10000px;top:0;width:816px;background:#fff;z-index:-1;overflow:visible;';
     document.body.appendChild(exportHost);
 
     const clone=sheet.cloneNode(true);
     clone.id='pdfExportSheet';
-    clone.style.width='816px';
-    clone.style.height='auto';
-    clone.style.minHeight='0';
-    clone.style.maxHeight='none';
-    clone.style.overflow='visible';
-    clone.style.margin='0';
-    clone.style.display='block';
+    clone.style.setProperty('width','816px','important');
+    clone.style.setProperty('min-width','816px','important');
+    clone.style.setProperty('max-width','816px','important');
+    clone.style.setProperty('height','auto','important');
+    clone.style.setProperty('min-height','1056px','important');
+    clone.style.setProperty('max-height','none','important');
+    clone.style.setProperty('overflow','visible','important');
+    clone.style.setProperty('margin','0','important');
 
-    // Turn the two-column main area into a normal grid with natural height for
-    // export. This guarantees the bottom of both columns is part of the canvas.
-    const cloneMain=clone.querySelector('.main');
-    if(cloneMain){
-      cloneMain.style.display='grid';
-      cloneMain.style.gridTemplateColumns='43.5% 56.5%';
-      cloneMain.style.height='auto';
-      cloneMain.style.minHeight='0';
-      cloneMain.style.overflow='visible';
+    // Keep the original estimate layout exactly, but let vertical sections grow
+    // so every note and the project price are present in the captured image.
+    const main=clone.querySelector('.main');
+    if(main){
+      main.style.setProperty('height','auto','important');
+      main.style.setProperty('min-height','0','important');
+      main.style.setProperty('overflow','visible','important');
     }
     clone.querySelectorAll('.left,.right,.notes-panel,.notes').forEach(el=>{
-      el.style.height='auto';
-      el.style.minHeight='0';
-      el.style.maxHeight='none';
-      el.style.overflow='visible';
+      el.style.setProperty('height','auto','important');
+      el.style.setProperty('max-height','none','important');
+      el.style.setProperty('overflow','visible','important');
     });
 
     exportHost.appendChild(clone);
 
-    // Wait for every image in the cloned estimate before measuring/capturing.
     const imgs=[...clone.querySelectorAll('img')];
     await Promise.all(imgs.map(img=>{
       if(img.complete) return Promise.resolve();
@@ -4056,14 +4045,12 @@ async function downloadEstimatePdf(){
     }));
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
 
-    // scrollHeight is now the true complete estimate height, including every
-    // note, Total Project Price, disclaimer, and footer.
-    const fullHeight=Math.max(
+    const fullWidth=816;
+    const fullHeight=Math.ceil(Math.max(
       clone.scrollHeight,
       clone.offsetHeight,
       clone.getBoundingClientRect().height
-    );
-    clone.style.height=Math.ceil(fullHeight)+'px';
+    ));
 
     const worker=window.html2pdf().set({
       margin:0,
@@ -4076,37 +4063,41 @@ async function downloadEstimatePdf(){
         logging:false,
         scrollX:0,
         scrollY:0,
-        width:816,
-        height:Math.ceil(fullHeight),
-        windowWidth:816,
-        windowHeight:Math.ceil(fullHeight)
+        width:fullWidth,
+        height:fullHeight,
+        windowWidth:fullWidth,
+        windowHeight:fullHeight
       },
       jsPDF:{unit:'in',format:'letter',orientation:'portrait',compress:true}
     }).from(clone).toCanvas();
 
     const canvas=await worker.get('canvas');
     if(!canvas || !canvas.width || !canvas.height) throw new Error('Estimate could not be rendered.');
-
     const imgData=canvas.toDataURL('image/jpeg',0.99);
 
     await worker.toPdf().get('pdf').then(function(pdf){
-      // Replace html2pdf's paginated output with one page containing the entire
-      // captured estimate, proportionally shrunk only as much as necessary.
+      // Keep exactly one Letter page.
       let count=pdf.internal.getNumberOfPages();
       while(count>1){ pdf.deletePage(count); count--; }
 
-      // Reuse page 1 and cover it completely with the full rendered estimate.
+      // Use a PRINT-SAFE inset on all four sides. This is intentionally slightly
+      // smaller than edge-to-edge Letter so no letters/words can be cut off by
+      // the PDF viewer or a normal home/office printer.
       const pageW=8.5, pageH=11;
+      const safeX=0.20, safeY=0.20;
+      const safeW=pageW-(safeX*2);
+      const safeH=pageH-(safeY*2);
       const ratio=canvas.width/canvas.height;
-      let drawW=pageW, drawH=pageW/ratio;
-      if(drawH>pageH){
-        drawH=pageH;
-        drawW=pageH*ratio;
+
+      let drawW=safeW;
+      let drawH=drawW/ratio;
+      if(drawH>safeH){
+        drawH=safeH;
+        drawW=drawH*ratio;
       }
       const x=(pageW-drawW)/2;
       const y=(pageH-drawH)/2;
 
-      // White page background, then full estimate image.
       pdf.setFillColor(255,255,255);
       pdf.rect(0,0,pageW,pageH,'F');
       pdf.addImage(imgData,'JPEG',x,y,drawW,drawH,undefined,'FAST');
@@ -4117,12 +4108,6 @@ async function downloadEstimatePdf(){
     alert('Could not download the estimate PDF. '+(err&&err.message?err.message:'Please try again.'));
   }finally{
     if(exportHost && exportHost.parentNode) exportHost.parentNode.removeChild(exportHost);
-    sheet.style.width=original.width;
-    sheet.style.height=original.height;
-    sheet.style.minHeight=original.minHeight;
-    sheet.style.maxHeight=original.maxHeight;
-    sheet.style.overflow=original.overflow;
-    sheet.style.display=original.display;
   }
 }
 function applyPopupChange(){

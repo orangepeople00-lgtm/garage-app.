@@ -384,16 +384,17 @@ function status(j){
  return 'Completed';
 }
 function lastComplete(j){
- if(j.completed_date || (j.final_payment==='Paid' && ['Passed','N/A'].includes(j.inspection_status)))return 'Final Payment';
- if(['Passed','N/A'].includes(j.inspection_status))return 'Inspection';
+ // Skipped stages (N/A / Not Included) are never "Last Complete".
+ if(j.completed_date || (j.final_payment==='Paid' && j.inspection_status==='Passed'))return 'Final Payment';
+ if(j.inspection_status==='Passed')return 'Inspection';
  if(j.extras_required===true && j.extras_status==='Complete')return 'Gutters / Extras';
- if(['Complete','Not Included','N/A'].includes(j.electric_status))return 'Electric';
+ if(j.electric_status==='Complete')return 'Electric';
  if(j.carpentry_status==='Garage Built')return 'Carpentry';
- if(['Poured','N/A'].includes(j.concrete_status))return 'Concrete / Framing';
+ if(j.concrete_status==='Poured')return 'Concrete / Framing';
  if(j.demolition_required!==false && j.demo_status==='Complete')return 'Demolition';
- if(['Approved','N/A'].includes(j.permit_status))return 'Permit';
+ if(j.permit_status==='Approved')return 'Permit';
  if(j.deposit_status==='Received')return 'Deposit';
- return 'None yet';
+ return '';
 }
 function next(j){
  if(j.hold_status)return `Resolve hold: ${j.hold_reason||'Review job'}`;

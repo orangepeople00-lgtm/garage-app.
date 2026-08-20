@@ -3602,7 +3602,8 @@
     html, body { margin: 0; padding: 0; background: #eceff3; font-family: Arial, Helvetica, sans-serif; color: #071d48; }
     body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .sheet { width: 8.5in; min-height: 11in; margin: 0 auto; background: #fff; position: relative; overflow: hidden; display: flex; flex-direction: column; }
-    .topbar { height: 1.48in; display: grid; grid-template-columns: 52% 48%; background: #061d4b; color: #fff; }
+    .topbar { height: 1.48in; min-height: 1.48in; max-height: 1.48in; display: grid; grid-template-columns: 52% 48%; grid-template-rows: 1.48in; align-items: stretch; background: #061d4b; color: #fff; overflow: hidden; }
+    .topbar > .brand-wrap, .topbar > .sales-block { height: 1.48in; min-height: 1.48in; max-height: 1.48in; margin:0; align-self:stretch; }
     .brand-wrap { display: flex; align-items: center; gap: 12px; padding: 14px 22px; min-width: 0; }
     .garage-logo { width: 108px; flex: 0 0 108px; }
     .brand-text { min-width: 0; }
@@ -3611,8 +3612,8 @@
     .brand-tag { font-size: 8.5px; margin-top: 7px; font-weight: 700; color: #fff; white-space: nowrap; }
     .sales-block { background: #ffc400; color: #061d4b; padding: 10px 18px; clip-path: none; display: flex; align-items: center; justify-content: center; text-align: center; align-self: stretch; }
     .sales-name { font-size: 18px; font-weight: 900; text-transform: uppercase; }
-    .wally-sheet .sales-block { padding: 8px 18px; }
-    .wally-sheet .sales-block > div:first-child { width:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; }
+    .wally-sheet .sales-block { padding: 8px 18px; height:1.48in; min-height:1.48in; max-height:1.48in; overflow:hidden; }
+    .wally-sheet .sales-block > div:first-child { width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; }
     .wally-sheet .sales-name { font-size: 38px; line-height: .95; letter-spacing: -1.2px; text-transform:none; text-align:center; }
     .wally-sheet .sales-title { font-size: 14px; font-weight: 800; margin-top: 4px; text-align:center; }
     .wally-sheet .sales-contact { font-size: 13px; line-height: 1.65; font-weight: 800; text-align:center; width:100%; }
@@ -3623,10 +3624,6 @@
     .license { font-size: 8px; font-weight: 800; text-transform: uppercase; }
     .license strong { display: block; font-size: 17px; line-height: 1.15; margin-top: 3px; }
     .wally-card-logo { width: 82px; max-height: 66px; object-fit: contain; display: block; margin: 0 auto 5px; background:#fff; border-radius:3px; padding:2px; }
-    .wally-blue-garage { position:relative; width:42px; height:31px; margin:0 auto 5px; }
-    .wally-blue-garage .garage-roof { position:absolute; left:3px; top:0; width:36px; height:18px; background:#0b4fa3; transform:skewY(-27deg) rotate(-1deg); border-radius:2px 2px 0 0; }
-    .wally-blue-garage .garage-body { position:absolute; left:7px; bottom:0; width:30px; height:19px; background:#0b4fa3; display:block; }
-    .wally-blue-garage .garage-door { position:absolute; left:6px; bottom:0; width:18px; height:13px; background:#fff; border:2px solid #0b4fa3; box-sizing:border-box; }
 
 
     .doc-title { height: .7in; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 29px; letter-spacing: .2px; position: relative; white-space: nowrap; }
@@ -3722,7 +3719,6 @@
         </div>
         <div class="sales-block">
             <div>
-                ${salesman.wally ? `<div class="wally-blue-garage" aria-hidden="true"><span class="garage-roof"></span><span class="garage-body"><span class="garage-door"></span></span></div>` : ''}
                 <div class="sales-name">${esc(salesmanName)}</div>
                 <div class="sales-title">${esc(salesmanTitle)}</div>
                 <div class="sales-contact">${salesmanPhone ? `☎ ${esc(salesmanPhone)}` : ''}${salesmanPhone && salesmanEmail ? '<br>' : ''}${salesmanEmail ? `✉ ${esc(salesmanEmail)}` : ''}${salesmanTagline ? `<br><span class="sales-tagline" style="font-size:8px;font-weight:800">${esc(salesmanTagline)}</span>` : ''}</div>

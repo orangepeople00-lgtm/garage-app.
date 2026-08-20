@@ -2281,8 +2281,17 @@
             const id=new URLSearchParams(location.search).get('editEstimate');
             if(!id)return;
             try{
-                const {data:e,error}=await garageSb.from('estimate_history').select('*').eq('id',id).single();
-                if(error||!e)return alert('Could not load the saved estimate for editing.');
+                let e=null;
+                try{
+                    const cached=JSON.parse(sessionStorage.getItem('garage_edit_estimate_record')||'null');
+                    if(cached&&String(cached.id)===String(id))e=cached;
+                }catch(cacheErr){console.warn('Could not read cached estimate',cacheErr)}
+                if(!e){
+                    const result=await garageSb.from('estimate_history').select('*').eq('id',id).maybeSingle();
+                    if(result.error)console.warn('Estimate edit fetch failed',result.error);
+                    e=result.data||null;
+                }
+                if(!e)return alert('Could not load the saved estimate for editing. Please return to Estimate History and click Edit again.');
                 const s=e.estimate_snapshot||{};
                 const state=s.calculator_state||null;
                 if(state){
@@ -2317,6 +2326,7 @@
                 banner.style.cssText='position:sticky;top:0;z-index:100;background:#92400e;color:white;padding:10px 16px;text-align:center;font-weight:800';
                 banner.textContent='Editing saved estimate — creating the estimate sheet will update this history record instead of making a duplicate.';
                 document.body.prepend(banner);
+                try{sessionStorage.removeItem('garage_edit_estimate_record');}catch(_e){}
             }catch(err){console.error(err);alert('Could not load the saved estimate for editing.')}
         }
 

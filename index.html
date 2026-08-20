@@ -662,7 +662,8 @@ function editEstimateHistory(id){
  const e=estimateHistory.find(x=>x.id===id);if(!e)return;
  const own=!!(profile&&String(e.salesman_username||'').toLowerCase()===String(profile.username||'').toLowerCase());
  if(!own&&!privateAccessManager())return alert('You can edit your own estimates. Sam and Ramsey can edit any salesperson’s estimate.');
- window.location.href=`estimator.html?editEstimate=${encodeURIComponent(id)}&v=20260820edit2`;
+ try{sessionStorage.setItem('garage_edit_estimate_record',JSON.stringify(e));}catch(err){console.warn('Could not cache estimate edit record',err)}
+ window.location.href=`estimator.html?editEstimate=${encodeURIComponent(id)}&v=20260820edit3`;
 }
 function renderEstimateHistory(){
  const rows=$('estimateHistoryRows');if(!rows)return;

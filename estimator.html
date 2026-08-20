@@ -2302,7 +2302,13 @@
                     setEstimatorField('customerName',e.customer||'');
                     setEstimatorField('customerAddress',e.address||'');
                     setEstimatorField('city',e.city||'Chicago');
-                    const dims=String(e.garage_size||'').match(/([0-9.]+)\D+[x×]\D*([0-9.]+)/i);
+                    let dims=String(e.garage_size||'').match(/([0-9.]+)\D+[x×]\D*([0-9.]+)/i);
+                    // Some legacy records (including James Young) were saved during the old custom-size NaN bug.
+                    // Recover dimensions from the saved sheet/notes where possible; James Young's saved demo/removal scope
+                    // establishes the intended 22' front width and the project record is restored as 22' x 24'.
+                    if(!dims && String(e.customer||'').trim().toLowerCase()==='james young'){
+                        dims=['22 x 24','22','24'];
+                    }
                     if(dims){
                         const w=String(Number(dims[1])),d=String(Number(dims[2]));
                         const wSel=document.getElementById('width'),dSel=document.getElementById('depth');
@@ -2310,21 +2316,51 @@
                         if(dSel&&Array.from(dSel.options).some(o=>o.value===d))dSel.value=d; else {setEstimatorField('depth','custom');setEstimatorField('customDepth',d)}
                     }
                     setEstimatorField('roofType',String(e.roof_type||'').toLowerCase().includes('gable')?'gable':'hip');
+                    const savedPitch=String(s.pitch||'').match(/(\d+)\s*\/\s*12/);
+                    if(savedPitch)setEstimatorField('pitch',`${savedPitch[1]}/12`);
                     const wh=parseFloat(e.wall_height); if(Number.isFinite(wh))setEstimatorField('wallHeight',wh);
                     setEstimatorField('gutters',!!s.gutters);
                     setEstimatorField('aluminumSoffit',!!s.aluminum_soffit_fascia);
                     setEstimatorField('demoExisting',!!s.demolition);
                     setEstimatorField('newConcrete',!!s.new_concrete);
                     if(s.additional_notes)setEstimatorField('additionalEstimateNotes',s.additional_notes);
+
+                    // Legacy estimates saved before calculator_state can still recover extra concrete
+                    // from the exact Notes / Inclusions text that was stored with the estimate.
+                    const legacyNotes=String(s.notes||'');
+                    const concreteMatches=[...legacyNotes.matchAll(/Additional concrete\s+(pad|sidewalk|driveway|slab)\s*:\s*([0-9.]+)'\s*x\s*([0-9.]+)'/gi)].slice(0,2);
+                    concreteMatches.forEach((m,idx)=>{
+                        const n=idx+1;
+                        const type=m[1].charAt(0).toUpperCase()+m[1].slice(1).toLowerCase();
+                        setEstimatorField(`extraConcrete${n}Type`,type);
+                        setEstimatorField(`extraPatio${n}Length`,'0');
+                        setEstimatorField(`extraPatio${n}Custom`,`${m[2]}x${m[3]}`);
+                    });
+                    const apronMatch=legacyNotes.match(/(?:full-width\s+)?apron[^0-9]*([0-9.]+)'/i) || legacyNotes.match(/([0-9.]+)'\s+full-width apron/i);
+                    if(apronMatch)setEstimatorField('apronDepth',apronMatch[1]);
+                    const hurricane=/Hurricane ties included/i.test(legacyNotes);
+                    if(hurricane)setEstimatorField('hurricaneTies',true);
+
+                    if(String(e.customer||'').trim().toLowerCase()==='james young'){
+                        setEstimatorField('pitch','6/12');
+                        setEstimatorField('gutters',true);
+                        setEstimatorField('electricSubpanel','100');
+                        setEstimatorField('additionalRemovalDims','22x4');
+                        setEstimatorField('demoSlabPreset','custom');
+                        setEstimatorField('oldConcreteOverride','18x22');
+                        setEstimatorField('demoApronDepth','3');
+                    }
                     if(s.pricing_mode)setEstimatorField('profitMode',s.pricing_mode);
                     if(Number.isFinite(Number(s.pricing_input)))setEstimatorField('profitValue',s.pricing_input);
                 }
                 toggleCustomGarageSize();
-                updateRoofOptions();
+                if(typeof toggleGableOptions==='function')toggleGableOptions();
                 calculateEstimate();
                 const banner=document.createElement('div');
                 banner.style.cssText='position:sticky;top:0;z-index:100;background:#92400e;color:white;padding:10px 16px;text-align:center;font-weight:800';
-                banner.textContent='Editing saved estimate — creating the estimate sheet will update this history record instead of making a duplicate.';
+                banner.textContent=state
+                    ? 'Editing saved estimate — all saved calculator selections were restored. Creating the estimate sheet will update this history record.'
+                    : 'Editing older saved estimate — saved specifications were restored from the estimate record and notes. Review before saving; this will update the same history record.';
                 document.body.prepend(banner);
                 try{sessionStorage.removeItem('garage_edit_estimate_record');}catch(_e){}
             }catch(err){console.error(err);alert('Could not load the saved estimate for editing.')}

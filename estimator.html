@@ -627,6 +627,29 @@
                         </div>
                     </div>
 
+                    <!-- Optional Overhang Section -->
+                    <div class="mb-6 border border-zinc-800 rounded-2xl p-5 bg-zinc-950/50">
+                        <div class="flex items-center justify-between">
+                            <div class="section-header flex items-center gap-x-2"><i class="fa-solid fa-ruler-horizontal"></i><span>OVERHANG</span></div>
+                            <label class="flex items-center cursor-pointer"><input type="checkbox" id="overhangEnabled" onchange="toggleOverhang(); calculateEstimate()" class="accent-blue-500 w-4 h-4"><span class="ml-2 text-xs font-medium text-zinc-300">Add Overhang</span></label>
+                        </div>
+                        <div id="overhangOptions" class="hidden mt-4">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div><label class="text-xs text-zinc-400 block mb-1">Overhang Size</label>
+                                    <select id="overhangSize" onchange="calculateEstimate()" class="calc-input w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-sm">
+                                        <option value="6" selected>6&quot;</option><option value="8">8&quot;</option><option value="12">12&quot;</option><option value="18">18&quot;</option><option value="24">24&quot;</option><option value="36">36&quot;</option>
+                                    </select>
+                                </div>
+                                <div><label class="text-xs text-zinc-400 block mb-1">Overhang Material</label>
+                                    <select id="overhangMaterial" onchange="calculateEstimate()" class="calc-input w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-sm">
+                                        <option value="lp" selected>LP / Prefinished Wood</option><option value="aluminum">Prefinished Aluminum</option>
+                                    </select>
+                                    <div class="text-[10px] text-zinc-500 mt-1">LP: $12/linear ft per 6&quot;. Aluminum: $15/linear ft per 6&quot;.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Concrete Section -->
                     <div class="mb-6 border border-zinc-800 rounded-2xl p-5 bg-zinc-950/50">
                         <div class="flex items-center justify-between mb-3">
@@ -657,6 +680,9 @@
                                     <option value="10">10 ft</option>
                                     <option value="manual">Manual Entry</option>
                                 </select>
+                                <input type="number" id="apronManual" min="0" step="0.1" inputmode="decimal" placeholder="e.g. 3.5" oninput="calculateEstimate()"
+                                       class="calc-input hidden mt-2 w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-sm">
+                                <div id="apronManualHelp" class="hidden text-[9px] text-zinc-500 mt-1">Enter any apron depth, including decimals such as 3.5 ft.</div>
                             </div>
                             <div class="flex items-end">
                                 <div>
@@ -1554,6 +1580,10 @@
             document.getElementById('roofPatioOptions')?.classList.toggle('hidden',!enabled);
             toggleManualRoofPatio();
         }
+        function toggleOverhang(){
+            const enabled=!!document.getElementById('overhangEnabled')?.checked;
+            document.getElementById('overhangOptions')?.classList.toggle('hidden',!enabled);
+        }
         function toggleManualRoofPatio(){
             document.getElementById('manualRoofPatioWrap')?.classList.toggle('hidden',document.getElementById('roofPatioDepth')?.value!=='manual');
         }
@@ -1622,7 +1652,15 @@
             
             // Concrete
             const newConcrete = document.getElementById('newConcrete').checked;
-            const apronDepth = parseFloat(document.getElementById('apronDepth').value) || 0;
+            const apronSelect = document.getElementById('apronDepth');
+            const apronManual = document.getElementById('apronManual');
+            const apronIsManual = apronSelect.value === 'manual';
+            if(apronManual) apronManual.classList.toggle('hidden', !apronIsManual);
+            const apronManualHelp = document.getElementById('apronManualHelp');
+            if(apronManualHelp) apronManualHelp.classList.toggle('hidden', !apronIsManual);
+            const apronDepth = apronIsManual
+                ? (Math.max(0, parseFloat(apronManual?.value || '0')) || 0)
+                : (parseFloat(apronSelect.value) || 0);
             const concreteThickness = Number(document.getElementById('concreteThickness').value || 4);
             const fiveInch = concreteThickness === 5;
             const sixInch = concreteThickness === 6;
@@ -1691,6 +1729,12 @@
             const retainType = document.getElementById('retainType').value || 'none';
             const retainInches = Number(document.getElementById('retainWallHeight').value || 0);
             const hasGutters = document.getElementById('gutters').checked;
+            const overhangEnabled = !!document.getElementById('overhangEnabled')?.checked;
+            const overhangSize = overhangEnabled ? Number(document.getElementById('overhangSize')?.value || 6) : 0;
+            const overhangMaterial = document.getElementById('overhangMaterial')?.value || 'lp';
+            const overhangLf = overhangEnabled ? 2 * (width + depth) : 0;
+            const overhangRatePerSix = overhangMaterial === 'aluminum' ? 15 : 12;
+            const overhangCost = overhangEnabled ? overhangLf * (overhangSize / 6) * overhangRatePerSix : 0;
             const hasSoffit = document.getElementById('aluminumSoffit').checked;
             const firewallWalls = parseInt(document.getElementById('firewallWalls').value) || 0;
             const firewall = firewallWalls * 600;
@@ -1925,6 +1969,7 @@
                 roofUpgrade + 
                 pitchSurcharge +
                 eavesSurcharge +
+                overhangCost +
                 roofPatioTotalCost +
                 electricalCost + 
                 overheadCost + 
@@ -1968,6 +2013,7 @@
                 demoCost, removalCost, additionalRemovalCost, additionalRemovalArea, epaCost,
                 footingCost, rodsCost, retainCost, retainRate, retainType, frostFootingCost, perimeterLf,
                 gutterCost, gutterFt, hasGutters,
+                overhangEnabled, overhangSize, overhangMaterial, overhangLf, overhangRatePerSix, overhangCost,
                 soffitCost, soffitFt, hasSoffit,
                 firewall, hurricane, wheeling, arlingtonSurvey, andrewPermit, hardieSidingCost, sidingType, wallHeight, overheadDoorHeight, sidingAreaNet, hardieSheets, extrasTotal,
                 permitCost, internalTotal, customerQuote, profitAmount, profitMode: profitSettings.mode, profitValue: profitSettings.value,
@@ -2143,6 +2189,10 @@
             }
             if (data.gutterCost > 0) {
                 lines.push({ label: `Gutters (${data.gutterFt.toFixed(0)} lf × $10)`, amount: data.gutterCost, section: 'structural' });
+            }
+            if (data.overhangCost > 0) {
+                const overhangMat=data.overhangMaterial==='aluminum'?'Prefinished Aluminum':'Prefinished Wood';
+                lines.push({ label: `Overhang ${data.overhangSize}" - ${overhangMat} (${data.overhangLf.toFixed(0)} lf × ${data.overhangSize/6} × $${data.overhangRatePerSix})`, amount:data.overhangCost, section:'structural' });
             }
             if (data.soffitCost > 0) {
                 lines.push({ label: `Aluminum soffit + fascia (${data.soffitFt.toFixed(1)} lf × $10.75)`, amount: data.soffitCost, section: 'structural' });
@@ -2393,8 +2443,8 @@
 
         const ESTIMATE_FIELD_LABELS={
             city:'City',width:'Garage Width',depth:'Garage Depth',customWidth:'Custom Garage Width',customDepth:'Custom Garage Depth',
-            wallHeight:'Wall Height',roofType:'Roof Style',eaveDir:'Gable Eaves',pitch:'Roof Pitch',eavesSize:'Eaves',manualEavesSize:'Manual Eaves Size',roofPatioEnabled:'Roof Patio',roofPatioDepth:'Roof Patio Depth',manualRoofPatioDepth:'Manual Roof Patio Depth',roofPatioSide:'Side Roof Patio',
-            newConcrete:'New Concrete',apronDepth:'Apron Depth',concreteThickness:'Concrete Thickness',excavation:'Excavation / Stone Loads',
+            wallHeight:'Wall Height',roofType:'Roof Style',eaveDir:'Gable Eaves',pitch:'Roof Pitch',eavesSize:'Eaves',manualEavesSize:'Manual Eaves Size',roofPatioEnabled:'Roof Patio',roofPatioDepth:'Roof Patio Depth',manualRoofPatioDepth:'Manual Roof Patio Depth',roofPatioSide:'Side Roof Patio',overhangEnabled:'Overhang',overhangSize:'Overhang Size',overhangMaterial:'Overhang Material',
+            newConcrete:'New Concrete',apronDepth:'Apron Depth',apronManual:'Manual Apron Depth',concreteThickness:'Concrete Thickness',excavation:'Excavation / Stone Loads',
             frostProtectedFooting:'42" Frost Protected Footing',retainType:'Retaining Wall Type',retainWallHeight:'Retaining Wall Height',
             demoExisting:'Demolition',demoSlabPreset:'Demo Garage / Slab Size',demoApronDepth:'Demo Apron Depth',demoApronManual:'Manual Demo Apron Depth',
             oldConcreteOverride:'Custom Demo Dimensions',additionalRemovalDims:'Additional Concrete Removal',
@@ -2417,7 +2467,7 @@
             if(value===false)return 'No';
             if(value===null||value===undefined||value==='')return 'None';
             if(key==='manualEavesSize' && !String(value).includes('"'))return `${value}"`;
-            const footKeys=['width','depth','customWidth','customDepth','wallHeight','apronDepth','demoApronDepth','demoApronManual','overheadDoorHeight','overheadDoorWidth','roofPatioDepth','manualRoofPatioDepth'];
+            const footKeys=['width','depth','customWidth','customDepth','wallHeight','apronDepth','apronManual','demoApronDepth','demoApronManual','overheadDoorHeight','overheadDoorWidth','roofPatioDepth','manualRoofPatioDepth'];
             if(footKeys.includes(key) && !String(value).includes("'"))return `${value}'`;
             return String(value);
         }
@@ -2432,7 +2482,7 @@
             }
             if(typeof value==='boolean')return value?'true':'false';
             let s=String(value).trim();
-            if(['width','depth','customWidth','customDepth','wallHeight','apronDepth','demoApronDepth','demoApronManual','overheadDoorHeight','overheadDoorWidth','manualEavesSize','roofPatioDepth','manualRoofPatioDepth'].includes(key)){
+            if(['width','depth','customWidth','customDepth','wallHeight','apronDepth','apronManual','demoApronDepth','demoApronManual','overheadDoorHeight','overheadDoorWidth','manualEavesSize','roofPatioDepth','manualRoofPatioDepth'].includes(key)){
                 s=s.replace(/[′’'"]/g,'').trim();
                 const n=Number(s);
                 if(Number.isFinite(n))return String(n);
@@ -3352,7 +3402,9 @@
             const sidingColorId = sidingType === 'hardie' ? 'hardieColor' : 'vinylColor';
             const sidingColor = selectedText(sidingColorId) || 'White';
             const sidingHex = val(sidingColorId) || '#F5F5F5';
-            const apronDepth = Number(val('apronDepth') || 0);
+            const apronDepth = val('apronDepth') === 'manual'
+                ? Number(val('apronManual') || 0)
+                : Number(val('apronDepth') || 0);
 
             // Estimate-sheet runtime values. These must be defined inside printEstimateSheet;
             // calculateEstimate() has its own local copies that are not visible here.
@@ -3400,10 +3452,14 @@
 
                 // Exact Wally row order.
                 addSpec('Garage Size', `${width}' x ${depth}'`);
-                addSpec('Roof Style', `${roofLabel} - ${pitch} Pitch with Vents`);
-                addSpec('Roofing', 'Architectural Shingles + 15lbs Felt Paper');
+                addSpec('Roof Style', `${roofLabel} - ${pitch} Pitch`);
+                addSpec('Roofing', 'Architectural Shingles + 15lbs Felt Paper + Roof Vents');
                 addSpec('Roof Sheathing', '1/2"');
-                addSpec('Overhang', checked('gutters') ? (roofType === 'gable' ? 'Seamless Gutters 2 Sides - 2 Down Spouts' : 'Seamless Gutters 4 Sides - 2 Down Spouts') : '" "');
+                if(checked('overhangEnabled')){
+                    const overhangSizePrint=Number(val('overhangSize')||6);
+                    const overhangMaterialPrint=val('overhangMaterial')==='aluminum'?'Prefinished Aluminum':'Prefinished Wood';
+                    addSpec('Overhang', `${overhangSizePrint}" - ${overhangMaterialPrint}`);
+                }
                 addSpec('Eaves', `${getEavesInches()}" Boxed Eaves - All 4 Sides`);
                 if(checked('roofPatioEnabled')){const d=getRoofPatioDepth(),side=checked('roofPatioSide'),span=side?depth:width;addSpec('Roof Patio',`${span}' x ${d}' ${side?'Side':'Rear'} Roof Patio - 4 Support Posts`);}
                 addSpec('Rafters', '2x6 16" O.C.');
@@ -3417,7 +3473,7 @@
                 addSpec('Overhead Door', `${overheadDoorWidth}' x ${overheadDoorHeight}' ${overheadDoorStyleText} Door`);
                 const openerQtyPrint=parseInt(val('openerQty'))||1;
                 const openerTypePrint=val('openerType')||'2200';
-                const openerNamePrint=openerTypePrint==='8500'?'LiftMaster 8500 Wall Mount JackShaft Opener':'LiftMaster 2220L 3/4HP Opener';
+                const openerNamePrint=openerTypePrint==='8500'?'LiftMaster 8500 Wall Mount JackShaft Opener':'LiftMaster 2220L 3/4HP Opener w/ Camera';
                 addSpec('Opener', `${openerQtyPrint > 1 ? '('+openerQtyPrint+') ' : ''}${openerNamePrint}`);
 
                 if (doorType === 'party') {
@@ -3452,7 +3508,7 @@
                 addSpec('Overhead Door', `${overheadDoorWidth}' x ${overheadDoorHeight}' ${overheadDoorStyleText} Door`);
                 const openerQtyPrint=parseInt(val('openerQty'))||1;
                 const openerTypePrint=val('openerType')||'2200';
-                const openerNamePrint=openerTypePrint==='8500'?'LiftMaster 8500 Wall Mount JackShaft Opener':'LiftMaster 2220L 3/4HP Opener';
+                const openerNamePrint=openerTypePrint==='8500'?'LiftMaster 8500 Wall Mount JackShaft Opener':'LiftMaster 2220L 3/4HP Opener w/ Camera';
                 addSpec('Opener', `${openerQtyPrint > 1 ? '('+openerQtyPrint+') ' : ''}${openerNamePrint}`);
                 if (doorType === 'party') addSpec('Party Door', "6' x 7' Steel Door");
                 else if (doorType === 'french') addSpec('French Door', 'French Door Allowance');
@@ -3754,6 +3810,31 @@
     .spec-table .item { font-weight:800; }
     .spec-table .details { font-weight:700; text-align:center; color:#17243a; }
     .wally-guarantee { text-align:center; font-size:13px; line-height:1.25; font-weight:900; color:#071d48; padding:9px 4px 2px; }
+    /* Uniform estimate-sheet typography: match Wally's 14-day guarantee (13px). */
+    .spec-table td,
+    .spec-table .item,
+    .spec-table .details,
+    .customer-box,
+    .customer-box .field,
+    .customer-box .field b,
+    .customer-box .field span,
+    .notes-panel .notes,
+    .notes-panel .estimate-notes-page.notes-1 + .notes,
+    .notes-panel .estimate-notes-page.notes-2 + .notes,
+    .notes-panel .estimate-notes-page.notes-few + .notes,
+    .notes-panel .estimate-notes-page.notes-medium + .notes,
+    .notes-panel .estimate-notes-page.notes-many + .notes {
+        font-size:13px !important;
+    }
+    .spec-table .item,
+    .spec-table .details,
+    .customer-box .field b,
+    .customer-box .field span,
+    .notes-panel .notes,
+    .notes-panel .notes li {
+        font-weight:900 !important;
+    }
+
     .total-box { margin-top: 8px; border:1px solid #b9c2d0; }
     .total-label { background:#ffc400; font-weight:900; text-align:center; font-size:12px; padding:4px; }
     .total-price { background:#061d4b; color:#ffc400; font-weight:900; text-align:center; font-size:34px; line-height:1; padding:8px 4px 10px; letter-spacing:.5px; white-space:nowrap; }
@@ -3766,15 +3847,15 @@
     .exterior img { object-fit: cover; object-position: center; }
     .exterior-title { margin-bottom: 6px; }
     .notes-panel { border:1px solid #9ba9be; margin-top:8px; min-height: 2.38in; }
-    .notes { list-style:none; margin:0; padding:9px 12px 7px 29px; font-size:10.5px; line-height:1.28; color:#14213a; font-weight:800; }
-    .notes li { position:relative; margin:0 0 7px; font-weight:800; overflow-wrap:anywhere; }
+    .notes { list-style:none; margin:0; padding:12px 14px 9px 31px; font-size:13px; line-height:1.42; color:#14213a; font-weight:900; }
+    .notes li { position:relative; margin:0 0 12px; font-weight:900; overflow-wrap:anywhere; }
     .notes li:before { content:'✓'; position:absolute; left:-18px; top:-1px; width:11px; height:11px; border:1px solid #7e8ba0; color:#f3b900; font-size:11px; line-height:10px; font-weight:900; text-align:center; }
     .notes-panel .panel-title { font-size:13px; font-weight:900; letter-spacing:.04em; }
-    .notes-panel .estimate-notes-page.notes-1 + .notes { font-size:16px; line-height:1.38; }
-    .notes-panel .estimate-notes-page.notes-2 + .notes { font-size:14.5px; line-height:1.36; }
-    .notes-panel .estimate-notes-page.notes-few + .notes { font-size:12.5px; line-height:1.32; }
-    .notes-panel .estimate-notes-page.notes-medium + .notes { font-size:11px; line-height:1.28; }
-    .notes-panel .estimate-notes-page.notes-many + .notes { font-size:10px; line-height:1.22; }
+    .notes-panel .estimate-notes-page.notes-1 + .notes { font-size:22px; line-height:1.48; }
+    .notes-panel .estimate-notes-page.notes-2 + .notes { font-size:19px; line-height:1.46; }
+    .notes-panel .estimate-notes-page.notes-few + .notes { font-size:16px; line-height:1.44; }
+    .notes-panel .estimate-notes-page.notes-medium + .notes { font-size:14px; line-height:1.38; }
+    .notes-panel .estimate-notes-page.notes-many + .notes { font-size:12.5px; line-height:1.32; }
 
     .footer { height:.52in; background:#061d4b; color:#ffc400; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:900; margin-top:0; position:relative; }
     .footer:before, .footer:after { content:""; width:78px; height:2px; background:#ffc400; margin:0 18px; }
@@ -4037,6 +4118,7 @@ async function openPopupChatGPT(){
                 document.getElementById('roofType').value = 'hip';
                 document.getElementById('newConcrete').checked = true;
                 document.getElementById('apronDepth').value = '3';
+            if(document.getElementById('apronManual')) document.getElementById('apronManual').value='';
                 document.getElementById('demoExisting').checked = true;
                 document.getElementById('demoSlabPreset').value = '20x20';
                 document.getElementById('demoApronDepth').value = '3';
@@ -4051,6 +4133,7 @@ async function openPopupChatGPT(){
                 document.getElementById('roofType').value = 'hip';
                 document.getElementById('newConcrete').checked = true;
                 document.getElementById('apronDepth').value = '3';
+            if(document.getElementById('apronManual')) document.getElementById('apronManual').value='';
                 document.getElementById('demoExisting').checked = true;
                 document.getElementById('demoSlabPreset').value = '20x20';
                 document.getElementById('demoApronDepth').value = '3';
@@ -4083,12 +4166,17 @@ async function openPopupChatGPT(){
             toggleManualEaves();
             
             const roofPatioEnabledEl=document.getElementById('roofPatioEnabled'); if(roofPatioEnabledEl)roofPatioEnabledEl.checked=false;
+            const overhangEnabledEl=document.getElementById('overhangEnabled'); if(overhangEnabledEl)overhangEnabledEl.checked=false;
+            const overhangSizeEl=document.getElementById('overhangSize'); if(overhangSizeEl)overhangSizeEl.value='6';
+            const overhangMaterialEl=document.getElementById('overhangMaterial'); if(overhangMaterialEl)overhangMaterialEl.value='lp';
             const roofPatioDepthEl=document.getElementById('roofPatioDepth'); if(roofPatioDepthEl)roofPatioDepthEl.value='6';
             const manualRoofPatioDepthEl=document.getElementById('manualRoofPatioDepth'); if(manualRoofPatioDepthEl)manualRoofPatioDepthEl.value='';
             const roofPatioSideEl=document.getElementById('roofPatioSide'); if(roofPatioSideEl)roofPatioSideEl.checked=false;
             toggleRoofPatio();
+            toggleOverhang();
             document.getElementById('newConcrete').checked = true;
             document.getElementById('apronDepth').value = '3';
+            if(document.getElementById('apronManual')) document.getElementById('apronManual').value='';
             document.getElementById('concreteThickness').value = '4';
             document.getElementById('excavation').value = '0';
             
@@ -4182,7 +4270,7 @@ async function openPopupChatGPT(){
         function attachListeners() {
             const ids = [
                 'city', 'width', 'depth', 'wallHeight', 'roofType', 'eaveDir', 'pitch',
-                'newConcrete', 'apronDepth', 'concreteThickness', 'excavation',
+                'newConcrete', 'apronDepth', 'apronManual', 'concreteThickness', 'excavation',
                 'extraConcrete1Type', 'extraConcrete1Thickness', 'extraPatio1Length', 'extraPatio1Custom',
                 'extraConcrete2Type', 'extraConcrete2Thickness', 'extraPatio2Length', 'extraPatio2Custom',
                 'demoExisting', 'demoSlabPreset', 'demoApronDepth', 'oldConcreteOverride', 'additionalRemovalDims', 'epaFee',
@@ -4289,6 +4377,7 @@ async function openPopupChatGPT(){
         }
 
     window.addEventListener('load',()=>setTimeout(loadEstimateForEditing,250));
+        document.addEventListener('DOMContentLoaded',()=>setTimeout(toggleOverhang,0));
 </script>
 </body>
 </html>

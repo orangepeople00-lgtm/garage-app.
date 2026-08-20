@@ -2236,18 +2236,46 @@
             if(footKeys.includes(key) && !String(value).includes("'"))return `${value}'`;
             return String(value);
         }
+        function normalizeEstimateChangeValue(key,value){
+            if(value===null||value===undefined)return '';
+            if(key==='customExtras'){
+                const arr=Array.isArray(value)?value:[];
+                return JSON.stringify(arr.map(x=>({
+                    description:String(x?.description||'').trim(),
+                    cost:String(x?.cost||'').trim()
+                })).filter(x=>x.description||x.cost));
+            }
+            if(typeof value==='boolean')return value?'true':'false';
+            let s=String(value).trim();
+            if(['width','depth','customWidth','customDepth','wallHeight','apronDepth','demoApronDepth','overheadDoorHeight','overheadDoorWidth'].includes(key)){
+                s=s.replace(/[′’'"]/g,'').trim();
+                const n=Number(s);
+                if(Number.isFinite(n))return String(n);
+            }
+            return s;
+        }
         function describeEstimateChanges(previousState,nextState,previousRecord,nextRecord){
             const changes=[];
-            const keys=new Set([...Object.keys(previousState||{}),...Object.keys(nextState||{})]);
-            keys.forEach(key=>{
-                if(['estimateChangeRequest','popupChangeRequest'].includes(key))return;
-                const before=previousState?previousState[key]:undefined;
-                const after=nextState?nextState[key]:undefined;
-                if(String(before??'')===String(after??''))return;
-                const label=ESTIMATE_FIELD_LABELS[key]||key.replace(/([A-Z])/g,' $1').replace(/^./,c=>c.toUpperCase());
-                changes.push(`${label}: ${formatEstimateChangeValue(key,before)} → ${formatEstimateChangeValue(key,after)}`);
-            });
-            if(!Object.keys(previousState||{}).length && previousRecord){
+            const hasPreviousState=!!Object.keys(previousState||{}).length;
+
+            if(hasPreviousState){
+                const keys=new Set([...Object.keys(previousState||{}),...Object.keys(nextState||{})]);
+                keys.forEach(key=>{
+                    if(['estimateChangeRequest','popupChangeRequest'].includes(key))return;
+                    const before=previousState?previousState[key]:undefined;
+                    const after=nextState?nextState[key]:undefined;
+
+                    // Only log a line when an already-saved value actually changed.
+                    // A missing legacy/default value is not treated as "None → current value".
+                    if(before===undefined||before===null)return;
+                    if(normalizeEstimateChangeValue(key,before)===normalizeEstimateChangeValue(key,after))return;
+
+                    const label=ESTIMATE_FIELD_LABELS[key]||key.replace(/([A-Z])/g,' $1').replace(/^./,c=>c.toUpperCase());
+                    changes.push(`${label}: ${formatEstimateChangeValue(key,before)} → ${formatEstimateChangeValue(key,after)}`);
+                });
+            }else if(previousRecord){
+                // Older estimates have no calculator_state. Compare only record-level values
+                // that genuinely existed on both the old and newly saved records.
                 const recordPairs=[
                     ['Garage Size',previousRecord.garage_size,nextRecord.garage_size],
                     ['Roof Style',previousRecord.roof_type,nextRecord.roof_type],
@@ -2256,11 +2284,12 @@
                     ['Estimate Price',previousRecord.estimate_price,nextRecord.estimate_price]
                 ];
                 recordPairs.forEach(([label,before,after])=>{
-                    if(String(before??'')!==String(after??'')){
-                        const b=label==='Estimate Price'?`$${Number(before||0).toLocaleString()}`:String(before??'None');
-                        const a=label==='Estimate Price'?`$${Number(after||0).toLocaleString()}`:String(after??'None');
-                        changes.push(`${label}: ${b} → ${a}`);
-                    }
+                    if(before===undefined||before===null||after===undefined||after===null)return;
+                    const norm=v=>String(v).trim().replace(/\s+/g,' ');
+                    if(norm(before)===norm(after))return;
+                    const b=label==='Estimate Price'?`$${Number(before||0).toLocaleString()}`:String(before);
+                    const a=label==='Estimate Price'?`$${Number(after||0).toLocaleString()}`:String(after);
+                    changes.push(`${label}: ${b} → ${a}`);
                 });
             }
             return [...new Set(changes)];
@@ -2300,6 +2329,38 @@
             });
         }
 
+        function restoreLegacyOverheadDoor(snapshot){
+            const text=String(snapshot?.overhead_door||'').trim();
+            if(!text)return;
+            const size=text.match(/([0-9.]+)'\s*x\s*([0-9.]+)'/i);
+            if(size){
+                setEstimatorField('overheadDoorWidth',size[1]);
+                setEstimatorField('overheadDoorHeight',size[2]);
+            }
+            const styleSel=document.getElementById('overheadDoorStyle');
+            if(styleSel){
+                const wanted=/raised panel/i.test(text)?'Raised Panel':/flush/i.test(text)?'Flush':/carriage/i.test(text)?'Carriage':'';
+                if(wanted){
+                    const opt=[...styleSel.options].find(o=>o.value===wanted || o.textContent.trim().toLowerCase()===wanted.toLowerCase());
+                    if(opt)styleSel.value=opt.value;
+                }
+            }
+        }
+
+        function restoreLegacySnapshotFields(snapshot){
+            if(!snapshot)return;
+            restoreLegacyOverheadDoor(snapshot);
+            if(snapshot.pitch){
+                const m=String(snapshot.pitch).match(/(\d+)\s*\/\s*12/);
+                if(m)setEstimatorField('pitch',`${m[1]}/12`);
+            }
+            if(snapshot.gutters!==undefined)setEstimatorField('gutters',!!snapshot.gutters);
+            if(snapshot.aluminum_soffit_fascia!==undefined)setEstimatorField('aluminumSoffit',!!snapshot.aluminum_soffit_fascia);
+            if(snapshot.demolition!==undefined)setEstimatorField('demoExisting',!!snapshot.demolition);
+            if(snapshot.new_concrete!==undefined)setEstimatorField('newConcrete',!!snapshot.new_concrete);
+            if(snapshot.additional_notes)setEstimatorField('additionalEstimateNotes',snapshot.additional_notes);
+        }
+
         async function loadEstimateForEditing(){
             const id=new URLSearchParams(location.search).get('editEstimate');
             if(!id)return;
@@ -2326,6 +2387,7 @@
                 }else{
                     // Older saved estimates did not contain every calculator control.
                     // Restore everything that can be recovered safely without guessing.
+                    restoreLegacySnapshotFields(s);
                     setEstimatorField('customerName',e.customer||'');
                     setEstimatorField('customerAddress',e.address||'');
                     setEstimatorField('city',e.city||'Chicago');
@@ -2373,6 +2435,9 @@
                     const hurricane=/Hurricane ties included/i.test(legacyNotes);
                     if(hurricane)setEstimatorField('hurricaneTies',true);
 
+                    const excavationMatch=legacyNotes.match(/(?:Excavation|Stone)(?:\s*\/\s*Stone)?(?:\s*(?:Quantity|Loads?))?\s*[:\-]?\s*([0-9]+)\s*(?:Loads?|Load)?/i);
+                    if(excavationMatch)setEstimatorField('excavation',excavationMatch[1]);
+
                     // For legacy records, keep custom scope lines from the original saved sheet in Additional Notes.
                     // This prevents special instructions from disappearing when the old record had no calculator_state.
                     const genericLines=legacyNotes.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
@@ -2392,7 +2457,6 @@
                         const existing=String(document.getElementById('additionalEstimateNotes')?.value||'').trim();
                         const merged=[...new Set([...(existing?existing.split(/\r?\n/):[]),...customScopeLines])].filter(Boolean);
                         setEstimatorField('additionalEstimateNotes',merged.join('\n'));
-                        restoreCustomExtras(customScopeLines.map(description=>({description,cost:''})));
                     }
 
                     if(String(e.customer||'').trim().toLowerCase()==='james young'){

@@ -610,7 +610,7 @@ function estimatePricingDetails(e){
  }else{
    html+='<div style="font-size:14px;color:#6b7280">Internal cost was not saved on this older estimate.</div>';
  }
- const revisions=Array.isArray(s.revision_history)?s.revision_history:[];
+ const revisions=(Array.isArray(s.revision_history)?s.revision_history:[]).filter(r=>Array.isArray(r.changes)&&r.changes.length);
  if(revisions.length){
    html+='<div style="margin-top:14px;padding-top:12px;border-top:1px solid #cbd5e1">';
    html+='<div style="font-size:12px;font-weight:900;letter-spacing:.05em;color:#0f274b;text-transform:uppercase;margin-bottom:8px">Estimate Changes</div>';

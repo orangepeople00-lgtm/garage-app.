@@ -3893,7 +3893,7 @@
 
     @media print {
         html,body { background:#fff; }
-        .sheet { margin:0; width:8.5in; height:11in; min-height:11in; }
+        .sheet { margin:0; width:8.5in; height:11in; min-height:11in; max-height:11in; overflow:hidden; }
         .actions { display:none !important; }
     }
 </style>
@@ -3989,7 +3989,43 @@ async function downloadEstimatePdf(){
   if(!sheet)return;
   if(typeof html2pdf==='undefined'){alert('PDF download is still loading. Please try again in a moment.');return;}
   const filename=(document.title||'Absolute Garage Builders Estimate').replace(/[\\/:*?"<>|]+/g,'-')+'.pdf';
-  await html2pdf().set({margin:0,filename,image:{type:'jpeg',quality:0.98},html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff'},jsPDF:{unit:'in',format:'letter',orientation:'portrait'}}).from(sheet).save();
+
+  // Force the downloaded estimate onto one exact Letter page.
+  // html2pdf/html2canvas can render a few pixels taller than 11in even when the
+  // browser preview looks correct, which used to create a second PDF page.
+  const original={
+    width:sheet.style.width,height:sheet.style.height,minHeight:sheet.style.minHeight,
+    maxHeight:sheet.style.maxHeight,overflow:sheet.style.overflow
+  };
+  sheet.style.width='8.5in';
+  sheet.style.height='11in';
+  sheet.style.minHeight='11in';
+  sheet.style.maxHeight='11in';
+  sheet.style.overflow='hidden';
+
+  try{
+    const canvas=await html2canvas(sheet,{
+      scale:2,
+      useCORS:true,
+      backgroundColor:'#ffffff',
+      logging:false,
+      windowWidth:sheet.scrollWidth,
+      windowHeight:sheet.scrollHeight
+    });
+    const img=canvas.toDataURL('image/jpeg',0.98);
+    const pdf=new jspdf.jsPDF({unit:'in',format:'letter',orientation:'portrait',compress:true});
+    pdf.addImage(img,'JPEG',0,0,8.5,11,undefined,'FAST');
+    pdf.save(filename);
+  }catch(err){
+    console.error('Single-page PDF export failed',err);
+    alert('Could not download the estimate PDF. Please try again.');
+  }finally{
+    sheet.style.width=original.width;
+    sheet.style.height=original.height;
+    sheet.style.minHeight=original.minHeight;
+    sheet.style.maxHeight=original.maxHeight;
+    sheet.style.overflow=original.overflow;
+  }
 }
 function applyPopupChange(){
   const q=document.getElementById('popupChangeRequest').value;

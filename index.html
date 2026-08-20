@@ -683,8 +683,7 @@ function estimatePricingDetails(e){
    html+='<div style="font-size:13px;font-weight:800;color:#475569;margin-bottom:10px">Only changes made after the original completed estimate are shown.</div>';
    [...revisions].reverse().forEach(r=>{
      const when=r.timestamp?new Date(r.timestamp).toLocaleString():'Unknown time';
-     const who=DISPLAY[r.editor_username]||r.editor_username||'User';
-     html+=`<div style="margin:9px 0 13px;padding:11px 13px;background:#fff;border:1px solid #dbe2ea;border-radius:8px"><div style="font-size:14px;font-weight:900;color:#334155">${esc(when)} • ${esc(who)}</div>`;
+     html+=`<div style="margin:9px 0 13px;padding:11px 13px;background:#fff;border:1px solid #dbe2ea;border-radius:8px"><div style="font-size:14px;font-weight:900;color:#334155">${esc(when)}</div>`;
      (Array.isArray(r.changes)?r.changes:[]).forEach(c=>{html+=`<div style="font-size:15px;font-weight:800;margin-top:7px;line-height:1.45;color:#172033">• ${esc(c)}</div>`});
      html+='</div>';
    });

@@ -3489,7 +3489,7 @@
                 addSpec('Apron', checked('newConcrete') && apronDepth > 0 ? `${apronDepth}'` : 'None');
                 addSpec('Perimeter Curb', 'Water Ledge, Included');
                 addSpec('Retaining Wall', frostProtectedFooting ? '42" Frost Protected Footing' : retainType !== 'none' ? `${retainType === 'standard' ? 'Standard' : retainType === 'reverse' ? 'Reverse' : '4 Sided'} Retaining Wall - ${retainInches}" Overall` : 'Included as Needed');
-                addSpec('Building Permits', isSuburb ? 'Absolute will file for and secure all permits. Customer pays all fees.' : 'Included ($550 Value)');
+                addSpec('Building Permits', isSuburb ? 'Absolute Will File For And Secure All Permits. Customer Pays All Fees.' : 'Included ($550 Value)');
             } else {
                 // Standard ABG estimate-sheet format for Ramsey, Samer and Tom.
                 addSpec('Garage Size', `${width}' x ${depth}'`);
@@ -3611,7 +3611,11 @@
                 notes.push('Built to meet applicable local building codes.');
             }
 
-            const notesHtml = notes.map(n => `<li>${esc(n)}</li>`).join('');
+            const capitalizeNoteLine = (text) => {
+                const s=String(text ?? '');
+                return s.replace(/[A-Za-z]/, ch => ch.toUpperCase());
+            };
+            const notesHtml = notes.map(n => `<li>${esc(capitalizeNoteLine(n))}</li>`).join('');
 
             // Photo-based exterior example. Hip and gable use separate real photo bases; visible door/window selections are composited onto the matching photo.
             const isGable = roofType === 'gable';

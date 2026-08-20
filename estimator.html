@@ -3122,6 +3122,7 @@
     .sales-contact { font-size: 11px; line-height: 1.7; font-weight: 700; }
     .license { font-size: 8px; font-weight: 800; text-transform: uppercase; }
     .license strong { display: block; font-size: 17px; line-height: 1.15; margin-top: 3px; }
+    .wally-card-logo { width: 82px; max-height: 66px; object-fit: contain; display: block; margin: 0 auto 5px; background:#fff; border-radius:3px; padding:2px; }
 
     .doc-title { height: .7in; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 29px; letter-spacing: .2px; position: relative; white-space: nowrap; }
     .doc-title:before, .doc-title:after { content:""; height: 4px; width: 23px; background:#ffc400; margin: 0 7px; }
@@ -3214,7 +3215,7 @@
                 <div class="sales-title">${esc(salesmanTitle)}</div>
                 <div class="sales-contact">${salesmanPhone ? `☎ ${esc(salesmanPhone)}` : ''}${salesmanPhone && salesmanEmail ? '<br>' : ''}${salesmanEmail ? `✉ ${esc(salesmanEmail)}` : ''}${salesmanTagline ? `<br><span style="font-size:8px;font-weight:800">${esc(salesmanTagline)}</span>` : ''}</div>
             </div>
-            <div class="license">ROOFING LICENSE NUMBER:<strong>104.016731<br>105.006803</strong></div>
+            <div class="license">${salesman.wally ? `<img class="wally-card-logo" src="wally-garage-guy-logo.png" alt="The Garage Guy Inc. / Absolute Garage Builders logo">` : ''}ROOFING LICENSE NUMBER:<strong>104.016731<br>105.006803</strong></div>
         </div>
     </div>
 

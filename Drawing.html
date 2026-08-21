@@ -1155,6 +1155,36 @@ button.danger{color:#b42318}
   text-shadow:0 0 2px rgba(255,255,255,.92)!important;
 }
 
+/* V64: print-safe concrete hatch.
+   The on-screen diagonal hatch can stay as a CSS background, but browsers may
+   omit background graphics when printing. This SVG overlay uses real strokes,
+   so the diagonal concrete symbol remains on printed Concrete and Demo sheets. */
+#paper .obj.concrete-hatched .print-hatch-svg{
+  display:none;
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  z-index:2;
+  pointer-events:none;
+  overflow:hidden;
+}
+@media print{
+  #paper .obj.concrete-hatched{
+    -webkit-print-color-adjust:exact!important;
+    print-color-adjust:exact!important;
+  }
+  #paper .obj.concrete-hatched .print-hatch-svg{
+    display:block!important;
+  }
+  #paper .obj.concrete-hatched > .label,
+  #paper .obj.concrete-hatched .dim-label,
+  #paper .obj.concrete-hatched .party-door-name{
+    position:relative!important;
+    z-index:5!important;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -2705,6 +2735,43 @@ function renderExtraRearReturnSpot(){
 }
 
 
+function addPrintableConcreteHatch(el){
+  if(!el || el.querySelector('.print-hatch-svg')) return;
+  const ns='http://www.w3.org/2000/svg';
+  const svg=document.createElementNS(ns,'svg');
+  svg.setAttribute('class','print-hatch-svg');
+  svg.setAttribute('preserveAspectRatio','none');
+
+  const defs=document.createElementNS(ns,'defs');
+  const pattern=document.createElementNS(ns,'pattern');
+  const pid='printHatch_'+Math.random().toString(36).slice(2);
+  pattern.setAttribute('id',pid);
+  pattern.setAttribute('patternUnits','userSpaceOnUse');
+  pattern.setAttribute('width','12');
+  pattern.setAttribute('height','12');
+
+  const path=document.createElementNS(ns,'path');
+  path.setAttribute('d','M-3,-3 L15,15 M-3,9 L3,15 M9,-3 L15,3');
+  path.setAttribute('fill','none');
+  path.setAttribute('stroke','#777');
+  path.setAttribute('stroke-width','1.35');
+  path.setAttribute('stroke-opacity','0.65');
+
+  pattern.appendChild(path);
+  defs.appendChild(pattern);
+  svg.appendChild(defs);
+
+  const rect=document.createElementNS(ns,'rect');
+  rect.setAttribute('x','0');
+  rect.setAttribute('y','0');
+  rect.setAttribute('width','100%');
+  rect.setAttribute('height','100%');
+  rect.setAttribute('fill','url(#'+pid+')');
+  svg.appendChild(rect);
+
+  el.insertBefore(svg,el.firstChild);
+}
+
 function shouldConcreteHatch(o){
   if(!o)return false;
   const label=String(o.label||'').toUpperCase();
@@ -2740,8 +2807,11 @@ function renderObjects(){
     if(['rearGap','alleyDistance','rearSetback'].includes(o.role)) return;
     const [w,h]=objPixels(o), el=document.createElement('div');
     el.className='obj '+(o.kind==='eraser'?'erase-patch ':'')+(o.kind==='text'?'textobj ':'')+(o.kind==='dimension'?'dimension ':'')+(o.kind==='stays'?'stays ':'')+(o.kind==='cut'?'cutstamp ':'')+(o.kind==='collect'?'collectstamp ':'')+((o.kind==='patio')?'patio ':'')+((o.kind==='pad')?'pad ':'')+((o.role==='partyDoor')?'party-door ':'')+((o.role==='serviceDoor')?'service-door ':'')+(((o.role==='garage'||o.role==='apron')&&sameGarageApronWidth())?'shared-slab-apron ':'')+((o.role==='garage')?'role-garage ':'')+((o.kind==='sidewalk')?'sidewalk ':'')+((o.kind==='sidewalk'&&h>w)?'vertical-label ':'')+(['frontLeft','frontMiddle','frontRight','rearLeft','rearMiddle','rearRight','leftSetback','rightSetback','rearSetback','houseGap','alleyDistance'].includes(o.role)?'big-dim ':'')+(o.role==='rearGap'?'gap-dim ':'')+(o.role==='rearSetback'?'rear-setback-clean ':'')+((o.role==='lotWidth'||o.role==='lotLength')?'lot-dim ':'')+(o.role==='lotLength'?'lot-length-special ':'')+(/SERVICE DOOR PAD/i.test(o.label||'')?'service-pad ':'')+((o.kind==='tree'||o.kind==='bush')?'circle-stamp ':'')+(state.mode==='siteplan'?'siteplan-object ':'')+((['serviceDoor','partyDoor'].includes(o.role)||['serviceReturn','partyReturnA','partyReturnB','frontLeft','frontMiddle','frontRight'].includes(o.role))?'no-direct-drag ':'')+(state.selected===o.id?'selected':'');
-    // V63: actually attach the concrete hatch class after the object's full className is built.
-    if(shouldConcreteHatch(o))el.classList.add('concrete-hatched');
+    // V64: attach both the screen hatch and a real SVG hatch for printing.
+    if(shouldConcreteHatch(o)){
+      el.classList.add('concrete-hatched');
+      addPrintableConcreteHatch(el);
+    }
     el.dataset.id=o.id;
     if(o.role)el.dataset.role=o.role;
     Object.assign(el.style,{left:o.x+'px',top:o.y+'px',width:w+'px',height:h+'px',transform:o.role==='lotLength'?'none':`rotate(${o.angle||0}deg)`});
@@ -3180,7 +3250,11 @@ function setPrintZoom(){
  const z=Math.min(maxH/t.h,maxW/t.w);
  document.documentElement.style.setProperty('--print-zoom',String(z));
 }
-$('printBtn').onclick=()=>{setPrintZoom();window.print()};
+$('printBtn').onclick=()=>{
+  document.querySelectorAll('#paper .obj.concrete-hatched').forEach(addPrintableConcreteHatch);
+  setPrintZoom();
+  window.print();
+};
 
 function dataUrlBytes(dataUrl){
  const b64=dataUrl.split(',')[1],bin=atob(b64),a=new Uint8Array(bin.length);

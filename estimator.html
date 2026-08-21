@@ -385,6 +385,169 @@
     .estimate-notes-page.notes-medium .notes-list { font-size:14px; }
     .estimate-notes-page.notes-many .notes-list { font-size:11.5px; }
     .estimate-notes-page .notes-list li { margin-bottom:.8em; }
+
+/* V-final print fit: preserve footer, but reserve real space for it and shrink
+   the proposal uniformly enough to keep every section on one 8.5 x 11 page. */
+@media print {
+  @page { size: Letter portrait; margin:0; }
+
+  html, body {
+    width:8.5in!important;
+    height:11in!important;
+    margin:0!important;
+    padding:0!important;
+    overflow:hidden!important;
+    background:#fff!important;
+  }
+
+  .sheet {
+    width:8.5in!important;
+    height:11in!important;
+    min-height:11in!important;
+    max-height:11in!important;
+    margin:0!important;
+    overflow:hidden!important;
+    display:flex!important;
+    flex-direction:column!important;
+  }
+
+  .topbar,
+  .topbar > .brand-wrap,
+  .topbar > .sales-block {
+    height:1.24in!important;
+    min-height:1.24in!important;
+    max-height:1.24in!important;
+  }
+  .wally-sheet .wally-brand-logo {
+    height:calc(1.24in - 8px)!important;
+    max-height:calc(1.24in - 8px)!important;
+  }
+
+  .doc-title {
+    height:.48in!important;
+    min-height:.48in!important;
+    font-size:24px!important;
+    line-height:1!important;
+  }
+
+  .customer-box {
+    margin:0 11px 5px!important;
+    padding:5px 10px!important;
+    min-height:0!important;
+    font-size:11px!important;
+    line-height:1.08!important;
+  }
+
+  .main {
+    flex:1 1 auto!important;
+    min-height:0!important;
+    height:auto!important;
+    overflow:hidden!important;
+    padding-bottom:2px!important;
+  }
+
+  .spec-table { font-size:9.8px!important; }
+  .spec-table th {
+    padding:2px 4px!important;
+    font-size:10.2px!important;
+    line-height:1!important;
+  }
+  .spec-table td,
+  .spec-table .item,
+  .spec-table .details {
+    padding:2px 4px!important;
+    font-size:9.8px!important;
+    line-height:1!important;
+  }
+
+  .exterior {
+    height:2.95in!important;
+    min-height:0!important;
+  }
+
+  .notes-panel {
+    margin-top:4px!important;
+    min-height:0!important;
+    max-height:3.05in!important;
+    overflow:hidden!important;
+  }
+  .notes-panel .panel-title {
+    padding:3px!important;
+    font-size:10px!important;
+    line-height:1!important;
+  }
+  .notes {
+    padding:5px 8px 4px 24px!important;
+    font-size:9.5px!important;
+    line-height:1.12!important;
+  }
+  .notes li { margin-bottom:3px!important; }
+
+  .wally-guarantee {
+    padding:3px 2px 0!important;
+    font-size:10px!important;
+    line-height:1.05!important;
+  }
+
+  .total-box {
+    flex:0 0 auto!important;
+    min-height:58px!important;
+    height:auto!important;
+    margin-top:3px!important;
+    overflow:visible!important;
+    break-inside:avoid!important;
+    page-break-inside:avoid!important;
+  }
+  .total-label {
+    padding:2px!important;
+    font-size:10px!important;
+    line-height:1!important;
+  }
+  .total-price {
+    min-height:37px!important;
+    padding:4px!important;
+    font-size:28px!important;
+    line-height:1!important;
+    white-space:nowrap!important;
+    overflow:visible!important;
+  }
+  .suburb-price-disclaimer {
+    padding:3px 5px!important;
+    font-size:6.5px!important;
+    line-height:1.05!important;
+  }
+  .wally-sheet .suburb-price-disclaimer {
+    padding:3px 5px!important;
+    font-size:8.5px!important;
+    line-height:1.05!important;
+  }
+
+  /* Footer remains visible but is a normal-flow final row, never an overlay. */
+  .footer {
+    display:flex!important;
+    position:static!important;
+    flex:0 0 .34in!important;
+    height:.34in!important;
+    min-height:.34in!important;
+    max-height:.34in!important;
+    margin:0!important;
+    padding:2px 8px!important;
+    align-items:center!important;
+    justify-content:center!important;
+    overflow:hidden!important;
+    font-size:9.5px!important;
+    line-height:1!important;
+    z-index:auto!important;
+  }
+  .footer small {
+    font-size:5.5px!important;
+    margin-top:1px!important;
+    line-height:1!important;
+  }
+
+  .actions, .estimate-assistant { display:none!important; }
+}
+
 </style>
 </head>
 <body class="bg-zinc-950 text-zinc-200"><div style="position:fixed;bottom:8px;left:8px;z-index:999999;background:#166534;color:white;padding:4px 7px;border-radius:6px;font:800 9px Arial">CLEAN ESTIMATOR BUILD</div><div style="position:fixed;bottom:10px;right:10px;z-index:999999;background:#dc2626;color:#fff;padding:6px 10px;border-radius:8px;font:900 11px Arial">ESTIMATOR UPDATE V2</div><a id="backToProductionBtn" class="back-production-btn" href="index.html?v=20260818v2">← Back To Dashboard</a>
@@ -4136,16 +4299,6 @@
     <button class="close" onclick="window.close()">Close</button>
 </div>
 
-<div class="estimate-assistant" style="width:8.5in;margin:0 auto 30px;background:#fff;border:1px solid #b9c2d0;border-radius:8px;padding:14px 16px;font-family:Arial,Helvetica,sans-serif;color:#071d48;">
-    <div style="font-size:15px;font-weight:900;margin-bottom:4px;">MAKE CHANGES TO THIS ESTIMATE</div>
-    <div style="font-size:11px;color:#526078;margin-bottom:10px;">Type a common change below. This local assistant works without an API key. For open-ended ChatGPT edits, use “Copy + Open ChatGPT.”</div>
-    <textarea id="popupChangeRequest" rows="3" style="width:100%;padding:10px;border:1px solid #aeb8c8;border-radius:7px;resize:vertical;" placeholder="Example: change siding to gray, move service door to right side, remove gutters..."></textarea>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:9px;">
-        <button onclick="applyPopupChange()" style="border:0;border-radius:7px;padding:10px 14px;background:#0b5bd3;color:white;font-weight:800;cursor:pointer;">Apply & Rebuild Sheet</button>
-        <button onclick="openPopupChatGPT()" style="border:0;border-radius:7px;padding:10px 14px;background:#061d4b;color:white;font-weight:800;cursor:pointer;">Copy + Open ChatGPT</button>
-    </div>
-    <div id="popupChangeStatus" style="font-size:11px;color:#526078;margin-top:8px;"></div>
-</div>
 <script>
 async function downloadEstimatePdf(){
   const sheet=document.querySelector('.sheet');
@@ -4234,9 +4387,9 @@ async function downloadEstimatePdf(){
 
     const worker=window.html2pdf().set({
       margin:0,
-      image:{type:'jpeg',quality:0.99},
+      image:{type:'png',quality:1},
       html2canvas:{
-        scale:2,
+        scale:3,
         useCORS:true,
         allowTaint:true,
         backgroundColor:'#ffffff',
@@ -4250,12 +4403,12 @@ async function downloadEstimatePdf(){
         windowWidth:fullWidth,
         windowHeight:fullHeight
       },
-      jsPDF:{unit:'in',format:'letter',orientation:'portrait',compress:true}
+      jsPDF:{unit:'in',format:'letter',orientation:'portrait',compress:false}
     }).from(clone).toCanvas();
 
     const canvas=await worker.get('canvas');
     if(!canvas || !canvas.width || !canvas.height) throw new Error('Estimate could not be rendered.');
-    const imgData=canvas.toDataURL('image/jpeg',0.99);
+    const imgData=canvas.toDataURL('image/png');
 
     await worker.toPdf().get('pdf').then(function(pdf){
       // Keep exactly one 8.5x11 Letter page and fit the COMPLETE measured
@@ -4276,7 +4429,7 @@ async function downloadEstimatePdf(){
 
       pdf.setFillColor(255,255,255);
       pdf.rect(0,0,pageW,pageH,'F');
-      pdf.addImage(imgData,'JPEG',x,y,drawW,drawH,undefined,'FAST');
+      pdf.addImage(imgData,'PNG',x,y,drawW,drawH,undefined,'NONE');
     }).save(filename);
 
   }catch(err){

@@ -1222,6 +1222,39 @@ button.danger{color:#b42318}
   pointer-events:auto!important;
 }
 
+
+/* V72 drawing-label cleanup */
+/* Sidewalk wording stays centered in the sidewalk and reads clockwise. */
+#paper .obj.sidewalk > .label{
+  position:absolute!important;
+  left:50%!important;
+  top:50%!important;
+  right:auto!important;
+  bottom:auto!important;
+  width:max-content!important;
+  max-width:none!important;
+  height:auto!important;
+  transform:translate(-50%,-50%) rotate(90deg)!important;
+  transform-origin:center center!important;
+  margin:0!important;
+  padding:2px 4px!important;
+  text-align:center!important;
+  white-space:pre-line!important;
+  line-height:1.1!important;
+  z-index:6!important;
+  pointer-events:auto!important;
+}
+
+/* Patio wording is intentionally more prominent than ordinary object labels. */
+#paper .obj.patio > .label{
+  font-size:15px!important;
+  font-weight:800!important;
+  line-height:1.12!important;
+  text-align:center!important;
+  white-space:pre-line!important;
+  z-index:7!important;
+}
+
 </style>
 </head>
 <body>
@@ -3191,6 +3224,32 @@ function renderObjects(){
         // Let manually typed multi-line sidewalk text display naturally.
         lab.style.setProperty('width','max-content','important');
         lab.style.setProperty('height','auto','important');
+      }
+    }
+
+    // V72: keep patio wording readable when a party door occupies the same wall area.
+    // The patio label becomes a clean callout above the patio, with a leader arrow
+    // pointing back to the patio instead of competing with the party-door wording.
+    if(o.kind==='patio'){
+      const party=(state.objects||[]).find(x=>x.kind==='partyDoor');
+      if(party){
+        lab.style.setProperty('left','50%','important');
+        lab.style.setProperty('top','-34px','important');
+        lab.style.setProperty('transform','translateX(-50%)','important');
+        lab.style.setProperty('width','max-content','important');
+        lab.style.setProperty('max-width','220px','important');
+        lab.style.setProperty('background','rgba(255,255,255,.92)','important');
+        lab.style.setProperty('padding','3px 6px','important');
+        lab.style.setProperty('border','1px solid rgba(0,0,0,.35)','important');
+        lab.style.setProperty('border-radius','3px','important');
+
+        const leader=document.createElement('div');
+        leader.className='patio-label-leader';
+        leader.style.cssText='position:absolute;left:50%;top:-13px;width:1px;height:28px;background:#333;z-index:6;pointer-events:none;';
+        const arrow=document.createElement('div');
+        arrow.style.cssText='position:absolute;left:-4px;bottom:-1px;width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-top:7px solid #333;';
+        leader.appendChild(arrow);
+        el.appendChild(leader);
       }
     }
 

@@ -1199,6 +1199,29 @@ button.danger{color:#b42318}
 #objectTextEditor .editor-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}
 #objectTextEditor button{padding:7px 12px;font-weight:700;cursor:pointer}
 
+
+/* V69: keep the main garage slab title/dimensions centered in the slab.
+   Door/return labels remain independent so they cannot push this wording into them. */
+#paper .obj.garage > .label{
+  position:absolute!important;
+  left:50%!important;
+  top:50%!important;
+  right:auto!important;
+  bottom:auto!important;
+  width:90%!important;
+  max-width:90%!important;
+  height:auto!important;
+  transform:translate(-50%,-50%)!important;
+  margin:0!important;
+  padding:2px 4px!important;
+  box-sizing:border-box!important;
+  text-align:center!important;
+  white-space:pre-line!important;
+  line-height:1.15!important;
+  z-index:5!important;
+  pointer-events:auto!important;
+}
+
 </style>
 </head>
 <body>
@@ -1435,7 +1458,8 @@ button.danger{color:#b42318}
 <button id="zoomIn">+</button>
 <div class="spacer"></div>
 <button id="undoBtn">Undo</button>
-<button id="redoBtn">Redo</button>
+    <button class="mini danger" id="deleteSelectedBtn" title="Delete selected drawing item">🗑 Delete Selected</button>
+
 <button id="printBtn">Print</button><button id="pdfBtn">Save as PDF</button>
 </div>
 <div class="viewport" id="viewport">
@@ -2051,17 +2075,57 @@ function calcPanelReturns(changed){
 
 function redrawGeneratedConcrete(opts={}){
  if(state.mode!=='concrete')return;
- const g=byRole('garage'); if(!g){renderSheet();return}
+
+ // V67: the side-panel garage-size field is a full drawing source, not just
+ // a wizard edit field. Typing a valid W x L creates the slab if one does not exist.
+ const panelW=+$('cSizeW').value||0, panelH=+$('cSizeL').value||0;
+ let g=byRole('garage');
+ if(!g && panelW && panelH){
+   snapshot();
+   const d=currentTemplate().draw;
+   // Keep a manually-created slab comfortably inside the printable drawing area.
+   const fitP=Math.min(DRAW_PXF,(d.w-90)/Math.max(panelW,1),(d.h-190)/Math.max(panelH+6,1));
+   const p0=Math.max(8,fitP);
+   const pxW=panelW*p0, pxH=panelH*p0;
+   g={
+     id:uid++,kind:'garage',role:'garage',
+     x:d.x+(d.w-pxW)/2,
+     y:d.y+Math.max(55,(d.h-pxH)/2-35),
+     wf:panelW,hf:panelH,
+     label:`NEW GARAGE SLAB\n${panelW}' x ${panelH}'`,
+     angle:0,pxf:p0
+   };
+   state.objects.push(g);
+   state.selected=g.id;
+ }
+ if(!g){renderSheet();return}
+
  const p=g.pxf||DRAW_PXF;
- const [gw,gh]=[+$('cSizeW').value||g.wf,+$('cSizeL').value||g.hf];
+ const [gw,gh]=[panelW||g.wf,panelH||g.hf];
  g.wf=gw;g.hf=gh;g.label=`NEW GARAGE SLAB\n${gw}' x ${gh}'`;
  const garageWpx=gw*p, garageHpx=gh*p;
 
- const a=byRole('apron');
+ // V67: manually entering an apron also creates/removes/updates the apron
+ // without requiring Start Drawing Wizard.
+ let a=byRole('apron');
+ const awPanel=+$('cApronW').value||0, ahPanel=+$('cApronL').value||0;
+ if(awPanel && ahPanel && !a){
+   a={
+     id:uid++,kind:'apron',role:'apron',
+     x:g.x,y:g.y+garageHpx,
+     wf:awPanel,hf:ahPanel,
+     label:`NEW CONCRETE APRON\n${awPanel}' x ${ahPanel}'`,
+     angle:0,pxf:p
+   };
+   state.objects.push(a);
+ }
+ if((!awPanel || !ahPanel) && a){
+   state.objects=state.objects.filter(o=>o.role!=='apron');
+   a=null;
+ }
  if(a){
-   const wasSame=Math.abs((+a.wf||0)-(+g.wf||0))<0.05 || Math.abs((+$('cApronW').value||0)-gw)<0.05;
-   const aw=wasSame?gw:(+$('cApronW').value||a.wf), ah=+$('cApronL').value||a.hf;
-   a.wf=aw;a.hf=ah;a.label=`NEW CONCRETE APRON\n${aw}' x ${ah}'`;
+   const aw=awPanel||a.wf, ah=ahPanel||a.hf;
+   a.wf=aw;a.hf=ah;a.pxf=p;a.label=`NEW CONCRETE APRON\n${aw}' x ${ah}'`;
    a.x=g.x+(garageWpx-aw*p)/2;a.y=g.y+garageHpx;
  }
  let sp=byRole('servicePad');
@@ -2114,8 +2178,18 @@ $('cReturnFR')?.addEventListener('input',()=>calcPanelReturns('right'));
 $('cReturnFM')?.addEventListener('input',()=>calcPanelReturns('middle'));
 $('cSizeCombo')?.addEventListener('input',()=>calcPanelReturns('garage'));
 ['cSizeCombo','cApronCombo','cServicePadCombo','cReturnFL','cReturnFM','cReturnFR','cReturnRL','cReturnRM','cReturnRR'].forEach(id=>{
- $(id)?.addEventListener('input',()=>setTimeout(redrawGeneratedConcrete,0));
- $(id)?.addEventListener('change',()=>setTimeout(redrawGeneratedConcrete,0));
+ $(id)?.addEventListener('input',()=>setTimeout(()=>{
+   redrawGeneratedConcrete();
+   if(id==='cApronCombo'||id==='cSizeCombo')syncRearSetbackDrawing();
+   // Once a manually-entered slab exists, all the normal panel additions work
+   // exactly like they do after using the wizard.
+   if(id==='cSizeCombo' && byRole('garage')) liveGarageDoors();
+ },0));
+ $(id)?.addEventListener('change',()=>setTimeout(()=>{
+   redrawGeneratedConcrete();
+   if(id==='cApronCombo'||id==='cSizeCombo')syncRearSetbackDrawing();
+   if(id==='cSizeCombo' && byRole('garage')) liveGarageDoors();
+ },0));
 });
 $('oSizeCombo')?.addEventListener('input',()=>setTimeout(redrawGeneratedObstruction,0));
 $('oApronCombo')?.addEventListener('input',()=>setTimeout(refreshObstructionCalculations,0));
@@ -2342,21 +2416,87 @@ $('wPartyDoor')?.addEventListener('change',syncDoorControls);
 function syncRearSetbackDrawing(){
   if(state.mode!=='concrete')return;
   const g=byRole('garage'),a=byRole('apron'),d=currentTemplate().draw;if(!g)return;
-  const p=g.pxf||DRAW_PXF,rr=+$('cRearSetback')?.value||0,apronDepth=a?.hf||0;
-  // Guarantee exactly one rear-setback object and at most one gap object.
+  const p=g.pxf||DRAW_PXF;
+  const rr=Math.max(0,+$('cRearSetback')?.value||0);
+  const apronDepth=a ? Math.max(0,+a.hf||0) : 0;
+
+  // V70 rear setback definition:
+  // Rear setback is measured from the rear property line / alley edge
+  // all the way to the FRONT (door/apron side) wall of the garage.
+  // Therefore the open gap behind the apron is rear setback - apron depth.
+  // Example: 3' setback + 3' apron = apron flush to alley/property line.
+  //          4' setback + 3' apron = 1' gap between apron and alley/property line.
+  const gap=Math.max(0,rr-apronDepth);
+  const rearBoundaryY=d.y+d.h-24;
+  const garageFrontY=rearBoundaryY-rr*p;
+
+  // Move the garage and all objects physically attached to it together so
+  // changing rear setback changes actual placement, not only the dimension label.
+  const dy=garageFrontY-(g.y+g.hf*p);
+  if(Math.abs(dy)>.01){
+    g.y+=dy;
+    // V71: rear-setback movement translates the complete garage assembly as one unit.
+    // This includes every garage-attached slab/pad/patio/sidewalk/return/opening and
+    // their drawing dimensions so nothing is left behind or visually crushed.
+    const attachedRoles=new Set([
+      'apron','servicePad','newPad','extraPad','newSidewalk','patio',
+      'frontLeft','frontMiddle','frontRight','rearLeft','rearMiddle','rearRight',
+      'serviceReturn','partyReturnLeft','partyReturnRight'
+    ]);
+    const attachedKinds=new Set(['serviceDoor','partyDoor']);
+    (state.objects||[]).forEach(o=>{
+      if(o===g)return;
+      if(attachedRoles.has(o.role) || attachedKinds.has(o.kind))o.y+=dy;
+    });
+
+    // Re-anchor wall openings/returns after translation so their return numbers,
+    // door labels and associated pads remain attached to the exact garage wall.
+    const sd=byRole('serviceDoor'),pd=byRole('partyDoor');
+    if(sd){placeWallObject(sd,g);placeServicePadAtDoor();syncServiceDoorReturn()}
+    if(pd){placeWallObject(pd,g);syncPartyReturns();syncPartyPrintedReturnsLive?.(pd)}
+  }
+
+  // Keep apron centered on and directly attached to the garage's front wall.
+  if(a){
+    a.pxf=p;
+    a.x=g.x+(g.wf*p-a.wf*p)/2;
+    a.y=g.y+g.hf*p;
+  }
+
+  // Keep exactly one full rear-setback dimension and at most one visible gap dimension.
   const rsAll=state.objects.filter(o=>o.role==='rearSetback');
   if(rsAll.length>1){const keep=rsAll[0];state.objects=state.objects.filter(o=>o.role!=='rearSetback'||o===keep)}
   const gapAll=state.objects.filter(o=>o.role==='rearGap');
   if(gapAll.length>1){const keep=gapAll[0];state.objects=state.objects.filter(o=>o.role!=='rearGap'||o===keep)}
+
   let rs=byRole('rearSetback');
-  if(rr&&!rs){rs={id:uid++,kind:'dimension',role:'rearSetback',wf:rr,hf:2,label:'',angle:90,pxf:p};state.objects.push(rs)}
-  const apronRight=a ? a.x+a.wf*(a.pxf||p) : g.x+g.wf*p;
-  const cornerX=Math.min(d.x+d.w-42,apronRight+8);
-  if(rs){rs.wf=Math.max(.01,rr);rs.label='';rs.x=cornerX;rs.y=g.y+g.hf*p;rs.pxf=p}
-  const gap=Math.max(0,rr-apronDepth);let rg=byRole('rearGap');
+  if(rr&&!rs){rs={id:uid++,kind:'dimension',role:'rearSetback',wf:rr,hf:2,label:rr+"'",angle:90,pxf:p};state.objects.push(rs)}
+  if(!rr&&rs){state.objects=state.objects.filter(o=>o.role!=='rearSetback');rs=null}
+
+  const rightEdge=Math.max(g.x+g.wf*p,a ? a.x+a.wf*p : 0);
+  const cornerX=Math.min(d.x+d.w-42,rightEdge+8);
+  if(rs){
+    rs.wf=Math.max(.01,rr);
+    rs.label=rr+"'";
+    rs.x=cornerX;
+    rs.y=g.y+g.hf*p;
+    rs.pxf=p;
+  }
+
+  let rg=byRole('rearGap');
   if(gap&&!rg){rg={id:uid++,kind:'dimension',role:'rearGap',wf:gap,hf:2,label:gap+"'",angle:90,pxf:p};state.objects.push(rg)}
-  if(!gap&&rg)state.objects=state.objects.filter(o=>o.role!=='rearGap');
-  rg=byRole('rearGap');if(rg){rg.wf=gap;rg.label=gap+"'";rg.x=cornerX;rg.y=g.y+g.hf*p+apronDepth*p;rg.pxf=p}
+  if(!gap&&rg){state.objects=state.objects.filter(o=>o.role!=='rearGap');rg=null}
+  rg=byRole('rearGap');
+  if(rg){
+    rg.wf=gap;
+    rg.label=gap+"'";
+    rg.x=cornerX;
+    rg.y=(a ? a.y+a.hf*p : g.y+g.hf*p);
+    rg.pxf=p;
+  }
+
+  // Recalculate all garage-relative dimension graphics after the move.
+  if(typeof syncVisualSetbacksToGarage==='function')syncVisualSetbacksToGarage();
   renderObjects();
 }
 $('cRearSetback')?.addEventListener('input',()=>{rearSetbackManual=true;setTimeout(syncRearSetbackDrawing,0)});
@@ -2895,31 +3035,6 @@ function renderObjects(){
     }
     el.dataset.id=o.id;
 
-    // V65: a user-entered keyboard label overrides only the visible center label.
-    if(o.customText){
-      const labelEl=el.querySelector(':scope > .label');
-      if(labelEl){
-        labelEl.textContent=o.customText;
-        labelEl.style.whiteSpace='pre-line';
-      }
-    }
-
-    // Tap/click the object's visible text to edit it; double-click anywhere on the object also opens it.
-    const editableLabel=el.querySelector(':scope > .label');
-    if(editableLabel){
-      editableLabel.style.cursor='text';
-      editableLabel.title='Click to edit text';
-      editableLabel.addEventListener('click',ev=>{
-        // Do not interfere with drag handles/other controls.
-        ev.stopPropagation();
-        openObjectTextEditor(o,el);
-      });
-    }
-    el.addEventListener('dblclick',ev=>{
-      if(ev.target.closest('.handle,.resize-handle,.rotate-handle')) return;
-      ev.stopPropagation();
-      openObjectTextEditor(o,el);
-    });
     if(o.role)el.dataset.role=o.role;
     Object.assign(el.style,{left:o.x+'px',top:o.y+'px',width:w+'px',height:h+'px',transform:o.role==='lotLength'?'none':`rotate(${o.angle||0}deg)`});
     if(o.role==='lotLength'){
@@ -3065,7 +3180,37 @@ function renderObjects(){
         lab.style.fontSize=fit+'px';
       }
     }
+    // V66: apply user-entered text only after all automatic wording has been built.
+    // This is important for custom boxes and sidewalks, whose labels are created later in renderObjects().
+    if(o.customText){
+      lab.textContent=o.customText;
+      lab.style.whiteSpace='pre-line';
+      lab.style.overflow='visible';
+      if(o.kind==='sidewalk'){
+        // Let manually typed multi-line sidewalk text display naturally.
+        lab.style.setProperty('width','max-content','important');
+        lab.style.setProperty('height','auto','important');
+      }
+    }
+
     if(o.role!=='lotLength' && !['serviceDoor','partyDoor'].includes(o.kind) && !['rearSetback','rearGap','alleyDistance'].includes(o.role))el.appendChild(lab);
+
+    // V66: attach text editing after the label exists in the object.
+    const editableLabel=el.querySelector(':scope > .label');
+    if(editableLabel){
+      editableLabel.style.cursor='text';
+      editableLabel.title='Click to edit text';
+      editableLabel.addEventListener('click',ev=>{
+        ev.stopPropagation();
+        openObjectTextEditor(o,el);
+      });
+    }
+    el.addEventListener('dblclick',ev=>{
+      if(ev.target.closest('.handle,.resize-handle,.rotate-handle')) return;
+      ev.stopPropagation();
+      openObjectTextEditor(o,el);
+    });
+
     // V33: sidewalks always expose their corner resize handle so they can be
     // grabbed and extended immediately without a separate select click.
     if(o.kind==='sidewalk' && state.selected!==o.id){
@@ -4095,6 +4240,20 @@ function syncMainModePanels(){
 $('mode').addEventListener('change',syncMainModePanels);
 
 window.addEventListener('beforeunload',()=>{saveActiveSheetState();saveSharedInfo()});
+
+function deleteCurrentlySelectedItem(){
+  const id=state && state.selected;
+  if(!id)return;
+  if(!(state.objects||[]).some(o=>o.id===id))return;
+  if(typeof snapshot==='function')snapshot();
+  state.objects=state.objects.filter(o=>o.id!==id);
+  state.selected=null;
+  if(typeof closeObjectTextEditor==='function')closeObjectTextEditor();
+  renderSheet();
+}
+const deleteSelectedButton=document.getElementById('deleteSelectedBtn');
+if(deleteSelectedButton)deleteSelectedButton.onclick=deleteCurrentlySelectedItem;
+
 </script>
 </body>
 </html>

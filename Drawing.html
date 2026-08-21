@@ -1255,6 +1255,24 @@ button.danger{color:#b42318}
   z-index:7!important;
 }
 
+
+/* V74: reclaim the old right-side lot margin for drawing space.
+   The heavy right lot boundary sits at the extreme paper/drawing edge,
+   while the lot-length number/title are pulled about 1/2 inch left for readability. */
+#paper .obj.lot-length-special{
+  left:calc(100% - 8px)!important;
+}
+#paper .obj.lot-length-special .lot-vline{
+  left:0!important;
+  width:6px!important;
+}
+#paper .obj.lot-length-special .lot-vvalue{
+  left:-48px!important;
+}
+#paper .obj.lot-length-special .lot-vtitle{
+  left:-24px!important;
+}
+
 </style>
 </head>
 <body>
@@ -2308,7 +2326,7 @@ function updateLotAndSetbacksFromPanel(changedId='cLeftSetback'){
  const ll=byRole('lotLength');
  if(ll){
    const v=+$('cLotLength')?.value||125;
-   ll.label=v+"'";ll.wf=v;ll.pxf=(d.h-220)/Math.max(v,1);ll.x=d.x+d.w+10;ll.y=d.y+d.h/2;
+   ll.label=v+"'";ll.wf=v;ll.pxf=(d.h-220)/Math.max(v,1);ll.x=d.x+d.w-8;ll.y=d.y+d.h/2;
  }
 
  syncVisualSetbacksToGarage();
@@ -2409,7 +2427,7 @@ function updateObstructionLotAndSetbacks(){
  const d=currentTemplate().draw,newX=d.x+12+left*p,dx=newX-g.x;g.x=newX;
  ['apron','servicePad','leftSetback','rightSetback','existingPatio','existingPad','existingSidewalk'].forEach(r=>{const o=byRole(r);if(o&&r!=='leftSetback'&&r!=='rightSetback')o.x+=dx});
  const lw=byRole('lotWidth');if(lw){lw.label=lot+"'";lw.wf=lot;lw.pxf=(d.w-34)/Math.max(lot,1)}
- const ll=byRole('lotLength');if(ll){const v=+$('oLotLength').value||125;ll.label=v+"'";ll.wf=v;ll.pxf=(d.h-140)/Math.max(v,1);ll.x=d.x+d.w+10;ll.y=d.y+70;ll.x=d.x+d.w+8}
+ const ll=byRole('lotLength');if(ll){const v=+$('oLotLength').value||125;ll.label=v+"'";ll.wf=v;ll.pxf=(d.h-140)/Math.max(v,1);ll.x=d.x+d.w-8;ll.y=d.y+70}
  const l=byRole('leftSetback');if(l){l.label=left+"'";l.wf=Math.max(.01,left);l.x=d.x+12;l.pxf=Math.max(1,(g.x-(d.x+12))/Math.max(left,.01))}
  const r=byRole('rightSetback');if(r){r.label=right+"'";r.wf=Math.max(.01,right);r.x=g.x+g.wf*p;r.pxf=Math.max(1,((d.x+d.w-12)-r.x)/Math.max(right,.01))}
  renderObjects();
@@ -2692,7 +2710,31 @@ function addSheetMark(text,x,y,w,h,size=19,extra=''){
 
 function renderConcreteMarks(){
  const thick=$('concreteThickness')?.value||'4';
- addSheetMark('6 BAG MIX   6 x 6 WIRE MESH',226,330,257,28,17);
+
+ // V73: concrete specification heading centered directly above the standard mix/mesh note.
+ const scored=addSheetMark('SCORED CONCRETE',226,304,257,25,17);
+ if(scored){
+   scored.style.textAlign='center';
+   scored.style.fontWeight='700';
+ }
+ const mix=addSheetMark('6 BAG MIX   6 x 6 WIRE MESH',226,330,257,28,17);
+ if(mix)mix.style.textAlign='center';
+
+ // V73: small anchor-bolt symbol projecting upward from the grade line,
+ // immediately left of the concrete detail. Built from real SVG strokes so it prints cleanly.
+ const anchor=document.createElementNS('http://www.w3.org/2000/svg','svg');
+ anchor.setAttribute('viewBox','0 0 24 42');
+ anchor.setAttribute('aria-label','Anchor bolt');
+ Object.assign(anchor.style,{
+   position:'absolute',zIndex:10,left:'198px',top:'342px',
+   width:'24px',height:'42px',pointerEvents:'none',overflow:'visible'
+ });
+ anchor.innerHTML=`
+   <ellipse cx="12" cy="7" rx="5" ry="2.5" fill="white" stroke="#222" stroke-width="1.6"/>
+   <path d="M7 7 L7 29 Q7 35 12 35 Q17 35 17 29 L17 7" fill="white" stroke="#222" stroke-width="1.6"/>
+   <ellipse cx="12" cy="29" rx="5" ry="2.5" fill="none" stroke="#222" stroke-width="1.2"/>
+ `;
+ fieldLayer.appendChild(anchor);
 
  const code=$('jobCode')?.value||'chicago';
  const footing=$('footingMode')?.value||'na';
@@ -3955,7 +3997,7 @@ function buildWizardForMode(forcedMode){
     const sideP=(d.h-140)/lotL;
     // Put the vertical lot-length line at the far-right lot boundary;
     // the title/value render in the white margin to the RIGHT of it.
-    wizardObj('dimension',lotL,2,lotL+"'",d.x+d.w+10,d.y+d.h/2,0,'lotLength');state.objects.at(-1).pxf=(d.h-220)/lotL;
+    wizardObj('dimension',lotL,2,lotL+"'",d.x+d.w-8,d.y+d.h/2,0,'lotLength');state.objects.at(-1).pxf=(d.h-220)/lotL;
   }
 
   const garageLabel=demo?`DEMOLISH EXISTING GARAGE / SLAB\n${gw}' x ${gh}'`:`NEW GARAGE SLAB\n${gw}' x ${gh}'`;

@@ -1511,7 +1511,7 @@ button.danger{color:#b42318}
   right:6px;
   bottom:6px;
   background:#fff;
-  z-index:42;
+  z-index:3;
   pointer-events:none;
 }
 
@@ -1551,6 +1551,104 @@ button.danger{color:#b42318}
   background:#fff;
   z-index:49;
   pointer-events:none;
+}
+
+
+/* V92: COLLECT field print treatment */
+#paper .collect-field-print{
+  font-size:24px!important;
+  font-weight:1000!important;
+  line-height:1!important;
+  text-transform:uppercase!important;
+  color:#000!important;
+  text-align:left!important;
+  letter-spacing:.2px!important;
+}
+
+
+/* V93: visible COLLECT + amount display */
+#paper .collect-display{
+  position:absolute;
+  left:159px;
+  top:1067px;
+  width:300px;
+  height:34px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  white-space:nowrap;
+  color:#000;
+  z-index:55;
+  pointer-events:none;
+  line-height:1;
+}
+#paper .collect-display .collect-word{
+  font-size:24px;
+  font-weight:1000;
+}
+#paper .collect-display .collect-amount{
+  font-size:22px;
+  font-weight:900;
+}
+#paper #sheet_cCollect{
+  color:transparent!important;
+  caret-color:#000!important;
+}
+
+
+/* V95: garage slab title + dimensions exactly centered inside slab */
+#paper .obj.garage > .label{
+  position:absolute!important;
+  left:50%!important;
+  top:50%!important;
+  right:auto!important;
+  bottom:auto!important;
+  width:100%!important;
+  height:auto!important;
+  margin:0!important;
+  padding:0 6px!important;
+  box-sizing:border-box!important;
+  transform:translate(-50%,-50%)!important;
+  text-align:center!important;
+  white-space:pre-line!important;
+  line-height:1.15!important;
+  display:block!important;
+  z-index:8!important;
+}
+
+
+/* V96: true middle-middle garage slab wording.
+   Rendered garage objects use .role-garage, so target that actual class. */
+#paper .obj.role-garage > .label,
+#paper .obj[data-role="garage"] > .label{
+  position:absolute!important;
+  left:50%!important;
+  top:50%!important;
+  right:auto!important;
+  bottom:auto!important;
+  width:94%!important;
+  max-width:94%!important;
+  height:auto!important;
+  margin:0!important;
+  padding:0 6px!important;
+  box-sizing:border-box!important;
+  transform:translate(-50%,-50%)!important;
+  transform-origin:center center!important;
+  text-align:center!important;
+  white-space:pre-line!important;
+  line-height:1.15!important;
+  display:block!important;
+  z-index:8!important;
+}
+
+/* Wizard apron wording also stays centered in its slab. */
+#paper .obj[data-role="apron"] > .label{
+  left:50%!important;
+  top:50%!important;
+  right:auto!important;
+  bottom:auto!important;
+  transform:translate(-50%,-50%)!important;
+  text-align:center!important;
 }
 
 </style>
@@ -2093,6 +2191,23 @@ function checkbox(key,xy){
   fieldLayer.appendChild(b);
 }
 
+
+function updateCollectDisplay(){
+  let d=$('collectDisplay');
+  if(!d){
+    d=document.createElement('div');
+    d.id='collectDisplay';
+    d.className='collect-display';
+    fieldLayer.appendChild(d);
+  }
+  const raw=String($('cCollect')?.value||'').trim().replace(/^COLLECT\s*/i,'').trim();
+  if(!raw){d.innerHTML='';return;}
+  const amount=/^\$/.test(raw)?raw:'$'+raw;
+  d.innerHTML='<span class="collect-word">COLLECT</span><span class="collect-amount"></span>';
+  const a=d.querySelector('.collect-amount');
+  if(a)a.textContent=amount;
+}
+
 function renderSheet(){
   state.mode=$('mode').value; const t=currentTemplate();
   paper.style.width=t.w+'px';paper.style.height=t.h+'px';img.style.display=state.mode==='siteplan'?'none':'block'; img.src=t.src||''; if(state.mode!=='siteplan'){img.onload=()=>{if(state.view==='fit')fitWhole()};} paper.classList.toggle('siteplan',state.mode==='siteplan');
@@ -2103,7 +2218,16 @@ function renderSheet(){
     let value=id==='contractor'?'Absolute Garage Builders':($(id)?.value||'');
     const input=fieldInput(id,box,value);
     if(id==='contractor'){input.readOnly=true;input.style.fontWeight='700'}
+    if(id==='cCollect'){
+      input.classList.add('collect-field-print');
+      const raw=String(value||'').trim().replace(/^COLLECT\s*/i,'').trim();
+      if(raw){
+        const amount=/^\$/.test(raw)?raw:'$'+raw;
+        input.value='COLLECT '+amount;
+      }
+    }
   });
+  if(state.mode==='concrete') updateCollectDisplay();
   if(state.mode==='obstruction') Object.entries(obstructionChecks).forEach(([k,v])=>checkbox(k,v));
   const oldPh=$('sitePlanPlaceholder'), oldBg=$('surveyBg');
   if(state.mode!=='siteplan'){if(oldPh)oldPh.style.display='none';if(oldBg)oldBg.style.display='none';}
@@ -2131,7 +2255,15 @@ function syncSideToSheet(id){
 });
 
 document.querySelectorAll('.sidebar input,.sidebar textarea,.sidebar select').forEach(el=>{
-  el.addEventListener('input',()=>syncSideToSheet(el.id));
+  el.addEventListener('input',()=>{
+    if(el.id==='cCollect'){
+      const s=$('sheet_cCollect');
+      if(s)s.value=el.value;
+      updateCollectDisplay();
+      return;
+    }
+    syncSideToSheet(el.id);
+  });
 });
 
 
@@ -2180,7 +2312,8 @@ function syncVisualSetbacksToGarage(){
     l.wf=Math.max(.01,leftVal);
     l.hf=2;
     l.pxf=p;
-    l.x=footprintLeft-leftVal*p;
+    // Keep the left setback dimension outside the garage footprint.
+    l.x=footprintLeft-leftVal*p-8;
     l.y=midY;
   }
 
@@ -2190,7 +2323,9 @@ function syncVisualSetbacksToGarage(){
     r.wf=Math.max(.01,rightVal);
     r.hf=2;
     r.pxf=p;
-    r.x=footprintRight;
+    // Keep the right setback dimension outside the garage footprint.
+    // The enlarged drawing area gives us room to show it clearly to the right.
+    r.x=footprintRight+8;
     r.y=midY;
   }
 }
@@ -3017,7 +3152,7 @@ function renderConcreteMarks(){
  fieldLayer.appendChild(pageBottomFrame);
  const cleanInteriorMask=document.createElement('div');
  cleanInteriorMask.className='clean-rectangle-interior-mask';
- fieldLayer.appendChild(cleanInteriorMask);
+ paper.insertBefore(cleanInteriorMask, fieldLayer);
  const cleanDrawingFrame=document.createElement('div');
  cleanDrawingFrame.className='clean-drawing-frame';
  fieldLayer.appendChild(cleanDrawingFrame);
@@ -4299,7 +4434,14 @@ function buildWizardForMode(forcedMode){
   else if(ah) garageBottom=d.h-apronPxH-20;
   const gyRel=Math.max(70,garageBottom-garagePxH);
 
-  const xGarage=d.x+gxRel, yGarage=d.y+gyRel;
+  // V94: Wizard garage slab starts about 15% larger visually.
+  // Preserve the true entered dimensions, but enlarge its pixels-per-foot scale.
+  // Re-center the slab in the main drawing area so the NEW GARAGE SLAB title
+  // and its W' x L' dimensions remain centered with the slab.
+  const wizardGarageScale=layoutScale*1.15;
+  const wizardGaragePxW=gw*wizardGarageScale, wizardGaragePxH=gh*wizardGarageScale;
+  const xGarage=d.x+(d.w-wizardGaragePxW)/2;
+  const yGarage=d.y+(d.h-wizardGaragePxH)/2;
 
   // Full lot-width dimension across the top and full lot-length dimension down the right.
   if(lotW){
@@ -4316,26 +4458,39 @@ function buildWizardForMode(forcedMode){
 
   const garageLabel=demo?`DEMOLISH EXISTING GARAGE / SLAB\n${gw}' x ${gh}'`:`NEW GARAGE SLAB\n${gw}' x ${gh}'`;
   wizardObj('garage',gw,gh,garageLabel,xGarage,yGarage,0,'garage');
-  state.objects.at(-1).pxf=layoutScale;
+  state.objects.at(-1).pxf=wizardGarageScale;
 
   if(mode==='concrete'){
     if($('wServiceDoor')?.value!=='no'){
-      const sd=wizardObj('serviceDoor',3,.5,'SERVICE DOOR',xGarage+garagePxW,yGarage+garagePxH*.25,0,'serviceDoor');
-      sd.wall=$('wServiceDoorLocation')?.value||'right';sd.wallPos=.25;sd.swing=$('wServiceDoorSwing')?.value||'in';sd.pxf=layoutScale;resolveOpeningCollisions(sd,byRole('garage'));placeWallObject(sd,byRole('garage'));placeServicePadAtDoor();syncServiceDoorReturn();
+      const sd=wizardObj('serviceDoor',3,.5,'SERVICE DOOR',xGarage+wizardGaragePxW,yGarage+wizardGaragePxH*.25,0,'serviceDoor');
+      sd.wall=$('wServiceDoorLocation')?.value||'right';sd.wallPos=.25;sd.swing=$('wServiceDoorSwing')?.value||'in';sd.pxf=wizardGarageScale;resolveOpeningCollisions(sd,byRole('garage'));placeWallObject(sd,byRole('garage'));placeServicePadAtDoor();syncServiceDoorReturn();
     }
     const partyW=+$('wPartyDoor')?.value||0;
     if(partyW){
       const pd=wizardObj('partyDoor',partyW,.5,partyW+"' PARTY DOOR",xGarage,yGarage,0,'partyDoor');
-      pd.wall=$('wPartyDoorLocation')?.value||'back';pd.wallPos=.5;pd.pxf=layoutScale;resolveOpeningCollisions(pd,byRole('garage'));placeWallObject(pd,byRole('garage'));syncPartyReturns();syncPartyPrintedReturnsLive(pd);
+      pd.wall=$('wPartyDoorLocation')?.value||'back';pd.wallPos=.5;pd.pxf=wizardGarageScale;resolveOpeningCollisions(pd,byRole('garage'));placeWallObject(pd,byRole('garage'));syncPartyReturns();syncPartyPrintedReturnsLive(pd);
     }
   }
 
+  // V97: after the larger Wizard slab is created, re-anchor every garage-wall
+  // opening/return to the NEW slab footprint before placing apron/setbacks.
+  // Returns stay near their actual corners; doors stay at their chosen offset.
+  syncVisualReturnsAfterGarageScale();
+  syncVisualSetbacksToGarage();
 
   if(aw&&ah){
-    const apronLabel=demo?`DEMOLISH EXISTING APRON\n${aw}' x ${ah}'`:`NEW CONCRETE APRON\n${aw}' x ${ah}'`;
-    const apronX=xGarage+(garagePxW-aw*layoutScale)/2;
-    const apronY=yGarage+garagePxH; // flush to garage
-    wizardObj('apron',aw,ah,apronLabel,apronX,apronY,0,'apron');state.objects.at(-1).pxf=layoutScale;
+    // V96: apron spans the FULL garage slab width on the drawing.
+    // Use the garage width for the apron footprint and label, while preserving
+    // the entered apron depth. Because both use wizardGarageScale, their left
+    // and right edges line up exactly.
+    const apronDrawW=gw;
+    const apronLabel=demo?`DEMOLISH EXISTING APRON\n${apronDrawW}' x ${ah}'`:`NEW CONCRETE APRON\n${apronDrawW}' x ${ah}'`;
+    const apronX=xGarage;
+    const apronY=yGarage+wizardGaragePxH; // flush to garage slab
+    wizardObj('apron',apronDrawW,ah,apronLabel,apronX,apronY,0,'apron');
+    state.objects.at(-1).pxf=wizardGarageScale;
+    syncSharedGarageApronWidth('force');
+    syncVisualSetbacksToGarage();
   }
 
   if(access==='alley'){
@@ -4345,8 +4500,8 @@ function buildWizardForMode(forcedMode){
       // Dimension from alley edge through apron to garage. Usually this equals apron depth.
       const rearValue=rr||ah;
       if(rearValue){
-        const apronRight=xGarage+(aw?aw*layoutScale:garagePxW);
-        wizardObj('dimension',rearValue,2,'',Math.min(d.x+d.w-42,apronRight+8),yGarage+garagePxH,90,'alleyDistance');
+        const apronRight=xGarage+wizardGaragePxW;
+        wizardObj('dimension',rearValue,2,'',Math.min(d.x+d.w-42,apronRight+8),yGarage+wizardGaragePxH,90,'alleyDistance');
         state.objects.at(-1).pxf=layoutScale;
       }
     }else{

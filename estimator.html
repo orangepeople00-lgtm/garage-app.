@@ -1502,7 +1502,7 @@
                             <option value="samer">Samer Barakat</option>
                             <option value="wally">Wally</option>
                             <option value="tom">Tom</option>
-                            <option value="tombartyzel">Tom Bartyzel</option>
+                            <option value="tomb">Tom Bartyzel</option>
                         </select>
                     </div>
                     <div>
@@ -2510,7 +2510,7 @@
             samer:  { name:'Samer Barakat', title:'Sales Consultant', phone:'708-351-6287', email:'samgarageman@yahoo.com', tagline:'', wally:false },
             wally:  { name:'Wally B.', title:'Sales Manager/Consultant', phone:'708-205-2882', email:'wally.absolutegarages@gmail.com', tagline:'Building Garages for 14+ Years', wally:true },
             tom:    { name:'Tom', title:'Sales Consultant', phone:'708-334-9470', email:'', tagline:'', wally:false },
-            tombartyzel: { name:'Tom Bartyzel', title:'Sales Consultant', phone:'224-628-8710', email:'agbtombartyzel@gmail.com', tagline:'', wally:false }
+            tomb: { name:'Tom Bartyzel', title:'Sales Consultant', phone:'224-628-8710', email:'agbtombartyzel@gmail.com', tagline:'', wally:false }
         };
 
 
@@ -2600,7 +2600,7 @@
                 const {data:staff}=await garageSb.from('staff_profiles').select('username').eq('id',user.id).single();
                 const select=document.getElementById('salesman');
                 if(!select||!staff?.username)return;
-                const map={ramsey:'ramsey',wally:'wally',tom:'tom',tombartyzel:'tombartyzel',sam:'sam'};
+                const map={ramsey:'ramsey',wally:'wally',tom:'tom',tomb:'tomb',sam:'sam'};
                 const target=map[staff.username];
                 if(target && Array.from(select.options).some(o=>o.value===target)) select.value=target;
             }catch(e){console.warn('Could not auto-select signed-in salesman',e)}

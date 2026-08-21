@@ -1273,6 +1273,286 @@ button.danger{color:#b42318}
   left:-24px!important;
 }
 
+
+/* V75: literal far-right lot boundary.
+   The heavy black lot line is pinned to the paper's right edge by default. */
+#paper .obj.lot-length-special{
+  left:calc(100% - 6px)!important;
+  width:6px!important;
+  overflow:visible!important;
+}
+#paper .obj.lot-length-special .lot-vline{
+  left:0!important;
+  width:6px!important;
+}
+#paper .obj.lot-length-special .lot-vvalue{
+  left:-54px!important;
+}
+#paper .obj.lot-length-special .lot-vtitle{
+  left:-30px!important;
+}
+
+
+/* V76: permanent original-template right boundary.
+   Draw the heavy black lot/property line directly on the physical right edge
+   of the paper, independent of the lot-length dimension object. */
+#paper::after{
+  content:"";
+  position:absolute;
+  top:0;
+  right:0;
+  bottom:0;
+  width:6px;
+  background:#000;
+  z-index:45;
+  pointer-events:none;
+}
+
+
+
+/* V82: continuous finished outline to the paper edge.
+   Remove only the old vertical divider. The horizontal outlines never stop:
+   each replacement stroke begins before the erased divider and runs flush
+   to the far-right property line. Nothing is allowed to protrude past the edge. */
+#paper{
+  overflow:hidden!important;
+}
+#paper .right-boundary-reclaim{
+  position:absolute;
+  left:900px;
+  top:139px;
+  width:92px;
+  height:1300px;
+  z-index:43;
+  pointer-events:none;
+  overflow:hidden;
+}
+#paper .right-boundary-reclaim .erase-old-right{
+  position:absolute;
+  left:22px;
+  top:8px;
+  bottom:8px;
+  width:20px;
+  background:#fff;
+  z-index:1;
+}
+#paper .right-boundary-reclaim .extend-top,
+#paper .right-boundary-reclaim .extend-bottom{
+  position:absolute;
+  left:0;
+  right:0;
+  height:6px;
+  background:#000;
+  z-index:3;
+}
+#paper .right-boundary-reclaim .extend-top{top:6px}
+#paper .right-boundary-reclaim .extend-bottom{bottom:6px}
+
+/* Exact far-right finish; no excess stroke beyond the paper. */
+#paper::after{
+  right:0!important;
+  width:6px!important;
+  z-index:46!important;
+}
+
+/* V83: phone-row drawing outline correction.
+   Extend the dark horizontal outline immediately right of the phone-number area
+   straight to the physical right edge. It does not turn upward or connect to
+   the recessed/regress boundary. */
+#paper .phone-outline-to-edge{
+  position:absolute;
+  left:494px;
+  right:0;
+  top:145px;
+  height:6px;
+  background:#000;
+  z-index:47;
+  pointer-events:none;
+}
+
+
+/* V84: bottom phone-row drawing outline correction.
+   Same treatment as the upper outline: the dark drawing boundary immediately
+   right of the lower phone-number area continues straight to the paper edge
+   without turning into the recessed/right-side divider. */
+#paper .bottom-phone-outline-to-edge{
+  position:absolute;
+  left:494px;
+  right:0;
+  top:1433px;
+  height:6px;
+  background:#000;
+  z-index:47;
+  pointer-events:none;
+}
+
+
+/* V85: one flush finished outline.
+   The extension is aligned exactly over the original outline height so there
+   is no doubled edge, step, or lip at the connection. */
+#paper .phone-outline-to-edge{
+  top:145px!important;
+  height:4px!important;
+  left:490px!important;
+}
+#paper .bottom-phone-outline-to-edge{
+  top:1433px!important;
+  height:4px!important;
+  left:490px!important;
+}
+#paper .right-boundary-reclaim .extend-top,
+#paper .right-boundary-reclaim .extend-bottom{
+  display:none!important;
+}
+
+
+/* V86 corrected:
+   TOP: use the horizontal outline directly under the cross (not the higher line
+   and not the City line), extending only its right-hand portion to the paper edge.
+   BOTTOM: keep the approved bottom extension and add the missing short vertical
+   connection on its left so it meets the original rectangle cleanly. */
+#paper .correct-cross-outline-to-edge{
+  position:absolute;
+  left:494px;
+  right:0;
+  top:145px;
+  height:4px;
+  background:#000;
+  z-index:47;
+  pointer-events:none;
+}
+#paper .bottom-outline-left-connector{
+  position:absolute;
+  left:490px;
+  top:1421px;
+  width:4px;
+  height:16px;
+  background:#000;
+  z-index:47;
+  pointer-events:none;
+}
+
+
+/* V87: finish the lower frame from the large drawing-input rectangle.
+   From the large rectangle's bottom-left corner, continue its left edge
+   straight down to the physical bottom of the paper. At the bottom edge,
+   run one thick horizontal frame line all the way to the bottom-right corner. */
+#paper .large-rect-left-to-bottom{
+  position:absolute;
+  left:494px;
+  top:1433px;
+  bottom:0;
+  width:6px;
+  background:#000;
+  z-index:48;
+  pointer-events:none;
+}
+#paper .page-bottom-frame{
+  position:absolute;
+  left:494px;
+  right:0;
+  bottom:0;
+  height:6px;
+  background:#000;
+  z-index:48;
+  pointer-events:none;
+}
+
+
+/* V88: clean four-line drawing rectangle.
+   One top, one right, one bottom, one left. No intermediate outline extensions,
+   lips, bends, or duplicate connector strokes. */
+#paper .right-boundary-reclaim,
+#paper .phone-outline-to-edge,
+#paper .bottom-phone-outline-to-edge,
+#paper .correct-cross-outline-to-edge,
+#paper .bottom-outline-left-connector,
+#paper .large-rect-left-to-bottom,
+#paper .page-bottom-frame{
+  display:none!important;
+}
+
+/* Remove the prior standalone paper-edge rule; the frame below owns the edge. */
+#paper::after{
+  display:none!important;
+}
+
+#paper .clean-drawing-frame{
+  position:absolute;
+  left:494px;
+  top:145px;
+  right:0;
+  bottom:0;
+  border:6px solid #000;
+  box-sizing:border-box;
+  z-index:48;
+  pointer-events:none;
+}
+
+
+/* V89: maximum clean drawing rectangle.
+   Keep the drawing area as large and open as possible: only the four outside
+   frame sides remain. Suppress the old baked/template divider lines inside it. */
+#paper .clean-drawing-frame{
+  left:494px!important;
+  top:145px!important;
+  right:0!important;
+  bottom:0!important;
+  border:6px solid #000!important;
+  box-sizing:border-box!important;
+}
+
+/* White masks cover the old internal template outline/divider strokes while
+   leaving the outer four-sided frame untouched. */
+#paper .clean-rectangle-interior-mask{
+  position:absolute;
+  left:500px;
+  top:151px;
+  right:6px;
+  bottom:6px;
+  background:#fff;
+  z-index:42;
+  pointer-events:none;
+}
+
+/* Drawing objects/marks remain above the cleanup mask. */
+#paper .obj,
+#paper .sheet-mark,
+#paper .print-hatch-svg{
+  z-index:50;
+}
+
+
+/* V90: trim the tiny outer overhang at the top-left of the large frame.
+   Keep the rectangle size unchanged; square off only the exterior excess. */
+#paper .clean-drawing-frame{
+  clip-path:inset(0 0 0 0);
+}
+#paper .clean-frame-top-left-trim{
+  position:absolute;
+  left:488px;
+  top:139px;
+  width:6px;
+  height:12px;
+  background:#fff;
+  z-index:49;
+  pointer-events:none;
+}
+
+
+/* V91: remove only the vertical divider touching RETURNS REAR.
+   Preserve the neighboring vertical line immediately to its right. */
+#paper .returns-rear-touching-line-mask{
+  position:absolute;
+  left:488px;
+  top:145px;
+  width:6px;
+  height:1288px;
+  background:#fff;
+  z-index:49;
+  pointer-events:none;
+}
+
 </style>
 </head>
 <body>
@@ -2326,7 +2606,7 @@ function updateLotAndSetbacksFromPanel(changedId='cLeftSetback'){
  const ll=byRole('lotLength');
  if(ll){
    const v=+$('cLotLength')?.value||125;
-   ll.label=v+"'";ll.wf=v;ll.pxf=(d.h-220)/Math.max(v,1);ll.x=d.x+d.w-8;ll.y=d.y+d.h/2;
+   ll.label=v+"'";ll.wf=v;ll.pxf=(d.h-220)/Math.max(v,1);ll.x=d.x+d.w-6;ll.y=d.y+d.h/2;
  }
 
  syncVisualSetbacksToGarage();
@@ -2427,7 +2707,7 @@ function updateObstructionLotAndSetbacks(){
  const d=currentTemplate().draw,newX=d.x+12+left*p,dx=newX-g.x;g.x=newX;
  ['apron','servicePad','leftSetback','rightSetback','existingPatio','existingPad','existingSidewalk'].forEach(r=>{const o=byRole(r);if(o&&r!=='leftSetback'&&r!=='rightSetback')o.x+=dx});
  const lw=byRole('lotWidth');if(lw){lw.label=lot+"'";lw.wf=lot;lw.pxf=(d.w-34)/Math.max(lot,1)}
- const ll=byRole('lotLength');if(ll){const v=+$('oLotLength').value||125;ll.label=v+"'";ll.wf=v;ll.pxf=(d.h-140)/Math.max(v,1);ll.x=d.x+d.w-8;ll.y=d.y+70}
+ const ll=byRole('lotLength');if(ll){const v=+$('oLotLength').value||125;ll.label=v+"'";ll.wf=v;ll.pxf=(d.h-140)/Math.max(v,1);ll.x=d.x+d.w-6;ll.y=d.y+70}
  const l=byRole('leftSetback');if(l){l.label=left+"'";l.wf=Math.max(.01,left);l.x=d.x+12;l.pxf=Math.max(1,(g.x-(d.x+12))/Math.max(left,.01))}
  const r=byRole('rightSetback');if(r){r.label=right+"'";r.wf=Math.max(.01,right);r.x=g.x+g.wf*p;r.pxf=Math.max(1,((d.x+d.w-12)-r.x)/Math.max(right,.01))}
  renderObjects();
@@ -2711,12 +2991,46 @@ function addSheetMark(text,x,y,w,h,size=19,extra=''){
 function renderConcreteMarks(){
  const thick=$('concreteThickness')?.value||'4';
 
+ // V78: erase the baked-in old right property line and connect the original
+ // top/bottom drawing-box lines to the new permanent black line at paper edge.
+ const reclaim=document.createElement('div');
+ reclaim.className='right-boundary-reclaim';
+ reclaim.innerHTML='<div class="erase-old-right"></div><div class="extend-top"></div><div class="extend-bottom"></div>';
+ fieldLayer.appendChild(reclaim);
+ const phoneOutline=document.createElement('div');
+ phoneOutline.className='phone-outline-to-edge';
+ fieldLayer.appendChild(phoneOutline);
+ const bottomPhoneOutline=document.createElement('div');
+ bottomPhoneOutline.className='bottom-phone-outline-to-edge';
+ fieldLayer.appendChild(bottomPhoneOutline);
+ const correctCrossOutline=document.createElement('div');
+ correctCrossOutline.className='correct-cross-outline-to-edge';
+ fieldLayer.appendChild(correctCrossOutline);
+ const bottomLeftConnector=document.createElement('div');
+ bottomLeftConnector.className='bottom-outline-left-connector';
+ fieldLayer.appendChild(bottomLeftConnector);
+ const largeRectLeftToBottom=document.createElement('div');
+ largeRectLeftToBottom.className='large-rect-left-to-bottom';
+ fieldLayer.appendChild(largeRectLeftToBottom);
+ const pageBottomFrame=document.createElement('div');
+ pageBottomFrame.className='page-bottom-frame';
+ fieldLayer.appendChild(pageBottomFrame);
+ const cleanInteriorMask=document.createElement('div');
+ cleanInteriorMask.className='clean-rectangle-interior-mask';
+ fieldLayer.appendChild(cleanInteriorMask);
+ const cleanDrawingFrame=document.createElement('div');
+ cleanDrawingFrame.className='clean-drawing-frame';
+ fieldLayer.appendChild(cleanDrawingFrame);
+ const cleanFrameTrim=document.createElement('div');
+ cleanFrameTrim.className='clean-frame-top-left-trim';
+ fieldLayer.appendChild(cleanFrameTrim);
+ const returnsRearLineMask=document.createElement('div');
+ returnsRearLineMask.className='returns-rear-touching-line-mask';
+ fieldLayer.appendChild(returnsRearLineMask);
+
  // V73: concrete specification heading centered directly above the standard mix/mesh note.
- const scored=addSheetMark('SCORED CONCRETE',226,304,257,25,17);
- if(scored){
-   scored.style.textAlign='center';
-   scored.style.fontWeight='700';
- }
+ const scored=addSheetMark('SCORED CONCRETE',226,304,257,28,17);
+ if(scored)scored.style.textAlign='center';
  const mix=addSheetMark('6 BAG MIX   6 x 6 WIRE MESH',226,330,257,28,17);
  if(mix)mix.style.textAlign='center';
 
@@ -2726,7 +3040,7 @@ function renderConcreteMarks(){
  anchor.setAttribute('viewBox','0 0 24 42');
  anchor.setAttribute('aria-label','Anchor bolt');
  Object.assign(anchor.style,{
-   position:'absolute',zIndex:10,left:'198px',top:'342px',
+   position:'absolute',zIndex:10,left:'214px',top:'342px',
    width:'24px',height:'42px',pointerEvents:'none',overflow:'visible'
  });
  anchor.innerHTML=`
@@ -3997,7 +4311,7 @@ function buildWizardForMode(forcedMode){
     const sideP=(d.h-140)/lotL;
     // Put the vertical lot-length line at the far-right lot boundary;
     // the title/value render in the white margin to the RIGHT of it.
-    wizardObj('dimension',lotL,2,lotL+"'",d.x+d.w-8,d.y+d.h/2,0,'lotLength');state.objects.at(-1).pxf=(d.h-220)/lotL;
+    wizardObj('dimension',lotL,2,lotL+"'",d.x+d.w-6,d.y+d.h/2,0,'lotLength');state.objects.at(-1).pxf=(d.h-220)/lotL;
   }
 
   const garageLabel=demo?`DEMOLISH EXISTING GARAGE / SLAB\n${gw}' x ${gh}'`:`NEW GARAGE SLAB\n${gw}' x ${gh}'`;

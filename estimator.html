@@ -3908,64 +3908,155 @@
     .roof-badge{position:absolute;left:2%;top:2%;z-index:8;background:rgba(8,38,84,.9);color:#fff;padding:4px 8px;font-size:8px;font-weight:900;letter-spacing:.08em;border-radius:3px}.photo-spec-badge{position:absolute;left:2%;bottom:2%;z-index:9;background:rgba(8,38,84,.9);color:#fff;padding:4px 7px;font-size:7px;font-weight:800;border-radius:3px;max-width:96%}
 
     @media print {
-        html,body { background:#fff; width:8.5in; min-height:11in; }
-        .sheet {
-            margin:0;
+        html,body {
+            margin:0!important;
+            padding:0!important;
+            background:#fff;
             width:8.5in;
-            min-height:11in;
-            height:auto;
-            max-height:none;
-            overflow:visible;
+            height:11in;
+            overflow:hidden!important;
         }
+        .sheet {
+            margin:0!important;
+            width:8.5in!important;
+            height:11in!important;
+            min-height:11in!important;
+            max-height:11in!important;
+            overflow:hidden!important;
+            display:flex!important;
+            flex-direction:column!important;
+        }
+
+        /* Compact the upper sections slightly so the entire proposal fits above
+           the footer instead of allowing content to run underneath it. */
+        .topbar,
+        .topbar > .brand-wrap,
+        .topbar > .sales-block {
+            height:1.34in!important;
+            min-height:1.34in!important;
+            max-height:1.34in!important;
+        }
+        .doc-title { height:.55in!important; font-size:26px!important; }
+        .customer-box {
+            margin:0 11px 6px!important;
+            padding:6px 11px!important;
+            gap:2px 28px!important;
+        }
+        .customer-left,.customer-right { gap:3px!important; }
+
         .main {
-            grid-template-columns:minmax(0,43.5fr) minmax(0,56.5fr);
-            min-height:0;
-            height:auto;
-            overflow:visible;
+            grid-template-columns:minmax(0,43.5fr) minmax(0,56.5fr)!important;
+            gap:8px!important;
+            min-height:0!important;
+            height:auto!important;
+            overflow:hidden!important;
+            flex:1 1 auto!important;
+            align-items:start!important;
         }
-        .left,.right,.notes-panel,.notes {
-            min-height:0;
-            height:auto;
-            max-height:none;
-            overflow:visible;
+        .left,.right {
+            min-height:0!important;
+            height:auto!important;
+            max-height:100%!important;
+            overflow:visible!important;
         }
+
+        /* Keep the specification table compact enough that Building Permits,
+           the guarantee and Total Project Price remain fully visible. */
+        .spec-table { font-size:10.5px!important; }
+        .spec-table th { padding:3px 4px!important; font-size:11px!important; line-height:1!important; }
+        .spec-table td,
+        .spec-table .item,
+        .spec-table .details {
+            font-size:10.5px!important;
+            line-height:1.02!important;
+            padding:2.5px 4px!important;
+        }
+        .wally-guarantee {
+            font-size:11px!important;
+            line-height:1.1!important;
+            padding:5px 3px 1px!important;
+        }
+
+        /* Keep the right column proportional while leaving room for the footer. */
+        .exterior { height:3.18in!important; }
+        .exterior-title { margin-bottom:4px!important; }
+        .notes-panel {
+            margin-top:5px!important;
+            min-height:0!important;
+            height:auto!important;
+            max-height:3.35in!important;
+            overflow:hidden!important;
+        }
+        .notes-panel .panel-title { font-size:11px!important; padding:4px!important; }
+        .notes,
+        .notes-panel .estimate-notes-page.notes-1 + .notes,
+        .notes-panel .estimate-notes-page.notes-2 + .notes,
+        .notes-panel .estimate-notes-page.notes-few + .notes,
+        .notes-panel .estimate-notes-page.notes-medium + .notes,
+        .notes-panel .estimate-notes-page.notes-many + .notes {
+            font-size:10.5px!important;
+            line-height:1.18!important;
+            padding:7px 10px 5px 27px!important;
+        }
+        .notes li { margin-bottom:5px!important; }
+
         /* Keep The Garage Guy logo fully inside the printable top-left area. */
         .wally-sheet .brand-wrap {
-            overflow:visible!important;
-            padding-left:6px!important;
-            padding-top:3px!important;
-            padding-bottom:3px!important;
+            overflow:hidden!important;
+            padding:3px 4px 3px 7px!important;
         }
         .wally-sheet .wally-brand-logo {
             display:block!important;
-            width:calc(100% - 8px)!important;
-            max-width:calc(100% - 8px)!important;
-            height:calc(1.48in - 8px)!important;
-            max-height:calc(1.48in - 8px)!important;
+            width:calc(100% - 6px)!important;
+            max-width:calc(100% - 6px)!important;
+            height:calc(1.34in - 6px)!important;
+            max-height:calc(1.34in - 6px)!important;
             object-fit:contain!important;
             object-position:left center!important;
-            margin-left:2px!important;
-            margin-top:0!important;
+            margin:0!important;
         }
+
+        /* Project price is part of normal flow and cannot be covered by footer. */
         .total-box {
             display:block!important;
-            min-height:76px!important;
+            flex:0 0 auto!important;
+            margin-top:5px!important;
+            min-height:66px!important;
             height:auto!important;
             overflow:visible!important;
             break-inside:avoid!important;
             page-break-inside:avoid!important;
+            position:relative!important;
+            z-index:2!important;
         }
-        .total-label { font-size:12px!important; padding:4px!important; }
+        .total-label { font-size:11px!important; padding:3px!important; }
         .total-price {
             display:block!important;
-            min-height:48px!important;
+            min-height:42px!important;
             height:auto!important;
-            font-size:32px!important;
-            line-height:1.05!important;
-            padding:8px 4px 9px!important;
+            font-size:30px!important;
+            line-height:1!important;
+            padding:6px 4px 7px!important;
             overflow:visible!important;
             white-space:nowrap!important;
         }
+        .suburb-price-disclaimer { padding:4px 6px!important; font-size:7px!important; line-height:1.12!important; }
+        .wally-sheet .suburb-price-disclaimer { font-size:9.5px!important; padding:5px 6px!important; }
+
+        /* Footer gets its own reserved space at the bottom; it never overlays
+           Building Permits or Total Project Price. */
+        .footer {
+            position:static!important;
+            flex:0 0 .42in!important;
+            height:.42in!important;
+            min-height:.42in!important;
+            max-height:.42in!important;
+            margin-top:auto!important;
+            z-index:1!important;
+            font-size:10.5px!important;
+        }
+        .footer small { font-size:6px!important; margin-top:1px!important; }
+
         .actions,.estimate-assistant { display:none !important; }
     }
 </style>

@@ -387,7 +387,7 @@
     .estimate-notes-page .notes-list li { margin-bottom:.8em; }
 </style>
 </head>
-<body class="bg-zinc-950 text-zinc-200"><div style="position:fixed;bottom:8px;left:8px;z-index:999999;background:#166534;color:white;padding:4px 7px;border-radius:6px;font:800 9px Arial">CLEAN ESTIMATOR BUILD</div><div style="position:fixed;bottom:10px;right:10px;z-index:999999;background:#dc2626;color:#fff;padding:6px 10px;border-radius:8px;font:900 11px Arial">ESTIMATOR UPDATE V2</div><a id="backToProductionBtn" class="back-production-btn" href="index.html?v=20260818v2">← Back to Production</a>
+<body class="bg-zinc-950 text-zinc-200"><div style="position:fixed;bottom:8px;left:8px;z-index:999999;background:#166534;color:white;padding:4px 7px;border-radius:6px;font:800 9px Arial">CLEAN ESTIMATOR BUILD</div><div style="position:fixed;bottom:10px;right:10px;z-index:999999;background:#dc2626;color:#fff;padding:6px 10px;border-radius:8px;font:900 11px Arial">ESTIMATOR UPDATE V2</div><a id="backToProductionBtn" class="back-production-btn" href="index.html?v=20260818v2">← Back To Dashboard</a>
     <div class="max-w-[1280px] mx-auto">
         <!-- Header -->
         <div class="flex items-center justify-between px-8 pt-8 pb-6">
@@ -3581,8 +3581,6 @@
 
             if (doorType === 'party') notes.push('Quote Includes Party Door.');
             if (doorType === 'french') notes.push('Quote Includes French Door.');
-            const typedAdditionalNotes = val('additionalEstimateNotes').trim();
-            if (typedAdditionalNotes) typedAdditionalNotes.split(/\r?\n/).map(s=>s.trim()).filter(Boolean).forEach(n=>notes.push(n));
 
             if (Number(val('extraLights') || 0) > 0) notes.push(`${val('extraLights')} additional light${Number(val('extraLights')) > 1 ? 's' : ''} included.`);
             if (Number(val('extraWindows') || 0) > 0) notes.push(`${val('extraWindows')} additional window${Number(val('extraWindows')) > 1 ? 's' : ''} included.`);
@@ -3602,6 +3600,19 @@
                 if (desc && desc.value.trim()) extraDesc.push(desc.value.trim());
             });
             extraDesc.forEach(text => notes.push(text));
+
+            // Customer-entered Additional Estimate Notes always flow directly
+            // into the printed Notes / Inclusions box. Read the textarea itself
+            // instead of relying on a generic helper, and preserve one line per note.
+            const notesField = document.getElementById('additionalEstimateNotes');
+            const typedAdditionalNotes = String(notesField ? notesField.value : '').trim();
+            if (typedAdditionalNotes) {
+                typedAdditionalNotes
+                    .split(/\r?\n/)
+                    .map(line => line.trim())
+                    .filter(Boolean)
+                    .forEach(line => notes.push(line));
+            }
 
             const inclusionSentence = isSuburb
                 ? 'Materials, labor, taxes, demolition, cleanup, and debris removal included.'

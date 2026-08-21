@@ -1457,7 +1457,8 @@ button.danger{color:#b42318}
 <span class="badge" id="zoomLabel">100%</span>
 <button id="zoomIn">+</button>
 <div class="spacer"></div>
-<button id="undoBtn">Undo</button>
+<button class="mini" type="button" onclick="window.location.href='index.html?v='+Date.now()">← Back To Dashboard</button>
+    <button id="undoBtn">Undo</button>
     <button class="mini danger" id="deleteSelectedBtn" title="Delete selected drawing item">🗑 Delete Selected</button>
 
 <button id="printBtn">Print</button><button id="pdfBtn">Save as PDF</button>
@@ -3492,7 +3493,7 @@ if($('deleteObj')) $('deleteObj').onclick=()=>{if(!state.selected)return;snapsho
 if($('duplicateObj')) $('duplicateObj').onclick=()=>{const o=getObj(state.selected);if(!o)return;snapshot();const n={...o,id:uid++,x:o.x+20,y:o.y+20};state.objects.push(n);state.selected=n.id;renderObjects()};
 
 $('undoBtn').onclick=()=>{if(!state.history.length)return;state.future.push(JSON.stringify(state.objects));restore(state.history.pop())};
-$('redoBtn').onclick=()=>{if(!state.future.length)return;state.history.push(JSON.stringify(state.objects));restore(state.future.pop())};
+
 $('fitBtn').onclick=fitWhole;$('drawViewBtn').onclick=focusDrawing;
 $('zoomIn').onclick=()=>changeZoom(1.15);$('zoomOut').onclick=()=>changeZoom(1/1.15);
 

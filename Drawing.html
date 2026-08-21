@@ -1977,7 +1977,12 @@ button.danger{color:#b42318}
 <div class="field"><label>Job address</label><input id="jobAddress"/></div>
 <div class="row">
 <div class="field"><label>City</label><input id="city"/></div>
-<div class="field"><label>Salesman</label><input id="salesman"/></div>
+<div class="field"><label>Salesman</label><select id="salesman"><option value="">Select salesman</option>
+<option value="sam">Sam Barakat</option>
+<option value="ramsey">Ramsey</option>
+<option value="wally">Wally</option>
+<option value="tom">Tom</option>
+<option value="tomb">Tom Bartyzel</option></select></div>
 </div>
 <div class="row">
 <div class="field"><label>Home phone</label><input id="homePhone"/></div>
@@ -2021,7 +2026,12 @@ button.danger{color:#b42318}
 <option value="obstruction">Obstruction Work Order</option>
 <option value="siteplan">Proposed Site Plan</option>
 </select></div>
-<div class="field"><label>Salesman</label><input id="wSalesman"/></div>
+<div class="field"><label>Salesman</label><select id="wSalesman"><option value="">Select salesman</option>
+<option value="sam">Sam Barakat</option>
+<option value="ramsey">Ramsey</option>
+<option value="wally">Wally</option>
+<option value="tom">Tom</option>
+<option value="tomb">Tom Bartyzel</option></select></div>
 </div>
 <input id="wCustomer" type="hidden"/><input id="wAddress" type="hidden"/><input id="wCity" type="hidden"/>
 <div class="field"><label>Salesman phone</label><input id="wSalesPhone"/></div>
@@ -2143,6 +2153,7 @@ button.danger{color:#b42318}
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const TEMPLATES={
  concrete:{
@@ -3204,6 +3215,44 @@ $('cPartySlider')?.addEventListener('input',movePartyFromPanel);
 $('cServiceSlider')?.addEventListener('input',moveServiceFromPanel);
 ['cSizeCombo','cReturnFM','cPartyDoor','cPartyDoorLocation','cServiceDoor','cServiceDoorLocation'].forEach(id=>$(id)?.addEventListener('change',()=>setTimeout(updateDoorPanelSliders,0)));
 
+const DRAWING_SALESMEN={
+ sam:{name:'Sam Barakat',phone:'708-351-6287'},
+ ramsey:{name:'Ramsey',phone:'708-663-0197'},
+ wally:{name:'Wally',phone:'708-205-2882'},
+ tom:{name:'Tom',phone:'708-334-9470'},
+ tomb:{name:'Tom Bartyzel',phone:'224-628-8710'}
+};
+function applyDrawingSalesman(key,force=false){
+ key=String(key||'').toLowerCase();
+ const s=DRAWING_SALESMEN[key]; if(!s)return;
+ if($('salesman') && (force||!$('salesman').value))$('salesman').value=key;
+ if($('wSalesman') && (force||!$('wSalesman').value))$('wSalesman').value=key;
+ if($('salesPhone'))$('salesPhone').value=s.phone||'';
+ if($('wSalesPhone'))$('wSalesPhone').value=s.phone||'';
+ saveSharedInfo();
+}
+function syncDrawingSalesmanFromSelect(sourceId){
+ const key=$(sourceId)?.value||'';
+ if(!key)return;
+ applyDrawingSalesman(key,true);
+ renderSheet();
+}
+async function defaultDrawingSalesmanFromSignedInUser(){
+ try{
+   if(!window.supabase)return;
+   const client=window.supabase.createClient(
+     'https://iomcekniylxfptswcxoi.supabase.co',
+     'sb_publishable_G_ZAnQ_CoJjWsn8-HgduLw_IziPWEmn',
+     {auth:{persistSession:true,autoRefreshToken:true}}
+   );
+   const {data:{user}}=await client.auth.getUser();
+   if(!user)return;
+   const {data:p}=await client.from('staff_profiles').select('username').eq('id',user.id).single();
+   const key=String(p?.username||'').toLowerCase();
+   if(DRAWING_SALESMEN[key])applyDrawingSalesman(key,true);
+ }catch(e){console.warn('Could not load signed-in salesman default',e)}
+}
+
 const SHARED_IDS=['customerName','jobAddress','city','homePhone','workPhone','salesman','salesPhone'];
 function saveSharedInfo(){
  const v={};SHARED_IDS.forEach(id=>v[id]=$(id)?.value||'');
@@ -3216,6 +3265,9 @@ function loadSharedInfo(){
  }catch(e){}
 }
 SHARED_IDS.forEach(id=>$(id)?.addEventListener('input',saveSharedInfo));
+$('salesman')?.addEventListener('change',()=>syncDrawingSalesmanFromSelect('salesman'));
+$('wSalesman')?.addEventListener('change',()=>syncDrawingSalesmanFromSelect('wSalesman'));
+
 
 const defaults={
  garage:[20,20,'NEW GARAGE SLAB'], apron:[20,5,'NEW CONCRETE APRON'], sidewalk:[3,20,'CONCRETE SIDEWALK'],
@@ -4612,17 +4664,15 @@ function buildWizardForMode(forcedMode){
   syncVisualSetbacksToGarage();
 
   if(aw&&ah){
-    // V98: apron visually spans the entire enlarged drawing rectangle.
-    // Its entered depth is preserved. The label still reports the garage-width
-    // apron dimension, while the drawing footprint reaches from the rectangle's
-    // left inside edge to its right inside edge.
-    const apronDrawW=(d.w-12)/wizardGarageScale;
+    // Wizard rule: apron must ALWAYS be the exact same width as the garage slab,
+    // both numerically and visually. Use the garage's x-position and pixel scale.
+    const apronDrawW=gw;
     const apronLabel=demo?`DEMOLISH EXISTING APRON\n${gw}' x ${ah}'`:`NEW CONCRETE APRON\n${gw}' x ${ah}'`;
-    const apronX=d.x+6;
-    const apronY=yGarage+wizardGaragePxH; // flush below garage slab
+    const apronX=xGarage;
+    const apronY=yGarage+wizardGaragePxH;
     wizardObj('apron',apronDrawW,ah,apronLabel,apronX,apronY,0,'apron');
     state.objects.at(-1).pxf=wizardGarageScale;
-    state.objects.at(-1).fullDrawingWidth=true;
+    state.objects.at(-1).fullDrawingWidth=false;
     syncVisualSetbacksToGarage();
   }
 
@@ -4923,7 +4973,7 @@ function organizeLeftPanel(){
 
 function initializeApp(){
   organizeLeftPanel();
-  hydrateSheetStates();loadSharedInfo();
+  hydrateSheetStates();loadSharedInfo();defaultDrawingSalesmanFromSignedInUser();
   // Fresh app launch starts with blank canvases. Saved form/job info may remain,
   // but no random/sample shapes are drawn until the user builds or adds them.
   state.sheetStates={

@@ -326,7 +326,7 @@ body.estimator-mode .estimator-exit{display:block}
 const SB_URL='https://iomcekniylxfptswcxoi.supabase.co';
 const SB_KEY='sb_publishable_G_ZAnQ_CoJjWsn8-HgduLw_IziPWEmn';
 const sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true}});
-const USER_EMAIL=u=>`${u.toLowerCase()}@absolute-garage.local`;
+const USER_EMAIL=u=>({tomb:'agbtombartyzel@gmail.com'}[u.toLowerCase()]||`${u.toLowerCase()}@absolute-garage.local`);
 const DISPLAY={randy:'Randy',sam:'Sam',ramsey:'Ramsey',wally:'Wally',tom:'Tom',tomb:'Tom Bartyzel'};
 let profile=null,jobs=[],trashJobs=[],requests=[],documents=[],editRequests=[],estimateHistory=[],calendarEntries=[],currentView='dashboard',openJobId=null,calendarMonth=new Date();
 const ESTIMATOR_URL='estimator.html';

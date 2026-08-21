@@ -3814,7 +3814,7 @@
     .field b { flex: 0 0 auto; }
     .field span { border-bottom: 1px solid #70809d; flex: 1; min-width: 0; padding: 0 4px 2px; font-weight: 700; color: #26354f; overflow-wrap: anywhere; }
 
-    .main { display: grid; grid-template-columns: 43.5% 56.5%; gap: 8px; padding: 0 11px; flex: 1; min-height: 0; }
+    .main { display: grid; grid-template-columns: minmax(0,43.5fr) minmax(0,56.5fr); gap: 8px; padding: 0 11px; flex: 1; min-height: 0; }
     .left, .right { min-width: 0; display:flex; flex-direction:column; }
     .right .notes-panel { flex:1; display:flex; flex-direction:column; }
     .right .notes-panel .notes { flex:1; }
@@ -3855,6 +3855,11 @@
     .total-price { background:#061d4b; color:#ffc400; font-weight:900; text-align:center; font-size:34px; line-height:1; padding:8px 4px 10px; letter-spacing:.5px; white-space:nowrap; }
     .suburb-price-disclaimer { background:#fff; color:#26354f; border-top:1px solid #b9c2d0; padding:7px 8px; font-size:7.7px; line-height:1.25; font-weight:700; text-align:left; }
     .wally-sheet .suburb-price-disclaimer { font-size:13px; line-height:1.25; font-weight:900; color:#071d48; text-align:center; padding:9px 8px; }
+
+
+    /* Print-safe project price: never let the total block collapse or disappear. */
+    .total-box { flex:0 0 auto; break-inside:avoid; page-break-inside:avoid; }
+    .total-label, .total-price, .suburb-price-disclaimer { flex:none; }
 
     .panel-title { background:#061d4b; color:#fff; text-align:center; font-size:12px; font-weight:900; padding:5px 4px; letter-spacing:.2px; }
     .exterior { border:1px solid #b9c2d0; overflow:hidden; height: 3.72in; background:#dbeaf4; }
@@ -3903,9 +3908,65 @@
     .roof-badge{position:absolute;left:2%;top:2%;z-index:8;background:rgba(8,38,84,.9);color:#fff;padding:4px 8px;font-size:8px;font-weight:900;letter-spacing:.08em;border-radius:3px}.photo-spec-badge{position:absolute;left:2%;bottom:2%;z-index:9;background:rgba(8,38,84,.9);color:#fff;padding:4px 7px;font-size:7px;font-weight:800;border-radius:3px;max-width:96%}
 
     @media print {
-        html,body { background:#fff; }
-        .sheet { margin:0; width:8.5in; height:11in; min-height:11in; max-height:11in; overflow:hidden; }
-        .actions { display:none !important; }
+        html,body { background:#fff; width:8.5in; min-height:11in; }
+        .sheet {
+            margin:0;
+            width:8.5in;
+            min-height:11in;
+            height:auto;
+            max-height:none;
+            overflow:visible;
+        }
+        .main {
+            grid-template-columns:minmax(0,43.5fr) minmax(0,56.5fr);
+            min-height:0;
+            height:auto;
+            overflow:visible;
+        }
+        .left,.right,.notes-panel,.notes {
+            min-height:0;
+            height:auto;
+            max-height:none;
+            overflow:visible;
+        }
+        /* Keep The Garage Guy logo fully inside the printable top-left area. */
+        .wally-sheet .brand-wrap {
+            overflow:visible!important;
+            padding-left:6px!important;
+            padding-top:3px!important;
+            padding-bottom:3px!important;
+        }
+        .wally-sheet .wally-brand-logo {
+            display:block!important;
+            width:calc(100% - 8px)!important;
+            max-width:calc(100% - 8px)!important;
+            height:calc(1.48in - 8px)!important;
+            max-height:calc(1.48in - 8px)!important;
+            object-fit:contain!important;
+            object-position:left center!important;
+            margin-left:2px!important;
+            margin-top:0!important;
+        }
+        .total-box {
+            display:block!important;
+            min-height:76px!important;
+            height:auto!important;
+            overflow:visible!important;
+            break-inside:avoid!important;
+            page-break-inside:avoid!important;
+        }
+        .total-label { font-size:12px!important; padding:4px!important; }
+        .total-price {
+            display:block!important;
+            min-height:48px!important;
+            height:auto!important;
+            font-size:32px!important;
+            line-height:1.05!important;
+            padding:8px 4px 9px!important;
+            overflow:visible!important;
+            white-space:nowrap!important;
+        }
+        .actions,.estimate-assistant { display:none !important; }
     }
 </style>
 </head>

@@ -1185,6 +1185,20 @@ button.danger{color:#b42318}
   }
 }
 
+
+/* V65: quick keyboard label editor for drawing objects */
+#objectTextEditor{
+  position:fixed; z-index:10050; display:none; min-width:260px; max-width:min(520px,92vw);
+  padding:10px; border:2px solid #111; border-radius:10px; background:#fff;
+  box-shadow:0 8px 28px rgba(0,0,0,.24);
+}
+#objectTextEditor textarea{
+  width:100%; min-height:74px; resize:vertical; box-sizing:border-box;
+  font:600 15px/1.25 Arial,sans-serif; padding:8px; border:1px solid #999; border-radius:6px;
+}
+#objectTextEditor .editor-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}
+#objectTextEditor button{padding:7px 12px;font-weight:700;cursor:pointer}
+
 </style>
 </head>
 <body>
@@ -1558,6 +1572,15 @@ button.danger{color:#b42318}
 </div>
 </div>
 </div>
+
+<div id="objectTextEditor" aria-hidden="true">
+  <textarea id="objectTextInput" placeholder="Type label, notes, or dimensions..."></textarea>
+  <div class="editor-actions">
+    <button type="button" id="objectTextCancel">Cancel</button>
+    <button type="button" id="objectTextSave">Save Text</button>
+  </div>
+</div>
+
 <script>
 const TEMPLATES={
  concrete:{
@@ -2735,6 +2758,64 @@ function renderExtraRearReturnSpot(){
 }
 
 
+
+let objectTextEditId=null;
+
+function editableObjectText(o){
+  if(!o) return '';
+  // Prefer the object's existing label/name fields. Do not alter dimensions or geometry.
+  return String(o.customText ?? o.label ?? o.name ?? o.text ?? '').trim();
+}
+
+function openObjectTextEditor(o,el){
+  if(!o || !el) return;
+  objectTextEditId=o.id;
+  const box=document.getElementById('objectTextEditor');
+  const input=document.getElementById('objectTextInput');
+  if(!box || !input) return;
+  input.value=editableObjectText(o);
+
+  const r=el.getBoundingClientRect();
+  const left=Math.max(8,Math.min(window.innerWidth-280,r.left));
+  const top=Math.max(8,Math.min(window.innerHeight-150,r.top+Math.min(r.height,40)));
+  box.style.left=left+'px';
+  box.style.top=top+'px';
+  box.style.display='block';
+  box.setAttribute('aria-hidden','false');
+  setTimeout(()=>{input.focus();input.select();},0);
+}
+
+function closeObjectTextEditor(){
+  const box=document.getElementById('objectTextEditor');
+  if(box){box.style.display='none';box.setAttribute('aria-hidden','true');}
+  objectTextEditId=null;
+}
+
+function saveObjectTextEditor(){
+  if(!objectTextEditId) return closeObjectTextEditor();
+  const o=(state?.objects||[]).find(x=>x.id===objectTextEditId);
+  const input=document.getElementById('objectTextInput');
+  if(!o || !input) return closeObjectTextEditor();
+
+  // customText is display-only: typing dimensions/notes never changes the object's actual size.
+  o.customText=input.value.trim();
+  closeObjectTextEditor();
+  if(typeof saveState==='function') saveState();
+  if(typeof render==='function') render();
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  const save=document.getElementById('objectTextSave');
+  const cancel=document.getElementById('objectTextCancel');
+  const input=document.getElementById('objectTextInput');
+  if(save) save.onclick=saveObjectTextEditor;
+  if(cancel) cancel.onclick=closeObjectTextEditor;
+  if(input) input.addEventListener('keydown',e=>{
+    if((e.ctrlKey||e.metaKey) && e.key==='Enter'){e.preventDefault();saveObjectTextEditor();}
+    if(e.key==='Escape'){e.preventDefault();closeObjectTextEditor();}
+  });
+});
+
 function addPrintableConcreteHatch(el){
   if(!el || el.querySelector('.print-hatch-svg')) return;
   const ns='http://www.w3.org/2000/svg';
@@ -2813,6 +2894,32 @@ function renderObjects(){
       addPrintableConcreteHatch(el);
     }
     el.dataset.id=o.id;
+
+    // V65: a user-entered keyboard label overrides only the visible center label.
+    if(o.customText){
+      const labelEl=el.querySelector(':scope > .label');
+      if(labelEl){
+        labelEl.textContent=o.customText;
+        labelEl.style.whiteSpace='pre-line';
+      }
+    }
+
+    // Tap/click the object's visible text to edit it; double-click anywhere on the object also opens it.
+    const editableLabel=el.querySelector(':scope > .label');
+    if(editableLabel){
+      editableLabel.style.cursor='text';
+      editableLabel.title='Click to edit text';
+      editableLabel.addEventListener('click',ev=>{
+        // Do not interfere with drag handles/other controls.
+        ev.stopPropagation();
+        openObjectTextEditor(o,el);
+      });
+    }
+    el.addEventListener('dblclick',ev=>{
+      if(ev.target.closest('.handle,.resize-handle,.rotate-handle')) return;
+      ev.stopPropagation();
+      openObjectTextEditor(o,el);
+    });
     if(o.role)el.dataset.role=o.role;
     Object.assign(el.style,{left:o.x+'px',top:o.y+'px',width:w+'px',height:h+'px',transform:o.role==='lotLength'?'none':`rotate(${o.angle||0}deg)`});
     if(o.role==='lotLength'){

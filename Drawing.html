@@ -1651,6 +1651,114 @@ button.danger{color:#b42318}
   text-align:center!important;
 }
 
+
+/* V100: overhead-door notation is compact and stays INSIDE the garage slab.
+   Returns are plain numbers near the corners. The door itself is shown only as
+   two tight vertical jamb marks with the door size between them: | 16' |.
+   No horizontal line/box spans the door width. */
+#paper .obj[data-role="frontLeft"],
+#paper .obj[data-role="frontRight"],
+#paper .obj[data-role="frontMiddle"]{
+  border:0!important;
+  border-top:0!important;
+  border-bottom:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  overflow:visible!important;
+}
+#paper .obj[data-role="frontLeft"]::before,
+#paper .obj[data-role="frontLeft"]::after,
+#paper .obj[data-role="frontRight"]::before,
+#paper .obj[data-role="frontRight"]::after,
+#paper .obj[data-role="frontMiddle"]::before,
+#paper .obj[data-role="frontMiddle"]::after{
+  content:none!important;
+  display:none!important;
+  border:0!important;
+}
+#paper .obj[data-role="frontLeft"] > .label,
+#paper .obj[data-role="frontRight"] > .label{
+  position:absolute!important;
+  left:50%!important;
+  top:50%!important;
+  right:auto!important;
+  bottom:auto!important;
+  width:max-content!important;
+  margin:0!important;
+  padding:0 2px!important;
+  transform:translate(-50%,-50%)!important;
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  text-align:center!important;
+  font-weight:1000!important;
+  white-space:nowrap!important;
+}
+#paper .obj[data-role="frontMiddle"]{
+  height:30px!important;
+}
+#paper .obj[data-role="frontMiddle"] > .label{
+  position:absolute!important;
+  left:50%!important;
+  top:50%!important;
+  right:auto!important;
+  bottom:auto!important;
+  width:max-content!important;
+  margin:0!important;
+  padding:0 18px!important;
+  transform:translate(-50%,-50%)!important;
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  text-align:center!important;
+  font-weight:1000!important;
+  white-space:nowrap!important;
+}
+/* Tight jamb marks immediately before and after the door-size text. */
+#paper .obj[data-role="frontMiddle"] > .label::before,
+#paper .obj[data-role="frontMiddle"] > .label::after{
+  content:""!important;
+  display:block!important;
+  position:absolute!important;
+  top:50%!important;
+  width:0!important;
+  height:28px!important;
+  transform:translateY(-50%)!important;
+  border-left:3px solid #000!important;
+}
+#paper .obj[data-role="frontMiddle"] > .label::before{left:7px!important}
+#paper .obj[data-role="frontMiddle"] > .label::after{right:7px!important}
+
+/* V103: compact side setback notation close to garage walls.
+   Keep exact -3'- style, but remove stretched dimension-object width. */
+#paper .obj[data-role="leftSetback"],
+#paper .obj[data-role="rightSetback"]{
+  width:58px!important;
+  min-width:58px!important;
+  max-width:58px!important;
+  height:28px!important;
+  border:0!important;
+  background:transparent!important;
+  overflow:visible!important;
+}
+#paper .obj[data-role="leftSetback"] > .label,
+#paper .obj[data-role="rightSetback"] > .label{
+  position:absolute!important;
+  left:50%!important;
+  top:50%!important;
+  width:max-content!important;
+  max-width:none!important;
+  transform:translate(-50%,-50%)!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  background:transparent!important;
+  white-space:nowrap!important;
+  letter-spacing:0!important;
+  word-spacing:0!important;
+  font-weight:1000!important;
+}
+
 </style>
 </head>
 <body>
@@ -2308,25 +2416,24 @@ function syncVisualSetbacksToGarage(){
 
   const l=byRole('leftSetback');
   if(l){
-    l.label=leftVal+"'";
+    l.label="-"+leftVal+"'-";
     l.wf=Math.max(.01,leftVal);
     l.hf=2;
     l.pxf=p;
-    // Keep the left setback dimension outside the garage footprint.
-    l.x=footprintLeft-leftVal*p-8;
-    l.y=midY;
+    // Compact notation sits just outside the left garage wall.
+    l.x=footprintLeft-66;
+    l.y=midY-14;
   }
 
   const r=byRole('rightSetback');
   if(r){
-    r.label=rightVal+"'";
+    r.label="-"+rightVal+"'-";
     r.wf=Math.max(.01,rightVal);
     r.hf=2;
     r.pxf=p;
-    // Keep the right setback dimension outside the garage footprint.
-    // The enlarged drawing area gives us room to show it clearly to the right.
+    // Compact notation sits just outside the right garage wall.
     r.x=footprintRight+8;
-    r.y=midY;
+    r.y=midY-14;
   }
 }
 
@@ -2337,6 +2444,7 @@ function sameGarageApronWidth(){
 }
 function syncSharedGarageApronWidth(source){
   const g=byRole('garage'),a=byRole('apron'); if(!g||!a)return;
+  if(a.fullDrawingWidth===true)return;
   if(!sameGarageApronWidth() && source!=='force')return;
   const p=g.pxf||a.pxf||DRAW_PXF;
   a.wf=g.wf; a.pxf=p; a.x=g.x; a.y=g.y+g.hf*p;
@@ -2741,7 +2849,7 @@ function updateLotAndSetbacksFromPanel(changedId='cLeftSetback'){
  const ll=byRole('lotLength');
  if(ll){
    const v=+$('cLotLength')?.value||125;
-   ll.label=v+"'";ll.wf=v;ll.pxf=(d.h-220)/Math.max(v,1);ll.x=d.x+d.w-6;ll.y=d.y+d.h/2;
+   ll.label=v+"'";ll.wf=v;ll.pxf=(d.h-220)/Math.max(v,1);ll.x=d.x+d.w-6;ll.y=d.y+d.h/2-192;
  }
 
  syncVisualSetbacksToGarage();
@@ -2894,8 +3002,15 @@ function syncRearSetbackDrawing(){
   // Example: 3' setback + 3' apron = apron flush to alley/property line.
   //          4' setback + 3' apron = 1' gap between apron and alley/property line.
   const gap=Math.max(0,rr-apronDepth);
-  const rearBoundaryY=d.y+d.h-24;
-  const garageFrontY=rearBoundaryY-rr*p;
+  const alley=byRole('alley');
+  const rearBoundaryY=alley ? alley.y : currentTemplate().h;
+  // V103: rear boundary for the garage/apron is the TOP of the alley.
+  // This keeps the apron out of the alley while allowing its bottom edge to be flush.
+  // If rear setback is not greater than apron depth, the apron is flush
+  // to the alley/rear property boundary. Only rear setback beyond apron depth
+  // creates an open gap.
+  const effectiveRear=rr>apronDepth ? rr : apronDepth;
+  const garageFrontY=rearBoundaryY-effectiveRear*p;
 
   // Move the garage and all objects physically attached to it together so
   // changing rear setback changes actual placement, not only the dimension label.
@@ -3832,6 +3947,15 @@ function objectPointerDown(e){
     'leftSetback','rightSetback','rearSetback','rearGap','alleyDistance'
   ];
   if(state.mode==='concrete' && panelOnlyDrawingRoles.includes(o.role)) return;
+  // V103: lot length can be slid vertically to fit each drawing.
+  if(state.mode==='concrete' && o.role==='lotLength'){
+    snapshot();
+    const startY=e.clientY,oy=o.y;
+    const moveLot=ev=>{o.y=oy+(ev.clientY-startY)/state.scale;renderObjects()};
+    const upLot=()=>{window.removeEventListener('pointermove',moveLot);window.removeEventListener('pointerup',upLot);save()};
+    window.addEventListener('pointermove',moveLot);window.addEventListener('pointerup',upLot);
+    return;
+  }
   const resizing=e.target.dataset.handle==='1', rotating=e.target.dataset.rotate==='1', cutSizing=e.target.dataset.cutend==='1'; snapshot();
   const startX=e.clientX,startY=e.clientY, ox=o.x,oy=o.y, ow=o.wf,oh=o.hf, oa=o.angle||0, op=o.pxf||DRAW_PXF;
   const [pw0,ph0]=objPixels(o), cx=o.x+pw0/2, cy=o.y+ph0/2;
@@ -4441,7 +4565,7 @@ function buildWizardForMode(forcedMode){
   const wizardGarageScale=layoutScale*1.15;
   const wizardGaragePxW=gw*wizardGarageScale, wizardGaragePxH=gh*wizardGarageScale;
   const xGarage=d.x+(d.w-wizardGaragePxW)/2;
-  const yGarage=d.y+(d.h-wizardGaragePxH)/2;
+  let yGarage=d.y+(d.h-wizardGaragePxH)/2;
 
   // Full lot-width dimension across the top and full lot-length dimension down the right.
   if(lotW){
@@ -4454,6 +4578,15 @@ function buildWizardForMode(forcedMode){
     // Put the vertical lot-length line at the far-right lot boundary;
     // the title/value render in the white margin to the RIGHT of it.
     wizardObj('dimension',lotL,2,lotL+"'",d.x+d.w-6,d.y+d.h/2,0,'lotLength');state.objects.at(-1).pxf=(d.h-220)/lotL;
+  }
+
+  // V101: initial Wizard placement respects apron/rear-setback relationship.
+  // If rear setback <= apron depth, apron sits flush to alley/rear boundary.
+  if(access==='alley' && ah){
+    const alleyTop=currentTemplate().h-(alleyDepthFt*layoutScale);
+    const rearBoundaryY=alleyTop;
+    const effectiveRear=(rr>ah)?rr:ah;
+    yGarage=rearBoundaryY-effectiveRear*wizardGarageScale-wizardGaragePxH;
   }
 
   const garageLabel=demo?`DEMOLISH EXISTING GARAGE / SLAB\n${gw}' x ${gh}'`:`NEW GARAGE SLAB\n${gw}' x ${gh}'`;
@@ -4479,24 +4612,32 @@ function buildWizardForMode(forcedMode){
   syncVisualSetbacksToGarage();
 
   if(aw&&ah){
-    // V96: apron spans the FULL garage slab width on the drawing.
-    // Use the garage width for the apron footprint and label, while preserving
-    // the entered apron depth. Because both use wizardGarageScale, their left
-    // and right edges line up exactly.
-    const apronDrawW=gw;
-    const apronLabel=demo?`DEMOLISH EXISTING APRON\n${apronDrawW}' x ${ah}'`:`NEW CONCRETE APRON\n${apronDrawW}' x ${ah}'`;
-    const apronX=xGarage;
-    const apronY=yGarage+wizardGaragePxH; // flush to garage slab
+    // V98: apron visually spans the entire enlarged drawing rectangle.
+    // Its entered depth is preserved. The label still reports the garage-width
+    // apron dimension, while the drawing footprint reaches from the rectangle's
+    // left inside edge to its right inside edge.
+    const apronDrawW=(d.w-12)/wizardGarageScale;
+    const apronLabel=demo?`DEMOLISH EXISTING APRON\n${gw}' x ${ah}'`:`NEW CONCRETE APRON\n${gw}' x ${ah}'`;
+    const apronX=d.x+6;
+    const apronY=yGarage+wizardGaragePxH; // flush below garage slab
     wizardObj('apron',apronDrawW,ah,apronLabel,apronX,apronY,0,'apron');
     state.objects.at(-1).pxf=wizardGarageScale;
-    syncSharedGarageApronWidth('force');
+    state.objects.at(-1).fullDrawingWidth=true;
     syncVisualSetbacksToGarage();
   }
 
   if(access==='alley'){
     const ap=$('wAlleyPos').value;
     if(ap==='bottom'){
-      wizardObj('custom',d.w/layoutScale,alleyDepthFt,'ALLEY',d.x,d.y+d.h-alleyH,0,'alley');state.objects.at(-1).pxf=layoutScale;
+      // V101: alley spans the full drawing rectangle, from its left boundary
+      // all the way to the right side of the sheet.
+      const alleyX=d.x;
+      const sheetBottom=currentTemplate().h;
+      const alleyWidthPx=currentTemplate().w-alleyX;
+      // V102: drawing area now extends to the physical bottom of the page,
+      // so the alley does too. Its bottom edge is flush with the page bottom.
+      wizardObj('custom',alleyWidthPx/layoutScale,alleyDepthFt,'ALLEY',alleyX,sheetBottom-alleyH,0,'alley');
+      state.objects.at(-1).pxf=layoutScale;
       // Dimension from alley edge through apron to garage. Usually this equals apron depth.
       const rearValue=rr||ah;
       if(rearValue){
@@ -4553,11 +4694,11 @@ function buildWizardForMode(forcedMode){
 
   if(mode==='concrete'){
     // Front opening: clean 2' / 16' / 2' style numbers with no extra wording.
-    const frontY=yGarage+garagePxH-46;
+    const frontY=yGarage+wizardGaragePxH-72; // keep returns/door notation safely inside garage slab
     let fx=xGarage;
-    if(retL){wizardObj('dimension',retL,2,retL+"'",fx,frontY,0,'frontLeft');state.objects.at(-1).pxf=layoutScale;fx+=retL*layoutScale}
-    if(door){wizardObj('dimension',door,2,door+"'",fx,frontY,0,'frontMiddle');state.objects.at(-1).pxf=layoutScale;fx+=door*layoutScale}
-    if(retR){wizardObj('dimension',retR,2,retR+"'",xGarage+garagePxW-retR*layoutScale,frontY,0,'frontRight');state.objects.at(-1).pxf=layoutScale}
+    if(retL){wizardObj('dimension',retL,2,retL+"'",fx,frontY,0,'frontLeft');state.objects.at(-1).pxf=wizardGarageScale;fx+=retL*wizardGarageScale}
+    if(door){wizardObj('dimension',door,2,door+"'",fx,frontY,0,'frontMiddle');state.objects.at(-1).pxf=wizardGarageScale;fx+=door*wizardGarageScale}
+    if(retR){wizardObj('dimension',retR,2,retR+"'",xGarage+wizardGaragePxW-retR*wizardGarageScale,frontY,0,'frontRight');state.objects.at(-1).pxf=wizardGarageScale}
 
     // Rear opening / return numbers, if used.
     const rearY=yGarage+8;
@@ -4568,8 +4709,12 @@ function buildWizardForMode(forcedMode){
   }
 
   // House is generated at the same site scale and placed above the garage with the requested gap.
-  const hw=+$('wHouseW').value||0,hh=+$('wHouseH').value||0,hgap=+$('wHouseGap').value||0;
-  if(hw&&hh){
+  const enteredHW=+$('wHouseW').value||0,enteredHH=+$('wHouseH').value||0,hgap=+$('wHouseGap').value||0;
+  // V103: always show an EXISTING HOME near the top of the drawing area.
+  // If dimensions are omitted, use a visual placeholder only (22' x 45') so the
+  // site plan still reads correctly without claiming user-entered dimensions.
+  const hw=enteredHW||22,hh=enteredHH||45;
+  {
     const houseP=layoutScale;
     const hx=d.x+Math.max(20,Math.min(d.w-hw*houseP-20,xGarage+(garagePxW-hw*houseP)/2));
     const houseBack=yGarage-Math.max(18,hgap*layoutScale);

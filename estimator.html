@@ -693,12 +693,14 @@
                         </label>
                         <select id="wallHeight" onchange="calculateEstimate()" 
                                 class="calc-input w-full bg-zinc-950 border border-zinc-700 text-white rounded-2xl px-4 py-3 text-sm focus:border-blue-500">
-                            <option value="8" selected>8 ft (standard - Chicago)</option>
-                            <option value="9">9 ft (+$1.25 × garage sq ft)</option>
-                            <option value="10">10 ft (+$2,000)</option>
-                            <option value="11">11 ft (+$3,000)</option>
+                            <option value="8" selected>8 ft (standard)</option>
+                            <option value="9">9 ft (+$1.50 × garage sq ft)</option>
+                            <option value="10">10 ft (+$3.00 × garage sq ft)</option>
+                            <option value="11">11 ft (+$4.50 × garage sq ft)</option>
                         </select>
-                        <div class="text-[9px] text-zinc-500 mt-0.5">Wall height automatically increases to at least 1' above any overhead door taller than 7'.</div>
+                        <div id="autoWallHeightMessage" class="hidden text-[10px] font-bold text-yellow-400 mt-1"></div>
+                        <div id="chicagoWallHeightWarning" class="hidden text-[10px] font-extrabold text-red-500 mt-1">Typically in Chicago 10ft Walls are Max</div>
+                        <div class="text-[9px] text-zinc-500 mt-0.5">Each foot above 8' adds $1.50 × garage square footage.</div>
                     </div>
 
                     <!-- Roof -->
@@ -759,56 +761,6 @@
                                 <input id="manualEavesSize" type="number" min="1" step="0.5" placeholder="Eaves inches" oninput="calculateEstimate()"
                                        class="calc-input w-full bg-zinc-900 border border-zinc-600 rounded-xl px-3 py-2 text-sm">
                                 <div class="text-[10px] text-zinc-500 mt-1">Manual eaves 8&quot; or larger add $1,200.</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Roof Patio Section -->
-                    <div class="mb-6 border border-emerald-900/70 rounded-2xl p-5 bg-emerald-950/20">
-                        <div class="flex items-center justify-between mb-3">
-                            <div class="section-header flex items-center gap-x-2"><i class="fa-solid fa-house-chimney-window"></i><span>ROOF PATIO</span></div>
-                            <label class="flex items-center cursor-pointer"><input type="checkbox" id="roofPatioEnabled" onchange="toggleRoofPatio(); calculateEstimate()" class="accent-emerald-500 w-4 h-4"><span class="ml-2 text-xs font-medium text-zinc-300">Add Roof Patio</span></label>
-                        </div>
-                        <div id="roofPatioOptions" class="hidden">
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                <div><label class="text-xs text-zinc-400 block mb-1">Roof Patio Depth</label>
-                                    <select id="roofPatioDepth" onchange="toggleManualRoofPatio(); calculateEstimate()" class="calc-input w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-sm">
-                                        <option value="4">4 ft</option><option value="6" selected>6 ft</option><option value="8">8 ft</option><option value="10">10 ft</option><option value="manual">Manual Entry</option>
-                                    </select>
-                                    <div id="manualRoofPatioWrap" class="hidden mt-2"><input id="manualRoofPatioDepth" type="number" min="1" step="0.5" placeholder="Patio depth in feet" oninput="calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-xl px-3 py-2 text-sm"></div>
-                                </div>
-                                <div><label class="text-xs text-zinc-400 block mb-1">Location</label><div class="h-[42px] flex items-center px-3 bg-zinc-900 border border-zinc-700 rounded-xl"><label class="flex items-center cursor-pointer"><input type="checkbox" id="roofPatioSide" onchange="calculateEstimate()" class="accent-emerald-500 w-4 h-4"><span class="ml-2 text-sm">Side Roof Patio</span></label></div><div class="text-[10px] text-zinc-500 mt-1">Default is rear roof patio.</div></div>
-                                <div><label class="text-xs text-zinc-400 block mb-1">Calculated Size</label><div id="roofPatioSizeDisplay" class="h-[42px] flex items-center px-3 bg-zinc-950 border border-zinc-700 rounded-xl text-sm font-bold">—</div>
-                                    <div class="text-[10px] text-zinc-500 mt-1">Includes concrete, labor and materials; 4 support posts included in material cost.</div>
-                                    <div id="roofPatioChicagoWarning" class="hidden mt-2 rounded-xl border border-red-600 bg-red-950/50 px-3 py-2 text-xs font-extrabold text-red-300">
-                                        CHICAGO PERMIT WARNING: 8' is the maximum roof patio depth with a standard permit. A 10' roof patio requires a special permit.
-                                    </div>
-                                    <div id="chicagoStructureAreaWarning" class="hidden mt-2 rounded-xl border border-red-600 bg-red-950/50 px-3 py-2 text-xs font-extrabold text-red-300">
-                                        CHICAGO SIZE WARNING: Garage + roof patio exceeds Chicago's allowed detached-garage building area. Roof patio area counts; concrete pads do not count.<br><span class="text-[10px] font-medium">Usually the limit is 600 sq. ft., but Chicago allows an allowance up to 614 sq. ft.</span>
-                                    </div></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Optional Overhang Section -->
-                    <div class="mb-6 border border-zinc-800 rounded-2xl p-5 bg-zinc-950/50">
-                        <div class="flex items-center justify-between">
-                            <div class="section-header flex items-center gap-x-2"><i class="fa-solid fa-ruler-horizontal"></i><span>OVERHANG</span></div>
-                            <label class="flex items-center cursor-pointer"><input type="checkbox" id="overhangEnabled" onchange="toggleOverhang(); calculateEstimate()" class="accent-blue-500 w-4 h-4"><span class="ml-2 text-xs font-medium text-zinc-300">Add Overhang</span></label>
-                        </div>
-                        <div id="overhangOptions" class="hidden mt-4">
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                <div><label class="text-xs text-zinc-400 block mb-1">Overhang Size</label>
-                                    <select id="overhangSize" onchange="calculateEstimate()" class="calc-input w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-sm">
-                                        <option value="6" selected>6&quot;</option><option value="8">8&quot;</option><option value="12">12&quot;</option><option value="18">18&quot;</option><option value="24">24&quot;</option><option value="36">36&quot;</option>
-                                    </select>
-                                </div>
-                                <div><label class="text-xs text-zinc-400 block mb-1">Overhang Material</label>
-                                    <select id="overhangMaterial" onchange="calculateEstimate()" class="calc-input w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-sm">
-                                        <option value="lp" selected>LP / Prefinished Wood</option><option value="aluminum">Prefinished Aluminum</option>
-                                    </select>
-                                    <div class="text-[10px] text-zinc-500 mt-1">LP: $12/linear ft per 6&quot;. Aluminum: $15/linear ft per 6&quot;.</div>
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -897,15 +849,14 @@
                                     <label class="text-xs text-zinc-400 block mb-1">Type</label>
                                     <select id="retainType" onchange="calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm">
                                         <option value="none">None</option>
-                                        <option value="standard">Standard Retaining Wall — $60/in above 8"</option>
-                                        <option value="reverse">Reverse Retaining Wall — $90/in above 8"</option>
-                                        <option value="four">4 Sided Retaining Wall — $115/in above 8"</option>
+                                        <option value="standard">Standard Retaining Wall</option>
+                                        <option value="reverse">Reverse Retaining Wall</option>
+                                        <option value="four">4 Sided Retaining Wall</option>
                                     </select>
                                 </div>
                                 <div>
-                                    <label class="text-xs text-zinc-400 block mb-1">Overall Retaining Wall Height</label>
-                                    <input id="retainWallHeight" type="number" value="8" min="0" step="1" oninput="calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm" placeholder='Height in inches'>
-                                    <div class="text-[10px] text-zinc-500 mt-0.5">Retaining wall charge applies only to inches above 8".</div>
+                                    <label class="text-xs text-zinc-400 block mb-1">Retaining Wall Above 8"</label>
+<input id="retainWallHeight" type="number" value="0" min="0" step="1" oninput="calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm" placeholder='Extra inches above 8"'><div class="text-[10px] text-zinc-500 mt-0.5">$95 × each inch entered above 8".</div>
                                 </div>
                             </div>
                         </div>
@@ -1005,16 +956,12 @@
                                 <i class="fa-solid fa-trash-alt"></i>
                                 <span>DEMOLITION &amp; REMOVAL</span>
                             </div>
-                            <label class="flex items-center cursor-pointer">
-                                <input type="checkbox" id="demoExisting" onchange="onDemoChange(); calculateEstimate()" class="accent-blue-500 w-4 h-4">
-                                <span class="ml-2 text-xs font-medium text-zinc-400">Demo existing garage</span>
-                            </label>
+                            <input type="checkbox" id="demoExisting" class="hidden" aria-hidden="true">
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
                             <div>
                                 <label class="text-xs text-zinc-400 block mb-1">Demo slab preset (includes apron below)</label>
-                                <select id="demoSlabPreset" onchange="calculateEstimate()" class="calc-input w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-sm">
-                                    <option value="custom">Custom — type total below</option>
+                                <select id="demoSlabPreset" onchange="syncDemoPreset(); calculateEstimate()" class="calc-input w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-sm"><option value="none" selected>No Demolition</option><option value="custom">Custom Size</option>
                                     <option value="20x20">20×20 slab</option>
                                     <option value="20x22">20×22 slab</option>
                                     <option value="22x22">22×22 slab</option>
@@ -1042,12 +989,7 @@
                                        class="calc-input hidden mt-2 w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-sm">
                                 <div id="demoApronManualHelp" class="hidden text-[9px] text-zinc-500 mt-1">Enter any apron depth, including decimals such as 3.5 ft.</div>
                             </div>
-                            <div>
-                                <label class="text-xs text-zinc-400 block mb-1">Custom demo slab dims (e.g. 20x20) — apron added from dropdown above</label>
-                                <input type="text" id="oldConcreteOverride" value="" placeholder="20x20" oninput="calculateEstimate()" 
-                                       class="calc-input w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-sm">
-                                <div class="text-[9px] text-zinc-500 mt-0.5">Slab only; standard 3ft apron auto-added from dropdown. Parses LxW.</div>
-                            </div>
+                            <div id="customDemoSlabWrap" class="hidden"><label class="text-xs text-zinc-400 block mb-1">Custom Demo Slab Size</label><input type="text" id="oldConcreteOverride" value="" placeholder="e.g. 21x25" oninput="calculateEstimate()" class="calc-input w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-sm"><div class="text-[9px] text-zinc-500 mt-0.5">Enter slab dimensions as width × depth. Demo apron is added from the apron dropdown.</div></div>
                             <div>
                                 <label class="text-xs text-zinc-400 block mb-1">Additional concrete removal dims (e.g. sidewalk 10x5 or pad 8x4)</label>
                                 <input type="text" id="additionalRemovalDims" value="" placeholder="10x5" oninput="calculateEstimate()" 
@@ -1080,6 +1022,13 @@
                                     <option value="party">Party door (+$800)</option>
                                     <option value="french">French door allowance (+$1,000)</option>
                                 </select>
+                            </div>
+                            <div>
+                                <label class="text-xs text-zinc-400 block mb-1">Side / rear door height</label>
+                                <select id="sideDoorHeight" onchange="calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm">
+                                    <option value="7" selected>7' standard</option><option value="8">8'</option><option value="9">9'</option><option value="10">10'</option>
+                                </select>
+                                <div class="text-[10px] text-zinc-500 mt-0.5">For Party/French doors, taller doors automatically raise wall height 1'.</div>
                             </div>
                             <div>
                                 <label class="text-xs text-zinc-400 block mb-1">Service / side door location</label>
@@ -1115,6 +1064,7 @@
                                 </select>
                             </div>
                             <div>
+                                <div id="doorWallAutoMessage" class="hidden text-[10px] font-bold text-yellow-400 mb-1"></div>
                                 <label class="text-xs text-zinc-400 block mb-1">Main overhead door height</label>
                                 <select id="overheadDoorHeight" onchange="calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm">
                                     <option value="7" selected>7' (standard)</option>
@@ -1131,7 +1081,7 @@
                                     <option value="10">10'</option>
                                     <option value="12">12'</option>
                                     <option value="16" selected>16' (standard)</option>
-                                    <option value="18">18'</option>
+                                    <option value="18">18' (+$350)</option>
                                 </select>
                             </div>
                             <div class="md:col-span-2">
@@ -1175,7 +1125,7 @@
                     <div class="mb-6">
                         <div class="section-header mb-2 flex items-center gap-x-2">
                             <i class="fa-solid fa-plug"></i>
-                            <span>ELECTRICAL &amp; WINDOWS</span>
+                            <span>ELECTRICAL</span>
                         </div>
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
                             <div>
@@ -1201,62 +1151,78 @@
                                     <span class="text-xs">EV charger (+$1,000)</span>
                                 </label>
                             </div>
-                            <div>
+                            <div><label class="flex items-center text-sm cursor-pointer mt-5"><input type="checkbox" id="evPrep" onchange="calculateEstimate()" class="accent-blue-500 w-4 h-4 mr-2"><span class="text-xs">EV Prep (+$450)</span></label></div><div>
                                 <label class="flex items-center text-sm cursor-pointer mt-5">
                                     <input type="checkbox" id="threeWaySwitch" onchange="calculateEstimate()" class="accent-blue-500 w-4 h-4 mr-2">
                                     <span class="text-xs">3-way switch (+$200)</span>
                                 </label>
                             </div>
                             <div class="grid grid-cols-2 gap-2">
-                                <div>
-                                    <label class="text-xs text-zinc-400 block mb-1">Extra lights</label>
-                                    <input type="number" id="extraLights" value="0" min="0" step="1" 
-                                           oninput="calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2 text-sm">
-                                    <div class="text-[10px] text-zinc-500">@ $150 ea above std 2</div>
-                                </div>
-                                <div>
-                                    <label class="text-xs text-zinc-400 block mb-1">Extra windows</label>
-                                    <input type="number" id="extraWindows" value="0" min="0" step="1" 
-                                           oninput="calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2 text-sm">
-                                    <div class="text-[10px] text-zinc-500">@ $250 ea</div>
-                                </div>
+<div><label class="text-xs text-zinc-400 block mb-1">Extra lights</label><input type="number" id="extraLights" value="0" min="0" step="1" oninput="calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2 text-sm"><div class="text-[10px] text-zinc-500">@ $150 ea above std 2</div></div>
+<div><label class="text-xs text-zinc-400 block mb-1">Extra outlets</label><input type="number" id="extraOutlets" value="0" min="0" step="1" oninput="calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2 text-sm"><div class="text-[10px] text-zinc-500">@ $150 ea</div></div>
+</div>
                             </div>
-                        <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mt-3 pt-3 border-t border-zinc-800">
-                            <div>
-                                <label class="text-xs text-zinc-400 block mb-1">Window type</label>
-                                <select id="windowType" onchange="calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm">
-                                    <option value="none">No window selected</option>
-                                    <option value="single" selected>Single Hung</option>
-                                    <option value="sliding">Sliding</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="text-xs text-zinc-400 block mb-1">Window quantity</label>
-                                <select id="windowQty" onchange="calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm">
-                                    <option value="0">0</option><option value="1" selected>1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="text-xs text-zinc-400 block mb-1">Window placement</label>
-                                <select id="windowPlacement" onchange="calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm">
-                                    <option value="service" selected>Service-door side</option>
-                                    <option value="front-left">Front left</option>
-                                    <option value="front-right">Front right</option>
-                                    <option value="both">Both sides</option>
-                                    <option value="rear">Rear</option>
-                                </select>
-                            </div>
-                            <div class="text-[10px] text-zinc-500 flex items-end pb-2">These visible selections are carried into the Exterior View (Example).</div>
-                        </div>
-                        </div>
-                    </div>
-
-                    <!-- Structural Add-ons -->
+                        <!-- Structural Add-ons -->
                     <div>
                         <div class="section-header mb-2 flex items-center gap-x-2">
                             <i class="fa-solid fa-tools"></i>
                             <span>STRUCTURAL &amp; EXTERIOR ADD-ONS</span>
+                        </div><div class="mt-4 pt-4 border-t border-zinc-700"><div class="text-xs font-semibold text-zinc-400 mb-2">WINDOWS</div>
+<input type="hidden" id="windowQty" value="0"><div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+<div><label class="text-xs text-zinc-400 block mb-1">Extra windows</label><input type="number" id="extraWindows" value="0" min="0" step="1" oninput="syncWindowQtyFromExtras(); calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2 text-sm"><div class="text-[10px] text-zinc-500">@ $300 ea</div></div>
+<div><label class="text-xs text-zinc-400 block mb-1">Window type</label><select id="windowType" onchange="calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm"><option value="none">No window selected</option><option value="single" selected>Single Hung</option><option value="sliding">Sliding</option></select></div>
+<div><label class="text-xs text-zinc-400 block mb-1">Window placement</label><select id="windowPlacement" onchange="calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm"><option value="service" selected>Service-door side</option><option value="front-left">Front left</option><option value="front-right">Front right</option><option value="both">Both sides</option><option value="rear">Rear</option></select></div>
+</div></div><!-- Roof Patio Section -->
+                    <div class="mb-6 border border-emerald-900/70 rounded-2xl p-5 bg-emerald-950/20">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="section-header flex items-center gap-x-2"><i class="fa-solid fa-house-chimney-window"></i><span>ROOF PATIO</span></div>
+                            <label class="flex items-center cursor-pointer"><input type="checkbox" id="roofPatioEnabled" onchange="toggleRoofPatio(); calculateEstimate()" class="accent-emerald-500 w-4 h-4"><span class="ml-2 text-xs font-medium text-zinc-300">Add Roof Patio</span></label>
                         </div>
+                        <div id="roofPatioOptions" class="hidden">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                <div><label class="text-xs text-zinc-400 block mb-1">Roof Patio Depth</label>
+                                    <select id="roofPatioDepth" onchange="toggleManualRoofPatio(); calculateEstimate()" class="calc-input w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-sm">
+                                        <option value="4">4 ft</option><option value="6" selected>6 ft</option><option value="8">8 ft</option><option value="10">10 ft</option><option value="manual">Manual Entry</option>
+                                    </select>
+                                    <div id="manualRoofPatioWrap" class="hidden mt-2"><input id="manualRoofPatioDepth" type="number" min="1" step="0.5" placeholder="Patio depth in feet" oninput="calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-xl px-3 py-2 text-sm"></div>
+                                </div>
+                                <div><label class="text-xs text-zinc-400 block mb-1">Location</label><div class="h-[42px] flex items-center px-3 bg-zinc-900 border border-zinc-700 rounded-xl"><label class="flex items-center cursor-pointer"><input type="checkbox" id="roofPatioSide" onchange="calculateEstimate()" class="accent-emerald-500 w-4 h-4"><span class="ml-2 text-sm">Side Roof Patio</span></label></div><div class="text-[10px] text-zinc-500 mt-1">Default is rear roof patio.</div></div>
+                                <div><label class="text-xs text-zinc-400 block mb-1">Calculated Size</label><div id="roofPatioSizeDisplay" class="h-[42px] flex items-center px-3 bg-zinc-950 border border-zinc-700 rounded-xl text-sm font-bold">—</div>
+                                    <div class="text-[10px] text-zinc-500 mt-1">Includes concrete, labor and materials; 4 support posts included in material cost.</div>
+                                    <div id="roofPatioChicagoWarning" class="hidden mt-2 rounded-xl border border-red-600 bg-red-950/50 px-3 py-2 text-xs font-extrabold text-red-300">
+                                        CHICAGO PERMIT WARNING: 8' is the maximum roof patio depth with a standard permit. A 10' roof patio requires a special permit.
+                                    </div>
+                                    <div id="chicagoStructureAreaWarning" class="hidden mt-2 rounded-xl border border-red-600 bg-red-950/50 px-3 py-2 text-xs font-extrabold text-red-300">
+                                        CHICAGO SIZE WARNING: Garage + roof patio exceeds Chicago's allowed detached-garage building area. Roof patio area counts; concrete pads do not count.<br><span class="text-[10px] font-medium">Usually the limit is 600 sq. ft., but Chicago allows an allowance up to 614 sq. ft.</span>
+                                    </div></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Optional Overhang Section -->
+                    <div class="mb-6 border border-zinc-800 rounded-2xl p-5 bg-zinc-950/50">
+                        <div class="flex items-center justify-between">
+                            <div class="section-header flex items-center gap-x-2"><i class="fa-solid fa-ruler-horizontal"></i><span>OVERHANG</span></div>
+                            <label class="flex items-center cursor-pointer"><input type="checkbox" id="overhangEnabled" onchange="toggleOverhang(); calculateEstimate()" class="accent-blue-500 w-4 h-4"><span class="ml-2 text-xs font-medium text-zinc-300">Add Overhang</span></label>
+                        </div>
+                        <div id="overhangOptions" class="hidden mt-4">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div><label class="text-xs text-zinc-400 block mb-1">Overhang Size</label>
+                                    <select id="overhangSize" onchange="calculateEstimate()" class="calc-input w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-sm">
+                                        <option value="6" selected>6&quot;</option><option value="8">8&quot;</option><option value="12">12&quot;</option><option value="18">18&quot;</option><option value="24">24&quot;</option><option value="36">36&quot;</option>
+                                    </select>
+                                </div>
+                                <div><label class="text-xs text-zinc-400 block mb-1">Overhang Material</label>
+                                    <select id="overhangMaterial" onchange="calculateEstimate()" class="calc-input w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-sm">
+                                        <option value="lp" selected>LP / Prefinished Wood</option><option value="aluminum">Prefinished Aluminum</option>
+                                    </select>
+                                    <div class="text-[10px] text-zinc-500 mt-1">LP: $12/linear ft per 6&quot;. Aluminum: $15/linear ft per 6&quot;.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    
                         
                         <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
                             
@@ -1631,9 +1597,15 @@
             handleEPALogic();
         }
 
-        function onDemoChange() {
+        function onDemoChange(){handleEPALogic();}
+        function syncDemoPreset(){
+            const preset=document.getElementById('demoSlabPreset')?.value||'none';
+            const demo=document.getElementById('demoExisting'); if(demo)demo.checked=preset!=='none';
+            document.getElementById('customDemoSlabWrap')?.classList.toggle('hidden',preset!=='custom');
+            if(preset!=='custom' && document.getElementById('oldConcreteOverride'))document.getElementById('oldConcreteOverride').value='';
             handleEPALogic();
         }
+        function syncWindowQtyFromExtras(){const q=Math.max(0,parseInt(document.getElementById('extraWindows')?.value||0)||0);if(document.getElementById('windowQty'))document.getElementById('windowQty').value=String(q);}
 
         function handleEPALogic() {
             const city = document.getElementById('city').value;
@@ -1804,14 +1776,20 @@
                 }
             }
             const overheadDoorHeight = parseInt(document.getElementById('overheadDoorHeight').value) || 7;
-            if (overheadDoorHeight > 7) {
-                const requiredWallHeight = overheadDoorHeight + 1;
-                if (wallHeight < requiredWallHeight) {
-                    const wallHeightEl = document.getElementById('wallHeight');
-                    if (wallHeightEl) wallHeightEl.value = String(requiredWallHeight);
-                    wallHeight = requiredWallHeight;
-                }
-            }
+            const sideDoorHeight = parseInt(document.getElementById('sideDoorHeight')?.value || 7);
+            const sideDoorTypeForHeight = document.getElementById('doorType')?.value || 'standard';
+            const tallestSelectedDoor = Math.max(overheadDoorHeight, ['party','french'].includes(sideDoorTypeForHeight) ? sideDoorHeight : 7);
+            const requiredWallHeight = tallestSelectedDoor > 7 ? tallestSelectedDoor + 1 : 8;
+            const wallHeightEl = document.getElementById('wallHeight');
+            const autoMsg = document.getElementById('autoWallHeightMessage'), doorAutoMsg=document.getElementById('doorWallAutoMessage');
+            if (wallHeight < requiredWallHeight && wallHeightEl) {
+                wallHeightEl.value=String(requiredWallHeight); wallHeight=requiredWallHeight;
+                const msg=`Automatically Selected (${requiredWallHeight}) Ft Walls.`;
+                if(autoMsg){autoMsg.textContent=msg;autoMsg.classList.remove('hidden');}
+                if(doorAutoMsg){doorAutoMsg.textContent=msg;doorAutoMsg.classList.remove('hidden');}
+            } else { if(autoMsg)autoMsg.classList.add('hidden'); if(doorAutoMsg)doorAutoMsg.classList.add('hidden'); }
+            const chicagoWarn=document.getElementById('chicagoWallHeightWarning');
+            if(chicagoWarn)chicagoWarn.classList.toggle('hidden', !(city==='Chicago' && wallHeight>10));
             updateOverheadDoorOffsetControl();
             
             // Concrete
@@ -1855,6 +1833,7 @@
             const patio2Type=document.getElementById('extraConcrete2Type').value||'Pad';
             
             // Demolition
+            syncDemoPreset();
             const demo = document.getElementById('demoExisting').checked;
             const demoSlabPreset = document.getElementById('demoSlabPreset').value;
             const demoApronSelect = document.getElementById('demoApronDepth');
@@ -1885,8 +1864,10 @@
             const elecBase = parseFloat(document.getElementById('elecBase').value) || 1500;
             const electricSubpanel = parseFloat(document.getElementById('electricSubpanel').value) || 0;
             const ev = document.getElementById('evCharger').checked ? 1000 : 0;
+            const evPrep = document.getElementById('evPrep').checked ? 450 : 0;
             const threeWay = document.getElementById('threeWaySwitch').checked ? 200 : 0;
             const extraLights = parseInt(document.getElementById('extraLights').value) || 0;
+            const extraOutlets = parseInt(document.getElementById('extraOutlets').value) || 0;
             const extraWindows = parseInt(document.getElementById('extraWindows').value) || 0;
             
             // Structural
@@ -1958,11 +1939,8 @@
             const floorArea = width * depth;
             const framingCost = floorArea * 6;
             
-            // Wall height surcharge (flat fees: 9ft = $1000, 10ft = $2000)
-            let wallHeightSurcharge = 0;
-            if (wallHeight === 9) wallHeightSurcharge = 1000;
-            else if (wallHeight === 10) wallHeightSurcharge = 2000;
-            else if (wallHeight === 11) wallHeightSurcharge = 3000;
+            // Wall height surcharge: each foot above 8' adds $1.50 × garage sq ft.
+            let wallHeightSurcharge = Math.max(0, wallHeight - 8) * 1.5 * floorArea;
             
             // Roof upgrade
             const roofUpgrade = (roofType === 'gable') ? 600 : 0;
@@ -1978,13 +1956,15 @@
             
             // Electrical
             const extraLightsCost = extraLights * 150;
+            const extraOutletsCost = extraOutlets * 150;
             const extraWindowsCost = extraWindows * 300;
-            const electricalCost = elecBase + ev + threeWay + extraLightsCost + electricSubpanel;
+            const electricalCost = elecBase + ev + evPrep + threeWay + extraLightsCost + extraOutletsCost + electricSubpanel;
             
             // Overhead doors (base 16x7 @1200 + upgrade for taller + additional)
             const overheadUpgrade = Math.max(0, overheadDoorHeight - 7) * 250;
+            const overheadWidthUpgrade = Number(document.getElementById('overheadDoorWidth').value || 16) === 18 ? 350 : 0;
             const opener8500Upgrade = openerType === '8500' ? (openerQty * 400) : 0;
-            const overheadCost = 1200 + overheadUpgrade + (addlOverheadDoors * 800) + (addlOpeners * 450) + opener8500Upgrade;
+            const overheadCost = 1200 + overheadUpgrade + overheadWidthUpgrade + (addlOverheadDoors * 800) + (addlOpeners * 450) + opener8500Upgrade;
             
             // Side door
             let sideDoorCost = 0;
@@ -2085,8 +2065,8 @@
             
             // Retaining wall
             const perimeterLf = 2 * (width + depth);
-            const retainRate = retainType === 'standard' ? 60 : retainType === 'reverse' ? 90 : retainType === 'four' ? 115 : 0;
-            const retainCost = retainRate > 0 && retainInches > 8 ? (retainInches - 8) * retainRate : 0;
+            const retainRate = retainType === 'none' ? 0 : 95;
+            const retainCost = retainRate > 0 && retainInches > 0 ? retainInches * retainRate : 0;
             const frostFootingCost = frostProtectedFooting ? perimeterLf * 200 : 0;
             
             // Gutters
@@ -2181,7 +2161,7 @@
                 soffitCost, soffitFt, hasSoffit,
                 firewall, hurricane, wheeling, arlingtonSurvey, andrewPermit, hardieSidingCost, sidingType, wallHeight, overheadDoorHeight, sidingAreaNet, hardieSheets, extrasTotal,
                 permitCost, internalTotal, customerQuote, profitAmount, profitMode: profitSettings.mode, profitValue: profitSettings.value,
-                city, roofType, doorType, ev, threeWay, extraLights, extraLightsCost, extraWindows, extraWindowsCost, opener8500Upgrade, openerType, openerQty,
+                city, roofType, doorType, ev, evPrep, threeWay, extraLights, extraLightsCost, extraOutlets, extraOutletsCost, extraWindows, extraWindowsCost, overheadWidthUpgrade, opener8500Upgrade, openerType, openerQty,
                 newConcrete, fiveInch, sixInch, demo, retainInches, addlOverheadDoors, addlOpeners,
                 patio1Area, patio2Area, demoSlabPreset, demoApronDepth, calculatedOldConcrete,
                 demoSlabArea, demoSlabWidth, demoApronArea
@@ -2369,7 +2349,10 @@
             if (data.ev > 0) lines.push({ label: 'EV charger', amount: data.ev, section: 'addons' });
             if (data.threeWay > 0) lines.push({ label: '3-way switch', amount: data.threeWay, section: 'addons' });
             if (data.extraLightsCost > 0) lines.push({ label: `Extra lights (${data.extraLights} × $150)`, amount: data.extraLightsCost, section: 'addons' });
-            if (data.extraWindowsCost > 0) lines.push({ label: `Extra windows (${data.extraWindows} × $300)`, amount: data.extraWindowsCost, section: 'addons' });
+            if (data.extraWindowsCost > 0) lines.push({ label: `Extra windows (${data.extraWindows})`, amount: data.extraWindowsCost, section: 'structural' });
+            if (data.evPrep > 0) lines.push({ label: 'EV Prep', amount: data.evPrep, section: 'addons' });
+            if (data.extraOutletsCost > 0) lines.push({ label: `Extra outlets (${data.extraOutlets})`, amount: data.extraOutletsCost, section: 'addons' });
+            if (data.overheadWidthUpgrade > 0) lines.push({ label: "18' overhead door width upgrade", amount: data.overheadWidthUpgrade, section: 'addons' });
             if (data.firewall > 0) lines.push({ label: `Firewall (${data.firewall / 600} wall${data.firewall > 600 ? 's' : ''})`, amount: data.firewall, section: 'addons' });
             if (data.hurricane > 0) lines.push({ label: 'Hurricane ties', amount: data.hurricane, section: 'addons' });
             if (data.wheeling > 0) lines.push({ label: 'Wheeling charge', amount: data.wheeling, section: 'addons' });
@@ -2610,14 +2593,14 @@
             city:'City',width:'Garage Width',depth:'Garage Depth',customWidth:'Custom Garage Width',customDepth:'Custom Garage Depth',
             wallHeight:'Wall Height',roofType:'Roof Style',eaveDir:'Gable Eaves',pitch:'Roof Pitch',eavesSize:'Eaves',manualEavesSize:'Manual Eaves Size',roofPatioEnabled:'Roof Patio',roofPatioDepth:'Roof Patio Depth',manualRoofPatioDepth:'Manual Roof Patio Depth',roofPatioSide:'Side Roof Patio',overhangEnabled:'Overhang',overhangSize:'Overhang Size',overhangMaterial:'Overhang Material',
             newConcrete:'New Concrete',apronDepth:'Apron Depth',apronManual:'Manual Apron Depth',concreteThickness:'Concrete Thickness',excavation:'Excavation / Stone Loads',
-            frostProtectedFooting:'42" Frost Protected Footing',retainType:'Retaining Wall Type',retainWallHeight:'Retaining Wall Height',
-            demoExisting:'Demolition',demoSlabPreset:'Demo Garage / Slab Size',demoApronDepth:'Demo Apron Depth',demoApronManual:'Manual Demo Apron Depth',
-            oldConcreteOverride:'Custom Demo Dimensions',additionalRemovalDims:'Additional Concrete Removal',
+            frostProtectedFooting:'42" Frost Protected Footing',retainType:'Retaining Wall Type',retainWallHeight:'Retaining Wall Above 8 Inches',
+            demoSlabPreset:'Demo Garage / Slab Size',demoApronDepth:'Demo Apron Depth',demoApronManual:'Manual Demo Apron Depth',
+            oldConcreteOverride:'Custom Demo Slab Size',additionalRemovalDims:'Additional Concrete Removal',
             doorType:'Service Door',serviceDoorLocation:'Service Door Location',addlOverheadDoors:'Additional Overhead Doors',
             openerQty:'Opener Quantity',openerType:'Opener Type',overheadDoorHeight:'Overhead Door Height',
             overheadDoorWidth:'Overhead Door Width',overheadDoorStyle:'Overhead Door Style',
-            elecBase:'Electric',electricSubpanel:'Electrical Subpanel',evCharger:'EV Charger',threeWaySwitch:'3-Way Switch',
-            extraLights:'Extra Lights',extraWindows:'Extra Windows',windowType:'Window Type',windowQty:'Window Quantity',
+            elecBase:'Electric',electricSubpanel:'Electrical Subpanel',evCharger:'EV Charger',evPrep:'EV Prep',threeWaySwitch:'3-Way Switch',
+            extraLights:'Extra Lights',extraOutlets:'Extra Outlets',extraWindows:'Extra Windows',windowType:'Window Type',
             gutters:'Gutters',aluminumSoffit:'Aluminum Soffit / Fascia',sidingType:'Siding Type',vinylColor:'Vinyl Color',
             hardieColor:'Hardie Color',firewallWalls:'Firewall Walls',hurricaneTies:'Hurricane Ties',
             profitMode:'Pricing Method',profitValue:'Pricing Input',additionalEstimateNotes:'Additional Notes',customExtras:'Custom Extras',
@@ -3653,7 +3636,7 @@
                 addSpec('Floor', `New ${width}' x ${depth}' - ${concreteThickness}" Reinforced Concrete Slab, 4,000 PSI`);
                 addSpec('Apron', checked('newConcrete') && apronDepth > 0 ? `${apronDepth}'` : 'None');
                 addSpec('Perimeter Curb', 'Water Ledge, Included');
-                addSpec('Retaining Wall', frostProtectedFooting ? '42" Frost Protected Footing' : retainType !== 'none' ? `${retainType === 'standard' ? 'Standard' : retainType === 'reverse' ? 'Reverse' : '4 Sided'} Retaining Wall - ${retainInches}" Overall` : 'Included as Needed');
+                addSpec('Retaining Wall', frostProtectedFooting ? '42" Frost Protected Footing' : retainType !== 'none' ? `${retainType === 'standard' ? 'Standard' : retainType === 'reverse' ? 'Reverse' : '4 Sided'} Retaining Wall - ${retainInches}" Above 8"` : 'Included as Needed');
                 addSpec('Building Permits', isSuburb ? 'Absolute Will File For And Secure All Permits. Customer Pays All Fees.' : 'Included ($550 Value)');
             } else {
                 // Standard ABG estimate-sheet format for Ramsey, Samer and Tom.
@@ -3682,7 +3665,7 @@
                 addSpec('Floor', `${concreteThickness}" Thick Reinforced with Steel Wire Mesh Rated 4,000 PSI`);
                 addSpec('Apron', checked('newConcrete') && apronDepth > 0 ? `${width}' x ${apronDepth}' New Concrete Apron` : 'None');
                 addSpec('Perimeter Curb', 'Water Ledge');
-                addSpec('Retaining Wall', retainType !== 'none' ? `${retainType === 'standard' ? 'Standard' : retainType === 'reverse' ? 'Reverse' : '4 Sided'} Retaining Wall - ${retainInches}" Overall` : 'Build Up Included');
+                addSpec('Retaining Wall', retainType !== 'none' ? `${retainType === 'standard' ? 'Standard' : retainType === 'reverse' ? 'Reverse' : '4 Sided'} Retaining Wall - ${retainInches}" Above 8"` : 'Build Up Included');
                 addSpec('Building Codes', 'YES');
                 addSpec('Building Permits', isSuburb ? 'Absolute will file for and secure all permits. Customer pays all fees.' : 'YES - Included');
                 addSpec('Bottom Plates', 'Treated');
@@ -4832,6 +4815,7 @@ async function openPopupChatGPT(){
 
     window.addEventListener('load',()=>setTimeout(loadEstimateForEditing,250));
         document.addEventListener('DOMContentLoaded',()=>setTimeout(toggleOverhang,0));
+document.addEventListener('DOMContentLoaded',()=>{syncDemoPreset();syncWindowQtyFromExtras();calculateEstimate();});
 </script>
 </body>
 </html>

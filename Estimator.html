@@ -3,7 +3,7 @@
 <head><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- GARAGE APP BUILD: 2026-08-20 FULL AUDIT FIX -->
+    
 <title>Absolute Garage Builders • Quick Estimator</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -592,6 +592,16 @@ body { min-height:100vh; }
 input, select, textarea, button { box-sizing:border-box; }
 .print-action span{white-space:normal;text-align:center;}
 @media(max-width:640px){.print-action{font-size:.75rem!important;}}
+
+/* Hide legacy version badges if any cached markup reappears */
+[class*="build-badge"],
+[id*="buildBadge"],
+[id*="versionBadge"],
+.estimator-update-badge,
+.clean-estimator-badge {
+  display: none !important;
+}
+
 </style>
 </head>
 <body class="bg-zinc-950 text-zinc-200"><a id="backToProductionBtn" class="back-production-btn" href="index.html?v=20260818v2">← Back To Dashboard</a>
@@ -1578,6 +1588,35 @@ input, select, textarea, button { box-sizing:border-box; }
                         <input type="text" id="customerAddress" placeholder="Enter customer address"
                                class="calc-input w-full bg-zinc-950 border border-zinc-700 text-white rounded-2xl px-4 py-3 text-sm focus:border-blue-500">
                     </div>
+                    <div class="rounded-2xl border border-violet-700/50 bg-zinc-950 p-4 mb-3">
+                        <div class="text-xs font-bold text-violet-300 mb-2 flex items-center gap-2">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> GARAGE PHOTO ON ESTIMATE SHEET
+                        </div>
+                        <select id="garagePhotoMode" onchange="saveGaragePhotoMode()" class="calc-input w-full bg-zinc-900 border border-zinc-700 text-white rounded-xl px-3 py-2.5 text-sm mb-2">
+                            <option value="hybrid">Auto: OpenAI → Free AI → library (recommended)</option>
+                            <option value="openai">OpenAI only</option>
+                            <option value="ai">Free AI only (no key — works on phone)</option>
+                            <option value="library">Photo library only (classic)</option>
+                        </select>
+                        <div id="openaiKeyLockedPanel" class="hidden mb-2 rounded-xl border border-emerald-700 bg-emerald-950/40 px-3 py-3">
+                            <div class="text-xs font-bold text-emerald-400">✓ OpenAI key locked on this device</div>
+                            <div class="text-[10px] text-zinc-400 mt-1">Hidden permanently on this phone/computer. Other salesmen on other devices do not get it.</div>
+                            <button type="button" onclick="resetOpenAIKeyEntry()" class="mt-2 text-[10px] px-3 py-1.5 rounded-lg bg-zinc-800 border border-zinc-600 text-zinc-300 font-bold">Replace key</button>
+                        </div>
+                        <div id="openaiKeyEntryPanel" class="mb-2">
+                            <label class="text-[10px] text-zinc-400 block mb-1" for="openaiApiKey">Paste OpenAI API key once (then it locks &amp; stays hidden)</label>
+                            <input type="text" id="openaiApiKey" name="openaiApiKey" placeholder="Paste sk- key here" inputmode="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
+                                   class="w-full bg-zinc-900 border-2 border-violet-500 text-white rounded-xl px-3 py-3 text-sm relative z-50"
+                                   style="pointer-events:auto !important; user-select:text !important; -webkit-user-select:text !important;"
+                                   onclick="event.stopPropagation(); this.focus();"
+                                   onfocus="event.stopPropagation();">
+                            <button type="button" id="saveOpenAIKeyBtn" onclick="lockOpenAIKey()" class="mt-2 w-full px-3 py-2.5 rounded-xl bg-violet-700 hover:bg-violet-600 text-xs font-bold text-white">Save &amp; Lock Key (one time)</button>
+                        </div>
+                        <div class="text-[10px] text-zinc-500 leading-relaxed">
+                            <b class="text-zinc-300">Recommended:</b> Auto mode. OpenAI is tried first; if your phone blocks it, Free AI still builds a custom garage from this estimate. Library is last resort. Key (optional) from platform.openai.com — locked on this device only.
+                        </div>
+                        <div id="aiPhotoStatus" class="text-[10px] text-emerald-400 mt-2 hidden"></div>
+                    </div>
                     <button type="button" onclick="safePrintEstimateSheet()"
                             class="print-action w-full px-3 sm:px-5 py-3 text-xs sm:text-sm font-semibold bg-green-700 hover:bg-green-600 active:bg-green-800 transition-all rounded-2xl flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-white leading-tight">
                         <i class="fa-solid fa-file-invoice"></i>
@@ -1625,12 +1664,13 @@ input, select, textarea, button { box-sizing:border-box; }
 
         // City change handler - show/hide Chicago options
         function onCityChange() {
-            const city = document.getElementById('city').value;
+            const city = document.getElementById('city')?.value || '';
             const wheelingContainer = document.getElementById('wheelingContainer');
             const arlingtonContainer = document.getElementById('arlingtonContainer');
             
             // Footing & Rods now lives permanently in the Concrete section.
             // chicagoOptions may not exist anymore, so never let city changes stop the calculator.
+            const chicagoDiv = document.getElementById('chicagoOptions');
             if (chicagoDiv) {
                 if (city === 'Chicago') chicagoDiv.classList.remove('hidden');
                 else chicagoDiv.classList.add('hidden');
@@ -1638,14 +1678,17 @@ input, select, textarea, button { box-sizing:border-box; }
             
             // Pre-check Wheeling if city is Wheeling
             if (city === 'Wheeling') {
-                document.getElementById('wheelingCharge').checked = true;
+                const wheelingCharge = document.getElementById('wheelingCharge');
+                if (wheelingCharge) wheelingCharge.checked = true;
             }
             
             // Pre-check Arlington survey option visibility
-            if (city === 'Arlington Heights') {
-                arlingtonContainer.style.opacity = '1';
-            } else {
-                arlingtonContainer.style.opacity = '0.5';
+            if (arlingtonContainer) {
+                if (city === 'Arlington Heights') {
+                    arlingtonContainer.style.opacity = '1';
+                } else {
+                    arlingtonContainer.style.opacity = '0.5';
+                }
             }
             
             // Handle EPA auto for Mundelein
@@ -3883,6 +3926,268 @@ input, select, textarea, button { box-sizing:border-box; }
             }
         }
 
+
+        // ===== AI / OpenAI realistic garage photo (from calculator choices) =====
+        function saveGaragePhotoMode(){
+            const m=document.getElementById('garagePhotoMode')?.value||'openai';
+            try{ localStorage.setItem('agb_garage_photo_mode', m); }catch(e){}
+        }
+        function getStoredOpenAIKey(){
+            try{ return (localStorage.getItem('agb_openai_api_key')||'').trim(); }catch(e){ return ''; }
+        }
+        function updateOpenAIKeyPanels(){
+            const has=!!getStoredOpenAIKey();
+            const locked=document.getElementById('openaiKeyLockedPanel');
+            const entry=document.getElementById('openaiKeyEntryPanel');
+            const keyEl=document.getElementById('openaiApiKey');
+            if(locked) locked.classList.toggle('hidden', !has);
+            if(entry) entry.classList.toggle('hidden', has);
+            // Never show the saved key in the box
+            if(keyEl) keyEl.value='';
+        }
+        function lockOpenAIKey(){
+            const keyEl=document.getElementById('openaiApiKey');
+            const k=(keyEl?.value||'').trim();
+            if(!k){ alert('Paste your OpenAI key first (starts with sk-).'); keyEl?.focus(); return; }
+            if(!k.startsWith('sk-') && !confirm('This does not look like an OpenAI key (usually starts with sk-). Save anyway?')) return;
+            try{
+                localStorage.setItem('agb_openai_api_key', k);
+            }catch(e){
+                alert('Could not save key on this device. Check browser storage settings.');
+                return;
+            }
+            if(keyEl) keyEl.value='';
+            updateOpenAIKeyPanels();
+            const status=document.getElementById('aiPhotoStatus');
+            if(status){ status.classList.remove('hidden'); status.textContent='Key locked on this device. It will not be shown again.'; }
+        }
+        function resetOpenAIKeyEntry(){
+            if(!confirm('Remove the locked key from this device? You will need to paste a new key.')) return;
+            try{ localStorage.removeItem('agb_openai_api_key'); }catch(e){}
+            const keyEl=document.getElementById('openaiApiKey');
+            if(keyEl) keyEl.value='';
+            updateOpenAIKeyPanels();
+            setTimeout(()=>document.getElementById('openaiApiKey')?.focus(), 50);
+        }
+        function loadGaragePhotoMode(){
+            const el=document.getElementById('garagePhotoMode');
+            try{
+                if(el) el.value=localStorage.getItem('agb_garage_photo_mode')||'hybrid';
+            }catch(e){ if(el) el.value='openai'; }
+            updateOpenAIKeyPanels();
+        }
+        document.addEventListener('DOMContentLoaded', ()=>setTimeout(loadGaragePhotoMode, 100));
+        if(document.readyState!=='loading') setTimeout(loadGaragePhotoMode, 200);
+
+        function buildGarageAIPrompt(){
+            const dim = (typeof getGarageDimensions==='function') ? getGarageDimensions() : {width:20, depth:20};
+            const w = dim.width||20, d = dim.depth||20;
+            const roof = document.getElementById('roofType')?.value||'gable';
+            const eave = document.getElementById('eaveDir')?.value||'';
+            const sidingType = document.getElementById('sidingType')?.value||'vinyl';
+            const colorEl = document.getElementById(sidingType==='hardie'?'hardieColor':'vinylColor');
+            const colorTxt = colorEl ? (colorEl.options[colorEl.selectedIndex]?.text||colorEl.value||'gray') : 'gray';
+            const wall = document.getElementById('wallHeight')?.value||'8';
+            const doorH = document.getElementById('overheadDoorHeight')?.value||'7';
+            const doorStyle = document.getElementById('overheadDoorStyle')?.value||document.getElementById('doorStyle')?.value||'raised';
+            const service = document.getElementById('serviceDoorLocation')?.value||'right';
+            const gutters = document.getElementById('gutters')?.checked;
+            const stone = document.getElementById('stoneAccent')?.checked;
+            const winQty = Number(document.getElementById('windowQty')?.value||0);
+            const roofWords = roof==='hip' ? 'hip roof' : (eave==='sides' ? 'reverse gable roof' : 'gable roof');
+            const sidingWords = sidingType==='hardie' ? 'Hardie fiber cement siding' : 'vinyl siding';
+            const doorWords = /window/i.test(String(doorStyle)) ? 'raised-panel overhead garage door with windows across the top' : 'solid raised-panel overhead garage door';
+            const serviceWords = (service==='no'||service==='none'||service==='hidden') ? 'no service door on the visible side' : (service+'-side service entry door');
+            const gutterWords = gutters ? 'with gutters and downspouts' : 'without gutters';
+            const stoneWords = stone ? 'with a stone accent wainscot along the base' : '';
+            const winWords = winQty>0 ? ('with '+winQty+' wall window'+(winQty>1?'s':'')) : 'no wall windows';
+            return [
+                'Hyper-realistic professional photograph of a brand-new detached residential garage in a suburban Midwest backyard',
+                w+' foot wide by '+d+' foot deep, '+wall+' foot tall walls',
+                roofWords,
+                sidingWords+' in '+colorTxt+' color',
+                doorWords+', about '+doorH+' feet tall, centered on the front elevation',
+                serviceWords,
+                winWords,
+                gutterWords,
+                stoneWords,
+                'clean concrete apron in front, neat landscaping, soft natural daylight, photorealistic architectural exterior photography, sharp detail, no text, no watermark, no people, no logo'
+            ].filter(Boolean).join(', ');
+        }
+
+        function garageAICacheKey(prompt){
+            let h=0; const s=String(prompt);
+            for(let i=0;i<s.length;i++) h=((h<<5)-h)+s.charCodeAt(i)|0;
+            return 'agb_ai_garage_'+h;
+        }
+
+        async function generateOpenAIGaragePhotoUrl(prompt){
+            const apiKey=(typeof getStoredOpenAIKey==='function'?getStoredOpenAIKey():(localStorage.getItem('agb_openai_api_key')||'')).trim();
+            if(!apiKey) throw new Error('Add your OpenAI API key above (starts with sk-).');
+            const cacheKey=garageAICacheKey('openai:'+prompt);
+            try{
+                const cached=localStorage.getItem(cacheKey);
+                if(cached && (cached.startsWith('http')||cached.startsWith('data:'))) return {url:cached, prompt, source:'openai', cached:true};
+            }catch(e){}
+            // DALL·E 3 retired May 2026 — use current GPT image model.
+            // gpt-image models return b64_json (no response_format param).
+            let res;
+            try{
+                res=await fetch('https://api.openai.com/v1/images/generations', {
+                    method:'POST',
+                    headers:{
+                        'Content-Type':'application/json',
+                        'Authorization':'Bearer '+apiKey
+                    },
+                    body: JSON.stringify({
+                        model:'gpt-image-1',
+                        prompt: prompt.slice(0, 3000),
+                        n:1,
+                        size:'1024x1024',
+                        quality:'medium'
+                    })
+                });
+            }catch(netErr){
+                throw new Error('Browser blocked the OpenAI request. Details: '+(netErr && netErr.message ? netErr.message : netErr));
+            }
+            const data=await res.json().catch(()=>({}));
+            if(!res.ok){
+                const msg=(data && data.error && data.error.message) ? data.error.message : ('OpenAI error '+res.status);
+                if(res.status===401) throw new Error('OpenAI key rejected (401). Replace key — wrong key or revoked.');
+                if(res.status===429) throw new Error('OpenAI rate limit / quota (429). Check billing at platform.openai.com.');
+                // Retry once with dall-e-3 minimal body if gpt-image not enabled on account
+                if(/model|unknown|not found|does not exist/i.test(msg)){
+                    const res2=await fetch('https://api.openai.com/v1/images/generations', {
+                        method:'POST',
+                        headers:{'Content-Type':'application/json','Authorization':'Bearer '+apiKey},
+                        body: JSON.stringify({ model:'dall-e-3', prompt: prompt.slice(0, 3900), n:1, size:'1024x1024' })
+                    });
+                    const data2=await res2.json().catch(()=>({}));
+                    if(!res2.ok){
+                        const msg2=(data2 && data2.error && data2.error.message) ? data2.error.message : ('OpenAI error '+res2.status);
+                        throw new Error(msg2);
+                    }
+                    const item2=data2 && data2.data && data2.data[0];
+                    let url2=item2 && (item2.url || (item2.b64_json ? ('data:image/png;base64,'+item2.b64_json) : null));
+                    if(!url2) throw new Error('OpenAI returned no image.');
+                    try{ localStorage.setItem(cacheKey, url2); }catch(e){}
+                    return {url:url2, prompt, source:'openai', cached:false};
+                }
+                throw new Error(msg);
+            }
+            const item=data && data.data && data.data[0];
+            let url=item && item.url;
+            if(!url && item && item.b64_json){
+                url='data:image/png;base64,'+item.b64_json;
+            }
+            if(!url) throw new Error('OpenAI returned no image.');
+            try{ localStorage.setItem(cacheKey, url); }catch(e){}
+            return {url, prompt, source:'openai', cached:false};
+        }
+
+        async function generateFreeAIGaragePhotoUrl(prompt){
+            const cacheKey=garageAICacheKey('free:'+prompt);
+            try{
+                const cached=localStorage.getItem(cacheKey);
+                if(cached && cached.startsWith('http')) return {url:cached, prompt, source:'free', cached:true};
+            }catch(e){}
+            const seed=Math.abs(cacheKey.split('').reduce((a,c)=>a+c.charCodeAt(0),0))%99999;
+            // Free realistic image host — works from phone HTML without OpenAI CORS issues
+            const url='https://image.pollinations.ai/prompt/'+encodeURIComponent(prompt)
+                +'?width=1024&height=1024&nologo=true&enhance=true&model=flux&seed='+seed;
+            try{ localStorage.setItem(cacheKey, url); }catch(e){}
+            return {url, prompt, source:'free', cached:false};
+        }
+
+        async function generateAIGaragePhotoUrl(preferOpenAI){
+            const prompt=buildGarageAIPrompt();
+            if(preferOpenAI){
+                return await generateOpenAIGaragePhotoUrl(prompt);
+            }
+            return await generateFreeAIGaragePhotoUrl(prompt);
+        }
+
+        async function resolveEstimateGaragePhotoSrc(){
+            const mode=document.getElementById('garagePhotoMode')?.value || localStorage.getItem('agb_garage_photo_mode') || 'openai';
+            const status=document.getElementById('aiPhotoStatus');
+            const libraryFallback=()=>{
+                try{
+                    const matched=getExteriorPhotoMatch().photo;
+                    const src=matched && matched.src ? matched.src : 'garage_114.png';
+                    const file=String(src).replace(/^.*\//,'');
+                    return {
+                        primary: new URL('images/'+file, document.baseURI).href,
+                        fallbacks: [
+                            new URL(file, document.baseURI).href,
+                            new URL(src, document.baseURI).href
+                        ],
+                        source: 'library'
+                    };
+                }catch(e){
+                    return {primary:'', fallbacks:[], source:'none'};
+                }
+            };
+            const warm=async (url)=>{
+                await new Promise(resolve=>{
+                    const img=new Image();
+                    img.onload=()=>resolve(true);
+                    img.onerror=()=>resolve(false);
+                    img.src=url;
+                    setTimeout(()=>resolve(false), 15000);
+                });
+            };
+            if(mode==='library') return libraryFallback();
+
+            const tryOpenAI=async ()=>{
+                if(status){ status.classList.remove('hidden'); status.textContent='OpenAI: creating garage photo…'; }
+                const ai=await generateAIGaragePhotoUrl(true);
+                await warm(ai.url);
+                if(status) status.textContent='OpenAI garage photo ready.';
+                return {primary:ai.url, fallbacks:libraryFallback().fallbacks, source:'openai', prompt:ai.prompt};
+            };
+            const tryFree=async ()=>{
+                if(status){ status.classList.remove('hidden'); status.textContent='Free AI: creating garage photo…'; }
+                const ai=await generateAIGaragePhotoUrl(false);
+                await warm(ai.url);
+                if(status) status.textContent='Free AI garage photo ready.';
+                return {primary:ai.url, fallbacks:libraryFallback().fallbacks, source:'free', prompt:ai.prompt};
+            };
+
+            if(mode==='openai'){
+                try{ return await tryOpenAI(); }
+                catch(err){
+                    console.warn('OpenAI failed, trying Free AI', err);
+                    const msg=String(err && err.message ? err.message : err);
+                    if(status){ status.classList.remove('hidden'); status.textContent='OpenAI blocked — switching to Free AI…'; }
+                    try{
+                        const free=await tryFree();
+                        if(status) status.textContent='Free AI garage photo ready (OpenAI unavailable here).';
+                        return free;
+                    }catch(err2){
+                        if(status){ status.classList.remove('hidden'); status.textContent='AI unavailable — library. '+msg; }
+                        return libraryFallback();
+                    }
+                }
+            }
+            if(mode==='ai'){
+                try{ return await tryFree(); }
+                catch(err){
+                    if(status){ status.classList.remove('hidden'); status.textContent='Free AI unavailable — using library.'; }
+                    return libraryFallback();
+                }
+            }
+            // hybrid: OpenAI → free → library
+            try{ return await tryOpenAI(); }
+            catch(e1){
+                console.warn('OpenAI failed, trying free AI', e1);
+                try{ return await tryFree(); }
+                catch(e2){
+                    if(status){ status.classList.remove('hidden'); status.textContent='AI unavailable — using library photo.'; }
+                    return libraryFallback();
+                }
+            }
+        }
+
         async function printEstimateSheet(saveToHistory = true, estimateWindow = null) {
             const customerName = (document.getElementById('customerName').value || '').trim();
             const customerEmail = (document.getElementById('customerEmail')?.value || '').trim();
@@ -4189,27 +4494,14 @@ input, select, textarea, button { box-sizing:border-box; }
 
             const realGaragePhoto = `<img src="images/basic_hip_no_gutters.png" alt="">`;
             const gableGaragePhoto = `<img src="images/basic_gable_no_gutters.png" alt="">`;
-            const matchedGaragePhoto = getExteriorPhotoMatch().photo;
-            const fallbackGaragePhoto = approvedBasicGaragePhoto(roofType, hasGutters);
-            const selectedGaragePhoto = matchedGaragePhoto && matchedGaragePhoto.src ? matchedGaragePhoto.src : fallbackGaragePhoto;
-            // The estimate sheet opens in a new browser document. Use an absolute image URL so
-            // GitHub Pages can load the selected garage photo inside the printed estimate sheet.
-            const selectedGaragePhotoFile = selectedGaragePhoto.replace(/^.*\//, '');
-            // Try BOTH layouts. On the live GitHub repo the garage image files may be uploaded
-            // directly beside estimator.html, while the packaged download keeps them in /images.
-            const selectedGaragePhotoOriginalUrl = new URL(selectedGaragePhoto, document.baseURI).href;
-            const selectedGaragePhotoRootUrl = new URL(selectedGaragePhotoFile, document.baseURI).href;
-            const selectedGaragePhotoFolderUrl = new URL('images/' + selectedGaragePhotoFile, document.baseURI).href;
-
-            // Load the approved garage image from the shared garage-photo library.
-            // The live app has used both /images/garage_xxx.* and root-level garage_xxx.* files
-            // across deployments, so the estimate sheet tries both locations before giving up.
-            // This prevents the EXTERIOR VIEW from appearing blank when the selected approved
-            // image exists but is stored in the other GitHub Pages layout.
-            const garagePhotoSrc = selectedGaragePhotoFolderUrl;
-            const garagePhotoFallbackSrc = selectedGaragePhotoRootUrl;
-            const garagePhotoOriginalSrc = selectedGaragePhotoOriginalUrl;
-            const garageSvg = `<div class="photo-config photo-only"><img src="${garagePhotoSrc}" alt="Approved garage exterior example" onerror="if(!this.dataset.tryRoot){this.dataset.tryRoot='1';this.src='${garagePhotoFallbackSrc}';}else if(!this.dataset.tryOriginal){this.dataset.tryOriginal='1';this.src='${garagePhotoOriginalSrc}';}else{this.style.visibility='hidden';}"></div>`;
+            // Resolve AI or library garage photo from calculator choices
+            const resolvedGarage = await resolveEstimateGaragePhotoSrc();
+            const garagePhotoSrc = resolvedGarage.primary || '';
+            const fb = resolvedGarage.fallbacks || [];
+            const garagePhotoFallbackSrc = fb[0] || garagePhotoSrc;
+            const garagePhotoOriginalSrc = fb[1] || fb[0] || garagePhotoSrc;
+            const aiBadge = resolvedGarage.source==='ai' ? 'AI preview based on this estimate' : 'Approved garage exterior example';
+            const garageSvg = `<div class="photo-config photo-only"><img src="${garagePhotoSrc}" alt="${aiBadge}" onerror="if(!this.dataset.tryRoot){this.dataset.tryRoot='1';this.src='${garagePhotoFallbackSrc}';}else if(!this.dataset.tryOriginal){this.dataset.tryOriginal='1';this.src='${garagePhotoOriginalSrc}';}else{this.style.visibility='hidden';}"></div>`;
 
             const notesCount = notes.length;
             const notesClass = notesCount <= 1 ? 'notes-1' : notesCount === 2 ? 'notes-2' : notesCount <= 4 ? 'notes-few' : notesCount <= 7 ? 'notes-medium' : 'notes-many';

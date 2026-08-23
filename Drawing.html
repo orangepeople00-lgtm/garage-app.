@@ -158,6 +158,32 @@ button.danger{color:#b42318}
 .side-handle.e{right:-6px}
 .side-handle.w{left:-6px}
 
+
+#paper .obj.lot-length-special{
+  cursor: ns-resize !important;
+  touch-action: none !important;
+  pointer-events: auto !important;
+}
+#paper .obj.lot-length-special .lot-vvalue,
+#paper .obj.lot-length-special .lot-vtitle{
+  pointer-events: none !important;
+}
+
+
+/* Lot length: entire block (LOT LENGTH title + number + ticks) moves together via object.y */
+#paper .obj.lot-length-special{
+  transform: none !important;
+  cursor: ns-resize !important;
+  touch-action: none !important;
+  pointer-events: auto !important;
+}
+#paper .obj.lot-length-special .lot-vvalue,
+#paper .obj.lot-length-special .lot-vtitle,
+#paper .obj.lot-length-special .lot-vline{
+  pointer-events: none !important;
+}
+
+
 /* ========== MOBILE / PHONE FRIENDLY (V81) ========== */
 .mobile-panel-btn,
 .mobile-snap-btn,
@@ -463,10 +489,10 @@ button.danger{color:#b42318}
 .obj.lot-dim:before{border-top:6px solid #000!important}
 .obj.lot-dim.vertical-lot .label{
   transform:translate(18px,-50%) rotate(-90deg)!important;
-  left:100%!important;top:50%!important
+  left:100%!important;/* top from object.y */
 }
 .obj.lot-dim.vertical-lot .dim-title{
-  left:100%!important;top:50%!important;transform:translate(52px,-50%) rotate(-90deg)!important;
+  left:100%!important;/* top from object.y */transform:translate(52px,-50%) rotate(-90deg)!important;
 }
 .obj.dimension .label{z-index:4}
 .obj .label{word-break:normal!important;overflow:visible!important}
@@ -482,12 +508,12 @@ button.danger{color:#b42318}
 .obj.lot-dim:before{border-top:6px solid #000!important}
 .obj.lot-dim.vertical-lot{overflow:visible!important}
 .obj.lot-dim.vertical-lot .label{
-  left:100%!important;top:50%!important;
+  left:100%!important;/* top from object.y */
   transform:translate(34px,-50%) rotate(-90deg)!important;
   overflow:visible!important;white-space:nowrap!important
 }
 .obj.lot-dim.vertical-lot .dim-title{
-  left:100%!important;top:50%!important;
+  left:100%!important;/* top from object.y */
   transform:translate(82px,-50%) rotate(-90deg)!important;
   white-space:nowrap!important;font-size:17px!important;font-weight:1000!important
 }
@@ -503,7 +529,7 @@ button.danger{color:#b42318}
   writing-mode:vertical-rl!important;
   text-orientation:mixed!important;
   transform:none!important;
-  left:50%!important;top:50%!important;
+  left:50%!important;/* top from object.y */
 }
 .existing-concrete-controls{border-top:1px solid #ddd;padding-top:8px;margin-top:8px}
 
@@ -512,7 +538,7 @@ button.danger{color:#b42318}
 .obj.sidewalk.vertical-label .label{
   writing-mode:horizontal-tb!important;
   text-orientation:mixed!important;
-  left:50%!important;top:50%!important;
+  left:50%!important;/* top from object.y */
   transform:translate(-50%,-50%) rotate(90deg)!important;
   white-space:nowrap!important;overflow:hidden!important;
   font-weight:1000!important;
@@ -558,7 +584,7 @@ button.danger{color:#b42318}
 }
 .obj.sidewalk.vertical-label .label{
   left:50%!important;
-  top:50%!important;
+  /* top from object.y */
   transform:translate(-50%,-50%) rotate(90deg)!important;
   transform-origin:center center!important;
   white-space:nowrap!important;
@@ -945,7 +971,7 @@ button.danger{color:#b42318}
    full sidewalk length rather than centering a short text block. */
 #paper .obj.sidewalk.vertical .sidewalk-label-v26{
   left:50%!important;
-  top:50%!important;
+  /* top from object.y */
   width:calc(100% - 4px)!important;
   height:auto!important;
   transform:translate(-50%,-50%) rotate(90deg)!important;
@@ -963,7 +989,7 @@ button.danger{color:#b42318}
 }
 #paper .obj.sidewalk.vertical-label .sidewalk-label-v26,
 #paper .obj.sidewalk.vertical .sidewalk-label-v26{
-  top:4px!important;
+  /* top from object.y */
   transform-origin:0 0!important;
 }
 
@@ -1043,10 +1069,10 @@ button.danger{color:#b42318}
 
 /* V41: lower the lot-length value so it is visually centered in the right margin */
 #paper .obj.lot-length-special .lot-vvalue{
-  top:54%!important;
+  /* top from object.y */
 }
 #paper .obj.lot-length-special .lot-vtitle{
-  top:54%!important;
+  /* top from object.y */
 }
 
 
@@ -1063,28 +1089,27 @@ button.danger{color:#b42318}
 
 
 /* V44: lot length belongs visually in the right-center margin, not high on the sheet */
-#paper .obj.lot-length-special .lot-vvalue,
-#paper .obj.lot-length-special .lot-vtitle{
-  top:66%!important;
-}
+/* V44 disabled — lot length Y is user-draggable via object.y */
 
 
 /* V45: TRUE lot-length placement.
    Position the entire lot-length object in the vertical center of the right margin. */
 #paper .obj.lot-length-special{
-  top:50%!important;
-  transform:translateY(-50%)!important;
+  /* top controlled by JS drag */
+  /* was: fixed */
+  /* no fixed transform */
 }
 #paper .obj.lot-length-special .lot-vvalue,
 #paper .obj.lot-length-special .lot-vtitle{
-  top:50%!important;
+  /* top from object.y */
 }
 
 
 #paper .obj.lot-length-special{
-  top:790px!important;
+  /* top controlled by JS drag */
+  /* was: fixed */
   bottom:auto!important;
-  transform:translateY(-50%)!important;
+  /* no fixed transform */
 }
 
 
@@ -1646,12 +1671,12 @@ button.danger{color:#b42318}
    The extension is aligned exactly over the original outline height so there
    is no doubled edge, step, or lip at the connection. */
 #paper .phone-outline-to-edge{
-  top:145px!important;
+  /* top from object.y */
   height:4px!important;
   left:490px!important;
 }
 #paper .bottom-phone-outline-to-edge{
-  top:1433px!important;
+  /* top from object.y */
   height:4px!important;
   left:490px!important;
 }
@@ -1750,7 +1775,7 @@ button.danger{color:#b42318}
    frame sides remain. Suppress the old baked/template divider lines inside it. */
 #paper .clean-drawing-frame{
   left:494px!important;
-  top:145px!important;
+  /* top from object.y */
   right:0!important;
   bottom:0!important;
   border:6px solid #000!important;
@@ -1855,7 +1880,7 @@ button.danger{color:#b42318}
 #paper .obj.garage > .label{
   position:absolute!important;
   left:50%!important;
-  top:50%!important;
+  /* top from object.y */
   right:auto!important;
   bottom:auto!important;
   width:100%!important;
@@ -1878,7 +1903,7 @@ button.danger{color:#b42318}
 #paper .obj[data-role="garage"] > .label{
   position:absolute!important;
   left:50%!important;
-  top:50%!important;
+  /* top from object.y */
   right:auto!important;
   bottom:auto!important;
   width:94%!important;
@@ -1899,7 +1924,7 @@ button.danger{color:#b42318}
 /* Wizard apron wording also stays centered in its slab. */
 #paper .obj[data-role="apron"] > .label{
   left:50%!important;
-  top:50%!important;
+  /* top from object.y */
   right:auto!important;
   bottom:auto!important;
   transform:translate(-50%,-50%)!important;
@@ -1935,7 +1960,7 @@ button.danger{color:#b42318}
 #paper .obj[data-role="frontRight"] > .label{
   position:absolute!important;
   left:50%!important;
-  top:50%!important;
+  /* top from object.y */
   right:auto!important;
   bottom:auto!important;
   width:max-content!important;
@@ -1955,7 +1980,7 @@ button.danger{color:#b42318}
 #paper .obj[data-role="frontMiddle"] > .label{
   position:absolute!important;
   left:50%!important;
-  top:50%!important;
+  /* top from object.y */
   right:auto!important;
   bottom:auto!important;
   width:max-content!important;
@@ -1975,10 +2000,10 @@ button.danger{color:#b42318}
   content:""!important;
   display:block!important;
   position:absolute!important;
-  top:50%!important;
+  /* top from object.y */
   width:0!important;
   height:28px!important;
-  transform:translateY(-50%)!important;
+  /* no fixed transform */
   border-left:3px solid #000!important;
 }
 #paper .obj[data-role="frontMiddle"] > .label::before{left:7px!important}
@@ -2000,7 +2025,7 @@ button.danger{color:#b42318}
 #paper .obj[data-role="rightSetback"] > .label{
   position:absolute!important;
   left:50%!important;
-  top:50%!important;
+  /* top from object.y */
   width:max-content!important;
   max-width:none!important;
   transform:translate(-50%,-50%)!important;
@@ -2727,12 +2752,14 @@ function syncVisualSetbacksToGarage(){
   const leftVal=+($(ids.left)?.value)||0;
   const rightVal=+($(ids.right)?.value)||0;
 
-  // Use the VISUAL garage scale for both setback dimensions. This keeps a 3' setback
-  // visually proportional to any other 3' object and makes the setback graphics follow
-  // the garage smoothly when the garage is moved or visually resized.
+  // Outer edges of the garage (and attached side patio if any)
   const footprintLeft=g.x-ext.left*p;
   const footprintRight=g.x+(g.wf+ext.right)*p;
   const midY=g.y+(g.hf*p)/2;
+
+  // Compact label size used in CSS (~58px). Place FULLY outside the slab with a small gap.
+  const labelW=58;
+  const gap=10; // px outside the wall so it never sits inside the garage
 
   const l=byRole('leftSetback');
   if(l){
@@ -2740,8 +2767,8 @@ function syncVisualSetbacksToGarage(){
     l.wf=Math.max(.01,leftVal);
     l.hf=2;
     l.pxf=p;
-    // Compact notation sits just outside the left garage wall.
-    l.x=footprintLeft-66;
+    // Just outside LEFT garage wall (to the left of the slab)
+    l.x=footprintLeft - labelW - gap;
     l.y=midY-14;
   }
 
@@ -2751,8 +2778,8 @@ function syncVisualSetbacksToGarage(){
     r.wf=Math.max(.01,rightVal);
     r.hf=2;
     r.pxf=p;
-    // Compact notation sits just outside the right garage wall.
-    r.x=footprintRight+8;
+    // Just outside RIGHT garage wall (to the right of the slab)
+    r.x=footprintRight + gap;
     r.y=midY-14;
   }
 }
@@ -4081,6 +4108,10 @@ function renderObjects(){
     if(o.role)el.dataset.role=o.role;
     Object.assign(el.style,{left:o.x+'px',top:o.y+'px',width:w+'px',height:h+'px',transform:o.role==='lotLength'?'none':`rotate(${o.angle||0}deg)`});
     if(o.role==='lotLength'){
+      // Force position so CSS legacy !important tops cannot pin LOT LENGTH + number in place
+      el.style.setProperty('top', o.y+'px', 'important');
+      el.style.setProperty('left', o.x+'px', 'important');
+      el.style.setProperty('transform', 'none', 'important');
       const lt=document.createElement('div');lt.className='lot-vline top';el.appendChild(lt);
       const lb=document.createElement('div');lb.className='lot-vline bottom';el.appendChild(lb);
       const vv=document.createElement('div');vv.className='lot-vvalue';vv.textContent=o.label;el.appendChild(vv);
@@ -4453,9 +4484,8 @@ function objectPointerDown(e){
   }
   if(state.selected!==o.id){
     state.selected=o.id;
-    // V33: for sidewalks, continue this same pointer gesture so the user can
-    // click-drag to move it or grab the visible corner and extend it immediately.
-    if(o.kind!=='sidewalk'){renderObjects();return}
+    // Sidewalks + lot-length: continue this same gesture so one touch can select and drag
+    if(o.kind!=='sidewalk' && o.role!=='lotLength'){renderObjects();return}
   }
   // V30: prevent direct sliding only for returns, door placement, and setbacks.
   // Garage/apron/patio/sidewalk/pads and other actual shapes remain movable and
@@ -4466,13 +4496,25 @@ function objectPointerDown(e){
     'leftSetback','rightSetback','rearSetback','rearGap','alleyDistance'
   ];
   if(state.mode==='concrete' && panelOnlyDrawingRoles.includes(o.role)) return;
-  // V103: lot length can be slid vertically to fit each drawing.
-  if(state.mode==='concrete' && o.role==='lotLength'){
+  // Lot length label can always be slid up/down so it does not cover other drawing content.
+  if(o.role==='lotLength'){
     snapshot();
     const startY=e.clientY,oy=o.y;
-    const moveLot=ev=>{o.y=oy+(ev.clientY-startY)/state.scale;renderObjects()};
-    const upLot=()=>{window.removeEventListener('pointermove',moveLot);window.removeEventListener('pointerup',upLot);save()};
-    window.addEventListener('pointermove',moveLot);window.addEventListener('pointerup',upLot);
+    const t=currentTemplate();
+    const moveLot=ev=>{
+      const ny=oy+(ev.clientY-startY)/state.scale;
+      // Keep on the sheet vertically
+      o.y=Math.max(20, Math.min((t?.h||1000)-80, ny));
+      renderObjects();
+    };
+    const upLot=()=>{
+      window.removeEventListener('pointermove',moveLot);
+      window.removeEventListener('pointerup',upLot);
+      if(typeof save==='function')save();
+      else if(typeof saveActiveSheetState==='function')saveActiveSheetState();
+    };
+    window.addEventListener('pointermove',moveLot);
+    window.addEventListener('pointerup',upLot);
     return;
   }
   const resizing=e.target.dataset.handle==='1', rotating=e.target.dataset.rotate==='1', cutSizing=e.target.dataset.cutend==='1';
@@ -5252,13 +5294,18 @@ function buildWizardForMode(forcedMode){
     placeServicePadAtDoor();
   }
 
-  // Setbacks: one clean line from the lot border to the corresponding garage side, only the number in the center gap.
+  // Side setbacks: compact labels just OUTSIDE the garage walls (never inside the slab).
   if(ls){
-    const lotStartX=d.x+Math.max(10,(d.w-(lotW||effectiveLotW)*layoutScale)/2);
-    wizardObj('dimension',Math.max(ls,.5),2,ls+"'",lotStartX,yGarage+garagePxH*.5,0,'leftSetback');state.objects.at(-1).pxf=layoutScale;
+    const labelW=58, gap=10;
+    const leftX = xGarage - labelW - gap;
+    wizardObj('dimension',Math.max(ls,.5),2,"-"+ls+"'-",leftX,yGarage+garagePxH*.5-14,0,'leftSetback');
+    state.objects.at(-1).pxf=layoutScale;
   }
   if(rsd){
-    wizardObj('dimension',Math.max(rsd,.5),2,rsd+"'",xGarage+garagePxW+(sidePatioOut&&patLocForScale==='right'?sidePatioOut*layoutScale:0),yGarage+garagePxH*.5,0,'rightSetback');state.objects.at(-1).pxf=layoutScale;
+    const gap=10;
+    const rightEdge = xGarage+garagePxW+(sidePatioOut&&patLocForScale==='right'?sidePatioOut*layoutScale:0);
+    wizardObj('dimension',Math.max(rsd,.5),2,"-"+rsd+"'-",rightEdge+gap,yGarage+garagePxH*.5-14,0,'rightSetback');
+    state.objects.at(-1).pxf=layoutScale;
   }
   if(rr && access!=='alley'){
     const apronDepth=ah||0;

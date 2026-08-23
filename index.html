@@ -478,7 +478,17 @@ async function boot(){
 }
 async function refresh(){
  $('syncState').textContent='Syncing…';
- const [{data:j,error:je},{data:tj,error:tje},{data:r,error:re},{data:d,error:de},{data:er,error:ere},{data:eh,error:ehe},{data:ce,error:cee}]=await Promise.all([sb.from('jobs').select('*').is('deleted_at',null).order('created_at',{ascending:false}),manager()?sb.from('jobs').select('*').not('deleted_at','is',null).order('deleted_at',{ascending:false}):Promise.resolve({data:[],error:null}),sb.from('job_requests').select('*').is('deleted_at',null).order('created_at',{ascending:false}),sb.from('job_documents').select('*').order('created_at',{ascending:false}),sb.from('job_edit_requests').select('*').order('created_at',{ascending:false}),sb.from('estimate_history').select('*').order('created_at',{ascending:false}).limit(1000),sb.from('salesman_calendar_entries').select('*').order('appointment_at',{ascending:true})]);
+ // LIGHT estimate list only — do NOT select estimate_snapshot (huge HTML times out / fails for managers)
+ const estimateListSelect='id,customer,address,city,garage_size,roof_type,wall_height,siding,estimate_price,salesman_username,created_by,created_at';
+ const [{data:j,error:je},{data:tj,error:tje},{data:r,error:re},{data:d,error:de},{data:er,error:ere},{data:eh,error:ehe},{data:ce,error:cee}]=await Promise.all([
+  sb.from('jobs').select('*').is('deleted_at',null).order('created_at',{ascending:false}),
+  manager()?sb.from('jobs').select('*').not('deleted_at','is',null).order('deleted_at',{ascending:false}):Promise.resolve({data:[],error:null}),
+  sb.from('job_requests').select('*').is('deleted_at',null).order('created_at',{ascending:false}),
+  sb.from('job_documents').select('*').order('created_at',{ascending:false}),
+  sb.from('job_edit_requests').select('*').order('created_at',{ascending:false}),
+  sb.from('estimate_history').select(estimateListSelect).order('created_at',{ascending:false}).limit(500),
+  sb.from('salesman_calendar_entries').select('*').order('appointment_at',{ascending:true})
+ ]);
  if(je)console.error(je);if(tje)console.error(tje);if(re)console.error(re);if(de)console.error(de);if(ere)console.error(ere);if(ehe)console.error('estimate_history load failed',ehe);if(cee)console.error(cee);
  jobs=j||[];trashJobs=tj||[];requests=r||[];documents=d||[];editRequests=er||[];estimateHistory=eh||[];calendarEntries=ce||[];
  if(ehe){
@@ -486,7 +496,18 @@ async function refresh(){
  }else{
   $('syncState').textContent='Connected • '+new Date().toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})+' • '+(estimateHistory.length||0)+' estimates';
  }
- populateFilters();renderAll();
+ populateFilters();
+ // Fill Estimate History salesman dropdown from loaded rows
+ try{
+  const sel=$('estimateHistorySalesFilter');
+  if(sel){
+   const cur=sel.value||'';
+   const names=[...new Set(estimateHistory.map(e=>e.salesman_username).filter(Boolean))].sort((a,b)=>(DISPLAY[a]||a).localeCompare(DISPLAY[b]||b));
+   sel.innerHTML='<option value="">All Salespeople</option>'+names.map(n=>`<option value="${esc(n)}">${esc(DISPLAY[n]||n)}</option>`).join('');
+   if(names.includes(cur)||cur==='') sel.value=cur; else sel.value='';
+  }
+ }catch(e){}
+ renderAll();
 }
 function renderAll(){if($('allPersonalCalendarsTab'))$('allPersonalCalendarsTab').classList.toggle('hidden',!privateAccessManager());renderStats();renderRequests();renderEditRequests();renderJobs();renderWeek();renderCalendar();renderPersonalCalendar();renderAllPersonalCalendars();renderUpcomingAppointments();renderEstimateHistory();renderCompleted();renderTrash()}
 function renderStats(){const active=jobs.filter(j=>status(j)!=='Completed').length,p=jobs.filter(j=>['Applied/Submitted','Submitted','Corrections Needed'].includes(j.permit_status)).length,c=jobs.filter(j=>j.concrete_status==='Scheduled').length,carp=jobs.filter(j=>['Scheduled','In Progress'].includes(j.carpentry_status)).length,h=jobs.filter(j=>j.hold_status).length,o=jobs.filter(overdue).length,done=jobs.filter(j=>status(j)==='Completed').length;$('stats').innerHTML=[['Active Jobs',active,''],['Permits Pending',p,''],['Concrete Scheduled',c,''],['Carpentry Active',carp,''],['On Hold',h,h?'alert':''],['Overdue',o,o?'alert':''],['Completed',done,'']].map(x=>`<div class="stat ${x[2]}"><div class="n">${x[1]}</div><div class="l">${x[0]}</div></div>`).join('')}
@@ -739,7 +760,22 @@ function filteredJobs(){const q=$('search').value.toLowerCase(),s=$('salesFilter
 function renderJobs(){const rows=filteredJobs();$('jobRows').innerHTML=rows.length?rows.map(j=>`<tr><td><div class="cust">${esc(j.customer)}</div><div class="sub">${esc(DISPLAY[j.salesman_username]||j.salesman_username)}${j.job_number?` • ${esc(j.job_number)}`:''}</div></td><td><div class="job-address">${esc(j.address||'Address not entered')}</div><div class="sub">${esc(j.city||'')}</div></td><td><span class="pill ${tone(status(j))}">${esc(status(j))}</span>${j.hold_status?`<div class="sub hold">ON HOLD — ${esc(j.hold_reason||'Reason not entered')}</div>`:''}${overdue(j)?'<div class="sub overdue">OVERDUE</div>':''}${lastComplete(j)?`<div class="sub progress-last"><strong>Last Complete:</strong> ${esc(lastComplete(j))}</div>`:''}<div class="sub progress-next"><strong>Next Step:</strong> ${esc(next(j))}</div><div class="sub job-age">Job age: ${esc(jobAgeLabel(j))}</div></td><td><button class="btn primary summary-btn" onclick="openDrawer('${j.id}')">View Summary</button></td></tr>`).join(''):`<tr><td colspan="4" style="text-align:center;padding:40px;color:#6f7a8d">No active jobs match these filters.</td></tr>`}
 function cell(s,d){return `<span class="pill ${tone(s)}">${esc(s||'—')}</span><div class="sub">${fmt(d)}</div>`}
 function clearFilters(){['search','salesFilter','statusFilter','cityFilter'].forEach(id=>$(id).value='');renderJobs()}
-function setView(v,btn){if(v==='trash'&&!manager())return;if(v==='allPersonalCalendars'&&!privateAccessManager())return;currentView=v;document.body.classList.toggle('estimator-mode',v==='estimator');document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));if(btn)btn.classList.add('active');['dashboard','week','calendar','personalCalendar','allPersonalCalendars','estimator','estimateHistory','completed','trash'].forEach(x=>$(x+'View').classList.toggle('hidden',x!==v));if(v==='estimator')loadEstimator();$('pageTitle').textContent=v==='week'?'Today':v==='calendar'?'Project Calendar':v==='personalCalendar'?'Personal Calendar':v==='allPersonalCalendars'?'All Personal Calendars':v==='estimator'?'Garage Estimator':v==='estimateHistory'?'Estimate History':v==='completed'?'Completed Archive':v==='trash'?'Trash':'Production Dashboard';$('subtitle').textContent=v==='allPersonalCalendars'?'Management view of everyone’s appointments and tasks':v==='personalCalendar'?'Your private appointments and tasks':v==='estimator'?'Quick estimating and customer estimate sheets':v==='estimateHistory'?(privateAccessManager()?'All saved company estimates':'Your private saved estimates'):'Live shared office data'}
+function setView(v,btn){
+ if(v==='trash'&&!manager())return;
+ if(v==='allPersonalCalendars'&&!privateAccessManager())return;
+ currentView=v;
+ document.body.classList.toggle('estimator-mode',v==='estimator');
+ document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+ if(btn)btn.classList.add('active');
+ ['dashboard','week','calendar','personalCalendar','allPersonalCalendars','estimator','estimateHistory','completed','trash'].forEach(x=>$(x+'View')?.classList.toggle('hidden',x!==v));
+ // Quick Job Command only on Dashboard + Today (week)
+ const qj=$('quickJobCard');
+ if(qj) qj.classList.toggle('hidden', v!=='dashboard' && v!=='week');
+ if(v==='estimator')loadEstimator();
+ if(v==='estimateHistory') renderEstimateHistory();
+ $('pageTitle').textContent=v==='week'?'Today':v==='calendar'?'Project Calendar':v==='personalCalendar'?'Personal Calendar':v==='allPersonalCalendars'?'All Personal Calendars':v==='estimator'?'Garage Estimator':v==='estimateHistory'?'Estimate History':v==='completed'?'Completed Archive':v==='trash'?'Trash':'Production Dashboard';
+ $('subtitle').textContent=v==='allPersonalCalendars'?'Management view of everyone’s appointments and tasks':v==='personalCalendar'?'Your private appointments and tasks':v==='estimator'?'Quick estimating and customer estimate sheets':v==='estimateHistory'?(privateAccessManager()||manager()?'All saved company estimates':'Your private saved estimates'):v==='week'?'Jobs scheduled for today':'Live shared office data';
+}
 function exitEstimator(){const b=document.querySelector('.tab[data-view="dashboard"]');setView('dashboard',b)}
 function jobEvents(j){return [['Demo',j.scheduled_demo,j.demo_crew],['Concrete / Framing',j.concrete_scheduled,j.concrete_crew],['Carpentry',j.carpentry_scheduled,j.carpentry_crew],['Electric',j.electric_date,j.electric_crew],['Gutters / Extras',j.extras_scheduled,''],['Inspection',j.inspection_date,'']].filter(x=>x[1])}
 function renderWeek(){const iso=todayISO(),events=[];jobs.forEach(j=>jobEvents(j).forEach(([type,date,crew])=>{if(date===iso)events.push({type,date,crew,j})}));$('weekContent').innerHTML=`<div class="card" style="margin-bottom:12px"><h3>Today — ${new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'})}</h3><div class="muted small">${manager()?'All company jobs scheduled today':'Only your jobs scheduled today'}</div></div><div class="today-grid">${events.length?events.map(e=>`<div class="today-job"><div class="split"><div><h4>${esc(e.j.customer)}</h4><div class="sub">${esc(e.j.address||'')} ${esc(e.j.city||'')}</div></div><span class="pill blue">${esc(e.type)}</span></div><div class="today-meta">${e.type==='Gutters / Extras'?`<span><strong>Extra Notes:</strong> ${esc(e.j.extras_notes||'No extra notes entered')}</span>`:`<span><strong>Crew:</strong> ${esc(e.crew||'Not assigned')}</span>`}<span><strong>Phone:</strong> ${esc(e.j.phone||'Not entered')}</span>${manager()?`<span><strong>Salesman:</strong> ${esc(DISPLAY[e.j.salesman_username]||e.j.salesman_username)}</span>`:''}</div><div style="margin-top:10px"><button class="btn primary sm" onclick="openDrawer('${e.j.id}')">View Summary</button></div></div>`).join(''):'<div class="card muted">No work is scheduled for today.</div>'}</div>`}
@@ -982,8 +1018,21 @@ This removes it from Estimate History.`))return;
  estimateHistory=estimateHistory.filter(e=>e.id!==id);
  renderEstimateHistory();
 }
-function viewEstimateHistory(id){
- const e=estimateHistory.find(x=>x.id===id);if(!e)return;
+async function fetchFullEstimateRecord(id){
+ // List load is light (no snapshot). Pull full row only when viewing/editing one estimate.
+ let e=estimateHistory.find(x=>x.id===id)||null;
+ try{
+  const {data,error}=await sb.from('estimate_history').select('*').eq('id',id).maybeSingle();
+  if(!error && data){
+   e=data;
+   const i=estimateHistory.findIndex(x=>x.id===id);
+   if(i>=0) estimateHistory[i]={...estimateHistory[i],...data};
+  }
+ }catch(err){ console.warn('fetchFullEstimateRecord',err); }
+ return e;
+}
+async function viewEstimateHistory(id){
+ const e=await fetchFullEstimateRecord(id);if(!e)return alert('Estimate not found.');
  const snap=e.estimate_snapshot||{},savedSheet=snap.sheet_html||'';
  const w=window.open('','_blank','width=1100,height=1000');if(!w)return alert('Your browser blocked the popup. Please allow popups and try again.');
  const hasSheet=!!savedSheet;
@@ -992,10 +1041,10 @@ function viewEstimateHistory(id){
  if(hasSheet){const frame=w.document.getElementById('savedEstimateFrame');if(frame)frame.srcdoc=savedSheet}
  w.focus();
 }
-function editEstimateHistory(id){
- const e=estimateHistory.find(x=>x.id===id);if(!e)return;
+async function editEstimateHistory(id){
+ const e=await fetchFullEstimateRecord(id);if(!e)return alert('Estimate not found.');
  const own=!!(profile&&String(e.salesman_username||'').toLowerCase()===String(profile.username||'').toLowerCase());
- if(!own&&!privateAccessManager())return alert('You can edit your own estimates. Sam and Ramsey can edit any salesperson’s estimate.');
+ if(!own&&!privateAccessManager()&&!manager())return alert('You can edit your own estimates. Sam and Ramsey can edit any salesperson’s estimate.');
  try{sessionStorage.setItem('garage_edit_estimate_record',JSON.stringify(e));}catch(err){console.warn('Could not cache estimate edit record',err)}
  window.location.href=`estimator.html?editEstimate=${encodeURIComponent(id)}&v=20260820edit3`;
 }

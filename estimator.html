@@ -4267,43 +4267,68 @@ input, select, textarea, button { box-sizing:border-box; }
             if (depthInChat) roofPatioDepth = parseFloat(depthInChat[1]) || roofPatioDepth;
 
             // Camera: chat wins for ANY feature (patio, doors, stone, walk, etc.)
-            const wantsRearView = /\b(back|rear|behind|from the back|rear view|back view|backyard|from behind)\b/.test(q);
-            const wantsSideView = /\b(side view|from the side|left side|right side|on the side)\b/.test(q);
+            // Rear patio implies rear view even if chat only said "roofed patio"
+            const wantsRearView = /\b(back|rear|behind|from the back|rear view|back view|backyard|from behind)\b/.test(q)
+                || (roofPatioOn && !roofPatioSide);
+            const wantsSideView = /\b(side view|from the side|left side|right side|on the side)\b/.test(q)
+                || (roofPatioOn && roofPatioSide);
             const wantsFrontView = /\b(front view|from the front|driveway view|front only)\b/.test(q);
             const wantsCornerView = /\b(corner|three[\s-]?quarter|3\/4)\b/.test(q);
 
             let cameraWords = '';
-            if (extra && (wantsRearView || (roofPatioOn && !roofPatioSide))) {
+            if (wantsRearView) {
                 cameraWords = [
-                    'CAMERA ANGLE (MANDATORY FROM CHAT): rear or rear-corner view of the garage',
-                    'the BACK of the building is the main subject so the customer can see what was requested on the rear',
-                    'do NOT use a front-only driveway portrait if the chat asked for the back or a rear feature'
+                    'CAMERA ANGLE (MANDATORY): rear or rear-corner view of the garage',
+                    'the BACK of the building is the main subject so the customer can see the rear elevation',
+                    'do NOT use a front-only driveway portrait for this photo'
                 ].join(', ');
-            } else if (extra && (wantsSideView || (roofPatioOn && roofPatioSide))) {
+            } else if (wantsSideView) {
                 cameraWords = [
-                    'CAMERA ANGLE (MANDATORY FROM CHAT): side or side three-quarter view',
-                    'the SIDE of the garage must be clearly visible so the customer can see the side feature requested'
+                    'CAMERA ANGLE (MANDATORY): side or side three-quarter view',
+                    'the SIDE of the garage must be clearly visible so the customer can see the side feature'
                 ].join(', ');
-            } else if (extra && wantsFrontView) {
-                cameraWords = 'CAMERA ANGLE (MANDATORY FROM CHAT): front or front three-quarter view facing the overhead garage door';
-            } else if (extra && wantsCornerView) {
-                cameraWords = 'CAMERA ANGLE (MANDATORY FROM CHAT): three-quarter corner view showing two faces of the garage';
+            } else if (wantsFrontView) {
+                cameraWords = 'CAMERA ANGLE (MANDATORY): front or front three-quarter view facing the overhead garage door';
+            } else if (wantsCornerView) {
+                cameraWords = 'CAMERA ANGLE (MANDATORY): three-quarter corner view showing two faces of the garage';
             } else if (access === 'alley') {
                 cameraWords = accessWords;
             } else {
                 cameraWords = accessWords;
             }
 
+            // Full-width roofed patio: span entire garage wall, not a small centered add-on
             let patioWords = '';
             if (roofPatioOn) {
+                const spanDim = roofPatioSide
+                    ? (d + '-foot DEPTH of the garage (full length of the side wall)')
+                    : (w + '-foot WIDTH of the garage (full length of the rear wall)');
                 const loc = roofPatioSide
                     ? 'SIDE wall only (not front, not rear)'
                     : 'REAR / BACK wall only (wall opposite the overhead door — not front, not side)';
                 patioWords = [
-                    'include a roofed covered patio attached to the '+loc,
-                    'about '+roofPatioDepth+' feet deep, clean concrete slab under it, four vertical support posts',
-                    'patio roof matches the main garage roof and uses the same '+shingleTxt+' architectural shingles'
+                    'MUST SHOW a full-width roofed covered patio attached to the '+loc,
+                    'CRITICAL PATIO SIZE: the patio roof AND the concrete slab under it MUST span the ENTIRE '+spanDim,
+                    'do NOT make a small or narrow patio in the middle — it must run wall-to-wall across the full garage face',
+                    'patio is about '+roofPatioDepth+' feet deep (projection out from the garage wall)',
+                    'clean continuous concrete patio slab under the full width of the patio roof, flush and level',
+                    'four or more vertical support posts evenly spaced across the full patio width',
+                    'patio roof matches the main garage roof style and uses the same '+shingleTxt+' architectural shingles'
                 ].join(', ');
+            }
+
+            // Rear view with a blank back wall looks unfinished — add a rear service door
+            // unless the salesman already placed a service door or explicitly said no door.
+            const chatBlocksRearDoor = /\b(no service door|no man door|no entry door|blank (back|rear)|plain (back|rear))\b/.test(q);
+            const chatAsksRearDoor = /\b(service door|man door|entry door).{0,20}\b(back|rear)\b|\b(back|rear).{0,20}\b(service door|man door|entry door)\b/.test(q);
+            if (wantsRearView && !chatBlocksRearDoor) {
+                if (service==='no'||service==='none'||service==='hidden'||service==='front'||chatAsksRearDoor) {
+                    serviceWords = 'service entry door centered or offset on the REAR wall (man door), clearly visible in the rear view';
+                    coachLightWords = 'black coach light mounted on the wall next to the rear service door';
+                    serviceWalkWords = 'small concrete walkway pad at the rear service door, flush with any patio slab if present';
+                } else if (service==='back') {
+                    // already set above
+                }
             }
 
             // Extra free-form features mentioned in chat (generic — whatever they type)

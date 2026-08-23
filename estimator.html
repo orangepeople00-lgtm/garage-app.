@@ -1598,15 +1598,22 @@ input, select, textarea, button { box-sizing:border-box; }
                             <option value="hybrid">OpenAI → free AI → library</option>
                             <option value="library">Photo library only (classic)</option>
                         </select>
-                        <label class="text-[10px] text-zinc-400 block mb-1">OpenAI API key (saved only on this device)</label>
-                        <div class="flex gap-2 mb-2">
-                            <input type="password" id="openaiApiKey" placeholder="sk-..." autocomplete="off"
-                                   class="calc-input flex-1 bg-zinc-900 border border-zinc-700 text-white rounded-xl px-3 py-2 text-sm"
-                                   onchange="saveOpenAIKey()" onblur="saveOpenAIKey()">
-                            <button type="button" onclick="toggleOpenAIKeyVisible()" class="px-3 py-2 rounded-xl bg-zinc-800 border border-zinc-600 text-xs font-bold">Show</button>
+                        <div id="openaiKeyLockedPanel" class="hidden mb-2 rounded-xl border border-emerald-700 bg-emerald-950/40 px-3 py-3">
+                            <div class="text-xs font-bold text-emerald-400">✓ OpenAI key locked on this device</div>
+                            <div class="text-[10px] text-zinc-400 mt-1">Hidden permanently on this phone/computer. Other salesmen on other devices do not get it.</div>
+                            <button type="button" onclick="resetOpenAIKeyEntry()" class="mt-2 text-[10px] px-3 py-1.5 rounded-lg bg-zinc-800 border border-zinc-600 text-zinc-300 font-bold">Replace key</button>
+                        </div>
+                        <div id="openaiKeyEntryPanel" class="mb-2">
+                            <label class="text-[10px] text-zinc-400 block mb-1" for="openaiApiKey">Paste OpenAI API key once (then it locks &amp; stays hidden)</label>
+                            <input type="text" id="openaiApiKey" name="openaiApiKey" placeholder="Paste sk- key here" inputmode="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
+                                   class="w-full bg-zinc-900 border-2 border-violet-500 text-white rounded-xl px-3 py-3 text-sm relative z-50"
+                                   style="pointer-events:auto !important; user-select:text !important; -webkit-user-select:text !important;"
+                                   onclick="event.stopPropagation(); this.focus();"
+                                   onfocus="event.stopPropagation();">
+                            <button type="button" id="saveOpenAIKeyBtn" onclick="lockOpenAIKey()" class="mt-2 w-full px-3 py-2.5 rounded-xl bg-violet-700 hover:bg-violet-600 text-xs font-bold text-white">Save &amp; Lock Key (one time)</button>
                         </div>
                         <div class="text-[10px] text-zinc-500 leading-relaxed">
-                            Get a key at <b class="text-zinc-300">platform.openai.com</b> → API keys. Uses DALL·E 3 (~a few cents per photo). Key stays in this phone/computer only — never sent to Absolute Garage servers.
+                            Get a key at <b class="text-zinc-300">platform.openai.com</b> → API keys. After you lock it, the key is stored only on <b>this device</b> and will not show again (not even to you). Other salesmen need their own device/key.
                         </div>
                         <div id="aiPhotoStatus" class="text-[10px] text-emerald-400 mt-2 hidden"></div>
                     </div>
@@ -3921,25 +3928,49 @@ input, select, textarea, button { box-sizing:border-box; }
             const m=document.getElementById('garagePhotoMode')?.value||'openai';
             try{ localStorage.setItem('agb_garage_photo_mode', m); }catch(e){}
         }
-        function saveOpenAIKey(){
-            const k=(document.getElementById('openaiApiKey')?.value||'').trim();
+        function getStoredOpenAIKey(){
+            try{ return (localStorage.getItem('agb_openai_api_key')||'').trim(); }catch(e){ return ''; }
+        }
+        function updateOpenAIKeyPanels(){
+            const has=!!getStoredOpenAIKey();
+            const locked=document.getElementById('openaiKeyLockedPanel');
+            const entry=document.getElementById('openaiKeyEntryPanel');
+            const keyEl=document.getElementById('openaiApiKey');
+            if(locked) locked.classList.toggle('hidden', !has);
+            if(entry) entry.classList.toggle('hidden', has);
+            // Never show the saved key in the box
+            if(keyEl) keyEl.value='';
+        }
+        function lockOpenAIKey(){
+            const keyEl=document.getElementById('openaiApiKey');
+            const k=(keyEl?.value||'').trim();
+            if(!k){ alert('Paste your OpenAI key first (starts with sk-).'); keyEl?.focus(); return; }
+            if(!k.startsWith('sk-') && !confirm('This does not look like an OpenAI key (usually starts with sk-). Save anyway?')) return;
             try{
-                if(k) localStorage.setItem('agb_openai_api_key', k);
-                else localStorage.removeItem('agb_openai_api_key');
-            }catch(e){}
+                localStorage.setItem('agb_openai_api_key', k);
+            }catch(e){
+                alert('Could not save key on this device. Check browser storage settings.');
+                return;
+            }
+            if(keyEl) keyEl.value='';
+            updateOpenAIKeyPanels();
+            const status=document.getElementById('aiPhotoStatus');
+            if(status){ status.classList.remove('hidden'); status.textContent='Key locked on this device. It will not be shown again.'; }
+        }
+        function resetOpenAIKeyEntry(){
+            if(!confirm('Remove the locked key from this device? You will need to paste a new key.')) return;
+            try{ localStorage.removeItem('agb_openai_api_key'); }catch(e){}
+            const keyEl=document.getElementById('openaiApiKey');
+            if(keyEl) keyEl.value='';
+            updateOpenAIKeyPanels();
+            setTimeout(()=>document.getElementById('openaiApiKey')?.focus(), 50);
         }
         function loadGaragePhotoMode(){
             const el=document.getElementById('garagePhotoMode');
-            const keyEl=document.getElementById('openaiApiKey');
             try{
                 if(el) el.value=localStorage.getItem('agb_garage_photo_mode')||'openai';
-                if(keyEl) keyEl.value=localStorage.getItem('agb_openai_api_key')||'';
             }catch(e){ if(el) el.value='openai'; }
-        }
-        function toggleOpenAIKeyVisible(){
-            const el=document.getElementById('openaiApiKey');
-            if(!el) return;
-            el.type = el.type==='password' ? 'text' : 'password';
+            updateOpenAIKeyPanels();
         }
         document.addEventListener('DOMContentLoaded', ()=>setTimeout(loadGaragePhotoMode, 100));
         if(document.readyState!=='loading') setTimeout(loadGaragePhotoMode, 200);
@@ -3987,7 +4018,7 @@ input, select, textarea, button { box-sizing:border-box; }
         }
 
         async function generateOpenAIGaragePhotoUrl(prompt){
-            const apiKey=(document.getElementById('openaiApiKey')?.value||localStorage.getItem('agb_openai_api_key')||'').trim();
+            const apiKey=(typeof getStoredOpenAIKey==='function'?getStoredOpenAIKey():(localStorage.getItem('agb_openai_api_key')||'')).trim();
             if(!apiKey) throw new Error('Add your OpenAI API key above (starts with sk-).');
             const cacheKey=garageAICacheKey('openai:'+prompt);
             try{

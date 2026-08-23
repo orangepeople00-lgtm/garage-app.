@@ -17,7 +17,15 @@ main{max-width:1500px;margin:auto;padding:22px}.titlebar{display:flex;justify-co
 .tabs{display:flex;gap:7px;margin:16px 0;flex-wrap:wrap}.tab{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 12px;font-weight:800;font-size:12px}.tab.active{background:var(--navy);color:#fff;border-color:var(--navy)}
 .stats{display:grid;grid-template-columns:repeat(7,minmax(120px,1fr));gap:10px;margin:15px 0}.stat{background:#fff;border:1px solid var(--line);border-radius:13px;padding:14px}.stat .n{font-size:25px;font-weight:900}.stat .l{font-size:11px;color:var(--muted);font-weight:800;margin-top:5px}.stat.alert .n{color:var(--red)}
 .card{background:#fff;border:1px solid var(--line);border-radius:13px;padding:14px;box-shadow:0 2px 10px #0f172a08}.card h3,.card h4{margin:0 0 11px}
-.toolbar{display:grid;grid-template-columns:2fr 1fr 1fr 1fr auto;gap:9px;margin-bottom:12px}.field{display:flex;flex-direction:column;gap:5px}.field label{font-size:10px;text-transform:uppercase;letter-spacing:.04em;font-weight:900;color:var(--muted)}input,select,textarea{border:1px solid #ccd5e1;border-radius:8px;padding:9px 10px;background:#fff;outline:none}input:focus,select:focus,textarea:focus{border-color:#8cb1ff;box-shadow:0 0 0 3px #dbeafe}
+.toolbar{display:grid;grid-template-columns:2fr 1fr 1fr 1fr auto;gap:9px;margin-bottom:12px}
+#dashboardView>.card.toolbar{grid-template-columns:minmax(0,2.2fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) auto;gap:6px;padding:8px 10px;margin-bottom:10px;align-items:end}
+#dashboardView>.card.toolbar .field{gap:2px}
+#dashboardView>.card.toolbar .field label{font-size:9px;margin:0;letter-spacing:.03em}
+#dashboardView>.card.toolbar input,#dashboardView>.card.toolbar select{padding:6px 8px;font-size:12px;border-radius:7px;min-height:0}
+#dashboardView>.card.toolbar .btn{padding:6px 10px;font-size:11px;border-radius:7px}
+@media(max-width:1050px){#dashboardView>.card.toolbar{grid-template-columns:1fr 1fr;gap:6px}}
+@media(max-width:650px){#dashboardView>.card.toolbar{grid-template-columns:1fr;gap:5px;padding:8px}}
+.field{display:flex;flex-direction:column;gap:5px}.field label{font-size:10px;text-transform:uppercase;letter-spacing:.04em;font-weight:900;color:var(--muted)}input,select,textarea{border:1px solid #ccd5e1;border-radius:8px;padding:9px 10px;background:#fff;outline:none}input:focus,select:focus,textarea:focus{border-color:#8cb1ff;box-shadow:0 0 0 3px #dbeafe}
 .table{width:100%;overflow-x:auto;overflow-y:visible;background:#fff;border:1px solid var(--line);border-radius:13px;box-shadow:var(--shadow);padding-bottom:4px;-webkit-overflow-scrolling:touch}table{width:100%;border-collapse:separate;border-spacing:0;min-width:1280px;table-layout:auto}thead{position:relative;z-index:3}th,td{padding:14px 14px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle;line-height:1.35;white-space:normal}th{background:#f8fafc;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:.04em;position:sticky;top:0;z-index:4;white-space:nowrap}tbody tr{min-height:64px;background:#fff}tbody tr:hover{background:#f8fafc}td{font-size:12px;min-height:64px}td:first-child{min-width:210px}.cust{font-weight:900;font-size:14px;line-height:1.25;overflow-wrap:anywhere}.sub{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.35;overflow-wrap:anywhere}.table .pill{white-space:nowrap}.table .btn{white-space:nowrap}
 .pill{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:5px 8px;font-size:10px;font-weight:900}.pill:before{content:"";width:6px;height:6px;background:currentColor;border-radius:50%}.green{background:#ecfdf3;color:var(--green)}.blue{background:#eff6ff;color:#1d4ed8}.yellow{background:#fff7ed;color:var(--yellow)}.red{background:#fef2f2;color:var(--red)}.gray{background:#f1f5f9;color:#64748b}
 .overdue{color:var(--red);font-weight:900}.hold{color:var(--red);font-weight:900}.hidden{display:none!important}
@@ -141,6 +149,17 @@ body.estimator-mode .estimator-exit{display:block}
  </div>
 
  <div class="stats" id="stats"></div>
+
+ <div class="card" id="quickJobCard" style="margin-bottom:12px">
+  <h3 style="margin:0 0 6px">Quick Job Command</h3>
+  <div class="muted small" id="quickJobHint" style="margin-bottom:10px">Type a few words. Salesmen: sends a request to Randy/Sam. Managers: updates the live job for everyone.</div>
+  <textarea id="quickJobText" rows="3" placeholder="Examples:&#10;New job — John Smith, 123 Main St Chicago, 20x22, deposit received&#10;Smith job — concrete poured by Romero, carpentry scheduled tomorrow" style="width:100%;resize:vertical;min-height:72px"></textarea>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px">
+   <button type="button" class="btn primary" onclick="submitQuickJobCommand()">Submit</button>
+   <button type="button" class="btn light" onclick="$('quickJobText').value='';$('quickJobStatus').textContent=''">Clear</button>
+   <span id="quickJobStatus" class="small muted"></span>
+  </div>
+ </div>
 
  <div id="managerRequests" class="card hidden" style="margin-bottom:12px"><h3 class="split"><span>Pending Sold-Job Requests</span><span id="pendingCount" class="pill yellow">0</span></h3><div id="requestList" class="list"></div></div>
  <div id="salesRequests" class="card hidden" style="margin-bottom:12px"><h3>My Sold-Job Requests</h3><div id="myRequestList" class="list"></div></div>
@@ -348,7 +367,7 @@ function jobAgeDays(j){const start=dateOnly(j.sold_date)||dateOnly(j.created_at)
 function jobAgeLabel(j){const d=jobAgeDays(j);return d===null?'—':`${d} day${d===1?'':'s'}`}
 
 const manager=()=>profile&&['owner','business_manager'].includes(profile.role);
-const privateAccessManager=()=>profile&&['sam','ramsey'].includes(profile.username);
+const privateAccessManager=()=>profile&&['sam','ramsey','randy'].includes(String(profile.username||'').toLowerCase());
 // Ramsey + Sam can see everyone's jobs on the dashboard (same visibility as management for job list)
 const canViewAllJobs=()=>manager()||privateAccessManager();
 
@@ -451,12 +470,23 @@ async function boot(){
  $('addBtn').classList.toggle('hidden',!manager());$('requestBtn').classList.toggle('hidden',manager());$('salesFilterWrap').classList.toggle('hidden',!canViewAllJobs());$('trashTab').classList.toggle('hidden',!manager());
  if($('allPersonalCalendarsTab'))$('allPersonalCalendarsTab').classList.toggle('hidden',!privateAccessManager());$('estimateHistorySalesFilterWrap')?.classList.toggle('hidden',!privateAccessManager());
  $('subtitle').textContent=canViewAllJobs()?'All company jobs • live shared data':'Your sold jobs • live production status';
+ const qh=$('quickJobHint');
+ if(qh)qh.textContent=manager()
+  ?'Managers: type an update and it changes the live job for everyone. Example: “Smith — concrete poured by Romero, carpentry tomorrow”.'
+  :'Salesmen: type a new sold job or an update. It goes to Randy/Sam for approval. Example: “New job John Smith 123 Main Chicago 20x22 deposit received”.';
  await refresh();
 }
 async function refresh(){
  $('syncState').textContent='Syncing…';
  const [{data:j,error:je},{data:tj,error:tje},{data:r,error:re},{data:d,error:de},{data:er,error:ere},{data:eh,error:ehe},{data:ce,error:cee}]=await Promise.all([sb.from('jobs').select('*').is('deleted_at',null).order('created_at',{ascending:false}),manager()?sb.from('jobs').select('*').not('deleted_at','is',null).order('deleted_at',{ascending:false}):Promise.resolve({data:[],error:null}),sb.from('job_requests').select('*').is('deleted_at',null).order('created_at',{ascending:false}),sb.from('job_documents').select('*').order('created_at',{ascending:false}),sb.from('job_edit_requests').select('*').order('created_at',{ascending:false}),sb.from('estimate_history').select('*').order('created_at',{ascending:false}).limit(1000),sb.from('salesman_calendar_entries').select('*').order('appointment_at',{ascending:true})]);
- if(je)console.error(je);if(tje)console.error(tje);if(re)console.error(re);if(de)console.error(de);if(ere)console.error(ere);if(ehe)console.error(ehe);if(cee)console.error(cee);jobs=j||[];trashJobs=tj||[];requests=r||[];documents=d||[];editRequests=er||[];estimateHistory=eh||[];calendarEntries=ce||[];$('syncState').textContent='Connected • '+new Date().toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});populateFilters();renderAll();
+ if(je)console.error(je);if(tje)console.error(tje);if(re)console.error(re);if(de)console.error(de);if(ere)console.error(ere);if(ehe)console.error('estimate_history load failed',ehe);if(cee)console.error(cee);
+ jobs=j||[];trashJobs=tj||[];requests=r||[];documents=d||[];editRequests=er||[];estimateHistory=eh||[];calendarEntries=ce||[];
+ if(ehe){
+  $('syncState').textContent='Estimate history blocked: '+(ehe.message||'RLS/permission error');
+ }else{
+  $('syncState').textContent='Connected • '+new Date().toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})+' • '+(estimateHistory.length||0)+' estimates';
+ }
+ populateFilters();renderAll();
 }
 function renderAll(){if($('allPersonalCalendarsTab'))$('allPersonalCalendarsTab').classList.toggle('hidden',!privateAccessManager());renderStats();renderRequests();renderEditRequests();renderJobs();renderWeek();renderCalendar();renderPersonalCalendar();renderAllPersonalCalendars();renderUpcomingAppointments();renderEstimateHistory();renderCompleted();renderTrash()}
 function renderStats(){const active=jobs.filter(j=>status(j)!=='Completed').length,p=jobs.filter(j=>['Applied/Submitted','Submitted','Corrections Needed'].includes(j.permit_status)).length,c=jobs.filter(j=>j.concrete_status==='Scheduled').length,carp=jobs.filter(j=>['Scheduled','In Progress'].includes(j.carpentry_status)).length,h=jobs.filter(j=>j.hold_status).length,o=jobs.filter(overdue).length,done=jobs.filter(j=>status(j)==='Completed').length;$('stats').innerHTML=[['Active Jobs',active,''],['Permits Pending',p,''],['Concrete Scheduled',c,''],['Carpentry Active',carp,''],['On Hold',h,h?'alert':''],['Overdue',o,o?'alert':''],['Completed',done,'']].map(x=>`<div class="stat ${x[2]}"><div class="n">${x[1]}</div><div class="l">${x[0]}</div></div>`).join('')}
@@ -469,6 +499,241 @@ function renderEditRequests(){const pending=editRequests.filter(r=>r.status==='P
 async function approveEditRequest(id){if(!manager())return;const r=editRequests.find(x=>x.id===id);if(!r)return;const {data:{user}}=await sb.auth.getUser();if(r.request_type==='Note'){const j=jobs.find(x=>x.id===r.job_id);const note=[j?.notes||'',`[${DISPLAY[r.salesman_username]||r.salesman_username} request] ${r.request_text}`].filter(Boolean).join('\n\n');const {error}=await sb.from('jobs').update({notes:note}).eq('id',r.job_id);if(error)return alert(error.message);await sb.from('job_activity').insert({job_id:r.job_id,actor_id:user.id,action:'Salesman note request approved',details:{request:r.request_text}})}else{await sb.from('job_activity').insert({job_id:r.job_id,actor_id:user.id,action:'Salesman edit request approved for management review',details:{request:r.request_text}})}await sb.from('job_edit_requests').update({status:'Approved',reviewed_by:user.id,reviewed_at:new Date().toISOString()}).eq('id',id);await refresh();if(r.request_type==='Edit'){openJobForm(r.job_id);alert('Edit request approved. Make the requested change in the job form and Save Job.')}}
 async function rejectEditRequest(id){if(!manager()||!confirm('Reject this request?'))return;const {data:{user}}=await sb.auth.getUser();await sb.from('job_edit_requests').update({status:'Rejected',reviewed_by:user.id,reviewed_at:new Date().toISOString()}).eq('id',id);await refresh()}
 async function submitJobChangeRequest(jobId,type){if(manager())return;const text=prompt(type==='Note'?'What note should Randy or Sam add?':'What should Randy or Sam change on this job?');if(!text||!text.trim())return;const {data:{user}}=await sb.auth.getUser();const {error}=await sb.from('job_edit_requests').insert({job_id:jobId,requested_by:user.id,salesman_username:profile.username,request_type:type,request_text:text.trim()});if(error)return alert(error.message);await refresh();alert(type==='Note'?'Note request sent to Randy and Sam.':'Edit request sent to Randy and Sam.')}
+
+function parseQuickDate(text){
+  const t=String(text||'').toLowerCase();
+  const today=new Date();
+  const iso=d=>{const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`};
+  if(/\btoday\b/.test(t)) return iso(today);
+  if(/\btomorrow\b/.test(t)){const d=new Date(today);d.setDate(d.getDate()+1);return iso(d);}
+  const mdy=t.match(/\b(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?\b/);
+  if(mdy){
+    let y=mdy[3]?Number(mdy[3]):today.getFullYear();
+    if(y<100)y+=2000;
+    const d=new Date(y,Number(mdy[1])-1,Number(mdy[2]));
+    if(!Number.isNaN(d.getTime())) return iso(d);
+  }
+  const ymd=t.match(/\b(20\d{2})-(\d{2})-(\d{2})\b/);
+  if(ymd) return `${ymd[1]}-${ymd[2]}-${ymd[3]}`;
+  return null;
+}
+function parseQuickJobText(raw){
+  const text=String(raw||'').trim();
+  const lower=text.toLowerCase();
+  const out={raw:text,isNew:false,customer:'',address:'',city:'',phone:'',garage_size:'',price:0,deposit:0,deposit_status:'',notes:'',updates:{},matchedJob:null};
+  if(/\b(new job|add job|sold job|new customer)\b/i.test(text)) out.isNew=true;
+
+  // Match existing job by customer name, street/address, or city phrase
+  // Examples: "job on Marquette just poured", "Smith concrete tomorrow", "123 Main electric Monday"
+  let best=null,bestScore=0;
+  (jobs||[]).forEach(j=>{
+    let score=0;
+    const name=String(j.customer||'').trim();
+    const addr=String(j.address||'').trim();
+    const city=String(j.city||'').trim();
+    const jobNo=String(j.job_number||'').trim();
+    if(name.length>=3 && lower.includes(name.toLowerCase())) score=Math.max(score, name.length+20);
+    if(jobNo && lower.includes(jobNo.toLowerCase())) score=Math.max(score, 40);
+    if(addr.length>=3){
+      const addrL=addr.toLowerCase();
+      if(lower.includes(addrL)) score=Math.max(score, addr.length+25);
+      // Street-only match: "Marquette", "Oak Ave", etc.
+      const streetBits=addrL.replace(/^\d+\s*/,'').split(/[,\s]+/).filter(w=>w.length>=4 && !/^(street|st|ave|avenue|rd|road|blvd|dr|drive|ln|lane|ct|court|way|pl|place)$/.test(w));
+      streetBits.forEach(bit=>{
+        if(bit.length>=4 && lower.includes(bit)) score=Math.max(score, bit.length+18);
+      });
+    }
+    if(city.length>=3 && lower.includes(city.toLowerCase()) && score>0) score+=5;
+    if(score>bestScore){best=j;bestScore=score;}
+  });
+  out.matchedJob=best;
+  if(best) out.customer=best.customer;
+
+  // Customer name heuristics for new jobs
+  if(!out.customer){
+    let m=text.match(/(?:customer|client|for)\s*[:\-]?\s*([A-Za-z][A-Za-z .'-]{1,40})/i);
+    if(m) out.customer=m[1].replace(/\s+(at|on|in|address|job)\b.*/i,'').trim();
+    if(!out.customer){
+      m=text.match(/^([A-Za-z][A-Za-z .'-]{1,40}?)(?:\s*[-–,]\s*|\s+at\s+|\s+on\s+)/);
+      if(m) out.customer=m[1].trim();
+    }
+  }
+
+  // Address
+  let am=text.match(/\b(\d{1,6}\s+[A-Za-z0-9 .'-]{2,40}(?:st|street|ave|avenue|rd|road|blvd|boulevard|ln|lane|dr|drive|ct|court|way|pl|place)\.?)\b/i);
+  if(am) out.address=am[1].trim();
+  const cityM=text.match(/\b(Chicago|Cicero|Berwyn|Oak\s*Park|Evanston|Skokie|Niles|Des\s*Plaines|Park\s*Ridge|Elmwood\s*Park|River\s*Grove|Melrose\s*Park|Maywood|Forest\s*Park|Brookfield|La\s*Grange|Summit|Stickney|Lyons)\b/i);
+  if(cityM) out.city=cityM[1].replace(/\s+/g,' ');
+  const phoneM=text.match(/\b(\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4})\b/);
+  if(phoneM) out.phone=phoneM[1];
+  const sizeM=text.match(/\b(\d{1,2}(?:\.\d+)?)\s*[x×]\s*(\d{1,2}(?:\.\d+)?)\b/i);
+  if(sizeM) out.garage_size=`${sizeM[1]}x${sizeM[2]}`;
+  const priceM=text.match(/\$\s*([\d,]+(?:\.\d{2})?)/);
+  if(priceM) out.price=Number(String(priceM[1]).replace(/,/g,''))||0;
+  if(/\bdeposit\s+(received|paid|got)\b/i.test(text)) out.deposit_status='Received';
+  if(/\bdeposit\s+pending\b/i.test(text)) out.deposit_status='Pending';
+
+  // Production updates
+  const u=out.updates;
+  const date=parseQuickDate(text);
+  const byCrew=text.match(/\b(?:by|crew)\s+([A-Za-z][A-Za-z .'-]{1,24})/i);
+  const crew=byCrew?byCrew[1].replace(/\s+(tomorrow|today|scheduled|poured).*/i,'').trim():'';
+
+  if(/\bconcrete\b/i.test(text)){
+    if(/\bpoured\b/i.test(text)){u.concrete_status='Poured';if(date)u.concrete_poured=date;}
+    else if(/\bscheduled\b/i.test(text)||date){u.concrete_status='Scheduled';if(date)u.concrete_scheduled=date;}
+    else if(/\bpending\b/i.test(text))u.concrete_status='Pending';
+    if(crew)u.concrete_crew=crew;
+  }
+  if(/\bcarpentry\b|\bframing\b|\bbuild\b/i.test(text)){
+    if(/\bbuilt\b|\bcomplete\b|\bfinished\b/i.test(text)){u.carpentry_status='Garage Built';if(date)u.built_date=date;}
+    else if(/\bin progress\b/i.test(text))u.carpentry_status='In Progress';
+    else if(/\bscheduled\b/i.test(text)||date){u.carpentry_status='Scheduled';if(date)u.carpentry_scheduled=date;}
+    if(crew)u.carpentry_crew=crew;
+  }
+  if(/\bdemo(?:lition)?\b/i.test(text)){
+    if(/\bcomplete\b|\bdone\b/i.test(text)){u.demo_status='Complete';if(date)u.demo_date=date;}
+    else if(/\bscheduled\b/i.test(text)||date){u.demo_status='Scheduled';if(date)u.scheduled_demo=date;}
+    if(crew)u.demo_crew=crew;
+  }
+  if(/\bpermit\b/i.test(text)){
+    if(/\bapproved\b/i.test(text))u.permit_status='Approved';
+    else if(/\bpending\b/i.test(text))u.permit_status='Permit Pending';
+    else if(/\bsubmitted\b|\bapplied\b/i.test(text))u.permit_status='Applied/Submitted';
+    if(date)u.permit_date=date;
+  }
+  if(/\belectric\b/i.test(text)){
+    if(/\bcomplete\b|\bdone\b/i.test(text))u.electric_status='Complete';
+    else if(/\bscheduled\b/i.test(text)||date){u.electric_status='Scheduled';if(date)u.electric_date=date;}
+    if(crew)u.electric_crew=crew;
+  }
+  if(/\bgutter|\bextras?\b/i.test(text)){
+    u.extras_required=true;
+    if(/\bcomplete\b|\bdone\b/i.test(text))u.extras_status='Complete';
+    else if(/\bscheduled\b/i.test(text)||date){u.extras_status='Scheduled';if(date)u.extras_scheduled=date;}
+    else u.extras_status='Pending';
+  }
+  if(/\binspection\b/i.test(text)){
+    if(/\bpassed\b/i.test(text))u.inspection_status='Passed';
+    else if(/\bfailed\b|\bcorrection\b/i.test(text))u.inspection_status='Inspection Correction';
+    else if(/\bscheduled\b/i.test(text)||date){u.inspection_status='Scheduled';if(date)u.inspection_date=date;}
+  }
+  if(/\bfinal payment\b.*\b(received|paid|collected)\b/i.test(text)||/\bpaid in full\b/i.test(text)){
+    u.final_payment='Paid';
+    if(date)u.completed_date=date;
+  }
+  if(/\bon hold\b/i.test(text)){u.hold_status=true;const rm=text.match(/on hold[:\s-]+([^.\n]{3,80})/i);if(rm)u.hold_reason=rm[1].trim();}
+  if(/\boff hold\b|\bremove hold\b/i.test(text)){u.hold_status=false;u.hold_reason='';}
+
+  out.notes=text;
+  if(!out.isNew && !out.matchedJob && Object.keys(u).length===0) out.isNew=/\b(sold|deposit|contract)\b/i.test(text);
+  return out;
+}
+async function submitQuickJobCommand(){
+  const box=$('quickJobText'), status=$('quickJobStatus');
+  const raw=(box?.value||'').trim();
+  if(!raw){if(status)status.textContent='Type a job note first.';return;}
+  if(status)status.textContent='Working…';
+  try{
+    const parsed=parseQuickJobText(raw);
+    const {data:{user}}=await sb.auth.getUser();
+    if(!user||!profile){if(status)status.textContent='Please sign in again.';return;}
+
+    // MANAGER: apply updates or create job directly
+    if(manager()){
+      if(parsed.matchedJob && Object.keys(parsed.updates).length){
+        const patch={...parsed.updates};
+        if(parsed.notes){
+          const prev=parsed.matchedJob.notes||'';
+          patch.notes=[prev,`[${profile.display_name||profile.username}] ${parsed.notes}`].filter(Boolean).join('\n\n');
+        }
+        const {error}=await sb.from('jobs').update(patch).eq('id',parsed.matchedJob.id);
+        if(error)throw error;
+        await sb.from('job_activity').insert({job_id:parsed.matchedJob.id,actor_id:user.id,action:'Quick command update',details:{text:raw,patch}});
+        if(box)box.value='';
+        if(status)status.textContent='Updated '+parsed.matchedJob.customer+' for everyone.';
+        await refresh();
+        return;
+      }
+      if(parsed.isNew || (!parsed.matchedJob && (parsed.customer||parsed.address))){
+        const rec={
+          customer:parsed.customer||'New Customer',
+          salesman_username:profile.username,
+          sold_date:todayISO(),
+          address:parsed.address||'',
+          city:parsed.city||'Chicago',
+          phone:parsed.phone||'',
+          garage_size:parsed.garage_size||'',
+          price:parsed.price||0,
+          deposit:parsed.deposit||0,
+          deposit_status:parsed.deposit_status||'Pending',
+          permit_status:'Not Submitted',
+          demolition_required:true,
+          demo_status:'Pending',
+          concrete_status:'Pending',
+          carpentry_status:'Pending',
+          electric_status:'Pending',
+          extras_required:false,
+          extras_status:'N/A',
+          notes:parsed.notes?`Quick add: ${parsed.notes}`:'',
+          created_by:user.id,
+          ...parsed.updates
+        };
+        const {data:j,error}=await sb.from('jobs').insert(rec).select().single();
+        if(error)throw error;
+        await sb.from('job_activity').insert({job_id:j.id,actor_id:user.id,action:'Job created via quick command',details:{text:raw}});
+        if(box)box.value='';
+        if(status)status.textContent='Job created for '+rec.customer+'.';
+        await refresh();
+        return;
+      }
+      if(status)status.textContent='Could not match a job. Include the customer name, or say “new job …”.';
+      return;
+    }
+
+    // SALESMAN: request approval (new job request or edit request)
+    if(parsed.matchedJob){
+      const {error}=await sb.from('job_edit_requests').insert({
+        job_id:parsed.matchedJob.id,
+        requested_by:user.id,
+        salesman_username:profile.username,
+        request_type:'Edit',
+        request_text:raw
+      });
+      if(error)throw error;
+      if(box)box.value='';
+      if(status)status.textContent='Edit request for '+parsed.matchedJob.customer+' sent to Randy/Sam.';
+      await refresh();
+      return;
+    }
+    // New sold-job request
+    const rec={
+      requested_by:user.id,
+      salesman_username:profile.username,
+      customer:parsed.customer||raw.slice(0,60),
+      sold_date:todayISO(),
+      address:parsed.address||'',
+      city:parsed.city||'Chicago',
+      phone:parsed.phone||'',
+      garage_size:parsed.garage_size||'',
+      demolition_required:true,
+      extras_required:false,
+      price:parsed.price||0,
+      deposit:parsed.deposit||0,
+      deposit_status:parsed.deposit_status||'Pending',
+      notes:raw,
+      status:'Pending'
+    };
+    const {error}=await sb.from('job_requests').insert(rec);
+    if(error)throw error;
+    if(box)box.value='';
+    if(status)status.textContent='Sold-job request sent to Randy and Sam for approval.';
+    await refresh();
+  }catch(e){
+    console.error(e);
+    if(status)status.textContent='Error: '+(e.message||e);
+  }
+}
 function populateFilters(){const fill=(id,vals,label)=>{const e=$(id),v=e.value;e.innerHTML=`<option value="">${label}</option>`+[...new Set(vals.filter(Boolean))].sort().map(x=>`<option value="${esc(x)}">${esc(DISPLAY[x]||x)}</option>`).join('');e.value=v};fill('salesFilter',jobs.map(j=>j.salesman_username),'All Salespeople');fill('statusFilter',jobs.map(status),'All Statuses');fill('cityFilter',jobs.map(j=>j.city),'All Cities')}
 function filteredJobs(){const q=$('search').value.toLowerCase(),s=$('salesFilter').value,st=$('statusFilter').value,c=$('cityFilter').value;return jobs.filter(j=>status(j)!=='Completed'&&(!q||[j.customer,j.address,j.city,j.job_number,j.garage_size].join(' ').toLowerCase().includes(q))&&(!s||j.salesman_username===s)&&(!st||status(j)===st)&&(!c||j.city===c))}
 function renderJobs(){const rows=filteredJobs();$('jobRows').innerHTML=rows.length?rows.map(j=>`<tr><td><div class="cust">${esc(j.customer)}</div><div class="sub">${esc(DISPLAY[j.salesman_username]||j.salesman_username)}${j.job_number?` • ${esc(j.job_number)}`:''}</div></td><td><div class="job-address">${esc(j.address||'Address not entered')}</div><div class="sub">${esc(j.city||'')}</div></td><td><span class="pill ${tone(status(j))}">${esc(status(j))}</span>${j.hold_status?`<div class="sub hold">ON HOLD — ${esc(j.hold_reason||'Reason not entered')}</div>`:''}${overdue(j)?'<div class="sub overdue">OVERDUE</div>':''}${lastComplete(j)?`<div class="sub progress-last"><strong>Last Complete:</strong> ${esc(lastComplete(j))}</div>`:''}<div class="sub progress-next"><strong>Next Step:</strong> ${esc(next(j))}</div><div class="sub job-age">Job age: ${esc(jobAgeLabel(j))}</div></td><td><button class="btn primary summary-btn" onclick="openDrawer('${j.id}')">View Summary</button></td></tr>`).join(''):`<tr><td colspan="4" style="text-align:center;padding:40px;color:#6f7a8d">No active jobs match these filters.</td></tr>`}
@@ -736,9 +1001,22 @@ function editEstimateHistory(id){
 }
 function renderEstimateHistory(){
  const rows=$('estimateHistoryRows');if(!rows)return;
- const q=($('estimateHistorySearch')?.value||'').trim().toLowerCase(),sf=$('estimateHistorySalesFilter')?.value||'';
- const a=estimateHistory.filter(e=>!sf||e.salesman_username===sf).filter(e=>!q||[e.customer,e.address,e.city,e.garage_size,e.roof_type,DISPLAY[e.salesman_username]||e.salesman_username].some(v=>String(v||'').toLowerCase().includes(q)));
- rows.innerHTML=a.length?a.map(e=>`<tr><td>${new Date(e.created_at).toLocaleDateString()}<div class="sub">${new Date(e.created_at).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}</div></td><td><strong>${esc(e.customer)}</strong></td><td>${esc(DISPLAY[e.salesman_username]||e.salesman_username)}</td><td>${esc(e.address||'')}<div class="sub">${esc(e.city||'')}</div></td><td>${esc(e.garage_size||'—')}</td><td>${esc(e.roof_type||'—')}</td><td><strong>${money(e.estimate_price)}</strong></td><td><div style="display:flex;gap:7px;align-items:center;justify-content:flex-end;flex-wrap:wrap"><button class="btn light sm" onclick="viewEstimateHistory('${e.id}')">View / Print</button><button class="btn light sm" style="background:#0f274b;color:#fff;border-color:#0f274b" onclick="editEstimateHistory('${e.id}')">Edit</button>${(privateAccessManager()||(profile&&e.salesman_username===profile.username))?`<button type="button" class="estimate-delete-btn" title="Delete estimate" aria-label="Delete estimate" onclick="deleteEstimateHistory('${e.id}','${esc(e.customer||'Estimate')}')">Delete</button>`:''}</div></td></tr>`).join(''):`<tr><td colspan="8" style="text-align:center;padding:35px;color:#6f7a8d">No saved estimates yet.</td></tr>`;
+ const q=($('estimateHistorySearch')?.value||'').trim().toLowerCase();
+ let sf=($('estimateHistorySalesFilter')?.value||'').trim();
+ const myUser=String(profile?.username||'').toLowerCase().trim();
+ // Show whatever the database/RLS already returned. Do not hide rows client-side
+ // except optional search + salesman dropdown filters (case-insensitive).
+ let a=Array.isArray(estimateHistory)?estimateHistory.slice():[];
+ if(sf) a=a.filter(e=>String(e.salesman_username||'').toLowerCase().trim()===String(sf).toLowerCase());
+ if(q) a=a.filter(e=>[e.customer,e.address,e.city,e.garage_size,e.roof_type,DISPLAY[e.salesman_username]||e.salesman_username,e.salesman_username].some(v=>String(v||'').toLowerCase().includes(q)));
+ const emptyMsg=!estimateHistory.length
+   ? 'No saved estimates returned from the database yet.'
+   : 'No estimates match this search / salesman filter. Clear filters to see all.';
+ rows.innerHTML=a.length?a.map(e=>{
+   const salesKey=String(e.salesman_username||'').toLowerCase().trim();
+   const canDel=privateAccessManager()||manager()||(myUser&&salesKey===myUser);
+   return `<tr><td>${new Date(e.created_at).toLocaleDateString()}<div class="sub">${new Date(e.created_at).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}</div></td><td><strong>${esc(e.customer)}</strong></td><td>${esc(DISPLAY[e.salesman_username]||e.salesman_username)}</td><td>${esc(e.address||'')}<div class="sub">${esc(e.city||'')}</div></td><td>${esc(e.garage_size||'—')}</td><td>${esc(e.roof_type||'—')}</td><td><strong>${money(e.estimate_price)}</strong></td><td><div style="display:flex;gap:7px;align-items:center;justify-content:flex-end;flex-wrap:wrap"><button class="btn light sm" onclick="viewEstimateHistory('${e.id}')">View / Print</button><button class="btn light sm" style="background:#0f274b;color:#fff;border-color:#0f274b" onclick="editEstimateHistory('${e.id}')">Edit</button>${canDel?`<button type="button" class="estimate-delete-btn" title="Delete estimate" aria-label="Delete estimate" onclick="deleteEstimateHistory('${e.id}','${esc(e.customer||'Estimate')}')">Delete</button>`:''}</div></td></tr>`;
+ }).join(''):`<tr><td colspan="8" style="text-align:center;padding:35px;color:#6f7a8d">${esc(emptyMsg)}</td></tr>`;
 }
 
 function renderCompleted(){const a=jobs.filter(j=>status(j)==='Completed').sort((x,y)=>(y.completed_date||'').localeCompare(x.completed_date||''));$('completedRows').innerHTML=a.length?a.map(j=>`<tr><td><strong>${esc(j.customer)}</strong></td><td>${esc(DISPLAY[j.salesman_username]||j.salesman_username)}</td><td>${esc(j.address||'')} ${esc(j.city||'')}</td><td>${esc(j.garage_size||'')}</td><td>${fmt(j.completed_date)}</td><td><span class="pill ${tone(j.final_payment)}">${esc(j.final_payment)}</span></td><td><button class="btn light sm" onclick="openDrawer('${j.id}')">Open</button></td></tr>`).join(''):`<tr><td colspan="7" style="text-align:center;padding:35px;color:#6f7a8d">No completed jobs yet.</td></tr>`}

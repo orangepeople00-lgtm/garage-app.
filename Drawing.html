@@ -380,11 +380,31 @@ button.danger{color:#b42318}
 #sitePlanControls{display:none}
 .siteplan #sitePlanControls{display:block}
 #surveyBg{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;z-index:1;pointer-events:none;background:#fff}
-.erase-patch{position:absolute;background:#fff;border:0;z-index:3;pointer-events:none}
-.erase-patch.brush-dot{border-radius:50%;border:0;box-shadow:none}
+/* Solid whiteout over survey — no border, no text, covers plat lines */
+.obj.erase-patch,
+.erase-patch{
+  position:absolute !important;
+  background:#ffffff !important;
+  border:0 !important;
+  outline:0 !important;
+  box-shadow:none !important;
+  z-index:5 !important;
+  pointer-events:none !important;
+  opacity:1 !important;
+  min-width:8px !important;
+  min-height:8px !important;
+}
+.obj.erase-patch .label,
+.erase-patch .label{display:none !important;content:none !important}
+.obj.erase-patch.brush-dot,
+.erase-patch.brush-dot{
+  border-radius:50% !important;
+  background:#ffffff !important;
+  border:0 !important;
+}
 .siteplan-page{position:absolute;inset:0;background:#fff}
 .whiteout-on{outline:2px solid #2563eb;outline-offset:2px}
-@media print{.erase-patch{border:0}.locked-contractor{background:#fff}.shed-x{display:block}}
+@media print{.obj.erase-patch,.erase-patch{border:0!important;background:#fff!important}.locked-contractor{background:#fff}.shed-x{display:block}}
 
 
 /* V4 workflow / layout corrections */
@@ -2171,7 +2191,7 @@ button.danger{color:#b42318}
 <aside class="sidebar">
 <div class="brand">
 <h1>Absolute Garage Builders</h1>
-<small>Drawing App · V81 Mobile</small>
+<small>Drawing App · V81.2 Email PDF</small>
 </div>
 <div class="scroll">
 <div class="section">
@@ -2395,7 +2415,20 @@ button.danger{color:#b42318}
 </div>
 <div class="section" id="sitePlanControls">
 <h3>Proposed Site Plan</h3>
+<!-- TOP: upload + place + whiteout (most-used first) -->
 <div class="field"><label>Upload current survey / plat</label><input accept="image/*" id="surveyUpload" type="file"/></div>
+<div class="field"><label>Garage placement</label><select id="spPlacement"><option value="bottom-right">Rear right</option><option value="bottom-left">Rear left</option><option value="custom">Place manually</option></select></div>
+<button id="placeProposedGarage" class="primary" type="button" style="width:100%;min-height:44px;font-weight:900;margin-bottom:10px">Place Proposed Garage</button>
+<div style="border:2px solid #2563eb;border-radius:10px;padding:10px;background:#f8fbff;margin-bottom:10px">
+  <div style="font-size:11px;font-weight:900;color:#1d4ed8;margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em">Whiteout / Erase Old Lines</div>
+  <button id="eraseSurveyBtn" type="button" class="primary" style="width:100%;min-height:44px;font-weight:900;margin-bottom:8px">Whiteout Brush</button>
+  <div class="field" style="margin-bottom:4px">
+    <label>Brush thickness: <span id="whiteoutSizeLabel">28</span> px</label>
+    <input id="whiteoutBrushSize" type="range" min="10" max="90" step="2" value="28" style="width:100%">
+  </div>
+  <div class="mode-note" id="eraseSurveyNote" style="margin:0">Tap Whiteout Brush, then drag over the old garage / lines on the survey. White covers only what you paint. Tap again to turn off. Undo removes strokes.</div>
+</div>
+<!-- Settings below -->
 <div class="row">
 <div class="field"><label>Survey scale: 1 inch = feet</label><input id="spScaleFeet" step=".5" type="number" value="20"/></div>
 <div class="field"><label>Overlay style</label><select id="spStyle"><option value="fine">Fine survey style</option><option value="normal">Normal</option></select></div>
@@ -2414,9 +2447,6 @@ button.danger{color:#b42318}
 <div class="field"><label>Existing sidewalk size</label><input class="combo-dim" id="spExistingWalkCombo" placeholder="3 x 35"/></div>
 <input class="hidden-dim-source" id="spExistingWalkW"/><input class="hidden-dim-source" id="spExistingWalkH"/>
 <div class="field"><label>Rear setback (ft)</label><input id="spRearSetback" step=".5" type="number" value="5"/></div>
-<div class="field"><label>Garage placement</label><select id="spPlacement"><option value="bottom-right">Rear right</option><option value="bottom-left">Rear left</option><option value="custom">Place manually</option></select></div>
-<div class="toolbar-grid"><button id="placeProposedGarage">Place Proposed Garage</button><button id="eraseSurveyBtn" type="button">Whiteout Brush</button></div>
-<div class="mode-note" id="eraseSurveyNote">Whiteout Brush: tap the button, then drag over the old garage on the survey to cover it with white. Tap again to turn off. Undo removes the last strokes.</div>
 </div>
 
 
@@ -2437,6 +2467,7 @@ button.danger{color:#b42318}
 <div class="field"><label>Home phone</label><input id="homePhone"/></div>
 <div class="field"><label>Work phone</label><input id="workPhone"/></div>
 </div>
+<div class="field"><label>Customer email</label><input id="customerEmail" type="email" placeholder="customer@email.com" autocomplete="email"/></div>
 <div class="field"><label>Salesman phone</label><input id="salesPhone"/></div>
 </div></div>
 </aside>
@@ -2444,7 +2475,7 @@ button.danger{color:#b42318}
 <div class="topbar">
 <button type="button" class="mobile-panel-btn" id="mobilePanelBtn" title="Open tools panel">☰ Tools</button>
 <button type="button" class="mobile-snap-btn on" id="snapToggleBtn" title="Toggle snapping">Snap ON</button>
-<span id="drawBuildBadge" style="font-size:10px;font-weight:900;background:#fef3c7;color:#92400e;border:1px solid #f59e0b;border-radius:6px;padding:4px 7px;white-space:nowrap">BUILD 0823-0045</span>
+<span id="drawBuildBadge" style="font-size:10px;font-weight:900;background:#fef3c7;color:#92400e;border:1px solid #f59e0b;border-radius:6px;padding:4px 7px;white-space:nowrap">BUILD 0823-0050</span>
 <button class="primary" id="fitBtn">Fit</button>
 <button type="button" id="rotateLeftBtn" title="Rotate selected -15°">↺</button>
 <button type="button" id="rotateRightBtn" title="Rotate selected +15°">↻</button>
@@ -2463,6 +2494,7 @@ button.danger{color:#b42318}
     <button class="mini danger hide-on-mobile" id="deleteSelectedBtn" title="Delete selected drawing item">🗑 Delete</button>
 
 <button id="printBtn" class="hide-on-mobile">Print</button><button id="pdfBtn" class="hide-on-mobile">PDF</button>
+<button id="emailPdfBtn" type="button" class="primary" title="Email PDF via Gmail / Mail app">✉ Email</button>
 </div>
 <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
 <div class="mobile-bottom-bar" id="mobileBottomBar">
@@ -2481,6 +2513,7 @@ button.danger{color:#b42318}
   <button type="button" class="danger" id="mobileDelBtn">Delete</button>
   <button type="button" id="mobileFitBtn">Fit</button>
   <button type="button" id="mobilePdfBtn">PDF</button>
+  <button type="button" id="mobileEmailBtn" style="background:#1d4ed8;color:#fff;border-color:#1d4ed8;font-weight:900">✉ Email</button>
   <button type="button" onclick="window.location.href='index.html?v='+Date.now()">Dashboard</button>
 </div>
 <div class="viewport" id="viewport">
@@ -2817,6 +2850,8 @@ function updateCollectDisplay(){
 
 function renderSheet(){
   state.mode=$('mode').value; const t=currentTemplate();
+  // Turn whiteout off when leaving site plan so it cannot keep painting
+  if(state.mode!=='siteplan' && typeof setWhiteoutBrush==='function' && whiteoutBrushOn) setWhiteoutBrush(false);
   paper.style.width=t.w+'px';paper.style.height=t.h+'px';img.style.display=state.mode==='siteplan'?'none':'block'; img.src=t.src||''; if(state.mode!=='siteplan'){img.onload=()=>{if(state.view==='fit')fitWhole()};} paper.classList.toggle('siteplan',state.mode==='siteplan');
   drawLayer.style.left='0px';drawLayer.style.top='0px';drawLayer.style.width=t.w+'px';drawLayer.style.height=t.h+'px';
   fieldLayer.innerHTML='';
@@ -4059,7 +4094,7 @@ async function fetchEstimateDetailForDrawing(id){
   return data||null;
 }
 
-const SHARED_IDS=['customerName','jobAddress','city','homePhone','workPhone','salesman','salesPhone'];
+const SHARED_IDS=['customerName','jobAddress','city','homePhone','workPhone','customerEmail','salesman','salesPhone'];
 function saveSharedInfo(){
  const v={};SHARED_IDS.forEach(id=>v[id]=$(id)?.value||'');
  try{localStorage.setItem('agbSharedInfo',JSON.stringify(v))}catch(e){}
@@ -4351,8 +4386,13 @@ if($('placeProposedGarage'))$('placeProposedGarage').onclick=()=>{
  placeProposedGarageOnSurvey({autoErase:false});
 };
 let whiteoutBrushOn=false;
+let whiteoutPainting=false;
+let whiteoutLastPt=null;
 function setWhiteoutBrush(on){
+  // Brush only works on Proposed Site Plan
+  if(on && state.mode!=='siteplan') on=false;
   whiteoutBrushOn=!!on;
+  if(!whiteoutBrushOn){ whiteoutPainting=false; whiteoutLastPt=null; }
   const btn=$('eraseSurveyBtn');
   if(btn){
     btn.classList.toggle('primary',whiteoutBrushOn);
@@ -4360,18 +4400,14 @@ function setWhiteoutBrush(on){
   }
   const note=$('eraseSurveyNote');
   if(note) note.textContent=whiteoutBrushOn
-    ?'Whiteout is ON. Drag your finger/mouse over the old garage lines on the survey. White covers only what you paint. Tap the button again to stop.'
-    :'Whiteout Brush: tap the button, then drag over the old garage on the survey to cover it with white. Tap again to turn off. Undo removes the last strokes.';
+    ?'Whiteout is ON. Drag over old garage / lines on the survey. White covers only what you paint. Tap again to stop. Undo removes the last stroke.'
+    :'Tap Whiteout Brush, then drag over the old garage / lines on the survey. White covers only what you paint. Tap again to turn off. Undo removes strokes.';
   if(drawLayer) drawLayer.style.cursor=whiteoutBrushOn?'crosshair':'';
 }
 if($('eraseSurveyBtn'))$('eraseSurveyBtn').onclick=()=>{
   if(state.mode!=='siteplan'){
-    // Non-site-plan: keep a simple white rectangle patch (no "ERASE" label)
-    snapshot();
-    const t=currentTemplate();
-    state.objects.push({id:uid++,kind:'eraser',x:t.w/2-80,y:t.h/2-60,wf:12,hf:10,label:'',angle:0,pxf:DRAW_PXF});
-    state.selected=state.objects.at(-1).id;
-    renderObjects();
+    // Fixed: do NOT drop a random white box on concrete/obstruction drawings
+    alert('Whiteout Brush only works on Proposed Site Plan. Switch Drawing type to Proposed Site Plan, upload the survey, then use Whiteout.');
     return;
   }
   setWhiteoutBrush(!whiteoutBrushOn);
@@ -4382,24 +4418,39 @@ function paperPointFromEvent(e){
   const sy=(e.clientY-rect.top-state.ty)/state.scale;
   return {x:sx,y:sy};
 }
+function getWhiteoutBrushPx(){
+  const el=$('whiteoutBrushSize');
+  const v=el?Number(el.value):28;
+  return Math.max(10, Math.min(90, Number.isFinite(v)?v:28));
+}
 function paintWhiteoutDot(pt){
-  // Small white circle dots — paint as you drag (no text, no big "ERASE" box)
-  const sizeFt=1.1;
+  // Solid white circles — cover survey lines only (no text)
+  const px=getWhiteoutBrushPx();
   state.objects.push({
     id:uid++,
     kind:'eraser',
     role:'whiteoutBrush',
-    x:pt.x-10,
-    y:pt.y-10,
-    wf:sizeFt,
-    hf:sizeFt,
+    x:pt.x - px/2,
+    y:pt.y - px/2,
+    wf:px/18,
+    hf:px/18,
     label:'',
     angle:0,
     pxf:18,
-    brush:true
+    brush:true,
+    visualWpx:px,
+    visualHpx:px
   });
 }
-let whiteoutPainting=false;
+if($('whiteoutBrushSize')){
+  const syncSizeLabel=()=>{
+    const lab=$('whiteoutSizeLabel');
+    if(lab) lab.textContent=String(getWhiteoutBrushPx());
+  };
+  $('whiteoutBrushSize').addEventListener('input',syncSizeLabel);
+  $('whiteoutBrushSize').addEventListener('change',syncSizeLabel);
+  syncSizeLabel();
+}
 if(viewport){
   viewport.addEventListener('pointerdown',e=>{
     if(!whiteoutBrushOn||state.mode!=='siteplan') return;
@@ -4407,23 +4458,33 @@ if(viewport){
     e.preventDefault();
     e.stopPropagation();
     whiteoutPainting=true;
-    snapshot();
-    paintWhiteoutDot(paperPointFromEvent(e));
+    whiteoutLastPt=paperPointFromEvent(e);
+    snapshot(); // one undo step for the whole stroke
+    paintWhiteoutDot(whiteoutLastPt);
     renderObjects();
     try{viewport.setPointerCapture(e.pointerId)}catch(_){}
   },true);
   viewport.addEventListener('pointermove',e=>{
-    if(!whiteoutPainting||!whiteoutBrushOn) return;
+    if(!whiteoutPainting||!whiteoutBrushOn||state.mode!=='siteplan') return;
     e.preventDefault();
-    paintWhiteoutDot(paperPointFromEvent(e));
+    const pt=paperPointFromEvent(e);
+    // Space dots slightly so a long drag does not create thousands of objects
+    const minDist=getWhiteoutBrushPx()*0.32;
+    if(whiteoutLastPt){
+      const dx=pt.x-whiteoutLastPt.x, dy=pt.y-whiteoutLastPt.y;
+      if(dx*dx+dy*dy < minDist*minDist) return;
+    }
+    whiteoutLastPt=pt;
+    paintWhiteoutDot(pt);
     renderObjects();
   },true);
   viewport.addEventListener('pointerup',e=>{
     if(!whiteoutPainting) return;
     whiteoutPainting=false;
+    whiteoutLastPt=null;
     saveActiveSheetState();
   },true);
-  viewport.addEventListener('pointercancel',()=>{whiteoutPainting=false});
+  viewport.addEventListener('pointercancel',()=>{whiteoutPainting=false;whiteoutLastPt=null});
 }
 
 const SHAPE_DEFAULTS={
@@ -4485,6 +4546,10 @@ function objPixels(o){
   if(o.kind==='dimension') return [Math.max(20,o.wf*p),26];
   if(o.kind==='serviceDoor') return [54,34];
   if(o.kind==='partyDoor') return [Math.max(60,o.wf*p),34];
+  if(o.kind==='eraser'){
+    if(Number.isFinite(o.visualWpx)&&Number.isFinite(o.visualHpx)) return [o.visualWpx,o.visualHpx];
+    return [Math.max(16,o.wf*p),Math.max(16,o.hf*p)];
+  }
   let w=Math.max(12,o.wf*p),h=Math.max(12,o.hf*p);
   // Visual-only size for freeform shapes and sidewalks (does NOT change real measurements)
   if(['sidewalk','custom','circle','arrow','xmark','line'].includes(o.kind)){
@@ -4778,7 +4843,20 @@ function renderObjects(){
         end.style.left=((o.arrowLen||110)+54)+'px';end.style.top='12px';el.appendChild(end);
       }
     } const lab=document.createElement('div');lab.className=(o.kind==='sidewalk'?'label sidewalk-label-v26':'label');
-    lab.textContent=((o.role==='rearSetback'||o.role==='rearGap'||o.role==='alleyDistance')?'':(o.label || (['custom','arrow','line','polyline'].includes(o.kind)?'':o.kind.toUpperCase()))); if(o.kind==='arrow' && /^arrow$/i.test(String(lab.textContent||'').trim())) lab.textContent='';
+    // Never show "ERASER" / any text on whiteout patches
+    if(o.kind==='eraser'){
+      lab.textContent='';
+      lab.style.display='none';
+      o.label='';
+      el.style.background='#ffffff';
+      el.style.border='0';
+      el.style.outline='0';
+      el.style.opacity='1';
+      el.style.zIndex='6';
+    } else {
+      lab.textContent=((o.role==='rearSetback'||o.role==='rearGap'||o.role==='alleyDistance')?'':(o.label || (['custom','arrow','line','polyline','eraser'].includes(o.kind)?'':o.kind.toUpperCase())));
+      if(o.kind==='arrow' && /^arrow$/i.test(String(lab.textContent||'').trim())) lab.textContent='';
+    }
     if(o.role==='lotWidth'){
       const ttl=document.createElement('div');ttl.className='dim-title';ttl.textContent='LOT WIDTH';el.appendChild(ttl);
     }
@@ -5447,10 +5525,11 @@ function makeJpegPdf(jpegBytes,imgW,imgH){
  push(`trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`);
  return new Blob(parts,{type:'application/pdf'});
 }
-async function saveAsPdf(){
+async function buildDrawingExport(){
+ // Returns { pdfBlob, jpegBlob, fileBase, customer, address }
  const t=currentTemplate(),clone=paper.cloneNode(true);
  clone.style.transform='none';clone.style.zoom='1';clone.style.boxShadow='none';clone.style.margin='0';
- clone.querySelectorAll('.handle,.rotate-handle,.cut-end-handle').forEach(e=>e.remove());
+ clone.querySelectorAll('.handle,.rotate-handle,.cut-end-handle,.side-handle').forEach(e=>e.remove());
  clone.querySelectorAll('.selected').forEach(e=>e.classList.remove('selected'));
  const cssText=[...document.querySelectorAll('style')].map(x=>x.textContent).join('\n');
  const html=`<div xmlns="http://www.w3.org/1999/xhtml"><style>${cssText}</style>${clone.outerHTML}</div>`;
@@ -5461,14 +5540,113 @@ async function saveAsPdf(){
    await new Promise((res,rej)=>{im.onload=res;im.onerror=rej;im.src=url});
    const c=document.createElement('canvas');c.width=t.w;c.height=t.h;
    const ctx=c.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,c.width,c.height);ctx.drawImage(im,0,0);
-   const jpg=c.toDataURL('image/jpeg',.96),bytes=dataUrlBytes(jpg),pdf=makeJpegPdf(bytes,c.width,c.height);
-   const a=document.createElement('a');a.href=URL.createObjectURL(pdf);
-   a.download=`Absolute_Garage_${state.mode}_${new Date().toISOString().slice(0,10)}.pdf`;
-   document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1500);
+   const jpgData=c.toDataURL('image/jpeg',.96);
+   const bytes=dataUrlBytes(jpgData);
+   const pdfBlob=makeJpegPdf(bytes,c.width,c.height);
+   // JPEG blob for share targets that prefer images
+   const jpegBlob=await (await fetch(jpgData)).blob();
+   const cust=($('customerName')&&$('customerName').value||'Customer').trim().replace(/[^\w\s\-]/g,'').slice(0,40)||'Customer';
+   const modeLabel=state.mode==='siteplan'?'SitePlan':(state.mode==='obstruction'?'Demo':(state.mode||'Drawing'));
+   const fileBase=`Absolute_Garage_${modeLabel}_${cust}_${new Date().toISOString().slice(0,10)}`.replace(/\s+/g,'_');
+   return {
+     pdfBlob,
+     jpegBlob,
+     fileBase,
+     customer: ($('customerName')&&$('customerName').value||'').trim(),
+     address: [($('jobAddress')&&$('jobAddress').value||'').trim(), ($('city')&&$('city').value||'').trim()].filter(Boolean).join(', '),
+     email: ($('customerEmail')&&$('customerEmail').value||'').trim()
+   };
+ }finally{URL.revokeObjectURL(url)}
+}
+async function saveAsPdf(){
+ try{
+   const exp=await buildDrawingExport();
+   const a=document.createElement('a');
+   a.href=URL.createObjectURL(exp.pdfBlob);
+   a.download=exp.fileBase+'.pdf';
+   document.body.appendChild(a);a.click();a.remove();
+   setTimeout(()=>URL.revokeObjectURL(a.href),2000);
  }catch(err){console.error(err);alert('Could not create PDF in this browser.');}
- finally{URL.revokeObjectURL(url)}
+}
+async function emailDrawingPdf(){
+ // Opens iPhone share sheet so salesman can pick Gmail / Mail and send from their personal account.
+ // Attachments work via Web Share API (files). mailto cannot attach files reliably.
+ try{
+   const exp=await buildDrawingExport();
+   let to=exp.email;
+   if(!to){
+     to=(prompt('Customer email address:')||'').trim();
+     if(to && $('customerEmail')) $('customerEmail').value=to;
+   }
+   if(!to){
+     // Still allow share without a prefilled address
+     to='';
+   }
+   const salesman=($('salesman')&&$('salesman').selectedOptions[0]&&$('salesman').selectedOptions[0].text||'').trim()||'Absolute Garage Builders';
+   const salesPhone=($('salesPhone')&&$('salesPhone').value||'').trim();
+   const subject=`Absolute Garage Builders — Drawing for ${exp.customer||'your project'}`;
+   const bodyLines=[
+     `Hi${exp.customer?(' '+exp.customer.split(' ')[0]):''},`,
+     '',
+     'Please find attached the garage drawing for your project'+(exp.address?(' at '+exp.address):'')+'.',
+     '',
+     'If you have any questions, reply to this email or call us.',
+     '',
+     salesman+(salesPhone?(' · '+salesPhone):''),
+     'Absolute Garage Builders'
+   ];
+   const body=bodyLines.join('\n');
+   const pdfFile=new File([exp.pdfBlob], exp.fileBase+'.pdf', {type:'application/pdf'});
+   const jpegFile=new File([exp.jpegBlob], exp.fileBase+'.jpg', {type:'image/jpeg'});
+
+   // Prefer sharing the PDF; some apps prefer images — offer PDF first
+   if(navigator.share){
+     const payload={
+       title: subject,
+       text: body+(to?('\n\nTo: '+to):''),
+       files: [pdfFile]
+     };
+     // iOS requires canShare check for files
+     if(navigator.canShare && !navigator.canShare({files:[pdfFile]})){
+       // Try JPEG instead
+       if(navigator.canShare({files:[jpegFile]})){
+         payload.files=[jpegFile];
+       } else {
+         // Share text only + download PDF so user can attach manually
+         await saveAsPdf();
+         if(to){
+           window.location.href='mailto:'+encodeURIComponent(to)+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body+'\n\n(PDF was downloaded — attach it in Gmail)');
+         } else {
+           alert('PDF downloaded. Open Gmail and attach the file from Downloads / Files.');
+         }
+         return;
+       }
+     }
+     try{
+       await navigator.share(payload);
+       return;
+     }catch(shareErr){
+       // User cancelled share sheet — not an error
+       if(shareErr && (shareErr.name==='AbortError' || /cancel/i.test(String(shareErr.message||'')))) return;
+       console.warn('share failed', shareErr);
+     }
+   }
+
+   // Fallback: download PDF + open mailto (no attachment possible via mailto)
+   await saveAsPdf();
+   if(to){
+     window.location.href='mailto:'+encodeURIComponent(to)+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body+'\n\n(PDF was saved on this device — attach Absolute_Garage_….pdf in Gmail)');
+   } else {
+     alert('PDF downloaded. Open the Gmail app, compose a message, and attach the PDF from Files / Downloads.');
+   }
+ }catch(err){
+   console.error(err);
+   alert('Could not prepare the drawing for email: '+(err&&err.message?err.message:err));
+ }
 }
 $('pdfBtn').onclick=saveAsPdf;
+if($('emailPdfBtn')) $('emailPdfBtn').onclick=emailDrawingPdf;
+if($('mobileEmailBtn')) $('mobileEmailBtn').onclick=emailDrawingPdf;
 
 $('mode').onchange=()=>{
   saveActiveSheetState();

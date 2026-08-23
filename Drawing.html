@@ -49,7 +49,115 @@ button.danger{color:#b42318}
 .obj.dimension:before{content:"";position:absolute;left:4px;right:4px;top:11px;border-top:2px solid #111}
 .obj.dimension:after{content:"↔";position:absolute;left:0;right:0;top:-2px;text-align:center;font-size:24px;line-height:24px}
 .obj.dimension .label{top:-18px;height:18px;bottom:auto;background:rgba(255,255,255,.8);font-size:12px}
-.handle{position:absolute;width:14px;height:14px;border-radius:50%;background:#2563eb;border:2px solid #fff;right:-9px;bottom:-9px;cursor:nwse-resize}.rotate-handle{position:absolute;width:15px;height:15px;border-radius:50%;background:#f59e0b;border:2px solid #fff;left:50%;top:-26px;transform:translateX(-50%);cursor:grab}.rotate-stem{position:absolute;left:50%;top:-13px;height:14px;border-left:2px solid #f59e0b}
+.handle{position:absolute;width:14px;height:14px;border-radius:50%;background:#2563eb;border:2px solid #fff;right:-9px;bottom:-9px;cursor:nwse-resize}
+
+
+/* Cleaner setback lines - proportional visual scale already driven by pxf */
+.obj.big-dim[data-role="leftSetback"],
+.obj.big-dim[data-role="rightSetback"],
+.obj.rear-setback-clean{
+  border-left: 3px dashed #64748b !important;
+  background: transparent !important;
+}
+.obj.big-dim[data-role="leftSetback"] .label,
+.obj.big-dim[data-role="rightSetback"] .label,
+.obj.rear-setback-clean .label{
+  background: rgba(255,255,255,.92) !important;
+  padding: 2px 5px !important;
+  border-radius: 3px !important;
+  font-weight: 900 !important;
+}
+/* Existing vs Proposed transparency */
+.obj.existing-object,
+.obj[data-role="existingSidewalk"],
+.obj[data-role="existingPatio"],
+.obj[data-role="existingPad"]{
+  opacity:0.55!important;
+  border-style:dashed!important;
+}
+.obj.proposed-object,
+.obj[data-role="newSidewalk"],
+.obj[data-role="patio"],
+.obj[data-role="newPad"]{
+  opacity:1!important;
+}
+/* ===== New CAD tools + side resize handles (V80) ===== */
+.obj.circle-shape{
+  border-radius:50%!important;
+  background:rgba(37,99,235,.08)!important;
+  border:3px solid #2563eb!important;
+}
+.obj.arrow-shape{
+  background:transparent!important;
+  border:none!important;
+  overflow:visible!important;
+}
+.obj.arrow-shape::before{
+  content:'';
+  position:absolute;
+  left:0;top:50%;
+  width:calc(100% - 14px);height:4px;
+  background:#111;
+  transform:translateY(-50%);
+}
+.obj.arrow-shape::after{
+  content:'';
+  position:absolute;
+  right:0;top:50%;
+  width:0;height:0;
+  border-top:10px solid transparent;
+  border-bottom:10px solid transparent;
+  border-left:16px solid #111;
+  transform:translateY(-50%);
+}
+.obj.xmark-shape{
+  background:transparent!important;
+  border:none!important;
+  overflow:visible!important;
+}
+.obj.xmark-shape::before,
+.obj.xmark-shape::after{
+  content:'';
+  position:absolute;
+  left:50%;top:50%;
+  width:140%;height:5px;
+  background:#b91c1c;
+  transform-origin:center;
+}
+.obj.xmark-shape::before{transform:translate(-50%,-50%) rotate(45deg)}
+.obj.xmark-shape::after{transform:translate(-50%,-50%) rotate(-45deg)}
+.obj.line-shape{
+  background:#111!important;
+  border:none!important;
+  height:4px!important;
+  min-height:4px!important;
+  border-radius:2px!important;
+}
+.obj.highlighted{
+  outline:4px solid #eab308!important;
+  outline-offset:3px!important;
+  box-shadow:0 0 0 6px rgba(234,179,8,.25)!important;
+}
+.obj.locked-obj{
+  outline:2px dashed #94a3b8!important;
+  opacity:.85;
+}
+/* Side / edge resize handles */
+.side-handle{
+  position:absolute;
+  background:#2563eb;
+  border:2px solid #fff;
+  z-index:60;
+  border-radius:3px;
+  pointer-events:auto;
+}
+.side-handle.n,.side-handle.s{height:10px;width:28px;left:50%;transform:translateX(-50%);cursor:ns-resize}
+.side-handle.e,.side-handle.w{width:10px;height:28px;top:50%;transform:translateY(-50%);cursor:ew-resize}
+.side-handle.n{top:-6px}
+.side-handle.s{bottom:-6px}
+.side-handle.e{right:-6px}
+.side-handle.w{left:-6px}
+.rotate-handle{position:absolute;width:15px;height:15px;border-radius:50%;background:#f59e0b;border:2px solid #fff;left:50%;top:-26px;transform:translateX(-50%);cursor:grab}.rotate-stem{position:absolute;left:50%;top:-13px;height:14px;border-left:2px solid #f59e0b}
 .status{font-size:11px;color:#667085;padding-top:4px}
 .hidden{display:none!important}
 .mode-note{font-size:11px;color:#475467;line-height:1.35}
@@ -1765,7 +1873,7 @@ button.danger{color:#b42318}
 <aside class="sidebar">
 <div class="brand">
 <h1>Absolute Garage Builders</h1>
-<small>Drawing App · V22</small>
+<small>Drawing App · V80 CAD Upgrade</small>
 </div>
 <div class="scroll">
 <div class="section">
@@ -1788,10 +1896,45 @@ button.danger{color:#b42318}
 <button data-add="pad">Parking Pad</button>
 <button data-add="driveway">Driveway</button>
 <button data-add="custom">Rectangle</button>
+<button data-add="circle">Circle</button>
+<button data-add="arrow">Arrow</button>
+<button data-add="xmark">X Marker</button>
+<button data-add="line">Line</button>
+<button data-add="polyline">Polyline</button>
 <button data-add="text">Text Box</button>
-<button data-add="dimension">Dimension</button><button class="stamp-btn" id="staysBtn">STAYS</button><button class="stamp-btn" id="cutBtn">◯ CUT →</button><button class="stamp-btn" id="collectBtn">COLLECT</button><button class="stamp-btn" id="treeBtn">TREE</button><button class="stamp-btn" id="bushBtn">BUSH</button>
+<button data-add="dimension">Dimension</button>
+<button class="stamp-btn" id="staysBtn">STAYS</button>
+<button class="stamp-btn" id="cutBtn">◯ CUT →</button>
+<button class="stamp-btn" id="collectBtn">COLLECT</button>
+<button class="stamp-btn" id="treeBtn">TREE</button>
+<button class="stamp-btn" id="bushBtn">BUSH</button>
 </div>
-<div class="status">Drag shapes to move them. Door positions use the left-panel sliders; setbacks remain draggable on the drawing. Drag the blue corner to resize.</div>
+<div class="status">Drag shapes to move. Use side handles or corner to resize (visual only). Lock / Hide / Duplicate available when selected. Snapping helps placement.</div>
+</div>
+
+<div class="section" id="selectedObjectPanel">
+<h3>Selected Object</h3>
+<div class="field"><label>Label / Text</label><input id="objLabel" placeholder="Label"></div>
+<div class="row">
+  <div class="field"><label>Width (ft)</label><input id="objW" type="number" step="0.5" min="0.5"></div>
+  <div class="field"><label>Depth (ft)</label><input id="objH" type="number" step="0.5" min="0.5"></div>
+</div>
+<div class="field">
+  <label>Rotation <span id="objAngleLabel">0°</span></label>
+  <input id="objAngle" type="range" min="0" max="360" step="1" value="0" style="width:100%">
+  <div class="row" style="margin-top:4px">
+    <button type="button" class="mini" onclick="nudgeAngle(-15)">-15°</button>
+    <button type="button" class="mini" onclick="nudgeAngle(-5)">-5°</button>
+    <button type="button" class="mini" onclick="nudgeAngle(5)">+5°</button>
+    <button type="button" class="mini" onclick="nudgeAngle(15)">+15°</button>
+    <button type="button" class="mini" onclick="nudgeAngle(90)">+90°</button>
+  </div>
+</div>
+<div class="row" style="margin-top:6px">
+  <button type="button" class="mini" id="bringForwardBtn">Bring Forward</button>
+  <button type="button" class="mini" id="sendBackBtn">Send Back</button>
+</div>
+<div class="status" style="margin-top:6px">Visual resize does not change real measurements. Use Lock to protect objects.</div>
 </div>
 
 <div class="section" id="concreteFields">
@@ -2001,6 +2144,10 @@ button.danger{color:#b42318}
 <div class="spacer"></div>
 <button class="mini" type="button" onclick="window.location.href='index.html?v='+Date.now()">← Back To Dashboard</button>
     <button id="undoBtn">Undo</button>
+    <button class="mini" id="duplicateSelectedBtn" title="Duplicate selected object">⧉ Duplicate</button>
+    <button class="mini" id="lockSelectedBtn" title="Lock / Unlock selected">🔒 Lock</button>
+    <button class="mini" id="hideSelectedBtn" title="Hide selected object">👁 Hide</button>
+    <button class="mini" id="highlightSelectedBtn" title="Toggle yellow highlight">✦ Highlight</button>
     <button class="mini danger" id="deleteSelectedBtn" title="Delete selected drawing item">🗑 Delete Selected</button>
 
 <button id="printBtn">Print</button><button id="pdfBtn">Save as PDF</button>
@@ -3271,7 +3418,9 @@ $('wSalesman')?.addEventListener('change',()=>syncDrawingSalesmanFromSelect('wSa
 
 const defaults={
  garage:[20,20,'NEW GARAGE SLAB'], apron:[20,5,'NEW CONCRETE APRON'], sidewalk:[3,20,'CONCRETE SIDEWALK'],
- pad:[10,20,'NEW PARKING PAD'], driveway:[10,30,'NEW DRIVEWAY'], custom:[10,10,''], text:[18,4,'TEXT'], dimension:[20,2,'20\'']
+ pad:[10,20,'NEW PARKING PAD'], driveway:[10,30,'NEW DRIVEWAY'], custom:[10,10,''],
+ circle:[8,8,'CIRCLE'], arrow:[12,3,'ARROW'], xmark:[6,6,'X'], line:[15,1,'LINE'], polyline:[20,1,'POLYLINE'],
+ text:[18,4,'TEXT'], dimension:[20,2,'20\'']
 };
 const DRAW_PXF=22;
 let uid=1;
@@ -3511,10 +3660,34 @@ $('eraseSurveyBtn').onclick=()=>{
 };
 
 function addObject(kind){
-  const [wf,hf,label]=defaults[kind]; snapshot();
+  const def=defaults[kind]||[10,10,kind.toUpperCase()];
+  const [wf,hf,label]=def;
+  snapshot();
   const d=currentTemplate().draw;
-  state.objects.push({id:uid++,kind,x:d.x+Math.max(12,d.w/2-wf*5),y:d.y+Math.max(12,d.h/2-hf*5),wf,hf,label,angle:0});
-  state.selected=state.objects[state.objects.length-1].id; renderObjects();
+  // Offset new objects so multiple creations do not stack exactly on top of each other
+  const offset = (state.objects.length % 6) * 18;
+  const baseX = d.x + Math.max(12, d.w/2 - wf*5) + offset;
+  const baseY = d.y + Math.max(12, d.h/2 - hf*5) + offset;
+  const obj = {
+    id: uid++,
+    kind,
+    x: baseX,
+    y: baseY,
+    wf, hf,
+    label: label || '',
+    angle: 0,
+    locked: false,
+    hidden: false,
+    highlighted: false
+  };
+  // Visual-only size fields for freeform shapes (do not affect measurements)
+  if (['custom','circle','arrow','xmark','line'].includes(kind)) {
+    obj.visualWpx = null;
+    obj.visualHpx = null;
+  }
+  state.objects.push(obj);
+  state.selected = obj.id;
+  renderObjects();
 }
 function objPixels(o){
   const p=o.pxf||DRAW_PXF;
@@ -3524,8 +3697,8 @@ function objPixels(o){
   if(o.kind==='serviceDoor') return [54,34];
   if(o.kind==='partyDoor') return [Math.max(60,o.wf*p),34];
   let w=Math.max(12,o.wf*p),h=Math.max(12,o.hf*p);
-  // Sidewalk resize handles are visual-only; their entered dimensions remain unchanged.
-  if(o.kind==='sidewalk'){
+  // Visual-only size for freeform shapes and sidewalks (does NOT change real measurements)
+  if(['sidewalk','custom','circle','arrow','xmark','line'].includes(o.kind)){
     if(Number.isFinite(o.visualWpx))w=Math.max(18,o.visualWpx);
     if(Number.isFinite(o.visualHpx))h=Math.max(18,o.visualHpx);
   }
@@ -3715,6 +3888,8 @@ function renderObjects(){
   // can never cover the setback line, dashes, or distance.
   paper.querySelectorAll('.side-setback-top-overlay').forEach(e=>e.remove());
   state.objects.forEach(o=>{
+    // Skip fully hidden objects (user can unhide later)
+    if(o.hidden) return;
     // V38: these legacy rear/alley guide objects are intentionally not drawn.
     // They caused the stray unlabeled vertical line beside the apron.
     if(['rearGap','alleyDistance','rearSetback'].includes(o.role)) return;
@@ -3726,6 +3901,20 @@ function renderObjects(){
       addPrintableConcreteHatch(el);
     }
     el.dataset.id=o.id;
+
+    // New CAD shape classes
+    if(o.kind==='circle') el.classList.add('circle-shape');
+    if(o.kind==='arrow') el.classList.add('arrow-shape');
+    if(o.kind==='xmark') el.classList.add('xmark-shape');
+    if(o.kind==='line' || o.kind==='polyline') el.classList.add('line-shape');
+    if(o.highlighted) el.classList.add('highlighted');
+    if(o.locked) el.classList.add('locked-obj');
+    // Existing vs Proposed visual distinction
+    if(o.role && (String(o.role).startsWith('existing') || /EXISTING|STAYS|DO NOT TOUCH/i.test(o.label||''))){
+      el.classList.add('existing-object');
+    } else if(o.role && (String(o.role).startsWith('new') || /PROPOSED|NEW /i.test(o.label||''))){
+      el.classList.add('proposed-object');
+    }
 
     if(o.role)el.dataset.role=o.role;
     Object.assign(el.style,{left:o.x+'px',top:o.y+'px',width:w+'px',height:h+'px',transform:o.role==='lotLength'?'none':`rotate(${o.angle||0}deg)`});
@@ -3946,9 +4135,20 @@ function renderObjects(){
       if(!panelOnly){
         const hideHandle=(o.role==='apron'&&sameGarageApronWidth());
         if(o.kind!=='dimension' && !hideHandle){
+          // Corner handle (existing behavior)
           const hnd=document.createElement('div');hnd.className='handle';hnd.dataset.handle='1';
           if(o.kind==='sidewalk'){hnd.style.width='52px';hnd.style.height='52px';hnd.style.right='-28px';hnd.style.bottom='-28px'}
           el.appendChild(hnd);
+          // Side / edge handles (AutoCAD-style)
+          if(!['line','arrow'].includes(o.kind)){
+            ['n','s','e','w'].forEach(side=>{
+              const sh=document.createElement('div');
+              sh.className='side-handle '+side;
+              sh.dataset.side=side;
+              sh.dataset.handle='1';
+              el.appendChild(sh);
+            });
+          }
         }
         const stem=document.createElement('div');stem.className='rotate-stem';el.appendChild(stem);
         const rh=document.createElement('div');rh.className='rotate-handle';rh.dataset.rotate='1';el.appendChild(rh);
@@ -3980,10 +4180,97 @@ function renderObjects(){
 function getObj(id){return state.objects.find(o=>o.id===+id)}
 function updateInspector(){
   const o=getObj(state.selected);
-  if($('objLabel'))$('objLabel').value=o?.label||'';if($('objW'))$('objW').value=o?.wf??'';if($('objH'))$('objH').value=o?.hf??'';if($('objAngle'))$('objAngle').value=o?.angle??0;
+  if($('objLabel'))$('objLabel').value=o?.customText || o?.label || '';
+  if($('objW'))$('objW').value=o?.wf??'';
+  if($('objH'))$('objH').value=o?.hf??'';
+  if($('objAngle')){
+    $('objAngle').value=Math.round(o?.angle??0);
+    const lab=document.getElementById('objAngleLabel');
+    if(lab) lab.textContent=Math.round(o?.angle??0)+'°';
+  }
+  const lb=document.getElementById('lockSelectedBtn');
+  if(lb) lb.textContent=(o&&o.locked)?'🔓 Unlock':'🔒 Lock';
 }
+
+// ===== Snapping System (corner / edge / center) =====
+const SNAP_DIST = 12; // pixels at current scale
+let snapPreviewEl = null;
+
+function getSnapPoints(o){
+  const [w,h] = objPixels(o);
+  return {
+    corners: [
+      {x:o.x, y:o.y}, {x:o.x+w, y:o.y},
+      {x:o.x, y:o.y+h}, {x:o.x+w, y:o.y+h}
+    ],
+    edges: [
+      {x:o.x+w/2, y:o.y}, {x:o.x+w/2, y:o.y+h},
+      {x:o.x, y:o.y+h/2}, {x:o.x+w, y:o.y+h/2}
+    ],
+    center: {x:o.x+w/2, y:o.y+h/2}
+  };
+}
+
+function findSnap(moving, excludeId, dx, dy){
+  const [mw,mh] = objPixels(moving);
+  const candidates = [];
+  // points on the moving object after tentative move
+  const mx = moving.x + dx, my = moving.y + dy;
+  const mPoints = [
+    {x:mx, y:my, type:'corner'}, {x:mx+mw, y:my, type:'corner'},
+    {x:mx, y:my+mh, type:'corner'}, {x:mx+mw, y:my+mh, type:'corner'},
+    {x:mx+mw/2, y:my, type:'edge'}, {x:mx+mw/2, y:my+mh, type:'edge'},
+    {x:mx, y:my+mh/2, type:'edge'}, {x:mx+mw, y:my+mh/2, type:'edge'},
+    {x:mx+mw/2, y:my+mh/2, type:'center'}
+  ];
+  for(const other of state.objects){
+    if(other.id===excludeId || other.hidden) continue;
+    const pts = getSnapPoints(other);
+    const all = [
+      ...pts.corners.map(p=>({...p,type:'corner'})),
+      ...pts.edges.map(p=>({...p,type:'edge'})),
+      {...pts.center, type:'center'}
+    ];
+    for(const mp of mPoints){
+      for(const tp of all){
+        const dist = Math.hypot(mp.x - tp.x, mp.y - tp.y);
+        if(dist < SNAP_DIST){
+          candidates.push({
+            dist,
+            dx: tp.x - (mp.x - dx), // correction to apply to original
+            dy: tp.y - (mp.y - dy),
+            type: mp.type + '-to-' + tp.type,
+            target: tp
+          });
+        }
+      }
+    }
+  }
+  if(!candidates.length) return null;
+  candidates.sort((a,b)=>a.dist-b.dist);
+  return candidates[0];
+}
+
+function showSnapPreview(pt){
+  if(!snapPreviewEl){
+    snapPreviewEl = document.createElement('div');
+    snapPreviewEl.style.cssText = 'position:absolute;width:14px;height:14px;border:2px solid #eab308;border-radius:50%;background:rgba(234,179,8,.35);pointer-events:none;z-index:200;transform:translate(-50%,-50%);box-shadow:0 0 0 4px rgba(234,179,8,.2)';
+    drawLayer.appendChild(snapPreviewEl);
+  }
+  snapPreviewEl.style.left = pt.x + 'px';
+  snapPreviewEl.style.top = pt.y + 'px';
+  snapPreviewEl.style.display = 'block';
+}
+function hideSnapPreview(){
+  if(snapPreviewEl) snapPreviewEl.style.display = 'none';
+}
+
 function objectPointerDown(e){
   e.preventDefault(); const el=e.currentTarget,o=getObj(el.dataset.id); if(!o)return;
+  // Locked objects can still be selected but not moved / resized / rotated
+  if(o.locked && !e.target.dataset.handle && !e.target.dataset.rotate){
+    state.selected=o.id; renderObjects(); return;
+  }
   if(state.selected!==o.id){
     state.selected=o.id;
     // V33: for sidewalks, continue this same pointer gesture so the user can
@@ -4008,7 +4295,9 @@ function objectPointerDown(e){
     window.addEventListener('pointermove',moveLot);window.addEventListener('pointerup',upLot);
     return;
   }
-  const resizing=e.target.dataset.handle==='1', rotating=e.target.dataset.rotate==='1', cutSizing=e.target.dataset.cutend==='1'; snapshot();
+  const resizing=e.target.dataset.handle==='1', rotating=e.target.dataset.rotate==='1', cutSizing=e.target.dataset.cutend==='1';
+  const sideHandle=e.target.dataset.side||null; // n,s,e,w
+  snapshot();
   const startX=e.clientX,startY=e.clientY, ox=o.x,oy=o.y, ow=o.wf,oh=o.hf, oa=o.angle||0, op=o.pxf||DRAW_PXF;
   const [pw0,ph0]=objPixels(o), cx=o.x+pw0/2, cy=o.y+ph0/2;
   const attachRoles=['apron','servicePad','frontLeft','frontMiddle','frontRight','rearLeft','rearMiddle','rearRight','patio','serviceDoor','partyDoor','partyReturnA','partyReturnB'];
@@ -4024,6 +4313,23 @@ function objectPointerDown(e){
       o.angle=((oa+(a-startAngle))%360+360)%360;
     } else if(resizing){
       const p=o.pxf||DRAW_PXF;
+      // Side-handle resizing (visual only for freeform / sidewalk)
+      if(sideHandle){
+        if(['custom','circle','arrow','xmark','line','sidewalk'].includes(o.kind) || !o.role){
+          let nw = pw0, nh = ph0, nx = o.x, ny = o.y;
+          if(sideHandle==='e'){ nw = Math.max(18, pw0 + dx); }
+          else if(sideHandle==='w'){ nw = Math.max(18, pw0 - dx); nx = ox + dx; }
+          else if(sideHandle==='s'){ nh = Math.max(18, ph0 + dy); }
+          else if(sideHandle==='n'){ nh = Math.max(18, ph0 - dy); ny = oy + dy; }
+          if(o.kind==='sidewalk'){
+            o.visualWpx = nw; o.visualHpx = nh; o.x = nx; o.y = ny;
+          } else {
+            // Keep measurement fields, only change visual size for free shapes
+            o.visualWpx = nw; o.visualHpx = nh; o.x = nx; o.y = ny;
+          }
+          renderObjects(); return;
+        }
+      }
       // V21: corner handles change appearance only. Entered dimensions and all return numbers stay untouched.
       if(state.mode==='concrete' && o.kind==='sidewalk'){
         o.visualWpx=Math.max(24,pw0+dx);o.visualHpx=Math.max(80,ph0+dy);renderObjects();return;
@@ -4178,8 +4484,20 @@ function objectPointerDown(e){
       const t=currentTemplate(),[pw,ph]=objPixels(o);
       const ang=((o.angle||0)%180+180)%180;
       const bw=(ang>45&&ang<135)?ph:pw, bh=(ang>45&&ang<135)?pw:ph;
-      o.x=Math.max(-bw/2,Math.min(t.w-bw/2,ox+dx));
-      o.y=Math.max(-bh/2,Math.min(t.h-bh/2,oy+dy));
+      let finalDx = dx, finalDy = dy;
+      // Snapping (skip for attached garage children and panel-only roles)
+      if(!o.locked && !['serviceDoor','partyDoor'].includes(o.role)){
+        const snap = findSnap(o, o.id, dx, dy);
+        if(snap){
+          finalDx = snap.dx;
+          finalDy = snap.dy;
+          showSnapPreview(snap.target);
+        } else {
+          hideSnapPreview();
+        }
+      }
+      o.x=Math.max(-bw/2,Math.min(t.w-bw/2,ox+finalDx));
+      o.y=Math.max(-bh/2,Math.min(t.h-bh/2,oy+finalDy));
       if(o.role==='garage'){
         attachRoles.forEach(r=>{const a=byRole(r),st=attachedStart[r];if(a&&st){a.x=st.x+(o.x-ox);a.y=st.y+(o.y-oy)}});
         syncVisualSetbacksToGarage();
@@ -4187,15 +4505,39 @@ function objectPointerDown(e){
     }
     renderObjects();
   };
-  const up=()=>{delete o._dragLeft;delete o._dragRight;delete o._dragRear;delete o._garageStartX;delete o._wallStart;const pd=byRole('partyDoor');if(pd)delete pd._returnStart;window.removeEventListener('pointermove',move);window.removeEventListener('pointerup',up)};
+  const up=()=>{
+    hideSnapPreview();
+    delete o._dragLeft;delete o._dragRight;delete o._dragRear;delete o._garageStartX;delete o._wallStart;
+    const pd=byRole('partyDoor');if(pd)delete pd._returnStart;
+    window.removeEventListener('pointermove',move);window.removeEventListener('pointerup',up);
+  };
   window.addEventListener('pointermove',move);window.addEventListener('pointerup',up);
 }
 
 document.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>addObject(b.dataset.add));
-if($('objLabel')) $('objLabel').oninput=()=>{const o=getObj(state.selected);if(o){o.label=$('objLabel').value;renderObjects()}};
+if($('objLabel')) $('objLabel').oninput=()=>{const o=getObj(state.selected);if(o){o.label=$('objLabel').value; if(o.customText!==undefined) o.customText=$('objLabel').value; renderObjects()}};
 if($('objW')) $('objW').onchange=()=>{const o=getObj(state.selected);if(o){snapshot();o.wf=Math.max(.5,+$('objW').value||.5);renderObjects()}};
 if($('objH')) $('objH').onchange=()=>{const o=getObj(state.selected);if(o){snapshot();o.hf=Math.max(.5,+$('objH').value||.5);renderObjects()}};
-if($('objAngle')) $('objAngle').onchange=()=>{const o=getObj(state.selected);if(o){snapshot();o.angle=((+$('objAngle').value||0)%360+360)%360;renderObjects()}};
+if($('objAngle')){
+  $('objAngle').oninput=()=>{
+    const o=getObj(state.selected);
+    if(!o) return;
+    o.angle=((+$('objAngle').value||0)%360+360)%360;
+    const lab=document.getElementById('objAngleLabel');
+    if(lab) lab.textContent=Math.round(o.angle)+'°';
+    renderObjects();
+  };
+  $('objAngle').onchange=()=>{const o=getObj(state.selected);if(o){snapshot();o.angle=((+$('objAngle').value||0)%360+360)%360;renderObjects()}};
+}
+window.nudgeAngle=function(delta){
+  const o=getObj(state.selected); if(!o) return;
+  snapshot();
+  o.angle=((o.angle||0)+delta)%360; if(o.angle<0) o.angle+=360;
+  if($('objAngle')) $('objAngle').value=Math.round(o.angle);
+  const lab=document.getElementById('objAngleLabel');
+  if(lab) lab.textContent=Math.round(o.angle)+'°';
+  renderObjects();
+};
 
 $('staysBtn').onclick=()=>{snapshot();const d=currentTemplate().draw;state.objects.push({id:uid++,kind:'stays',x:d.x+40,y:d.y+60,wf:10,hf:3,label:'STAYS',angle:0});state.selected=state.objects.at(-1).id;renderObjects()};
 
@@ -4760,17 +5102,25 @@ function buildWizardForMode(forcedMode){
 
   // House is generated at the same site scale and placed above the garage with the requested gap.
   const enteredHW=+$('wHouseW').value||0,enteredHH=+$('wHouseH').value||0,hgap=+$('wHouseGap').value||0;
-  // V103: always show an EXISTING HOME near the top of the drawing area.
-  // If dimensions are omitted, use a visual placeholder only (22' x 45') so the
-  // site plan still reads correctly without claiming user-entered dimensions.
-  const hw=enteredHW||22,hh=enteredHH||45;
+  // If user did NOT enter house dimensions: still show a house silhouette labeled
+  // "Existing House" / "Home" with NO fake measurements on the label.
+  const hasHouseDims = enteredHW > 0 && enteredHH > 0;
+  const hw = hasHouseDims ? enteredHW : 22;
+  const hh = hasHouseDims ? enteredHH : 45;
   {
     const houseP=layoutScale;
     const hx=d.x+Math.max(20,Math.min(d.w-hw*houseP-20,xGarage+(garagePxW-hw*houseP)/2));
     const houseBack=yGarage-Math.max(18,hgap*layoutScale);
     const hy=Math.max(d.y+42,houseBack-hh*houseP);
-    wizardObj('house',hw,hh,`EXISTING HOUSE
-${hw}' x ${hh}'`,hx,hy,0,'house');state.objects.at(-1).pxf=houseP;
+    const houseLabel = hasHouseDims
+      ? `EXISTING HOUSE\n${hw}' x ${hh}'`
+      : `EXISTING HOUSE\n(Home)`;
+    wizardObj('house',hw,hh,houseLabel,hx,hy,0,'house');
+    state.objects.at(-1).pxf=houseP;
+    if(!hasHouseDims){
+      // Mark so future logic knows these are visual-only placeholder dims
+      state.objects.at(-1).visualOnly = true;
+    }
     if(hgap){
       const actualBack=hy+hh*houseP;
       const gapPx=Math.max(18,yGarage-actualBack);
@@ -5019,6 +5369,81 @@ function deleteCurrentlySelectedItem(){
 }
 const deleteSelectedButton=document.getElementById('deleteSelectedBtn');
 if(deleteSelectedButton)deleteSelectedButton.onclick=deleteCurrentlySelectedItem;
+
+// ===== CAD tools: Duplicate / Lock / Hide / Highlight =====
+function getSelectedObj(){ return state.objects.find(o=>o.id===state.selected); }
+
+const dupBtn=document.getElementById('duplicateSelectedBtn');
+if(dupBtn) dupBtn.onclick=()=>{
+  const o=getSelectedObj(); if(!o) return alert('Select an object first');
+  snapshot();
+  const copy=JSON.parse(JSON.stringify(o));
+  copy.id=uid++;
+  copy.x=(o.x||0)+24;
+  copy.y=(o.y||0)+24;
+  copy.locked=false;
+  copy.hidden=false;
+  state.objects.push(copy);
+  state.selected=copy.id;
+  renderObjects();
+};
+
+const lockBtn=document.getElementById('lockSelectedBtn');
+if(lockBtn) lockBtn.onclick=()=>{
+  const o=getSelectedObj(); if(!o) return alert('Select an object first');
+  snapshot();
+  o.locked=!o.locked;
+  lockBtn.textContent=o.locked?'🔓 Unlock':'🔒 Lock';
+  renderObjects();
+};
+
+const hideBtn=document.getElementById('hideSelectedBtn');
+if(hideBtn) hideBtn.onclick=()=>{
+  const o=getSelectedObj(); if(!o) return alert('Select an object first');
+  snapshot();
+  o.hidden=true;
+  state.selected=null;
+  renderObjects();
+};
+
+const hlBtn=document.getElementById('highlightSelectedBtn');
+if(hlBtn) hlBtn.onclick=()=>{
+  const o=getSelectedObj(); if(!o) return alert('Select an object first');
+  snapshot();
+  o.highlighted=!o.highlighted;
+  renderObjects();
+};
+
+const bringBtn=document.getElementById('bringForwardBtn');
+if(bringBtn) bringBtn.onclick=()=>{
+  const o=getSelectedObj(); if(!o) return;
+  const idx=state.objects.findIndex(x=>x.id===o.id);
+  if(idx<0 || idx===state.objects.length-1) return;
+  snapshot();
+  state.objects.splice(idx,1);
+  state.objects.push(o);
+  renderObjects();
+};
+
+const sendBtn=document.getElementById('sendBackBtn');
+if(sendBtn) sendBtn.onclick=()=>{
+  const o=getSelectedObj(); if(!o) return;
+  const idx=state.objects.findIndex(x=>x.id===o.id);
+  if(idx<=0) return;
+  snapshot();
+  state.objects.splice(idx,1);
+  state.objects.unshift(o);
+  renderObjects();
+};
+
+// Keep lock button label in sync when selection changes
+const _origUpdateInspector=typeof updateInspector==='function'?updateInspector:null;
+updateInspector=function(){
+  if(_origUpdateInspector) _origUpdateInspector();
+  const o=getSelectedObj();
+  const lb=document.getElementById('lockSelectedBtn');
+  if(lb) lb.textContent=(o&&o.locked)?'🔓 Unlock':'🔒 Lock';
+};
 
 </script>
 </body>

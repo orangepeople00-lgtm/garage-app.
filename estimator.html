@@ -548,6 +548,50 @@
   .actions, .estimate-assistant { display:none!important; }
 }
 
+
+/* Device responsive sizing update */
+html, body { width:100%; max-width:100%; overflow-x:hidden; }
+body { min-height:100vh; }
+.max-w-\[1280px\], .max-w-\[1680px\] {
+    width:100% !important;
+    max-width:none !important;
+}
+.px-8 { padding-left:clamp(12px,2vw,32px) !important; padding-right:clamp(12px,2vw,32px) !important; }
+.grid { min-width:0; }
+.grid > *, .flex > * { min-width:0; max-width:100%; }
+.customer-print-form,
+.estimate-assistant-body {
+    width:100%;
+    min-width:0;
+}
+.customer-print-form input,
+.customer-print-form select,
+.customer-print-form button,
+.customer-print-form textarea {
+    width:100%;
+    min-width:0;
+}
+@media (min-width:1200px) {
+    .customer-print-form {
+        grid-template-columns:repeat(4,minmax(0,1fr)) !important;
+    }
+}
+@media (max-width:1199px) {
+    .customer-print-form {
+        grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    }
+}
+@media (max-width:700px) {
+    .customer-print-form,
+    .estimate-assistant-body {
+        grid-template-columns:1fr !important;
+    }
+    .customer-print-form button { width:100% !important; }
+}
+/* prevent customer fields from pushing page wider */
+input, select, textarea, button { box-sizing:border-box; }
+.print-action span{white-space:normal;text-align:center;}
+@media(max-width:640px){.print-action{font-size:.75rem!important;}}
 </style>
 </head>
 <body class="bg-zinc-950 text-zinc-200"><div style="position:fixed;bottom:8px;left:8px;z-index:999999;background:#166534;color:white;padding:4px 7px;border-radius:6px;font:800 9px Arial">CLEAN ESTIMATOR BUILD</div><div style="position:fixed;bottom:10px;right:10px;z-index:999999;background:#dc2626;color:#fff;padding:6px 10px;border-radius:8px;font:900 11px Arial">ESTIMATOR UPDATE V2</div><a id="backToProductionBtn" class="back-production-btn" href="index.html?v=20260818v2">← Back To Dashboard</a>
@@ -578,7 +622,10 @@
         </div>
 
         <div class="px-8 pb-8">
-            <div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
+            <div class="mb-5 grid grid-cols-1 lg:grid-cols-3 gap-3">
+<div class="lg:col-span-2 rounded-2xl border border-zinc-700 bg-zinc-900 p-3"><label class="text-[10px] font-bold tracking-wider text-zinc-400 block mb-1">SEARCH ESTIMATOR</label><div class="flex gap-2"><input id="estimatorSearch" type="search" placeholder="Search retaining wall, EV, apron, window, demolition..." oninput="searchEstimatorOptions()" onkeydown="if(event.key==='Enter'){event.preventDefault();jumpToEstimatorSearchResult();}" class="calc-input flex-1 bg-zinc-950 border border-zinc-700 rounded-xl px-3 py-2 text-sm"><button type="button" onclick="jumpToEstimatorSearchResult()" class="px-3 py-2 rounded-xl bg-blue-700 text-xs font-bold">GO</button></div><div id="estimatorSearchStatus" class="text-[10px] text-zinc-500 mt-1">Type a feature name and press Go.</div></div>
+<div class="rounded-2xl border border-zinc-700 bg-zinc-900 p-3"><div class="flex items-center justify-between"><span class="text-[10px] font-bold tracking-wider text-zinc-400">ESTIMATE HEALTH CHECK</span><span id="healthCheckBadge" class="text-[10px] font-extrabold text-green-400">READY</span></div><div id="healthCheckList" class="mt-2 text-[10px] space-y-1 text-zinc-400">Checking estimate…</div></div>
+</div><div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
                 
                 <!-- INPUTS -->
                 <div class="xl:col-span-7 bg-zinc-900 border border-zinc-800 rounded-3xl p-7 garage-shadow">
@@ -1263,36 +1310,14 @@
                                             <option value="hardie">Hardieboard / Cement Board (upgrade)</option>
                                         </select>
                                     </div>
-                                    <div>
-                                        <label class="text-xs text-zinc-400 block mb-1">Vinyl Color</label>
-                                        <select id="vinylColor" onchange="calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2 text-sm">
-                                            <option value="#F5F5F5">White</option>
-                                            <option value="#E8D5B7">Beige</option>
-                                            <option value="#D3D3D3">Light Gray</option>
-                                            <option value="#0077B6">Ocean Blue</option>
-                                            <option value="#FFEB3B">Bright Yellow</option>
-                                            <option value="#228B22">Forest Green</option>
-                                            <option value="#8B4513">Brown</option>
-                                            <option value="#FF0000">Red</option>
-                                            <option value="#000000">Black</option>
-                                            <option value="#D2B48C">Tan</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="text-xs text-zinc-400 block mb-1">Hardie Color</label>
-                                        <select id="hardieColor" onchange="calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2 text-sm">
-                                            <option value="#F5F5F5">White</option>
-                                            <option value="#E8D5B7">Beige</option>
-                                            <option value="#D3D3D3">Light Gray</option>
-                                            <option value="#0077B6">Ocean Blue</option>
-                                            <option value="#FFEB3B">Bright Yellow</option>
-                                            <option value="#228B22">Forest Green</option>
-                                            <option value="#8B4513">Brown</option>
-                                            <option value="#FF0000">Red</option>
-                                            <option value="#000000">Black</option>
-                                            <option value="#D2B48C">Tan</option>
-                                        </select>
-                                    </div>
+                                    <!-- Color choices intentionally hidden from estimator UI.
+                                         Keep default values for existing photo/state logic. -->
+                                    <select id="vinylColor" class="hidden" aria-hidden="true" tabindex="-1">
+                                        <option value="#F5F5F5" selected>White</option>
+                                    </select>
+                                    <select id="hardieColor" class="hidden" aria-hidden="true" tabindex="-1">
+                                        <option value="#F5F5F5" selected>White</option>
+                                    </select>
                                     <div id="hardieCalcBox" class="hidden bg-zinc-950 border border-zinc-700 rounded-2xl p-3 text-xs md:col-span-2">
                                         <div class="flex justify-between"><span>Siding area:</span> <span id="sidingAreaDisplay" class="font-mono">0</span> sq ft</div>
                                         <div class="flex justify-between"><span>Door opening subtracted:</span> <span id="doorOpeningDisplay" class="font-mono">112</span> sq ft</div>
@@ -1307,7 +1332,7 @@
                             <div class="mt-3 pt-3 border-t border-zinc-700 col-span-2 md:col-span-3">
                                 <div class="text-xs font-semibold text-zinc-400 mb-1.5 flex items-center gap-x-2">
                                     <i class="fa-solid fa-plus-circle"></i>
-                                    <span>CUSTOM EXTRAS</span>
+                                    <span>CUSTOM EXTRA / OPTIONS</span>
                                 </div>
                                 <div id="extrasContainer" class="space-y-2 mb-2">
                                     <!-- Dynamic extra rows added via JS -->
@@ -1315,9 +1340,9 @@
                                 <button type="button" onclick="addExtraRow()" 
                                         class="px-4 py-2 text-xs bg-blue-600 hover:bg-blue-500 active:bg-blue-700 transition-all rounded-2xl flex items-center gap-x-2">
                                     <i class="fa-solid fa-plus"></i>
-                                    <span>Add Custom Extra</span>
+                                    <span>Add Custom Extra / Option</span>
                                 </button>
-                                <div class="text-[9px] text-zinc-500 mt-1">Describe the item and enter its internal cost. These will be added to the total and shown in breakdown.</div>
+                                <div class="text-[9px] text-zinc-500 mt-1">Describe the item and internal cost. Included in Price is the default and hides the item's price on the customer estimate. Option prints the item in Notes / Inclusions with its +price.</div>
                             </div>
                         
                         <!-- Other toggles -->
@@ -1361,19 +1386,20 @@
                 <!-- RESULTS PANEL -->
                 <div class="xl:col-span-5 bg-zinc-900 border border-zinc-800 rounded-3xl p-7 garage-shadow flex flex-col">
                     <div class="flex items-center justify-between gap-3 mb-4 flex-wrap">
-                        <div class="section-header flex items-center gap-x-2">
+                        <button type="button" onclick="toggleEstimateSummary()" class="section-header flex items-center gap-x-2 cursor-pointer select-none" aria-expanded="false" aria-controls="breakdown" title="Open estimate summary">
+                            <i id="estimateSummaryArrow" class="fa-solid fa-chevron-right transition-transform"></i>
                             <i class="fa-solid fa-calculator"></i>
                             <span>ESTIMATE SUMMARY</span>
-                        </div>
+                        </button>
                         <div onclick="copyEstimate()" class="cursor-pointer flex items-center text-yellow-400 hover:text-blue-300 transition-colors text-xs font-semibold">
                             <i class="fa-solid fa-copy mr-1.5"></i>
                             <span>COPY</span>
                         </div>
                     </div>
 
-                    <!-- Breakdown -->
+                    <!-- Breakdown: collapsed by default; totals remain visible -->
                     <div id="breakdown" 
-                         class="flex-1 overflow-auto text-sm space-y-px pr-1 custom-scroll max-h-[420px] text-zinc-300">
+                         class="hidden flex-1 overflow-auto text-sm space-y-px pr-1 custom-scroll max-h-[420px] text-zinc-300">
                         <!-- Populated dynamically by JS -->
                     </div>
 
@@ -1447,7 +1473,7 @@
                 </div>
             </div>
 
-            <!-- Customer / Print Estimate Sheet -->
+            <div class="mt-5 rounded-3xl border border-zinc-700 bg-zinc-900 p-5 garage-shadow"><div class="flex items-center justify-between gap-3 flex-wrap"><div><div class="section-header flex items-center gap-x-2"><i class="fa-solid fa-code-compare"></i><span>GARAGE COMPARISON</span></div><div class="text-[10px] text-zinc-500 mt-1">Save current calculator as Option A or B, then change the garage and save the other option.</div></div><button type="button" onclick="clearEstimateComparison()" class="text-[10px] px-3 py-2 rounded-xl border border-zinc-700 bg-zinc-950">Clear Comparison</button></div><div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3"><div class="rounded-2xl border border-zinc-700 bg-zinc-950 p-4"><div class="flex justify-between"><b>OPTION A</b><button type="button" onclick="saveEstimateComparison('A')" class="text-xs px-3 py-1.5 rounded-lg bg-blue-700">Save Current</button></div><div id="compareA" class="text-xs text-zinc-400 mt-2">Not saved yet.</div></div><div class="rounded-2xl border border-zinc-700 bg-zinc-950 p-4"><div class="flex justify-between"><b>OPTION B</b><button type="button" onclick="saveEstimateComparison('B')" class="text-xs px-3 py-1.5 rounded-lg bg-blue-700">Save Current</button></div><div id="compareB" class="text-xs text-zinc-400 mt-2">Not saved yet.</div></div></div><div id="compareDifference" class="hidden mt-3 rounded-xl bg-blue-950/60 border border-blue-800 p-3 text-sm text-yellow-400 font-bold"></div></div><!-- Customer / Print Estimate Sheet -->
             <div class="customer-print-panel mt-6 bg-zinc-900 border border-zinc-800 rounded-3xl p-6 garage-shadow">
                 <div class="flex items-start justify-between gap-4 flex-wrap mb-5">
                     <div>
@@ -1497,7 +1523,7 @@
                                class="calc-input w-full bg-zinc-950 border border-zinc-700 text-white rounded-2xl px-4 py-3 text-sm focus:border-blue-500">
                     </div>
                     <button type="button" onclick="safePrintEstimateSheet()"
-                            class="print-action px-5 py-3 text-sm font-semibold bg-green-700 hover:bg-green-600 active:bg-green-800 transition-all rounded-2xl flex items-center justify-center gap-x-2 text-white">
+                            class="print-action w-full px-3 sm:px-5 py-3 text-xs sm:text-sm font-semibold bg-green-700 hover:bg-green-600 active:bg-green-800 transition-all rounded-2xl flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-white leading-tight">
                         <i class="fa-solid fa-file-invoice"></i>
                         <span>Create / View Estimate Sheet</span>
                     </button>
@@ -1505,34 +1531,7 @@
             </div>
 
 
-            <div class="estimate-change-panel mt-6 rounded-3xl border border-zinc-700 bg-zinc-900/80 overflow-hidden">
-                <div class="px-4 py-3 bg-blue-950/70 border-b border-zinc-700 flex items-center justify-between gap-3 flex-wrap">
-                    <div class="assistant-header-copy">
-                        <div class="text-base font-semibold text-white">Estimate Change Assistant</div>
-                        <div class="text-xs text-zinc-400 mt-1">Describe a common change in plain language, or copy the current estimate into ChatGPT for a more open-ended edit.</div>
-                    </div>
-                    <button type="button" onclick="copyEstimateForChatGPT()" class="text-xs px-3 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 border border-zinc-600">Copy Estimate for ChatGPT</button>
-                </div>
-                <div class="p-5">
-                    <div class="estimate-assistant-body">
-                        <div>
-                            <label for="estimateChangeRequest" class="text-xs text-zinc-400 block mb-2">What would you like to change?</label>
-                            <textarea id="estimateChangeRequest" rows="4" placeholder="Example: change siding to gray, move the service door to the right wall, remove gutters, change the roof to gable..." class="w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-4 py-3 text-sm text-white focus:border-blue-500 resize-y"></textarea>
-                            <div id="estimateChangeStatus" class="text-xs text-zinc-400 mt-2 min-h-[18px]"></div>
-                        </div>
-                        <div class="estimate-assistant-actions">
-                            <button type="button" onclick="applyLocalEstimateChange()" class="w-full px-4 py-3 rounded-xl bg-blue-700 hover:bg-blue-600 text-white text-sm font-semibold">
-                                <i class="fa-solid fa-wand-magic-sparkles mr-2"></i>Apply Changes
-                            </button>
-                            <button type="button" onclick="openChatGPTWithEstimate()" class="w-full px-4 py-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white text-sm font-semibold border border-zinc-600">
-                                <i class="fa-solid fa-arrow-up-right-from-square mr-2"></i>Open ChatGPT
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Quick Load Examples -->
+                        <!-- Quick Load Examples -->
             <div class="xl:col-span-12 mt-6 flex flex-wrap gap-2 items-center">
                 <span class="text-xs uppercase tracking-widest text-zinc-500 px-2">Quick load examples:</span>
                 <button onclick="loadExample(1)" 
@@ -2190,30 +2189,21 @@
             }
         }
 
+        function updateStickyEstimateTotal(internal,quote){const a=document.getElementById('stickyInternalTotal'),b=document.getElementById('stickyCustomerQuote');if(a)a.textContent='$'+Number(internal||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});if(b)b.textContent='$'+Number(quote||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
+        function updateEstimateHealthCheck(data){const issues=[],warnings=[],d=getGarageDimensions();if(!(d.width>0&&d.depth>0))issues.push('Garage size is missing.');if(!String(document.getElementById('salesman')?.value||'').trim())issues.push('Salesman is not selected.');if(!String(document.getElementById('customerName')?.value||'').trim())warnings.push('Customer name needed before estimate sheet.');if(!String(document.getElementById('customerAddress')?.value||'').trim())warnings.push('Customer address needed before estimate sheet.');const city=document.getElementById('city')?.value||'',wall=Number(document.getElementById('wallHeight')?.value||8),oh=Number(document.getElementById('overheadDoorHeight')?.value||7);if(wall<oh+1)issues.push(`Wall height must be at least ${oh+1}' for the ${oh}' overhead door.`);if(city==='Chicago'&&wall>10)warnings.push('Typically in Chicago 10ft Walls are Max.');if(data&&data.totalConcreteArea>1200)warnings.push('Large concrete quantity — verify dimensions.');const list=document.getElementById('healthCheckList'),badge=document.getElementById('healthCheckBadge');if(list){const rows=[];if(!issues.length&&!warnings.length)rows.push('<div class="text-green-400">✓ No conflicts detected.</div>');issues.forEach(x=>rows.push(`<div class="text-red-400">● ${x}</div>`));warnings.forEach(x=>rows.push(`<div class="text-yellow-400">▲ ${x}</div>`));list.innerHTML=rows.join('');}if(badge){badge.textContent=issues.length?'CHECK':warnings.length?'REVIEW':'READY';badge.className='text-[10px] font-extrabold '+(issues.length?'text-red-400':warnings.length?'text-yellow-400':'text-green-400');}return{issues,warnings};}
+        function searchEstimatorOptions(){const q=String(document.getElementById('estimatorSearch')?.value||'').trim().toLowerCase(),status=document.getElementById('estimatorSearchStatus');document.querySelectorAll('[data-estimator-search-hit="1"]').forEach(el=>{el.style.outline='';el.removeAttribute('data-estimator-search-hit')});if(!q){if(status)status.textContent='Type a feature name and press Go.';return[]}const candidates=[...document.querySelectorAll('label,button,.section-header,select,input')].filter(el=>el.id!=='estimatorSearch'),hits=candidates.filter(el=>((el.innerText||'')+' '+(el.getAttribute('placeholder')||'')+' '+(el.id||'')).toLowerCase().includes(q));if(status)status.textContent=hits.length?`${hits.length} match${hits.length===1?'':'es'} found. Press Go to jump.`:'No matching estimator option found.';hits.slice(0,5).forEach(el=>{el.style.outline='2px solid #eab308';el.style.outlineOffset='2px';el.setAttribute('data-estimator-search-hit','1')});return hits;}
+        function jumpToEstimatorSearchResult(){const hits=searchEstimatorOptions();if(!hits.length)return;(hits[0].closest('div')||hits[0]).scrollIntoView({behavior:'smooth',block:'center'});}
+        let estimateComparison={A:null,B:null};function currentComparisonSnapshot(){const d=getGarageDimensions(),money=id=>parseFloat(String(document.getElementById(id)?.textContent||'0').replace(/[^0-9.]/g,''))||0;return{width:d.width,depth:d.depth,wall:Number(document.getElementById('wallHeight')?.value||8),roof:document.getElementById('roofType')?.value||'',internal:money('internalTotal'),quote:money('customerQuote')}}function saveEstimateComparison(slot){estimateComparison[slot]=currentComparisonSnapshot();renderEstimateComparison()}function renderEstimateComparison(){['A','B'].forEach(slot=>{const el=document.getElementById('compare'+slot),s=estimateComparison[slot];if(el)el.innerHTML=s?`<div class="text-white font-bold">${s.width}' × ${s.depth}' • ${s.wall}' walls • ${String(s.roof).toUpperCase()}</div><div class="mt-1">Internal: $${s.internal.toLocaleString('en-US',{minimumFractionDigits:2})}</div><div class="text-yellow-400 font-bold">Project Price: $${s.quote.toLocaleString('en-US',{minimumFractionDigits:2})}</div>`:'Not saved yet.'});const diff=document.getElementById('compareDifference'),a=estimateComparison.A,b=estimateComparison.B;if(diff&&a&&b){const n=b.quote-a.quote;diff.textContent=`Option B is ${n>=0?'+':'-'}$${Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})} compared with Option A.`;diff.classList.remove('hidden')}else diff?.classList.add('hidden')}function clearEstimateComparison(){estimateComparison={A:null,B:null};renderEstimateComparison();}
         // Custom extras helpers
         function addExtraRow() {
-            const container = document.getElementById('extrasContainer');
-            if (!container) return;
-            const row = document.createElement('div');
-            row.className = 'grid grid-cols-1 md:grid-cols-2 gap-2 items-center';
-            row.innerHTML = `
-                <input type="text" placeholder="Description (e.g. extra electrical, custom trim)" 
-                       class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2 text-sm extra-desc" 
-                       oninput="calculateEstimate()">
-                <div class="flex items-center gap-2">
-                    <input type="number" placeholder="Cost $" step="50" min="0" 
-                           class="calc-input flex-1 bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2 text-sm extra-cost" 
-                           oninput="calculateEstimate()">
-                    <button type="button" onclick="removeExtraRow(this)" 
-                            class="px-2 py-1 text-xs text-red-400 hover:text-red-300 font-bold">×</button>
-                </div>
-            `;
-            container.appendChild(row);
-            calculateEstimate();
+            const container=document.getElementById('extrasContainer');if(!container)return;
+            const row=document.createElement('div');row.className='grid grid-cols-1 md:grid-cols-3 gap-2 items-center custom-extra-row';
+            row.innerHTML=`<input type="text" placeholder="Description" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2 text-sm extra-desc" oninput="calculateEstimate()"><input type="number" placeholder="Internal cost $" step="0.01" min="0" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2 text-sm extra-cost" oninput="calculateEstimate()"><div class="flex items-center gap-2"><select class="extra-display calc-input flex-1 bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2 text-sm" onchange="calculateEstimate()"><option value="included" selected>Included in Price</option><option value="option">Option (+price)</option></select><button type="button" onclick="removeExtraRow(this)" class="px-2 py-1 text-xs text-red-400 font-bold">×</button></div>`;
+            container.appendChild(row);calculateEstimate();
         }
 
         function removeExtraRow(btn) {
-            const row = btn.closest('.grid');
+            const row = btn.closest('.custom-extra-row');
             if (row) row.remove();
             calculateEstimate();
         }
@@ -2358,9 +2348,7 @@
             if (data.wheeling > 0) lines.push({ label: 'Wheeling charge', amount: data.wheeling, section: 'addons' });
             if (data.arlingtonSurvey > 0) lines.push({ label: 'Topographical survey (Arlington Heights)', amount: data.arlingtonSurvey, section: 'addons' });
             if (data.andrewPermit > 0) lines.push({ label: 'Andrew for Permit', amount: data.andrewPermit, section: 'addons' });
-            if (data.extrasTotal > 0) {
-                lines.push({ label: 'Custom extras', amount: data.extrasTotal, section: 'addons' });
-            }
+            document.querySelectorAll('#extrasContainer > div').forEach(row=>{const desc=String(row.querySelector('.extra-desc')?.value||'Custom Extra / Option').trim()||'Custom Extra / Option';const cost=parseFloat(row.querySelector('.extra-cost')?.value)||0;const display=row.querySelector('.extra-display')?.value||'included';if(cost>0)lines.push({label:`${desc}${display==='option'?' — customer option':' — included in price'}`,amount:cost,section:'addons'});});
             
             // Render
             let html = '';
@@ -2398,6 +2386,7 @@
             // Update totals
             document.getElementById('internalTotal').innerHTML = '$' + data.internalTotal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
             document.getElementById('customerQuote').innerHTML = '$' + data.customerQuote.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            updateStickyEstimateTotal(data.internalTotal,data.customerQuote);updateEstimateHealthCheck(data);
             updateExteriorLibraryPreview();
             const profitDisplay = document.getElementById('profitAppliedDisplay');
             if (profitDisplay) profitDisplay.textContent = '+$' + (data.profitAmount || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
@@ -2625,7 +2614,8 @@
                 const arr=Array.isArray(value)?value:[];
                 return JSON.stringify(arr.map(x=>({
                     description:String(x?.description||'').trim(),
-                    cost:String(x?.cost||'').trim()
+                    cost:String(x?.cost||'').trim(),
+                    display:String(x?.display||'included')
                 })).filter(x=>x.description||x.cost));
             }
             if(typeof value==='boolean')return value?'true':'false';
@@ -2686,7 +2676,8 @@
             });
             state.customExtras=[...document.querySelectorAll('#extrasContainer > div')].map(row=>({
                 description:String(row.querySelector('.extra-desc')?.value||''),
-                cost:String(row.querySelector('.extra-cost')?.value||'')
+                cost:String(row.querySelector('.extra-cost')?.value||''),
+                display:String(row.querySelector('.extra-display')?.value||'included')
             })).filter(x=>x.description||x.cost);
             return state;
         }
@@ -2706,9 +2697,8 @@
                 const row=container.lastElementChild;
                 if(!row)return;
                 const desc=row.querySelector('.extra-desc');
-                const cost=row.querySelector('.extra-cost');
-                if(desc)desc.value=String(item?.description||'');
-                if(cost)cost.value=String(item?.cost||'');
+                const cost=row.querySelector('.extra-cost');const display=row.querySelector('.extra-display');
+                if(desc)desc.value=String(item?.description||'');if(cost)cost.value=String(item?.cost||'');if(display)display.value=String(item?.display||'included');
             });
         }
 
@@ -3451,6 +3441,7 @@
         }
 
         async function safePrintEstimateSheet(saveToHistory = true) {
+            const health=updateEstimateHealthCheck(null);if(health.issues.length){alert('Please check the Estimate Health Check before creating the estimate sheet.\n\n'+health.issues.join('\n'));return;}
             const customerName = (document.getElementById('customerName')?.value || '').trim();
             const customerAddress = (document.getElementById('customerAddress')?.value || '').trim();
 
@@ -3473,7 +3464,7 @@
               <body style="font-family:Arial,sans-serif;padding:40px;text-align:center">
                 <h2>Opening estimate…</h2>
                 <p>Your estimate sheet is being prepared.</p>
-              </body></html>`);
+              <div id="stickyEstimateTotal" class="fixed bottom-3 left-1/2 -translate-x-1/2 z-[80] rounded-2xl border border-blue-700 bg-zinc-950/95 shadow-2xl px-4 py-2 flex items-center gap-5 backdrop-blur max-w-[94vw]"><div><div class="text-[9px] text-zinc-500">INTERNAL</div><div id="stickyInternalTotal" class="font-mono text-sm font-bold text-white">$0.00</div></div><div class="w-px h-8 bg-zinc-700"></div><div><div class="text-[9px] text-yellow-500">PROJECT PRICE</div><div id="stickyCustomerQuote" class="font-mono text-lg font-extrabold text-yellow-400">$0.00</div></div><button type="button" onclick="document.getElementById('customerQuote')?.scrollIntoView({behavior:'smooth',block:'center'})" class="text-zinc-400 hover:text-white" title="Jump to totals"><i class="fa-solid fa-arrow-up"></i></button></div></body></html>`);
             estimateWindow.document.close();
 
             try {
@@ -3742,12 +3733,9 @@
             if (checked('excavation')) notes.push('Excavation and stone base included.');
             if (val('additionalRemovalDims').trim()) notes.push(`Additional concrete removal: ${prettyDims(val('additionalRemovalDims'))}.`);
 
-            const extraDesc = [];
-            document.querySelectorAll('#extrasContainer > div').forEach(row => {
-                const desc = row.querySelector('.extra-desc');
-                if (desc && desc.value.trim()) extraDesc.push(desc.value.trim());
-            });
-            extraDesc.forEach(text => notes.push(text));
+            const extraDesc=[];
+            document.querySelectorAll('#extrasContainer > div').forEach(row=>{const desc=String(row.querySelector('.extra-desc')?.value||'').trim();const cost=parseFloat(row.querySelector('.extra-cost')?.value)||0;const display=row.querySelector('.extra-display')?.value||'included';if(desc)extraDesc.push(display==='option'&&cost>0?`${desc} (+$${cost.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})})`:desc);});
+            extraDesc.forEach(text=>notes.push(text));
 
             // Customer-entered Additional Estimate Notes always flow directly
             // into the printed Notes / Inclusions box. Read the textarea itself
@@ -4491,6 +4479,20 @@ async function openPopupChatGPT(){
 
 
         // Copy estimate to clipboard
+        function toggleEstimateSummary(){
+            const breakdown=document.getElementById('breakdown');
+            const arrow=document.getElementById('estimateSummaryArrow');
+            const button=arrow?.closest('button');
+            if(!breakdown)return;
+            const opening=breakdown.classList.contains('hidden');
+            breakdown.classList.toggle('hidden',!opening);
+            if(arrow)arrow.style.transform=opening?'rotate(90deg)':'rotate(0deg)';
+            if(button){
+                button.setAttribute('aria-expanded',opening?'true':'false');
+                button.title=opening?'Collapse estimate summary':'Open estimate summary';
+            }
+        }
+
         function copyEstimate() {
             const city = document.getElementById('city').value;
             const dims = getGarageDimensions();
@@ -4817,5 +4819,22 @@ async function openPopupChatGPT(){
         document.addEventListener('DOMContentLoaded',()=>setTimeout(toggleOverhang,0));
 document.addEventListener('DOMContentLoaded',()=>{syncDemoPreset();syncWindowQtyFromExtras();calculateEstimate();});
 </script>
+
+<!-- Sticky Total Bar — always visible while scrolling -->
+<div id="stickyEstimateTotal" class="fixed bottom-3 left-1/2 -translate-x-1/2 z-[80] rounded-2xl border border-blue-700 bg-zinc-950/95 shadow-2xl px-5 py-2.5 flex items-center gap-5 backdrop-blur max-w-[94vw]">
+  <div>
+    <div class="text-[9px] text-zinc-500 font-bold tracking-wider">INTERNAL</div>
+    <div id="stickyInternalTotal" class="font-mono text-sm font-bold text-white">\$0.00</div>
+  </div>
+  <div class="w-px h-9 bg-zinc-700"></div>
+  <div>
+    <div class="text-[9px] text-yellow-500 font-bold tracking-wider">PROJECT PRICE</div>
+    <div id="stickyCustomerQuote" class="font-mono text-lg font-extrabold text-yellow-400">\$0.00</div>
+  </div>
+  <button type="button" onclick="document.getElementById('customerQuote')?.scrollIntoView({behavior:'smooth',block:'center'})" class="ml-1 text-zinc-400 hover:text-white transition-colors" title="Jump to totals">
+    <i class="fa-solid fa-arrow-up"></i>
+  </button>
+</div>
+
 </body>
 </html>

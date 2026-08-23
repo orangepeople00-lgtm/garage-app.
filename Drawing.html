@@ -4329,8 +4329,8 @@ $('surveyUpload').onchange=e=>{
  };
  r.readAsDataURL(f);
 };
-$('placeProposedGarage').onclick=()=>{
- placeProposedGarageOnSurvey({autoErase:true});
+if($('placeProposedGarage'))$('placeProposedGarage').onclick=()=>{
+ placeProposedGarageOnSurvey({autoErase:false});
 };
 let whiteoutBrushOn=false;
 function setWhiteoutBrush(on){
@@ -4346,7 +4346,7 @@ function setWhiteoutBrush(on){
     :'Whiteout Brush: tap the button, then drag over the old garage on the survey to cover it with white. Tap again to turn off. Undo removes the last strokes.';
   if(drawLayer) drawLayer.style.cursor=whiteoutBrushOn?'crosshair':'';
 }
-$('eraseSurveyBtn').onclick=()=>{
+if($('eraseSurveyBtn'))$('eraseSurveyBtn').onclick=()=>{
   if(state.mode!=='siteplan'){
     // Non-site-plan: keep a simple white rectangle patch (no "ERASE" label)
     snapshot();
@@ -4382,29 +4382,31 @@ function paintWhiteoutDot(pt){
   });
 }
 let whiteoutPainting=false;
-viewport.addEventListener('pointerdown',e=>{
-  if(!whiteoutBrushOn||state.mode!=='siteplan') return;
-  if(e.button!=null&&e.button!==0) return;
-  e.preventDefault();
-  e.stopPropagation();
-  whiteoutPainting=true;
-  snapshot();
-  paintWhiteoutDot(paperPointFromEvent(e));
-  renderObjects();
-  try{viewport.setPointerCapture(e.pointerId)}catch(_){}
-},true);
-viewport.addEventListener('pointermove',e=>{
-  if(!whiteoutPainting||!whiteoutBrushOn) return;
-  e.preventDefault();
-  paintWhiteoutDot(paperPointFromEvent(e));
-  renderObjects();
-},true);
-viewport.addEventListener('pointerup',e=>{
-  if(!whiteoutPainting) return;
-  whiteoutPainting=false;
-  saveActiveSheetState();
-},true);
-viewport.addEventListener('pointercancel',()=>{whiteoutPainting=false});
+if(viewport){
+  viewport.addEventListener('pointerdown',e=>{
+    if(!whiteoutBrushOn||state.mode!=='siteplan') return;
+    if(e.button!=null&&e.button!==0) return;
+    e.preventDefault();
+    e.stopPropagation();
+    whiteoutPainting=true;
+    snapshot();
+    paintWhiteoutDot(paperPointFromEvent(e));
+    renderObjects();
+    try{viewport.setPointerCapture(e.pointerId)}catch(_){}
+  },true);
+  viewport.addEventListener('pointermove',e=>{
+    if(!whiteoutPainting||!whiteoutBrushOn) return;
+    e.preventDefault();
+    paintWhiteoutDot(paperPointFromEvent(e));
+    renderObjects();
+  },true);
+  viewport.addEventListener('pointerup',e=>{
+    if(!whiteoutPainting) return;
+    whiteoutPainting=false;
+    saveActiveSheetState();
+  },true);
+  viewport.addEventListener('pointercancel',()=>{whiteoutPainting=false});
+}
 
 function addObject(kind){
   const def=defaults[kind]||[10,10,kind.toUpperCase()];
@@ -5889,8 +5891,10 @@ function buildWizardForMode(forcedMode){
 
   // Side setbacks: compact labels just OUTSIDE the garage walls (never inside the slab).
   // Site plan uses smaller scale + simple "3'" markers for survey review.
-  const setbackPxH=sitePlanOnlyNew?siteGaragePxH:garagePxH;
-  const setbackPxW=sitePlanOnlyNew?siteGaragePxW:garagePxW;
+  const garagePxW=sitePlanOnlyNew?siteGaragePxW:wizardGaragePxW;
+  const garagePxH=sitePlanOnlyNew?siteGaragePxH:wizardGaragePxH;
+  const setbackPxH=garagePxH;
+  const setbackPxW=garagePxW;
   const setbackScale=sitePlanOnlyNew?siteGarageScale:layoutScale;
   if(ls){
     const labelW=sitePlanOnlyNew?36:58, gap=sitePlanOnlyNew?6:10;
@@ -5934,10 +5938,6 @@ function buildWizardForMode(forcedMode){
     if(rearM){wizardObj('dimension',rearM,2,rearM+"'",rx,rearY,0,'rearMiddle');state.objects.at(-1).pxf=layoutScale;rx+=rearM*layoutScale}
     if(rearR){wizardObj('dimension',rearR,2,rearR+"'",xGarage+garagePxW-rearR*layoutScale,rearY,0,'rearRight');state.objects.at(-1).pxf=layoutScale}
   }
-
-  // Proposed Site Plan: survey already shows existing house / walks / lots.
-  // Wizard must ONLY overlay NEW proposed garage + NEW apron (+ setbacks already placed above).
-  const sitePlanOnlyNew = (mode==='siteplan');
 
   // House / Existing Home — NEVER on Proposed Site Plan (already on the survey).
   if(!sitePlanOnlyNew){

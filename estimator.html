@@ -3,7 +3,7 @@
 <head><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- GARAGE APP BUILD: 2026-08-20 FULL AUDIT FIX -->
+    
 <title>Absolute Garage Builders • Quick Estimator</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -592,9 +592,19 @@ body { min-height:100vh; }
 input, select, textarea, button { box-sizing:border-box; }
 .print-action span{white-space:normal;text-align:center;}
 @media(max-width:640px){.print-action{font-size:.75rem!important;}}
+
+/* Hide legacy version badges if any cached markup reappears */
+[class*="build-badge"],
+[id*="buildBadge"],
+[id*="versionBadge"],
+.estimator-update-badge,
+.clean-estimator-badge {
+  display: none !important;
+}
+
 </style>
 </head>
-<body class="bg-zinc-950 text-zinc-200"><div style="position:fixed;bottom:8px;left:8px;z-index:999999;background:#166534;color:white;padding:4px 7px;border-radius:6px;font:800 9px Arial">CLEAN ESTIMATOR BUILD</div><div style="position:fixed;bottom:10px;right:10px;z-index:999999;background:#dc2626;color:#fff;padding:6px 10px;border-radius:8px;font:900 11px Arial">ESTIMATOR UPDATE V2</div><a id="backToProductionBtn" class="back-production-btn" href="index.html?v=20260818v2">← Back To Dashboard</a>
+<body class="bg-zinc-950 text-zinc-200"><a id="backToProductionBtn" class="back-production-btn" href="index.html?v=20260818v2">← Back To Dashboard</a>
     <div class="max-w-[1280px] mx-auto">
         <!-- Header -->
         <div class="flex items-center justify-between px-8 pt-8 pb-6">
@@ -1473,7 +1483,63 @@ input, select, textarea, button { box-sizing:border-box; }
                 </div>
             </div>
 
-            <div class="mt-5 rounded-3xl border border-zinc-700 bg-zinc-900 p-5 garage-shadow"><div class="flex items-center justify-between gap-3 flex-wrap"><div><div class="section-header flex items-center gap-x-2"><i class="fa-solid fa-code-compare"></i><span>GARAGE COMPARISON</span></div><div class="text-[10px] text-zinc-500 mt-1">Save current calculator as Option A or B, then change the garage and save the other option.</div></div><button type="button" onclick="clearEstimateComparison()" class="text-[10px] px-3 py-2 rounded-xl border border-zinc-700 bg-zinc-950">Clear Comparison</button></div><div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3"><div class="rounded-2xl border border-zinc-700 bg-zinc-950 p-4"><div class="flex justify-between"><b>OPTION A</b><button type="button" onclick="saveEstimateComparison('A')" class="text-xs px-3 py-1.5 rounded-lg bg-blue-700">Save Current</button></div><div id="compareA" class="text-xs text-zinc-400 mt-2">Not saved yet.</div></div><div class="rounded-2xl border border-zinc-700 bg-zinc-950 p-4"><div class="flex justify-between"><b>OPTION B</b><button type="button" onclick="saveEstimateComparison('B')" class="text-xs px-3 py-1.5 rounded-lg bg-blue-700">Save Current</button></div><div id="compareB" class="text-xs text-zinc-400 mt-2">Not saved yet.</div></div></div><div id="compareDifference" class="hidden mt-3 rounded-xl bg-blue-950/60 border border-blue-800 p-3 text-sm text-yellow-400 font-bold"></div></div><!-- Customer / Print Estimate Sheet -->
+            <div class="mt-5 rounded-3xl border border-yellow-600/50 bg-zinc-900 p-5 garage-shadow">
+                <button type="button" onclick="toggleMultiEstimatePanel()" class="w-full flex items-center justify-between gap-3 text-left" aria-expanded="true" id="multiEstimateToggle">
+                    <div class="flex items-center gap-x-2 section-header">
+                        <i id="multiEstimateArrow" class="fa-solid fa-chevron-right transition-transform" style="transform:rotate(90deg)"></i>
+                        <i class="fa-solid fa-layer-group text-yellow-400"></i>
+                        <span>CREATE MULTIPLE ESTIMATES</span>
+                    </div>
+                    <span class="text-[10px] text-yellow-500 font-bold">Option A · B · C — Save, Load, View Sheet</span>
+                </button>
+                <div id="multiEstimateBody" class="mt-4">
+                    <div class="text-[11px] text-zinc-300 mb-3 leading-relaxed">
+                        <b class="text-white">How to use:</b> Build estimate → <b>Save Current</b> as A, B, or C → change the garage → save another option.
+                        Tap <b class="text-emerald-400">Load / Edit</b> to bring that option back into the calculator and change it.
+                        Tap <b class="text-blue-300">View Sheet</b> to open that option’s customer estimate sheet.
+                    </div>
+                    <div class="flex justify-end mb-3">
+                        <button type="button" onclick="clearEstimateComparison()" class="text-[10px] px-3 py-2 rounded-xl border border-zinc-700 bg-zinc-950">Clear All Options</button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div id="compareCardA" class="rounded-2xl border border-zinc-700 bg-zinc-950 p-4 transition-all">
+                            <div class="flex justify-between items-center gap-2 mb-2">
+                                <b class="text-sm text-white">OPTION A</b>
+                                <button type="button" onclick="saveEstimateComparison('A')" class="text-xs px-3 py-2 rounded-lg bg-blue-700 font-bold">Save Current</button>
+                            </div>
+                            <div id="compareA" class="text-xs text-zinc-400 min-h-[56px]">Not saved yet.</div>
+                            <div id="compareAActions" class="hidden mt-3 grid grid-cols-1 gap-2">
+                                <button type="button" onclick="loadEstimateComparison('A')" class="w-full text-xs px-3 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 font-bold">↻ Load / Edit Option A</button>
+                                <button type="button" onclick="viewEstimateComparisonSheet('A')" class="w-full text-xs px-3 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 font-bold">📄 View Estimate Sheet A</button>
+                            </div>
+                        </div>
+                        <div id="compareCardB" class="rounded-2xl border border-zinc-700 bg-zinc-950 p-4 transition-all">
+                            <div class="flex justify-between items-center gap-2 mb-2">
+                                <b class="text-sm text-white">OPTION B</b>
+                                <button type="button" onclick="saveEstimateComparison('B')" class="text-xs px-3 py-2 rounded-lg bg-blue-700 font-bold">Save Current</button>
+                            </div>
+                            <div id="compareB" class="text-xs text-zinc-400 min-h-[56px]">Not saved yet.</div>
+                            <div id="compareBActions" class="hidden mt-3 grid grid-cols-1 gap-2">
+                                <button type="button" onclick="loadEstimateComparison('B')" class="w-full text-xs px-3 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 font-bold">↻ Load / Edit Option B</button>
+                                <button type="button" onclick="viewEstimateComparisonSheet('B')" class="w-full text-xs px-3 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 font-bold">📄 View Estimate Sheet B</button>
+                            </div>
+                        </div>
+                        <div id="compareCardC" class="rounded-2xl border border-zinc-700 bg-zinc-950 p-4 transition-all">
+                            <div class="flex justify-between items-center gap-2 mb-2">
+                                <b class="text-sm text-white">OPTION C</b>
+                                <button type="button" onclick="saveEstimateComparison('C')" class="text-xs px-3 py-2 rounded-lg bg-blue-700 font-bold">Save Current</button>
+                            </div>
+                            <div id="compareC" class="text-xs text-zinc-400 min-h-[56px]">Not saved yet.</div>
+                            <div id="compareCActions" class="hidden mt-3 grid grid-cols-1 gap-2">
+                                <button type="button" onclick="loadEstimateComparison('C')" class="w-full text-xs px-3 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 font-bold">↻ Load / Edit Option C</button>
+                                <button type="button" onclick="viewEstimateComparisonSheet('C')" class="w-full text-xs px-3 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 font-bold">📄 View Estimate Sheet C</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="compareDifference" class="hidden mt-3 rounded-xl bg-blue-950/60 border border-blue-800 p-3 text-sm text-yellow-400 font-bold space-y-1"></div>
+                    <div id="activeOptionBadge" class="hidden mt-3 text-[12px] text-emerald-400 font-bold"></div>
+                </div>
+            </div><!-- Customer / Print Estimate Sheet -->
             <div class="customer-print-panel mt-6 bg-zinc-900 border border-zinc-800 rounded-3xl p-6 garage-shadow">
                 <div class="flex items-start justify-between gap-4 flex-wrap mb-5">
                     <div>
@@ -1521,6 +1587,28 @@ input, select, textarea, button { box-sizing:border-box; }
                         <label class="text-xs text-zinc-400 block mb-1.5">Customer Address</label>
                         <input type="text" id="customerAddress" placeholder="Enter customer address"
                                class="calc-input w-full bg-zinc-950 border border-zinc-700 text-white rounded-2xl px-4 py-3 text-sm focus:border-blue-500">
+                    </div>
+                    <div class="rounded-2xl border border-violet-700/50 bg-zinc-950 p-4 mb-3">
+                        <div class="text-xs font-bold text-violet-300 mb-2 flex items-center gap-2">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> GARAGE PHOTO ON ESTIMATE SHEET
+                        </div>
+                        <select id="garagePhotoMode" onchange="saveGaragePhotoMode()" class="calc-input w-full bg-zinc-900 border border-zinc-700 text-white rounded-xl px-3 py-2.5 text-sm mb-2">
+                            <option value="openai">OpenAI (best quality — needs API key)</option>
+                            <option value="ai">Free AI (no key)</option>
+                            <option value="hybrid">OpenAI → free AI → library</option>
+                            <option value="library">Photo library only (classic)</option>
+                        </select>
+                        <label class="text-[10px] text-zinc-400 block mb-1">OpenAI API key (saved only on this device)</label>
+                        <div class="flex gap-2 mb-2">
+                            <input type="password" id="openaiApiKey" placeholder="sk-..." autocomplete="off"
+                                   class="calc-input flex-1 bg-zinc-900 border border-zinc-700 text-white rounded-xl px-3 py-2 text-sm"
+                                   onchange="saveOpenAIKey()" onblur="saveOpenAIKey()">
+                            <button type="button" onclick="toggleOpenAIKeyVisible()" class="px-3 py-2 rounded-xl bg-zinc-800 border border-zinc-600 text-xs font-bold">Show</button>
+                        </div>
+                        <div class="text-[10px] text-zinc-500 leading-relaxed">
+                            Get a key at <b class="text-zinc-300">platform.openai.com</b> → API keys. Uses DALL·E 3 (~a few cents per photo). Key stays in this phone/computer only — never sent to Absolute Garage servers.
+                        </div>
+                        <div id="aiPhotoStatus" class="text-[10px] text-emerald-400 mt-2 hidden"></div>
                     </div>
                     <button type="button" onclick="safePrintEstimateSheet()"
                             class="print-action w-full px-3 sm:px-5 py-3 text-xs sm:text-sm font-semibold bg-green-700 hover:bg-green-600 active:bg-green-800 transition-all rounded-2xl flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-white leading-tight">
@@ -2191,10 +2279,354 @@ input, select, textarea, button { box-sizing:border-box; }
 
         function updateStickyEstimateTotal(internal,quote){const a=document.getElementById('stickyInternalTotal'),b=document.getElementById('stickyCustomerQuote');if(a)a.textContent='$'+Number(internal||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});if(b)b.textContent='$'+Number(quote||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
         function updateEstimateHealthCheck(data){const issues=[],warnings=[],d=getGarageDimensions();if(!(d.width>0&&d.depth>0))issues.push('Garage size is missing.');if(!String(document.getElementById('salesman')?.value||'').trim())issues.push('Salesman is not selected.');if(!String(document.getElementById('customerName')?.value||'').trim())warnings.push('Customer name needed before estimate sheet.');if(!String(document.getElementById('customerAddress')?.value||'').trim())warnings.push('Customer address needed before estimate sheet.');const city=document.getElementById('city')?.value||'',wall=Number(document.getElementById('wallHeight')?.value||8),oh=Number(document.getElementById('overheadDoorHeight')?.value||7);if(wall<oh+1)issues.push(`Wall height must be at least ${oh+1}' for the ${oh}' overhead door.`);if(city==='Chicago'&&wall>10)warnings.push('Typically in Chicago 10ft Walls are Max.');if(data&&data.totalConcreteArea>1200)warnings.push('Large concrete quantity — verify dimensions.');const list=document.getElementById('healthCheckList'),badge=document.getElementById('healthCheckBadge');if(list){const rows=[];if(!issues.length&&!warnings.length)rows.push('<div class="text-green-400">✓ No conflicts detected.</div>');issues.forEach(x=>rows.push(`<div class="text-red-400">● ${x}</div>`));warnings.forEach(x=>rows.push(`<div class="text-yellow-400">▲ ${x}</div>`));list.innerHTML=rows.join('');}if(badge){badge.textContent=issues.length?'CHECK':warnings.length?'REVIEW':'READY';badge.className='text-[10px] font-extrabold '+(issues.length?'text-red-400':warnings.length?'text-yellow-400':'text-green-400');}return{issues,warnings};}
-        function searchEstimatorOptions(){const q=String(document.getElementById('estimatorSearch')?.value||'').trim().toLowerCase(),status=document.getElementById('estimatorSearchStatus');document.querySelectorAll('[data-estimator-search-hit="1"]').forEach(el=>{el.style.outline='';el.removeAttribute('data-estimator-search-hit')});if(!q){if(status)status.textContent='Type a feature name and press Go.';return[]}const candidates=[...document.querySelectorAll('label,button,.section-header,select,input')].filter(el=>el.id!=='estimatorSearch'),hits=candidates.filter(el=>((el.innerText||'')+' '+(el.getAttribute('placeholder')||'')+' '+(el.id||'')).toLowerCase().includes(q));if(status)status.textContent=hits.length?`${hits.length} match${hits.length===1?'':'es'} found. Press Go to jump.`:'No matching estimator option found.';hits.slice(0,5).forEach(el=>{el.style.outline='2px solid #eab308';el.style.outlineOffset='2px';el.setAttribute('data-estimator-search-hit','1')});return hits;}
-        function jumpToEstimatorSearchResult(){const hits=searchEstimatorOptions();if(!hits.length)return;(hits[0].closest('div')||hits[0]).scrollIntoView({behavior:'smooth',block:'center'});}
-        let estimateComparison={A:null,B:null};function currentComparisonSnapshot(){const d=getGarageDimensions(),money=id=>parseFloat(String(document.getElementById(id)?.textContent||'0').replace(/[^0-9.]/g,''))||0;return{width:d.width,depth:d.depth,wall:Number(document.getElementById('wallHeight')?.value||8),roof:document.getElementById('roofType')?.value||'',internal:money('internalTotal'),quote:money('customerQuote')}}function saveEstimateComparison(slot){estimateComparison[slot]=currentComparisonSnapshot();renderEstimateComparison()}function renderEstimateComparison(){['A','B'].forEach(slot=>{const el=document.getElementById('compare'+slot),s=estimateComparison[slot];if(el)el.innerHTML=s?`<div class="text-white font-bold">${s.width}' × ${s.depth}' • ${s.wall}' walls • ${String(s.roof).toUpperCase()}</div><div class="mt-1">Internal: $${s.internal.toLocaleString('en-US',{minimumFractionDigits:2})}</div><div class="text-yellow-400 font-bold">Project Price: $${s.quote.toLocaleString('en-US',{minimumFractionDigits:2})}</div>`:'Not saved yet.'});const diff=document.getElementById('compareDifference'),a=estimateComparison.A,b=estimateComparison.B;if(diff&&a&&b){const n=b.quote-a.quote;diff.textContent=`Option B is ${n>=0?'+':'-'}$${Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})} compared with Option A.`;diff.classList.remove('hidden')}else diff?.classList.add('hidden')}function clearEstimateComparison(){estimateComparison={A:null,B:null};renderEstimateComparison();}
-        // Custom extras helpers
+        function searchEstimatorOptions(){
+            const q=String(document.getElementById('estimatorSearch')?.value||'').trim().toLowerCase();
+            const status=document.getElementById('estimatorSearchStatus');
+            document.querySelectorAll('[data-estimator-search-hit="1"]').forEach(el=>{
+                el.style.outline='';
+                el.style.outlineOffset='';
+                el.removeAttribute('data-estimator-search-hit');
+            });
+            if(!q){
+                if(status) status.textContent='Type a feature name and press Go.';
+                return [];
+            }
+            const hits=[];
+            const seen=new Set();
+            const addHit=(el,why)=>{
+                if(!el || seen.has(el)) return;
+                // Prefer the nearest labeled field container
+                const target=el.closest('.field, label, .rounded-2xl, .section, div')||el;
+                if(seen.has(target)) return;
+                seen.add(el); seen.add(target);
+                hits.push({el:target, source:el, why});
+            };
+            // Labels, buttons, headers, inputs, selects
+            document.querySelectorAll('label,button,.section-header,select,input,textarea,span,div').forEach(el=>{
+                if(el.id==='estimatorSearch') return;
+                if(el.closest('#multiEstimateBody')) return; // skip multi-estimate noise
+                const text=((el.innerText||el.textContent||'')+' '+(el.getAttribute('placeholder')||'')+' '+(el.id||'')+' '+(el.getAttribute('title')||'')).toLowerCase();
+                if(text.includes(q)) addHit(el, 'text');
+            });
+            // Dropdown OPTIONS (e.g. Reverse Retaining Wall)
+            document.querySelectorAll('select option').forEach(opt=>{
+                const text=((opt.textContent||'')+' '+(opt.value||'')).toLowerCase();
+                if(!text.includes(q)) return;
+                const sel=opt.parentElement;
+                if(sel && sel.tagName==='SELECT') addHit(sel, 'option:'+opt.textContent.trim());
+            });
+            if(status){
+                status.textContent=hits.length
+                    ? (hits.length+' match'+(hits.length===1?'':'es')+' found. Press Go to jump to the first one.')
+                    : 'No matching estimator option found.';
+            }
+            hits.slice(0,8).forEach(h=>{
+                h.el.style.outline='2px solid #eab308';
+                h.el.style.outlineOffset='3px';
+                h.el.setAttribute('data-estimator-search-hit','1');
+            });
+            return hits;
+        }
+        function jumpToEstimatorSearchResult(){
+            const hits=searchEstimatorOptions();
+            if(!hits.length){
+                const status=document.getElementById('estimatorSearchStatus');
+                if(status) status.textContent='No match to jump to. Try another word.';
+                return;
+            }
+            const target=hits[0].el;
+            target.scrollIntoView({behavior:'smooth', block:'center'});
+            // Flash highlight stronger for a moment
+            target.style.outline='3px solid #f59e0b';
+            target.style.boxShadow='0 0 0 6px rgba(245,158,11,.35)';
+            setTimeout(()=>{
+                target.style.boxShadow='';
+            }, 1600);
+            // If match was a select option, briefly open/focus the select
+            if(hits[0].source && hits[0].source.tagName==='SELECT'){
+                try{ hits[0].source.focus(); }catch(e){}
+            }
+        }
+        let estimateComparison={A:null,B:null,C:null};
+        let activeComparisonSlot=null;
+        const MULTI_ESTIMATE_KEY='agb_multi_estimates_v1';
+
+        function toggleMultiEstimatePanel(){
+            const body=document.getElementById('multiEstimateBody');
+            const arrow=document.getElementById('multiEstimateArrow');
+            const btn=document.getElementById('multiEstimateToggle');
+            if(!body)return;
+            const opening=body.classList.contains('hidden');
+            body.classList.toggle('hidden',!opening);
+            if(arrow)arrow.style.transform=opening?'rotate(90deg)':'rotate(0deg)';
+            if(btn)btn.setAttribute('aria-expanded',opening?'true':'false');
+        }
+
+        // Capture ALL calculator fields so options fully restore
+        function captureFormState(){
+            const state={};
+            document.querySelectorAll('input[id], select[id], textarea[id]').forEach(el=>{
+                if(!el.id) return;
+                if(el.type==='checkbox' || el.type==='radio') state[el.id]={t:'c',v:!!el.checked};
+                else state[el.id]={t:'v',v:el.value};
+            });
+            // Custom extras rows
+            const extras=[];
+            document.querySelectorAll('#extrasContainer > div').forEach(row=>{
+                extras.push({
+                    desc:row.querySelector('.extra-desc')?.value||'',
+                    cost:row.querySelector('.extra-cost')?.value||'',
+                    display:row.querySelector('.extra-display')?.value||'included'
+                });
+            });
+            state.__extras=extras;
+            return state;
+        }
+
+        function restoreFormState(state){
+            if(!state)return;
+            Object.keys(state).forEach(key=>{
+                if(key==='__extras') return;
+                const item=state[key];
+                const el=document.getElementById(key);
+                if(!el || !item) return;
+                if(item.t==='c'){
+                    el.checked=!!item.v;
+                } else {
+                    el.value=item.v;
+                }
+            });
+            // Restore custom extras
+            const container=document.getElementById('extrasContainer');
+            if(container && Array.isArray(state.__extras)){
+                container.innerHTML='';
+                state.__extras.forEach(ex=>{
+                    if(typeof addExtraRow==='function') addExtraRow();
+                    const row=container.lastElementChild;
+                    if(!row) return;
+                    const d=row.querySelector('.extra-desc'); if(d) d.value=ex.desc||'';
+                    const c=row.querySelector('.extra-cost'); if(c) c.value=ex.cost||'';
+                    const disp=row.querySelector('.extra-display'); if(disp) disp.value=ex.display||'included';
+                });
+            }
+            // trigger dependent UI
+            try{ if(typeof onCityChange==='function') onCityChange(); }catch(e){}
+            try{ if(typeof toggleCustomGarageSize==='function') toggleCustomGarageSize(); }catch(e){}
+            try{ if(typeof toggleServiceDoorLocationFields==='function') toggleServiceDoorLocationFields(); }catch(e){}
+            try{ if(typeof toggleGableOptions==='function') toggleGableOptions(); }catch(e){}
+            try{ if(typeof syncDemoPreset==='function') syncDemoPreset(); }catch(e){}
+            try{ if(typeof syncWindowQtyFromExtras==='function') syncWindowQtyFromExtras(); }catch(e){}
+            try{ if(typeof calculateEstimate==='function') calculateEstimate(); }catch(e){}
+            try{ if(typeof safeCalculateEstimate==='function') safeCalculateEstimate(); }catch(e){}
+        }
+
+        function persistMultiEstimates(){
+            try{
+                localStorage.setItem(MULTI_ESTIMATE_KEY, JSON.stringify({
+                    slots:estimateComparison,
+                    active:activeComparisonSlot
+                }));
+            }catch(e){}
+        }
+
+        function loadPersistedMultiEstimates(){
+            try{
+                const raw=localStorage.getItem(MULTI_ESTIMATE_KEY);
+                if(!raw) return;
+                const data=JSON.parse(raw);
+                if(data && data.slots){
+                    estimateComparison={
+                        A:data.slots.A||null,
+                        B:data.slots.B||null,
+                        C:data.slots.C||null
+                    };
+                    activeComparisonSlot=data.active||null;
+                }
+            }catch(e){}
+        }
+
+        function currentComparisonSnapshot(){
+            const d=getGarageDimensions();
+            const money=id=>parseFloat(String(document.getElementById(id)?.textContent||'0').replace(/[^0-9.]/g,''))||0;
+            return {
+                width:d.width,
+                depth:d.depth,
+                wall:Number(document.getElementById('wallHeight')?.value||8),
+                roof:document.getElementById('roofType')?.value||'',
+                internal:money('internalTotal'),
+                quote:money('customerQuote'),
+                formState:captureFormState(),
+                savedAt:new Date().toLocaleString()
+            };
+        }
+
+        function saveEstimateComparison(slot){
+            estimateComparison[slot]=currentComparisonSnapshot();
+            activeComparisonSlot=slot;
+            persistMultiEstimates();
+            renderEstimateComparison();
+            const badge=document.getElementById('activeOptionBadge');
+            if(badge){
+                badge.classList.remove('hidden');
+                badge.textContent='✓ Option '+slot+' saved. Use Load / Edit to come back and change it, or View Sheet for the customer printout.';
+            }
+        }
+
+        function loadEstimateComparison(slot){
+            const s=estimateComparison[slot];
+            if(!s){ alert('Option '+slot+' is not saved yet. Build the estimate first, then tap Save Current.'); return; }
+            if(s.formState) restoreFormState(s.formState);
+            else {
+                const w=document.getElementById('width'); if(w) w.value=String(s.width);
+                const d=document.getElementById('depth'); if(d) d.value=String(s.depth);
+                const wall=document.getElementById('wallHeight'); if(wall) wall.value=String(s.wall);
+                const roof=document.getElementById('roofType'); if(roof) roof.value=s.roof||'';
+                try{ if(typeof calculateEstimate==='function') calculateEstimate(); }catch(e){}
+            }
+            activeComparisonSlot=slot;
+            persistMultiEstimates();
+            renderEstimateComparison();
+            const badge=document.getElementById('activeOptionBadge');
+            if(badge){
+                badge.classList.remove('hidden');
+                badge.textContent='Loaded Option '+slot+' — edit anything, then Save Current again to update it. Or open View Sheet.';
+            }
+            // Scroll to totals so user sees the restored numbers
+            setTimeout(()=>{
+                document.getElementById('customerQuote')?.scrollIntoView({behavior:'smooth',block:'center'});
+            }, 100);
+        }
+
+        function viewEstimateComparisonSheet(slot){
+            const s=estimateComparison[slot];
+            if(!s){ alert('Option '+slot+' is not saved yet. Tap Save Current on Option '+slot+' first.'); return; }
+
+            // Need customer info for a real sheet
+            const customerName=(document.getElementById('customerName')?.value||'').trim();
+            const customerAddress=(document.getElementById('customerAddress')?.value||'').trim();
+            if(!customerName || !customerAddress){
+                // Still load the option so numbers are ready
+                try{ loadEstimateComparison(slot); }catch(e){}
+                alert('Option '+slot+' is loaded.\n\nEnter Customer Name and Customer Address, then tap View Estimate Sheet '+slot+' again.\n\n(Or scroll down and use Create / View Estimate Sheet.)');
+                document.getElementById('customerName')?.scrollIntoView({behavior:'smooth',block:'center'});
+                document.getElementById('customerName')?.focus();
+                return;
+            }
+
+            // Open popup RIGHT NOW (must be direct from the tap or iPhone blocks it)
+            let estimateWindow=null;
+            try{
+                estimateWindow=window.open('', '_blank', 'width=1000,height=1000');
+            }catch(e){ estimateWindow=null; }
+
+            // Load option into calculator
+            try{ loadEstimateComparison(slot); }catch(e){ console.error(e); }
+
+            if(!estimateWindow || estimateWindow.closed){
+                // Popup blocked (very common on iPhone / local HTML files)
+                alert('Option '+slot+' is loaded in the calculator.\n\nYour browser blocked the popup window.\n\nOn iPhone: Settings → Safari → turn OFF "Block Pop-ups", then try again.\n\nOr scroll down and tap the green "Create / View Estimate Sheet" button — that opens the same sheet for the option you just loaded.');
+                const printBtn=document.querySelector('button[onclick*="safePrintEstimateSheet"]');
+                if(printBtn) printBtn.scrollIntoView({behavior:'smooth',block:'center'});
+                return;
+            }
+
+            try{
+                estimateWindow.document.open();
+                estimateWindow.document.write('<!doctype html><html><head><title>Option '+slot+' Estimate</title></head><body style="font-family:Arial,sans-serif;padding:40px;text-align:center"><h2>Loading Option '+slot+'…</h2><p>Preparing estimate sheet.</p></body></html>');
+                estimateWindow.document.close();
+            }catch(e){}
+
+            setTimeout(async ()=>{
+                try{
+                    if(typeof printEstimateSheet==='function'){
+                        await printEstimateSheet(false, estimateWindow);
+                    } else if(typeof safePrintEstimateSheet==='function'){
+                        try{ estimateWindow.close(); }catch(_){}
+                        await safePrintEstimateSheet(false);
+                    } else {
+                        estimateWindow.document.write('<p>Use Create / View Estimate Sheet on the main page.</p>');
+                    }
+                }catch(err){
+                    console.error(err);
+                    alert('Option '+slot+' is loaded. Scroll down and tap the green Create / View Estimate Sheet button.');
+                    const printBtn=document.querySelector('button[onclick*="safePrintEstimateSheet"]');
+                    if(printBtn) printBtn.scrollIntoView({behavior:'smooth',block:'center'});
+                }
+            }, 300);
+        }
+
+        function renderEstimateComparison(){
+            ['A','B','C'].forEach(slot=>{
+                const el=document.getElementById('compare'+slot);
+                const actions=document.getElementById('compare'+slot+'Actions');
+                const card=document.getElementById('compareCard'+slot);
+                const s=estimateComparison[slot];
+                if(el){
+                    if(s){
+                        const activeMark = (activeComparisonSlot===slot) ? ' <span class="text-emerald-400">(active)</span>' : '';
+                        el.innerHTML=`<div class="text-white font-bold">${s.width}' × ${s.depth}' • ${s.wall}' walls • ${String(s.roof||'').toUpperCase()}${activeMark}</div>
+                            <div class="mt-1">Internal: $${Number(s.internal||0).toLocaleString('en-US',{minimumFractionDigits:2})}</div>
+                            <div class="text-yellow-400 font-bold">Project Price: $${Number(s.quote||0).toLocaleString('en-US',{minimumFractionDigits:2})}</div>
+                            <div class="text-[9px] text-zinc-500 mt-1">Saved ${s.savedAt||''}</div>`;
+                    } else {
+                        el.innerHTML='Not saved yet. Set up the garage, then tap Save Current.';
+                    }
+                }
+                if(actions) actions.classList.toggle('hidden', !s);
+                if(card){
+                    if(activeComparisonSlot===slot && s){
+                        card.classList.add('border-emerald-500');
+                        card.classList.remove('border-zinc-700');
+                    } else {
+                        card.classList.remove('border-emerald-500');
+                        card.classList.add('border-zinc-700');
+                    }
+                }
+            });
+
+            const diff=document.getElementById('compareDifference');
+            const a=estimateComparison.A, b=estimateComparison.B, c=estimateComparison.C;
+            if(diff){
+                const lines=[];
+                if(a&&b){
+                    const n=b.quote-a.quote;
+                    lines.push(`Option B is ${n>=0?'+':'-'}$${Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})} vs Option A`);
+                }
+                if(a&&c){
+                    const n=c.quote-a.quote;
+                    lines.push(`Option C is ${n>=0?'+':'-'}$${Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})} vs Option A`);
+                }
+                if(b&&c){
+                    const n=c.quote-b.quote;
+                    lines.push(`Option C is ${n>=0?'+':'-'}$${Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})} vs Option B`);
+                }
+                if(lines.length){
+                    diff.innerHTML=lines.map(t=>`<div>${t}</div>`).join('');
+                    diff.classList.remove('hidden');
+                } else {
+                    diff.classList.add('hidden');
+                    diff.innerHTML='';
+                }
+            }
+        }
+
+        function clearEstimateComparison(){
+            estimateComparison={A:null,B:null,C:null};
+            activeComparisonSlot=null;
+            persistMultiEstimates();
+            renderEstimateComparison();
+            const badge=document.getElementById('activeOptionBadge');
+            if(badge){ badge.classList.add('hidden'); badge.textContent=''; }
+        }
+
+        // Restore saved options on load
+        try{
+            loadPersistedMultiEstimates();
+            document.addEventListener('DOMContentLoaded', ()=>setTimeout(renderEstimateComparison, 200));
+            if(document.readyState!=='loading') setTimeout(renderEstimateComparison, 300);
+        }catch(e){}
+
+// Custom extras helpers
         function addExtraRow() {
             const container=document.getElementById('extrasContainer');if(!container)return;
             const row=document.createElement('div');row.className='grid grid-cols-1 md:grid-cols-3 gap-2 items-center custom-extra-row';
@@ -3483,6 +3915,205 @@ input, select, textarea, button { box-sizing:border-box; }
             }
         }
 
+
+        // ===== AI / OpenAI realistic garage photo (from calculator choices) =====
+        function saveGaragePhotoMode(){
+            const m=document.getElementById('garagePhotoMode')?.value||'openai';
+            try{ localStorage.setItem('agb_garage_photo_mode', m); }catch(e){}
+        }
+        function saveOpenAIKey(){
+            const k=(document.getElementById('openaiApiKey')?.value||'').trim();
+            try{
+                if(k) localStorage.setItem('agb_openai_api_key', k);
+                else localStorage.removeItem('agb_openai_api_key');
+            }catch(e){}
+        }
+        function loadGaragePhotoMode(){
+            const el=document.getElementById('garagePhotoMode');
+            const keyEl=document.getElementById('openaiApiKey');
+            try{
+                if(el) el.value=localStorage.getItem('agb_garage_photo_mode')||'openai';
+                if(keyEl) keyEl.value=localStorage.getItem('agb_openai_api_key')||'';
+            }catch(e){ if(el) el.value='openai'; }
+        }
+        function toggleOpenAIKeyVisible(){
+            const el=document.getElementById('openaiApiKey');
+            if(!el) return;
+            el.type = el.type==='password' ? 'text' : 'password';
+        }
+        document.addEventListener('DOMContentLoaded', ()=>setTimeout(loadGaragePhotoMode, 100));
+        if(document.readyState!=='loading') setTimeout(loadGaragePhotoMode, 200);
+
+        function buildGarageAIPrompt(){
+            const dim = (typeof getGarageDimensions==='function') ? getGarageDimensions() : {width:20, depth:20};
+            const w = dim.width||20, d = dim.depth||20;
+            const roof = document.getElementById('roofType')?.value||'gable';
+            const eave = document.getElementById('eaveDir')?.value||'';
+            const sidingType = document.getElementById('sidingType')?.value||'vinyl';
+            const colorEl = document.getElementById(sidingType==='hardie'?'hardieColor':'vinylColor');
+            const colorTxt = colorEl ? (colorEl.options[colorEl.selectedIndex]?.text||colorEl.value||'gray') : 'gray';
+            const wall = document.getElementById('wallHeight')?.value||'8';
+            const doorH = document.getElementById('overheadDoorHeight')?.value||'7';
+            const doorStyle = document.getElementById('overheadDoorStyle')?.value||document.getElementById('doorStyle')?.value||'raised';
+            const service = document.getElementById('serviceDoorLocation')?.value||'right';
+            const gutters = document.getElementById('gutters')?.checked;
+            const stone = document.getElementById('stoneAccent')?.checked;
+            const winQty = Number(document.getElementById('windowQty')?.value||0);
+            const roofWords = roof==='hip' ? 'hip roof' : (eave==='sides' ? 'reverse gable roof' : 'gable roof');
+            const sidingWords = sidingType==='hardie' ? 'Hardie fiber cement siding' : 'vinyl siding';
+            const doorWords = /window/i.test(String(doorStyle)) ? 'raised-panel overhead garage door with windows across the top' : 'solid raised-panel overhead garage door';
+            const serviceWords = (service==='no'||service==='none'||service==='hidden') ? 'no service door on the visible side' : (service+'-side service entry door');
+            const gutterWords = gutters ? 'with gutters and downspouts' : 'without gutters';
+            const stoneWords = stone ? 'with a stone accent wainscot along the base' : '';
+            const winWords = winQty>0 ? ('with '+winQty+' wall window'+(winQty>1?'s':'')) : 'no wall windows';
+            return [
+                'Hyper-realistic professional photograph of a brand-new detached residential garage in a suburban Midwest backyard',
+                w+' foot wide by '+d+' foot deep, '+wall+' foot tall walls',
+                roofWords,
+                sidingWords+' in '+colorTxt+' color',
+                doorWords+', about '+doorH+' feet tall, centered on the front elevation',
+                serviceWords,
+                winWords,
+                gutterWords,
+                stoneWords,
+                'clean concrete apron in front, neat landscaping, soft natural daylight, photorealistic architectural exterior photography, sharp detail, no text, no watermark, no people, no logo'
+            ].filter(Boolean).join(', ');
+        }
+
+        function garageAICacheKey(prompt){
+            let h=0; const s=String(prompt);
+            for(let i=0;i<s.length;i++) h=((h<<5)-h)+s.charCodeAt(i)|0;
+            return 'agb_ai_garage_'+h;
+        }
+
+        async function generateOpenAIGaragePhotoUrl(prompt){
+            const apiKey=(document.getElementById('openaiApiKey')?.value||localStorage.getItem('agb_openai_api_key')||'').trim();
+            if(!apiKey) throw new Error('Add your OpenAI API key above (starts with sk-).');
+            const cacheKey=garageAICacheKey('openai:'+prompt);
+            try{
+                const cached=localStorage.getItem(cacheKey);
+                if(cached && (cached.startsWith('http')||cached.startsWith('data:'))) return {url:cached, prompt, source:'openai', cached:true};
+            }catch(e){}
+            const res=await fetch('https://api.openai.com/v1/images/generations', {
+                method:'POST',
+                headers:{
+                    'Content-Type':'application/json',
+                    'Authorization':'Bearer '+apiKey
+                },
+                body: JSON.stringify({
+                    model:'dall-e-3',
+                    prompt: prompt.slice(0, 3900),
+                    n:1,
+                    size:'1024x1024',
+                    quality:'standard',
+                    response_format:'url'
+                })
+            });
+            const data=await res.json().catch(()=>({}));
+            if(!res.ok){
+                const msg=(data && data.error && data.error.message) ? data.error.message : ('OpenAI error '+res.status);
+                throw new Error(msg);
+            }
+            const url=data && data.data && data.data[0] && data.data[0].url;
+            if(!url) throw new Error('OpenAI returned no image URL.');
+            try{ localStorage.setItem(cacheKey, url); }catch(e){}
+            return {url, prompt, source:'openai', cached:false};
+        }
+
+        async function generateFreeAIGaragePhotoUrl(prompt){
+            const cacheKey=garageAICacheKey('free:'+prompt);
+            try{
+                const cached=localStorage.getItem(cacheKey);
+                if(cached && cached.startsWith('http')) return {url:cached, prompt, source:'free', cached:true};
+            }catch(e){}
+            const seed=Math.abs(cacheKey.split('').reduce((a,c)=>a+c.charCodeAt(0),0))%99999;
+            const url='https://image.pollinations.ai/prompt/'+encodeURIComponent(prompt)
+                +'?width=1024&height=768&nologo=true&refine=true&seed='+seed;
+            try{ localStorage.setItem(cacheKey, url); }catch(e){}
+            return {url, prompt, source:'free', cached:false};
+        }
+
+        async function generateAIGaragePhotoUrl(preferOpenAI){
+            const prompt=buildGarageAIPrompt();
+            if(preferOpenAI){
+                return await generateOpenAIGaragePhotoUrl(prompt);
+            }
+            return await generateFreeAIGaragePhotoUrl(prompt);
+        }
+
+        async function resolveEstimateGaragePhotoSrc(){
+            const mode=document.getElementById('garagePhotoMode')?.value || localStorage.getItem('agb_garage_photo_mode') || 'openai';
+            const status=document.getElementById('aiPhotoStatus');
+            const libraryFallback=()=>{
+                try{
+                    const matched=getExteriorPhotoMatch().photo;
+                    const src=matched && matched.src ? matched.src : 'garage_114.png';
+                    const file=String(src).replace(/^.*\//,'');
+                    return {
+                        primary: new URL('images/'+file, document.baseURI).href,
+                        fallbacks: [
+                            new URL(file, document.baseURI).href,
+                            new URL(src, document.baseURI).href
+                        ],
+                        source: 'library'
+                    };
+                }catch(e){
+                    return {primary:'', fallbacks:[], source:'none'};
+                }
+            };
+            const warm=async (url)=>{
+                await new Promise(resolve=>{
+                    const img=new Image();
+                    img.onload=()=>resolve(true);
+                    img.onerror=()=>resolve(false);
+                    img.src=url;
+                    setTimeout(()=>resolve(false), 15000);
+                });
+            };
+            if(mode==='library') return libraryFallback();
+
+            const tryOpenAI=async ()=>{
+                if(status){ status.classList.remove('hidden'); status.textContent='OpenAI: creating garage photo…'; }
+                const ai=await generateAIGaragePhotoUrl(true);
+                await warm(ai.url);
+                if(status) status.textContent='OpenAI garage photo ready.';
+                return {primary:ai.url, fallbacks:libraryFallback().fallbacks, source:'openai', prompt:ai.prompt};
+            };
+            const tryFree=async ()=>{
+                if(status){ status.classList.remove('hidden'); status.textContent='Free AI: creating garage photo…'; }
+                const ai=await generateAIGaragePhotoUrl(false);
+                await warm(ai.url);
+                if(status) status.textContent='Free AI garage photo ready.';
+                return {primary:ai.url, fallbacks:libraryFallback().fallbacks, source:'free', prompt:ai.prompt};
+            };
+
+            if(mode==='openai'){
+                try{ return await tryOpenAI(); }
+                catch(err){
+                    console.warn(err);
+                    if(status){ status.classList.remove('hidden'); status.textContent='OpenAI failed: '+(err.message||err)+' — using library.'; }
+                    return libraryFallback();
+                }
+            }
+            if(mode==='ai'){
+                try{ return await tryFree(); }
+                catch(err){
+                    if(status){ status.classList.remove('hidden'); status.textContent='Free AI unavailable — using library.'; }
+                    return libraryFallback();
+                }
+            }
+            // hybrid: OpenAI → free → library
+            try{ return await tryOpenAI(); }
+            catch(e1){
+                console.warn('OpenAI failed, trying free AI', e1);
+                try{ return await tryFree(); }
+                catch(e2){
+                    if(status){ status.classList.remove('hidden'); status.textContent='AI unavailable — using library photo.'; }
+                    return libraryFallback();
+                }
+            }
+        }
+
         async function printEstimateSheet(saveToHistory = true, estimateWindow = null) {
             const customerName = (document.getElementById('customerName').value || '').trim();
             const customerEmail = (document.getElementById('customerEmail')?.value || '').trim();
@@ -3789,27 +4420,14 @@ input, select, textarea, button { box-sizing:border-box; }
 
             const realGaragePhoto = `<img src="images/basic_hip_no_gutters.png" alt="">`;
             const gableGaragePhoto = `<img src="images/basic_gable_no_gutters.png" alt="">`;
-            const matchedGaragePhoto = getExteriorPhotoMatch().photo;
-            const fallbackGaragePhoto = approvedBasicGaragePhoto(roofType, hasGutters);
-            const selectedGaragePhoto = matchedGaragePhoto && matchedGaragePhoto.src ? matchedGaragePhoto.src : fallbackGaragePhoto;
-            // The estimate sheet opens in a new browser document. Use an absolute image URL so
-            // GitHub Pages can load the selected garage photo inside the printed estimate sheet.
-            const selectedGaragePhotoFile = selectedGaragePhoto.replace(/^.*\//, '');
-            // Try BOTH layouts. On the live GitHub repo the garage image files may be uploaded
-            // directly beside estimator.html, while the packaged download keeps them in /images.
-            const selectedGaragePhotoOriginalUrl = new URL(selectedGaragePhoto, document.baseURI).href;
-            const selectedGaragePhotoRootUrl = new URL(selectedGaragePhotoFile, document.baseURI).href;
-            const selectedGaragePhotoFolderUrl = new URL('images/' + selectedGaragePhotoFile, document.baseURI).href;
-
-            // Load the approved garage image from the shared garage-photo library.
-            // The live app has used both /images/garage_xxx.* and root-level garage_xxx.* files
-            // across deployments, so the estimate sheet tries both locations before giving up.
-            // This prevents the EXTERIOR VIEW from appearing blank when the selected approved
-            // image exists but is stored in the other GitHub Pages layout.
-            const garagePhotoSrc = selectedGaragePhotoFolderUrl;
-            const garagePhotoFallbackSrc = selectedGaragePhotoRootUrl;
-            const garagePhotoOriginalSrc = selectedGaragePhotoOriginalUrl;
-            const garageSvg = `<div class="photo-config photo-only"><img src="${garagePhotoSrc}" alt="Approved garage exterior example" onerror="if(!this.dataset.tryRoot){this.dataset.tryRoot='1';this.src='${garagePhotoFallbackSrc}';}else if(!this.dataset.tryOriginal){this.dataset.tryOriginal='1';this.src='${garagePhotoOriginalSrc}';}else{this.style.visibility='hidden';}"></div>`;
+            // Resolve AI or library garage photo from calculator choices
+            const resolvedGarage = await resolveEstimateGaragePhotoSrc();
+            const garagePhotoSrc = resolvedGarage.primary || '';
+            const fb = resolvedGarage.fallbacks || [];
+            const garagePhotoFallbackSrc = fb[0] || garagePhotoSrc;
+            const garagePhotoOriginalSrc = fb[1] || fb[0] || garagePhotoSrc;
+            const aiBadge = resolvedGarage.source==='ai' ? 'AI preview based on this estimate' : 'Approved garage exterior example';
+            const garageSvg = `<div class="photo-config photo-only"><img src="${garagePhotoSrc}" alt="${aiBadge}" onerror="if(!this.dataset.tryRoot){this.dataset.tryRoot='1';this.src='${garagePhotoFallbackSrc}';}else if(!this.dataset.tryOriginal){this.dataset.tryOriginal='1';this.src='${garagePhotoOriginalSrc}';}else{this.style.visibility='hidden';}"></div>`;
 
             const notesCount = notes.length;
             const notesClass = notesCount <= 1 ? 'notes-1' : notesCount === 2 ? 'notes-2' : notesCount <= 4 ? 'notes-few' : notesCount <= 7 ? 'notes-medium' : 'notes-many';

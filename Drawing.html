@@ -202,14 +202,28 @@ button.danger{color:#b42318}
     box-shadow:12px 0 40px rgba(0,0,0,.25);
     flex:none !important;
   }
-  .sidebar.mobile-open{transform:translateX(0)}
+  .sidebar.mobile-open{transform:translateX(0); pointer-events:auto}
   .sidebar-backdrop{
     display:none;
     position:fixed; inset:0;
     background:rgba(15,23,42,.45);
     z-index:290;
+    pointer-events:auto;
   }
   .sidebar-backdrop.show{display:block}
+  .sidebar .toolbar-grid button,
+  .sidebar .stamp-btn,
+  .sidebar button{
+    min-height:44px !important;
+    font-size:14px !important;
+    font-weight:800 !important;
+    touch-action:manipulation !important;
+    -webkit-tap-highlight-color:rgba(37,99,235,.25);
+  }
+  .sidebar .drawing-tools{
+    border:2px solid #2563eb !important;
+    background:#f8fbff !important;
+  }
   .main{width:100%; flex:1; min-height:0}
   .topbar{
     height:auto;
@@ -4408,35 +4422,57 @@ if(viewport){
   viewport.addEventListener('pointercancel',()=>{whiteoutPainting=false});
 }
 
+const SHAPE_DEFAULTS={
+  garage:[20,20,'NEW GARAGE SLAB'],
+  apron:[20,3,'NEW CONCRETE APRON'],
+  sidewalk:[3,20,'CONCRETE SIDEWALK'],
+  pad:[10,10,'NEW CONCRETE PAD'],
+  driveway:[10,30,'DRIVEWAY'],
+  custom:[12,8,'RECTANGLE'],
+  circle:[8,8,'CIRCLE'],
+  arrow:[10,2,''],
+  xmark:[4,4,''],
+  line:[12,1,''],
+  polyline:[12,1,''],
+  text:[16,4,'TEXT'],
+  dimension:[10,2,"10'"]
+};
 function addObject(kind){
-  const def=defaults[kind]||[10,10,kind.toUpperCase()];
-  const [wf,hf,label]=def;
-  snapshot();
-  const d=currentTemplate().draw;
-  // Offset new objects so multiple creations do not stack exactly on top of each other
-  const offset = (state.objects.length % 6) * 18;
-  const baseX = d.x + Math.max(12, d.w/2 - wf*5) + offset;
-  const baseY = d.y + Math.max(12, d.h/2 - hf*5) + offset;
-  const obj = {
-    id: uid++,
-    kind,
-    x: baseX,
-    y: baseY,
-    wf, hf,
-    label: label || '',
-    angle: 0,
-    locked: false,
-    hidden: false,
-    highlighted: false
-  };
-  // Visual-only size fields for freeform shapes (do not affect measurements)
-  if (['custom','circle','arrow','xmark','line'].includes(kind)) {
-    obj.visualWpx = null;
-    obj.visualHpx = null;
+  try{
+    const table=(typeof defaults!=='undefined'&&defaults)?defaults:SHAPE_DEFAULTS;
+    const def=table[kind]||SHAPE_DEFAULTS[kind]||[10,10,String(kind||'').toUpperCase()];
+    const [wf,hf,label]=def;
+    if(typeof snapshot==='function') snapshot();
+    const d=currentTemplate().draw;
+    // Offset new objects so multiple creations do not stack exactly on top of each other
+    const offset = (state.objects.length % 6) * 18;
+    const baseX = d.x + Math.max(12, d.w/2 - wf*5) + offset;
+    const baseY = d.y + Math.max(12, d.h/2 - hf*5) + offset;
+    const obj = {
+      id: uid++,
+      kind,
+      x: baseX,
+      y: baseY,
+      wf, hf,
+      label: label || '',
+      angle: 0,
+      locked: false,
+      hidden: false,
+      highlighted: false
+    };
+    // Visual-only size fields for freeform shapes (do not affect measurements)
+    if (['custom','circle','arrow','xmark','line'].includes(kind)) {
+      obj.visualWpx = null;
+      obj.visualHpx = null;
+    }
+    state.objects.push(obj);
+    state.selected = obj.id;
+    renderObjects();
+    saveActiveSheetState();
+  }catch(err){
+    console.error('addObject failed', kind, err);
+    alert('Could not add tool shape: '+(err&&err.message?err.message:err));
   }
-  state.objects.push(obj);
-  state.selected = obj.id;
-  renderObjects();
 }
 function objPixels(o){
   const p=o.pxf||DRAW_PXF;
@@ -4504,7 +4540,6 @@ function renderExtraRearReturnSpot(){
   const el=document.createElement('div');
   el.id='sheet_extraRearReturn';
   el.className='sheet-return-extra';
-    if(shouldConcreteHatch(o))el.classList.add('concrete-hatched');
   el.textContent=extra+"'";
   // Directly beneath the far-right RETURNS REAR value, still on the form side.
   Object.assign(el.style,{left:'416px',top:'610px',width:'59px',height:'26px'});
@@ -5759,14 +5794,13 @@ function buildWizardForMode(forcedMode){
   let garageBottom=d.h-18;
   if(access==='alley' && $('wAlleyPos').value==='bottom') garageBottom=d.h-alleyH-apronPxH-8;
   else if(ah) garageBottom=d.h-apronPxH-20;
-  const gyRel=Math.max(70,garageBottom-garagePxH);
-
   // V94: Wizard garage slab starts about 15% larger visually.
   // Preserve the true entered dimensions, but enlarge its pixels-per-foot scale.
   // Re-center the slab in the main drawing area so the NEW GARAGE SLAB title
   // and its W' x L' dimensions remain centered with the slab.
   const wizardGarageScale=layoutScale*1.15;
   const wizardGaragePxW=gw*wizardGarageScale, wizardGaragePxH=gh*wizardGarageScale;
+  const gyRel=Math.max(70,garageBottom-wizardGaragePxH);
   let xGarage=d.x+(d.w-wizardGaragePxW)/2;
   let yGarage=d.y+(d.h-wizardGaragePxH)/2;
 
@@ -6319,14 +6353,21 @@ function toggleMobilePanel(){
   const toolsBtn=document.getElementById('mobileToolsBtn');
   const backdrop=document.getElementById('sidebarBackdrop');
   if(panelBtn) panelBtn.onclick=toggleMobilePanel;
-  if(toolsBtn) toolsBtn.onclick=toggleMobilePanel;
+  // Tools button: open panel and scroll straight to Drawing Tools
+  if(toolsBtn) toolsBtn.onclick=()=>{
+    openMobilePanel();
+    setTimeout(()=>{
+      const tools=document.querySelector('.drawing-tools')||document.querySelector('[data-section="drawing-tools"]');
+      if(tools) tools.scrollIntoView({behavior:'smooth',block:'start'});
+    },80);
+  };
   if(backdrop) backdrop.onclick=closeMobilePanel;
 
-  // Close panel when a tool is chosen on mobile
+  // Close panel when a tool is chosen on mobile (after the tool action runs)
   document.querySelectorAll('[data-add], .stamp-btn, #wizardBtn').forEach(b=>{
     b.addEventListener('click', ()=>{
-      if(window.matchMedia('(max-width:900px)').matches) setTimeout(closeMobilePanel, 180);
-    });
+      if(window.matchMedia('(max-width:900px)').matches) setTimeout(closeMobilePanel, 220);
+    }, false);
   });
 
   const snapBtn=document.getElementById('snapToggleBtn');
@@ -6355,6 +6396,58 @@ function toggleMobilePanel(){
     const m=document.getElementById(mobileId);
     const d=document.getElementById(desktopId);
     if(m && d) m.onclick=()=>d.click();
+  });
+})();
+
+// Ensure Drawing Tools buttons always add shapes (phone + desktop)
+(function wireDrawingToolButtons(){
+  function fireAdd(kind,e){
+    if(e){ e.preventDefault(); e.stopPropagation(); }
+    if(!kind) return;
+    if(typeof addObject!=='function'){
+      alert('Drawing tools not ready — hard refresh the page.');
+      return;
+    }
+    addObject(kind);
+  }
+  document.querySelectorAll('[data-add]').forEach(btn=>{
+    const kind=btn.getAttribute('data-add');
+    btn.style.touchAction='manipulation';
+    btn.style.minHeight='44px';
+    btn.onclick=e=>fireAdd(kind,e);
+    // iOS sometimes drops click; touchend is more reliable on phones
+    btn.ontouchend=e=>{
+      // Avoid double-fire if a click will also arrive
+      if(btn._touchFired) return;
+      btn._touchFired=true;
+      setTimeout(()=>{btn._touchFired=false},400);
+      fireAdd(kind,e);
+    };
+  });
+  function addStamp(kind,label,wf,hf){
+    try{
+      snapshot();
+      const d=currentTemplate().draw;
+      state.objects.push({id:uid++,kind,x:d.x+40,y:d.y+60,wf,hf,label,angle:0});
+      state.selected=state.objects.at(-1).id;
+      renderObjects();
+      saveActiveSheetState();
+    }catch(err){ alert(err.message||err); }
+  }
+  const stampMap={
+    staysBtn:()=>addStamp('stays','STAYS',6,2),
+    cutBtn:()=>addStamp('cut','CUT →',8,2),
+    collectBtn:()=>addStamp('collect','COLLECT',8,2),
+    treeBtn:()=>addStamp('tree','TREE',4,4),
+    bushBtn:()=>addStamp('bush','BUSH',3,3)
+  };
+  Object.keys(stampMap).forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el) return;
+    el.style.touchAction='manipulation';
+    el.style.minHeight='44px';
+    el.onclick=e=>{e.preventDefault();stampMap[id]()};
+    el.ontouchend=e=>{e.preventDefault();stampMap[id]()};
   });
 })();
 

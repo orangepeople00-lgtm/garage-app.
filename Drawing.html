@@ -2444,6 +2444,7 @@ button.danger{color:#b42318}
 <div class="topbar">
 <button type="button" class="mobile-panel-btn" id="mobilePanelBtn" title="Open tools panel">☰ Tools</button>
 <button type="button" class="mobile-snap-btn on" id="snapToggleBtn" title="Toggle snapping">Snap ON</button>
+<span id="drawBuildBadge" style="font-size:10px;font-weight:900;background:#fef3c7;color:#92400e;border:1px solid #f59e0b;border-radius:6px;padding:4px 7px;white-space:nowrap">BUILD 0823-0045</span>
 <button class="primary" id="fitBtn">Fit</button>
 <button type="button" id="rotateLeftBtn" title="Rotate selected -15°">↺</button>
 <button type="button" id="rotateRightBtn" title="Rotate selected +15°">↻</button>
@@ -2466,6 +2467,9 @@ button.danger{color:#b42318}
 <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
 <div class="mobile-bottom-bar" id="mobileBottomBar">
   <button type="button" class="primary" id="mobileToolsBtn">☰ Tools</button>
+  <button type="button" id="mobileAddGarageBtn" style="background:#1d4ed8;color:#fff;border-color:#1d4ed8;font-weight:900">+ Garage</button>
+  <button type="button" id="mobileAddApronBtn" style="background:#0f766e;color:#fff;border-color:#0f766e;font-weight:900">+ Apron</button>
+  <button type="button" id="mobileAddRectBtn">+ Box</button>
   <button type="button" id="mobileRotateLeftBtn" title="Rotate -15°">↺</button>
   <button type="button" id="mobileRotateRightBtn" title="Rotate +15°">↻</button>
   <button type="button" id="mobileRotate90Btn" title="Rotate 90°">90°</button>
@@ -5925,10 +5929,9 @@ function buildWizardForMode(forcedMode){
 
   // Side setbacks: compact labels just OUTSIDE the garage walls (never inside the slab).
   // Site plan uses smaller scale + simple "3'" markers for survey review.
-  const garagePxW=sitePlanOnlyNew?siteGaragePxW:wizardGaragePxW;
-  const garagePxH=sitePlanOnlyNew?siteGaragePxH:wizardGaragePxH;
-  const setbackPxH=garagePxH;
-  const setbackPxW=garagePxW;
+  // (Do not redeclare garagePxW/H — already defined above from layoutScale.)
+  const setbackPxH=sitePlanOnlyNew?siteGaragePxH:wizardGaragePxH;
+  const setbackPxW=sitePlanOnlyNew?siteGaragePxW:wizardGaragePxW;
   const setbackScale=sitePlanOnlyNew?siteGarageScale:layoutScale;
   if(ls){
     const labelW=sitePlanOnlyNew?36:58, gap=sitePlanOnlyNew?6:10;
@@ -6397,6 +6400,24 @@ function toggleMobilePanel(){
     const d=document.getElementById(desktopId);
     if(m && d) m.onclick=()=>d.click();
   });
+
+  // Direct phone shortcuts — do not depend on the side panel Tools list
+  function bindQuickAdd(id, kind){
+    const el=document.getElementById(id);
+    if(!el) return;
+    const go=e=>{
+      if(e){ e.preventDefault(); e.stopPropagation(); }
+      try{
+        if(typeof addObject==='function') addObject(kind);
+        else alert('Tools script not loaded. Hard-close the tab and reopen. Look for BUILD badge.');
+      }catch(err){ alert('Add failed: '+(err&&err.message?err.message:err)); }
+    };
+    el.onclick=go;
+    el.ontouchend=go;
+  }
+  bindQuickAdd('mobileAddGarageBtn','garage');
+  bindQuickAdd('mobileAddApronBtn','apron');
+  bindQuickAdd('mobileAddRectBtn','custom');
 })();
 
 // Ensure Drawing Tools buttons always add shapes (phone + desktop)

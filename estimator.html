@@ -1593,9 +1593,9 @@ input, select, textarea, button { box-sizing:border-box; }
                             <i class="fa-solid fa-wand-magic-sparkles"></i> GARAGE PHOTO ON ESTIMATE SHEET
                         </div>
                         <select id="garagePhotoMode" onchange="saveGaragePhotoMode()" class="calc-input w-full bg-zinc-900 border border-zinc-700 text-white rounded-xl px-3 py-2.5 text-sm mb-2">
-                            <option value="openai">OpenAI (best quality — needs API key)</option>
-                            <option value="ai">Free AI (no key)</option>
-                            <option value="hybrid">OpenAI → free AI → library</option>
+                            <option value="hybrid">Auto: OpenAI → Free AI → library (recommended)</option>
+                            <option value="openai">OpenAI only</option>
+                            <option value="ai">Free AI only (no key — works on phone)</option>
                             <option value="library">Photo library only (classic)</option>
                         </select>
                         <div id="openaiKeyLockedPanel" class="hidden mb-2 rounded-xl border border-emerald-700 bg-emerald-950/40 px-3 py-3">
@@ -1613,7 +1613,7 @@ input, select, textarea, button { box-sizing:border-box; }
                             <button type="button" id="saveOpenAIKeyBtn" onclick="lockOpenAIKey()" class="mt-2 w-full px-3 py-2.5 rounded-xl bg-violet-700 hover:bg-violet-600 text-xs font-bold text-white">Save &amp; Lock Key (one time)</button>
                         </div>
                         <div class="text-[10px] text-zinc-500 leading-relaxed">
-                            Get a key at <b class="text-zinc-300">platform.openai.com</b> → API keys. After you lock it, the key is stored only on <b>this device</b> and will not show again (not even to you). Other salesmen need their own device/key.
+                            <b class="text-zinc-300">Recommended:</b> Auto mode. OpenAI is tried first; if your phone blocks it, Free AI still builds a custom garage from this estimate. Library is last resort. Key (optional) from platform.openai.com — locked on this device only.
                         </div>
                         <div id="aiPhotoStatus" class="text-[10px] text-emerald-400 mt-2 hidden"></div>
                     </div>
@@ -3968,7 +3968,7 @@ input, select, textarea, button { box-sizing:border-box; }
         function loadGaragePhotoMode(){
             const el=document.getElementById('garagePhotoMode');
             try{
-                if(el) el.value=localStorage.getItem('agb_garage_photo_mode')||'openai';
+                if(el) el.value=localStorage.getItem('agb_garage_photo_mode')||'hybrid';
             }catch(e){ if(el) el.value='openai'; }
             updateOpenAIKeyPanels();
         }
@@ -4025,28 +4025,40 @@ input, select, textarea, button { box-sizing:border-box; }
                 const cached=localStorage.getItem(cacheKey);
                 if(cached && (cached.startsWith('http')||cached.startsWith('data:'))) return {url:cached, prompt, source:'openai', cached:true};
             }catch(e){}
-            const res=await fetch('https://api.openai.com/v1/images/generations', {
-                method:'POST',
-                headers:{
-                    'Content-Type':'application/json',
-                    'Authorization':'Bearer '+apiKey
-                },
-                body: JSON.stringify({
-                    model:'dall-e-3',
-                    prompt: prompt.slice(0, 3900),
-                    n:1,
-                    size:'1024x1024',
-                    quality:'standard',
-                    response_format:'url'
-                })
-            });
+            let res;
+            try{
+                res=await fetch('https://api.openai.com/v1/images/generations', {
+                    method:'POST',
+                    headers:{
+                        'Content-Type':'application/json',
+                        'Authorization':'Bearer '+apiKey
+                    },
+                    body: JSON.stringify({
+                        model:'dall-e-3',
+                        prompt: prompt.slice(0, 3900),
+                        n:1,
+                        size:'1024x1024',
+                        quality:'standard'
+                    })
+                });
+            }catch(netErr){
+                // Browser security (CORS) often blocks OpenAI when the estimator is opened as a local file or simple static page
+                throw new Error('Browser blocked the OpenAI request (common with local HTML). Use Free AI mode, or open the estimator from a real website host. Details: '+(netErr && netErr.message ? netErr.message : netErr));
+            }
             const data=await res.json().catch(()=>({}));
             if(!res.ok){
                 const msg=(data && data.error && data.error.message) ? data.error.message : ('OpenAI error '+res.status);
+                // Common account issues
+                if(res.status===401) throw new Error('OpenAI key rejected (401). Replace key — wrong key or revoked.');
+                if(res.status===429) throw new Error('OpenAI rate limit / quota (429). Check billing at platform.openai.com.');
                 throw new Error(msg);
             }
-            const url=data && data.data && data.data[0] && data.data[0].url;
-            if(!url) throw new Error('OpenAI returned no image URL.');
+            const item=data && data.data && data.data[0];
+            let url=item && item.url;
+            if(!url && item && item.b64_json){
+                url='data:image/png;base64,'+item.b64_json;
+            }
+            if(!url) throw new Error('OpenAI returned no image.');
             try{ localStorage.setItem(cacheKey, url); }catch(e){}
             return {url, prompt, source:'openai', cached:false};
         }
@@ -4058,8 +4070,9 @@ input, select, textarea, button { box-sizing:border-box; }
                 if(cached && cached.startsWith('http')) return {url:cached, prompt, source:'free', cached:true};
             }catch(e){}
             const seed=Math.abs(cacheKey.split('').reduce((a,c)=>a+c.charCodeAt(0),0))%99999;
+            // Free realistic image host — works from phone HTML without OpenAI CORS issues
             const url='https://image.pollinations.ai/prompt/'+encodeURIComponent(prompt)
-                +'?width=1024&height=768&nologo=true&refine=true&seed='+seed;
+                +'?width=1024&height=1024&nologo=true&enhance=true&model=flux&seed='+seed;
             try{ localStorage.setItem(cacheKey, url); }catch(e){}
             return {url, prompt, source:'free', cached:false};
         }
@@ -4121,9 +4134,17 @@ input, select, textarea, button { box-sizing:border-box; }
             if(mode==='openai'){
                 try{ return await tryOpenAI(); }
                 catch(err){
-                    console.warn(err);
-                    if(status){ status.classList.remove('hidden'); status.textContent='OpenAI failed: '+(err.message||err)+' — using library.'; }
-                    return libraryFallback();
+                    console.warn('OpenAI failed, trying Free AI', err);
+                    const msg=String(err && err.message ? err.message : err);
+                    if(status){ status.classList.remove('hidden'); status.textContent='OpenAI blocked — switching to Free AI…'; }
+                    try{
+                        const free=await tryFree();
+                        if(status) status.textContent='Free AI garage photo ready (OpenAI unavailable here).';
+                        return free;
+                    }catch(err2){
+                        if(status){ status.classList.remove('hidden'); status.textContent='AI unavailable — library. '+msg; }
+                        return libraryFallback();
+                    }
                 }
             }
             if(mode==='ai'){

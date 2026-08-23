@@ -3879,36 +3879,61 @@ async function loadMyEstimatesForDrawing(){
   try{
     const client=getDrawingSupabase();
     if(!client){
-      if(status) status.textContent='Supabase not available.';
+      if(status) status.textContent='Supabase not available in this browser.';
       return;
     }
     if(status) status.textContent='Loading your estimates…';
-    const {data:{user}}=await client.auth.getUser();
+
+    // Prefer existing dashboard session on the same site
+    const sess=await client.auth.getSession();
+    let user=sess?.data?.session?.user||null;
     if(!user){
-      if(status) status.textContent='Sign in on the dashboard first, then reopen Drawing.';
+      const gu=await client.auth.getUser();
+      user=gu?.data?.user||null;
+    }
+    if(!user){
+      if(status) status.textContent='Not signed in. Open the Dashboard, sign in, then come back here and tap Refresh My Jobs.';
       if(list) list.innerHTML='';
+      myEstimateHistoryCache=[];
       return;
     }
-    const {data:staff}=await client.from('staff_profiles').select('username,role').eq('id',user.id).maybeSingle();
-    const username=String(staff?.username||'').toLowerCase();
-    const role=String(staff?.role||'').toLowerCase();
-    const isManager=/sam|randy|ramsey|admin|manager/.test(username) || /admin|manager/.test(role);
 
-    let query=client.from('estimate_history').select('id,customer,address,city,garage_size,roof_type,wall_height,siding,estimate_price,estimate_snapshot,salesman_username,created_by,created_at,updated_at').order('created_at',{ascending:false}).limit(80);
-    // Non-managers: own jobs only
-    if(!isManager){
-      query=query.or(`created_by.eq.${user.id},salesman_username.eq.${username}`);
-    }
-    const {data,error}=await query;
+    let username='';
+    try{
+      const {data:staff}=await client.from('staff_profiles').select('username').eq('id',user.id).maybeSingle();
+      username=String(staff?.username||'').toLowerCase();
+    }catch(e){ console.warn('staff_profiles', e); }
+
+    const isManager=/^(sam|randy|ramsey|admin|manager)/.test(username) || /sam|randy|ramsey/.test(username);
+
+    // Same style as dashboard: load history, then filter in the app
+    const {data,error}=await client
+      .from('estimate_history')
+      .select('id,customer,address,city,garage_size,roof_type,wall_height,siding,estimate_price,estimate_snapshot,salesman_username,created_by,created_at,updated_at')
+      .order('created_at',{ascending:false})
+      .limit(200);
     if(error) throw error;
-    myEstimateHistoryCache=Array.isArray(data)?data:[];
-    if(status) status.textContent=myEstimateHistoryCache.length
-      ? (`${myEstimateHistoryCache.length} estimate${myEstimateHistoryCache.length===1?'':'s'} loaded. Tap a customer to fill the wizard.`)
-      : 'No estimates found for your account yet. Create an estimate sheet first.';
+
+    let rows=Array.isArray(data)?data:[];
+    if(!isManager){
+      rows=rows.filter(r=>{
+        const byMe=r.created_by===user.id;
+        const salesMatch=username && String(r.salesman_username||'').toLowerCase()===username;
+        return byMe || salesMatch;
+      });
+    }
+    myEstimateHistoryCache=rows;
+    if(status){
+      status.textContent=rows.length
+        ? (rows.length+' estimate'+(rows.length===1?'':'s')+' loaded'+(username?' for '+username:'')+'. Tap a customer to fill the wizard.')
+        : ('Signed in'+(username?' as '+username:'')+', but no estimates found yet. Create an estimate sheet first, then Refresh.');
+    }
     renderEstimateImportList();
   }catch(e){
     console.warn('loadMyEstimatesForDrawing',e);
-    if(status) status.textContent='Could not load estimates. Sign in on the dashboard, then tap Refresh.';
+    const msg=String(e?.message||e||'unknown error');
+    if(status) status.textContent='Could not load estimates: '+msg+'. Sign in on the Dashboard (same website), then tap Refresh.';
+    if(list) list.innerHTML='';
   }
 }
 

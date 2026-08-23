@@ -3854,7 +3854,7 @@ function renderEstimateImportList(){
     return;
   }
   list.innerHTML=rows.map((r,i)=>{
-    const when=(r.created_at||r.updated_at||'').slice(0,10);
+    const when=(r.created_at||'').slice(0,10);
     const size=r.garage_size||'';
     const title=String(r.customer||'Unnamed').replace(/</g,'&lt;');
     const addr=String(r.address||'').replace(/</g,'&lt;');
@@ -3909,7 +3909,7 @@ async function loadMyEstimatesForDrawing(){
     // Same style as dashboard: load history, then filter in the app
     const {data,error}=await client
       .from('estimate_history')
-      .select('id,customer,address,city,garage_size,roof_type,wall_height,siding,estimate_price,estimate_snapshot,salesman_username,created_by,created_at,updated_at')
+      .select('id,customer,address,city,garage_size,roof_type,wall_height,siding,estimate_price,estimate_snapshot,salesman_username,created_by,created_at')
       .order('created_at',{ascending:false})
       .limit(200);
     if(error) throw error;

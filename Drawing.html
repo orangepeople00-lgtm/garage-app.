@@ -157,6 +157,153 @@ button.danger{color:#b42318}
 .side-handle.s{bottom:-6px}
 .side-handle.e{right:-6px}
 .side-handle.w{left:-6px}
+
+/* ========== MOBILE / PHONE FRIENDLY (V81) ========== */
+.mobile-panel-btn,
+.mobile-snap-btn,
+.mobile-bottom-bar{display:none}
+
+@media (max-width: 900px){
+  body{flex-direction:column; height:100dvh; overflow:hidden}
+  .sidebar{
+    position:fixed;
+    left:0; top:0; bottom:0;
+    width:min(92vw, 340px);
+    max-width:340px;
+    z-index:300;
+    transform:translateX(-105%);
+    transition:transform .22s ease;
+    box-shadow:12px 0 40px rgba(0,0,0,.25);
+    flex:none !important;
+  }
+  .sidebar.mobile-open{transform:translateX(0)}
+  .sidebar-backdrop{
+    display:none;
+    position:fixed; inset:0;
+    background:rgba(15,23,42,.45);
+    z-index:290;
+  }
+  .sidebar-backdrop.show{display:block}
+  .main{width:100%; flex:1; min-height:0}
+  .topbar{
+    height:auto;
+    min-height:48px;
+    flex-wrap:wrap;
+    gap:6px;
+    padding:8px;
+  }
+  .topbar button, .topbar .badge{
+    font-size:13px !important;
+    padding:10px 12px !important;
+    min-height:42px;
+    border-radius:10px;
+    font-weight:700;
+  }
+  .topbar .mini{padding:10px 11px !important}
+  .mobile-panel-btn, .mobile-snap-btn{
+    display:inline-flex !important;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    background:#111;
+    color:#fff;
+    border:none;
+    font-weight:800;
+  }
+  .mobile-snap-btn.on{background:#166534}
+  .mobile-snap-btn.off{background:#64748b}
+  /* Bigger touch handles on phone */
+  .handle,
+  #paper .obj .handle,
+  #paper .obj.selected .handle,
+  #paper .obj.sidewalk .handle{
+    width:48px !important;
+    height:48px !important;
+    right:-22px !important;
+    bottom:-22px !important;
+    border-width:5px !important;
+    z-index:80 !important;
+    box-shadow:0 0 0 8px rgba(37,99,235,.22) !important;
+  }
+  .side-handle{
+    background:#2563eb !important;
+    border:3px solid #fff !important;
+    z-index:85 !important;
+  }
+  .side-handle.n, .side-handle.s{
+    height:22px !important;
+    width:44px !important;
+  }
+  .side-handle.e, .side-handle.w{
+    width:22px !important;
+    height:44px !important;
+  }
+  .side-handle.n{top:-12px !important}
+  .side-handle.s{bottom:-12px !important}
+  .side-handle.e{right:-12px !important}
+  .side-handle.w{left:-12px !important}
+  .rotate-handle{
+    width:36px !important;
+    height:36px !important;
+    top:-40px !important;
+  }
+  /* Sidebar buttons bigger on mobile when open */
+  .sidebar button{
+    padding:12px 10px !important;
+    font-size:14px !important;
+    min-height:46px;
+    font-weight:700;
+  }
+  .sidebar .toolbar-grid{
+    grid-template-columns:1fr 1fr;
+    gap:8px !important;
+  }
+  .sidebar input, .sidebar select, .sidebar textarea{
+    padding:11px 10px !important;
+    font-size:15px !important;
+    min-height:44px;
+  }
+  .sidebar label{font-size:12px !important; font-weight:700}
+  .sidebar .section{padding:12px !important; margin-bottom:10px !important}
+  .sidebar h3{font-size:14px !important; margin-bottom:10px !important}
+  /* Bottom quick bar so key actions stay reachable without endless scroll */
+  .mobile-bottom-bar{
+    display:flex !important;
+    position:fixed;
+    left:0; right:0; bottom:0;
+    z-index:250;
+    background:#0f172a;
+    padding:8px 8px calc(8px + env(safe-area-inset-bottom));
+    gap:6px;
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+    box-shadow:0 -6px 24px rgba(0,0,0,.25);
+  }
+  .mobile-bottom-bar button{
+    flex:0 0 auto;
+    background:#1e293b;
+    color:#fff;
+    border:1px solid #334155;
+    border-radius:12px;
+    padding:11px 14px;
+    font-size:13px;
+    font-weight:800;
+    white-space:nowrap;
+    min-height:46px;
+  }
+  .mobile-bottom-bar button.primary{background:#2563eb; border-color:#2563eb}
+  .mobile-bottom-bar button.danger{background:#b91c1c; border-color:#b91c1c}
+  /* Give drawing area room above the bottom bar */
+  .main{padding-bottom:62px}
+  .viewport{min-height:0}
+  /* Hide some less-critical topbar buttons on very small screens - still in bottom bar / panel */
+  .topbar .hide-on-mobile{display:none !important}
+}
+
+@media (max-width: 420px){
+  .topbar button{font-size:12px !important; padding:9px 10px !important}
+}
+
 .rotate-handle{position:absolute;width:15px;height:15px;border-radius:50%;background:#f59e0b;border:2px solid #fff;left:50%;top:-26px;transform:translateX(-50%);cursor:grab}.rotate-stem{position:absolute;left:50%;top:-13px;height:14px;border-left:2px solid #f59e0b}
 .status{font-size:11px;color:#667085;padding-top:4px}
 .hidden{display:none!important}
@@ -1873,7 +2020,7 @@ button.danger{color:#b42318}
 <aside class="sidebar">
 <div class="brand">
 <h1>Absolute Garage Builders</h1>
-<small>Drawing App · V80 CAD Upgrade</small>
+<small>Drawing App · V81 Mobile</small>
 </div>
 <div class="scroll">
 <div class="section">
@@ -2136,21 +2283,36 @@ button.danger{color:#b42318}
 </aside>
 <main class="main">
 <div class="topbar">
-<button class="primary" id="fitBtn">Fit Whole Sheet</button>
-<button id="drawViewBtn">Drawing View</button>
+<button type="button" class="mobile-panel-btn" id="mobilePanelBtn" title="Open tools panel">☰ Tools</button>
+<button type="button" class="mobile-snap-btn on" id="snapToggleBtn" title="Toggle snapping">Snap ON</button>
+<button class="primary" id="fitBtn">Fit</button>
+<button id="drawViewBtn" class="hide-on-mobile">Drawing View</button>
 <button id="zoomOut">−</button>
 <span class="badge" id="zoomLabel">100%</span>
 <button id="zoomIn">+</button>
 <div class="spacer"></div>
-<button class="mini" type="button" onclick="window.location.href='index.html?v='+Date.now()">← Back To Dashboard</button>
+<button class="mini hide-on-mobile" type="button" onclick="window.location.href='index.html?v='+Date.now()">← Dashboard</button>
     <button id="undoBtn">Undo</button>
-    <button class="mini" id="duplicateSelectedBtn" title="Duplicate selected object">⧉ Duplicate</button>
-    <button class="mini" id="lockSelectedBtn" title="Lock / Unlock selected">🔒 Lock</button>
-    <button class="mini" id="hideSelectedBtn" title="Hide selected object">👁 Hide</button>
-    <button class="mini" id="highlightSelectedBtn" title="Toggle yellow highlight">✦ Highlight</button>
-    <button class="mini danger" id="deleteSelectedBtn" title="Delete selected drawing item">🗑 Delete Selected</button>
+    <button class="mini hide-on-mobile" id="duplicateSelectedBtn" title="Duplicate selected object">⧉ Duplicate</button>
+    <button class="mini hide-on-mobile" id="lockSelectedBtn" title="Lock / Unlock selected">🔒 Lock</button>
+    <button class="mini hide-on-mobile" id="hideSelectedBtn" title="Hide selected object">👁 Hide</button>
+    <button class="mini hide-on-mobile" id="highlightSelectedBtn" title="Toggle yellow highlight">✦ Highlight</button>
+    <button class="mini danger hide-on-mobile" id="deleteSelectedBtn" title="Delete selected drawing item">🗑 Delete</button>
 
-<button id="printBtn">Print</button><button id="pdfBtn">Save as PDF</button>
+<button id="printBtn" class="hide-on-mobile">Print</button><button id="pdfBtn" class="hide-on-mobile">PDF</button>
+</div>
+<div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+<div class="mobile-bottom-bar" id="mobileBottomBar">
+  <button type="button" class="primary" id="mobileToolsBtn">☰ Tools</button>
+  <button type="button" id="mobileUndoBtn">Undo</button>
+  <button type="button" id="mobileDupBtn">Duplicate</button>
+  <button type="button" id="mobileLockBtn">Lock</button>
+  <button type="button" id="mobileHideBtn">Hide</button>
+  <button type="button" id="mobileHlBtn">Highlight</button>
+  <button type="button" class="danger" id="mobileDelBtn">Delete</button>
+  <button type="button" id="mobileFitBtn">Fit</button>
+  <button type="button" id="mobilePdfBtn">PDF</button>
+  <button type="button" onclick="window.location.href='index.html?v='+Date.now()">Dashboard</button>
 </div>
 <div class="viewport" id="viewport">
 <div class="paper" id="paper">
@@ -4192,9 +4354,11 @@ function updateInspector(){
   if(lb) lb.textContent=(o&&o.locked)?'🔓 Unlock':'🔒 Lock';
 }
 
-// ===== Snapping System (corner / edge / center) =====
-const SNAP_DIST = 12; // pixels at current scale
+// ===== Snapping System (corner / edge / center) — sticky hysteresis to stop mobile shake =====
+const SNAP_IN = 16;   // distance to start a snap
+const SNAP_OUT = 34;  // must pull farther than this to break an active snap (stops oscillation)
 let snapPreviewEl = null;
+let activeSnap = null; // sticky snap for current drag: {dx, dy, target, key}
 
 function getSnapPoints(o){
   const [w,h] = objPixels(o);
@@ -4214,7 +4378,6 @@ function getSnapPoints(o){
 function findSnap(moving, excludeId, dx, dy){
   const [mw,mh] = objPixels(moving);
   const candidates = [];
-  // points on the moving object after tentative move
   const mx = moving.x + dx, my = moving.y + dy;
   const mPoints = [
     {x:mx, y:my, type:'corner'}, {x:mx+mw, y:my, type:'corner'},
@@ -4234,13 +4397,18 @@ function findSnap(moving, excludeId, dx, dy){
     for(const mp of mPoints){
       for(const tp of all){
         const dist = Math.hypot(mp.x - tp.x, mp.y - tp.y);
-        if(dist < SNAP_DIST){
+        // Use larger capture radius while sticky is active
+        const limit = activeSnap ? SNAP_OUT : SNAP_IN;
+        if(dist < limit){
+          const snapDx = tp.x - (mp.x - dx);
+          const snapDy = tp.y - (mp.y - dy);
           candidates.push({
             dist,
-            dx: tp.x - (mp.x - dx), // correction to apply to original
-            dy: tp.y - (mp.y - dy),
+            dx: snapDx,
+            dy: snapDy,
             type: mp.type + '-to-' + tp.type,
-            target: tp
+            target: tp,
+            key: other.id + ':' + Math.round(tp.x) + ',' + Math.round(tp.y) + ':' + mp.type
           });
         }
       }
@@ -4248,6 +4416,18 @@ function findSnap(moving, excludeId, dx, dy){
   }
   if(!candidates.length) return null;
   candidates.sort((a,b)=>a.dist-b.dist);
+
+  // Prefer keeping the same active snap to prevent rapid switching / shake
+  if(activeSnap){
+    const same = candidates.find(c => c.key === activeSnap.key);
+    if(same && same.dist < SNAP_OUT) return same;
+    // If finger pulled far from active snap target, clear sticky
+    if(candidates[0].dist > SNAP_IN * 0.85){
+      // allow switch only to a clearly better close target
+      if(candidates[0].dist < SNAP_IN * 0.55) return candidates[0];
+      return null;
+    }
+  }
   return candidates[0];
 }
 
@@ -4297,6 +4477,7 @@ function objectPointerDown(e){
   }
   const resizing=e.target.dataset.handle==='1', rotating=e.target.dataset.rotate==='1', cutSizing=e.target.dataset.cutend==='1';
   const sideHandle=e.target.dataset.side||null; // n,s,e,w
+  activeSnap = null; // fresh drag — no sticky snap yet
   snapshot();
   const startX=e.clientX,startY=e.clientY, ox=o.x,oy=o.y, ow=o.wf,oh=o.hf, oa=o.angle||0, op=o.pxf||DRAW_PXF;
   const [pw0,ph0]=objPixels(o), cx=o.x+pw0/2, cy=o.y+ph0/2;
@@ -4485,16 +4666,22 @@ function objectPointerDown(e){
       const ang=((o.angle||0)%180+180)%180;
       const bw=(ang>45&&ang<135)?ph:pw, bh=(ang>45&&ang<135)?pw:ph;
       let finalDx = dx, finalDy = dy;
-      // Snapping (skip for attached garage children and panel-only roles)
-      if(!o.locked && !['serviceDoor','partyDoor'].includes(o.role)){
+      // Snapping (skip when off, locked, or panel-only roles)
+      // Sticky hysteresis prevents the rapid shake on mobile touch drag
+      if(window.snapEnabled !== false && !o.locked && !['serviceDoor','partyDoor'].includes(o.role)){
         const snap = findSnap(o, o.id, dx, dy);
         if(snap){
+          activeSnap = { key: snap.key, dx: snap.dx, dy: snap.dy, target: snap.target };
           finalDx = snap.dx;
           finalDy = snap.dy;
           showSnapPreview(snap.target);
         } else {
+          activeSnap = null;
           hideSnapPreview();
         }
+      } else {
+        activeSnap = null;
+        hideSnapPreview();
       }
       o.x=Math.max(-bw/2,Math.min(t.w-bw/2,ox+finalDx));
       o.y=Math.max(-bh/2,Math.min(t.h-bh/2,oy+finalDy));
@@ -4506,6 +4693,7 @@ function objectPointerDown(e){
     renderObjects();
   };
   const up=()=>{
+    activeSnap = null;
     hideSnapPreview();
     delete o._dragLeft;delete o._dragRight;delete o._dragRear;delete o._garageStartX;delete o._wallStart;
     const pd=byRole('partyDoor');if(pd)delete pd._returnStart;
@@ -5100,32 +5288,37 @@ function buildWizardForMode(forcedMode){
     if(rearR){wizardObj('dimension',rearR,2,rearR+"'",xGarage+garagePxW-rearR*layoutScale,rearY,0,'rearRight');state.objects.at(-1).pxf=layoutScale}
   }
 
-  // House is generated at the same site scale and placed above the garage with the requested gap.
+  // House / Existing Home: start a bit smaller visually and sit near the center-top
+  // of the drawing sheet, just under the property-line (lot width) dimension.
   const enteredHW=+$('wHouseW').value||0,enteredHH=+$('wHouseH').value||0,hgap=+$('wHouseGap').value||0;
   // If user did NOT enter house dimensions: still show a house silhouette labeled
   // "Existing House" / "Home" with NO fake measurements on the label.
   const hasHouseDims = enteredHW > 0 && enteredHH > 0;
   const hw = hasHouseDims ? enteredHW : 22;
-  const hh = hasHouseDims ? enteredHH : 45;
+  const hh = hasHouseDims ? enteredHH : 40;
   {
-    const houseP=layoutScale;
-    const hx=d.x+Math.max(20,Math.min(d.w-hw*houseP-20,xGarage+(garagePxW-hw*houseP)/2));
-    const houseBack=yGarage-Math.max(18,hgap*layoutScale);
-    const hy=Math.max(d.y+42,houseBack-hh*houseP);
+    // Visually smaller than full site scale (~70%)
+    const houseP = layoutScale * 0.70;
+    const housePxW = hw * houseP;
+    const housePxH = hh * houseP;
+    // Centered horizontally on the drawing area
+    const hx = d.x + Math.max(16, (d.w - housePxW) / 2);
+    // Just under the top property-line / lot-width area (center-top of sheet)
+    const hy = d.y + 58;
     const houseLabel = hasHouseDims
       ? `EXISTING HOUSE\n${hw}' x ${hh}'`
       : `EXISTING HOUSE\n(Home)`;
     wizardObj('house',hw,hh,houseLabel,hx,hy,0,'house');
     state.objects.at(-1).pxf=houseP;
     if(!hasHouseDims){
-      // Mark so future logic knows these are visual-only placeholder dims
       state.objects.at(-1).visualOnly = true;
     }
-    if(hgap){
-      const actualBack=hy+hh*houseP;
-      const gapPx=Math.max(18,yGarage-actualBack);
+    // Gap dimension only when user entered a real house-to-garage gap and house sits above garage
+    if(hgap && (hy + housePxH) < yGarage - 8){
+      const actualBack = hy + housePxH;
+      const gapPx = Math.max(18, yGarage - actualBack);
       wizardObj('dimension',hgap,2,hgap+"'",xGarage+garagePxW*.5,actualBack,90,'houseGap');
-      state.objects.at(-1).pxf=gapPx/hgap;
+      state.objects.at(-1).pxf = gapPx / Math.max(0.5, hgap);
     }
   }
 
@@ -5444,6 +5637,72 @@ updateInspector=function(){
   const lb=document.getElementById('lockSelectedBtn');
   if(lb) lb.textContent=(o&&o.locked)?'🔓 Unlock':'🔒 Lock';
 };
+
+
+// ===== Mobile panel + Snap toggle (V81) =====
+window.snapEnabled = true;
+
+function openMobilePanel(){
+  const sb=document.querySelector('.sidebar');
+  const bd=document.getElementById('sidebarBackdrop');
+  if(sb) sb.classList.add('mobile-open');
+  if(bd) bd.classList.add('show');
+}
+function closeMobilePanel(){
+  const sb=document.querySelector('.sidebar');
+  const bd=document.getElementById('sidebarBackdrop');
+  if(sb) sb.classList.remove('mobile-open');
+  if(bd) bd.classList.remove('show');
+}
+function toggleMobilePanel(){
+  const sb=document.querySelector('.sidebar');
+  if(sb && sb.classList.contains('mobile-open')) closeMobilePanel();
+  else openMobilePanel();
+}
+
+(function wireMobileUI(){
+  const panelBtn=document.getElementById('mobilePanelBtn');
+  const toolsBtn=document.getElementById('mobileToolsBtn');
+  const backdrop=document.getElementById('sidebarBackdrop');
+  if(panelBtn) panelBtn.onclick=toggleMobilePanel;
+  if(toolsBtn) toolsBtn.onclick=toggleMobilePanel;
+  if(backdrop) backdrop.onclick=closeMobilePanel;
+
+  // Close panel when a tool is chosen on mobile
+  document.querySelectorAll('[data-add], .stamp-btn, #wizardBtn').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      if(window.matchMedia('(max-width:900px)').matches) setTimeout(closeMobilePanel, 180);
+    });
+  });
+
+  const snapBtn=document.getElementById('snapToggleBtn');
+  if(snapBtn){
+    snapBtn.onclick=()=>{
+      window.snapEnabled = !window.snapEnabled;
+      snapBtn.textContent = window.snapEnabled ? 'Snap ON' : 'Snap OFF';
+      snapBtn.classList.toggle('on', window.snapEnabled);
+      snapBtn.classList.toggle('off', !window.snapEnabled);
+      if(!window.snapEnabled && typeof hideSnapPreview==='function') hideSnapPreview();
+    };
+  }
+
+  // Bottom bar mirrors
+  const map=[
+    ['mobileUndoBtn','undoBtn'],
+    ['mobileDupBtn','duplicateSelectedBtn'],
+    ['mobileLockBtn','lockSelectedBtn'],
+    ['mobileHideBtn','hideSelectedBtn'],
+    ['mobileHlBtn','highlightSelectedBtn'],
+    ['mobileDelBtn','deleteSelectedBtn'],
+    ['mobileFitBtn','fitBtn'],
+    ['mobilePdfBtn','pdfBtn']
+  ];
+  map.forEach(([mobileId, desktopId])=>{
+    const m=document.getElementById(mobileId);
+    const d=document.getElementById(desktopId);
+    if(m && d) m.onclick=()=>d.click();
+  });
+})();
 
 </script>
 </body>

@@ -151,9 +151,9 @@ body.estimator-mode .estimator-exit{display:block}
  <div class="stats" id="stats"></div>
 
  <div class="card" id="quickJobCard" style="margin-bottom:12px">
-  <h3 style="margin:0 0 6px">Quick Job Command</h3>
-  <div class="muted small" id="quickJobHint" style="margin-bottom:10px">Type a few words. Salesmen: sends a request to Randy/Sam. Managers: updates the live job for everyone.</div>
-  <textarea id="quickJobText" rows="3" placeholder="Examples:&#10;New job — John Smith, 123 Main St Chicago, 20x22, deposit received&#10;Smith job — concrete poured by Romero, carpentry scheduled tomorrow" style="width:100%;resize:vertical;min-height:72px"></textarea>
+  <h3 style="margin:0 0 6px">Quick Command</h3>
+  <div class="muted small" id="quickJobHint" style="margin-bottom:10px">Jobs, personal calendar, or messages to Randy/Sam. Salesmen: requests go for approval. Managers: job updates apply live.</div>
+  <textarea id="quickJobText" rows="3" placeholder="Examples:&#10;New job — John Smith, 123 Main St Chicago, 20x22, deposit received&#10;Smith job — concrete poured by Romero, carpentry tomorrow&#10;Calendar — meet Jones 123 Oak tomorrow 3pm&#10;Message Randy — need permit help on Smith job&#10;Request — change Smith deposit to received" style="width:100%;resize:vertical;min-height:72px"></textarea>
   <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px">
    <button type="button" class="btn primary" onclick="submitQuickJobCommand()">Submit</button>
    <button type="button" class="btn light" onclick="$('quickJobText').value='';$('quickJobStatus').textContent=''">Clear</button>
@@ -471,9 +471,9 @@ async function boot(){
  if($('allPersonalCalendarsTab'))$('allPersonalCalendarsTab').classList.toggle('hidden',!privateAccessManager());$('estimateHistorySalesFilterWrap')?.classList.toggle('hidden',!privateAccessManager());
  $('subtitle').textContent=canViewAllJobs()?'All company jobs • live shared data':'Your sold jobs • live production status';
  const qh=$('quickJobHint');
- if(qh)qh.textContent=manager()
-  ?'Managers: type an update and it changes the live job for everyone. Example: “Smith — concrete poured by Romero, carpentry tomorrow”.'
-  :'Salesmen: type a new sold job or an update. It goes to Randy/Sam for approval. Example: “New job John Smith 123 Main Chicago 20x22 deposit received”.';
+ if(qh)qh.textContent=manager()||privateAccessManager()
+  ?'Jobs (live update), personal calendar, or messages. Examples: “Smith — concrete poured”, “Calendar — meet Jones tomorrow 3pm”, “Message — need help on permit”.'
+  :'Jobs (goes to Randy/Sam), personal calendar, or messages to Randy/Sam. Examples: “New job John Smith…”, “Calendar — appt Oak St Friday 2pm”, “Message Randy — question about deposit”.';
  await refresh();
 }
 async function refresh(){
@@ -516,9 +516,50 @@ function renderRequests(){
  if(manager())$('requestList').innerHTML=pend.map(r=>{const hasContract=documents.some(d=>d.request_id===r.id&&d.document_type==='Contract');return `<div class="rowbox"><div class="split"><div><strong>${esc(r.customer)}</strong><div class="sub">${esc(r.salesman_username)} • ${esc(r.address||'')} • ${esc(r.garage_size||'')} • ${money(r.price)} • Deposit: ${esc(r.deposit_status||'Pending')} • Demo: ${r.demolition_required===false?'No':'Yes'} • Gutters/Extras: ${r.extras_required===true?'Yes':'No'}</div><div class="sub">${esc(r.notes||'')}</div></div><div style="display:flex;gap:6px"><button class="btn primary sm" onclick="approveRequest('${r.id}')">Approve</button><button class="btn light sm" onclick="rejectRequest('${r.id}')">Reject</button></div></div>${hasContract?'':`<div style="margin-top:10px;padding:12px;border:2px solid #b91c1c;background:#fef2f2;color:#b91c1c;font-size:19px;font-weight:1000;text-align:center;border-radius:9px">MISSING PAPERWORK</div>`}</div>`}).join('');
  const myPending=requests.filter(r=>r.status==='Pending');$('salesRequests').classList.toggle('hidden',manager()||!myPending.length);if(!manager())$('myRequestList').innerHTML=myPending.slice(0,8).map(r=>`<div class="rowbox split"><div><strong>${esc(r.customer)}</strong><div class="sub">${fmt(r.sold_date)} • ${esc(r.city||'')}</div></div><span class="pill yellow">Pending</span></div>`).join('')
 }
-function renderEditRequests(){const pending=editRequests.filter(r=>r.status==='Pending');const card=$('editRequestsCard');if(!card)return;card.classList.toggle('hidden',!manager()||!pending.length);$('editRequestCount').textContent=pending.length;if(manager())$('editRequestList').innerHTML=pending.map(r=>{const j=jobs.find(x=>x.id===r.job_id);return `<div class="rowbox"><div class="split"><div><strong>${esc(r.request_type)} request — ${esc(j?.customer||'Job')}</strong><div class="sub">${esc(DISPLAY[r.salesman_username]||r.salesman_username)} • ${esc(j?.address||'')}</div><div style="margin-top:7px;white-space:pre-wrap">${esc(r.request_text)}</div></div><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn primary sm" onclick="approveEditRequest('${r.id}')">Approve</button><button class="btn light sm" onclick="rejectEditRequest('${r.id}')">Reject</button><button class="btn light sm" onclick="openDrawer('${r.job_id}')">View Job</button></div></div></div>`}).join('')}
-async function approveEditRequest(id){if(!manager())return;const r=editRequests.find(x=>x.id===id);if(!r)return;const {data:{user}}=await sb.auth.getUser();if(r.request_type==='Note'){const j=jobs.find(x=>x.id===r.job_id);const note=[j?.notes||'',`[${DISPLAY[r.salesman_username]||r.salesman_username} request] ${r.request_text}`].filter(Boolean).join('\n\n');const {error}=await sb.from('jobs').update({notes:note}).eq('id',r.job_id);if(error)return alert(error.message);await sb.from('job_activity').insert({job_id:r.job_id,actor_id:user.id,action:'Salesman note request approved',details:{request:r.request_text}})}else{await sb.from('job_activity').insert({job_id:r.job_id,actor_id:user.id,action:'Salesman edit request approved for management review',details:{request:r.request_text}})}await sb.from('job_edit_requests').update({status:'Approved',reviewed_by:user.id,reviewed_at:new Date().toISOString()}).eq('id',id);await refresh();if(r.request_type==='Edit'){openJobForm(r.job_id);alert('Edit request approved. Make the requested change in the job form and Save Job.')}}
-async function rejectEditRequest(id){if(!manager()||!confirm('Reject this request?'))return;const {data:{user}}=await sb.auth.getUser();await sb.from('job_edit_requests').update({status:'Rejected',reviewed_by:user.id,reviewed_at:new Date().toISOString()}).eq('id',id);await refresh()}
+function renderEditRequests(){
+  const pending=editRequests.filter(r=>r.status==='Pending'||!r.status);
+  const card=$('editRequestsCard');if(!card)return;
+  // Managers + privateAccess managers (Sam/Ramsey) see pending edit/message requests
+  const canReview=manager()||privateAccessManager();
+  card.classList.toggle('hidden',!canReview||!pending.length);
+  $('editRequestCount').textContent=pending.length;
+  if(canReview)$('editRequestList').innerHTML=pending.map(r=>{
+    const j=r.job_id?jobs.find(x=>x.id===r.job_id):null;
+    const title=r.request_type==='Message'?'Message to office':(`${esc(r.request_type||'Request')} — ${esc(j?.customer||'General')}`);
+    const jobBtn=r.job_id?`<button class="btn light sm" onclick="openDrawer('${r.job_id}')">View Job</button>`:'';
+    return `<div class="rowbox"><div class="split"><div><strong>${title}</strong><div class="sub">${esc(DISPLAY[r.salesman_username]||r.salesman_username)}${j?.address?' • '+esc(j.address):''}</div><div style="margin-top:7px;white-space:pre-wrap">${esc(r.request_text)}</div></div><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn primary sm" onclick="approveEditRequest('${r.id}')">Approve</button><button class="btn light sm" onclick="rejectEditRequest('${r.id}')">Reject</button>${jobBtn}</div></div></div>`;
+  }).join('');
+}
+async function approveEditRequest(id){
+  if(!manager()&&!privateAccessManager())return;
+  const r=editRequests.find(x=>x.id===id);if(!r)return;
+  const {data:{user}}=await sb.auth.getUser();
+  if(r.request_type==='Note'&&r.job_id){
+    const j=jobs.find(x=>x.id===r.job_id);
+    const note=[j?.notes||'',`[${DISPLAY[r.salesman_username]||r.salesman_username} request] ${r.request_text}`].filter(Boolean).join('\n\n');
+    const {error}=await sb.from('jobs').update({notes:note}).eq('id',r.job_id);
+    if(error)return alert(error.message);
+    await sb.from('job_activity').insert({job_id:r.job_id,actor_id:user.id,action:'Salesman note request approved',details:{request:r.request_text}});
+  }else if(r.request_type==='Edit'&&r.job_id){
+    await sb.from('job_activity').insert({job_id:r.job_id,actor_id:user.id,action:'Salesman edit request approved for management review',details:{request:r.request_text}});
+  }
+  // Message / general: mark approved (no job form required)
+  await sb.from('job_edit_requests').update({status:'Approved',reviewed_by:user.id,reviewed_at:new Date().toISOString()}).eq('id',id);
+  await refresh();
+  if(r.request_type==='Edit'&&r.job_id){
+    if(typeof openJobForm==='function') openJobForm(r.job_id);
+    else if(typeof openDrawer==='function') openDrawer(r.job_id);
+    alert('Edit request approved. Make the requested change in the job form and Save Job.');
+  }else if(r.request_type==='Message'){
+    alert('Message marked as read / approved.');
+  }
+}
+async function rejectEditRequest(id){
+  if((!manager()&&!privateAccessManager())||!confirm('Reject this request?'))return;
+  const {data:{user}}=await sb.auth.getUser();
+  await sb.from('job_edit_requests').update({status:'Rejected',reviewed_by:user.id,reviewed_at:new Date().toISOString()}).eq('id',id);
+  await refresh();
+}
 async function submitJobChangeRequest(jobId,type){if(manager())return;const text=prompt(type==='Note'?'What note should Randy or Sam add?':'What should Randy or Sam change on this job?');if(!text||!text.trim())return;const {data:{user}}=await sb.auth.getUser();const {error}=await sb.from('job_edit_requests').insert({job_id:jobId,requested_by:user.id,salesman_username:profile.username,request_type:type,request_text:text.trim()});if(error)return alert(error.message);await refresh();alert(type==='Note'?'Note request sent to Randy and Sam.':'Edit request sent to Randy and Sam.')}
 
 function parseQuickDate(text){
@@ -527,6 +568,15 @@ function parseQuickDate(text){
   const iso=d=>{const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`};
   if(/\btoday\b/.test(t)) return iso(today);
   if(/\btomorrow\b/.test(t)){const d=new Date(today);d.setDate(d.getDate()+1);return iso(d);}
+  const dow=['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+  for(let i=0;i<dow.length;i++){
+    if(new RegExp('\\b'+dow[i]+'\\b').test(t)){
+      const d=new Date(today);
+      const add=((i-d.getDay())+7)%7 || 7;
+      d.setDate(d.getDate()+add);
+      return iso(d);
+    }
+  }
   const mdy=t.match(/\b(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?\b/);
   if(mdy){
     let y=mdy[3]?Number(mdy[3]):today.getFullYear();
@@ -538,10 +588,48 @@ function parseQuickDate(text){
   if(ymd) return `${ymd[1]}-${ymd[2]}-${ymd[3]}`;
   return null;
 }
+function parseQuickTime(text){
+  const t=String(text||'');
+  let m=t.match(/\b(\d{1,2})(?::(\d{2}))?\s*(am|pm)\b/i);
+  if(m){
+    let h=Number(m[1]), min=Number(m[2]||0);
+    const ap=m[3].toLowerCase();
+    if(ap==='pm'&&h<12)h+=12;
+    if(ap==='am'&&h===12)h=0;
+    return String(h).padStart(2,'0')+':'+String(min).padStart(2,'0');
+  }
+  m=t.match(/\bat\s+(\d{1,2})(?::(\d{2}))?\b/i);
+  if(m){
+    let h=Number(m[1]), min=Number(m[2]||0);
+    if(h>=0&&h<=23) return String(h).padStart(2,'0')+':'+String(min).padStart(2,'0');
+  }
+  return null;
+}
 function parseQuickJobText(raw){
   const text=String(raw||'').trim();
   const lower=text.toLowerCase();
-  const out={raw:text,isNew:false,customer:'',address:'',city:'',phone:'',garage_size:'',price:0,deposit:0,deposit_status:'',notes:'',updates:{},matchedJob:null};
+  const out={
+    raw:text,isNew:false,customer:'',address:'',city:'',phone:'',garage_size:'',price:0,deposit:0,deposit_status:'',
+    notes:'',updates:{},matchedJob:null,
+    isCalendar:false,calTask:'',calDate:null,calTime:null,
+    isMessage:false,isRequest:false
+  };
+  // Personal calendar intent
+  if(/\b(calendar|appointment|appt|schedule me|personal calendar|add to calendar|remind me|task for me|meet with|meeting with)\b/i.test(text)
+     || /^\s*(calendar|appt|appointment|task)\b/i.test(text)){
+    out.isCalendar=true;
+  }
+  // General message / request to management (Randy/Sam)
+  if(/\b(message|tell|ask|text|email)\s+(randy|sam|manager|management|office)\b/i.test(text)
+     || /\b(randy|sam)\s*[,:\-–]\s*/i.test(text)
+     || /^\s*(message|request|note to|tell|ask)\b/i.test(text)
+     || /\b(please\s+)?(request|ask)\s+(randy|sam|manager)\b/i.test(text)
+     || /\bgeneral request\b/i.test(text)){
+    out.isMessage=true;
+  }
+  if(/\b(request an? edit|request a note|change request|please change|need you to|can you (update|change|fix))\b/i.test(text)){
+    out.isRequest=true;
+  }
   if(/\b(new job|add job|sold job|new customer)\b/i.test(text)) out.isNew=true;
 
   // Match existing job by customer name, street/address, or city phrase
@@ -646,19 +734,122 @@ function parseQuickJobText(raw){
   if(/\bon hold\b/i.test(text)){u.hold_status=true;const rm=text.match(/on hold[:\s-]+([^.\n]{3,80})/i);if(rm)u.hold_reason=rm[1].trim();}
   if(/\boff hold\b|\bremove hold\b/i.test(text)){u.hold_status=false;u.hold_reason='';}
 
+  // Calendar fields
+  out.calDate=parseQuickDate(text);
+  out.calTime=parseQuickTime(text);
+  if(out.isCalendar){
+    let task=text
+      .replace(/^\s*(calendar|appt|appointment|task|personal calendar)\s*[:\-–]?\s*/i,'')
+      .replace(/\b(today|tomorrow|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/gi,'')
+      .replace(/\b\d{1,2}(?::\d{2})?\s*(am|pm)\b/gi,'')
+      .replace(/\bat\s+\d{1,2}(?::\d{2})?\b/gi,'')
+      .replace(/\b\d{1,2}[\/\-]\d{1,2}(?:[\/\-]\d{2,4})?\b/g,'')
+      .replace(/\b20\d{2}-\d{2}-\d{2}\b/g,'')
+      .replace(/\s{2,}/g,' ')
+      .trim();
+    if(out.matchedJob && !task) task='Follow-up — '+(out.matchedJob.customer||'job');
+    if(out.customer && !/meet|appointment|follow/i.test(task)) task=(task?task+' — ':'')+out.customer;
+    out.calTask=task||text.slice(0,80);
+    if(out.matchedJob && !out.address) out.address=out.matchedJob.address||'';
+    if(out.matchedJob && !out.customer) out.customer=out.matchedJob.customer||'';
+  }
+
   out.notes=text;
-  if(!out.isNew && !out.matchedJob && Object.keys(u).length===0) out.isNew=/\b(sold|deposit|contract)\b/i.test(text);
+  if(!out.isNew && !out.matchedJob && !out.isCalendar && !out.isMessage && !out.isRequest && Object.keys(u).length===0){
+    out.isNew=/\b(sold|deposit|contract)\b/i.test(text);
+  }
+  // Bare message with no job match and no production keywords → general message
+  if(!out.isCalendar && !out.isNew && !out.matchedJob && Object.keys(u).length===0 && !out.isMessage){
+    if(/\b(randy|sam|manager|office|please|need help|question)\b/i.test(text)) out.isMessage=true;
+  }
   return out;
 }
 async function submitQuickJobCommand(){
   const box=$('quickJobText'), status=$('quickJobStatus');
   const raw=(box?.value||'').trim();
-  if(!raw){if(status)status.textContent='Type a job note first.';return;}
+  if(!raw){if(status)status.textContent='Type a command first.';return;}
   if(status)status.textContent='Working…';
   try{
     const parsed=parseQuickJobText(raw);
     const {data:{user}}=await sb.auth.getUser();
     if(!user||!profile){if(status)status.textContent='Please sign in again.';return;}
+
+    // ---- PERSONAL CALENDAR (any logged-in user) ----
+    if(parsed.isCalendar){
+      let appointmentAt=null;
+      if(parsed.calDate){
+        const t=parsed.calTime||'09:00';
+        appointmentAt=new Date(parsed.calDate+'T'+t+':00');
+        if(Number.isNaN(appointmentAt.getTime())) appointmentAt=null;
+        else appointmentAt=appointmentAt.toISOString();
+      }
+      const rec={
+        created_by:user.id,
+        salesman_username:profile.username,
+        customer_name:parsed.customer||parsed.calTask||'Personal item',
+        address:parsed.address||'',
+        task:parsed.calTask||raw,
+        appointment_at:appointmentAt,
+        latitude:null,
+        longitude:null
+      };
+      const {data:inserted,error}=await sb.from('salesman_calendar_entries').insert(rec).select('*').single();
+      if(error) throw error;
+      if(inserted){
+        calendarEntries=calendarEntries.filter(x=>x.id!==inserted.id);
+        calendarEntries.push(inserted);
+      }
+      if(box)box.value='';
+      const when=appointmentAt?new Date(appointmentAt).toLocaleString([],{weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'unscheduled task';
+      if(status)status.textContent='Added to your personal calendar ('+when+').';
+      renderPersonalCalendar();
+      renderUpcomingAppointments();
+      refresh().catch(()=>{});
+      return;
+    }
+
+    // ---- MESSAGE / GENERAL REQUEST to Randy or Sam ----
+    if(parsed.isMessage || (parsed.isRequest && !parsed.matchedJob && Object.keys(parsed.updates).length===0)){
+      const reqType=parsed.matchedJob?'Edit':'Message';
+      const payload={
+        requested_by:user.id,
+        salesman_username:profile.username,
+        request_type:reqType,
+        request_text:raw,
+        status:'Pending'
+      };
+      if(parsed.matchedJob) payload.job_id=parsed.matchedJob.id;
+      let {error}=await sb.from('job_edit_requests').insert(payload);
+      // If job_id is required by schema, fall back to a sold-job-style office message
+      if(error && /job_id|null value|not-null/i.test(String(error.message||''))){
+        const fallback={
+          requested_by:user.id,
+          salesman_username:profile.username,
+          customer:parsed.matchedJob?.customer||'Office message',
+          sold_date:todayISO(),
+          address:parsed.matchedJob?.address||'',
+          city:parsed.matchedJob?.city||'',
+          phone:'',
+          garage_size:'',
+          demolition_required:false,
+          extras_required:false,
+          price:0,
+          deposit:0,
+          deposit_status:'Pending',
+          notes:'[MESSAGE TO RANDY/SAM] '+raw,
+          status:'Pending'
+        };
+        const res2=await sb.from('job_requests').insert(fallback);
+        error=res2.error;
+      }
+      if(error) throw error;
+      if(box)box.value='';
+      if(status)status.textContent=parsed.matchedJob
+        ?('Request about '+parsed.matchedJob.customer+' sent to Randy/Sam.')
+        :'Message sent to Randy and Sam.';
+      await refresh();
+      return;
+    }
 
     // MANAGER: apply updates or create job directly
     if(manager()){
@@ -712,18 +903,20 @@ async function submitQuickJobCommand(){
       return;
     }
 
-    // SALESMAN: request approval (new job request or edit request)
+    // SALESMAN: request approval (job-specific edit/note, or new sold job)
     if(parsed.matchedJob){
+      const reqType=parsed.isRequest||Object.keys(parsed.updates).length||/\b(change|update|fix|set|mark)\b/i.test(raw)?'Edit':'Note';
       const {error}=await sb.from('job_edit_requests').insert({
         job_id:parsed.matchedJob.id,
         requested_by:user.id,
         salesman_username:profile.username,
-        request_type:'Edit',
-        request_text:raw
+        request_type:reqType,
+        request_text:raw,
+        status:'Pending'
       });
       if(error)throw error;
       if(box)box.value='';
-      if(status)status.textContent='Edit request for '+parsed.matchedJob.customer+' sent to Randy/Sam.';
+      if(status)status.textContent=reqType+' request for '+parsed.matchedJob.customer+' sent to Randy/Sam.';
       await refresh();
       return;
     }

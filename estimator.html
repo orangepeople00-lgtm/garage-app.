@@ -1613,7 +1613,22 @@ input, select, textarea, button { box-sizing:border-box; }
                             <button type="button" id="saveOpenAIKeyBtn" onclick="lockOpenAIKey()" class="mt-2 w-full px-3 py-2.5 rounded-xl bg-violet-700 hover:bg-violet-600 text-xs font-bold text-white">Save &amp; Lock Key (one time)</button>
                         </div>
                         <div class="text-[10px] text-zinc-500 leading-relaxed">
-                            <b class="text-zinc-300">Recommended:</b> Auto mode. OpenAI is tried first; if your phone blocks it, Free AI still builds a custom garage from this estimate. Library is last resort. Key (optional) from platform.openai.com — locked on this device only.
+                            <b class="text-zinc-300">Recommended:</b> Auto mode. Uses the <b>company OpenAI</b> (set up once by manager in Supabase — salesmen never see the key). If company AI is offline, falls back to Free AI. Optional personal key below is only a backup.
+                        </div>
+                        <div class="mt-3">
+                            <label class="text-[10px] font-bold tracking-wider text-violet-300 block mb-1" for="garageAccessType">GARAGE ACCESS (affects AI photo)</label>
+                            <select id="garageAccessType" onchange="this.dataset.userTouched='1'; saveGarageAccessType()" class="calc-input w-full bg-zinc-900 border border-violet-700/60 text-white rounded-xl px-3 py-2.5 text-sm mb-1">
+                                <option value="driveway" selected>Off a driveway (front access)</option>
+                                <option value="alley">Off an alley (rear access)</option>
+                            </select>
+                            <div class="text-[10px] text-zinc-500 mb-2">Driveway = front approach with clean apron. Alley = rear alley approach. Changes how the AI photo is composed.</div>
+                        </div>
+                        <div class="mt-2">
+                            <label class="text-[10px] font-bold tracking-wider text-violet-300 block mb-1" for="aiPhotoExtraInstructions">EXTRA INSTRUCTIONS FOR AI PHOTO (optional)</label>
+                            <textarea id="aiPhotoExtraInstructions" rows="3" placeholder="Example: Make siding charcoal gray with black trim. Show more of the side elevation. Add flower beds. Keep photorealistic."
+                                oninput="saveAIPhotoExtraInstructions()"
+                                class="w-full bg-zinc-900 border border-violet-700/60 text-white rounded-xl px-3 py-2.5 text-sm resize-y min-h-[72px]"></textarea>
+                            <div class="text-[10px] text-zinc-500 mt-1">Added to the AI prompt every time you create an estimate sheet. Saved on this device. Every salesman can type their own tweaks here.</div>
                         </div>
                         <div id="aiPhotoStatus" class="text-[10px] text-emerald-400 mt-2 hidden"></div>
                     </div>
@@ -1691,6 +1706,17 @@ input, select, textarea, button { box-sizing:border-box; }
                 }
             }
             
+            // Chicago default: alley access (typical rear garage). Suburbs default driveway.
+            const gat = document.getElementById('garageAccessType');
+            if (gat) {
+                if (city === 'Chicago') {
+                    gat.value = 'alley';
+                } else if (!gat.dataset.userTouched) {
+                    gat.value = 'driveway';
+                }
+                try { localStorage.setItem('agb_garage_access_type', gat.value); } catch (e) {}
+            }
+
             // Handle EPA auto for Mundelein
             handleEPALogic();
         }
@@ -3976,8 +4002,36 @@ input, select, textarea, button { box-sizing:border-box; }
             }catch(e){ if(el) el.value='openai'; }
             updateOpenAIKeyPanels();
         }
-        document.addEventListener('DOMContentLoaded', ()=>setTimeout(loadGaragePhotoMode, 100));
-        if(document.readyState!=='loading') setTimeout(loadGaragePhotoMode, 200);
+        function saveAIPhotoExtraInstructions(){
+            try{
+                const el=document.getElementById('aiPhotoExtraInstructions');
+                localStorage.setItem('agb_ai_photo_extra', (el?.value||'').trim());
+            }catch(e){}
+        }
+        function loadAIPhotoExtraInstructions(){
+            try{
+                const el=document.getElementById('aiPhotoExtraInstructions');
+                if(el) el.value=localStorage.getItem('agb_ai_photo_extra')||'';
+            }catch(e){}
+        }
+        function saveGarageAccessType(){
+            try{
+                const el=document.getElementById('garageAccessType');
+                if(el) localStorage.setItem('agb_garage_access_type', el.value||'driveway');
+            }catch(e){}
+        }
+        function loadGarageAccessType(){
+            try{
+                const el=document.getElementById('garageAccessType');
+                if(!el) return;
+                const city=document.getElementById('city')?.value||'';
+                const saved=localStorage.getItem('agb_garage_access_type');
+                if(saved){ el.value=saved; }
+                else { el.value=(city==='Chicago')?'alley':'driveway'; }
+            }catch(e){}
+        }
+        document.addEventListener('DOMContentLoaded', ()=>setTimeout(()=>{ loadGaragePhotoMode(); loadAIPhotoExtraInstructions(); loadGarageAccessType(); }, 100));
+        if(document.readyState!=='loading') setTimeout(()=>{ loadGaragePhotoMode(); loadAIPhotoExtraInstructions(); loadGarageAccessType(); }, 200);
 
         function buildGarageAIPrompt(){
             const dim = (typeof getGarageDimensions==='function') ? getGarageDimensions() : {width:20, depth:20};
@@ -3991,28 +4045,56 @@ input, select, textarea, button { box-sizing:border-box; }
             const doorH = document.getElementById('overheadDoorHeight')?.value||'7';
             const doorStyle = document.getElementById('overheadDoorStyle')?.value||document.getElementById('doorStyle')?.value||'raised';
             const service = document.getElementById('serviceDoorLocation')?.value||'right';
+            const serviceFrontSide = document.getElementById('serviceDoorFrontSide')?.value||'right';
             const gutters = document.getElementById('gutters')?.checked;
             const stone = document.getElementById('stoneAccent')?.checked;
             const winQty = Number(document.getElementById('windowQty')?.value||0);
+            const access = document.getElementById('garageAccessType')?.value || localStorage.getItem('agb_garage_access_type') || 'driveway';
             const roofWords = roof==='hip' ? 'hip roof' : (eave==='sides' ? 'reverse gable roof' : 'gable roof');
             const sidingWords = sidingType==='hardie' ? 'Hardie fiber cement siding' : 'vinyl siding';
             const doorWords = /window/i.test(String(doorStyle)) ? 'raised-panel overhead garage door with windows across the top' : 'solid raised-panel overhead garage door';
-            const serviceWords = (service==='no'||service==='none'||service==='hidden') ? 'no service door on the visible side' : (service+'-side service entry door');
+            // Service door + coach light rule (company-wide)
+            let serviceWords = '';
+            let coachLightWords = '';
+            if(service==='no'||service==='none'||service==='hidden'){
+                serviceWords = 'no service door on the visible elevation';
+            } else if(service==='front'){
+                serviceWords = 'service entry door on the front elevation, '+serviceFrontSide+' of the overhead door';
+                coachLightWords = 'black coach light mounted on the wall next to the service door';
+            } else if(service==='back'){
+                serviceWords = 'service entry door on the rear elevation (not visible from the main camera angle)';
+            } else if(service==='left'){
+                serviceWords = 'service entry door on the left side wall';
+                coachLightWords = 'black coach light mounted on the wall next to the service door';
+            } else {
+                serviceWords = 'service entry door on the right side wall';
+                coachLightWords = 'black coach light mounted on the wall next to the service door';
+            }
             const gutterWords = gutters ? 'with gutters and downspouts' : 'without gutters';
             const stoneWords = stone ? 'with a stone accent wainscot along the base' : '';
             const winWords = winQty>0 ? ('with '+winQty+' wall window'+(winQty>1?'s':'')) : 'no wall windows';
-            return [
-                'Hyper-realistic professional photograph of a brand-new detached residential garage in a suburban Midwest backyard',
+            // Alley vs driveway composition
+            const accessWords = access==='alley'
+                ? 'garage sits at the rear of the lot accessed from a residential alley, view from the alley side, clean concrete apron facing the alley'
+                : 'garage accessed from a residential driveway at the front, clean scored concrete apron and driveway approach in the foreground';
+            const extra = (document.getElementById('aiPhotoExtraInstructions')?.value || localStorage.getItem('agb_ai_photo_extra') || '').trim();
+            // Permanent company-wide rules (every salesman gets these automatically)
+            const parts = [
+                'Hyper-realistic professional photograph of a brand-new detached residential garage in a suburban Midwest setting',
                 w+' foot wide by '+d+' foot deep, '+wall+' foot tall walls',
                 roofWords,
                 sidingWords+' in '+colorTxt+' color',
-                doorWords+', about '+doorH+' feet tall, centered on the front elevation',
+                doorWords+', about '+doorH+' feet tall, centered on the main elevation',
                 serviceWords,
+                coachLightWords,
                 winWords,
                 gutterWords,
                 stoneWords,
-                'clean concrete apron in front, neat landscaping, soft natural daylight, photorealistic architectural exterior photography, sharp detail, no text, no watermark, no people, no logo'
-            ].filter(Boolean).join(', ');
+                accessWords,
+                'brand-new clean garage exterior, pristine clean concrete apron with no stains or debris, neat landscaping, soft natural daylight, photorealistic architectural exterior photography, sharp detail, no text, no watermark, no people, no logo, no vehicles blocking the view'
+            ];
+            if(extra) parts.push(extra);
+            return parts.filter(Boolean).join(', ');
         }
 
         function garageAICacheKey(prompt){
@@ -4022,15 +4104,34 @@ input, select, textarea, button { box-sizing:border-box; }
         }
 
         async function generateOpenAIGaragePhotoUrl(prompt){
-            const apiKey=(typeof getStoredOpenAIKey==='function'?getStoredOpenAIKey():(localStorage.getItem('agb_openai_api_key')||'')).trim();
-            if(!apiKey) throw new Error('Add your OpenAI API key above (starts with sk-).');
             const cacheKey=garageAICacheKey('openai:'+prompt);
             try{
                 const cached=localStorage.getItem(cacheKey);
                 if(cached && (cached.startsWith('http')||cached.startsWith('data:'))) return {url:cached, prompt, source:'openai', cached:true};
             }catch(e){}
-            // DALL·E 3 retired May 2026 — use current GPT image model.
-            // gpt-image models return b64_json (no response_format param).
+
+            // 1) Preferred: company Edge Function (key never leaves Supabase — all salesmen)
+            try{
+                if(typeof garageSb!=='undefined' && garageSb?.functions?.invoke){
+                    const { data, error } = await garageSb.functions.invoke('generate-garage-photo', {
+                        body: { prompt: String(prompt||'').slice(0, 3900) }
+                    });
+                    if(error) throw new Error(error.message || String(error));
+                    const url = data && (data.url || (data.b64 ? ('data:image/png;base64,'+data.b64) : null));
+                    if(url){
+                        try{ localStorage.setItem(cacheKey, url); }catch(e){}
+                        return {url, prompt, source:'openai-company', cached:false};
+                    }
+                    if(data && data.error) throw new Error(data.error);
+                }
+            }catch(edgeErr){
+                console.warn('Company OpenAI edge function unavailable, trying device key…', edgeErr);
+            }
+
+            // 2) Fallback: device-locked personal key (optional)
+            const apiKey=(typeof getStoredOpenAIKey==='function'?getStoredOpenAIKey():(localStorage.getItem('agb_openai_api_key')||'')).trim();
+            if(!apiKey) throw new Error('Company AI not set up yet (or offline). Ask manager to deploy the generate-garage-photo Edge Function, or lock a personal OpenAI key on this device.');
+
             let res;
             try{
                 res=await fetch('https://api.openai.com/v1/images/generations', {
@@ -4055,7 +4156,6 @@ input, select, textarea, button { box-sizing:border-box; }
                 const msg=(data && data.error && data.error.message) ? data.error.message : ('OpenAI error '+res.status);
                 if(res.status===401) throw new Error('OpenAI key rejected (401). Replace key — wrong key or revoked.');
                 if(res.status===429) throw new Error('OpenAI rate limit / quota (429). Check billing at platform.openai.com.');
-                // Retry once with dall-e-3 minimal body if gpt-image not enabled on account
                 if(/model|unknown|not found|does not exist/i.test(msg)){
                     const res2=await fetch('https://api.openai.com/v1/images/generations', {
                         method:'POST',
@@ -5331,6 +5431,13 @@ async function openPopupChatGPT(){
             const sdl = document.getElementById('serviceDoorLocation'); if (sdl) sdl.value = 'right';
             const sdf = document.getElementById('serviceDoorFrontSide'); if (sdf) sdf.value = 'right';
             toggleServiceDoorLocationFields();
+            const gat = document.getElementById('garageAccessType');
+            if (gat) {
+                const cityNow = document.getElementById('city')?.value || 'Chicago';
+                gat.value = (cityNow === 'Chicago') ? 'alley' : 'driveway';
+                delete gat.dataset.userTouched;
+                try { localStorage.setItem('agb_garage_access_type', gat.value); } catch (e) {}
+            }
             document.getElementById('addlOverheadDoors').value = '0';
             document.getElementById('wallHeight').value = '8';
             document.getElementById('overheadDoorHeight').value = '7';

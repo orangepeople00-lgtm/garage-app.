@@ -1540,7 +1540,7 @@ button.danger{color:#b42318}
    The heavy right lot boundary sits at the extreme paper/drawing edge,
    while the lot-length number/title are pulled about 1/2 inch left for readability. */
 #paper .obj.lot-length-special{
-  left:calc(100% - 8px)!important;
+  /* V82: left from JS */
 }
 #paper .obj.lot-length-special .lot-vline{
   left:0!important;
@@ -1557,8 +1557,7 @@ button.danger{color:#b42318}
 /* V75: literal far-right lot boundary.
    The heavy black lot line is pinned to the paper's right edge by default. */
 #paper .obj.lot-length-special{
-  left:calc(100% - 6px)!important;
-  width:6px!important;
+  /* V82: position/size from JS drag system */
   overflow:visible!important;
 }
 #paper .obj.lot-length-special .lot-vline{
@@ -2039,6 +2038,105 @@ button.danger{color:#b42318}
   font-weight:1000!important;
 }
 
+
+/* V82: LOT LENGTH block is fully draggable (title + number move together) */
+#paper .obj.lot-length-special{
+  left: auto !important; /* use JS left */
+  width: 72px !important;
+  min-width: 72px !important;
+  overflow: visible !important;
+  cursor: ns-resize !important;
+  touch-action: none !important;
+  pointer-events: auto !important;
+  transform: none !important;
+  background: transparent !important;
+  border: 0 !important;
+  z-index: 40 !important;
+}
+#paper .obj.lot-length-special .lot-vline{
+  left: 50% !important;
+  margin-left: -3px !important;
+  width: 6px !important;
+  pointer-events: none !important;
+}
+#paper .obj.lot-length-special .lot-vvalue,
+#paper .obj.lot-length-special .lot-vtitle{
+  pointer-events: none !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  white-space: nowrap !important;
+  text-align: center !important;
+}
+#paper .obj.lot-length-special .lot-vvalue{
+  font-size: 22px !important;
+  font-weight: 1000 !important;
+  top: 42% !important;
+}
+#paper .obj.lot-length-special .lot-vtitle{
+  font-size: 11px !important;
+  font-weight: 900 !important;
+  top: 52% !important;
+  letter-spacing: 0.04em !important;
+}
+
+
+/* V82: Garage slab + apron labels ALWAYS centered INSIDE the box */
+#paper .obj.role-garage > .label,
+#paper .obj[data-role="garage"] > .label,
+#paper .obj.garage > .label,
+#paper .obj[data-role="apron"] > .label,
+#paper .obj.apron > .label{
+  position: absolute !important;
+  left: 50% !important;
+  top: 50% !important;
+  right: auto !important;
+  bottom: auto !important;
+  width: 92% !important;
+  max-width: 92% !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 4px 6px !important;
+  box-sizing: border-box !important;
+  transform: translate(-50%, -50%) !important;
+  transform-origin: center center !important;
+  text-align: center !important;
+  white-space: pre-line !important;
+  line-height: 1.15 !important;
+  display: block !important;
+  z-index: 8 !important;
+  overflow: hidden !important;
+  background: rgba(255,255,255,.82) !important;
+}
+
+
+/* V82: SERVICE / DOOR stacked */
+#paper .service-door-label-v25,
+#paper .obj.service-door .door-name{
+  white-space: normal !important;
+  text-align: center !important;
+  line-height: 1.05 !important;
+  font-size: 9px !important;
+  font-weight: 1000 !important;
+  background: #fff !important;
+  padding: 2px 4px !important;
+}
+
+
+/* V82: sidewalk labels stay centered and scale with the shape */
+#paper .obj.sidewalk > .label,
+#paper .obj.sidewalk > .sidewalk-label-v26{
+  position: absolute !important;
+  left: 50% !important;
+  top: 50% !important;
+  right: auto !important;
+  bottom: auto !important;
+  margin: 0 !important;
+  text-align: center !important;
+  transform-origin: center center !important;
+  pointer-events: none !important;
+  overflow: hidden !important;
+}
+
 </style>
 </head>
 <body>
@@ -2311,6 +2409,9 @@ button.danger{color:#b42318}
 <button type="button" class="mobile-panel-btn" id="mobilePanelBtn" title="Open tools panel">☰ Tools</button>
 <button type="button" class="mobile-snap-btn on" id="snapToggleBtn" title="Toggle snapping">Snap ON</button>
 <button class="primary" id="fitBtn">Fit</button>
+<button type="button" id="rotateLeftBtn" title="Rotate selected -15°">↺</button>
+<button type="button" id="rotateRightBtn" title="Rotate selected +15°">↻</button>
+<button type="button" id="rotate90Btn" title="Rotate selected 90°" class="hide-on-mobile">90°</button>
 <button id="drawViewBtn" class="hide-on-mobile">Drawing View</button>
 <button id="zoomOut">−</button>
 <span class="badge" id="zoomLabel">100%</span>
@@ -2329,6 +2430,9 @@ button.danger{color:#b42318}
 <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
 <div class="mobile-bottom-bar" id="mobileBottomBar">
   <button type="button" class="primary" id="mobileToolsBtn">☰ Tools</button>
+  <button type="button" id="mobileRotateLeftBtn" title="Rotate -15°">↺</button>
+  <button type="button" id="mobileRotateRightBtn" title="Rotate +15°">↻</button>
+  <button type="button" id="mobileRotate90Btn" title="Rotate 90°">90°</button>
   <button type="button" id="mobileUndoBtn">Undo</button>
   <button type="button" id="mobileDupBtn">Duplicate</button>
   <button type="button" id="mobileLockBtn">Lock</button>
@@ -2509,7 +2613,7 @@ const concreteFields = {
  customerName:[112,48,402,30], jobAddress:[145,96,370,30], city:[96,138,323,30],
  homePhone:[162,176,247,28], workPhone:[159,213,260,28],
  cSizeW:[94,246,56,30], cSizeL:[177,246,78,30],
- cApronW:[132,285,58,30], cApronL:[218,285,68,30],
+ cApronW:[128,272,58,28], cApronL:[188,272,78,28],
  cGrade:[143,376,58,30], cCode:[139,431,78,30],
  cReturnFL:[220,512,57,30], cReturnFM:[315,512,58,30], cReturnFR:[421,512,52,30],
  cReturnRL:[220,577,72,30], cReturnRM:[326,577,58,30], cReturnRR:[416,577,59,30],
@@ -3608,7 +3712,7 @@ $('wSalesman')?.addEventListener('change',()=>syncDrawingSalesmanFromSelect('wSa
 const defaults={
  garage:[20,20,'NEW GARAGE SLAB'], apron:[20,5,'NEW CONCRETE APRON'], sidewalk:[3,20,'CONCRETE SIDEWALK'],
  pad:[10,20,'NEW PARKING PAD'], driveway:[10,30,'NEW DRIVEWAY'], custom:[10,10,''],
- circle:[8,8,'CIRCLE'], arrow:[12,3,'ARROW'], xmark:[6,6,'X'], line:[15,1,'LINE'], polyline:[20,1,'POLYLINE'],
+ circle:[8,8,'CIRCLE'], arrow:[12,3,''], xmark:[6,6,'X'], line:[15,1,''], polyline:[20,1,''],
  text:[18,4,'TEXT'], dimension:[20,2,'20\'']
 };
 const DRAW_PXF=22;
@@ -3669,9 +3773,9 @@ function renderConcreteMarks(){
  fieldLayer.appendChild(returnsRearLineMask);
 
  // V73: concrete specification heading centered directly above the standard mix/mesh note.
- const scored=addSheetMark('SCORED CONCRETE',226,304,257,28,17);
+ const scored=addSheetMark('SCORED CONCRETE',226,312,257,26,16);
  if(scored)scored.style.textAlign='center';
- const mix=addSheetMark('6 BAG MIX   6 x 6 WIRE MESH',226,330,257,28,17);
+ const mix=addSheetMark('6 BAG MIX   6 x 6 WIRE MESH',226,336,257,26,16);
  if(mix)mix.style.textAlign='center';
 
  // V73: small anchor-bolt symbol projecting upward from the grade line,
@@ -4108,10 +4212,15 @@ function renderObjects(){
     if(o.role)el.dataset.role=o.role;
     Object.assign(el.style,{left:o.x+'px',top:o.y+'px',width:w+'px',height:h+'px',transform:o.role==='lotLength'?'none':`rotate(${o.angle||0}deg)`});
     if(o.role==='lotLength'){
-      // Force position so CSS legacy !important tops cannot pin LOT LENGTH + number in place
+      // Whole block (LOT LENGTH + number + ticks) follows o.y — user can slide it
       el.style.setProperty('top', o.y+'px', 'important');
-      el.style.setProperty('left', o.x+'px', 'important');
+      el.style.setProperty('left', (o.x||0)+'px', 'important');
+      el.style.setProperty('width', '72px', 'important');
+      el.style.setProperty('height', Math.max(h, 280)+'px', 'important');
       el.style.setProperty('transform', 'none', 'important');
+      el.style.setProperty('pointer-events', 'auto', 'important');
+      el.style.setProperty('cursor', 'ns-resize', 'important');
+      el.title = 'Drag up/down to move LOT LENGTH';
       const lt=document.createElement('div');lt.className='lot-vline top';el.appendChild(lt);
       const lb=document.createElement('div');lb.className='lot-vline bottom';el.appendChild(lb);
       const vv=document.createElement('div');vv.className='lot-vvalue';vv.textContent=o.label;el.appendChild(vv);
@@ -4125,7 +4234,7 @@ function renderObjects(){
       const dimText=document.createElement('div');dimText.className='service-door-3ft-text';dimText.textContent="3'";
       const nm=document.createElement('div');nm.className='door-name service-door-label-v25';
       const rt=(o.closestReturnText!=null?o.closestReturnText:'');
-      nm.textContent='SERVICE DOOR'+(rt!==''?` (${rt}' RETURN)`:'');
+      nm.innerHTML='SERVICE<br>DOOR'+(rt!==''?`<br>(${rt}' RETURN)`:''); nm.style.whiteSpace='normal'; nm.style.lineHeight='1.05'; nm.style.textAlign='center';
       const p=o.pxf||DRAW_PXF;
       // Service door opening is always 3'. Use the same pixels-per-foot as the garage
       // so the double-ended arrow measures the actual 3' opening on the drawing.
@@ -4171,7 +4280,7 @@ function renderObjects(){
         end.style.left=((o.arrowLen||110)+54)+'px';end.style.top='12px';el.appendChild(end);
       }
     } const lab=document.createElement('div');lab.className=(o.kind==='sidewalk'?'label sidewalk-label-v26':'label');
-    lab.textContent=((o.role==='rearSetback'||o.role==='rearGap'||o.role==='alleyDistance')?'':(o.label || (o.kind==='custom'?'':o.kind.toUpperCase())));
+    lab.textContent=((o.role==='rearSetback'||o.role==='rearGap'||o.role==='alleyDistance')?'':(o.label || (['custom','arrow','line','polyline'].includes(o.kind)?'':o.kind.toUpperCase()))); if(o.kind==='arrow' && /^arrow$/i.test(String(lab.textContent||'').trim())) lab.textContent='';
     if(o.role==='lotWidth'){
       const ttl=document.createElement('div');ttl.className='dim-title';ttl.textContent='LOT WIDTH';el.appendChild(ttl);
     }
@@ -4188,70 +4297,57 @@ function renderObjects(){
         }
         const txt=String(o.label||'SIDEWALK').replace(/\s*\n\s*/g,' ').replace(/\s+/g,' ').trim();
 
-        // V53: sidewalk wording keeps the same font size when the rectangle is
-        // visually stretched. Capture the initial V51 size once and reuse it.
-        const longSide=Math.max(vertical?h:w,80);
-        const shortSide=Math.max(vertical?w:h,22);
+                // V82: sidewalk label ALWAYS stays centered and scales with the box
+        const longSide=Math.max(vertical?h:w,40);
+        const shortSide=Math.max(vertical?w:h,16);
         const maxChars=Math.max(txt.length,1);
-        if(!Number.isFinite(o.sidewalkFontPx)){
-          o.sidewalkFontPx=Math.max(12,Math.min(19,shortSide*.58,longSide/(maxChars*.56)));
-        }
-        const fit=o.sidewalkFontPx;
+        // Recompute font every render so shrink/grow keeps text inside
+        const fit=Math.max(9, Math.min(18, shortSide*0.55, longSide/(maxChars*0.52)));
 
+        lab.textContent=txt;
         lab.style.position='absolute';
+        lab.style.setProperty('left','50%','important');
+        lab.style.setProperty('top','50%','important');
+        lab.style.setProperty('right','auto','important');
+        lab.style.setProperty('bottom','auto','important');
+        lab.style.setProperty('width','max-content','important');
+        lab.style.setProperty('max-width','95%','important');
+        lab.style.setProperty('height','auto','important');
         lab.style.setProperty('font-size',fit+'px','important');
-        lab.style.lineHeight='1';
-        lab.style.fontWeight='1000';
-        lab.style.whiteSpace='nowrap';
-        lab.style.overflow='visible';
-        lab.style.textAlign='left';
-        lab.style.display='block';
-        lab.style.padding='0';
-        lab.style.margin='0';
-
-        // Measure one complete wording+dimension phrase at the fixed font size.
-        let naturalTextWidth=Math.max(1,maxChars*fit*.56);
-        let ctx=null;
-        try{
-          ctx=document.createElement('canvas').getContext('2d');
-          ctx.font=`1000 ${fit}px Arial, sans-serif`;
-          naturalTextWidth=Math.max(1,ctx.measureText(txt).width);
-        }catch(e){}
-
-        // V58: never duplicate sidewalk wording. Show one fixed label only.
-        const shown=txt;
-        lab.textContent=shown;
-
-        let shownWidth=naturalTextWidth;
-        try{if(ctx)shownWidth=Math.max(1,ctx.measureText(shown).width)}catch(e){}
-
-        lab.style.setProperty('letter-spacing','0px','important');
-        lab.style.setProperty('word-spacing','normal','important');
-        lab.style.setProperty('width',shownWidth+'px','important');
-        lab.style.setProperty('height',Math.max(16,fit+2)+'px','important');
-
-        // V58: capture the current centered wording position ONCE.
-        // After that, visual resizing changes only the sidewalk rectangle;
-        // it does not move, resize, rotate, or duplicate the words.
-        if(!Number.isFinite(o.sidewalkLabelLeftPx))o.sidewalkLabelLeftPx=w/2;
-        if(!Number.isFinite(o.sidewalkLabelTopPx))o.sidewalkLabelTopPx=h/2;
-        if(typeof o.sidewalkLabelVertical!=='boolean')o.sidewalkLabelVertical=vertical;
-
-        lab.style.setProperty('left',o.sidewalkLabelLeftPx+'px','important');
-        lab.style.setProperty('top',o.sidewalkLabelTopPx+'px','important');
-
-        if(o.sidewalkLabelVertical){
-          lab.style.setProperty('transform','rotate(90deg)','important');
-          lab.style.setProperty('transform-origin','0 0','important');
+        lab.style.setProperty('line-height','1.05','important');
+        lab.style.setProperty('font-weight','1000','important');
+        lab.style.setProperty('white-space','nowrap','important');
+        lab.style.setProperty('overflow','hidden','important');
+        lab.style.setProperty('text-align','center','important');
+        lab.style.setProperty('display','block','important');
+        lab.style.setProperty('padding','1px 3px','important');
+        lab.style.setProperty('margin','0','important');
+        lab.style.setProperty('letter-spacing','0','important');
+        if(vertical){
+          lab.style.setProperty('transform','translate(-50%,-50%) rotate(90deg)','important');
         }else{
-          lab.style.setProperty('transform','translateY(-50%)','important');
-          lab.style.setProperty('transform-origin','0 50%','important');
+          lab.style.setProperty('transform','translate(-50%,-50%)','important');
         }
+        lab.style.setProperty('transform-origin','center center','important');
+        // Clear frozen coords so old drawings re-center
+        delete o.sidewalkLabelLeftPx;
+        delete o.sidewalkLabelTopPx;
+        delete o.sidewalkFontPx;
       }else{
-        const lines=String(lab.textContent).split('\n');
+        // All other labeled shapes: keep text centered and scaled to the box
+        const lines=String(lab.textContent||'').split('\n');
         const maxChars=Math.max(...lines.map(x=>x.length),1);
-        const fit=Math.max(10,Math.min(20,h/Math.max(2.8,lines.length*1.35),w/(maxChars*.58)));
-        lab.style.fontSize=fit+'px';
+        const fit=Math.max(9,Math.min(22,h/Math.max(2.4,lines.length*1.25),w/(maxChars*.55)));
+        lab.style.position='absolute';
+        lab.style.setProperty('left','50%','important');
+        lab.style.setProperty('top','50%','important');
+        lab.style.setProperty('transform','translate(-50%,-50%)','important');
+        lab.style.setProperty('width','92%','important');
+        lab.style.setProperty('text-align','center','important');
+        lab.style.setProperty('font-size',fit+'px','important');
+        lab.style.setProperty('line-height','1.1','important');
+        lab.style.setProperty('white-space','pre-line','important');
+        lab.style.setProperty('overflow','hidden','important');
       }
     }
     // V66: apply user-entered text only after all automatic wording has been built.
@@ -4496,25 +4592,29 @@ function objectPointerDown(e){
     'leftSetback','rightSetback','rearSetback','rearGap','alleyDistance'
   ];
   if(state.mode==='concrete' && panelOnlyDrawingRoles.includes(o.role)) return;
-  // Lot length label can always be slid up/down so it does not cover other drawing content.
+  // Lot length: entire LOT LENGTH + number block slides up/down
   if(o.role==='lotLength'){
+    e.preventDefault();
+    e.stopPropagation();
     snapshot();
-    const startY=e.clientY,oy=o.y;
+    const startY=e.clientY, oy=o.y;
     const t=currentTemplate();
     const moveLot=ev=>{
-      const ny=oy+(ev.clientY-startY)/state.scale;
-      // Keep on the sheet vertically
-      o.y=Math.max(20, Math.min((t?.h||1000)-80, ny));
+      ev.preventDefault();
+      const ny=oy+(ev.clientY-startY)/Math.max(0.01,state.scale||1);
+      o.y=Math.max(40, Math.min((t?.h||1056)-120, ny));
       renderObjects();
     };
     const upLot=()=>{
       window.removeEventListener('pointermove',moveLot);
       window.removeEventListener('pointerup',upLot);
+      window.removeEventListener('pointercancel',upLot);
       if(typeof save==='function')save();
       else if(typeof saveActiveSheetState==='function')saveActiveSheetState();
     };
-    window.addEventListener('pointermove',moveLot);
+    window.addEventListener('pointermove',moveLot,{passive:false});
     window.addEventListener('pointerup',upLot);
+    window.addEventListener('pointercancel',upLot);
     return;
   }
   const resizing=e.target.dataset.handle==='1', rotating=e.target.dataset.rotate==='1', cutSizing=e.target.dataset.cutend==='1';
@@ -4793,6 +4893,23 @@ if($('duplicateObj')) $('duplicateObj').onclick=()=>{const o=getObj(state.select
 $('undoBtn').onclick=()=>{if(!state.history.length)return;state.future.push(JSON.stringify(state.objects));restore(state.history.pop())};
 
 $('fitBtn').onclick=fitWhole;$('drawViewBtn').onclick=focusDrawing;
+function rotateSelectedBy(delta){
+  const o=typeof getObj==='function'?getObj(state.selected):null;
+  if(!o){ alert('Select an object first, then rotate.'); return; }
+  if(o.locked){ alert('Object is locked. Unlock it to rotate.'); return; }
+  if(typeof snapshot==='function') snapshot();
+  o.angle=((o.angle||0)+delta)%360;
+  if(o.angle<0) o.angle+=360;
+  if($('objAngle')) $('objAngle').value=Math.round(o.angle);
+  const lab=document.getElementById('objAngleLabel');
+  if(lab) lab.textContent=Math.round(o.angle)+'°';
+  renderObjects();
+  if(typeof save==='function') try{save();}catch(e){}
+}
+['rotateLeftBtn','mobileRotateLeftBtn'].forEach(id=>{const b=$(id); if(b) b.onclick=()=>rotateSelectedBy(-15);});
+['rotateRightBtn','mobileRotateRightBtn'].forEach(id=>{const b=$(id); if(b) b.onclick=()=>rotateSelectedBy(15);});
+['rotate90Btn','mobileRotate90Btn'].forEach(id=>{const b=$(id); if(b) b.onclick=()=>rotateSelectedBy(90);});
+
 $('zoomIn').onclick=()=>changeZoom(1.15);$('zoomOut').onclick=()=>changeZoom(1/1.15);
 
 function setPrintZoom(){

@@ -1329,10 +1329,46 @@ input, select, textarea, button { box-sizing:border-box; }
                                             <option value="hardie">Hardieboard / Cement Board (upgrade)</option>
                                         </select>
                                     </div>
-                                    <!-- Color choices intentionally hidden from estimator UI.
-                                         Keep default values for existing photo/state logic. -->
+                                    <div>
+                                        <label class="text-xs text-zinc-400 block mb-1">Siding color</label>
+                                        <select id="sidingColor" onchange="syncSidingColorFields(); calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2 text-sm">
+                                            <option value="Light Gray" selected>Light Gray (default)</option>
+                                            <option value="White">White</option>
+                                            <option value="Gray">Gray</option>
+                                            <option value="Charcoal">Charcoal</option>
+                                            <option value="Black">Black</option>
+                                            <option value="Beige">Beige</option>
+                                            <option value="Almond">Almond</option>
+                                            <option value="Cream">Cream</option>
+                                            <option value="Tan">Tan</option>
+                                            <option value="Brown">Brown</option>
+                                            <option value="Clay">Clay</option>
+                                            <option value="Sage">Sage</option>
+                                            <option value="Green">Green</option>
+                                            <option value="Blue">Blue</option>
+                                            <option value="Navy">Navy</option>
+                                            <option value="Red">Red</option>
+                                            <option value="Yellow">Yellow</option>
+                                            <option value="Pearl">Pearl</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="text-xs text-zinc-400 block mb-1">Shingle color</label>
+                                        <select id="shingleColor" onchange="calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2 text-sm">
+                                            <option value="Black" selected>Black (default)</option>
+                                            <option value="Charcoal">Charcoal</option>
+                                            <option value="Weathered Wood">Weathered Wood</option>
+                                            <option value="Gray">Gray</option>
+                                            <option value="Brown">Brown</option>
+                                            <option value="Driftwood">Driftwood</option>
+                                            <option value="Slate">Slate</option>
+                                            <option value="Hunter Green">Hunter Green</option>
+                                        </select>
+                                    </div>
+                                    <!-- Keep legacy color fields in sync for older photo/state logic -->
                                     <select id="vinylColor" class="hidden" aria-hidden="true" tabindex="-1">
-                                        <option value="#F5F5F5" selected>White</option>
+                                        <option value="#D3D3D3" selected>Light Gray</option>
+                                        <option value="#F5F5F5">White</option>
                                         <option value="#C41E3A">Red</option>
                                         <option value="#4A4A4A">Charcoal</option>
                                         <option value="#808080">Gray</option>
@@ -1345,9 +1381,14 @@ input, select, textarea, button { box-sizing:border-box; }
                                         <option value="#5B7C99">Blue</option>
                                         <option value="#E8DCC8">Almond</option>
                                         <option value="#FFFDD0">Cream</option>
+                                        <option value="#C4A484">Clay</option>
+                                        <option value="#9CAF88">Sage</option>
+                                        <option value="#F7E7A9">Yellow</option>
+                                        <option value="#F8F6F0">Pearl</option>
                                     </select>
                                     <select id="hardieColor" class="hidden" aria-hidden="true" tabindex="-1">
-                                        <option value="#F5F5F5" selected>White</option>
+                                        <option value="#D3D3D3" selected>Light Gray</option>
+                                        <option value="#F5F5F5">White</option>
                                         <option value="#C41E3A">Red</option>
                                         <option value="#4A4A4A">Charcoal</option>
                                         <option value="#808080">Gray</option>
@@ -1360,6 +1401,10 @@ input, select, textarea, button { box-sizing:border-box; }
                                         <option value="#5B7C99">Blue</option>
                                         <option value="#E8DCC8">Almond</option>
                                         <option value="#FFFDD0">Cream</option>
+                                        <option value="#C4A484">Clay</option>
+                                        <option value="#9CAF88">Sage</option>
+                                        <option value="#F7E7A9">Yellow</option>
+                                        <option value="#F8F6F0">Pearl</option>
                                     </select>
                                     <div id="hardieCalcBox" class="hidden bg-zinc-950 border border-zinc-700 rounded-2xl p-3 text-xs md:col-span-2">
                                         <div class="flex justify-between"><span>Siding area:</span> <span id="sidingAreaDisplay" class="font-mono">0</span> sq ft</div>
@@ -1813,6 +1858,27 @@ input, select, textarea, button { box-sizing:border-box; }
             if(widthWrap) widthWrap.classList.toggle('hidden',!widthCustom);
             if(depthWrap) depthWrap.classList.toggle('hidden',!depthCustom);
             syncCarCapacityUI();
+        }
+        function syncSidingColorFields(){
+            const label = document.getElementById('sidingColor')?.value || 'Light Gray';
+            ['vinylColor','hardieColor'].forEach(id=>{
+                const el=document.getElementById(id);
+                if(!el||!el.options) return;
+                let found=false;
+                for(let i=0;i<el.options.length;i++){
+                    if(el.options[i].text===label || el.options[i].text.toLowerCase()===label.toLowerCase()){
+                        el.selectedIndex=i; found=true; break;
+                    }
+                }
+                if(!found){
+                    // fallback: try partial match
+                    for(let i=0;i<el.options.length;i++){
+                        if(el.options[i].text.toLowerCase().includes(label.toLowerCase())||label.toLowerCase().includes(el.options[i].text.toLowerCase())){
+                            el.selectedIndex=i; break;
+                        }
+                    }
+                }
+            });
         }
         function syncCarCapacityUI(){
             const wrap=document.getElementById('carCapacityWrap');
@@ -4088,33 +4154,33 @@ input, select, textarea, button { box-sizing:border-box; }
             const roof = document.getElementById('roofType')?.value||'gable';
             const eave = document.getElementById('eaveDir')?.value||'';
             let sidingType = document.getElementById('sidingType')?.value||'vinyl';
-            const colorEl = document.getElementById(sidingType==='hardie'?'hardieColor':'vinylColor');
-            let colorTxt = colorEl ? (colorEl.options[colorEl.selectedIndex]?.text||'White') : 'White';
+            let colorTxt = document.getElementById('sidingColor')?.value || 'Light Gray';
+            let shingleTxt = document.getElementById('shingleColor')?.value || 'Black';
             const wall = document.getElementById('wallHeight')?.value||'8';
             const doorH = document.getElementById('overheadDoorHeight')?.value||'7';
             const doorW = Number(document.getElementById('overheadDoorWidth')?.value||16) || 16;
             const doorStyle = document.getElementById('overheadDoorStyle')?.value||document.getElementById('doorStyle')?.value||'raised';
             const service = document.getElementById('serviceDoorLocation')?.value||'right';
             const serviceFrontSide = document.getElementById('serviceDoorFrontSide')?.value||'right';
-            const gutters = document.getElementById('gutters')?.checked;
+            const gutters = !!document.getElementById('gutters')?.checked;
+            const hasAlumSoffit = !!document.getElementById('aluminumSoffit')?.checked;
             const stone = document.getElementById('stoneAccent')?.checked;
             const winQty = Number(document.getElementById('windowQty')?.value||0);
             let access = document.getElementById('garageAccessType')?.value || localStorage.getItem('agb_garage_access_type') || 'driveway';
 
-            // Plain chat text overrides (this is what makes the box actually control the image)
             const extra = (document.getElementById('aiPhotoExtraInstructions')?.value || localStorage.getItem('agb_ai_photo_extra') || '').trim();
             const q = extra.toLowerCase();
             if (/vinyl/.test(q)) sidingType = 'vinyl';
             if (/hardie|cement\s*board/.test(q)) sidingType = 'hardie';
             const colorMap = {
-                red:'Red', white:'White', gray:'Gray', grey:'Gray', charcoal:'Charcoal', black:'Black',
+                red:'Red', white:'White', 'light gray':'Light Gray', 'light grey':'Light Gray',
+                gray:'Gray', grey:'Gray', charcoal:'Charcoal', black:'Black',
                 brown:'Brown', tan:'Tan', beige:'Beige', almond:'Almond', cream:'Cream',
-                blue:'Blue', navy:'Navy', green:'Green', sage:'Green', yellow:'Yellow'
+                blue:'Blue', navy:'Navy', green:'Green', sage:'Sage', yellow:'Yellow', clay:'Clay', pearl:'Pearl'
             };
             for (const [key, label] of Object.entries(colorMap)) {
-                if (new RegExp('\\b'+key+'\\b').test(q)) { colorTxt = label; break; }
+                if (new RegExp('\\b'+key.replace(' ','\\s+')+'\\b').test(q)) { colorTxt = label; break; }
             }
-            // Chat can also force alley / driveway wording
             if (/\balley\b/.test(q)) access = 'alley';
             if (/\bdriveway\b/.test(q)) access = 'driveway';
 
@@ -4122,7 +4188,6 @@ input, select, textarea, button { box-sizing:border-box; }
             const sidingWords = sidingType==='hardie' ? 'Hardie fiber cement siding' : 'vinyl siding';
             const doorStyleWords = /window/i.test(String(doorStyle)) ? 'raised-panel overhead garage door with a row of windows across the top' : 'solid raised-panel overhead garage door';
 
-            // Car capacity: 27'+ asks 2 vs 3 (default 3). Under 27 uses width rules.
             const carSel = document.getElementById('carCapacity');
             let carWords = 'single-car garage';
             if (w >= 27) {
@@ -4139,39 +4204,53 @@ input, select, textarea, button { box-sizing:border-box; }
             const scaleWords = [
                 'IMPORTANT SCALE: this is a '+w+'-foot-wide by '+d+'-foot-deep '+carWords,
                 'the building must look large and substantial, not a tiny shed',
-                'the overhead door is '+doorW+' feet wide by '+doorH+' feet tall and must dominate most of the front wall width',
+                'the overhead door is '+doorW+' feet wide by '+doorH+' feet tall and must dominate most of the FRONT wall width',
                 'camera pulled back so the full wide garage fits in frame with correct real-world proportions'
             ].join(', ');
 
+            const frontDoorRule = 'CRITICAL LAYOUT: the large overhead garage door is ONLY on the FRONT wall — never on the rear wall and never on the same wall as a roofed patio';
+
             let serviceWords = '';
             let coachLightWords = '';
+            let serviceWalkWords = '';
             if(service==='no'||service==='none'||service==='hidden'){
                 serviceWords = 'no service door on the visible elevation';
             } else if(service==='front'){
-                serviceWords = 'service entry door on the front elevation, '+serviceFrontSide+' of the overhead door';
+                serviceWords = 'service entry door on the FRONT elevation, '+serviceFrontSide+' of the overhead door';
                 coachLightWords = 'black coach light mounted on the wall next to the service door';
+                serviceWalkWords = 'small concrete walkway pad from the front service door connecting neatly flush into the main concrete apron';
             } else if(service==='back'){
-                serviceWords = 'service entry door on the rear elevation (not visible from the main camera angle)';
+                serviceWords = 'service entry door on the REAR wall only (not on the front wall with the overhead door)';
+                coachLightWords = 'black coach light next to the rear service door if visible';
+                serviceWalkWords = 'if the rear service door is visible, a small concrete walkway pad at that door';
             } else if(service==='left'){
-                serviceWords = 'service entry door on the left side wall';
+                serviceWords = 'service entry door on the LEFT SIDE wall (not on the front overhead-door wall)';
                 coachLightWords = 'black coach light mounted on the wall next to the service door';
+                serviceWalkWords = 'small concrete sidewalk from the left-side service door connecting neatly flush to the front concrete apron so people do not step on grass';
             } else {
-                serviceWords = 'service entry door on the right side wall';
+                serviceWords = 'service entry door on the RIGHT SIDE wall (not on the front overhead-door wall)';
                 coachLightWords = 'black coach light mounted on the wall next to the service door';
+                serviceWalkWords = 'small concrete sidewalk from the right-side service door connecting neatly flush to the front concrete apron so people do not step on grass';
             }
-            const gutterWords = gutters ? 'with gutters and downspouts' : 'without gutters';
+
+            const gutterWords = gutters
+                ? 'with continuous gutters and downspouts clearly visible'
+                : 'NO gutters and NO downspouts anywhere — clean roof edge only';
+
+            const trimWords = hasAlumSoffit
+                ? 'white aluminum soffit and aluminum fascia'
+                : 'painted white real wood trim at soffit and fascia (traditional wood trim, not aluminum)';
+
             const stoneWords = stone ? 'with a stone accent wainscot along the base' : '';
             const winWords = winQty>0 ? ('with '+winQty+' wall window'+(winQty>1?'s':'')) : 'no wall windows';
 
-            // Access: make this impossible to miss in the image
             let accessWords = '';
             if (access === 'alley') {
-                accessWords = 'CAMERA AND SETTING: rear alley access only — the photo is taken from the alley looking at the garage, narrow residential alley pavement in the foreground, NO front driveway, clean concrete apron on the alley side';
+                accessWords = 'CAMERA AND SETTING: rear alley access — photo from the alley, alley pavement in the foreground, clean concrete apron on the overhead-door approach, NO suburban front driveway';
             } else {
-                accessWords = 'CAMERA AND SETTING: front driveway access — residential driveway and wide clean scored concrete apron in the foreground leading to the overhead door, typical front-yard approach';
+                accessWords = 'CAMERA AND SETTING: front driveway access — residential driveway and wide clean scored concrete apron in the foreground leading to the FRONT overhead door';
             }
 
-            // Roofed patio
             let roofPatioOn = !!document.getElementById('roofPatioEnabled')?.checked;
             let roofPatioSide = !!document.getElementById('roofPatioSide')?.checked;
             if (/roofed?\s*patio|covered\s*patio|roof\s*patio/.test(q)) {
@@ -4188,40 +4267,48 @@ input, select, textarea, button { box-sizing:border-box; }
 
             let patioWords = '';
             if (roofPatioOn) {
-                const loc = roofPatioSide ? 'side' : 'rear / back';
+                const loc = roofPatioSide ? 'SIDE wall' : 'REAR / BACK wall';
                 patioWords = [
-                    'MUST SHOW: roofed patio on the '+loc+' of the garage',
-                    'camera angle is a 3/4 view that clearly shows the '+loc+' elevation and the roofed patio',
-                    'roofed patio is about '+roofPatioDepth+' feet deep with a clean concrete slab under it',
-                    'roofed patio has exactly four vertical support posts',
-                    'patio roof matches the main garage roof'
+                    'MUST SHOW a roofed patio attached only to the '+loc+' of the garage',
+                    'CRITICAL: roofed patio is NEVER on the front wall and NEVER on the same wall as the overhead garage door',
+                    'overhead door stays on the FRONT wall; patio is on the '+loc+' only',
+                    'use a 3/4 camera angle showing the FRONT overhead-door wall AND the '+loc+' with the patio',
+                    'roofed patio about '+roofPatioDepth+' feet deep with clean concrete slab underneath',
+                    'exactly four vertical support posts under the patio roof',
+                    'patio roof matches the main garage roof and uses the same '+shingleTxt+' shingles',
+                    'all concrete (apron, patio slab, sidewalks) is flush, level, and neatly connected with no gaps'
                 ].join(', ');
             }
 
+            const concreteRule = 'ALL concrete surfaces (apron, patio slab, service walkways, sidewalks) are flush with each other, clean, and neatly connected with no grass strips between connected pads';
+
             const parts = [];
-            // Lead with the strongest, most specific instructions
             if (extra) {
                 parts.push('USER WANTS THIS EXACTLY (highest priority): '+extra);
             }
             parts.push(
-                'MUST USE SIDING COLOR: '+colorTxt+' '+sidingWords,
+                frontDoorRule,
+                'MUST USE SIDING: '+colorTxt+' '+sidingWords,
+                'MUST USE ROOF SHINGLES: architectural '+shingleTxt+' shingles',
                 accessWords,
                 patioWords,
                 'Hyper-realistic professional photograph of a brand-new detached residential garage in a suburban Midwest setting',
                 scaleWords,
                 wall+'-foot tall walls, '+roofWords,
-                doorStyleWords+', '+doorW+' feet wide by '+doorH+' feet tall, centered, filling most of the front wall',
+                doorStyleWords+', '+doorW+' feet wide by '+doorH+' feet tall, centered on the FRONT wall only, filling most of the front wall',
                 serviceWords,
                 coachLightWords,
+                serviceWalkWords,
                 winWords,
                 gutterWords,
+                trimWords,
                 stoneWords,
-                'brand-new clean garage exterior, pristine clean concrete with no stains or debris, neat landscaping, soft natural daylight, photorealistic architectural exterior photography, sharp detail, correct real-world proportions, no text, no watermark, no people, no logo, no vehicles blocking the view'
+                concreteRule,
+                'brand-new clean garage exterior, soft natural daylight, photorealistic architectural exterior photography, sharp detail, correct real-world proportions, no text, no watermark, no people, no logo, no vehicles blocking the view'
             );
             return parts.filter(Boolean).join(', ');
         }
 
-        // Plain-language photo chat → update calculator fields when possible
         function applyPhotoChatToEstimate(){
             const box=document.getElementById('aiPhotoExtraInstructions');
             const raw=String(box?.value||'').trim();
@@ -4231,11 +4318,13 @@ input, select, textarea, button { box-sizing:border-box; }
                 if(/vinyl/.test(q)) { const e=document.getElementById('sidingType'); if(e) e.value='vinyl'; }
                 if(/hardie|cement\s*board/.test(q)) { const e=document.getElementById('sidingType'); if(e) e.value='hardie'; }
 
-                const colors=['white','gray','grey','black','charcoal','brown','tan','beige','almond','cream','blue','navy','green','sage','red','yellow','clay','pearl'];
-                const color=colors.find(c=>new RegExp('\\b'+c+'\\b').test(q));
-                if(color && typeof selectOptionByText==='function'){
-                    const sid=(document.getElementById('sidingType')||{}).value==='hardie'?'hardieColor':'vinylColor';
-                    selectOptionByText(sid, color==='grey'?'gray':color);
+                const colorPairs=[['light gray','Light Gray'],['light grey','Light Gray'],['white','White'],['gray','Gray'],['grey','Gray'],['charcoal','Charcoal'],['black','Black'],['brown','Brown'],['tan','Tan'],['beige','Beige'],['almond','Almond'],['cream','Cream'],['blue','Blue'],['navy','Navy'],['green','Green'],['sage','Sage'],['red','Red'],['yellow','Yellow'],['clay','Clay'],['pearl','Pearl']];
+                for(const [key,label] of colorPairs){
+                    if(new RegExp('\\b'+key.replace(' ','\\s+')+'\\b').test(q)){
+                        const sc=document.getElementById('sidingColor');
+                        if(sc){ sc.value=label; if(typeof syncSidingColorFields==='function') syncSidingColorFields(); }
+                        break;
+                    }
                 }
 
                 if(/roofed?\s*patio|covered\s*patio|roof\s*patio/.test(q)){

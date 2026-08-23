@@ -1682,10 +1682,10 @@ input, select, textarea, button { box-sizing:border-box; }
                         </div>
                         <div>
                             <label class="text-[10px] font-bold tracking-wider text-violet-300 block mb-1" for="aiPhotoExtraInstructions">TELL THE PHOTO WHAT YOU WANT</label>
-                            <textarea id="aiPhotoExtraInstructions" rows="3" placeholder="Example: roofed patio in back red siding vinyl"
+                            <textarea id="aiPhotoExtraInstructions" rows="3" placeholder="Example: roofed patio in the back — show from the rear so customer sees the patio"
                                 oninput="saveAIPhotoExtraInstructions(); applyPhotoChatToEstimate()"
                                 class="w-full bg-zinc-900 border border-violet-700/60 text-white rounded-xl px-3 py-2.5 text-sm resize-y min-h-[72px]"></textarea>
-                            <div class="text-[10px] text-zinc-500 mt-1">Type plain words. Example: “roofed patio in back red siding vinyl” — AI will show that and update the estimate when it can.</div>
+                            <div class="text-[10px] text-zinc-500 mt-1">Be specific. “Patio in the back” = rear camera view of the back patio. “Patio on the side” = side view. Words here override defaults.</div>
                         </div>
                         <div id="aiPhotoStatus" class="text-[10px] text-emerald-400 mt-2 hidden"></div>
                     </div>
@@ -4246,17 +4246,18 @@ input, select, textarea, button { box-sizing:border-box; }
 
             let accessWords = '';
             if (access === 'alley') {
-                accessWords = 'CAMERA AND SETTING: rear alley access — photo from the alley, alley pavement in the foreground, clean concrete apron on the overhead-door approach, NO suburban front driveway';
+                accessWords = 'DEFAULT SETTING when chat does not specify view: rear alley access, alley pavement in the foreground, clean concrete apron on the overhead-door approach, NO suburban front driveway';
             } else {
-                accessWords = 'CAMERA AND SETTING: front driveway access — residential driveway and wide clean scored concrete apron in the foreground leading to the FRONT overhead door';
+                accessWords = 'DEFAULT SETTING when chat does not specify view: front driveway access, residential driveway and wide clean scored concrete apron leading to the FRONT overhead door';
             }
 
+            // ---- Parse ANY salesman chat specifics (not only patio) ----
             let roofPatioOn = !!document.getElementById('roofPatioEnabled')?.checked;
             let roofPatioSide = !!document.getElementById('roofPatioSide')?.checked;
-            if (/roofed?\s*patio|covered\s*patio|roof\s*patio/.test(q)) {
-                roofPatioOn = true;
-                if (/side/.test(q)) roofPatioSide = true;
-                if (/back|rear/.test(q)) roofPatioSide = false;
+            if (/roofed?\s*patio|covered\s*patio|roof\s*patio|awning\s*patio/.test(q)) roofPatioOn = true;
+            if (roofPatioOn) {
+                if (/\b(side|left\s*side|right\s*side|on the side)\b/.test(q)) roofPatioSide = true;
+                if (/\b(back|rear|behind|in the back)\b/.test(q)) roofPatioSide = false;
             }
             let roofPatioDepth = 6;
             if (roofPatioOn && typeof getRoofPatioDepth === 'function') {
@@ -4265,37 +4266,75 @@ input, select, textarea, button { box-sizing:border-box; }
             const depthInChat = q.match(/(\d+(?:\.\d+)?)\s*(?:ft|feet|foot)/);
             if (depthInChat) roofPatioDepth = parseFloat(depthInChat[1]) || roofPatioDepth;
 
+            // Camera: chat wins for ANY feature (patio, doors, stone, walk, etc.)
+            const wantsRearView = /\b(back|rear|behind|from the back|rear view|back view|backyard|from behind)\b/.test(q);
+            const wantsSideView = /\b(side view|from the side|left side|right side|on the side)\b/.test(q);
+            const wantsFrontView = /\b(front view|from the front|driveway view|front only)\b/.test(q);
+            const wantsCornerView = /\b(corner|three[\s-]?quarter|3\/4)\b/.test(q);
+
+            let cameraWords = '';
+            if (extra && (wantsRearView || (roofPatioOn && !roofPatioSide))) {
+                cameraWords = [
+                    'CAMERA ANGLE (MANDATORY FROM CHAT): rear or rear-corner view of the garage',
+                    'the BACK of the building is the main subject so the customer can see what was requested on the rear',
+                    'do NOT use a front-only driveway portrait if the chat asked for the back or a rear feature'
+                ].join(', ');
+            } else if (extra && (wantsSideView || (roofPatioOn && roofPatioSide))) {
+                cameraWords = [
+                    'CAMERA ANGLE (MANDATORY FROM CHAT): side or side three-quarter view',
+                    'the SIDE of the garage must be clearly visible so the customer can see the side feature requested'
+                ].join(', ');
+            } else if (extra && wantsFrontView) {
+                cameraWords = 'CAMERA ANGLE (MANDATORY FROM CHAT): front or front three-quarter view facing the overhead garage door';
+            } else if (extra && wantsCornerView) {
+                cameraWords = 'CAMERA ANGLE (MANDATORY FROM CHAT): three-quarter corner view showing two faces of the garage';
+            } else if (access === 'alley') {
+                cameraWords = accessWords;
+            } else {
+                cameraWords = accessWords;
+            }
+
             let patioWords = '';
             if (roofPatioOn) {
-                const loc = roofPatioSide ? 'SIDE wall' : 'REAR / BACK wall';
+                const loc = roofPatioSide
+                    ? 'SIDE wall only (not front, not rear)'
+                    : 'REAR / BACK wall only (wall opposite the overhead door — not front, not side)';
                 patioWords = [
-                    'MUST SHOW a roofed patio attached only to the '+loc+' of the garage',
-                    'CRITICAL: roofed patio is NEVER on the front wall and NEVER on the same wall as the overhead garage door',
-                    'overhead door stays on the FRONT wall; patio is on the '+loc+' only',
-                    'use a 3/4 camera angle showing the FRONT overhead-door wall AND the '+loc+' with the patio',
-                    'roofed patio about '+roofPatioDepth+' feet deep with clean concrete slab underneath',
-                    'exactly four vertical support posts under the patio roof',
-                    'patio roof matches the main garage roof and uses the same '+shingleTxt+' shingles',
-                    'all concrete (apron, patio slab, sidewalks) is flush, level, and neatly connected with no gaps'
+                    'include a roofed covered patio attached to the '+loc,
+                    'about '+roofPatioDepth+' feet deep, clean concrete slab under it, four vertical support posts',
+                    'patio roof matches the main garage roof and uses the same '+shingleTxt+' architectural shingles'
                 ].join(', ');
+            }
+
+            // Extra free-form features mentioned in chat (generic — whatever they type)
+            let chatFeatureWords = '';
+            if (extra) {
+                chatFeatureWords = [
+                    'SALESMAN CHAT IS THE SOURCE OF TRUTH for this image',
+                    'Include every specific detail the salesman wrote: placement, colors, materials, doors, windows, stone, walks, gutters, roof style, and camera/view',
+                    'If chat conflicts with any default below, follow the chat',
+                    'Choose the camera angle so the customer can clearly see the features named in the chat (if they said back, show the back; if side, show the side; if front, show the front)'
+                ].join('. ') + '.';
             }
 
             const concreteRule = 'ALL concrete surfaces (apron, patio slab, service walkways, sidewalks) are flush with each other, clean, and neatly connected with no grass strips between connected pads';
 
             const parts = [];
+            // Chat first and last so the model cannot ignore specifics
             if (extra) {
-                parts.push('USER WANTS THIS EXACTLY (highest priority): '+extra);
+                parts.push('SALESMAN REQUEST (HIGHEST PRIORITY — FOLLOW LITERALLY): ' + extra);
+                parts.push(chatFeatureWords);
             }
             parts.push(
                 frontDoorRule,
+                cameraWords,
+                patioWords,
                 'MUST USE SIDING: '+colorTxt+' '+sidingWords,
                 'MUST USE ROOF SHINGLES: architectural '+shingleTxt+' shingles',
-                accessWords,
-                patioWords,
                 'Hyper-realistic professional photograph of a brand-new detached residential garage in a suburban Midwest setting',
                 scaleWords,
                 wall+'-foot tall walls, '+roofWords,
-                doorStyleWords+', '+doorW+' feet wide by '+doorH+' feet tall, centered on the FRONT wall only, filling most of the front wall',
+                doorStyleWords+', '+doorW+' feet wide by '+doorH+' feet tall, on the FRONT wall only when the front is in view',
                 serviceWords,
                 coachLightWords,
                 serviceWalkWords,
@@ -4306,6 +4345,10 @@ input, select, textarea, button { box-sizing:border-box; }
                 concreteRule,
                 'brand-new clean garage exterior, soft natural daylight, photorealistic architectural exterior photography, sharp detail, correct real-world proportions, no text, no watermark, no people, no logo, no vehicles blocking the view'
             );
+            if (extra) {
+                parts.push('FINAL CHECK: the finished photo must match this salesman request exactly: ' + extra);
+                parts.push('Do not substitute a different view, location, or feature than what the salesman asked for');
+            }
             return parts.filter(Boolean).join(', ');
         }
 
@@ -5291,10 +5334,42 @@ input, select, textarea, button { box-sizing:border-box; }
 <div class="actions">
     <button class="print" onclick="window.print()">Print</button>
     <button class="download" onclick="downloadEstimatePdf()" style="background:#166534;color:#fff">Download PDF</button>
+    <button class="email" onclick="emailEstimateToCustomer()" style="background:#1d4ed8;color:#fff">Email Customer</button>
     <button class="close" onclick="window.close()">Close</button>
 </div>
 
 <script>
+const ESTIMATE_EMAIL_TO=${JSON.stringify(customerEmail||'')};
+const ESTIMATE_CUSTOMER=${JSON.stringify(customerName||'')};
+const ESTIMATE_QUOTE=${JSON.stringify(quote||'')};
+const ESTIMATE_ADDRESS=${JSON.stringify(customerAddress||'')};
+const ESTIMATE_SALESMAN=${JSON.stringify(salesmanName||'')};
+const ESTIMATE_SALES_EMAIL=${JSON.stringify(salesmanEmail||'')};
+const ESTIMATE_SALES_PHONE=${JSON.stringify(salesmanPhone||'')};
+
+function emailEstimateToCustomer(){
+  let to=ESTIMATE_EMAIL_TO;
+  if(!to){
+    to=prompt('Customer email is not on the estimate. Enter their email address:')||'';
+    to=to.trim();
+    if(!to)return;
+  }
+  const subject=encodeURIComponent('Your Absolute Garage Builders Estimate — '+(ESTIMATE_CUSTOMER||'Proposal'));
+  const body=encodeURIComponent(
+    'Hi '+(ESTIMATE_CUSTOMER||'there')+',\\n\\n'+
+    'Thank you for the opportunity. Attached/printed is your Absolute Garage Builders estimate.\\n\\n'+
+    (ESTIMATE_ADDRESS?('Project address: '+ESTIMATE_ADDRESS+'\\n'):'')+
+    (ESTIMATE_QUOTE?('Project price: '+ESTIMATE_QUOTE+'\\n'):'')+
+    '\\nPlease reply with any questions.\\n\\n'+
+    'Thank you,\\n'+
+    (ESTIMATE_SALESMAN||'Absolute Garage Builders')+
+    (ESTIMATE_SALES_PHONE?('\\n'+ESTIMATE_SALES_PHONE):'')+
+    (ESTIMATE_SALES_EMAIL?('\\n'+ESTIMATE_SALES_EMAIL):'')+
+    '\\n\\nAbsolute Garage Builders\\nBuilt Right. Built Strong. Built To Last.'
+  );
+  window.location.href='mailto:'+encodeURIComponent(to)+'?subject='+subject+'&body='+body;
+}
+
 async function downloadEstimatePdf(){
   const sheet=document.querySelector('.sheet');
   if(!sheet)return;

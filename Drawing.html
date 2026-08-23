@@ -366,8 +366,10 @@ button.danger{color:#b42318}
 #sitePlanControls{display:none}
 .siteplan #sitePlanControls{display:block}
 #surveyBg{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;z-index:1;pointer-events:none;background:#fff}
-.erase-patch{position:absolute;background:#fff;border:1px dashed #bbb;z-index:3}
+.erase-patch{position:absolute;background:#fff;border:0;z-index:3;pointer-events:none}
+.erase-patch.brush-dot{border-radius:50%;border:0;box-shadow:none}
 .siteplan-page{position:absolute;inset:0;background:#fff}
+.whiteout-on{outline:2px solid #2563eb;outline-offset:2px}
 @media print{.erase-patch{border:0}.locked-contractor{background:#fff}.shed-x{display:block}}
 
 
@@ -378,7 +380,19 @@ button.danger{color:#b42318}
   color:#000!important;
   font-weight:900!important;
   text-align:center!important;
-  line-height:1!important;
+  line-height:1.05!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  padding:0 4px!important;
+  box-sizing:border-box!important;
+  vertical-align:middle!important;
+}
+/* Single-line blanks: keep text vertically centered in the printed box */
+#paper input.field-overlay.sheet-text,
+#paper input[id^="sheet_"]:not([id="sheet_cNotes"]):not([id="sheet_oNotes"]){
+  text-align:center!important;
+  padding:0 4px!important;
 }
 .locked-contractor{
   background:#fff!important;
@@ -2387,8 +2401,8 @@ button.danger{color:#b42318}
 <input class="hidden-dim-source" id="spExistingWalkW"/><input class="hidden-dim-source" id="spExistingWalkH"/>
 <div class="field"><label>Rear setback (ft)</label><input id="spRearSetback" step=".5" type="number" value="5"/></div>
 <div class="field"><label>Garage placement</label><select id="spPlacement"><option value="bottom-right">Rear right</option><option value="bottom-left">Rear left</option><option value="custom">Place manually</option></select></div>
-<div class="toolbar-grid"><button id="placeProposedGarage">Place Proposed Garage</button><button id="eraseSurveyBtn">Erase Old Garage Area</button></div>
-<div class="mode-note">Erase Old Garage Area creates a movable white patch over old survey lines/dimensions. It does not alter the uploaded survey image.</div>
+<div class="toolbar-grid"><button id="placeProposedGarage">Place Proposed Garage</button><button id="eraseSurveyBtn" type="button">Whiteout Brush</button></div>
+<div class="mode-note" id="eraseSurveyNote">Whiteout Brush: tap the button, then drag over the old garage on the survey to cover it with white. Tap again to turn off. Undo removes the last strokes.</div>
 </div>
 
 
@@ -2730,14 +2744,24 @@ function changeZoom(mult){
 
 function fieldInput(id,box,value=''){
   const [x,y,w,h]=box;
-  const inp=document.createElement((id==='cNotes'||id==='oNotes')?'textarea':'input');
+  const isNotes=(id==='cNotes'||id==='oNotes');
+  const inp=document.createElement(isNotes?'textarea':'input');
   inp.className='field-overlay sheet-text';inp.id='sheet_'+id;inp.value=value||'';
   if(['cReturnFL','cReturnFM','cReturnFR','cReturnRL','cReturnRM','cReturnRR'].includes(id)){
     inp.classList.add('sheet-return-text-only');
   }
-  if(id==='oNotes'){inp.classList.add('notes-overlay');inp.style.lineHeight='27px';inp.style.textAlign='left';}
-  if(id==='cNotes'){inp.classList.add('notes-overlay');inp.style.lineHeight='30px';inp.style.textAlign='left';}
-  Object.assign(inp.style,{left:x+'px',top:y+'px',width:w+'px',height:h+'px',fontSize:Math.max(17,Math.min(24,h-3))+'px'});
+  if(id==='oNotes'){inp.classList.add('notes-overlay');inp.style.lineHeight='27px';inp.style.textAlign='left';inp.style.justifyContent='flex-start';inp.style.alignItems='flex-start';}
+  if(id==='cNotes'){inp.classList.add('notes-overlay');inp.style.lineHeight='30px';inp.style.textAlign='left';inp.style.justifyContent='flex-start';inp.style.alignItems='flex-start';}
+  const fontSize=Math.max(16,Math.min(22,h-4));
+  Object.assign(inp.style,{
+    left:x+'px',top:y+'px',width:w+'px',height:h+'px',
+    fontSize:fontSize+'px',
+    textAlign:isNotes?'left':'center',
+    // Center single-line values inside the blank (not under it)
+    lineHeight:isNotes?'':(h+'px'),
+    padding:isNotes?'4px 6px':'0 4px',
+    boxSizing:'border-box'
+  });
   inp.addEventListener('input',()=>{
       const side=$(id);
       if(side && side.value!==inp.value){
@@ -3830,13 +3854,40 @@ function fillWizardFromEstimate(rec){
   if(st.additionalEstimateNotes && $('wFormNotes'))$('wFormNotes').value=st.additionalEstimateNotes;
   if(snap.additional_notes && $('wFormNotes') && !$('wFormNotes').value)$('wFormNotes').value=snap.additional_notes;
 
-  if(status) status.textContent='Loaded: '+(cust||'Customer')+' — open Wizard to review, then build the drawing.';
+  // Site plan garage size from estimate
+  if(gw>0&&gh>0){
+    setWizardCombo('spGarageCombo',gw,gh);
+    if($('spGarageW'))$('spGarageW').value=String(gw);
+    if($('spGarageH'))$('spGarageH').value=String(gh);
+  }
+
+  // Push everything onto the printed form blanks (centered) and sidebar
+  try{
+    ['customerName','jobAddress','city','homePhone','workPhone','salesPhone'].forEach(id=>{
+      const side=$(id), sheet=$('sheet_'+id);
+      if(side && sheet) sheet.value=side.value||'';
+    });
+    if(typeof renderSheet==='function') renderSheet();
+    else {
+      ['customerName','jobAddress','city','homePhone','workPhone','salesman','salesPhone','cSizeW','cSizeL','cApronW','cApronL'].forEach(id=>{
+        if(typeof syncSideToSheet==='function') syncSideToSheet(id);
+      });
+    }
+  }catch(e){ console.warn('sheet sync',e); }
+
+  if(status) status.textContent='Loaded: '+(cust||'Customer')+' — info is on the form blanks. Open Wizard to build the drawing.';
   try{ if(typeof openWizard==='function') openWizard(); }catch(e){}
   try{
     ['wGarageCombo','wApronCombo','wWalkCombo','wPadCombo','wServiceCombo','wDemoGarageCombo','wDemoApronCombo','wPatioCombo'].forEach(id=>{
       $(id)?.dispatchEvent(new Event('change'));
       $(id)?.dispatchEvent(new Event('input'));
     });
+    // Re-sync blanks after wizard defaults settle
+    setTimeout(()=>{
+      try{
+        if(typeof renderSheet==='function') renderSheet();
+      }catch(e){}
+    }, 50);
   }catch(e){}
 }
 function renderEstimateImportList(){
@@ -4215,39 +4266,145 @@ function renderSitePlanBackground(){
  let bg=$('surveyBg');
  if(!bg){bg=document.createElement('img');bg.id='surveyBg';paper.insertBefore(bg,paper.firstChild)}
  bg.src=surveyData||'';bg.style.display=surveyData?'block':'none';
+ // Remove the old centered "Upload survey" message — blank page until a survey is uploaded
  let ph=$('sitePlanPlaceholder');
- if(!ph){
-   ph=document.createElement('div');ph.id='sitePlanPlaceholder';
-   ph.innerHTML='<div class="card"><b>PROPOSED SITE PLAN</b><br><br>Upload the current survey / plat from the left panel.<br>The survey will be fit to the page, then the proposed garage and dimensions are drawn as a fine survey-style overlay.</div>';
-   paper.appendChild(ph);
- }
- ph.style.display=surveyData?'none':'flex';
+ if(ph){ ph.remove(); }
 }
-$('surveyUpload').onchange=e=>{
- const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{surveyData=r.result;localStorage.setItem('agbSurveyImage',surveyData);renderSitePlanBackground()};r.readAsDataURL(f)
-};
-$('placeProposedGarage').onclick=()=>{
+function placeProposedGarageOnSurvey(opts={}){
  if(state.mode!=='siteplan')return;
- snapshot();const t=currentTemplate(),gw=+$('spGarageW').value||20,gh=+$('spGarageH').value||22,ls=+$('spLeftSetback').value||3,rsd=+$('spRightSetback').value||3,rs=+$('spRearSetback').value||5;
+ const autoErase=opts.autoErase!==false;
+ snapshot();
+ const t=currentTemplate();
+ const gw=+$('spGarageW').value||20,gh=+$('spGarageH').value||22;
+ const ls=+$('spLeftSetback').value||3,rsd=+$('spRightSetback').value||3,rs=+$('spRearSetback').value||5;
+ const lotW=+$('spLotWidth').value||0, lotL=+$('spLotLength').value||0;
  const scaleFeet=Math.max(.5,+$('spScaleFeet').value||20);
- const sc=96/scaleFeet,placement=$('spPlacement').value;
+ const sc=96/scaleFeet,placement=$('spPlacement')?.value||'bottom-right';
+ // Clear previous proposed garage + setback dims on this site plan (keep manual erase patches)
+ state.objects=state.objects.filter(o=>!(
+   o.kind==='garage' ||
+   o.role==='proposedGarage' ||
+   o.role==='surveyEraseGarage' ||
+   (o.kind==='dimension' && ['leftSetback','rightSetback','rearSetback','lotWidth','lotLength'].includes(o.role))
+ ));
+ // Prefer rear placement using setbacks (typical Chicago alley garage)
  let x=t.w-gw*sc-rsd*sc-45,y=t.h-gh*sc-rs*sc-55;
  if(placement==='bottom-left')x=45+ls*sc;
  if(placement==='custom'){x=t.w/2-gw*sc/2;y=t.h/2-gh*sc/2}
- state.objects.push({id:uid++,kind:'garage',x,y,wf:gw,hf:gh,label:`PROPOSED GARAGE\n${gw}' x ${gh}'`,angle:0,pxf:sc});
- if(placement==='bottom-left'){
-   state.objects.push({id:uid++,kind:'dimension',x:Math.max(5,x-ls*sc),y:y+gh*sc/2,wf:ls,hf:2,label:`${ls}'`,angle:0,pxf:sc});
- }else{
-   state.objects.push({id:uid++,kind:'dimension',x:x+gw*sc,y:y+gh*sc/2,wf:rsd,hf:2,label:`${rsd}'`,angle:0,pxf:sc});
+ // White out typical existing garage footprint slightly larger than new garage
+ if(autoErase){
+  const pad=18;
+  state.objects.push({
+    id:uid++,kind:'eraser',role:'surveyEraseGarage',
+    x:x-pad,y:y-pad,
+    wf:(gw*sc+pad*2)/(sc||1),hf:(gh*sc+pad*2)/(sc||1),
+    label:'',angle:0,pxf:sc
+  });
  }
- state.objects.push({id:uid++,kind:'dimension',x:x+gw*sc/2,y:y+gh*sc,wf:rs,hf:2,label:`${rs}'`,angle:90,pxf:sc});
- if(lotW)state.objects.push({id:uid++,kind:'dimension',x:12,y:18,wf:lotW,hf:2,label:`${lotW}'`,angle:0,pxf:(t.w-24)/lotW});
- if(lotL)state.objects.push({id:uid++,kind:'dimension',x:t.w-24,y:16,wf:lotL,hf:2,label:`${lotL}'`,angle:90,pxf:(t.h-32)/lotL});
- saveActiveSheetState();renderObjects()
+ state.objects.push({id:uid++,kind:'garage',role:'proposedGarage',x,y,wf:gw,hf:gh,label:`PROPOSED GARAGE\n${gw}' x ${gh}'`,angle:0,pxf:sc});
+ if(placement==='bottom-left'){
+   state.objects.push({id:uid++,kind:'dimension',role:'leftSetback',x:Math.max(5,x-ls*sc),y:y+gh*sc/2,wf:ls,hf:2,label:`${ls}'`,angle:0,pxf:sc});
+ }else{
+   state.objects.push({id:uid++,kind:'dimension',role:'rightSetback',x:x+gw*sc,y:y+gh*sc/2,wf:rsd,hf:2,label:`${rsd}'`,angle:0,pxf:sc});
+ }
+ state.objects.push({id:uid++,kind:'dimension',role:'rearSetback',x:x+gw*sc/2,y:y+gh*sc,wf:rs,hf:2,label:`${rs}'`,angle:90,pxf:sc});
+ // No lot width/length on site plan — survey already has property lines
+ saveActiveSheetState();renderObjects();
+}
+$('surveyUpload').onchange=e=>{
+ const f=e.target.files[0];if(!f)return;
+ const r=new FileReader();
+ r.onload=()=>{
+  surveyData=r.result;
+  localStorage.setItem('agbSurveyImage',surveyData);
+  // Ensure site plan mode so the survey is visible
+  if($('mode') && $('mode').value!=='siteplan'){
+    $('mode').value='siteplan';
+    if(typeof renderSheet==='function') renderSheet();
+  }else{
+    renderSitePlanBackground();
+  }
+  // Auto-place proposed garage using setbacks (no auto whiteout — use Whiteout Brush)
+  try{ placeProposedGarageOnSurvey({autoErase:false}); }catch(err){ console.warn('auto place garage',err); }
+ };
+ r.readAsDataURL(f);
 };
+$('placeProposedGarage').onclick=()=>{
+ placeProposedGarageOnSurvey({autoErase:true});
+};
+let whiteoutBrushOn=false;
+function setWhiteoutBrush(on){
+  whiteoutBrushOn=!!on;
+  const btn=$('eraseSurveyBtn');
+  if(btn){
+    btn.classList.toggle('primary',whiteoutBrushOn);
+    btn.textContent=whiteoutBrushOn?'Whiteout ON — drag to erase':'Whiteout Brush';
+  }
+  const note=$('eraseSurveyNote');
+  if(note) note.textContent=whiteoutBrushOn
+    ?'Whiteout is ON. Drag your finger/mouse over the old garage lines on the survey. White covers only what you paint. Tap the button again to stop.'
+    :'Whiteout Brush: tap the button, then drag over the old garage on the survey to cover it with white. Tap again to turn off. Undo removes the last strokes.';
+  if(drawLayer) drawLayer.style.cursor=whiteoutBrushOn?'crosshair':'';
+}
 $('eraseSurveyBtn').onclick=()=>{
- snapshot();const t=currentTemplate();state.objects.push({id:uid++,kind:'eraser',x:t.w/2-100,y:t.h/2-100,wf:20,hf:20,label:'',angle:0});state.selected=state.objects.at(-1).id;renderObjects()
+  if(state.mode!=='siteplan'){
+    // Non-site-plan: keep a simple white rectangle patch (no "ERASE" label)
+    snapshot();
+    const t=currentTemplate();
+    state.objects.push({id:uid++,kind:'eraser',x:t.w/2-80,y:t.h/2-60,wf:12,hf:10,label:'',angle:0,pxf:DRAW_PXF});
+    state.selected=state.objects.at(-1).id;
+    renderObjects();
+    return;
+  }
+  setWhiteoutBrush(!whiteoutBrushOn);
 };
+function paperPointFromEvent(e){
+  const rect=viewport.getBoundingClientRect();
+  const sx=(e.clientX-rect.left-state.tx)/state.scale;
+  const sy=(e.clientY-rect.top-state.ty)/state.scale;
+  return {x:sx,y:sy};
+}
+function paintWhiteoutDot(pt){
+  // Small white circle dots — paint as you drag (no text, no big "ERASE" box)
+  const sizeFt=1.1;
+  state.objects.push({
+    id:uid++,
+    kind:'eraser',
+    role:'whiteoutBrush',
+    x:pt.x-10,
+    y:pt.y-10,
+    wf:sizeFt,
+    hf:sizeFt,
+    label:'',
+    angle:0,
+    pxf:18,
+    brush:true
+  });
+}
+let whiteoutPainting=false;
+viewport.addEventListener('pointerdown',e=>{
+  if(!whiteoutBrushOn||state.mode!=='siteplan') return;
+  if(e.button!=null&&e.button!==0) return;
+  e.preventDefault();
+  e.stopPropagation();
+  whiteoutPainting=true;
+  snapshot();
+  paintWhiteoutDot(paperPointFromEvent(e));
+  renderObjects();
+  try{viewport.setPointerCapture(e.pointerId)}catch(_){}
+},true);
+viewport.addEventListener('pointermove',e=>{
+  if(!whiteoutPainting||!whiteoutBrushOn) return;
+  e.preventDefault();
+  paintWhiteoutDot(paperPointFromEvent(e));
+  renderObjects();
+},true);
+viewport.addEventListener('pointerup',e=>{
+  if(!whiteoutPainting) return;
+  whiteoutPainting=false;
+  saveActiveSheetState();
+},true);
+viewport.addEventListener('pointercancel',()=>{whiteoutPainting=false});
 
 function addObject(kind){
   const def=defaults[kind]||[10,10,kind.toUpperCase()];
@@ -4480,11 +4637,14 @@ function renderObjects(){
   state.objects.forEach(o=>{
     // Skip fully hidden objects (user can unhide later)
     if(o.hidden) return;
-    // V38: these legacy rear/alley guide objects are intentionally not drawn.
-    // They caused the stray unlabeled vertical line beside the apron.
-    if(['rearGap','alleyDistance','rearSetback'].includes(o.role)) return;
+    // V38: on concrete/obstruction, hide legacy rear gap / alley distance lines.
+    // On Proposed Site Plan we DO show rear setback markers.
+    if(state.mode!=='siteplan' && ['rearGap','alleyDistance','rearSetback'].includes(o.role)) return;
+    if(state.mode==='siteplan' && ['rearGap','alleyDistance'].includes(o.role)) return;
     const [w,h]=objPixels(o), el=document.createElement('div');
-    el.className='obj '+(o.kind==='eraser'?'erase-patch ':'')+(o.kind==='text'?'textobj ':'')+(o.kind==='dimension'?'dimension ':'')+(o.kind==='stays'?'stays ':'')+(o.kind==='cut'?'cutstamp ':'')+(o.kind==='collect'?'collectstamp ':'')+((o.kind==='patio')?'patio ':'')+((o.kind==='pad')?'pad ':'')+((o.role==='partyDoor')?'party-door ':'')+((o.role==='serviceDoor')?'service-door ':'')+(((o.role==='garage'||o.role==='apron')&&sameGarageApronWidth())?'shared-slab-apron ':'')+((o.role==='garage')?'role-garage ':'')+((o.kind==='sidewalk')?'sidewalk ':'')+((o.kind==='sidewalk'&&h>w)?'vertical-label ':'')+(['frontLeft','frontMiddle','frontRight','rearLeft','rearMiddle','rearRight','leftSetback','rightSetback','rearSetback','houseGap','alleyDistance'].includes(o.role)?'big-dim ':'')+(o.role==='rearGap'?'gap-dim ':'')+(o.role==='rearSetback'?'rear-setback-clean ':'')+((o.role==='lotWidth'||o.role==='lotLength')?'lot-dim ':'')+(o.role==='lotLength'?'lot-length-special ':'')+(/SERVICE DOOR PAD/i.test(o.label||'')?'service-pad ':'')+((o.kind==='tree'||o.kind==='bush')?'circle-stamp ':'')+(state.mode==='siteplan'?'siteplan-object ':'')+((['serviceDoor','partyDoor'].includes(o.role)||['serviceReturn','partyReturnA','partyReturnB','frontLeft','frontMiddle','frontRight'].includes(o.role))?'no-direct-drag ':'')+(state.selected===o.id?'selected':'');
+    el.className='obj '+(o.kind==='eraser'?'erase-patch ':'')+(o.brush?'brush-dot ':'')+(o.kind==='text'?'textobj ':'')+(o.kind==='dimension'?'dimension ':'')+(o.kind==='stays'?'stays ':'')+(o.kind==='cut'?'cutstamp ':'')+(o.kind==='collect'?'collectstamp ':'')+((o.kind==='patio')?'patio ':'')+((o.kind==='pad')?'pad ':'')+((o.role==='partyDoor')?'party-door ':'')+((o.role==='serviceDoor')?'service-door ':'')+(((o.role==='garage'||o.role==='apron')&&sameGarageApronWidth())?'shared-slab-apron ':'')+((o.role==='garage'||o.role==='proposedGarage')?'role-garage ':'')+((o.kind==='sidewalk')?'sidewalk ':'')+((o.kind==='sidewalk'&&h>w)?'vertical-label ':'')+(['frontLeft','frontMiddle','frontRight','rearLeft','rearMiddle','rearRight','leftSetback','rightSetback','rearSetback','houseGap','alleyDistance'].includes(o.role)?'big-dim ':'')+(o.role==='rearGap'?'gap-dim ':'')+(o.role==='rearSetback'?'rear-setback-clean ':'')+((o.role==='lotWidth'||o.role==='lotLength')?'lot-dim ':'')+(o.role==='lotLength'?'lot-length-special ':'')+(/SERVICE DOOR PAD/i.test(o.label||'')?'service-pad ':'')+((o.kind==='tree'||o.kind==='bush')?'circle-stamp ':'')+(state.mode==='siteplan'?'siteplan-object ':'')+((['serviceDoor','partyDoor'].includes(o.role)||['serviceReturn','partyReturnA','partyReturnB','frontLeft','frontMiddle','frontRight'].includes(o.role))?'no-direct-drag ':'')+(state.selected===o.id?'selected':'');
+    // Eraser patches never show the word "ERASE" / labels
+    if(o.kind==='eraser'){ o.label=''; }
     // V64: attach both the screen hatch and a real SVG hatch for printing.
     if(shouldConcreteHatch(o)){
       el.classList.add('concrete-hatched');
@@ -5514,6 +5674,9 @@ function buildWizardForMode(forcedMode){
   const ww=+$('wWalkW').value||0,wh=+$('wWalkH').value||0,pw=+$('wPadW').value||0,ph=+$('wPadH').value||0;
   const sw=+$('wServiceW').value||0,sh=+$('wServiceH').value||0;
   const demo=mode==='obstruction';
+  // Proposed Site Plan overlays ONLY new proposed garage + new apron on the survey.
+  // Existing house, walks, driveways, alleys, pads are already on the survey image.
+  const sitePlanOnlyNew=(mode==='siteplan');
 
   if(mode==='concrete'){
     $('concreteThickness').value=$('wThickness').value;
@@ -5602,16 +5765,16 @@ function buildWizardForMode(forcedMode){
   // and its W' x L' dimensions remain centered with the slab.
   const wizardGarageScale=layoutScale*1.15;
   const wizardGaragePxW=gw*wizardGarageScale, wizardGaragePxH=gh*wizardGarageScale;
-  const xGarage=d.x+(d.w-wizardGaragePxW)/2;
+  let xGarage=d.x+(d.w-wizardGaragePxW)/2;
   let yGarage=d.y+(d.h-wizardGaragePxH)/2;
 
-  // Full lot-width dimension across the top and full lot-length dimension down the right.
-  if(lotW){
+  // Lot width/length property lines — NOT on Proposed Site Plan (already on survey).
+  if(!sitePlanOnlyNew && lotW){
     const lotY=(mode==='obstruction')?d.y+74:d.y+42;
     const lotStartX=d.x+Math.max(10,(d.w-lotW*layoutScale)/2);
     wizardObj('dimension',lotW,2,lotW+"'",lotStartX,lotY,0,'lotWidth');state.objects.at(-1).pxf=layoutScale;
   }
-  if(lotL){
+  if(!sitePlanOnlyNew && lotL){
     const sideP=(d.h-140)/lotL;
     // Put the vertical lot-length line at the far-right lot boundary;
     // the title/value render in the white margin to the RIGHT of it.
@@ -5620,16 +5783,28 @@ function buildWizardForMode(forcedMode){
 
   // V101: initial Wizard placement respects apron/rear-setback relationship.
   // If rear setback <= apron depth, apron sits flush to alley/rear boundary.
-  if(access==='alley' && ah){
+  // Skip alley-based placement math on site plan — survey already shows alley.
+  if(!sitePlanOnlyNew && access==='alley' && ah){
     const alleyTop=currentTemplate().h-(alleyDepthFt*layoutScale);
     const rearBoundaryY=alleyTop;
     const effectiveRear=(rr>ah)?rr:ah;
     yGarage=rearBoundaryY-effectiveRear*wizardGarageScale-wizardGaragePxH;
   }
 
-  const garageLabel=demo?`DEMOLISH EXISTING GARAGE / SLAB\n${gw}' x ${gh}'`:`NEW GARAGE SLAB\n${gw}' x ${gh}'`;
-  wizardObj('garage',gw,gh,garageLabel,xGarage,yGarage,0,'garage');
-  state.objects.at(-1).pxf=wizardGarageScale;
+  // Site plan: much smaller garage footprint so it fits survey scale cleanly
+  const siteGarageScale=sitePlanOnlyNew ? Math.max(4, layoutScale * 0.42) : wizardGarageScale;
+  const siteGaragePxW=gw*siteGarageScale, siteGaragePxH=gh*siteGarageScale;
+  if(sitePlanOnlyNew){
+    // Recompute position at smaller scale, toward rear of sheet
+    xGarage=d.x+(d.w-siteGaragePxW)/2;
+    yGarage=d.y+Math.max(80, d.h*0.55 - siteGaragePxH/2);
+  }
+
+  const garageLabel=demo
+    ? `DEMOLISH EXISTING GARAGE / SLAB\n${gw}' x ${gh}'`
+    : (sitePlanOnlyNew ? `PROPOSED GARAGE\n${gw}' x ${gh}'` : `NEW GARAGE SLAB\n${gw}' x ${gh}'`);
+  wizardObj('garage',gw,gh,garageLabel,xGarage,yGarage,0,sitePlanOnlyNew?'proposedGarage':'garage');
+  state.objects.at(-1).pxf=sitePlanOnlyNew?siteGarageScale:wizardGarageScale;
 
   if(mode==='concrete'){
     if($('wServiceDoor')?.value!=='no'){
@@ -5652,17 +5827,21 @@ function buildWizardForMode(forcedMode){
   if(aw&&ah){
     // Wizard rule: apron must ALWAYS be the exact same width as the garage slab,
     // both numerically and visually. Use the garage's x-position and pixel scale.
+    const useScale=sitePlanOnlyNew?siteGarageScale:wizardGarageScale;
     const apronDrawW=gw;
-    const apronLabel=demo?`DEMOLISH EXISTING APRON\n${gw}' x ${ah}'`:`NEW CONCRETE APRON\n${gw}' x ${ah}'`;
+    const apronLabel=demo
+      ? `DEMOLISH EXISTING APRON\n${gw}' x ${ah}'`
+      : (sitePlanOnlyNew ? `PROPOSED APRON\n${gw}' x ${ah}'` : `NEW CONCRETE APRON\n${gw}' x ${ah}'`);
     const apronX=xGarage;
-    const apronY=yGarage+wizardGaragePxH;
+    const apronY=yGarage+(sitePlanOnlyNew?siteGaragePxH:wizardGaragePxH);
     wizardObj('apron',apronDrawW,ah,apronLabel,apronX,apronY,0,'apron');
-    state.objects.at(-1).pxf=wizardGarageScale;
+    state.objects.at(-1).pxf=useScale;
     state.objects.at(-1).fullDrawingWidth=false;
-    syncVisualSetbacksToGarage();
+    if(!sitePlanOnlyNew) syncVisualSetbacksToGarage();
   }
 
-  if(access==='alley'){
+  // Site plan: no alley/driveway/walk/pad overlays — survey already has existing features.
+  if(!sitePlanOnlyNew && access==='alley'){
     const ap=$('wAlleyPos').value;
     if(ap==='bottom'){
       // V101: alley spans the full drawing rectangle, from its left boundary
@@ -5684,13 +5863,13 @@ function buildWizardForMode(forcedMode){
     }else{
       wizardObj('custom',alleyDepthFt,(d.h-24)/layoutScale,'ALLEY',d.x+d.w-alleyDepthFt*layoutScale-8,d.y+12,90);state.objects.at(-1).pxf=layoutScale;
     }
-  } else if(access==='driveway'){
+  } else if(!sitePlanOnlyNew && access==='driveway'){
     const side=$('wDriveSide').value;
     wizardObj('driveway',10,35,'EXISTING DRIVEWAY',side==='left'?d.x+12:d.x+d.w-10*layoutScale-12,d.y+d.h*.55,0);
     state.objects.at(-1).pxf=layoutScale;
   }
 
-  if(ww&&wh){
+  if(!sitePlanOnlyNew && ww&&wh){
     const hxGuess=d.x+Math.max(24,(d.w-(+$('wHouseW').value||0)*layoutScale)/2);
     const hyGuess=d.y+95;
     const xWalk=Math.max(d.x+8,Math.min(xGarage-ww*layoutScale-8,hxGuess-ww*layoutScale-8));
@@ -5701,35 +5880,42 @@ function buildWizardForMode(forcedMode){
     state.objects.at(-1).visualWpx=Math.max(38,swVisW*layoutScale);
     state.objects.at(-1).visualHpx=Math.max(520,swVisH*layoutScale,swVisW*layoutScale*14);
   }
-  if(pw&&ph){wizardObj('pad',pw,ph,demo?`DEMOLISH PAD\n${pw}' x ${ph}'`:`NEW CONCRETE PAD\n${pw}' x ${ph}'`,d.x+d.w-pw*layoutScale-18,d.y+200,0);state.objects.at(-1).pxf=layoutScale}
-  if(sw&&sh){
+  if(!sitePlanOnlyNew && pw&&ph){wizardObj('pad',pw,ph,demo?`DEMOLISH PAD\n${pw}' x ${ph}'`:`NEW CONCRETE PAD\n${pw}' x ${ph}'`,d.x+d.w-pw*layoutScale-18,d.y+200,0);state.objects.at(-1).pxf=layoutScale}
+  if(!sitePlanOnlyNew && sw&&sh){
     wizardObj('pad',sw,sh,`SERVICE DOOR PAD\n${sw}' x ${sh}'`,xGarage+garagePxW,yGarage+garagePxH*.35,0,'servicePad');
     state.objects.at(-1).pxf=layoutScale;
     placeServicePadAtDoor();
   }
 
   // Side setbacks: compact labels just OUTSIDE the garage walls (never inside the slab).
+  // Site plan uses smaller scale + simple "3'" markers for survey review.
+  const setbackPxH=sitePlanOnlyNew?siteGaragePxH:garagePxH;
+  const setbackPxW=sitePlanOnlyNew?siteGaragePxW:garagePxW;
+  const setbackScale=sitePlanOnlyNew?siteGarageScale:layoutScale;
   if(ls){
-    const labelW=58, gap=10;
+    const labelW=sitePlanOnlyNew?36:58, gap=sitePlanOnlyNew?6:10;
     const leftX = xGarage - labelW - gap;
-    wizardObj('dimension',Math.max(ls,.5),2,"-"+ls+"'-",leftX,yGarage+garagePxH*.5-14,0,'leftSetback');
-    state.objects.at(-1).pxf=layoutScale;
+    wizardObj('dimension',Math.max(ls,.5),2,(sitePlanOnlyNew?ls+"'":("-"+ls+"'-")),leftX,yGarage+setbackPxH*.5-14,0,'leftSetback');
+    state.objects.at(-1).pxf=setbackScale;
   }
   if(rsd){
-    const gap=10;
-    const rightEdge = xGarage+garagePxW+(sidePatioOut&&patLocForScale==='right'?sidePatioOut*layoutScale:0);
-    wizardObj('dimension',Math.max(rsd,.5),2,"-"+rsd+"'-",rightEdge+gap,yGarage+garagePxH*.5-14,0,'rightSetback');
-    state.objects.at(-1).pxf=layoutScale;
+    const gap=sitePlanOnlyNew?6:10;
+    const rightEdge = xGarage+setbackPxW+(sidePatioOut&&patLocForScale==='right'?sidePatioOut*setbackScale:0);
+    wizardObj('dimension',Math.max(rsd,.5),2,(sitePlanOnlyNew?rsd+"'":("-"+rsd+"'-")),rightEdge+gap,yGarage+setbackPxH*.5-14,0,'rightSetback');
+    state.objects.at(-1).pxf=setbackScale;
   }
-  if(rr && access!=='alley'){
+  if(rr && (sitePlanOnlyNew || access!=='alley')){
     const apronDepth=ah||0;
     const gap=Math.max(0,rr-apronDepth);
-    const apronRight=xGarage+(aw?aw*layoutScale:garagePxW);
+    const apronRight=xGarage+(aw?aw*setbackScale:setbackPxW);
     const rx=Math.min(d.x+d.w-42,apronRight+8);
-    wizardObj('dimension',rr,2,'',rx,yGarage+garagePxH,90,'rearSetback');state.objects.at(-1).pxf=layoutScale;
-    if(gap>0){
-      wizardObj('dimension',gap,2,gap+"'",rx,yGarage+garagePxH+apronDepth*layoutScale,90,'rearGap');
-      state.objects.at(-1).pxf=layoutScale;
+    // Site plan: always show rear setback number (survey-style marker)
+    if(sitePlanOnlyNew || access!=='alley'){
+      wizardObj('dimension',rr,2,rr+"'",rx,yGarage+setbackPxH,90,'rearSetback');state.objects.at(-1).pxf=setbackScale;
+    }
+    if(!sitePlanOnlyNew && gap>0){
+      wizardObj('dimension',gap,2,gap+"'",rx,yGarage+setbackPxH+apronDepth*setbackScale,90,'rearGap');
+      state.objects.at(-1).pxf=setbackScale;
     }
   }
 
@@ -5749,8 +5935,12 @@ function buildWizardForMode(forcedMode){
     if(rearR){wizardObj('dimension',rearR,2,rearR+"'",xGarage+garagePxW-rearR*layoutScale,rearY,0,'rearRight');state.objects.at(-1).pxf=layoutScale}
   }
 
-  // House / Existing Home: start a bit smaller visually and sit near the center-top
-  // of the drawing sheet, just under the property-line (lot width) dimension.
+  // Proposed Site Plan: survey already shows existing house / walks / lots.
+  // Wizard must ONLY overlay NEW proposed garage + NEW apron (+ setbacks already placed above).
+  const sitePlanOnlyNew = (mode==='siteplan');
+
+  // House / Existing Home — NEVER on Proposed Site Plan (already on the survey).
+  if(!sitePlanOnlyNew){
   const enteredHW=+$('wHouseW').value||0,enteredHH=+$('wHouseH').value||0,hgap=+$('wHouseGap').value||0;
   // If user did NOT enter house dimensions: still show a house silhouette labeled
   // "Existing House" / "Home" with NO fake measurements on the label.
@@ -5782,10 +5972,11 @@ function buildWizardForMode(forcedMode){
       state.objects.at(-1).pxf = gapPx / Math.max(0.5, hgap);
     }
   }
+  }
 
 
   const [exww,exwh]=parseDims($('wExistingWalkCombo').value);
-  if(exww&&exwh && !(mode==='concrete' && $('wShowExistingWalk')?.value==='no')){
+  if(!sitePlanOnlyNew && exww&&exwh && !(mode==='concrete' && $('wShowExistingWalk')?.value==='no')){
     const exVisW=Math.min(exww,exwh),exVisH=Math.max(exww,exwh);
     wizardObj('sidewalk',exww,exwh,($('wSidewalkDemo')?.value==='no'?`EXISTING SIDEWALK\nSTAYS / DO NOT TOUCH\n${exww}' x ${exwh}'`:`EXISTING SIDEWALK\nDEMOLISH\n${exww}' x ${exwh}'`),d.x+28,d.y+135,0,'existingSidewalk');
     state.objects.at(-1).pxf=layoutScale;
@@ -5824,7 +6015,7 @@ function buildWizardForMode(forcedMode){
 
 
     const [ePadW,ePadH]=parseDims($('wExistingPadCombo')?.value||'');
-    if(ePadW&&ePadH){
+    if(!sitePlanOnlyNew && ePadW&&ePadH){
       const lbl=$('wPadDemo')?.value==='no'
         ? `EXISTING CONCRETE PAD — STAYS / DO NOT TOUCH\n${ePadW}' x ${ePadH}'`
         : `DEMOLISH EXISTING CONCRETE PAD\n${ePadW}' x ${ePadH}'`;

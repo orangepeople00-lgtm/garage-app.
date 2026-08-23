@@ -3866,10 +3866,25 @@ function renderEstimateImportList(){
   }).join('');
   // Map filtered indices back to cache
   list.querySelectorAll('[data-est-idx]').forEach(btn=>{
-    btn.addEventListener('click',()=>{
+    btn.addEventListener('click',async ()=>{
       const idx=Number(btn.getAttribute('data-est-idx'));
-      const rec=rows[idx];
-      if(rec) fillWizardFromEstimate(rec);
+      const light=rows[idx];
+      if(!light) return;
+      const status=$('estimateImportStatus');
+      try{
+        if(status) status.textContent='Loading full estimate for '+(light.customer||'customer')+'…';
+        let rec=light;
+        if(light.id){
+          const full=await fetchEstimateDetailForDrawing(light.id);
+          if(full) rec=full;
+        }
+        fillWizardFromEstimate(rec);
+      }catch(e){
+        console.warn(e);
+        if(status) status.textContent='Could not open that estimate: '+String(e?.message||e);
+        // Still try with light data (garage size + customer at least)
+        fillWizardFromEstimate(light);
+      }
     });
   });
 }
@@ -3884,7 +3899,6 @@ async function loadMyEstimatesForDrawing(){
     }
     if(status) status.textContent='Loading your estimates…';
 
-    // Prefer existing dashboard session on the same site
     const sess=await client.auth.getSession();
     let user=sess?.data?.session?.user||null;
     if(!user){
@@ -3904,14 +3918,14 @@ async function loadMyEstimatesForDrawing(){
       username=String(staff?.username||'').toLowerCase();
     }catch(e){ console.warn('staff_profiles', e); }
 
-    const isManager=/^(sam|randy|ramsey|admin|manager)/.test(username) || /sam|randy|ramsey/.test(username);
+    const isManager=/sam|randy|ramsey|admin|manager/.test(username);
 
-    // Same style as dashboard: load history, then filter in the app
+    // LIGHT list only — do NOT pull estimate_snapshot (contains huge sheet HTML and times out)
     const {data,error}=await client
       .from('estimate_history')
-      .select('id,customer,address,city,garage_size,roof_type,wall_height,siding,estimate_price,estimate_snapshot,salesman_username,created_by,created_at')
+      .select('id,customer,address,city,garage_size,roof_type,wall_height,siding,estimate_price,salesman_username,created_by,created_at')
       .order('created_at',{ascending:false})
-      .limit(200);
+      .limit(60);
     if(error) throw error;
 
     let rows=Array.isArray(data)?data:[];
@@ -3932,11 +3946,49 @@ async function loadMyEstimatesForDrawing(){
   }catch(e){
     console.warn('loadMyEstimatesForDrawing',e);
     const msg=String(e?.message||e||'unknown error');
-    if(status) status.textContent='Could not load estimates: '+msg+'. Sign in on the Dashboard (same website), then tap Refresh.';
+    if(status) status.textContent='Could not load estimates: '+msg+'. Try Refresh again, or open Dashboard first.';
     if(list) list.innerHTML='';
   }
 }
-
+async function fetchEstimateDetailForDrawing(id){
+  const client=getDrawingSupabase();
+  if(!client||!id) return null;
+  // Light load: only calculator_state from snapshot (NOT the huge sheet_html)
+  // PostgREST json path avoids pulling the full estimate sheet for load purposes.
+  let data=null, error=null;
+  try{
+    const res=await client
+      .from('estimate_history')
+      .select('id,customer,address,city,garage_size,roof_type,wall_height,siding,estimate_price,salesman_username,created_by,created_at,estimate_snapshot->calculator_state')
+      .eq('id',id)
+      .maybeSingle();
+    data=res.data; error=res.error;
+  }catch(e){ error=e; }
+  // Fallback if json-path select is not supported on this project
+  if(error || !data){
+    const res2=await client
+      .from('estimate_history')
+      .select('id,customer,address,city,garage_size,roof_type,wall_height,siding,estimate_price,salesman_username,created_by,created_at,estimate_snapshot')
+      .eq('id',id)
+      .maybeSingle();
+    if(res2.error) throw res2.error;
+    data=res2.data||null;
+    // Drop heavy sheet HTML immediately so we only keep calculator info in memory
+    if(data && data.estimate_snapshot && typeof data.estimate_snapshot==='object'){
+      const cs=data.estimate_snapshot.calculator_state||null;
+      data.estimate_snapshot={ calculator_state: cs };
+    }
+  } else {
+    // Normalize json-path result into estimate_snapshot.calculator_state shape
+    const cs=data.calculator_state || data['estimate_snapshot->calculator_state'] || null;
+    if(cs && !data.estimate_snapshot){
+      data.estimate_snapshot={ calculator_state: cs };
+    } else if(cs && data.estimate_snapshot && !data.estimate_snapshot.calculator_state){
+      data.estimate_snapshot={ calculator_state: cs };
+    }
+  }
+  return data||null;
+}
 
 const SHARED_IDS=['customerName','jobAddress','city','homePhone','workPhone','salesman','salesPhone'];
 function saveSharedInfo(){

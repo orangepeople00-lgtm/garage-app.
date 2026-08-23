@@ -1592,43 +1592,22 @@ input, select, textarea, button { box-sizing:border-box; }
                         <div class="text-xs font-bold text-violet-300 mb-2 flex items-center gap-2">
                             <i class="fa-solid fa-wand-magic-sparkles"></i> GARAGE PHOTO ON ESTIMATE SHEET
                         </div>
-                        <select id="garagePhotoMode" onchange="saveGaragePhotoMode()" class="calc-input w-full bg-zinc-900 border border-zinc-700 text-white rounded-xl px-3 py-2.5 text-sm mb-2">
-                            <option value="hybrid">Auto: OpenAI → Free AI → library (recommended)</option>
-                            <option value="openai">OpenAI only</option>
-                            <option value="ai">Free AI only (no key — works on phone)</option>
-                            <option value="library">Photo library only (classic)</option>
-                        </select>
-                        <div id="openaiKeyLockedPanel" class="hidden mb-2 rounded-xl border border-emerald-700 bg-emerald-950/40 px-3 py-3">
-                            <div class="text-xs font-bold text-emerald-400">✓ OpenAI key locked on this device</div>
-                            <div class="text-[10px] text-zinc-400 mt-1">Hidden permanently on this phone/computer. Other salesmen on other devices do not get it.</div>
-                            <button type="button" onclick="resetOpenAIKeyEntry()" class="mt-2 text-[10px] px-3 py-1.5 rounded-lg bg-zinc-800 border border-zinc-600 text-zinc-300 font-bold">Replace key</button>
+                        <div class="text-[10px] text-zinc-500 leading-relaxed mb-3">
+                            Uses company OpenAI automatically. If offline / AI fails, uses the saved photo library.
                         </div>
-                        <div id="openaiKeyEntryPanel" class="mb-2">
-                            <label class="text-[10px] text-zinc-400 block mb-1" for="openaiApiKey">Paste OpenAI API key once (then it locks &amp; stays hidden)</label>
-                            <input type="text" id="openaiApiKey" name="openaiApiKey" placeholder="Paste sk- key here" inputmode="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
-                                   class="w-full bg-zinc-900 border-2 border-violet-500 text-white rounded-xl px-3 py-3 text-sm relative z-50"
-                                   style="pointer-events:auto !important; user-select:text !important; -webkit-user-select:text !important;"
-                                   onclick="event.stopPropagation(); this.focus();"
-                                   onfocus="event.stopPropagation();">
-                            <button type="button" id="saveOpenAIKeyBtn" onclick="lockOpenAIKey()" class="mt-2 w-full px-3 py-2.5 rounded-xl bg-violet-700 hover:bg-violet-600 text-xs font-bold text-white">Save &amp; Lock Key (one time)</button>
-                        </div>
-                        <div class="text-[10px] text-zinc-500 leading-relaxed">
-                            <b class="text-zinc-300">Recommended:</b> Auto mode. Uses the <b>company OpenAI</b> (set up once by manager in Supabase — salesmen never see the key). If company AI is offline, falls back to Free AI. Optional personal key below is only a backup.
-                        </div>
-                        <div class="mt-3">
-                            <label class="text-[10px] font-bold tracking-wider text-violet-300 block mb-1" for="garageAccessType">GARAGE ACCESS (affects AI photo)</label>
+                        <div class="mb-3">
+                            <label class="text-[10px] font-bold tracking-wider text-violet-300 block mb-1" for="garageAccessType">GARAGE ACCESS</label>
                             <select id="garageAccessType" onchange="this.dataset.userTouched='1'; saveGarageAccessType()" class="calc-input w-full bg-zinc-900 border border-violet-700/60 text-white rounded-xl px-3 py-2.5 text-sm mb-1">
                                 <option value="driveway" selected>Off a driveway (front access)</option>
                                 <option value="alley">Off an alley (rear access)</option>
                             </select>
-                            <div class="text-[10px] text-zinc-500 mb-2">Driveway = front approach with clean apron. Alley = rear alley approach. Changes how the AI photo is composed.</div>
                         </div>
-                        <div class="mt-2">
-                            <label class="text-[10px] font-bold tracking-wider text-violet-300 block mb-1" for="aiPhotoExtraInstructions">EXTRA INSTRUCTIONS FOR AI PHOTO (optional)</label>
-                            <textarea id="aiPhotoExtraInstructions" rows="3" placeholder="Example: Make siding charcoal gray with black trim. Show more of the side elevation. Add flower beds. Keep photorealistic."
-                                oninput="saveAIPhotoExtraInstructions()"
+                        <div>
+                            <label class="text-[10px] font-bold tracking-wider text-violet-300 block mb-1" for="aiPhotoExtraInstructions">TELL THE PHOTO WHAT YOU WANT</label>
+                            <textarea id="aiPhotoExtraInstructions" rows="3" placeholder="Example: roofed patio in back red siding vinyl"
+                                oninput="saveAIPhotoExtraInstructions(); applyPhotoChatToEstimate()"
                                 class="w-full bg-zinc-900 border border-violet-700/60 text-white rounded-xl px-3 py-2.5 text-sm resize-y min-h-[72px]"></textarea>
-                            <div class="text-[10px] text-zinc-500 mt-1">Added to the AI prompt every time you create an estimate sheet. Saved on this device. Every salesman can type their own tweaks here.</div>
+                            <div class="text-[10px] text-zinc-500 mt-1">Type plain words. Example: “roofed patio in back red siding vinyl” — AI will show that and update the estimate when it can.</div>
                         </div>
                         <div id="aiPhotoStatus" class="text-[10px] text-emerald-400 mt-2 hidden"></div>
                     </div>
@@ -4035,7 +4014,7 @@ input, select, textarea, button { box-sizing:border-box; }
 
         function buildGarageAIPrompt(){
             const dim = (typeof getGarageDimensions==='function') ? getGarageDimensions() : {width:20, depth:20};
-            const w = dim.width||20, d = dim.depth||20;
+            const w = Number(dim.width)||20, d = Number(dim.depth)||20;
             const roof = document.getElementById('roofType')?.value||'gable';
             const eave = document.getElementById('eaveDir')?.value||'';
             const sidingType = document.getElementById('sidingType')?.value||'vinyl';
@@ -4043,6 +4022,7 @@ input, select, textarea, button { box-sizing:border-box; }
             const colorTxt = colorEl ? (colorEl.options[colorEl.selectedIndex]?.text||colorEl.value||'gray') : 'gray';
             const wall = document.getElementById('wallHeight')?.value||'8';
             const doorH = document.getElementById('overheadDoorHeight')?.value||'7';
+            const doorW = Number(document.getElementById('overheadDoorWidth')?.value||16) || 16;
             const doorStyle = document.getElementById('overheadDoorStyle')?.value||document.getElementById('doorStyle')?.value||'raised';
             const service = document.getElementById('serviceDoorLocation')?.value||'right';
             const serviceFrontSide = document.getElementById('serviceDoorFrontSide')?.value||'right';
@@ -4052,8 +4032,22 @@ input, select, textarea, button { box-sizing:border-box; }
             const access = document.getElementById('garageAccessType')?.value || localStorage.getItem('agb_garage_access_type') || 'driveway';
             const roofWords = roof==='hip' ? 'hip roof' : (eave==='sides' ? 'reverse gable roof' : 'gable roof');
             const sidingWords = sidingType==='hardie' ? 'Hardie fiber cement siding' : 'vinyl siding';
-            const doorWords = /window/i.test(String(doorStyle)) ? 'raised-panel overhead garage door with windows across the top' : 'solid raised-panel overhead garage door';
-            // Service door + coach light rule (company-wide)
+            const doorStyleWords = /window/i.test(String(doorStyle)) ? 'raised-panel overhead garage door with a row of windows across the top' : 'solid raised-panel overhead garage door';
+
+            // Scale: wide buildings must not look like tiny sheds
+            let carWords = 'single-car garage';
+            if (w >= 28) carWords = 'large three-car garage, very wide facade';
+            else if (w > 18) carWords = 'full-size two-car garage, wide facade';
+            else if (w >= 16) carWords = 'generous single-car or compact two-car garage';
+
+            const scaleWords = [
+                'IMPORTANT SCALE: this is a '+w+'-foot-wide by '+d+'-foot-deep '+carWords,
+                'the building must look large and substantial, not a tiny shed',
+                'the overhead door is '+doorW+' feet wide by '+doorH+' feet tall and must dominate most of the front wall width',
+                'camera pulled back so the full wide garage fits in frame with correct real-world proportions'
+            ].join(', ');
+
+            // Service door + coach light (company-wide)
             let serviceWords = '';
             let coachLightWords = '';
             if(service==='no'||service==='none'||service==='hidden'){
@@ -4073,28 +4067,101 @@ input, select, textarea, button { box-sizing:border-box; }
             const gutterWords = gutters ? 'with gutters and downspouts' : 'without gutters';
             const stoneWords = stone ? 'with a stone accent wainscot along the base' : '';
             const winWords = winQty>0 ? ('with '+winQty+' wall window'+(winQty>1?'s':'')) : 'no wall windows';
-            // Alley vs driveway composition
             const accessWords = access==='alley'
                 ? 'garage sits at the rear of the lot accessed from a residential alley, view from the alley side, clean concrete apron facing the alley'
-                : 'garage accessed from a residential driveway at the front, clean scored concrete apron and driveway approach in the foreground';
+                : 'garage accessed from a residential driveway at the front, wide clean scored concrete apron and driveway approach in the foreground matching the garage width';
+
+            // Roofed patio from calculator (or implied by chat)
+            const roofPatioOn = !!document.getElementById('roofPatioEnabled')?.checked;
+            const roofPatioSide = !!document.getElementById('roofPatioSide')?.checked;
+            let roofPatioDepth = 0;
+            if (roofPatioOn && typeof getRoofPatioDepth === 'function') {
+                roofPatioDepth = getRoofPatioDepth() || 6;
+            } else if (roofPatioOn) {
+                roofPatioDepth = 6;
+            }
+            let patioWords = '';
+            if (roofPatioOn) {
+                const loc = roofPatioSide ? 'side' : 'rear';
+                patioWords = [
+                    'camera angle shows the '+loc+' of the garage featuring a roofed patio / covered patio attached to the '+loc,
+                    'roofed patio depth about '+roofPatioDepth+' feet with clean concrete slab underneath matching that depth',
+                    'roofed patio supported by exactly four vertical posts unless the user request says otherwise',
+                    'patio roof matches the garage roof style'
+                ].join(', ');
+            }
+
             const extra = (document.getElementById('aiPhotoExtraInstructions')?.value || localStorage.getItem('agb_ai_photo_extra') || '').trim();
-            // Permanent company-wide rules (every salesman gets these automatically)
-            const parts = [
+            const parts = [];
+            if (extra) {
+                parts.push('CRITICAL USER REQUEST (must follow exactly, plain language is OK): '+extra);
+            }
+            parts.push(
                 'Hyper-realistic professional photograph of a brand-new detached residential garage in a suburban Midwest setting',
-                w+' foot wide by '+d+' foot deep, '+wall+' foot tall walls',
-                roofWords,
-                sidingWords+' in '+colorTxt+' color',
-                doorWords+', about '+doorH+' feet tall, centered on the main elevation',
+                scaleWords,
+                wall+'-foot tall walls, '+roofWords,
+                sidingWords+' in '+colorTxt+' color (use this siding color unless the critical user request specifies a different color)',
+                doorStyleWords+', '+doorW+' feet wide by '+doorH+' feet tall, centered, filling most of the front wall',
                 serviceWords,
                 coachLightWords,
                 winWords,
                 gutterWords,
                 stoneWords,
                 accessWords,
-                'brand-new clean garage exterior, pristine clean concrete apron with no stains or debris, neat landscaping, soft natural daylight, photorealistic architectural exterior photography, sharp detail, no text, no watermark, no people, no logo, no vehicles blocking the view'
-            ];
-            if(extra) parts.push(extra);
+                patioWords,
+                'brand-new clean garage exterior, pristine clean concrete apron with no stains or debris, neat landscaping, soft natural daylight, photorealistic architectural exterior photography, sharp detail, correct real-world proportions, no text, no watermark, no people, no logo, no vehicles blocking the view'
+            );
             return parts.filter(Boolean).join(', ');
+        }
+
+        // Plain-language photo chat → update calculator fields when possible
+        function applyPhotoChatToEstimate(){
+            const box=document.getElementById('aiPhotoExtraInstructions');
+            const raw=String(box?.value||'').trim();
+            if(!raw) return;
+            const q=raw.toLowerCase();
+            try{
+                if(/vinyl/.test(q)) { const e=document.getElementById('sidingType'); if(e) e.value='vinyl'; }
+                if(/hardie|cement\s*board/.test(q)) { const e=document.getElementById('sidingType'); if(e) e.value='hardie'; }
+
+                const colors=['white','gray','grey','black','charcoal','brown','tan','beige','almond','cream','blue','navy','green','sage','red','yellow','clay','pearl'];
+                const color=colors.find(c=>new RegExp('\\b'+c+'\\b').test(q));
+                if(color && typeof selectOptionByText==='function'){
+                    const sid=(document.getElementById('sidingType')||{}).value==='hardie'?'hardieColor':'vinylColor';
+                    selectOptionByText(sid, color==='grey'?'gray':color);
+                }
+
+                if(/roofed?\s*patio|covered\s*patio|roof\s*patio/.test(q)){
+                    const en=document.getElementById('roofPatioEnabled');
+                    if(en){ en.checked=true; if(typeof toggleRoofPatio==='function') toggleRoofPatio(); }
+                    if(/side/.test(q)){
+                        const side=document.getElementById('roofPatioSide'); if(side) side.checked=true;
+                    } else if(/back|rear/.test(q)){
+                        const side=document.getElementById('roofPatioSide'); if(side) side.checked=false;
+                    }
+                    const depthMatch=q.match(/(\d+(?:\.\d+)?)\s*(?:ft|feet|foot)?/);
+                    const depthSel=document.getElementById('roofPatioDepth');
+                    if(depthSel){
+                        if(depthMatch){
+                            const n=parseFloat(depthMatch[1]);
+                            const opt=[...depthSel.options].find(o=>o.value!=='manual' && Math.abs(parseFloat(o.value)-n)<0.01);
+                            if(opt) depthSel.value=opt.value;
+                            else {
+                                depthSel.value='manual';
+                                const man=document.getElementById('manualRoofPatioDepth');
+                                if(man) man.value=String(n);
+                            }
+                        } else if(!depthSel.value || depthSel.value==='0'){
+                            // default 6 ft when chat asks for patio but size not on sheet
+                            const six=[...depthSel.options].find(o=>o.value==='6');
+                            if(six) depthSel.value='6';
+                            else { depthSel.value='manual'; const man=document.getElementById('manualRoofPatioDepth'); if(man) man.value='6'; }
+                        }
+                        if(typeof toggleManualRoofPatio==='function') toggleManualRoofPatio();
+                    }
+                }
+                if(typeof calculateEstimate==='function') calculateEstimate();
+            }catch(e){ console.warn('applyPhotoChatToEstimate', e); }
         }
 
         function garageAICacheKey(prompt){
@@ -4236,8 +4303,7 @@ input, select, textarea, button { box-sizing:border-box; }
                     setTimeout(()=>resolve(false), 15000);
                 });
             };
-            if(mode==='library') return libraryFallback();
-
+            // Always: company OpenAI first → library if offline / AI fails
             const tryOpenAI=async ()=>{
                 if(status){ status.classList.remove('hidden'); status.textContent='OpenAI: creating garage photo…'; }
                 const ai=await generateAIGaragePhotoUrl(true);
@@ -4245,46 +4311,12 @@ input, select, textarea, button { box-sizing:border-box; }
                 if(status) status.textContent='OpenAI garage photo ready.';
                 return {primary:ai.url, fallbacks:libraryFallback().fallbacks, source:'openai', prompt:ai.prompt};
             };
-            const tryFree=async ()=>{
-                if(status){ status.classList.remove('hidden'); status.textContent='Free AI: creating garage photo…'; }
-                const ai=await generateAIGaragePhotoUrl(false);
-                await warm(ai.url);
-                if(status) status.textContent='Free AI garage photo ready.';
-                return {primary:ai.url, fallbacks:libraryFallback().fallbacks, source:'free', prompt:ai.prompt};
-            };
-
-            if(mode==='openai'){
-                try{ return await tryOpenAI(); }
-                catch(err){
-                    console.warn('OpenAI failed, trying Free AI', err);
-                    const msg=String(err && err.message ? err.message : err);
-                    if(status){ status.classList.remove('hidden'); status.textContent='OpenAI blocked — switching to Free AI…'; }
-                    try{
-                        const free=await tryFree();
-                        if(status) status.textContent='Free AI garage photo ready (OpenAI unavailable here).';
-                        return free;
-                    }catch(err2){
-                        if(status){ status.classList.remove('hidden'); status.textContent='AI unavailable — library. '+msg; }
-                        return libraryFallback();
-                    }
-                }
-            }
-            if(mode==='ai'){
-                try{ return await tryFree(); }
-                catch(err){
-                    if(status){ status.classList.remove('hidden'); status.textContent='Free AI unavailable — using library.'; }
-                    return libraryFallback();
-                }
-            }
-            // hybrid: OpenAI → free → library
             try{ return await tryOpenAI(); }
-            catch(e1){
-                console.warn('OpenAI failed, trying free AI', e1);
-                try{ return await tryFree(); }
-                catch(e2){
-                    if(status){ status.classList.remove('hidden'); status.textContent='AI unavailable — using library photo.'; }
-                    return libraryFallback();
-                }
+            catch(err){
+                console.warn('OpenAI failed, using library photo', err);
+                const msg=String(err && err.message ? err.message : err);
+                if(status){ status.classList.remove('hidden'); status.textContent='AI offline — using library photo. '+msg; }
+                return libraryFallback();
             }
         }
 

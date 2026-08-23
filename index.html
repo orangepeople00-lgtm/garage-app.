@@ -114,7 +114,7 @@ body.estimator-mode .estimator-exit{display:block}
 @media(max-width:900px){.personal-calendar-layout{grid-template-columns:1fr}.personal-task-sidebar{position:static;max-height:none}}
 </style>
 </head>
-<body><div style="position:fixed;bottom:8px;right:8px;z-index:999999;background:#dc2626;color:#fff;padding:6px 10px;border-radius:8px;font:900 11px Arial">ESTIMATOR UPDATE V2</div>
+<body>
 <header>
  <div class="brand"><div class="logo">A</div><div><h1>Absolute Garage Builders</h1><p>Production & Job Status</p></div></div>
  <div class="actions">
@@ -349,6 +349,8 @@ function jobAgeLabel(j){const d=jobAgeDays(j);return d===null?'—':`${d} day${d
 
 const manager=()=>profile&&['owner','business_manager'].includes(profile.role);
 const privateAccessManager=()=>profile&&['sam','ramsey'].includes(profile.username);
+// Ramsey + Sam can see everyone's jobs on the dashboard (same visibility as management for job list)
+const canViewAllJobs=()=>manager()||privateAccessManager();
 
 function roleName(){return profile?.role==='owner'?'Owner':profile?.role==='business_manager'?'Business Manager':'Salesman'}
 function status(j){
@@ -446,9 +448,9 @@ async function boot(){
  const {data:{user}}=await sb.auth.getUser(); if(!user){$('loginBg').classList.add('show');return}
  const {data:p,error}=await sb.from('staff_profiles').select('*').eq('id',user.id).single(); if(error||!p){await sb.auth.signOut();alert('This account is not configured for the Garage App.');return}
  profile=p;$('loginBg').classList.remove('show');$('appMain').classList.remove('hidden');$('userBadge').classList.remove('hidden');$('logoutBtn').classList.remove('hidden');$('userBadge').textContent=`${p.display_name} • ${roleName()}`;
- $('addBtn').classList.toggle('hidden',!manager());$('requestBtn').classList.toggle('hidden',manager());$('salesFilterWrap').classList.toggle('hidden',!manager());$('trashTab').classList.toggle('hidden',!manager());
+ $('addBtn').classList.toggle('hidden',!manager());$('requestBtn').classList.toggle('hidden',manager());$('salesFilterWrap').classList.toggle('hidden',!canViewAllJobs());$('trashTab').classList.toggle('hidden',!manager());
  if($('allPersonalCalendarsTab'))$('allPersonalCalendarsTab').classList.toggle('hidden',!privateAccessManager());$('estimateHistorySalesFilterWrap')?.classList.toggle('hidden',!privateAccessManager());
- $('subtitle').textContent=manager()?'All company jobs • live shared data':'Your sold jobs • live production status';
+ $('subtitle').textContent=canViewAllJobs()?'All company jobs • live shared data':'Your sold jobs • live production status';
  await refresh();
 }
 async function refresh(){

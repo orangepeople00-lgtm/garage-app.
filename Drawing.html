@@ -2157,6 +2157,14 @@ button.danger{color:#b42318}
 </select>
 </div>
 <div class="mode-note" id="modeNote">Shows where the new concrete will be poured.</div><div class="toolbar-grid" style="margin-top:8px"><button class="primary" id="wizardBtn">Start Drawing Wizard</button><button id="clearDrawingBtn">Clear Drawing</button></div>
+<div class="section" style="margin-top:10px" id="estimateImportSection">
+  <h3>Load from My Estimates</h3>
+  <div class="mode-note" style="margin-bottom:8px">Your estimate history. Tap a customer to fill the Drawing Wizard with garage size, apron, concrete, sidewalks, and customer info.</div>
+  <input id="estimateImportSearch" placeholder="Search customer or address" style="margin-bottom:8px" oninput="renderEstimateImportList()"/>
+  <div id="estimateImportStatus" class="mode-note">Loading…</div>
+  <div id="estimateImportList" style="max-height:240px;overflow:auto;display:flex;flex-direction:column;gap:6px"></div>
+  <button type="button" id="estimateImportRefresh" style="margin-top:8px;width:100%">Refresh My Jobs</button>
+</div>
 </div><div class="drawing-tools section" data-section="drawing-tools">
 <h3>Drawing Tools</h3>
 <div class="toolbar-grid">
@@ -3677,14 +3685,22 @@ function syncDrawingSalesmanFromSelect(sourceId){
  applyDrawingSalesman(key,true);
  renderSheet();
 }
+let drawingSbClient=null;
+let myEstimateHistoryCache=[];
+function getDrawingSupabase(){
+  if(drawingSbClient) return drawingSbClient;
+  if(!window.supabase) return null;
+  drawingSbClient=window.supabase.createClient(
+    'https://iomcekniylxfptswcxoi.supabase.co',
+    'sb_publishable_G_ZAnQ_CoJjWsn8-HgduLw_IziPWEmn',
+    {auth:{persistSession:true,autoRefreshToken:true}}
+  );
+  return drawingSbClient;
+}
 async function defaultDrawingSalesmanFromSignedInUser(){
  try{
-   if(!window.supabase)return;
-   const client=window.supabase.createClient(
-     'https://iomcekniylxfptswcxoi.supabase.co',
-     'sb_publishable_G_ZAnQ_CoJjWsn8-HgduLw_IziPWEmn',
-     {auth:{persistSession:true,autoRefreshToken:true}}
-   );
+   const client=getDrawingSupabase();
+   if(!client)return;
    const {data:{user}}=await client.auth.getUser();
    if(!user)return;
    const {data:p}=await client.from('staff_profiles').select('username').eq('id',user.id).single();
@@ -3692,6 +3708,210 @@ async function defaultDrawingSalesmanFromSignedInUser(){
    if(DRAWING_SALESMEN[key])applyDrawingSalesman(key,true);
  }catch(e){console.warn('Could not load signed-in salesman default',e)}
 }
+function parseGarageSizeText(str){
+  const m=String(str||'').match(/([0-9.]+)\s*[x×]\s*([0-9.]+)/i);
+  if(!m) return null;
+  return {w:parseFloat(m[1])||0, h:parseFloat(m[2])||0};
+}
+function setWizardCombo(comboId,w,h){
+  if(!comboId||!(w>0)||!(h>0)) return;
+  if(typeof updateCombo==='function') updateCombo(comboId,w,h);
+  else {
+    const el=$(comboId); if(el) el.value=w+' x '+h;
+  }
+}
+function fillWizardFromEstimate(rec){
+  if(!rec) return;
+  const snap=rec.estimate_snapshot||{};
+  const st=snap.calculator_state||{};
+  const status=$('estimateImportStatus');
+
+  // Customer / job info
+  const cust=rec.customer||st.customerName||'';
+  const addr=rec.address||st.customerAddress||'';
+  const city=rec.city||st.city||'';
+  if($('customerName'))$('customerName').value=cust;
+  if($('jobAddress'))$('jobAddress').value=addr;
+  if($('city'))$('city').value=city;
+  if($('wCustomer'))$('wCustomer').value=cust;
+  if($('wAddress'))$('wAddress').value=addr;
+  if($('wCity'))$('wCity').value=city;
+  if($('homePhone')&&st.customerPhone1)$('homePhone').value=st.customerPhone1;
+  if($('workPhone')&&st.customerPhone2)$('workPhone').value=st.customerPhone2;
+  if(typeof saveSharedInfo==='function') saveSharedInfo();
+
+  // Salesman
+  const salesKey=String(rec.salesman_username||st.salesman||'').toLowerCase();
+  if(salesKey && DRAWING_SALESMEN[salesKey]) applyDrawingSalesman(salesKey,true);
+
+  // New garage size
+  let gw=0,gh=0;
+  if(st.width==='custom'){ gw=parseFloat(st.customWidth)||0; gh=parseFloat(st.customDepth)||0; }
+  else { gw=parseFloat(st.width)||0; gh=parseFloat(st.depth)||0; }
+  if(!(gw>0&&gh>0)){
+    const p=parseGarageSizeText(rec.garage_size);
+    if(p){ gw=p.w; gh=p.h; }
+  }
+  if(gw>0&&gh>0){
+    setWizardCombo('wGarageCombo',gw,gh);
+    if($('cSizeW'))$('cSizeW').value=String(gw);
+    if($('cSizeL'))$('cSizeL').value=String(gh);
+  }
+
+  // Apron depth
+  let apronD=0;
+  if(String(st.apronDepth)==='manual') apronD=parseFloat(st.apronManual)||0;
+  else apronD=parseFloat(st.apronDepth)||0;
+  if(apronD>0 && gw>0){
+    setWizardCombo('wApronCombo',gw,apronD);
+    if($('cApronW'))$('cApronW').value=String(gw);
+    if($('cApronL'))$('cApronL').value=String(apronD);
+  }
+
+  // Concrete thickness
+  if(st.concreteThickness && $('wThickness'))$('wThickness').value=String(st.concreteThickness);
+  if(st.concreteThickness && $('concreteThickness'))$('concreteThickness').value=String(st.concreteThickness);
+
+  // City / code
+  const cityLower=String(city||'').toLowerCase();
+  if($('wCode'))$('wCode').value=(cityLower==='chicago'||cityLower.includes('chicago'))?'chicago':'suburb';
+  if($('jobCode'))$('jobCode').value=$('wCode')?.value||'chicago';
+
+  // Existing / demo garage
+  if(st.demoExisting || st.demoSlabPreset && st.demoSlabPreset!=='none'){
+    let dw=0,dh=0;
+    const demoPreset=String(st.demoSlabPreset||'');
+    const demoMatch=demoPreset.match(/([0-9.]+)\s*[x×]\s*([0-9.]+)/i) || String(st.oldConcreteOverride||'').match(/([0-9.]+)\s*[x×]\s*([0-9.]+)/i);
+    if(demoMatch){ dw=parseFloat(demoMatch[1])||0; dh=parseFloat(demoMatch[2])||0; }
+    if(!(dw>0&&dh>0) && gw>0&&gh>0){ dw=gw; dh=gh; }
+    if(dw>0&&dh>0) setWizardCombo('wDemoGarageCombo',dw,dh);
+    let demoApron=0;
+    if(String(st.demoApronDepth)==='manual') demoApron=parseFloat(st.demoApronManual)||0;
+    else demoApron=parseFloat(st.demoApronDepth)||0;
+    if(demoApron>0 && dw>0) setWizardCombo('wDemoApronCombo',dw,demoApron);
+  }
+
+  // Extra concrete / sidewalks / pads from estimate extras
+  const patio1=String(st.extraPatio1Custom||st.extraPatio1Length||'').trim();
+  const patio2=String(st.extraPatio2Custom||st.extraPatio2Length||'').trim();
+  const type1=String(st.extraConcrete1Type||'').toLowerCase();
+  const type2=String(st.extraConcrete2Type||'').toLowerCase();
+  function applyExtra(type,dims){
+    if(!dims) return;
+    const p=parseGarageSizeText(dims.includes('x')||dims.includes('×')?dims: (parseFloat(dims)>0 && gw ? (gw+' x '+dims) : dims));
+    if(!p||!(p.w>0&&p.h>0)) return;
+    if(type.includes('sidewalk')||type.includes('walk')) setWizardCombo('wWalkCombo',p.w,p.h);
+    else if(type.includes('pad')||type.includes('drive')) setWizardCombo('wPadCombo',p.w,p.h);
+    else if(type.includes('patio')||type.includes('slab')) setWizardCombo('wPatioCombo',p.w,p.h);
+  }
+  applyExtra(type1, patio1 || (st.extraPatio1Length?String(st.extraPatio1Length):''));
+  applyExtra(type2, patio2 || (st.extraPatio2Length?String(st.extraPatio2Length):''));
+
+  // Service door
+  if(st.serviceDoorLocation && $('wServiceDoorLocation')){
+    $('wServiceDoorLocation').value=st.serviceDoorLocation;
+    if($('cServiceDoorLocation'))$('cServiceDoorLocation').value=st.serviceDoorLocation;
+  }
+  if($('wServiceDoor'))$('wServiceDoor').value='yes';
+
+  // Overhead door width
+  if(st.overheadDoorWidth && $('wDoor'))$('wDoor').value=String(st.overheadDoorWidth);
+
+  // Wall height for obstruction
+  if(st.wallHeight && $('wWallHeight'))$('wWallHeight').value=String(st.wallHeight);
+
+  // Roof type for demo
+  if(st.roofType && $('wRoof')){
+    const rt=String(st.roofType).toLowerCase();
+    if(['hip','gable','flat'].includes(rt))$('wRoof').value=rt;
+  }
+
+  // Notes
+  if(st.additionalEstimateNotes && $('wFormNotes'))$('wFormNotes').value=st.additionalEstimateNotes;
+  if(snap.additional_notes && $('wFormNotes') && !$('wFormNotes').value)$('wFormNotes').value=snap.additional_notes;
+
+  if(status) status.textContent='Loaded: '+(cust||'Customer')+' — open Wizard to review, then build the drawing.';
+  try{ if(typeof openWizard==='function') openWizard(); }catch(e){}
+  try{
+    ['wGarageCombo','wApronCombo','wWalkCombo','wPadCombo','wServiceCombo','wDemoGarageCombo','wDemoApronCombo','wPatioCombo'].forEach(id=>{
+      $(id)?.dispatchEvent(new Event('change'));
+      $(id)?.dispatchEvent(new Event('input'));
+    });
+  }catch(e){}
+}
+function renderEstimateImportList(){
+  const list=$('estimateImportList');
+  const status=$('estimateImportStatus');
+  if(!list) return;
+  const q=String($('estimateImportSearch')?.value||'').toLowerCase().trim();
+  const rows=(myEstimateHistoryCache||[]).filter(r=>{
+    if(!q) return true;
+    const blob=[r.customer,r.address,r.city,r.garage_size,r.salesman_username].join(' ').toLowerCase();
+    return blob.includes(q);
+  });
+  if(!rows.length){
+    list.innerHTML='<div class="mode-note">No matching estimates.</div>';
+    return;
+  }
+  list.innerHTML=rows.map((r,i)=>{
+    const when=(r.created_at||r.updated_at||'').slice(0,10);
+    const size=r.garage_size||'';
+    const title=String(r.customer||'Unnamed').replace(/</g,'&lt;');
+    const addr=String(r.address||'').replace(/</g,'&lt;');
+    return `<button type="button" data-est-idx="${i}" class="estimate-import-item" style="text-align:left;padding:10px;border:1px solid #d0d7de;border-radius:10px;background:#f8fafc">
+      <div style="font-weight:800;font-size:13px">${title}</div>
+      <div style="font-size:11px;color:#475467">${addr}</div>
+      <div style="font-size:11px;color:#64748b;margin-top:3px">${size}${when?' · '+when:''}</div>
+    </button>`;
+  }).join('');
+  // Map filtered indices back to cache
+  list.querySelectorAll('[data-est-idx]').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const idx=Number(btn.getAttribute('data-est-idx'));
+      const rec=rows[idx];
+      if(rec) fillWizardFromEstimate(rec);
+    });
+  });
+}
+async function loadMyEstimatesForDrawing(){
+  const status=$('estimateImportStatus');
+  const list=$('estimateImportList');
+  try{
+    const client=getDrawingSupabase();
+    if(!client){
+      if(status) status.textContent='Supabase not available.';
+      return;
+    }
+    if(status) status.textContent='Loading your estimates…';
+    const {data:{user}}=await client.auth.getUser();
+    if(!user){
+      if(status) status.textContent='Sign in on the dashboard first, then reopen Drawing.';
+      if(list) list.innerHTML='';
+      return;
+    }
+    const {data:staff}=await client.from('staff_profiles').select('username,role').eq('id',user.id).maybeSingle();
+    const username=String(staff?.username||'').toLowerCase();
+    const role=String(staff?.role||'').toLowerCase();
+    const isManager=/sam|randy|ramsey|admin|manager/.test(username) || /admin|manager/.test(role);
+
+    let query=client.from('estimate_history').select('id,customer,address,city,garage_size,roof_type,wall_height,siding,estimate_price,estimate_snapshot,salesman_username,created_by,created_at,updated_at').order('created_at',{ascending:false}).limit(80);
+    // Non-managers: own jobs only
+    if(!isManager){
+      query=query.or(`created_by.eq.${user.id},salesman_username.eq.${username}`);
+    }
+    const {data,error}=await query;
+    if(error) throw error;
+    myEstimateHistoryCache=Array.isArray(data)?data:[];
+    if(status) status.textContent=myEstimateHistoryCache.length
+      ? (`${myEstimateHistoryCache.length} estimate${myEstimateHistoryCache.length===1?'':'s'} loaded. Tap a customer to fill the wizard.`)
+      : 'No estimates found for your account yet. Create an estimate sheet first.';
+    renderEstimateImportList();
+  }catch(e){
+    console.warn('loadMyEstimatesForDrawing',e);
+    if(status) status.textContent='Could not load estimates. Sign in on the dashboard, then tap Refresh.';
+  }
+}
+
 
 const SHARED_IDS=['customerName','jobAddress','city','homePhone','workPhone','salesman','salesPhone'];
 function saveSharedInfo(){
@@ -5681,6 +5901,8 @@ function organizeLeftPanel(){
 function initializeApp(){
   organizeLeftPanel();
   hydrateSheetStates();loadSharedInfo();defaultDrawingSalesmanFromSignedInUser();
+  loadMyEstimatesForDrawing();
+  $('estimateImportRefresh')?.addEventListener('click',()=>loadMyEstimatesForDrawing());
   // Fresh app launch starts with blank canvases. Saved form/job info may remain,
   // but no random/sample shapes are drawn until the user builds or adds them.
   state.sheetStates={

@@ -634,7 +634,7 @@ input, select, textarea, button { box-sizing:border-box; }
         <div class="px-8 pb-8">
             <div class="mb-5 grid grid-cols-1 lg:grid-cols-3 gap-3">
 <div class="lg:col-span-2 rounded-2xl border border-zinc-700 bg-zinc-900 p-3"><label class="text-[10px] font-bold tracking-wider text-zinc-400 block mb-1">SEARCH ESTIMATOR</label><div class="flex gap-2"><input id="estimatorSearch" type="search" placeholder="Search retaining wall, EV, apron, window, demolition..." oninput="searchEstimatorOptions()" onkeydown="if(event.key==='Enter'){event.preventDefault();jumpToEstimatorSearchResult();}" class="calc-input flex-1 bg-zinc-950 border border-zinc-700 rounded-xl px-3 py-2 text-sm"><button type="button" onclick="jumpToEstimatorSearchResult()" class="px-3 py-2 rounded-xl bg-blue-700 text-xs font-bold">GO</button></div><div id="estimatorSearchStatus" class="text-[10px] text-zinc-500 mt-1">Type a feature name and press Go.</div></div>
-<div class="rounded-2xl border border-zinc-700 bg-zinc-900 p-3"><div class="flex items-center justify-between"><span class="text-[10px] font-bold tracking-wider text-zinc-400">ESTIMATE HEALTH CHECK</span><span id="healthCheckBadge" class="text-[10px] font-extrabold text-green-400">READY</span></div><div id="healthCheckList" class="mt-2 text-[10px] space-y-1 text-zinc-400">Checking estimate…</div></div>
+<!-- Estimate Health Check removed -->
 </div><div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
                 
                 <!-- INPUTS -->
@@ -1083,18 +1083,30 @@ input, select, textarea, button { box-sizing:border-box; }
                         <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
                             <div>
                                 <label class="text-xs text-zinc-400 block mb-1">Side / rear door</label>
-                                <select id="doorType" onchange="toggleServiceDoorLocationFields(); calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm">
-                                    <option value="standard">Standard service door (included)</option>
-                                    <option value="party">Party door (+$800)</option>
+                                <select id="doorType" onchange="toggleServiceDoorLocationFields(); togglePartyDoorSize(); calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm">
+                                    <option value="standard" selected>Service door (included)</option>
+                                    <option value="party">Party door</option>
                                     <option value="french">French door allowance (+$1,000)</option>
                                 </select>
                             </div>
-                            <div>
-                                <label class="text-xs text-zinc-400 block mb-1">Side / rear door height</label>
-                                <select id="sideDoorHeight" onchange="calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm">
-                                    <option value="7" selected>7' standard</option><option value="8">8'</option><option value="9">9'</option><option value="10">10'</option>
-                                </select>
-                                <div class="text-[10px] text-zinc-500 mt-0.5">For Party/French doors, taller doors automatically raise wall height 1'.</div>
+                            <div id="partyDoorSizeWrap" class="hidden md:col-span-2">
+                                <label class="text-xs text-zinc-400 block mb-1">Party door size (base 6' × 7')</label>
+                                <div class="flex items-center gap-2">
+                                    <div class="flex-1">
+                                        <label class="text-[10px] text-zinc-500">Width (ft)</label>
+                                        <input type="number" id="partyDoorWidth" value="6" min="6" max="10" step="1" inputmode="numeric"
+                                               oninput="this.value=Math.max(6,Math.min(10,Math.round(Number(this.value)||6))); calculateEstimate()"
+                                               class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm">
+                                    </div>
+                                    <span class="text-zinc-500 pt-4">×</span>
+                                    <div class="flex-1">
+                                        <label class="text-[10px] text-zinc-500">Height (ft)</label>
+                                        <input type="number" id="partyDoorHeight" value="7" min="7" max="10" step="1" inputmode="numeric"
+                                               oninput="this.value=Math.max(7,Math.min(10,Math.round(Number(this.value)||7))); calculateEstimate()"
+                                               class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm">
+                                    </div>
+                                </div>
+                                <div class="text-[10px] text-zinc-500 mt-0.5">Base $800 for 6×7. +$100 per extra foot of width or height.</div>
                             </div>
                             <div>
                                 <label class="text-xs text-zinc-400 block mb-1">Service / side door location</label>
@@ -1104,7 +1116,7 @@ input, select, textarea, button { box-sizing:border-box; }
                                     <option value="back">Back</option>
                                     <option value="left">Left side</option>
                                 </select>
-                                <div class="text-[10px] text-zinc-500 mt-0.5">Right = door must appear on the visible RIGHT WALL. Front = beside the overhead door. Left/Back = service door hidden from the front-right example.</div>
+                                <div class="text-[10px] text-zinc-500 mt-0.5">Right = visible RIGHT WALL. Front = beside overhead door.</div>
                             </div>
                             <div id="serviceDoorFrontSideWrap" class="hidden">
                                 <label class="text-xs text-zinc-400 block mb-1">If front, place service door</label>
@@ -1115,40 +1127,53 @@ input, select, textarea, button { box-sizing:border-box; }
                             </div>
                             <div>
                                 <label class="text-xs text-zinc-400 block mb-1">Additional overhead doors (door only)</label>
-                                <input type="number" id="addlOverheadDoors" value="0" min="0" max="3" step="1" 
-                                       oninput="calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm">
-                                <div class="text-[10px] text-zinc-500 mt-0.5">Each @ $800</div>
+                                <input type="number" id="addlOverheadDoors" value="" min="0" max="3" step="1" placeholder=""
+                                       oninput="this.value=this.value===''?'':String(Math.max(0,Math.min(3,Math.round(Number(this.value)||0)))); calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm">
+                                <div class="text-[10px] text-zinc-500 mt-0.5">Each @ $800 · leave blank if none</div>
                             </div>
                             <div>
-                                <label class="text-xs text-zinc-400 block mb-1">Additional openers (opener only)</label>
-                                <select id="openerQty" onchange="calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm">
-                                    <option value="1" selected>1 Opener</option><option value="2">2 Openers</option>
-                                </select>
+                                <label class="text-xs text-zinc-400 block mb-1">Additional openers</label>
+                                <input type="number" id="addlOpenersInput" value="" min="0" max="5" step="1" placeholder="" inputmode="numeric"
+                                       oninput="this.value=this.value===''?'':String(Math.max(0,Math.min(5,Math.round(Number(this.value)||0)))); calculateEstimate()"
+                                       class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm">
+                                <div class="text-[10px] text-zinc-500 mt-0.5">1 opener included · leave blank if none extra · each @ $450</div>
+                                <input type="hidden" id="openerQty" value="1">
                                 <select id="openerType" onchange="calculateEstimate()" class="calc-input w-full mt-2 bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm">
                                     <option value="2200" selected>LiftMaster 2200 — 3/4HP Opener</option>
                                     <option value="8500">LiftMaster 8500 Wall Mount JackShaft Opener (+$400)</option>
                                 </select>
                             </div>
-                            <div>
+                            <div class="md:col-span-2">
                                 <div id="doorWallAutoMessage" class="hidden text-[10px] font-bold text-yellow-400 mb-1"></div>
-                                <label class="text-xs text-zinc-400 block mb-1">Main overhead door height</label>
-                                <select id="overheadDoorHeight" onchange="calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm">
-                                    <option value="7" selected>7' (standard)</option>
-                                    <option value="8">8' (+$250)</option>
-                                    <option value="9">9' (+$500)</option>
-                                    <option value="10">10' (+$750)</option>
+                                <label class="text-xs text-zinc-400 block mb-1">Main overhead door size</label>
+                                <select id="overheadDoorSizePreset" onchange="applyOverheadDoorSizePreset(); calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm">
+                                    <option value="16x7" selected>16' × 7' (standard)</option>
+                                    <option value="18x7">18' × 7' (+$350)</option>
+                                    <option value="custom">Custom dimensions…</option>
                                 </select>
-                            </div>
-                            <div>
-                                <label class="text-xs text-zinc-400 block mb-1">Main overhead door width</label>
-                                <select id="overheadDoorWidth" onchange="calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm">
-                                    <option value="8">8'</option>
-                                    <option value="9">9'</option>
-                                    <option value="10">10'</option>
-                                    <option value="12">12'</option>
-                                    <option value="16" selected>16' (standard)</option>
-                                    <option value="18">18' (+$350)</option>
-                                </select>
+                                <input type="hidden" id="overheadDoorWidth" value="16">
+                                <input type="hidden" id="overheadDoorHeight" value="7">
+                                <div id="overheadDoorCustomWrap" class="hidden mt-2 grid grid-cols-3 gap-2">
+                                    <div>
+                                        <label class="text-[10px] text-zinc-500">Width (ft)</label>
+                                        <input type="number" id="overheadDoorCustomWidth" value="16" min="6" max="24" step="1" inputmode="numeric"
+                                               oninput="syncOverheadDoorCustom(); calculateEstimate()"
+                                               class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-xl px-2 py-2 text-sm">
+                                    </div>
+                                    <div>
+                                        <label class="text-[10px] text-zinc-500">Height (ft)</label>
+                                        <input type="number" id="overheadDoorCustomHeight" value="7" min="6" max="14" step="1" inputmode="numeric"
+                                               oninput="syncOverheadDoorCustom(); calculateEstimate()"
+                                               class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-xl px-2 py-2 text-sm">
+                                    </div>
+                                    <div>
+                                        <label class="text-[10px] text-zinc-500">Extra cost (internal only)</label>
+                                        <input type="number" id="overheadDoorCustomExtraCost" value="" min="0" step="50" placeholder="$"
+                                               oninput="calculateEstimate()"
+                                               class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-xl px-2 py-2 text-sm">
+                                    </div>
+                                    <div class="col-span-3 text-[10px] text-zinc-500">Size prints on the customer sheet. Extra cost is internal only — not shown to the customer.</div>
+                                </div>
                             </div>
                             <div class="md:col-span-2">
                                 <div class="flex items-center justify-between gap-3 mb-1">
@@ -1189,11 +1214,24 @@ input, select, textarea, button { box-sizing:border-box; }
 
                     <!-- Electrical &amp; Windows -->
                     <div class="mb-6">
-                        <div class="section-header mb-2 flex items-center gap-x-2">
-                            <i class="fa-solid fa-plug"></i>
-                            <span>ELECTRICAL</span>
+                        <div class="section-header mb-2 flex items-center justify-between gap-x-2">
+                            <div class="flex items-center gap-x-2">
+                                <i class="fa-solid fa-plug"></i>
+                                <span>ELECTRICAL</span>
+                            </div>
+                            <label class="flex items-center gap-2 cursor-pointer text-xs text-zinc-300 font-semibold">
+                                <input type="checkbox" id="electricIncluded" checked onchange="toggleElectricIncluded(); calculateEstimate()" class="accent-blue-500 w-4 h-4">
+                                <span>Electric included</span>
+                            </label>
                         </div>
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div id="electricAltWrap" class="hidden mb-3">
+                            <label class="text-xs text-zinc-400 block mb-1">If electric is not included</label>
+                            <select id="electricAltOption" onchange="calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm">
+                                <option value="owner">Owner to handle electrical work</option>
+                                <option value="none">No electric</option>
+                            </select>
+                        </div>
+                        <div id="electricFieldsWrap" class="grid grid-cols-2 md:grid-cols-4 gap-3">
                             <div>
                                 <label class="text-xs text-zinc-400 block mb-1">Electrical base</label>
                                 <div class="flex items-center bg-zinc-950 border border-zinc-700 rounded-2xl px-1">
@@ -1225,18 +1263,19 @@ input, select, textarea, button { box-sizing:border-box; }
                             </div>
                             <div class="grid grid-cols-2 gap-2">
 <div><label class="text-xs text-zinc-400 block mb-1">Extra lights</label><input type="number" id="extraLights" value="0" min="0" step="1" oninput="calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2 text-sm"><div class="text-[10px] text-zinc-500">@ $150 ea above std 2</div></div>
-<div><label class="text-xs text-zinc-400 block mb-1">Extra outlets</label><input type="number" id="extraOutlets" value="0" min="0" step="1" oninput="calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2 text-sm"><div class="text-[10px] text-zinc-500">@ $150 ea</div></div>
+<div><label class="text-xs text-zinc-400 block mb-1">Extra outlets</label><input type="number" id="extraOutlets" value="0" min="0" step="1" oninput="calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2 text-sm"><div class="text-[10px] text-zinc-500">@ $150 ea · sheet shows extra + 1</div></div>
 </div>
-                            </div>
+                        </div>
+                        </div>
                         <!-- Structural Add-ons -->
                     <div>
                         <div class="section-header mb-2 flex items-center gap-x-2">
                             <i class="fa-solid fa-tools"></i>
                             <span>STRUCTURAL &amp; EXTERIOR ADD-ONS</span>
                         </div><div class="mt-4 pt-4 border-t border-zinc-700"><div class="text-xs font-semibold text-zinc-400 mb-2">WINDOWS</div>
-<input type="hidden" id="windowQty" value="0"><div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-<div><label class="text-xs text-zinc-400 block mb-1">Extra windows</label><input type="number" id="extraWindows" value="0" min="0" step="1" oninput="syncWindowQtyFromExtras(); calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2 text-sm"><div class="text-[10px] text-zinc-500">@ $300 ea</div></div>
-<div><label class="text-xs text-zinc-400 block mb-1">Window type</label><select id="windowType" onchange="calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm"><option value="none">No window selected</option><option value="single" selected>Single Hung</option><option value="sliding">Sliding</option></select></div>
+<input type="hidden" id="windowQty" value="1"><div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+<div><label class="text-xs text-zinc-400 block mb-1">Extra windows</label><input type="number" id="extraWindows" value="0" min="0" step="1" oninput="syncWindowQtyFromExtras(); calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2 text-sm"><div class="text-[10px] text-zinc-500">@ $150 ea · sheet shows extra + 1 standard</div></div>
+<div><label class="text-xs text-zinc-400 block mb-1">Window type</label><select id="windowType" onchange="syncWindowQtyFromExtras(); calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm"><option value="choice" selected>Customer Choice</option><option value="single">Single Hung</option><option value="sliding">Slider</option><option value="none">No Window</option></select></div>
 <div><label class="text-xs text-zinc-400 block mb-1">Window placement</label><select id="windowPlacement" onchange="calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm"><option value="service" selected>Service-door side</option><option value="front-left">Front left</option><option value="front-right">Front right</option><option value="both">Both sides</option><option value="rear">Rear</option></select></div>
 </div></div><!-- Roof Patio Section -->
                     <div class="mb-6 border border-emerald-900/70 rounded-2xl p-5 bg-emerald-950/20">
@@ -1618,21 +1657,15 @@ input, select, textarea, button { box-sizing:border-box; }
                     <div id="activeOptionBadge" class="hidden mt-3 text-[12px] text-emerald-400 font-bold"></div>
                 </div>
             </div><!-- Customer / Print Estimate Sheet -->
-            <div class="customer-print-panel mt-6 bg-zinc-900 border border-zinc-800 rounded-3xl p-6 garage-shadow">
-                <div class="flex items-start justify-between gap-4 flex-wrap mb-5">
-                    <div>
-                        <div class="section-header flex items-center gap-x-2">
-                            <i class="fa-solid fa-file-invoice"></i>
-                            <span>PRINT CUSTOMER ESTIMATE SHEET</span>
-                        </div>
-                        <p class="text-xs text-zinc-500 mt-1">Standard ABG project estimate layout • Salesman-specific rules • Garage example photo reflects the selected roof style and configuration • Internal cost and profit are not printed</p>
-                    </div>
+            <div class="customer-print-panel mt-4 bg-zinc-900 border border-zinc-800 rounded-2xl p-4 garage-shadow">
+                <div class="section-header flex items-center gap-x-2 mb-3 text-sm">
+                    <i class="fa-solid fa-file-invoice"></i>
+                    <span>PRINT ESTIMATE SHEET</span>
                 </div>
-
-                <div class="customer-print-form">
+                <div class="customer-print-form grid grid-cols-2 gap-2">
                     <div>
-                        <label class="text-xs text-zinc-400 block mb-1.5">Salesman</label>
-                        <select id="salesman" class="calc-input w-full bg-zinc-950 border border-zinc-700 text-white rounded-2xl px-4 py-3 text-sm focus:border-blue-500">
+                        <label class="text-[10px] text-zinc-400 block mb-0.5">Salesman</label>
+                        <select id="salesman" class="calc-input w-full bg-zinc-950 border border-zinc-700 text-white rounded-xl px-2.5 py-2 text-xs focus:border-blue-500">
                             <option value="ramsey" selected>Ramsey Barakat</option>
                             <option value="sam">Sam Barakat</option>
                             <option value="samer">Samer Barakat</option>
@@ -1642,55 +1675,52 @@ input, select, textarea, button { box-sizing:border-box; }
                         </select>
                     </div>
                     <div>
-                        <label class="text-xs text-zinc-400 block mb-1.5">Customer Name</label>
-                        <input type="text" id="customerName" placeholder="Enter customer name"
-                               class="calc-input w-full bg-zinc-950 border border-zinc-700 text-white rounded-2xl px-4 py-3 text-sm focus:border-blue-500">
+                        <label class="text-[10px] text-zinc-400 block mb-0.5">Customer Name</label>
+                        <input type="text" id="customerName" placeholder="Name"
+                               class="calc-input w-full bg-zinc-950 border border-zinc-700 text-white rounded-xl px-2.5 py-2 text-xs focus:border-blue-500">
                     </div>
                     <div>
-                        <label class="text-xs text-zinc-400 block mb-1.5">Customer Email <span class="text-zinc-600">(Optional)</span></label>
-                        <input type="email" id="customerEmail" placeholder="Enter customer email"
-                               class="calc-input w-full bg-zinc-950 border border-zinc-700 text-white rounded-2xl px-4 py-3 text-sm focus:border-blue-500">
+                        <label class="text-[10px] text-zinc-400 block mb-0.5">Email <span class="text-zinc-600">(opt)</span></label>
+                        <input type="email" id="customerEmail" placeholder="Email"
+                               class="calc-input w-full bg-zinc-950 border border-zinc-700 text-white rounded-xl px-2.5 py-2 text-xs focus:border-blue-500">
                     </div>
                     <div>
-                        <label class="text-xs text-zinc-400 block mb-1.5">Customer Phone Number</label>
-                        <input type="tel" id="customerPhone1" placeholder="Enter customer phone number"
-                               class="calc-input w-full bg-zinc-950 border border-zinc-700 text-white rounded-2xl px-4 py-3 text-sm focus:border-blue-500">
+                        <label class="text-[10px] text-zinc-400 block mb-0.5">Phone</label>
+                        <input type="tel" id="customerPhone1" placeholder="Phone"
+                               class="calc-input w-full bg-zinc-950 border border-zinc-700 text-white rounded-xl px-2.5 py-2 text-xs focus:border-blue-500">
                     </div>
                     <div>
-                        <label class="text-xs text-zinc-400 block mb-1.5">Second Phone Number <span class="text-zinc-600">(Optional)</span></label>
-                        <input type="tel" id="customerPhone2" placeholder="Enter second phone number"
-                               class="calc-input w-full bg-zinc-950 border border-zinc-700 text-white rounded-2xl px-4 py-3 text-sm focus:border-blue-500">
+                        <label class="text-[10px] text-zinc-400 block mb-0.5">2nd Phone <span class="text-zinc-600">(opt)</span></label>
+                        <input type="tel" id="customerPhone2" placeholder="Optional"
+                               class="calc-input w-full bg-zinc-950 border border-zinc-700 text-white rounded-xl px-2.5 py-2 text-xs focus:border-blue-500">
                     </div>
                     <div class="address-field">
-                        <label class="text-xs text-zinc-400 block mb-1.5">Customer Address</label>
-                        <input type="text" id="customerAddress" placeholder="Enter customer address"
-                               class="calc-input w-full bg-zinc-950 border border-zinc-700 text-white rounded-2xl px-4 py-3 text-sm focus:border-blue-500">
+                        <label class="text-[10px] text-zinc-400 block mb-0.5">Address</label>
+                        <input type="text" id="customerAddress" placeholder="Address"
+                               class="calc-input w-full bg-zinc-950 border border-zinc-700 text-white rounded-xl px-2.5 py-2 text-xs focus:border-blue-500">
                     </div>
-                    <div class="rounded-2xl border border-violet-700/50 bg-zinc-950 p-4 mb-3">
-                        <div class="text-xs font-bold text-violet-300 mb-2 flex items-center gap-2">
-                            <i class="fa-solid fa-wand-magic-sparkles"></i> GARAGE PHOTO ON ESTIMATE SHEET
+                    <div class="col-span-2 rounded-xl border border-violet-700/40 bg-zinc-950 p-2.5">
+                        <div class="text-[10px] font-bold text-violet-300 mb-1.5 flex items-center gap-1.5">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> PHOTO
                         </div>
-                        <div class="text-[10px] text-zinc-500 leading-relaxed mb-3">
-                            Uses company OpenAI automatically. If offline / AI fails, uses the saved photo library.
+                        <div class="grid grid-cols-2 gap-2 mb-1.5">
+                            <div>
+                                <label class="text-[9px] font-bold text-violet-300/80 block mb-0.5" for="garageAccessType">ACCESS</label>
+                                <select id="garageAccessType" onchange="this.dataset.userTouched='1'; saveGarageAccessType()" class="calc-input w-full bg-zinc-900 border border-violet-700/50 text-white rounded-lg px-2 py-1.5 text-xs">
+                                    <option value="driveway" selected>Driveway</option>
+                                    <option value="alley">Alley</option>
+                                </select>
+                            </div>
+                            <div class="text-[9px] text-zinc-500 leading-snug pt-4">AI photo · library fallback if offline</div>
                         </div>
-                        <div class="mb-3">
-                            <label class="text-[10px] font-bold tracking-wider text-violet-300 block mb-1" for="garageAccessType">GARAGE ACCESS</label>
-                            <select id="garageAccessType" onchange="this.dataset.userTouched='1'; saveGarageAccessType()" class="calc-input w-full bg-zinc-900 border border-violet-700/60 text-white rounded-xl px-3 py-2.5 text-sm mb-1">
-                                <option value="driveway" selected>Off a driveway (front access)</option>
-                                <option value="alley">Off an alley (rear access)</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="text-[10px] font-bold tracking-wider text-violet-300 block mb-1" for="aiPhotoExtraInstructions">TELL THE PHOTO WHAT YOU WANT</label>
-                            <textarea id="aiPhotoExtraInstructions" rows="3" placeholder="Example: roofed patio in the back — show from the rear so customer sees the patio"
-                                oninput="saveAIPhotoExtraInstructions(); applyPhotoChatToEstimate()"
-                                class="w-full bg-zinc-900 border border-violet-700/60 text-white rounded-xl px-3 py-2.5 text-sm resize-y min-h-[72px]"></textarea>
-                            <div class="text-[10px] text-zinc-500 mt-1">Be specific. “Patio in the back” = rear camera view of the back patio. “Patio on the side” = side view. Words here override defaults.</div>
-                        </div>
-                        <div id="aiPhotoStatus" class="text-[10px] text-emerald-400 mt-2 hidden"></div>
+                        <label class="text-[9px] font-bold text-violet-300/80 block mb-0.5" for="aiPhotoExtraInstructions">PHOTO NOTES</label>
+                        <textarea id="aiPhotoExtraInstructions" rows="2" placeholder="e.g. roofed patio in the back — rear view"
+                            oninput="saveAIPhotoExtraInstructions(); applyPhotoChatToEstimate()"
+                            class="w-full bg-zinc-900 border border-violet-700/50 text-white rounded-lg px-2 py-1.5 text-xs resize-y min-h-[44px]"></textarea>
+                        <div id="aiPhotoStatus" class="text-[9px] text-emerald-400 mt-1 hidden"></div>
                     </div>
                     <button type="button" onclick="safePrintEstimateSheet()"
-                            class="print-action w-full px-3 sm:px-5 py-3 text-xs sm:text-sm font-semibold bg-green-700 hover:bg-green-600 active:bg-green-800 transition-all rounded-2xl flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-white leading-tight">
+                            class="print-action col-span-2 w-full px-3 py-2.5 text-xs font-semibold bg-green-700 hover:bg-green-600 active:bg-green-800 transition-all rounded-xl flex items-center justify-center gap-x-2 text-white">
                         <i class="fa-solid fa-file-invoice"></i>
                         <span>Create / View Estimate Sheet</span>
                     </button>
@@ -1786,7 +1816,40 @@ input, select, textarea, button { box-sizing:border-box; }
             if(preset!=='custom' && document.getElementById('oldConcreteOverride'))document.getElementById('oldConcreteOverride').value='';
             handleEPALogic();
         }
-        function syncWindowQtyFromExtras(){const q=Math.max(0,parseInt(document.getElementById('extraWindows')?.value||0)||0);if(document.getElementById('windowQty'))document.getElementById('windowQty').value=String(q);}
+        function syncWindowQtyFromExtras(){
+            const wt=document.getElementById('windowType')?.value||'choice';
+            const extra=Math.max(0,parseInt(document.getElementById('extraWindows')?.value||0)||0);
+            // Standard garage includes 1 window; sheet total = extra + 1 (unless No Window)
+            const total=(wt==='none')?0:(extra+1);
+            if(document.getElementById('windowQty'))document.getElementById('windowQty').value=String(total);
+        }
+        function toggleElectricIncluded(){
+            const on=!!document.getElementById('electricIncluded')?.checked;
+            const alt=document.getElementById('electricAltWrap');
+            const fields=document.getElementById('electricFieldsWrap');
+            if(alt) alt.classList.toggle('hidden', on);
+            if(fields) fields.classList.toggle('hidden', !on);
+        }
+        function isElectricIncluded(){
+            return !!document.getElementById('electricIncluded')?.checked;
+        }
+        function getElectricAltOption(){
+            return document.getElementById('electricAltOption')?.value||'owner';
+        }
+        /** Sheet quantity = extra input + 1 standard (garage always includes one) */
+        function sheetQtyFromExtra(extraId, baseOne){
+            const extra=Math.max(0,parseInt(document.getElementById(extraId)?.value||0)||0);
+            return extra + (baseOne?1:0);
+        }
+        function formatWindowSheetDetail(){
+            const wt=document.getElementById('windowType')?.value||'choice';
+            const extra=Math.max(0,parseInt(document.getElementById('extraWindows')?.value||0)||0);
+            const total=extra+1;
+            if(wt==='none') return 'No Window';
+            if(wt==='choice') return `(${total}) Customer Choice - Single Hung or Slider`;
+            if(wt==='sliding') return `(${total}) Slider`;
+            return `(${total}) Single Hung`;
+        }
 
         function handleEPALogic() {
             const city = document.getElementById('city').value;
@@ -1994,9 +2057,9 @@ input, select, textarea, button { box-sizing:border-box; }
                 }
             }
             const overheadDoorHeight = parseInt(document.getElementById('overheadDoorHeight').value) || 7;
-            const sideDoorHeight = parseInt(document.getElementById('sideDoorHeight')?.value || 7);
             const sideDoorTypeForHeight = document.getElementById('doorType')?.value || 'standard';
-            const tallestSelectedDoor = Math.max(overheadDoorHeight, ['party','french'].includes(sideDoorTypeForHeight) ? sideDoorHeight : 7);
+            const partyH = parseInt(document.getElementById('partyDoorHeight')?.value || 7) || 7;
+            const tallestSelectedDoor = Math.max(overheadDoorHeight, sideDoorTypeForHeight === 'party' ? partyH : (sideDoorTypeForHeight === 'french' ? 7 : 7));
             const requiredWallHeight = tallestSelectedDoor > 7 ? tallestSelectedDoor + 1 : 8;
             const wallHeightEl = document.getElementById('wallHeight');
             const autoMsg = document.getElementById('autoWallHeightMessage'), doorAutoMsg=document.getElementById('doorWallAutoMessage');
@@ -2074,19 +2137,24 @@ input, select, textarea, button { box-sizing:border-box; }
             // Doors
             const doorType = document.getElementById('doorType').value;
             const addlOverheadDoors = parseInt(document.getElementById('addlOverheadDoors').value) || 0;
-            const openerQty=parseInt(document.getElementById('openerQty').value)||1;
+            // Additional openers: blank = 0 extra; total openers = 1 standard + extras
+            const addlOpeners = Math.max(0, parseInt(document.getElementById('addlOpenersInput')?.value) || 0);
+            const openerQty = 1 + addlOpeners;
+            if (document.getElementById('openerQty')) document.getElementById('openerQty').value = String(openerQty);
             const openerType=document.getElementById('openerType').value||'2200';
-            const addlOpeners=Math.max(0,openerQty-1);
             
-            // Electrical
-            const elecBase = parseFloat(document.getElementById('elecBase').value) || 1500;
-            const electricSubpanel = parseFloat(document.getElementById('electricSubpanel').value) || 0;
-            const ev = document.getElementById('evCharger').checked ? 1000 : 0;
-            const evPrep = document.getElementById('evPrep').checked ? 450 : 0;
-            const threeWay = document.getElementById('threeWaySwitch').checked ? 200 : 0;
-            const extraLights = parseInt(document.getElementById('extraLights').value) || 0;
-            const extraOutlets = parseInt(document.getElementById('extraOutlets').value) || 0;
+            // Electrical (zeroed when "Electric included" is unchecked)
+            const electricOn = typeof isElectricIncluded==='function' ? isElectricIncluded() : true;
+            const elecBase = electricOn ? (parseFloat(document.getElementById('elecBase').value) || 1500) : 0;
+            const electricSubpanel = electricOn ? (parseFloat(document.getElementById('electricSubpanel').value) || 0) : 0;
+            const ev = electricOn && document.getElementById('evCharger').checked ? 1000 : 0;
+            const evPrep = electricOn && document.getElementById('evPrep').checked ? 450 : 0;
+            const threeWay = electricOn && document.getElementById('threeWaySwitch').checked ? 200 : 0;
+            const extraLights = electricOn ? (parseInt(document.getElementById('extraLights').value) || 0) : 0;
+            const extraOutlets = electricOn ? (parseInt(document.getElementById('extraOutlets').value) || 0) : 0;
             const extraWindows = parseInt(document.getElementById('extraWindows').value) || 0;
+            // Openers: if No electric, still allow cost in calc unless we also zero openers — sheet hides opener row only
+            const noElectricSelected = !electricOn && (typeof getElectricAltOption==='function' && getElectricAltOption()==='none');
             
             // Structural
             const retainType = document.getElementById('retainType').value || 'none';
@@ -2102,8 +2170,9 @@ input, select, textarea, button { box-sizing:border-box; }
             const firewallWalls = parseInt(document.getElementById('firewallWalls').value) || 0;
             const firewall = firewallWalls * 600;
             const hurricane = document.getElementById('hurricaneTies').checked ? 300 : 0;
-            const wheeling = (city === 'Wheeling' && document.getElementById('wheelingCharge').checked) ? 500 : 0;
-            const arlingtonSurvey = (city === 'Arlington Heights' && document.getElementById('arlingtonSurvey').checked) ? 2500 : 0;
+            // Always count checked items in internal cost, even if city-hint is grayed out
+            const wheeling = document.getElementById('wheelingCharge')?.checked ? 500 : 0;
+            const arlingtonSurvey = document.getElementById('arlingtonSurvey')?.checked ? 2500 : 0;
             const andrewPermit = document.getElementById('andrewPermit').checked ? 850 : 0;
             const sidingType = document.getElementById('sidingType').value;
             const forceFootingChicago = document.getElementById('forceFootingChicago').checked;
@@ -2123,7 +2192,7 @@ input, select, textarea, button { box-sizing:border-box; }
             if (sidingType === 'hardie') {
                 const perimeter = 2 * (width + depth);
                 const wallArea = perimeter * wallHeight;
-                const doorArea = 16 * overheadDoorHeight; // main overhead opening
+                const doorArea = (Number(document.getElementById('overheadDoorWidth')?.value)||16) * overheadDoorHeight; // main overhead opening
                 sidingAreaNet = Math.max(0, wallArea - doorArea);
                 const sheetCoverage = 99; // approx to match user example (592 sq ft → 6 sheets)
                 hardieSheets = Math.ceil(sidingAreaNet / sheetCoverage);
@@ -2175,21 +2244,30 @@ input, select, textarea, button { box-sizing:border-box; }
             // Electrical
             const extraLightsCost = extraLights * 150;
             const extraOutletsCost = extraOutlets * 150;
-            const extraWindowsCost = extraWindows * 300;
+            const extraWindowsCost = extraWindows * 150;
             const electricalCost = elecBase + ev + evPrep + threeWay + extraLightsCost + extraOutletsCost + electricSubpanel;
             
             // Overhead doors (base 16x7 @1200 + upgrade for taller + additional)
-            const overheadUpgrade = Math.max(0, overheadDoorHeight - 7) * 250;
-            const overheadWidthUpgrade = Number(document.getElementById('overheadDoorWidth').value || 16) === 18 ? 350 : 0;
+            // Overhead door: presets 16x7 / 18x7(+350) / custom (typed size + optional internal-only extra)
+            const ohPreset = document.getElementById('overheadDoorSizePreset')?.value || '16x7';
+            const overheadDoorWidthNum = Number(document.getElementById('overheadDoorWidth')?.value || 16) || 16;
+            const overheadWidthUpgrade = (ohPreset === '18x7') ? 350 : 0;
+            const overheadUpgrade = 0; // height pricing only via custom extra when non-standard
+            const overheadCustomExtra = (ohPreset === 'custom')
+                ? Math.max(0, parseFloat(document.getElementById('overheadDoorCustomExtraCost')?.value) || 0)
+                : 0;
             const opener8500Upgrade = openerType === '8500' ? (openerQty * 400) : 0;
-            const overheadCost = 1200 + overheadUpgrade + overheadWidthUpgrade + (addlOverheadDoors * 800) + (addlOpeners * 450) + opener8500Upgrade;
+            const overheadCost = 1200 + overheadUpgrade + overheadWidthUpgrade + overheadCustomExtra + (addlOverheadDoors * 800) + (addlOpeners * 450) + opener8500Upgrade;
             
-            // Side door
+            // Side door — party: base 6x7 @ $800, +$100 per extra foot of W or H
             let sideDoorCost = 0;
-            let sideDoorLabel = 'Standard service door (included)';
+            let sideDoorLabel = 'Service door (included)';
             if (doorType === 'party') {
-                sideDoorCost = 750;
-                sideDoorLabel = 'Party door';
+                const pw = Math.max(6, Math.min(10, Math.round(Number(document.getElementById('partyDoorWidth')?.value) || 6)));
+                const ph = Math.max(7, Math.min(10, Math.round(Number(document.getElementById('partyDoorHeight')?.value) || 7)));
+                const extraFt = Math.max(0, (pw - 6) + (ph - 7));
+                sideDoorCost = 800 + (extraFt * 100);
+                sideDoorLabel = `Party door ${pw}' × ${ph}'`;
             } else if (doorType === 'french') {
                 sideDoorCost = 1000;
                 sideDoorLabel = 'French door allowance';
@@ -2357,6 +2435,7 @@ input, select, textarea, button { box-sizing:border-box; }
                 arlingtonSurvey + 
                 andrewPermit +
                 hardieSidingCost +
+                extraWindowsCost +
                 extrasTotal +
                 excavation + 
                 permitCost;
@@ -2379,7 +2458,7 @@ input, select, textarea, button { box-sizing:border-box; }
                 soffitCost, soffitFt, hasSoffit,
                 firewall, hurricane, wheeling, arlingtonSurvey, andrewPermit, hardieSidingCost, sidingType, wallHeight, overheadDoorHeight, sidingAreaNet, hardieSheets, extrasTotal,
                 permitCost, internalTotal, customerQuote, profitAmount, profitMode: profitSettings.mode, profitValue: profitSettings.value,
-                city, roofType, doorType, ev, evPrep, threeWay, extraLights, extraLightsCost, extraOutlets, extraOutletsCost, extraWindows, extraWindowsCost, overheadWidthUpgrade, opener8500Upgrade, openerType, openerQty,
+                city, roofType, doorType, ev, evPrep, threeWay, extraLights, extraLightsCost, extraOutlets, extraOutletsCost, extraWindows, extraWindowsCost, overheadWidthUpgrade, overheadCustomExtra, opener8500Upgrade, openerType, openerQty,
                 newConcrete, fiveInch, sixInch, demo, retainInches, addlOverheadDoors, addlOpeners,
                 patio1Area, patio2Area, demoSlabPreset, demoApronDepth, calculatedOldConcrete,
                 demoSlabArea, demoSlabWidth, demoApronArea
@@ -2409,7 +2488,7 @@ input, select, textarea, button { box-sizing:border-box; }
         }
 
         function updateStickyEstimateTotal(internal,quote){const a=document.getElementById('stickyInternalTotal'),b=document.getElementById('stickyCustomerQuote');if(a)a.textContent='$'+Number(internal||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});if(b)b.textContent='$'+Number(quote||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
-        function updateEstimateHealthCheck(data){const issues=[],warnings=[],d=getGarageDimensions();if(!(d.width>0&&d.depth>0))issues.push('Garage size is missing.');if(!String(document.getElementById('salesman')?.value||'').trim())issues.push('Salesman is not selected.');if(!String(document.getElementById('customerName')?.value||'').trim())warnings.push('Customer name needed before estimate sheet.');if(!String(document.getElementById('customerAddress')?.value||'').trim())warnings.push('Customer address needed before estimate sheet.');const city=document.getElementById('city')?.value||'',wall=Number(document.getElementById('wallHeight')?.value||8),oh=Number(document.getElementById('overheadDoorHeight')?.value||7);if(wall<oh+1)issues.push(`Wall height must be at least ${oh+1}' for the ${oh}' overhead door.`);if(city==='Chicago'&&wall>10)warnings.push('Typically in Chicago 10ft Walls are Max.');if(data&&data.totalConcreteArea>1200)warnings.push('Large concrete quantity — verify dimensions.');const list=document.getElementById('healthCheckList'),badge=document.getElementById('healthCheckBadge');if(list){const rows=[];if(!issues.length&&!warnings.length)rows.push('<div class="text-green-400">✓ No conflicts detected.</div>');issues.forEach(x=>rows.push(`<div class="text-red-400">● ${x}</div>`));warnings.forEach(x=>rows.push(`<div class="text-yellow-400">▲ ${x}</div>`));list.innerHTML=rows.join('');}if(badge){badge.textContent=issues.length?'CHECK':warnings.length?'REVIEW':'READY';badge.className='text-[10px] font-extrabold '+(issues.length?'text-red-400':warnings.length?'text-yellow-400':'text-green-400');}return{issues,warnings};}
+        function updateEstimateHealthCheck(data){return{issues:[],warnings:[]};}
         function searchEstimatorOptions(){
             const q=String(document.getElementById('estimatorSearch')?.value||'').trim().toLowerCase();
             const status=document.getElementById('estimatorSearchStatus');
@@ -2791,6 +2870,29 @@ input, select, textarea, button { box-sizing:border-box; }
             calculateEstimate();
         }
 
+        function recomputeTotalsFromSummaryInputs(){
+            const inputs = document.querySelectorAll('#breakdown .summary-amt-input');
+            let sum = 0;
+            inputs.forEach(inp => {
+                const v = parseFloat(inp.value);
+                if (Number.isFinite(v)) sum += v;
+                const k = inp.getAttribute('data-line-key');
+                if (k && Number.isFinite(v)) window._summaryLineOverrides[k] = v;
+                inp.classList.add('ring-1', 'ring-amber-500/60');
+            });
+            const profitSettings = typeof getProfitSettings === 'function' ? getProfitSettings(sum) : { mode: 'percent', value: 0 };
+            let profit = 0;
+            if (profitSettings.mode === 'amount') profit = Number(profitSettings.value) || 0;
+            else profit = sum * ((Number(profitSettings.value) || 0) / 100);
+            const quote = sum + profit;
+            const it = document.getElementById('internalTotal');
+            const cq = document.getElementById('customerQuote');
+            if (it) it.innerHTML = '$' + sum.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            if (cq) cq.innerHTML = '$' + quote.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            if (typeof updateStickyEstimateTotal === 'function') updateStickyEstimateTotal(sum, quote);
+            const profitDisplay = document.getElementById('profitAppliedDisplay');
+            if (profitDisplay) profitDisplay.textContent = '+$' + profit.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        }
         function updateBreakdown(data) {
             const container = document.getElementById('breakdown');
             container.innerHTML = '';
@@ -2798,8 +2900,8 @@ input, select, textarea, button { box-sizing:border-box; }
             const lines = [];
             
             // CORE
-            lines.push({ label: `Garage package (${data.width}×${data.depth})`, amount: data.packageCost, section: 'core' });
-            lines.push({ label: `Framing (${data.width}×${data.depth} sq ft × $6.00)`, amount: data.framingCost, section: 'core' });
+            lines.push({ label: `Garage package (${data.width}×${data.depth})`, amount: data.packageCost, section: 'core', key: 'package' });
+            lines.push({ label: `Framing (${data.width}×${data.depth} sq ft × $6.00)`, amount: data.framingCost, section: 'core', key: 'framing' });
             
             if (data.roofUpgrade > 0) {
                 lines.push({ label: 'Gable roof upgrade', amount: data.roofUpgrade, section: 'core' });
@@ -2820,13 +2922,13 @@ input, select, textarea, button { box-sizing:border-box; }
                 lines.push({ label: `Wall height surcharge (${data.wallHeight} ft)`, amount: data.wallHeightSurcharge, section: 'core' });
             }
             
-            lines.push({ label: `Electrical base${data.elecBase !== 1500 ? ' (adjusted)' : ''}`, amount: data.electricalCost - data.ev - data.threeWay - data.extraLightsCost, section: 'core' });
-            lines.push({ label: `Overhead door + opener (1 bundled)`, amount: 1200, section: 'core' });
+            lines.push({ label: `Electrical base${data.elecBase !== 1500 ? ' (adjusted)' : ''}`, amount: data.electricalCost - data.ev - data.threeWay - data.extraLightsCost, section: 'core', key: 'elec_base' });
+            lines.push({ label: `Overhead door + opener (1 bundled)`, amount: 1200, section: 'core', key: 'oh_door_opener' });
             if (data.addlOverheadDoors > 0) {
-                lines.push({ label: `Additional overhead doors (${data.addlOverheadDoors} × $800)`, amount: data.addlOverheadDoors * 800, section: 'core' });
+                lines.push({ label: `Additional overhead doors (${data.addlOverheadDoors} × $800)`, amount: data.addlOverheadDoors * 800, section: 'core', key: 'addl_oh_doors' });
             }
             if (data.addlOpeners > 0) {
-                lines.push({ label: `Additional openers (${data.addlOpeners} × $450)`, amount: data.addlOpeners * 450, section: 'core' });
+                lines.push({ label: `Additional openers (${data.addlOpeners} × $450)`, amount: data.addlOpeners * 450, section: 'core', key: 'addl_openers' });
             }
             
             if (data.sideDoorCost > 0) {
@@ -2835,7 +2937,7 @@ input, select, textarea, button { box-sizing:border-box; }
                 lines.push({ label: 'Standard service door', amount: 0, section: 'core', note: 'included' });
             }
             
-            lines.push({ label: 'Permit allowance', amount: data.permitCost, section: 'core' });
+            lines.push({ label: 'Permit', amount: data.permitCost, section: 'core', key: 'permit' });
             
             // CONCRETE
             if (data.newConcrete || data.totalConcreteArea > 0) {
@@ -2922,17 +3024,22 @@ input, select, textarea, button { box-sizing:border-box; }
             if (data.ev > 0) lines.push({ label: 'EV charger', amount: data.ev, section: 'addons' });
             if (data.threeWay > 0) lines.push({ label: '3-way switch', amount: data.threeWay, section: 'addons' });
             if (data.extraLightsCost > 0) lines.push({ label: `Extra lights (${data.extraLights} × $150)`, amount: data.extraLightsCost, section: 'addons' });
-            if (data.extraWindowsCost > 0) lines.push({ label: `Extra windows (${data.extraWindows})`, amount: data.extraWindowsCost, section: 'structural' });
+            if (data.extraWindowsCost > 0) lines.push({ label: `Extra windows (${data.extraWindows} × $150)`, amount: data.extraWindowsCost, section: 'structural', key: 'extra_windows' });
             if (data.evPrep > 0) lines.push({ label: 'EV Prep', amount: data.evPrep, section: 'addons' });
             if (data.extraOutletsCost > 0) lines.push({ label: `Extra outlets (${data.extraOutlets})`, amount: data.extraOutletsCost, section: 'addons' });
-            if (data.overheadWidthUpgrade > 0) lines.push({ label: "18' overhead door width upgrade", amount: data.overheadWidthUpgrade, section: 'addons' });
+            if (data.overheadWidthUpgrade > 0) lines.push({ label: "18' × 7' overhead door upgrade", amount: data.overheadWidthUpgrade, section: 'addons' });
+            if (data.overheadCustomExtra > 0) lines.push({ label: 'Custom overhead door (internal extra)', amount: data.overheadCustomExtra, section: 'addons' });
             if (data.firewall > 0) lines.push({ label: `Firewall (${data.firewall / 600} wall${data.firewall > 600 ? 's' : ''})`, amount: data.firewall, section: 'addons' });
             if (data.hurricane > 0) lines.push({ label: 'Hurricane ties', amount: data.hurricane, section: 'addons' });
             if (data.wheeling > 0) lines.push({ label: 'Wheeling charge', amount: data.wheeling, section: 'addons' });
-            if (data.arlingtonSurvey > 0) lines.push({ label: 'Topographical survey (Arlington Heights)', amount: data.arlingtonSurvey, section: 'addons' });
+            if (data.arlingtonSurvey > 0) lines.push({ label: 'Topographical survey', amount: data.arlingtonSurvey, section: 'addons', key: 'topo_survey' });
             if (data.andrewPermit > 0) lines.push({ label: 'Andrew for Permit', amount: data.andrewPermit, section: 'addons' });
             document.querySelectorAll('#extrasContainer > div').forEach(row=>{const desc=String(row.querySelector('.extra-desc')?.value||'Custom Extra / Option').trim()||'Custom Extra / Option';const cost=parseFloat(row.querySelector('.extra-cost')?.value)||0;const display=row.querySelector('.extra-display')?.value||'included';if(cost>0)lines.push({label:`${desc}${display==='option'?' — customer option':' — included in price'}`,amount:cost,section:'addons'});});
             
+            // Editable summary amounts — overrides stick until calculator rebuilds that line without a match
+            if (!window._summaryLineOverrides) window._summaryLineOverrides = {};
+            const overrides = window._summaryLineOverrides;
+
             // Render
             let html = '';
             let currentSection = '';
@@ -2944,6 +3051,25 @@ input, select, textarea, button { box-sizing:border-box; }
                 'structural': 'STRUCTURAL ADD-ONS',
                 'addons': 'ELECTRICAL & MISC ADD-ONS'
             };
+
+            // Assign stable keys and apply overrides
+            lines.forEach((line, index) => {
+                if (!line.key) line.key = 'line_' + index + '_' + String(line.label || '').slice(0, 40);
+                if (Object.prototype.hasOwnProperty.call(overrides, line.key) && Number.isFinite(Number(overrides[line.key]))) {
+                    line.amount = Number(overrides[line.key]);
+                    line.overridden = true;
+                }
+            });
+            // Recompute internal total from (possibly overridden) line amounts
+            let adjustedInternal = lines.reduce((s, L) => s + (Number(L.amount) || 0), 0);
+            const profitSettingsAdj = typeof getProfitSettings === 'function' ? getProfitSettings(adjustedInternal) : { mode: 'percent', value: 0 };
+            let adjustedProfit = 0;
+            if (profitSettingsAdj.mode === 'amount') adjustedProfit = Number(profitSettingsAdj.value) || 0;
+            else adjustedProfit = adjustedInternal * ((Number(profitSettingsAdj.value) || 0) / 100);
+            const adjustedQuote = adjustedInternal + adjustedProfit;
+            data.internalTotal = adjustedInternal;
+            data.customerQuote = adjustedQuote;
+            data.profitAmount = adjustedProfit;
             
             lines.forEach((line, index) => {
                 if (line.section !== currentSection) {
@@ -2952,19 +3078,36 @@ input, select, textarea, button { box-sizing:border-box; }
                     currentSection = line.section;
                 }
                 
-                const amountStr = line.amount > 0 
-                    ? '$' + line.amount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})
-                    : (line.note ? `<span class="text-yellow-400 text-xs">${line.note}</span>` : '$0.00');
+                const amt = Number(line.amount) || 0;
+                const keyEsc = String(line.key).replace(/"/g, '&quot;');
+                const amountInput = line.note && amt === 0
+                    ? `<span class="text-yellow-400 text-xs">${line.note}</span>`
+                    : `<input type="number" step="1" class="summary-amt-input font-mono text-right tabular-nums bg-transparent border border-transparent hover:border-zinc-600 focus:border-blue-500 rounded px-1 py-0.5 w-[7.5rem] text-blue-300 ${line.overridden ? 'ring-1 ring-amber-500/60' : ''}" data-line-key="${keyEsc}" value="${amt.toFixed(2)}" title="Click to edit — updates internal cost">`;
                 
                 html += `
-                    <div class="estimate-line flex justify-between items-center px-2 py-[1px] hover:bg-zinc-800/40 rounded">
-                        <div class="flex-1 pr-3 text-zinc-300">${line.label}</div>
-                        <div class="font-mono text-right tabular-nums text-blue-300 whitespace-nowrap">${amountStr}</div>
+                    <div class="estimate-line flex justify-between items-center px-2 py-[1px] hover:bg-zinc-800/40 rounded gap-2">
+                        <div class="flex-1 pr-2 text-zinc-300 min-w-0">${line.label}${line.overridden ? ' <span class="text-[9px] text-amber-400">edited</span>' : ''}</div>
+                        <div class="shrink-0">${amountInput}</div>
                     </div>
                 `;
             });
             
             container.innerHTML = html || '<div class="text-center text-zinc-500 py-8 text-sm">Select options to see breakdown</div>';
+
+            // Wire editable amount inputs
+            container.querySelectorAll('.summary-amt-input').forEach(inp => {
+                inp.addEventListener('change', () => {
+                    const k = inp.getAttribute('data-line-key');
+                    const v = parseFloat(inp.value);
+                    if (!k || !Number.isFinite(v)) return;
+                    window._summaryLineOverrides[k] = v;
+                    // Recalc totals from all visible inputs without full calculator reset
+                    recomputeTotalsFromSummaryInputs();
+                });
+                inp.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') { e.preventDefault(); inp.blur(); }
+                });
+            });
             
             // Update totals
             document.getElementById('internalTotal').innerHTML = '$' + data.internalTotal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
@@ -3553,6 +3696,35 @@ input, select, textarea, button { box-sizing:border-box; }
             return { offset, leftReturn, rightReturn, garageWidth, doorWidth, centeredReturn, totalReturn };
         }
 
+        function togglePartyDoorSize(){
+            const wrap=document.getElementById('partyDoorSizeWrap');
+            const isParty=(document.getElementById('doorType')?.value||'')==='party';
+            if(wrap) wrap.classList.toggle('hidden', !isParty);
+        }
+        function applyOverheadDoorSizePreset(){
+            const preset=document.getElementById('overheadDoorSizePreset')?.value||'16x7';
+            const customWrap=document.getElementById('overheadDoorCustomWrap');
+            const wEl=document.getElementById('overheadDoorWidth');
+            const hEl=document.getElementById('overheadDoorHeight');
+            if(customWrap) customWrap.classList.toggle('hidden', preset!=='custom');
+            if(preset==='16x7'){
+                if(wEl) wEl.value='16';
+                if(hEl) hEl.value='7';
+            } else if(preset==='18x7'){
+                if(wEl) wEl.value='18';
+                if(hEl) hEl.value='7';
+            } else {
+                syncOverheadDoorCustom();
+            }
+        }
+        function syncOverheadDoorCustom(){
+            const w=Math.max(6, Math.min(24, Math.round(Number(document.getElementById('overheadDoorCustomWidth')?.value)||16)));
+            const h=Math.max(6, Math.min(14, Math.round(Number(document.getElementById('overheadDoorCustomHeight')?.value)||7)));
+            const wEl=document.getElementById('overheadDoorWidth');
+            const hEl=document.getElementById('overheadDoorHeight');
+            if(wEl) wEl.value=String(w);
+            if(hEl) hEl.value=String(h);
+        }
         function toggleServiceDoorLocationFields() {
             const loc = (document.getElementById('serviceDoorLocation') || {}).value || 'right';
             const wrap = document.getElementById('serviceDoorFrontSideWrap');
@@ -4711,8 +4883,10 @@ input, select, textarea, button { box-sizing:border-box; }
             const overheadDoorStyleText = selectedText('overheadDoorStyle') || 'Steel Raised Panel';
             const doorPosition = updateOverheadDoorOffsetControl();
             const doorOffset = Number(doorPosition.offset || 0);
-            const windowType = val('windowType') || 'none';
-            const windowQty = Number(val('windowQty') || 0);
+            const windowType = val('windowType') || 'choice';
+            // Sheet total windows = extra + 1 standard (0 if No Window)
+            const windowQty = (windowType === 'none') ? 0 : (Math.max(0, Number(val('extraWindows') || 0)) + 1);
+            try{ if(typeof syncWindowQtyFromExtras==='function') syncWindowQtyFromExtras(); }catch(e){}
             const windowPlacement = val('windowPlacement') || 'service';
             const sidingType = val('sidingType');
             const sidingColorId = sidingType === 'hardie' ? 'hardieColor' : 'vinylColor';
@@ -4762,9 +4936,9 @@ input, select, textarea, button { box-sizing:border-box; }
                     : 'Hip';
                 const vinylWally = 'Premium Vinyl Siding w/ Housewrap';
                 const hardieWally = 'Hardieboard / Cement Board Siding';
-                const wallyWindowDetail = windowType === 'none'
-                    ? 'None'
-                    : `(${windowQty}) Single Hung or Sliding Window - Owner's Choice`;
+                const wallyWindowDetail = (typeof formatWindowSheetDetail==='function')
+                    ? formatWindowSheetDetail()
+                    : (windowType === 'none' ? 'No Window' : `(${Math.max(1, Number(windowQty)||1)}) Customer Choice - Single Hung or Slider`);
 
                 // Exact Wally row order.
                 addSpec('Garage Size', `${width}' x ${depth}'`);
@@ -4788,13 +4962,21 @@ input, select, textarea, button { box-sizing:border-box; }
                 addSpec('Headers', 'Double LVL Headers');
                 addSpec('Cross Ties', '2x6 48 O.C.');
                 addSpec('Overhead Door', `${overheadDoorWidth}' x ${overheadDoorHeight}' ${overheadDoorStyleText} Door`);
-                const openerQtyPrint=parseInt(val('openerQty'))||1;
-                const openerTypePrint=val('openerType')||'2200';
-                const openerNamePrint=openerTypePrint==='8500'?'LiftMaster 8500 Wall Mount JackShaft Opener':'LiftMaster 2220L 3/4HP Opener w/ Camera';
-                addSpec('Opener', `${openerQtyPrint > 1 ? '('+openerQtyPrint+') ' : ''}${openerNamePrint}`);
+                const electricOnPrint=typeof isElectricIncluded==='function'?isElectricIncluded():true;
+                const electricAltPrint=typeof getElectricAltOption==='function'?getElectricAltOption():'owner';
+                const hideOpener=!electricOnPrint && electricAltPrint==='none';
+                if(!hideOpener){
+                    const addlO=Math.max(0, parseInt(document.getElementById('addlOpenersInput')?.value)||0);
+                    const openerQtyPrint=1+addlO;
+                    const openerTypePrint=val('openerType')||'2200';
+                    const openerNamePrint=openerTypePrint==='8500'?'LiftMaster 8500 Wall Mount JackShaft Opener':'LiftMaster 2220L 3/4HP Opener w/ Camera';
+                    addSpec('Opener', `(${openerQtyPrint}) ${openerNamePrint}`);
+                }
 
                 if (doorType === 'party') {
-                    addSpec('Party Door', "6' x 7' Steel Door");
+                    const pw=Math.max(6,Math.min(10,Math.round(Number(val('partyDoorWidth')||6))));
+                    const ph=Math.max(7,Math.min(10,Math.round(Number(val('partyDoorHeight')||7))));
+                    addSpec('Party Door', `${pw}' x ${ph}' Steel Door`);
                 } else if (doorType === 'french') {
                     addSpec('French Door', 'French Door Allowance');
                 } else {
@@ -4825,14 +5007,23 @@ input, select, textarea, button { box-sizing:border-box; }
                 addSpec('Rafters', '2x6 16" O.C.');
                 addSpec('Headers', '2 LVL Headers');
                 addSpec('Overhead Door', `${overheadDoorWidth}' x ${overheadDoorHeight}' ${overheadDoorStyleText} Door`);
-                const openerQtyPrint=parseInt(val('openerQty'))||1;
-                const openerTypePrint=val('openerType')||'2200';
-                const openerNamePrint=openerTypePrint==='8500'?'LiftMaster 8500 Wall Mount JackShaft Opener':'LiftMaster 2220L 3/4HP Opener w/ Camera';
-                addSpec('Opener', `${openerQtyPrint > 1 ? '('+openerQtyPrint+') ' : ''}${openerNamePrint}`);
-                if (doorType === 'party') addSpec('Party Door', "6' x 7' Steel Door");
-                else if (doorType === 'french') addSpec('French Door', 'French Door Allowance');
-                addSpec('Service Door', '1 x 36"x80" Steel Door with Deadbolt Lock');
-                addSpec('Window Type', windowType === 'none' ? 'None' : `${windowType === 'sliding' ? 'Sliding Window' : 'Single Hung Window'}${windowQty > 0 ? ` (${windowQty})` : ''}`);
+                const electricOnPrint2=typeof isElectricIncluded==='function'?isElectricIncluded():true;
+                const electricAltPrint2=typeof getElectricAltOption==='function'?getElectricAltOption():'owner';
+                const hideOpener2=!electricOnPrint2 && electricAltPrint2==='none';
+                if(!hideOpener2){
+                    const addlO2=Math.max(0, parseInt(document.getElementById('addlOpenersInput')?.value)||0);
+                    const openerQtyPrint=1+addlO2;
+                    const openerTypePrint=val('openerType')||'2200';
+                    const openerNamePrint=openerTypePrint==='8500'?'LiftMaster 8500 Wall Mount JackShaft Opener':'LiftMaster 2220L 3/4HP Opener w/ Camera';
+                    addSpec('Opener', `(${openerQtyPrint}) ${openerNamePrint}`);
+                }
+                if (doorType === 'party') {
+                    const pw=Math.max(6,Math.min(10,Math.round(Number(val('partyDoorWidth')||6))));
+                    const ph=Math.max(7,Math.min(10,Math.round(Number(val('partyDoorHeight')||7))));
+                    addSpec('Party Door', `${pw}' x ${ph}' Steel Door`);
+                } else if (doorType === 'french') addSpec('French Door', 'French Door Allowance');
+                else addSpec('Service Door', '1 x 36"x80" Steel Door with Deadbolt Lock');
+                addSpec('Window Type', typeof formatWindowSheetDetail==='function' ? formatWindowSheetDetail() : (windowType === 'none' ? 'No Window' : `(${Math.max(1,Number(windowQty)||1)}) Single Hung`));
                 addSpec('Floor', `${concreteThickness}" Thick Reinforced with Steel Wire Mesh Rated 4,000 PSI`);
                 addSpec('Apron', checked('newConcrete') && apronDepth > 0 ? `${width}' x ${apronDepth}' New Concrete Apron` : 'None');
                 addSpec('Perimeter Curb', 'Water Ledge');
@@ -4843,7 +5034,8 @@ input, select, textarea, button { box-sizing:border-box; }
                 addSpec('Bottom Plates', 'Treated');
             }
 
-            const subpanelPrint=Number(val('electricSubpanel')||0);
+            const electricOnForSub=typeof isElectricIncluded==='function'?isElectricIncluded():true;
+            const subpanelPrint=electricOnForSub?Number(val('electricSubpanel')||0):0;
             if(subpanelPrint){
                 const amp=subpanelPrint===1000?'30 Amp':subpanelPrint===1200?'60 Amp':'100 Amp';
                 addSpec('Electric SubPanel', amp);
@@ -4896,16 +5088,25 @@ input, select, textarea, button { box-sizing:border-box; }
                 notes.push(demoDesc);
             }
 
-            // Standard electric inclusion wording for all salespeople.
-            notes.push('Electric Includes; 2 INT. Lights, 2 INT. Outlets, 2 INT. Switches, 1 EXT. Light, and Connection to Existing Home Electrical System.');
+            // Electric notes depend on include checkbox + alt option
+            const electricOnNote=typeof isElectricIncluded==='function'?isElectricIncluded():true;
+            const electricAltNote=typeof getElectricAltOption==='function'?getElectricAltOption():'owner';
+            if(electricOnNote){
+                notes.push('Electric Includes; 2 INT. Lights, 2 INT. Outlets, 2 INT. Switches, 1 EXT. Light, and Connection to Existing Home Electrical System.');
+            } else if(electricAltNote==='none'){
+                notes.push('No electrical work included.');
+            } else {
+                notes.push('Owner to handle electrical work.');
+            }
 
             if (doorType === 'party') notes.push('Quote Includes Party Door.');
             if (doorType === 'french') notes.push('Quote Includes French Door.');
 
-            if (Number(val('extraLights') || 0) > 0) notes.push(`${val('extraLights')} additional light${Number(val('extraLights')) > 1 ? 's' : ''} included.`);
-            if (Number(val('extraWindows') || 0) > 0) notes.push(`${val('extraWindows')} additional window${Number(val('extraWindows')) > 1 ? 's' : ''} included.`);
-            if (checked('evCharger')) notes.push('EV charger provision included.');
-            if (checked('threeWaySwitch')) notes.push('3-way switch included.');
+            if (electricOnNote && Number(val('extraLights') || 0) > 0) notes.push(`${val('extraLights')} additional light${Number(val('extraLights')) > 1 ? 's' : ''} included.`);
+            // Windows: total on sheet is extra+1; notes only mention true extras
+            if (val('windowType')!=='none' && Number(val('extraWindows') || 0) > 0) notes.push(`${val('extraWindows')} additional window${Number(val('extraWindows')) > 1 ? 's' : ''} included.`);
+            if (electricOnNote && checked('evCharger')) notes.push('EV charger provision included.');
+            if (electricOnNote && checked('threeWaySwitch')) notes.push('3-way switch included.');
             if (checked('gutters')) notes.push(roofType === 'gable' ? 'Seamless Gutters 2 Sides - 2 Down Spouts included.' : 'Seamless Gutters 4 Sides - 2 Down Spouts included.');
             if (checked('aluminumSoffit')) notes.push('Aluminum soffit and fascia included.');
             if (Number(val('firewallWalls') || 0) > 0) notes.push(`${val('firewallWalls')} firewall wall${Number(val('firewallWalls')) > 1 ? 's' : ''} included.`);
@@ -5849,13 +6050,16 @@ async function openPopupChatGPT(){
             }
             document.getElementById('addlOverheadDoors').value = '0';
             document.getElementById('wallHeight').value = '8';
-            document.getElementById('overheadDoorHeight').value = '7';
+            const ohPreset=document.getElementById('overheadDoorSizePreset'); if(ohPreset) ohPreset.value='16x7';
             const odw = document.getElementById('overheadDoorWidth'); if (odw) odw.value = '16';
+            const odh = document.getElementById('overheadDoorHeight'); if (odh) odh.value = '7';
+            try{ applyOverheadDoorSizePreset(); }catch(e){}
             const doorOffsetEl = document.getElementById('doorOffset'); if (doorOffsetEl) { doorOffsetEl.dataset.combo = ''; doorOffsetEl.value = '2'; }
             updateOverheadDoorOffsetControl();
             const ods = document.getElementById('overheadDoorStyle'); if (ods) ods.value = 'raised';
-            const wt = document.getElementById('windowType'); if (wt) wt.value = 'single';
+            const wt = document.getElementById('windowType'); if (wt) wt.value = 'choice';
             const wq = document.getElementById('windowQty'); if (wq) wq.value = '1';
+            const ei = document.getElementById('electricIncluded'); if (ei) { ei.checked = true; if (typeof toggleElectricIncluded==='function') toggleElectricIncluded(); }
             const wp = document.getElementById('windowPlacement'); if (wp) wp.value = 'service';
             const sm = document.getElementById('salesman'); if (sm) sm.value = 'ramsey';
             
@@ -6025,7 +6229,7 @@ async function openPopupChatGPT(){
 
     window.addEventListener('load',()=>setTimeout(loadEstimateForEditing,250));
         document.addEventListener('DOMContentLoaded',()=>setTimeout(toggleOverhang,0));
-document.addEventListener('DOMContentLoaded',()=>{syncDemoPreset();syncWindowQtyFromExtras();calculateEstimate();});
+document.addEventListener('DOMContentLoaded',()=>{syncDemoPreset();syncWindowQtyFromExtras();try{togglePartyDoorSize()}catch(e){};try{applyOverheadDoorSizePreset()}catch(e){};calculateEstimate();});
 </script>
 
 <!-- Sticky Total Bar — always visible while scrolling -->

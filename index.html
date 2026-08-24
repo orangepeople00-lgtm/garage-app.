@@ -153,7 +153,7 @@ body.estimator-mode .estimator-exit{display:block}
  <div class="card" id="quickJobCard" style="margin-bottom:12px">
   <h3 style="margin:0 0 6px">Quick Command</h3>
   <div class="muted small" id="quickJobHint" style="margin-bottom:10px">Jobs, personal calendar, or messages to Randy/Sam. Salesmen: requests go for approval. Managers: job updates apply live.</div>
-  <textarea id="quickJobText" rows="3" placeholder="Examples:&#10;New job — John Smith, 123 Main St Chicago, 20x22, deposit received&#10;Smith job — concrete poured by Romero, carpentry tomorrow&#10;Calendar — meet Jones 123 Oak tomorrow 3pm&#10;Message Randy — need permit help on Smith job&#10;Request — change Smith deposit to received" style="width:100%;resize:vertical;min-height:72px"></textarea>
+  <textarea id="quickJobText" rows="3" placeholder="Examples:&#10;New job — John Smith, 123 Main St Chicago, 20x22, deposit received&#10;Smith — concrete poured by Romero, carpentry tomorrow&#10;Move Smith appointment from tomorrow to today&#10;Calendar — meet Jones tomorrow 3pm&#10;Tell Randy — need help on the permit&#10;Remind Sam about Smith deposit" style="width:100%;resize:vertical;min-height:72px"></textarea>
   <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px">
    <button type="button" class="btn primary" onclick="submitQuickJobCommand()">Submit</button>
    <button type="button" class="btn light" onclick="$('quickJobText').value='';$('quickJobStatus').textContent=''">Clear</button>
@@ -562,19 +562,24 @@ async function rejectEditRequest(id){
 }
 async function submitJobChangeRequest(jobId,type){if(manager())return;const text=prompt(type==='Note'?'What note should Randy or Sam add?':'What should Randy or Sam change on this job?');if(!text||!text.trim())return;const {data:{user}}=await sb.auth.getUser();const {error}=await sb.from('job_edit_requests').insert({job_id:jobId,requested_by:user.id,salesman_username:profile.username,request_type:type,request_text:text.trim()});if(error)return alert(error.message);await refresh();alert(type==='Note'?'Note request sent to Randy and Sam.':'Edit request sent to Randy and Sam.')}
 
-function parseQuickDate(text){
-  const t=String(text||'').toLowerCase();
+function quickDateIso(d){
+  const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+function parseOneQuickDateToken(token){
+  const t=String(token||'').toLowerCase().trim();
+  if(!t) return null;
   const today=new Date();
-  const iso=d=>{const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`};
-  if(/\btoday\b/.test(t)) return iso(today);
-  if(/\btomorrow\b/.test(t)){const d=new Date(today);d.setDate(d.getDate()+1);return iso(d);}
+  if(/\btoday\b/.test(t)) return quickDateIso(today);
+  if(/\btomorrow\b/.test(t)){const d=new Date(today);d.setDate(d.getDate()+1);return quickDateIso(d);}
+  if(/\byesterday\b/.test(t)){const d=new Date(today);d.setDate(d.getDate()-1);return quickDateIso(d);}
   const dow=['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
   for(let i=0;i<dow.length;i++){
     if(new RegExp('\\b'+dow[i]+'\\b').test(t)){
       const d=new Date(today);
       const add=((i-d.getDay())+7)%7 || 7;
       d.setDate(d.getDate()+add);
-      return iso(d);
+      return quickDateIso(d);
     }
   }
   const mdy=t.match(/\b(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?\b/);
@@ -582,10 +587,32 @@ function parseQuickDate(text){
     let y=mdy[3]?Number(mdy[3]):today.getFullYear();
     if(y<100)y+=2000;
     const d=new Date(y,Number(mdy[1])-1,Number(mdy[2]));
-    if(!Number.isNaN(d.getTime())) return iso(d);
+    if(!Number.isNaN(d.getTime())) return quickDateIso(d);
   }
   const ymd=t.match(/\b(20\d{2})-(\d{2})-(\d{2})\b/);
   if(ymd) return `${ymd[1]}-${ymd[2]}-${ymd[3]}`;
+  return null;
+}
+function parseQuickDate(text){
+  // Prefer "to DATE" / "for DATE" as the target when moving
+  const t=String(text||'');
+  const toM=t.match(/\b(?:to|for|on)\s+(today|tomorrow|yesterday|monday|tuesday|wednesday|thursday|friday|saturday|sunday|\d{1,2}[\/\-]\d{1,2}(?:[\/\-]\d{2,4})?|20\d{2}-\d{2}-\d{2})\b/i);
+  if(toM){
+    const d=parseOneQuickDateToken(toM[1]);
+    if(d) return d;
+  }
+  return parseOneQuickDateToken(t);
+}
+function parseQuickFromDate(text){
+  // Source date for move/reschedule: "from tomorrow", "tomorrow's appointment", "appointment for tomorrow"
+  const t=String(text||'');
+  const fromM=t.match(/\b(?:from|of)\s+(today|tomorrow|yesterday|monday|tuesday|wednesday|thursday|friday|saturday|sunday|\d{1,2}[\/\-]\d{1,2}(?:[\/\-]\d{2,4})?|20\d{2}-\d{2}-\d{2})\b/i);
+  if(fromM) return parseOneQuickDateToken(fromM[1]);
+  const forM=t.match(/\b(?:appointment|appt|meeting|visit)\s+(?:for|on)\s+(today|tomorrow|yesterday|monday|tuesday|wednesday|thursday|friday|saturday|sunday|\d{1,2}[\/\-]\d{1,2}(?:[\/\-]\d{2,4})?|20\d{2}-\d{2}-\d{2})\b/i);
+  if(forM) return parseOneQuickDateToken(forM[1]);
+  // "move tomorrow ... to today" — first day word is usually the source
+  const moveM=t.match(/\b(?:move|reschedule|change|shift|push|pull)\b[\s\S]{0,40}?\b(today|tomorrow|yesterday|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i);
+  if(moveM) return parseOneQuickDateToken(moveM[1]);
   return null;
 }
 function parseQuickTime(text){
@@ -605,31 +632,96 @@ function parseQuickTime(text){
   }
   return null;
 }
+function myCalendarEntriesQuick(){
+  const u=String(profile?.username||'').toLowerCase();
+  return (calendarEntries||[]).filter(x=>String(x.salesman_username||'').toLowerCase()===u);
+}
+function findMatchingCalendarEntry(parsed){
+  // Match existing personal calendar item by name + optional source date
+  const mine=myCalendarEntriesQuick();
+  if(!mine.length) return null;
+  const lower=String(parsed.raw||'').toLowerCase();
+  const nameHints=[];
+  if(parsed.customer) nameHints.push(String(parsed.customer).toLowerCase());
+  if(parsed.matchedJob?.customer) nameHints.push(String(parsed.matchedJob.customer).toLowerCase());
+  if(parsed.matchedJob?.address){
+    const street=String(parsed.matchedJob.address).toLowerCase().replace(/^\d+\s*/,'').split(/[,\s]+/).filter(w=>w.length>=4);
+    nameHints.push(...street.slice(0,3));
+  }
+  // Also pull quoted or capitalized words that might be names
+  const nameM=String(parsed.raw||'').match(/\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\b/g);
+  if(nameM) nameM.forEach(n=>{ if(n.length>=3 && !/^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday|Today|Tomorrow|Calendar|Appointment|Move|Message|Tell|Remind|Request)$/i.test(n)) nameHints.push(n.toLowerCase()); });
+
+  const fromIso=parsed.calFromDate||null;
+  let best=null,bestScore=0;
+  mine.forEach(e=>{
+    let score=0;
+    const blob=[e.customer_name,e.task,e.address].join(' ').toLowerCase();
+    nameHints.forEach(h=>{
+      if(h && h.length>=3 && blob.includes(h)) score+=h.length+10;
+    });
+    if(fromIso && e.appointment_at){
+      const ed=localISODate?localISODate(e.appointment_at):String(e.appointment_at).slice(0,10);
+      if(ed===fromIso) score+=50;
+    }
+    // If only one appointment on fromIso and no name, still match
+    if(fromIso && e.appointment_at && score===0){
+      const ed=String(e.appointment_at).slice(0,10);
+      const onDay=mine.filter(x=>x.appointment_at && String(x.appointment_at).slice(0,10)===fromIso);
+      if(onDay.length===1 && onDay[0].id===e.id) score+=30;
+    }
+    if(score>bestScore){best=e;bestScore=score;}
+  });
+  return bestScore>=20?best:null;
+}
 function parseQuickJobText(raw){
   const text=String(raw||'').trim();
   const lower=text.toLowerCase();
   const out={
     raw:text,isNew:false,customer:'',address:'',city:'',phone:'',garage_size:'',price:0,deposit:0,deposit_status:'',
     notes:'',updates:{},matchedJob:null,
-    isCalendar:false,calTask:'',calDate:null,calTime:null,
-    isMessage:false,isRequest:false
+    isCalendar:false,calTask:'',calDate:null,calTime:null,calFromDate:null,
+    isCalMove:false,isCalCancel:false,matchedCal:null,
+    isMessage:false,isRequest:false,messageTo:''
   };
-  // Personal calendar intent
-  if(/\b(calendar|appointment|appt|schedule me|personal calendar|add to calendar|remind me|task for me|meet with|meeting with)\b/i.test(text)
-     || /^\s*(calendar|appt|appointment|task)\b/i.test(text)){
-    out.isCalendar=true;
-  }
-  // General message / request to management (Randy/Sam)
-  if(/\b(message|tell|ask|text|email)\s+(randy|sam|manager|management|office)\b/i.test(text)
-     || /\b(randy|sam)\s*[,:\-–]\s*/i.test(text)
-     || /^\s*(message|request|note to|tell|ask)\b/i.test(text)
-     || /\b(please\s+)?(request|ask)\s+(randy|sam|manager)\b/i.test(text)
-     || /\bgeneral request\b/i.test(text)){
+
+  // Message / remind Randy or Sam — check FIRST so it doesn't become a calendar item
+  const msgTo=lower.match(/\b(?:tell|message|text|email|ask|remind|notify|ping|let)\s+(randy|sam|manager|management|office)\b/i)
+    || lower.match(/\b(randy|sam)\s*[,:\-–]\s*/i)
+    || lower.match(/^\s*(message|request|note to)\b/i);
+  if(msgTo || /\b(tell|remind|message|ask)\s+(randy|sam)\b/i.test(text)
+     || /\b(randy|sam)\s+(that|about|to)\b/i.test(text)
+     || /\bremind\s+(randy|sam)\b/i.test(text)
+     || /\bgeneral request\b/i.test(text)
+     || /^\s*(tell|remind|message|ask)\b/i.test(text) && /\b(randy|sam|manager|office)\b/i.test(text)){
     out.isMessage=true;
+    const who=text.match(/\b(randy|sam)\b/i);
+    out.messageTo=who?who[1]:'Randy/Sam';
   }
   if(/\b(request an? edit|request a note|change request|please change|need you to|can you (update|change|fix))\b/i.test(text)){
     out.isRequest=true;
   }
+
+  // Calendar move / cancel / add
+  const isMove=/\b(move|reschedule|change|shift|push|pull)\b/i.test(text)
+    && /\b(appointment|appt|meeting|visit|calendar)\b/i.test(text);
+  const isMoveDateOnly=/\b(move|reschedule|change)\b/i.test(text)
+    && /\b(today|tomorrow|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i.test(text)
+    && /\b(to|from)\b/i.test(text);
+  const isCancel=/\b(cancel|delete|remove)\b/i.test(text)
+    && /\b(appointment|appt|meeting|visit|calendar)\b/i.test(text);
+  if(isMove||isMoveDateOnly){ out.isCalendar=true; out.isCalMove=true; }
+  if(isCancel){ out.isCalendar=true; out.isCalCancel=true; }
+  if(/\b(calendar|appointment|appt|schedule me|personal calendar|add to calendar|remind me|task for me|meet with|meeting with)\b/i.test(text)
+     || /^\s*(calendar|appt|appointment|task)\b/i.test(text)){
+    out.isCalendar=true;
+  }
+  // Don't treat pure messages as calendar
+  if(out.isMessage && !out.isCalMove && !out.isCalCancel
+     && !/\b(calendar|appointment|appt)\b/i.test(text)){
+    out.isCalendar=false;
+  }
+
   if(/\b(new job|add job|sold job|new customer)\b/i.test(text)) out.isNew=true;
 
   // Match existing job by customer name, street/address, or city phrase
@@ -735,32 +827,43 @@ function parseQuickJobText(raw){
   if(/\boff hold\b|\bremove hold\b/i.test(text)){u.hold_status=false;u.hold_reason='';}
 
   // Calendar fields
+  out.calFromDate=parseQuickFromDate(text);
   out.calDate=parseQuickDate(text);
   out.calTime=parseQuickTime(text);
+  // If move said "tomorrow to today", ensure from/to are distinct
+  if(out.isCalMove && out.calFromDate && out.calDate && out.calFromDate===out.calDate){
+    // Prefer explicit "to X"
+    const toOnly=text.match(/\bto\s+(today|tomorrow|yesterday|monday|tuesday|wednesday|thursday|friday|saturday|sunday|\d{1,2}[\/\-]\d{1,2}(?:[\/\-]\d{2,4})?)\b/i);
+    if(toOnly) out.calDate=parseOneQuickDateToken(toOnly[1]);
+  }
   if(out.isCalendar){
     let task=text
       .replace(/^\s*(calendar|appt|appointment|task|personal calendar)\s*[:\-–]?\s*/i,'')
-      .replace(/\b(today|tomorrow|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/gi,'')
+      .replace(/\b(move|reschedule|change|shift|push|pull|cancel|delete|remove)\b/gi,'')
+      .replace(/\b(appointment|appt|meeting|visit)\b/gi,'')
+      .replace(/\b(from|to|for|on)\s+(today|tomorrow|yesterday|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/gi,'')
+      .replace(/\b(today|tomorrow|yesterday|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/gi,'')
       .replace(/\b\d{1,2}(?::\d{2})?\s*(am|pm)\b/gi,'')
       .replace(/\bat\s+\d{1,2}(?::\d{2})?\b/gi,'')
       .replace(/\b\d{1,2}[\/\-]\d{1,2}(?:[\/\-]\d{2,4})?\b/g,'')
       .replace(/\b20\d{2}-\d{2}-\d{2}\b/g,'')
       .replace(/\s{2,}/g,' ')
       .trim();
-    if(out.matchedJob && !task) task='Follow-up — '+(out.matchedJob.customer||'job');
-    if(out.customer && !/meet|appointment|follow/i.test(task)) task=(task?task+' — ':'')+out.customer;
-    out.calTask=task||text.slice(0,80);
+    // Prefer job/customer name as the calendar title, not the command words
+    if(out.matchedJob) task=out.matchedJob.customer||task;
+    else if(out.customer) task=out.customer;
+    out.calTask=task||'Appointment';
     if(out.matchedJob && !out.address) out.address=out.matchedJob.address||'';
     if(out.matchedJob && !out.customer) out.customer=out.matchedJob.customer||'';
+    out.matchedCal=findMatchingCalendarEntry(out);
   }
 
   out.notes=text;
   if(!out.isNew && !out.matchedJob && !out.isCalendar && !out.isMessage && !out.isRequest && Object.keys(u).length===0){
     out.isNew=/\b(sold|deposit|contract)\b/i.test(text);
   }
-  // Bare message with no job match and no production keywords → general message
   if(!out.isCalendar && !out.isNew && !out.matchedJob && Object.keys(u).length===0 && !out.isMessage){
-    if(/\b(randy|sam|manager|office|please|need help|question)\b/i.test(text)) out.isMessage=true;
+    if(/\b(randy|sam|manager|office|please|need help|question|remind|tell)\b/i.test(text)) out.isMessage=true;
   }
   return out;
 }
@@ -774,8 +877,108 @@ async function submitQuickJobCommand(){
     const {data:{user}}=await sb.auth.getUser();
     if(!user||!profile){if(status)status.textContent='Please sign in again.';return;}
 
-    // ---- PERSONAL CALENDAR (any logged-in user) ----
+    // ---- MESSAGE / GENERAL REQUEST to Randy or Sam (before calendar so "tell Randy" never becomes an appt) ----
+    if(parsed.isMessage || (parsed.isRequest && !parsed.isCalendar && !parsed.matchedJob && Object.keys(parsed.updates).length===0)){
+      const reqType=parsed.matchedJob?(parsed.isRequest?'Edit':'Note'):'Message';
+      const who=parsed.messageTo||'Randy/Sam';
+      const payload={
+        requested_by:user.id,
+        salesman_username:profile.username,
+        request_type:reqType,
+        request_text:raw,
+        status:'Pending'
+      };
+      if(parsed.matchedJob) payload.job_id=parsed.matchedJob.id;
+      let {error}=await sb.from('job_edit_requests').insert(payload);
+      if(error && /job_id|null value|not-null/i.test(String(error.message||''))){
+        const fallback={
+          requested_by:user.id,
+          salesman_username:profile.username,
+          customer:parsed.matchedJob?.customer||('Message to '+who),
+          sold_date:todayISO(),
+          address:parsed.matchedJob?.address||'',
+          city:parsed.matchedJob?.city||'',
+          phone:'',
+          garage_size:'',
+          demolition_required:false,
+          extras_required:false,
+          price:0,
+          deposit:0,
+          deposit_status:'Pending',
+          notes:'[MESSAGE TO '+who.toUpperCase()+'] '+raw,
+          status:'Pending'
+        };
+        const res2=await sb.from('job_requests').insert(fallback);
+        error=res2.error;
+      }
+      if(error) throw error;
+      if(box)box.value='';
+      if(status)status.textContent=parsed.matchedJob
+        ? (reqType+' for '+parsed.matchedJob.customer+' sent to '+who+'.')
+        : ('Message sent to '+who+'.');
+      await refresh();
+      return;
+    }
+
+    // ---- PERSONAL CALENDAR (add / move / cancel) ----
     if(parsed.isCalendar){
+      // CANCEL
+      if(parsed.isCalCancel){
+        const target=parsed.matchedCal||findMatchingCalendarEntry(parsed);
+        if(!target){
+          if(status)status.textContent='Could not find that appointment on your calendar. Name the customer or the day.';
+          return;
+        }
+        const {error}=await sb.from('salesman_calendar_entries').delete().eq('id',target.id);
+        if(error) throw error;
+        calendarEntries=calendarEntries.filter(x=>x.id!==target.id);
+        if(box)box.value='';
+        if(status)status.textContent='Removed calendar item: '+(target.customer_name||target.task||'appointment')+'.';
+        renderPersonalCalendar();renderUpcomingAppointments();
+        refresh().catch(()=>{});
+        return;
+      }
+
+      // MOVE / RESCHEDULE existing appointment
+      if(parsed.isCalMove){
+        const target=parsed.matchedCal||findMatchingCalendarEntry(parsed);
+        if(!target){
+          if(status)status.textContent='Could not find the appointment to move. Include the customer/job name and the day it is on (e.g. “move Smith appointment from tomorrow to today”).';
+          return;
+        }
+        if(!parsed.calDate){
+          if(status)status.textContent='Say which day to move it to (today, tomorrow, Monday, …).';
+          return;
+        }
+        // Keep original time unless a new time was given
+        let hhmm=parsed.calTime;
+        if(!hhmm && target.appointment_at){
+          const od=new Date(target.appointment_at);
+          hhmm=String(od.getHours()).padStart(2,'0')+':'+String(od.getMinutes()).padStart(2,'0');
+        }
+        if(!hhmm) hhmm='09:00';
+        let appointmentAt=new Date(parsed.calDate+'T'+hhmm+':00');
+        if(Number.isNaN(appointmentAt.getTime())){
+          if(status)status.textContent='Could not read the new date/time.';
+          return;
+        }
+        const patch={ appointment_at:appointmentAt.toISOString() };
+        // Keep the existing title/name — do not rename to the command text
+        const {data:updated,error}=await sb.from('salesman_calendar_entries').update(patch).eq('id',target.id).select('*').single();
+        if(error) throw error;
+        if(updated){
+          calendarEntries=calendarEntries.filter(x=>x.id!==target.id);
+          calendarEntries.push(updated);
+        }
+        if(box)box.value='';
+        const when=appointmentAt.toLocaleString([],{weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
+        if(status)status.textContent='Moved "'+(target.customer_name||target.task||'appointment')+'" to '+when+'.';
+        renderPersonalCalendar();renderUpcomingAppointments();
+        refresh().catch(()=>{});
+        return;
+      }
+
+      // ADD new appointment
       let appointmentAt=null;
       if(parsed.calDate){
         const t=parsed.calTime||'09:00';
@@ -786,9 +989,9 @@ async function submitQuickJobCommand(){
       const rec={
         created_by:user.id,
         salesman_username:profile.username,
-        customer_name:parsed.customer||parsed.calTask||'Personal item',
-        address:parsed.address||'',
-        task:parsed.calTask||raw,
+        customer_name:parsed.customer||parsed.matchedJob?.customer||parsed.calTask||'Personal item',
+        address:parsed.address||parsed.matchedJob?.address||'',
+        task:parsed.calTask||'Appointment',
         appointment_at:appointmentAt,
         latitude:null,
         longitude:null
@@ -805,49 +1008,6 @@ async function submitQuickJobCommand(){
       renderPersonalCalendar();
       renderUpcomingAppointments();
       refresh().catch(()=>{});
-      return;
-    }
-
-    // ---- MESSAGE / GENERAL REQUEST to Randy or Sam ----
-    if(parsed.isMessage || (parsed.isRequest && !parsed.matchedJob && Object.keys(parsed.updates).length===0)){
-      const reqType=parsed.matchedJob?'Edit':'Message';
-      const payload={
-        requested_by:user.id,
-        salesman_username:profile.username,
-        request_type:reqType,
-        request_text:raw,
-        status:'Pending'
-      };
-      if(parsed.matchedJob) payload.job_id=parsed.matchedJob.id;
-      let {error}=await sb.from('job_edit_requests').insert(payload);
-      // If job_id is required by schema, fall back to a sold-job-style office message
-      if(error && /job_id|null value|not-null/i.test(String(error.message||''))){
-        const fallback={
-          requested_by:user.id,
-          salesman_username:profile.username,
-          customer:parsed.matchedJob?.customer||'Office message',
-          sold_date:todayISO(),
-          address:parsed.matchedJob?.address||'',
-          city:parsed.matchedJob?.city||'',
-          phone:'',
-          garage_size:'',
-          demolition_required:false,
-          extras_required:false,
-          price:0,
-          deposit:0,
-          deposit_status:'Pending',
-          notes:'[MESSAGE TO RANDY/SAM] '+raw,
-          status:'Pending'
-        };
-        const res2=await sb.from('job_requests').insert(fallback);
-        error=res2.error;
-      }
-      if(error) throw error;
-      if(box)box.value='';
-      if(status)status.textContent=parsed.matchedJob
-        ?('Request about '+parsed.matchedJob.customer+' sent to Randy/Sam.')
-        :'Message sent to Randy and Sam.';
-      await refresh();
       return;
     }
 

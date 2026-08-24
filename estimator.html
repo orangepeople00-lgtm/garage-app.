@@ -1562,15 +1562,15 @@ input, select, textarea, button { box-sizing:border-box; }
             </div>
 
             <div class="mt-5 rounded-3xl border border-yellow-600/50 bg-zinc-900 p-5 garage-shadow">
-                <button type="button" onclick="toggleMultiEstimatePanel()" class="w-full flex items-center justify-between gap-3 text-left" aria-expanded="true" id="multiEstimateToggle">
+                <button type="button" onclick="toggleMultiEstimatePanel()" class="w-full flex items-center justify-between gap-3 text-left" aria-expanded="false" id="multiEstimateToggle">
                     <div class="flex items-center gap-x-2 section-header">
-                        <i id="multiEstimateArrow" class="fa-solid fa-chevron-right transition-transform" style="transform:rotate(90deg)"></i>
+                        <i id="multiEstimateArrow" class="fa-solid fa-chevron-right transition-transform" style="transform:rotate(0deg)"></i>
                         <i class="fa-solid fa-layer-group text-yellow-400"></i>
                         <span>CREATE MULTIPLE ESTIMATES</span>
                     </div>
                     <span class="text-[10px] text-yellow-500 font-bold">Option A · B · C — Save, Load, View Sheet</span>
                 </button>
-                <div id="multiEstimateBody" class="mt-4">
+                <div id="multiEstimateBody" class="mt-4 hidden">
                     <div class="text-[11px] text-zinc-300 mb-3 leading-relaxed">
                         <b class="text-white">How to use:</b> Build estimate → <b>Save Current</b> as A, B, or C → change the garage → save another option.
                         Tap <b class="text-emerald-400">Load / Edit</b> to bring that option back into the calculator and change it.
@@ -2552,18 +2552,27 @@ input, select, textarea, button { box-sizing:border-box; }
         }
 
         function persistMultiEstimates(){
+            // Session only — clears when the browser tab is closed. Not sticky forever.
             try{
-                localStorage.setItem(MULTI_ESTIMATE_KEY, JSON.stringify({
+                sessionStorage.setItem(MULTI_ESTIMATE_KEY, JSON.stringify({
                     slots:estimateComparison,
                     active:activeComparisonSlot
                 }));
             }catch(e){}
+            // Remove old sticky localStorage so Option B is not "always there"
+            try{ localStorage.removeItem(MULTI_ESTIMATE_KEY); }catch(e){}
         }
 
         function loadPersistedMultiEstimates(){
+            // Only restore within this browser-tab session (not across days/devices)
             try{
-                const raw=localStorage.getItem(MULTI_ESTIMATE_KEY);
-                if(!raw) return;
+                try{ localStorage.removeItem(MULTI_ESTIMATE_KEY); }catch(e){}
+                const raw=sessionStorage.getItem(MULTI_ESTIMATE_KEY);
+                if(!raw){
+                    estimateComparison={A:null,B:null,C:null};
+                    activeComparisonSlot=null;
+                    return;
+                }
                 const data=JSON.parse(raw);
                 if(data && data.slots){
                     estimateComparison={
@@ -2573,7 +2582,10 @@ input, select, textarea, button { box-sizing:border-box; }
                     };
                     activeComparisonSlot=data.active||null;
                 }
-            }catch(e){}
+            }catch(e){
+                estimateComparison={A:null,B:null,C:null};
+                activeComparisonSlot=null;
+            }
         }
 
         function currentComparisonSnapshot(){
@@ -2750,9 +2762,17 @@ input, select, textarea, button { box-sizing:border-box; }
             if(badge){ badge.classList.add('hidden'); badge.textContent=''; }
         }
 
-        // Restore saved options on load
+        // Multi-options: session-only. Fresh estimator open (not editing history) starts empty.
         try{
-            loadPersistedMultiEstimates();
+            const editingHistory=!!new URLSearchParams(location.search).get('editEstimate');
+            if(!editingHistory){
+                try{ sessionStorage.removeItem(MULTI_ESTIMATE_KEY); }catch(e){}
+                try{ localStorage.removeItem(MULTI_ESTIMATE_KEY); }catch(e){}
+                estimateComparison={A:null,B:null,C:null};
+                activeComparisonSlot=null;
+            } else {
+                loadPersistedMultiEstimates();
+            }
             document.addEventListener('DOMContentLoaded', ()=>setTimeout(renderEstimateComparison, 200));
             if(document.readyState!=='loading') setTimeout(renderEstimateComparison, 300);
         }catch(e){}
@@ -3242,6 +3262,15 @@ input, select, textarea, button { box-sizing:border-box; }
                 cost:String(row.querySelector('.extra-cost')?.value||''),
                 display:String(row.querySelector('.extra-display')?.value||'included')
             })).filter(x=>x.description||x.cost);
+            // Persist multi-option A/B/C with the estimate so Edit from history can restore them
+            try{
+                state.multi_options={
+                    A:estimateComparison?.A||null,
+                    B:estimateComparison?.B||null,
+                    C:estimateComparison?.C||null,
+                    active:activeComparisonSlot||null
+                };
+            }catch(e){}
             return state;
         }
 
@@ -3316,10 +3345,30 @@ input, select, textarea, button { box-sizing:border-box; }
                 const state=s.calculator_state||null;
                 if(state){
                     Object.entries(state).forEach(([key,value])=>{
-                        if(key==='customExtras')return;
+                        if(key==='customExtras'||key==='multi_options')return;
                         setEstimatorField(key,value);
                     });
                     restoreCustomExtras(state.customExtras||[]);
+                    // Restore Option A/B/C if they were saved on this estimate
+                    if(state.multi_options && typeof state.multi_options==='object'){
+                        estimateComparison={
+                            A:state.multi_options.A||null,
+                            B:state.multi_options.B||null,
+                            C:state.multi_options.C||null
+                        };
+                        activeComparisonSlot=state.multi_options.active||null;
+                        try{ persistMultiEstimates(); }catch(e){}
+                        try{ renderEstimateComparison(); }catch(e){}
+                        // Open the multi panel when saved options exist
+                        if(estimateComparison.A||estimateComparison.B||estimateComparison.C){
+                            const body=document.getElementById('multiEstimateBody');
+                            const arrow=document.getElementById('multiEstimateArrow');
+                            const btn=document.getElementById('multiEstimateToggle');
+                            if(body) body.classList.remove('hidden');
+                            if(arrow) arrow.style.transform='rotate(90deg)';
+                            if(btn) btn.setAttribute('aria-expanded','true');
+                        }
+                    }
                 }else{
                     // Older saved estimates did not contain every calculator control.
                     // Restore everything that can be recovered safely without guessing.
@@ -4099,7 +4148,9 @@ input, select, textarea, button { box-sizing:border-box; }
         function saveAIPhotoExtraInstructions(){
             try{
                 const el=document.getElementById('aiPhotoExtraInstructions');
-                localStorage.setItem('agb_ai_photo_extra', (el?.value||'').trim());
+                // Session only — empty again next time you open estimator
+                sessionStorage.setItem('agb_ai_photo_extra', (el?.value||'').trim());
+                try{ localStorage.removeItem('agb_ai_photo_extra'); }catch(e){}
                 // Clear old AI image caches so the next sheet uses the new words
                 const keys=[];
                 for(let i=0;i<localStorage.length;i++){
@@ -4112,7 +4163,18 @@ input, select, textarea, button { box-sizing:border-box; }
         function loadAIPhotoExtraInstructions(){
             try{
                 const el=document.getElementById('aiPhotoExtraInstructions');
-                if(el) el.value=localStorage.getItem('agb_ai_photo_extra')||'';
+                if(!el) return;
+                // Always start empty on a fresh open; only keep text while this tab session is open
+                try{ localStorage.removeItem('agb_ai_photo_extra'); }catch(e){}
+                const isEdit=!!new URLSearchParams(location.search).get('editEstimate');
+                if(isEdit){
+                    // Editing a saved estimate: leave empty unless chat was part of that session
+                    el.value=sessionStorage.getItem('agb_ai_photo_extra')||'';
+                } else {
+                    // New estimate visit: default empty (do not restore old "roofed patio back")
+                    el.value='';
+                    try{ sessionStorage.removeItem('agb_ai_photo_extra'); }catch(e){}
+                }
             }catch(e){}
         }
         function saveGarageAccessType(){
@@ -4168,7 +4230,7 @@ input, select, textarea, button { box-sizing:border-box; }
             const winQty = Number(document.getElementById('windowQty')?.value||0);
             let access = document.getElementById('garageAccessType')?.value || localStorage.getItem('agb_garage_access_type') || 'driveway';
 
-            const extra = (document.getElementById('aiPhotoExtraInstructions')?.value || localStorage.getItem('agb_ai_photo_extra') || '').trim();
+            const extra = (document.getElementById('aiPhotoExtraInstructions')?.value || sessionStorage.getItem('agb_ai_photo_extra') || '').trim();
             const q = extra.toLowerCase();
             if (/vinyl/.test(q)) sidingType = 'vinyl';
             if (/hardie|cement\s*board/.test(q)) sidingType = 'hardie';

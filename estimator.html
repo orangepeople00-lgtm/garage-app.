@@ -1511,10 +1511,68 @@ input, select, textarea, button { box-sizing:border-box; }
                 </div>
 
                 <!-- RESULTS PANEL -->
-                <div class="xl:col-span-5 bg-zinc-900 border border-zinc-800 rounded-3xl p-7 garage-shadow flex flex-col">
+                <div class="xl:col-span-5 bg-zinc-900 border border-zinc-800 rounded-3xl p-5 sm:p-7 garage-shadow flex flex-col min-w-0">
+                    <!-- Multi-estimate: collapsed by default, green accordion above Estimate Summary -->
+                    <div class="mb-3 rounded-2xl border border-emerald-700/50 bg-emerald-950/30 overflow-hidden">
+                        <button type="button" onclick="toggleMultiEstimatePanel()" class="w-full flex items-center justify-between gap-2 px-3 py-2.5 text-left" aria-expanded="false" id="multiEstimateToggle">
+                            <div class="flex items-center gap-x-2 text-emerald-400 font-semibold text-xs tracking-wider">
+                                <i id="multiEstimateArrow" class="fa-solid fa-chevron-right transition-transform text-emerald-400" style="transform:rotate(0deg)"></i>
+                                <i class="fa-solid fa-layer-group"></i>
+                                <span>CREATE MULTIPLE ESTIMATES</span>
+                            </div>
+                            <span class="text-[9px] text-emerald-500/80 font-bold hidden sm:inline">A · B · C</span>
+                        </button>
+                        <div id="multiEstimateBody" class="hidden px-3 pb-3 border-t border-emerald-800/40">
+                            <div class="text-[10px] text-zinc-400 my-2 leading-relaxed">
+                                Build → <b class="text-zinc-200">Save Current</b> as A/B/C → change garage → save another.
+                                <b class="text-emerald-400">Load / Edit</b> restores the calculator. <b class="text-blue-300">View Sheet</b> opens that option’s sheet.
+                            </div>
+                            <div class="flex justify-end mb-2">
+                                <button type="button" onclick="clearEstimateComparison()" class="text-[10px] px-2.5 py-1.5 rounded-lg border border-zinc-700 bg-zinc-950">Clear All</button>
+                            </div>
+                            <div class="grid grid-cols-1 gap-2">
+                                <div id="compareCardA" class="rounded-xl border border-zinc-700 bg-zinc-950 p-2.5">
+                                    <div class="flex justify-between items-center gap-2 mb-1">
+                                        <b class="text-xs text-white">OPTION A</b>
+                                        <button type="button" onclick="saveEstimateComparison('A')" class="text-[10px] px-2 py-1 rounded-lg bg-blue-700 font-bold">Save Current</button>
+                                    </div>
+                                    <div id="compareA" class="text-[10px] text-zinc-400 min-h-[36px]">Not saved yet.</div>
+                                    <div id="compareAActions" class="hidden mt-2 grid grid-cols-1 gap-1.5">
+                                        <button type="button" onclick="loadEstimateComparison('A')" class="w-full text-[10px] px-2 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 font-bold">↻ Load / Edit A</button>
+                                        <button type="button" onclick="viewEstimateComparisonSheet('A')" class="w-full text-[10px] px-2 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 font-bold">📄 View Sheet A</button>
+                                    </div>
+                                </div>
+                                <div id="compareCardB" class="rounded-xl border border-zinc-700 bg-zinc-950 p-2.5">
+                                    <div class="flex justify-between items-center gap-2 mb-1">
+                                        <b class="text-xs text-white">OPTION B</b>
+                                        <button type="button" onclick="saveEstimateComparison('B')" class="text-[10px] px-2 py-1 rounded-lg bg-blue-700 font-bold">Save Current</button>
+                                    </div>
+                                    <div id="compareB" class="text-[10px] text-zinc-400 min-h-[36px]">Not saved yet.</div>
+                                    <div id="compareBActions" class="hidden mt-2 grid grid-cols-1 gap-1.5">
+                                        <button type="button" onclick="loadEstimateComparison('B')" class="w-full text-[10px] px-2 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 font-bold">↻ Load / Edit B</button>
+                                        <button type="button" onclick="viewEstimateComparisonSheet('B')" class="w-full text-[10px] px-2 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 font-bold">📄 View Sheet B</button>
+                                    </div>
+                                </div>
+                                <div id="compareCardC" class="rounded-xl border border-zinc-700 bg-zinc-950 p-2.5">
+                                    <div class="flex justify-between items-center gap-2 mb-1">
+                                        <b class="text-xs text-white">OPTION C</b>
+                                        <button type="button" onclick="saveEstimateComparison('C')" class="text-[10px] px-2 py-1 rounded-lg bg-blue-700 font-bold">Save Current</button>
+                                    </div>
+                                    <div id="compareC" class="text-[10px] text-zinc-400 min-h-[36px]">Not saved yet.</div>
+                                    <div id="compareCActions" class="hidden mt-2 grid grid-cols-1 gap-1.5">
+                                        <button type="button" onclick="loadEstimateComparison('C')" class="w-full text-[10px] px-2 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 font-bold">↻ Load / Edit C</button>
+                                        <button type="button" onclick="viewEstimateComparisonSheet('C')" class="w-full text-[10px] px-2 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 font-bold">📄 View Sheet C</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="compareDifference" class="hidden mt-2 rounded-xl bg-blue-950/60 border border-blue-800 p-2 text-xs text-yellow-400 font-bold space-y-1"></div>
+                            <div id="activeOptionBadge" class="hidden mt-2 text-[11px] text-emerald-400 font-bold"></div>
+                        </div>
+                    </div>
+
                     <div class="flex items-center justify-between gap-3 mb-4 flex-wrap">
-                        <button type="button" onclick="toggleEstimateSummary()" class="section-header flex items-center gap-x-2 cursor-pointer select-none" aria-expanded="false" aria-controls="breakdown" title="Open estimate summary">
-                            <i id="estimateSummaryArrow" class="fa-solid fa-chevron-right transition-transform"></i>
+                        <button type="button" onclick="toggleEstimateSummary()" class="section-header flex items-center gap-x-2 cursor-pointer select-none text-emerald-400" aria-expanded="false" aria-controls="breakdown" title="Open estimate summary">
+                            <i id="estimateSummaryArrow" class="fa-solid fa-chevron-right transition-transform text-emerald-400"></i>
                             <i class="fa-solid fa-calculator"></i>
                             <span>ESTIMATE SUMMARY</span>
                         </button>
@@ -1600,63 +1658,7 @@ input, select, textarea, button { box-sizing:border-box; }
                 </div>
             </div>
 
-            <div class="mt-5 rounded-3xl border border-yellow-600/50 bg-zinc-900 p-5 garage-shadow">
-                <button type="button" onclick="toggleMultiEstimatePanel()" class="w-full flex items-center justify-between gap-3 text-left" aria-expanded="false" id="multiEstimateToggle">
-                    <div class="flex items-center gap-x-2 section-header">
-                        <i id="multiEstimateArrow" class="fa-solid fa-chevron-right transition-transform" style="transform:rotate(0deg)"></i>
-                        <i class="fa-solid fa-layer-group text-yellow-400"></i>
-                        <span>CREATE MULTIPLE ESTIMATES</span>
-                    </div>
-                    <span class="text-[10px] text-yellow-500 font-bold">Option A · B · C — Save, Load, View Sheet</span>
-                </button>
-                <div id="multiEstimateBody" class="mt-4 hidden">
-                    <div class="text-[11px] text-zinc-300 mb-3 leading-relaxed">
-                        <b class="text-white">How to use:</b> Build estimate → <b>Save Current</b> as A, B, or C → change the garage → save another option.
-                        Tap <b class="text-emerald-400">Load / Edit</b> to bring that option back into the calculator and change it.
-                        Tap <b class="text-blue-300">View Sheet</b> to open that option’s customer estimate sheet.
-                    </div>
-                    <div class="flex justify-end mb-3">
-                        <button type="button" onclick="clearEstimateComparison()" class="text-[10px] px-3 py-2 rounded-xl border border-zinc-700 bg-zinc-950">Clear All Options</button>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        <div id="compareCardA" class="rounded-2xl border border-zinc-700 bg-zinc-950 p-4 transition-all">
-                            <div class="flex justify-between items-center gap-2 mb-2">
-                                <b class="text-sm text-white">OPTION A</b>
-                                <button type="button" onclick="saveEstimateComparison('A')" class="text-xs px-3 py-2 rounded-lg bg-blue-700 font-bold">Save Current</button>
-                            </div>
-                            <div id="compareA" class="text-xs text-zinc-400 min-h-[56px]">Not saved yet.</div>
-                            <div id="compareAActions" class="hidden mt-3 grid grid-cols-1 gap-2">
-                                <button type="button" onclick="loadEstimateComparison('A')" class="w-full text-xs px-3 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 font-bold">↻ Load / Edit Option A</button>
-                                <button type="button" onclick="viewEstimateComparisonSheet('A')" class="w-full text-xs px-3 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 font-bold">📄 View Estimate Sheet A</button>
-                            </div>
-                        </div>
-                        <div id="compareCardB" class="rounded-2xl border border-zinc-700 bg-zinc-950 p-4 transition-all">
-                            <div class="flex justify-between items-center gap-2 mb-2">
-                                <b class="text-sm text-white">OPTION B</b>
-                                <button type="button" onclick="saveEstimateComparison('B')" class="text-xs px-3 py-2 rounded-lg bg-blue-700 font-bold">Save Current</button>
-                            </div>
-                            <div id="compareB" class="text-xs text-zinc-400 min-h-[56px]">Not saved yet.</div>
-                            <div id="compareBActions" class="hidden mt-3 grid grid-cols-1 gap-2">
-                                <button type="button" onclick="loadEstimateComparison('B')" class="w-full text-xs px-3 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 font-bold">↻ Load / Edit Option B</button>
-                                <button type="button" onclick="viewEstimateComparisonSheet('B')" class="w-full text-xs px-3 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 font-bold">📄 View Estimate Sheet B</button>
-                            </div>
-                        </div>
-                        <div id="compareCardC" class="rounded-2xl border border-zinc-700 bg-zinc-950 p-4 transition-all">
-                            <div class="flex justify-between items-center gap-2 mb-2">
-                                <b class="text-sm text-white">OPTION C</b>
-                                <button type="button" onclick="saveEstimateComparison('C')" class="text-xs px-3 py-2 rounded-lg bg-blue-700 font-bold">Save Current</button>
-                            </div>
-                            <div id="compareC" class="text-xs text-zinc-400 min-h-[56px]">Not saved yet.</div>
-                            <div id="compareCActions" class="hidden mt-3 grid grid-cols-1 gap-2">
-                                <button type="button" onclick="loadEstimateComparison('C')" class="w-full text-xs px-3 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 font-bold">↻ Load / Edit Option C</button>
-                                <button type="button" onclick="viewEstimateComparisonSheet('C')" class="w-full text-xs px-3 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 font-bold">📄 View Estimate Sheet C</button>
-                            </div>
-                        </div>
-                    </div>
-                    <div id="compareDifference" class="hidden mt-3 rounded-xl bg-blue-950/60 border border-blue-800 p-3 text-sm text-yellow-400 font-bold space-y-1"></div>
-                    <div id="activeOptionBadge" class="hidden mt-3 text-[12px] text-emerald-400 font-bold"></div>
-                </div>
-            </div><!-- Customer / Print Estimate Sheet -->
+            <!-- Customer / Print Estimate Sheet -->
             <div class="customer-print-panel mt-4 bg-zinc-900 border border-zinc-800 rounded-2xl p-4 garage-shadow">
                 <div class="section-header flex items-center gap-x-2 mb-3 text-sm">
                     <i class="fa-solid fa-file-invoice"></i>

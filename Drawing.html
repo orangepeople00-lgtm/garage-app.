@@ -482,6 +482,19 @@ button.danger{color:#b42318}
 .siteplan .obj .label{font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:600;background:rgba(255,255,255,.88)}
 .siteplan .obj.dimension:before{border-top-width:1px}
 .siteplan .obj.dimension .label{font-size:10px;font-weight:600;padding:1px 4px;height:18px}
+/* Survey-style proposed garage: small center title + inner wall dimensions + small setbacks */
+#paper.siteplan-mode .obj.role-garage > .label{
+  font-size:9px!important;font-weight:700!important;padding:1px 3px!important;
+  background:rgba(255,255,255,.92)!important;line-height:1.1!important;
+}
+#paper.siteplan-mode .obj.textobj .label{
+  font-size:9px!important;font-weight:700!important;padding:0 2px!important;
+  background:transparent!important;border:0!important;
+}
+#paper.siteplan-mode .obj.dimension:not(.big-dim) .label{
+  font-size:9px!important;font-weight:600!important;padding:0 2px!important;height:auto!important;
+  background:rgba(255,255,255,.9)!important;
+}
 #sitePlanPlaceholder{
   position:absolute;inset:0;z-index:2;display:flex;align-items:center;justify-content:center;
   pointer-events:none;text-align:center;padding:50px;color:#555;font-family:Arial,sans-serif
@@ -2420,7 +2433,7 @@ button.danger{color:#b42318}
 <div class="field"><label>Garage placement</label><select id="spPlacement"><option value="bottom-right">Rear right</option><option value="bottom-left">Rear left</option><option value="custom">Place manually</option></select></div>
 <button id="placeProposedGarage" class="primary" type="button" style="width:100%;min-height:44px;font-weight:900;margin-bottom:8px">Place Proposed Garage</button>
 <button id="aiPlaceOnSurveyBtn" type="button" style="width:100%;min-height:44px;font-weight:900;margin-bottom:10px;background:#0f274b;color:#fff;border:0;border-radius:10px">AI Place from Wizard + Survey</button>
-<div class="mode-note" id="aiSurveyStatus" style="margin:0 0 10px">AI finds the existing garage on the survey, whites out those lines, then places your new garage using Wizard/Concrete sizes and setbacks. Fine-tune with drag or Whiteout Brush if needed.</div>
+<div class="mode-note" id="aiSurveyStatus" style="margin:0 0 10px">AI reads labels (existing/frm/frame garage) and matches the customer street number, whites out only that footprint, then places proposed garage with wall dimensions and small setbacks. Fill customer address first for best results.</div>
 <div style="border:2px solid #2563eb;border-radius:10px;padding:10px;background:#f8fbff;margin-bottom:10px">
   <div style="font-size:11px;font-weight:900;color:#1d4ed8;margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em">Whiteout / Erase Old Lines</div>
   <button id="eraseSurveyBtn" type="button" class="primary" style="width:100%;min-height:44px;font-weight:900;margin-bottom:8px">Whiteout Brush</button>
@@ -4374,76 +4387,136 @@ function getApronDimsForSurvey(){
   }catch(e){}
   return {w:null,h:null};
 }
+/** Map 0-1 coords from the survey IMAGE into paper pixels (object-fit:contain letterboxing). */
+function mapSurveyImageNormToPaper(xNorm,yNorm,paperW,paperH,imgW,imgH){
+  if(!imgW||!imgH||!paperW||!paperH) return {x:xNorm*paperW,y:yNorm*paperH};
+  const paperAspect=paperW/paperH, imgAspect=imgW/imgH;
+  let drawW,drawH,offsetX,offsetY;
+  if(imgAspect>paperAspect){
+    drawW=paperW; drawH=paperW/imgAspect; offsetX=0; offsetY=(paperH-drawH)/2;
+  }else{
+    drawH=paperH; drawW=paperH*imgAspect; offsetX=(paperW-drawW)/2; offsetY=0;
+  }
+  return {x:offsetX+xNorm*drawW, y:offsetY+yNorm*drawH};
+}
+function getSurveyNaturalSize(){
+  const bg=$('surveyBg');
+  if(bg&&bg.naturalWidth) return {w:bg.naturalWidth,h:bg.naturalHeight};
+  return {w:0,h:0};
+}
 function placeProposedGarageOnSurvey(opts={}){
  if(state.mode!=='siteplan')return;
- // Always respect latest Wizard + Concrete numbers
  if(opts.sync!==false) syncSitePlanDimsFromWizardAndConcrete();
  const autoErase=opts.autoErase===true;
  snapshot();
  const t=currentTemplate();
  const gw=+$('spGarageW').value||20,gh=+$('spGarageH').value||22;
  const ls=+$('spLeftSetback').value||3,rsd=+$('spRightSetback').value||3,rs=+$('spRearSetback').value||5;
+ // Survey drawings use a finer visual scale so labels match plat text size
  const scaleFeet=Math.max(.5,+$('spScaleFeet').value||20);
- const sc=96/scaleFeet;
+ const sc=Math.max(2.2, Math.min(5.5, 72/scaleFeet)); // tighter than concrete sheet
  let placement=opts.placement||$('spPlacement')?.value||'bottom-right';
  if($('spPlacement')&&opts.placement)$('spPlacement').value=placement;
- // Clear previous proposed garage + setback dims on this site plan (keep manual erase patches)
+ // Clear previous AI/manual proposed garage pieces (keep other brush whiteouts)
  state.objects=state.objects.filter(o=>!(
-   o.kind==='garage' ||
    o.role==='proposedGarage' ||
    o.role==='surveyEraseGarage' ||
-   (o.kind==='dimension' && ['leftSetback','rightSetback','rearSetback','lotWidth','lotLength'].includes(o.role))
+   o.role==='spLeftSb' || o.role==='spRightSb' || o.role==='spRearSb' ||
+   o.role==='garageWallDimN' || o.role==='garageWallDimS' || o.role==='garageWallDimE' || o.role==='garageWallDimW' ||
+   (o.kind==='garage' && state.mode==='siteplan') ||
+   (o.kind==='dimension' && ['leftSetback','rightSetback','rearSetback'].includes(o.role) && state.mode==='siteplan')
  ));
- // Default geometric rear placement using setbacks
- let x=t.w-gw*sc-rsd*sc-45,y=t.h-gh*sc-rs*sc-55;
- if(placement==='bottom-left')x=45+ls*sc;
+ // Default geometric rear placement (only if AI did not give coords)
+ let x=t.w-gw*sc-rsd*sc-40,y=t.h-gh*sc-rs*sc-50;
+ if(placement==='bottom-left')x=40+ls*sc;
  if(placement==='custom'){x=t.w/2-gw*sc/2;y=t.h/2-gh*sc/2}
- // AI normalized center (0-1 across paper/survey)
- if(Number.isFinite(opts.xNorm)&&Number.isFinite(opts.yNorm)){
-   const cx=opts.xNorm*t.w, cy=opts.yNorm*t.h;
-   x=cx-(gw*sc)/2;
-   y=cy-(gh*sc)/2;
-   // Keep a little margin inside the page
-   x=Math.max(20,Math.min(t.w-gw*sc-20,x));
-   y=Math.max(20,Math.min(t.h-gh*sc-20,y));
+
+ const nat=opts.imgSize||getSurveyNaturalSize();
+ const xn=Number(opts.xNorm), yn=Number(opts.yNorm);
+ const hasAI=Number.isFinite(xn)&&Number.isFinite(yn);
+ const eb=opts.eraseBox||null;
+ const hasErase=eb&&Number.isFinite(Number(eb.x0))&&Number.isFinite(Number(eb.y0))&&Number.isFinite(Number(eb.x1))&&Number.isFinite(Number(eb.y1));
+
+ // Prefer EXISTING GARAGE erase-box CENTER for placement (most reliable)
+ // Fall back to xNorm/yNorm from AI, then geometric corner
+ if(hasErase){
+   const p0=mapSurveyImageNormToPaper(Number(eb.x0),Number(eb.y0),t.w,t.h,nat.w,nat.h);
+   const p1=mapSurveyImageNormToPaper(Number(eb.x1),Number(eb.y1),t.w,t.h,nat.w,nat.h);
+   const cx=(p0.x+p1.x)/2, cy=(p0.y+p1.y)/2;
+   // Ignore title-block boxes (top strip)
+   if(!(Math.min(p0.y,p1.y)<t.h*0.10 && Math.abs(p1.y-p0.y)<t.h*0.12 && Math.abs(p1.x-p0.x)>t.w*0.4)){
+     x=cx-(gw*sc)/2;
+     y=cy-(gh*sc)/2;
+     placement='custom';
+     if($('spPlacement'))$('spPlacement').value='custom';
+   }else if(hasAI){
+     const pt=mapSurveyImageNormToPaper(xn,yn,t.w,t.h,nat.w,nat.h);
+     x=pt.x-(gw*sc)/2; y=pt.y-(gh*sc)/2;
+     placement='custom';
+     if($('spPlacement'))$('spPlacement').value='custom';
+   }
+ }else if(hasAI){
+   const pt=mapSurveyImageNormToPaper(xn,yn,t.w,t.h,nat.w,nat.h);
+   x=pt.x-(gw*sc)/2;
+   y=pt.y-(gh*sc)/2;
    placement='custom';
    if($('spPlacement'))$('spPlacement').value='custom';
  }
- // Whiteout: AI erase box (old garage lines) and/or under new garage footprint
- if(autoErase || opts.eraseBox){
+ x=Math.max(12,Math.min(t.w-gw*sc-12,x));
+ y=Math.max(12,Math.min(t.h-gh*sc-12,y));
+
+ // Whiteout existing garage footprint, then thin clear under new slab
+ if(autoErase || hasErase){
   const pushErase=(ex,ey,ewPx,ehPx)=>{
-    if(ewPx<8||ehPx<8) return;
+    if(ewPx<4||ehPx<4) return;
+    const maxW=t.w*0.35, maxH=t.h*0.35;
+    const w=Math.min(ewPx,maxW), h=Math.min(ehPx,maxH);
     state.objects.push({
       id:uid++,kind:'eraser',role:'surveyEraseGarage',
       x:ex,y:ey,
-      wf:ewPx/(sc||1),hf:ehPx/(sc||1),
+      wf:w/(sc||1),hf:h/(sc||1),
       label:'',angle:0,pxf:sc
     });
   };
-  // 1) Vision box covering existing garage / clutter on the survey
-  if(opts.eraseBox && Number.isFinite(opts.eraseBox.x0)){
-    const bx0=opts.eraseBox.x0*t.w, by0=opts.eraseBox.y0*t.h;
-    const bx1=opts.eraseBox.x1*t.w, by1=opts.eraseBox.y1*t.h;
-    const ex=Math.min(bx0,bx1), ey=Math.min(by0,by1);
-    pushErase(ex, ey, Math.abs(bx1-bx0), Math.abs(by1-by0));
+  if(hasErase){
+    const p0=mapSurveyImageNormToPaper(Number(eb.x0),Number(eb.y0),t.w,t.h,nat.w,nat.h);
+    const p1=mapSurveyImageNormToPaper(Number(eb.x1),Number(eb.y1),t.w,t.h,nat.w,nat.h);
+    const ex=Math.min(p0.x,p1.x), ey=Math.min(p0.y,p1.y);
+    const ew=Math.abs(p1.x-p0.x), eh=Math.abs(p1.y-p0.y);
+    if(!(ey<t.h*0.10 && eh<t.h*0.12 && ew>t.w*0.4)){
+      pushErase(ex, ey, ew, eh);
+    }
   }
-  // 2) Also clear under the new proposed garage (+ margin) so plat lines don't show through
-  if(autoErase){
-    const pad=22;
+  // Always clear under the new garage so old lines don't show through
+  if(autoErase || hasErase){
+    const pad=4;
     pushErase(x-pad, y-pad, gw*sc+pad*2, gh*sc+pad*2);
   }
  }
- state.objects.push({id:uid++,kind:'garage',role:'proposedGarage',x,y,wf:gw,hf:gh,label:`PROPOSED GARAGE\n${gw}' x ${gh}'`,angle:0,pxf:sc});
- if(placement==='bottom-left'){
-   state.objects.push({id:uid++,kind:'dimension',role:'leftSetback',x:Math.max(5,x-ls*sc),y:y+gh*sc/2,wf:ls,hf:2,label:`${ls}'`,angle:0,pxf:sc});
- }else if(placement==='bottom-right'){
-   state.objects.push({id:uid++,kind:'dimension',role:'rightSetback',x:x+gw*sc,y:y+gh*sc/2,wf:rsd,hf:2,label:`${rsd}'`,angle:0,pxf:sc});
- }else{
-   // custom / AI: show left + right if space, always rear
-   state.objects.push({id:uid++,kind:'dimension',role:'leftSetback',x:Math.max(5,x-ls*sc),y:y+gh*sc/2,wf:ls,hf:2,label:`${ls}'`,angle:0,pxf:sc});
-   state.objects.push({id:uid++,kind:'dimension',role:'rightSetback',x:x+gw*sc,y:y+gh*sc/2,wf:rsd,hf:2,label:`${rsd}'`,angle:0,pxf:sc});
+ // Garage box: center text is only "PROPOSED GARAGE" (dimensions go on inner walls)
+ state.objects.push({
+   id:uid++,kind:'garage',role:'proposedGarage',
+   x,y,wf:gw,hf:gh,
+   label:'PROPOSED GARAGE',
+   angle:0,pxf:sc
+ });
+ // Inner-wall dimensions: one number centered on each inside wall
+ const dimStyle={kind:'text',angle:0,pxf:sc};
+ const wallPad=Math.max(8, sc*0.35);
+ state.objects.push({id:uid++, ...dimStyle, role:'garageWallDimN', x:x+gw*sc/2-10, y:y+wallPad, wf:3, hf:1.2, label:String(gw)});
+ state.objects.push({id:uid++, ...dimStyle, role:'garageWallDimS', x:x+gw*sc/2-10, y:y+gh*sc-wallPad-12, wf:3, hf:1.2, label:String(gw)});
+ state.objects.push({id:uid++, ...dimStyle, role:'garageWallDimW', x:x+wallPad, y:y+gh*sc/2-8, wf:3, hf:1.2, label:String(gh)});
+ state.objects.push({id:uid++, ...dimStyle, role:'garageWallDimE', x:x+gw*sc-wallPad-14, y:y+gh*sc/2-8, wf:3, hf:1.2, label:String(gh)});
+ // Small survey-style setback labels (NOT big-dim concrete-sheet sizes)
+ // roles spLeftSb/spRightSb/spRearSb intentionally avoid the big-dim CSS class
+ const sbH=1.1;
+ if(placement==='bottom-left' || placement==='custom'){
+   state.objects.push({id:uid++,kind:'dimension',role:'spLeftSb',x:Math.max(4,x-ls*sc),y:y+gh*sc/2-6,wf:ls,hf:sbH,label:`${ls}'`,angle:0,pxf:sc});
  }
- state.objects.push({id:uid++,kind:'dimension',role:'rearSetback',x:x+gw*sc/2,y:y+gh*sc,wf:rs,hf:2,label:`${rs}'`,angle:90,pxf:sc});
+ if(placement==='bottom-right' || placement==='custom'){
+   state.objects.push({id:uid++,kind:'dimension',role:'spRightSb',x:x+gw*sc,y:y+gh*sc/2-6,wf:rsd,hf:sbH,label:`${rsd}'`,angle:0,pxf:sc});
+ }
+ state.objects.push({id:uid++,kind:'dimension',role:'spRearSb',x:x+gw*sc/2-8,y:y+gh*sc,wf:rs,hf:sbH,label:`${rs}'`,angle:0,pxf:sc});
  saveActiveSheetState();renderObjects();
 }
 /** Shrink survey image for Vision (speed + cost) */
@@ -4480,53 +4553,94 @@ async function aiPlaceProposedGarageOnSurvey(){
   const ls=+$('spLeftSetback').value||3,rsd=+$('spRightSetback').value||3,rs=+$('spRearSetback').value||5;
   const lotW=+$('spLotWidth').value||null, lotL=+$('spLotLength').value||null;
   const apron=getApronDimsForSurvey();
+  const customerAddress=($('jobAddress')?.value||$('wAddress')?.value||'').trim();
+  const customerName=($('customerName')?.value||$('wCustomer')?.value||'').trim();
+  const addressNumber=(customerAddress.match(/^\s*(\d+[A-Za-z]?)/)||[])[1]||'';
   const client=getDrawingSupabase();
   if(!client){
     if(status)status.textContent='Not signed in — cannot call AI. Sign in on the dashboard, then open Drawing again.';
     return;
   }
-  if(status)status.textContent='Reading survey with AI using your Wizard/Concrete sizes…';
+  if(status)status.textContent=addressNumber
+    ? `Reading survey — matching garage for ${addressNumber}…`
+    : 'Reading survey with AI (add customer address for better matching)…';
   const btn=$('aiPlaceOnSurveyBtn');
   if(btn){ btn.disabled=true; btn.textContent='AI placing…'; }
   try{
-    const image=await compressSurveyForAI(surveyData,1600);
-    const {data,error}=await client.functions.invoke('analyze-site-survey',{
+    // Ensure survey image is in DOM so naturalWidth is available for coordinate mapping
+    renderSitePlanBackground();
+    const image=await compressSurveyForAI(surveyData,1800);
+    // Measure natural size from compressed image for mapping
+    const imgSize=await new Promise(resolve=>{
+      const im=new Image();
+      im.onload=()=>resolve({w:im.naturalWidth,h:im.naturalHeight});
+      im.onerror=()=>resolve(getSurveyNaturalSize());
+      im.src=image;
+    });
+    const inv=await client.functions.invoke('analyze-site-survey',{
       body:{
         image,
         garageW:gw,garageH:gh,
         leftSetback:ls,rightSetback:rsd,rearSetback:rs,
         lotWidth:lotW||undefined,lotLength:lotL||undefined,
         apronW:apron.w||undefined,apronH:apron.h||undefined,
+        customerAddress, addressNumber, customerName,
         placementHint:$('spPlacement')?.value||''
       }
     });
-    if(error) throw error;
-    if(data?.error) throw new Error(data.error);
-    // Find existing garage → whiteout that area + under new footprint → place with Wizard sizes/setbacks
+    // Supabase may put the JSON in data, or error with body
+    let data=inv?.data;
+    if(typeof data==='string'){
+      try{ data=JSON.parse(data); }catch(e){}
+    }
+    if(inv?.error){
+      // Try to surface function body error
+      let msg=inv.error.message||String(inv.error);
+      try{
+        if(inv.error.context){
+          const b=await inv.error.context.json?.();
+          if(b?.error) msg=b.error;
+        }
+      }catch(e){}
+      throw new Error(msg);
+    }
+    if(!data) throw new Error('Empty response from analyze-site-survey — is the function deployed?');
+    if(data.error) throw new Error(data.error);
+
+    const xNorm=Number(data.xNorm);
+    const yNorm=Number(data.yNorm);
+    const eraseBox={
+      x0:Number(data.eraseX0), y0:Number(data.eraseY0),
+      x1:Number(data.eraseX1), y1:Number(data.eraseY1)
+    };
+    const hasCoords=Number.isFinite(xNorm)&&Number.isFinite(yNorm);
+    const hasErase=Number.isFinite(eraseBox.x0)&&Number.isFinite(eraseBox.y0)&&Number.isFinite(eraseBox.x1)&&Number.isFinite(eraseBox.y1);
+    if(!hasCoords && !hasErase){
+      throw new Error('AI returned no garage location. Check OPENAI_API_KEY on the function.');
+    }
+
     placeProposedGarageOnSurvey({
       autoErase:true,
       sync:false,
-      placement:data.placement||'bottom-right',
-      xNorm:data.xNorm,
-      yNorm:data.yNorm,
-      eraseBox:{
-        x0:data.eraseX0, y0:data.eraseY0,
-        x1:data.eraseX1, y1:data.eraseY1
-      }
+      placement:'custom',
+      xNorm: hasCoords?xNorm:undefined,
+      yNorm: hasCoords?yNorm:undefined,
+      eraseBox: hasErase?eraseBox:null,
+      imgSize
     });
     const noteParts=[];
+    if(data.matchedLabel) noteParts.push('Found: '+data.matchedLabel);
+    else if(data.foundExisting) noteParts.push('Existing garage found');
+    else noteParts.push('No labeled existing garage — placed from AI coordinates');
+    if(data.matchedAddressNumber) noteParts.push('matched #'+data.matchedAddressNumber);
     if(data.notes) noteParts.push(data.notes);
-    noteParts.push(`Cleared survey lines and placed ${gw}'×${gh}' with L ${ls}' / R ${rsd}' / Rear ${rs}' setbacks.`);
-    if(data.existingGarage && data.existingGarage!=='unknown' && data.existingGarage!=='none'){
-      noteParts.push('Existing garage detected: '+data.existingGarage+'.');
-    }
-    noteParts.push('You can still whiteout more by hand or drag the garage to fine-tune.');
-    if(status)status.textContent=noteParts.join(' ');
+    noteParts.push(`Placed ${gw}'×${gh}' · L ${ls}' / R ${rsd}' / Rear ${rs}'.`);
+    noteParts.push('Drag to fine-tune if needed.');
+    if(status)status.textContent=noteParts.join(' · ');
   }catch(err){
     console.warn('AI place survey failed',err);
-    // Fallback: geometric place with wizard dims + local whiteout under garage
-    try{ placeProposedGarageOnSurvey({autoErase:true}); }catch(e){}
-    if(status)status.textContent='AI place failed ('+(err.message||err)+'). Used setback placement from Wizard/Concrete with local whiteout.';
+    // Do NOT silently dump the garage in the corner — tell the salesman what failed
+    if(status)status.textContent='AI place FAILED: '+(err.message||err)+' — Fix the function/key, or place manually with Place Proposed Garage.';
   }finally{
     if(btn){ btn.disabled=false; btn.textContent='AI Place from Wizard + Survey'; }
   }

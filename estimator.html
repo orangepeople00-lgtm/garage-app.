@@ -4963,7 +4963,7 @@ input, select, textarea, button { box-sizing:border-box; }
             return parts.join('\n');
         }
 
-        /** Full post-sheet AI change pipeline: calculator + presentation + history */
+        /** Full post-sheet AI change pipeline: calculator + presentation (history log is background-only) */
         async function applySheetAIChange(requestText){
             const raw=String(requestText||'').trim();
             if(!raw) return 'Type a change first.';
@@ -4973,8 +4973,9 @@ input, select, textarea, button { box-sizing:border-box; }
             const bits=[];
             if(calcMsg && !/^Type a change/.test(calcMsg)) bits.push(calcMsg);
             if(presChanged.length) bits.push('Sheet layout: '+presChanged.join(' • '));
-            const msg=bits.length?bits.join(' | '):'Saved AI sheet request.';
-            try{ await logSheetAIRevision(raw, msg); }catch(e){ console.error('history log failed', e); }
+            const msg=bits.length?bits.join(' | '):'Applied sheet change.';
+            // Never block the rebuild on history network calls
+            try{ Promise.resolve(logSheetAIRevision(raw, msg)).catch(function(){}); }catch(e){}
             return msg;
         }
 
@@ -5096,7 +5097,8 @@ input, select, textarea, button { box-sizing:border-box; }
             const customerName = (document.getElementById('customerName')?.value || '').trim();
             const customerAddress = (document.getElementById('customerAddress')?.value || '').trim();
 
-            if (!customerName || !customerAddress) {
+            const skipCustomer = !!(opts && (opts.skipHealth || opts.skipCustomer));
+            if (!skipCustomer && (!customerName || !customerAddress)) {
                 alert('Please enter the customer name and customer address before creating the estimate.');
                 return;
             }
@@ -7074,7 +7076,7 @@ input, select, textarea, button { box-sizing:border-box; }
 
 <div class="sheet-ai-panel no-print">
   <h3>AI Sheet Changes</h3>
-  <p>Full control for <b>this sheet only</b>: photo, specs, notes, wording, landscape/portrait, colors, font size, hide/show sections, item details. Every request is saved to Estimate History for managers.</p>
+  <p>Full control for <b>this sheet only</b>: photo, specs, notes, wording, landscape/portrait, colors, font size, hide/show sections, item details. Type a change and tap Apply to rebuild.</p>
   <textarea id="popupChangeRequest" placeholder="Examples:&#10;• Remove photo / hide exterior view&#10;• Remove Gutters row · remove Windows item&#10;• Clear details for Siding&#10;• Change Overhead Door details to 16x7 raised panel&#10;• Remove note about demolition&#10;• Landscape · larger font · hide price"></textarea>
   <div class="ai-row">
     <button type="button" class="ai-apply" id="popupAiApplyBtn" onclick="applyPopupAIChange()">Apply AI Change &amp; Rebuild Sheet</button>
@@ -7319,22 +7321,30 @@ async function applyPopupAIChange(){
     return;
   }
   if(btn) btn.disabled=true;
-  if(status) status.textContent='Applying change on the estimator…';
+  if(status) status.textContent='Applying…';
   try{
     let msg='';
-    if(typeof window.opener.applySheetAIChange==='function'){
-      msg=await window.opener.applySheetAIChange(q);
-    } else if(typeof window.opener.applyLocalEstimateChange==='function'){
-      msg=window.opener.applyLocalEstimateChange(q);
+    // Prefer fast local apply (do not hang on network history)
+    if(typeof window.opener.applyLocalEstimateChange==='function'){
+      try{ msg=window.opener.applyLocalEstimateChange(q)||msg; }catch(e1){ msg='Calc: '+(e1.message||e1); }
     }
-    if(status) status.textContent=(msg||'Applied.')+' Rebuilding this sheet…';
-    // Rebuild THIS window in place (do not close + open — mobile blocks that popup)
+    if(typeof window.opener.applySheetPresentationChange==='function'){
+      try{
+        const pres=window.opener.applySheetPresentationChange(q)||[];
+        if(pres.length) msg=(msg?msg+' | ':'')+'Layout: '+pres.join(' • ');
+      }catch(e2){ msg=(msg?msg+' | ':'')+'Layout error: '+(e2.message||e2); }
+    }
+    if(!msg && typeof window.opener.applySheetAIChange==='function'){
+      try{ msg=await window.opener.applySheetAIChange(q); }catch(e3){ msg='Apply error: '+(e3.message||e3); }
+    }
+    if(status) status.textContent=(msg||'Applied.')+' — rebuilding sheet…';
+    // Rebuild THIS window in place
     if(typeof window.opener.safePrintEstimateSheet==='function'){
-      await window.opener.safePrintEstimateSheet(true, { skipHealth:true, targetWindow: window });
+      await window.opener.safePrintEstimateSheet(true, { skipHealth:true, skipPlacement:true, skipCustomer:true, targetWindow: window });
     } else if(typeof window.opener.printEstimateSheet==='function'){
       await window.opener.printEstimateSheet(true, window);
     } else {
-      if(status) status.textContent='Change saved on estimator — open Create / View Estimate Sheet again to see it.';
+      if(status) status.textContent='Change saved — open Create / View Estimate Sheet again.';
       if(btn) btn.disabled=false;
     }
   }catch(err){

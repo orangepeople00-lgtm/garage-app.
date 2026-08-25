@@ -4393,20 +4393,30 @@ input, select, textarea, button { box-sizing:border-box; }
                 }
             }
 
-            // Anything visual on the sheet must also update the AI photo so wording + picture match
+            // Visual changes EDIT the existing AI photo (keep windows/doors/etc.) — do not wipe and start over
             const visualChange = changed.some(c=>/roof:|siding|color|door style|overhead door|service door|party door|french|gable|hip|patio|photo view|wall height|windows|gutters|soffit/i.test(c))
                 || /\b(photo|picture|image|render|camera|view|siding|door|roof|gable|hip|color|patio)\b/.test(q);
+            const forceNewPhoto = /\b(new photo|regenerate|start over|brand new image|full regenerate)\b/.test(q);
 
-            if(visualChange){
-                try{ syncPhotoNotesWithCalculator(raw); }catch(e){}
+            if(forceNewPhoto){
                 try{
-                    Object.keys(sessionStorage).forEach(k=>{
-                        if(/^agb_ai_photo|^garageAI/i.test(k) || /openai:/i.test(k) || /photo_cache/i.test(k)) sessionStorage.removeItem(k);
-                    });
-                    // Also clear any in-memory AI photo cache maps if present
-                    if(window._garageAiPhotoCache) window._garageAiPhotoCache={};
+                    window._lastAiGaragePhotoUrl=null;
+                    sessionStorage.removeItem('agb_last_ai_garage_photo');
+                    window._sheetPhotoMode='generate';
+                    window._sheetPhotoEditPrompt='';
                 }catch(e){}
-                if(!changed.some(c=>/photo|regenerate/i.test(c))) changed.push('photo will regenerate to match sheet');
+                try{ syncPhotoNotesWithCalculator(raw); }catch(e){}
+                changed.push('photo will fully regenerate');
+            } else if(visualChange){
+                try{ syncPhotoNotesWithCalculator(raw); }catch(e){}
+                // Keep prior image; next sheet build will EDIT it with only this change
+                window._sheetPhotoMode='edit';
+                window._sheetPhotoEditPrompt=raw;
+                changed.push('photo will EDIT prior image (keep existing windows/details)');
+            } else {
+                // Text/layout-only change — reuse the same photo
+                window._sheetPhotoMode='reuse';
+                window._sheetPhotoEditPrompt='';
             }
 
             // Free-form wording / layout notes that should appear on the sheet
@@ -5357,16 +5367,36 @@ input, select, textarea, button { box-sizing:border-box; }
             return 'agb_ai_garage_'+h;
         }
 
-        async function generateOpenAIGaragePhotoUrl(prompt){
-            // Do NOT reuse cached AI images — access type + chat text must always regenerate a fresh photo
-            const cacheKey=garageAICacheKey('openai:'+prompt);
+        function getLastAiGaragePhotoUrl(){
+            try{
+                if(window._lastAiGaragePhotoUrl) return window._lastAiGaragePhotoUrl;
+                return sessionStorage.getItem('agb_last_ai_garage_photo')||'';
+            }catch(e){ return window._lastAiGaragePhotoUrl||''; }
+        }
+        function setLastAiGaragePhotoUrl(url){
+            if(!url) return;
+            window._lastAiGaragePhotoUrl=url;
+            try{ sessionStorage.setItem('agb_last_ai_garage_photo', url); }catch(e){}
+        }
+
+        async function generateOpenAIGaragePhotoUrl(prompt, opts){
+            opts=opts||{};
+            const editFromUrl=opts.editFromUrl||'';
+            const isEdit=!!(opts.edit && editFromUrl);
+            const cacheKey=garageAICacheKey('openai:'+(isEdit?'edit:':'')+prompt);
             let lastEdgeError='';
 
             // 1) Preferred: company Edge Function (key never leaves Supabase — all salesmen)
             try{
                 if(typeof garageSb!=='undefined' && garageSb?.functions?.invoke){
+                    const body={ prompt: String(prompt||'').slice(0, 3900) };
+                    if(isEdit){
+                        body.mode='edit';
+                        // Pass prior image as data URL or https URL for the edge function to fetch/edit
+                        body.imageUrl=String(editFromUrl).slice(0, 2500000);
+                    }
                     const invokePromise = garageSb.functions.invoke('generate-garage-photo', {
-                        body: { prompt: String(prompt||'').slice(0, 3900) }
+                        body
                     });
                     // Hard timeout so sheet never spins forever
                     const timed = await Promise.race([
@@ -5389,7 +5419,8 @@ input, select, textarea, button { box-sizing:border-box; }
                     const url = data && (data.url || (data.b64 ? ('data:image/png;base64,'+data.b64) : null));
                     if(url){
                         try{ localStorage.setItem(cacheKey, url); }catch(e){}
-                        return {url, prompt, source:'openai-company', cached:false};
+                        setLastAiGaragePhotoUrl(url);
+                        return {url, prompt, source: isEdit ? 'openai-company-edit' : 'openai-company', cached:false, edited:isEdit};
                     }
                     if(data && data.error){
                         lastEdgeError=String(data.error);
@@ -5481,17 +5512,33 @@ input, select, textarea, button { box-sizing:border-box; }
             return {url, prompt, source:'free', cached:false};
         }
 
-        async function generateAIGaragePhotoUrl(preferOpenAI){
+        async function generateAIGaragePhotoUrl(preferOpenAI, opts){
             const prompt=buildGarageAIPrompt();
             if(preferOpenAI){
-                return await generateOpenAIGaragePhotoUrl(prompt);
+                return await generateOpenAIGaragePhotoUrl(prompt, opts);
             }
             return await generateFreeAIGaragePhotoUrl(prompt);
+        }
+
+        function buildPhotoEditPrompt(changeText){
+            const change=String(changeText||'').trim();
+            return [
+                'Edit this existing garage photograph only.',
+                'Apply ONLY this change: '+(change||'minor refinement'),
+                'Keep the same camera angle, same building proportions, same windows, same doors, same siding color, same roof, same concrete, same background, same lighting unless the change explicitly asks to alter them.',
+                'Do NOT remove windows unless the change says to remove windows.',
+                'Do NOT redesign the whole garage. Do NOT generate a completely different building.',
+                'Preserve every detail that is not mentioned in the change request.',
+                'Photorealistic continuous edit of the provided image.'
+            ].join(' ');
         }
 
         async function resolveEstimateGaragePhotoSrc(){
             const mode=document.getElementById('garagePhotoMode')?.value || localStorage.getItem('agb_garage_photo_mode') || 'openai';
             const status=document.getElementById('aiPhotoStatus');
+            const photoMode=window._sheetPhotoMode || 'generate'; // generate | edit | reuse
+            const editPrompt=window._sheetPhotoEditPrompt || '';
+            const lastUrl=getLastAiGaragePhotoUrl();
             const libraryFallback=()=>{
                 try{
                     const matched=getExteriorPhotoMatch().photo;
@@ -5518,7 +5565,39 @@ input, select, textarea, button { box-sizing:border-box; }
                     setTimeout(()=>resolve(false), 15000);
                 });
             };
-            // Always: company OpenAI first → library only if AI fails (show real error)
+
+            // Reuse prior AI photo when sheet text/layout changed but photo did not
+            if(photoMode==='reuse' && lastUrl && (/^https?:\/\//i.test(lastUrl) || lastUrl.startsWith('data:image'))){
+                if(status){ status.classList.remove('hidden'); status.textContent='Keeping previous AI garage photo.'; }
+                try{ if(typeof window.__estimateLoadingSetStatus==='function') window.__estimateLoadingSetStatus('Keeping previous AI photo…'); }catch(_){}
+                // Reset mode so a later full create can generate fresh if needed
+                window._sheetPhotoMode='generate';
+                window._sheetPhotoEditPrompt='';
+                return {primary:lastUrl, fallbacks:libraryFallback().fallbacks, source:'openai', aiSource:'reused', prompt:'(reused prior AI photo)'};
+            }
+
+            // Edit prior AI photo with only the chat change
+            if(photoMode==='edit' && lastUrl && (/^https?:\/\//i.test(lastUrl) || lastUrl.startsWith('data:image'))){
+                if(status){ status.classList.remove('hidden'); status.textContent='OpenAI: editing previous garage photo…'; }
+                try{ if(typeof window.__estimateLoadingSetStatus==='function') window.__estimateLoadingSetStatus('Editing previous AI photo (keeping windows & details)…'); }catch(_){}
+                try{
+                    const editText=buildPhotoEditPrompt(editPrompt);
+                    // Combine edit instruction with light context from full prompt (but edit instruction first)
+                    const full=editText+' Context of current estimate: '+String(buildGarageAIPrompt()||'').slice(0,1800);
+                    const ai=await generateOpenAIGaragePhotoUrl(full, { edit:true, editFromUrl:lastUrl });
+                    await warm(ai.url);
+                    setLastAiGaragePhotoUrl(ai.url);
+                    window._sheetPhotoMode='generate';
+                    window._sheetPhotoEditPrompt='';
+                    if(status) status.textContent='AI photo edited from previous image.';
+                    return {primary:ai.url, fallbacks:libraryFallback().fallbacks, source:'openai', prompt:ai.prompt, aiSource:ai.source||'edit'};
+                }catch(editErr){
+                    console.warn('Photo edit failed, generating new image', editErr);
+                    // fall through to full generate
+                }
+            }
+
+            // Full generate (first sheet, or edit failed, or forced new)
             const tryOpenAI=async ()=>{
                 if(status){ status.classList.remove('hidden'); status.textContent='OpenAI: creating garage photo…'; }
                 try{
@@ -5528,6 +5607,9 @@ input, select, textarea, button { box-sizing:border-box; }
                 }catch(_){}
                 const ai=await generateAIGaragePhotoUrl(true);
                 await warm(ai.url);
+                setLastAiGaragePhotoUrl(ai.url);
+                window._sheetPhotoMode='generate';
+                window._sheetPhotoEditPrompt='';
                 if(status) status.textContent='OpenAI garage photo ready ('+(ai.source||'openai')+').';
                 return {primary:ai.url, fallbacks:libraryFallback().fallbacks, source:'openai', prompt:ai.prompt, aiSource:ai.source};
             };
@@ -5541,8 +5623,11 @@ input, select, textarea, button { box-sizing:border-box; }
                         window.__estimateLoadingSetStatus('AI photo failed — using library. '+msg);
                     }
                 }catch(_){}
-                // Keep failure visible briefly in console for managers
                 try{ window.__lastGaragePhotoError=msg; }catch(_){}
+                // Prefer last AI photo over library if we have one
+                if(lastUrl && (/^https?:\/\//i.test(lastUrl) || lastUrl.startsWith('data:image'))){
+                    return {primary:lastUrl, fallbacks:libraryFallback().fallbacks, source:'openai', aiSource:'reused-after-error', error:msg, prompt:'(reused prior AI photo after error)'};
+                }
                 const lib=libraryFallback();
                 lib.error=msg;
                 lib.source='library';

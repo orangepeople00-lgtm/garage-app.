@@ -2915,22 +2915,59 @@ input, select, textarea, button { box-sizing:border-box; }
             calculateEstimate();
         }
 
+        function summaryLineKey(label, explicitKey){
+            if (explicitKey) return String(explicitKey);
+            return 'lbl_' + String(label || '')
+                .toLowerCase()
+                .replace(/\([^)]*\)/g, '')
+                .replace(/[^a-z0-9]+/g, '_')
+                .replace(/^_|_$/g, '')
+                .slice(0, 64);
+        }
+        function loadSummaryOverrides(){
+            if (window._summaryLineOverrides && typeof window._summaryLineOverrides === 'object') return window._summaryLineOverrides;
+            try {
+                const raw = sessionStorage.getItem('agb_summary_line_overrides');
+                window._summaryLineOverrides = raw ? (JSON.parse(raw) || {}) : {};
+            } catch (e) {
+                window._summaryLineOverrides = {};
+            }
+            return window._summaryLineOverrides;
+        }
+        function saveSummaryOverrides(){
+            try {
+                sessionStorage.setItem('agb_summary_line_overrides', JSON.stringify(window._summaryLineOverrides || {}));
+            } catch (e) {}
+        }
         function recomputeTotalsFromSummaryInputs(){
             const inputs = document.querySelectorAll('#breakdown .summary-amt-input');
             let sum = 0;
+            const overrides = loadSummaryOverrides();
             inputs.forEach(inp => {
                 const raw = String(inp.value || '').replace(/[$,\s]/g, '');
                 const v = parseFloat(raw);
                 if (Number.isFinite(v)) sum += v;
                 const k = inp.getAttribute('data-line-key');
-                if (k && Number.isFinite(v)) window._summaryLineOverrides[k] = v;
-                if (Number.isFinite(v)) inp.classList.add('ring-1', 'ring-amber-500/60');
+                if (k && Number.isFinite(v)) {
+                    overrides[k] = v;
+                    inp.classList.add('ring-1', 'ring-amber-500/60');
+                }
             });
+            window._summaryLineOverrides = overrides;
+            saveSummaryOverrides();
             const profitSettings = typeof getProfitSettings === 'function' ? getProfitSettings(sum) : { mode: 'percent', value: 0 };
             let profit = 0;
-            if (profitSettings.mode === 'amount') profit = Number(profitSettings.value) || 0;
-            else profit = sum * ((Number(profitSettings.value) || 0) / 100);
-            const quote = sum + profit;
+            let quote = sum;
+            if (profitSettings.mode === 'total') {
+                quote = Math.max(0, Number(profitSettings.value) || 0);
+                profit = Math.max(0, quote - sum);
+            } else if (profitSettings.mode === 'amount') {
+                profit = Math.max(0, Number(profitSettings.value) || 0);
+                quote = sum + profit;
+            } else {
+                profit = sum * ((Number(profitSettings.value) || 0) / 100);
+                quote = sum + profit;
+            }
             const it = document.getElementById('internalTotal');
             const cq = document.getElementById('customerQuote');
             if (it) it.innerHTML = '$' + sum.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
@@ -2945,11 +2982,21 @@ input, select, textarea, button { box-sizing:border-box; }
             const raw = String(inp.value || '').replace(/[$,\s]/g, '');
             const v = parseFloat(raw);
             if (!k || !Number.isFinite(v) || v < 0) return;
-            window._summaryLineOverrides = window._summaryLineOverrides || {};
-            window._summaryLineOverrides[k] = v;
+            const overrides = loadSummaryOverrides();
+            overrides[k] = v;
+            // Also store by bare label slug so rebuilds that change index still match
+            const label = inp.closest('.estimate-line')?.querySelector('div.flex-1')?.textContent?.replace(/\s*edited\s*$/i,'').trim();
+            if (label) overrides[summaryLineKey(label)] = v;
+            window._summaryLineOverrides = overrides;
+            saveSummaryOverrides();
+            window._summaryOverrideLockUntil = Date.now() + 800;
             inp.value = String(Math.round(v * 100) / 100);
             inp.classList.add('ring-1', 'ring-amber-500/60');
             recomputeTotalsFromSummaryInputs();
+        }
+        function clearSummaryLineOverrides(){
+            window._summaryLineOverrides = {};
+            try { sessionStorage.removeItem('agb_summary_line_overrides'); } catch (e) {}
         }
         function updateBreakdown(data) {
             const container = document.getElementById('breakdown');
@@ -2957,34 +3004,39 @@ input, select, textarea, button { box-sizing:border-box; }
             if (document.activeElement && document.activeElement.classList && document.activeElement.classList.contains('summary-amt-input')) {
                 return;
             }
+            // Brief lock after a manual commit so a cascading calculateEstimate cannot wipe the typed value
+            if (window._summaryOverrideLockUntil && Date.now() < window._summaryOverrideLockUntil) {
+                // still rebuild, but overrides will be forced below
+            }
             container.innerHTML = '';
             
             const lines = [];
             
-            // CORE
+            // CORE — stable keys so manual edits always stick
             lines.push({ label: `Garage package (${data.width}×${data.depth})`, amount: data.packageCost, section: 'core', key: 'package' });
             lines.push({ label: `Framing (${data.width}×${data.depth} sq ft × $6.00)`, amount: data.framingCost, section: 'core', key: 'framing' });
             
             if (data.roofUpgrade > 0) {
-                lines.push({ label: 'Gable roof upgrade', amount: data.roofUpgrade, section: 'core' });
+                lines.push({ label: 'Gable roof upgrade', amount: data.roofUpgrade, section: 'core', key: 'gable_upgrade' });
             }
             if (data.pitchSurcharge > 0) {
-                lines.push({ label: `Roof pitch upgrade (${data.pitchStr || '4/12'})`, amount: data.pitchSurcharge, section: 'core' });
+                lines.push({ label: `Roof pitch upgrade (${data.pitchStr || '4/12'})`, amount: data.pitchSurcharge, section: 'core', key: 'pitch_upgrade' });
             }
             if (data.eavesSurcharge > 0) {
-                lines.push({ label: `Eaves upgrade (${data.eavesInches}")`, amount: data.eavesSurcharge, section: 'core' });
+                lines.push({ label: `Eaves upgrade (${data.eavesInches}")`, amount: data.eavesSurcharge, section: 'core', key: 'eaves_upgrade' });
             }
             if(data.roofPatioEnabled&&data.roofPatioArea>0){
                 const loc=data.roofPatioSide?'Side':'Rear';
-                lines.push({label:`${loc} roof patio concrete (${data.roofPatioSpan}×${data.roofPatioDepth} = ${data.roofPatioArea} sq ft × $8.50)`,amount:data.roofPatioConcreteCost,section:'core'});
-                lines.push({label:`${loc} roof patio labor (${data.roofPatioArea} sq ft × $6.00)`,amount:data.roofPatioLaborCost,section:'core'});
-                lines.push({label:`Roof patio materials (${data.roofPatioMaterialUnits} × $550 per 2 ft; includes 4 support posts)`,amount:data.roofPatioMaterialCost,section:'core'});
+                lines.push({label:`${loc} roof patio concrete (${data.roofPatioSpan}×${data.roofPatioDepth} = ${data.roofPatioArea} sq ft × $8.50)`,amount:data.roofPatioConcreteCost,section:'core',key:'roof_patio_concrete'});
+                lines.push({label:`${loc} roof patio labor (${data.roofPatioArea} sq ft × $6.00)`,amount:data.roofPatioLaborCost,section:'core',key:'roof_patio_labor'});
+                lines.push({label:`Roof patio materials (${data.roofPatioMaterialUnits} × $550 per 2 ft; includes 4 support posts)`,amount:data.roofPatioMaterialCost,section:'core',key:'roof_patio_materials'});
             }
             if (data.wallHeightSurcharge > 0) {
-                lines.push({ label: `Wall height surcharge (${data.wallHeight} ft)`, amount: data.wallHeightSurcharge, section: 'core' });
+                lines.push({ label: `Wall height surcharge (${data.wallHeight} ft)`, amount: data.wallHeightSurcharge, section: 'core', key: 'wall_height' });
             }
             
-            lines.push({ label: `Electrical base${data.elecBase !== 1500 ? ' (adjusted)' : ''}`, amount: data.electricalCost - data.ev - data.threeWay - data.extraLightsCost, section: 'core', key: 'elec_base' });
+            // Electrical line amount = full electrical cost bucket (edits override and stick)
+            lines.push({ label: `Electrical`, amount: data.electricalCost, section: 'core', key: 'electrical' });
             lines.push({ label: `Overhead door + opener (1 bundled)`, amount: 1200, section: 'core', key: 'oh_door_opener' });
             if (data.addlOverheadDoors > 0) {
                 lines.push({ label: `Additional overhead doors (${data.addlOverheadDoors} × $800)`, amount: data.addlOverheadDoors * 800, section: 'core', key: 'addl_oh_doors' });
@@ -3098,9 +3150,8 @@ input, select, textarea, button { box-sizing:border-box; }
             if (data.andrewPermit > 0) lines.push({ label: 'Andrew for Permit', amount: data.andrewPermit, section: 'addons' });
             document.querySelectorAll('#extrasContainer > div').forEach(row=>{const desc=String(row.querySelector('.extra-desc')?.value||'Custom Extra / Option').trim()||'Custom Extra / Option';const cost=parseFloat(row.querySelector('.extra-cost')?.value)||0;const display=row.querySelector('.extra-display')?.value||'included';if(cost>0)lines.push({label:`${desc}${display==='option'?' — customer option':' — included in price'}`,amount:cost,section:'addons'});});
             
-            // Editable summary amounts — overrides stick until calculator rebuilds that line without a match
-            if (!window._summaryLineOverrides) window._summaryLineOverrides = {};
-            const overrides = window._summaryLineOverrides;
+            // Editable summary amounts — manual overrides stick across recalculation
+            const overrides = loadSummaryOverrides();
 
             // Render
             let html = '';
@@ -3114,14 +3165,25 @@ input, select, textarea, button { box-sizing:border-box; }
                 'addons': 'ELECTRICAL & MISC ADD-ONS'
             };
 
-            // Assign stable keys and apply overrides
+            // Assign stable keys and apply overrides (by explicit key and by label slug)
             lines.forEach((line, index) => {
-                if (!line.key) line.key = 'line_' + index + '_' + String(line.label || '').slice(0, 40);
+                line.key = summaryLineKey(line.label, line.key || null);
+                const labelKey = summaryLineKey(line.label);
+                let ov = null;
                 if (Object.prototype.hasOwnProperty.call(overrides, line.key) && Number.isFinite(Number(overrides[line.key]))) {
-                    line.amount = Number(overrides[line.key]);
+                    ov = Number(overrides[line.key]);
+                } else if (labelKey !== line.key && Object.prototype.hasOwnProperty.call(overrides, labelKey) && Number.isFinite(Number(overrides[labelKey]))) {
+                    ov = Number(overrides[labelKey]);
+                    // Migrate to primary key
+                    overrides[line.key] = ov;
+                }
+                if (ov != null) {
+                    line.amount = ov;
                     line.overridden = true;
                 }
             });
+            window._summaryLineOverrides = overrides;
+            saveSummaryOverrides();
             // Recompute internal total from (possibly overridden) line amounts
             let adjustedInternal = lines.reduce((s, L) => s + (Number(L.amount) || 0), 0);
             const profitSettingsAdj = typeof getProfitSettings === 'function' ? getProfitSettings(adjustedInternal) : { mode: 'percent', value: 0 };
@@ -3174,6 +3236,7 @@ input, select, textarea, button { box-sizing:border-box; }
             container.querySelectorAll('.summary-amt-input').forEach(inp => {
                 inp.addEventListener('focus', (e) => {
                     e.stopPropagation();
+                    window._summaryTyping = true;
                     try { inp.select(); } catch (_) {}
                 });
                 inp.addEventListener('click', (e) => e.stopPropagation());
@@ -3182,9 +3245,37 @@ input, select, textarea, button { box-sizing:border-box; }
                     e.stopPropagation();
                     if (e.key === 'Enter') { e.preventDefault(); inp.blur(); }
                 });
-                inp.addEventListener('input', (e) => { e.stopPropagation(); });
-                inp.addEventListener('blur', () => { commitSummaryAmtInput(inp); });
+                inp.addEventListener('input', (e) => {
+                    e.stopPropagation();
+                    // Live-save so a mid-type recalculate cannot lose the number
+                    const k = inp.getAttribute('data-line-key');
+                    const raw = String(inp.value || '').replace(/[$,\s]/g, '');
+                    const v = parseFloat(raw);
+                    if (k && Number.isFinite(v) && v >= 0) {
+                        const o = loadSummaryOverrides();
+                        o[k] = v;
+                        window._summaryLineOverrides = o;
+                        saveSummaryOverrides();
+                    }
+                });
+                inp.addEventListener('blur', () => {
+                    window._summaryTyping = false;
+                    commitSummaryAmtInput(inp);
+                });
             });
+
+            // Small helper under the list once
+            if (Object.keys(overrides).length) {
+                const note = document.createElement('div');
+                note.className = 'px-2 pt-2 text-[10px] text-amber-400/90';
+                note.innerHTML = 'Amber ring = manual override (stays until you change that calculator option or clear overrides). <button type="button" class="underline text-amber-300" id="clearSummaryOverridesBtn">Clear all manual amounts</button>';
+                container.appendChild(note);
+                document.getElementById('clearSummaryOverridesBtn')?.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    clearSummaryLineOverrides();
+                    calculateEstimate();
+                });
+            }
             
             // Update totals
             document.getElementById('internalTotal').innerHTML = '$' + data.internalTotal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});

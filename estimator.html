@@ -1111,12 +1111,12 @@ input, select, textarea, button { box-sizing:border-box; }
                             <div>
                                 <label class="text-xs text-zinc-400 block mb-1">Service / side door location</label>
                                 <select id="serviceDoorLocation" onchange="toggleServiceDoorLocationFields(); calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm">
-                                    <option value="right" selected>Right side</option>
-                                    <option value="front">Front</option>
-                                    <option value="back">Back</option>
-                                    <option value="left">Left side</option>
+                                    <option value="right" selected>Right side wall</option>
+                                    <option value="front">Front (beside overhead)</option>
+                                    <option value="back">Back wall</option>
+                                    <option value="left">Left side wall</option>
                                 </select>
-                                <div class="text-[10px] text-zinc-500 mt-0.5">Right = visible RIGHT WALL. Front = beside overhead door.</div>
+                                <div class="text-[10px] text-zinc-500 mt-0.5">Right/Left = SIDE WALLS (not front). Front = next to overhead door only.</div>
                             </div>
                             <div id="serviceDoorFrontSideWrap" class="hidden">
                                 <label class="text-xs text-zinc-400 block mb-1">If front, place service door</label>
@@ -2505,6 +2505,7 @@ input, select, textarea, button { box-sizing:border-box; }
             
             // Update gutter/soffit info lines
             updateInfoLines(gutterFt, hasGutters, soffitFt, hasSoffit);
+            try{ updatePlacementConflictUI(); }catch(e){}
         }
 
         function updateInfoLines(gutterFt, hasGutters, soffitFt, hasSoffit) {
@@ -3822,6 +3823,102 @@ input, select, textarea, button { box-sizing:border-box; }
             const loc = (document.getElementById('serviceDoorLocation') || {}).value || 'right';
             const wrap = document.getElementById('serviceDoorFrontSideWrap');
             if (wrap) wrap.classList.toggle('hidden', loc !== 'front');
+            try{ updatePlacementConflictUI(); }catch(e){}
+        }
+
+        /**
+         * Calculator ↔ photo layout sync: service door, windows, and overhead door
+         * cannot occupy the same wall slot.
+         */
+        function getGaragePlacementState(){
+            const service=(document.getElementById('serviceDoorLocation')?.value||'right').toLowerCase();
+            const serviceFront=(document.getElementById('serviceDoorFrontSide')?.value||'right').toLowerCase();
+            const winPlace=(document.getElementById('windowPlacement')?.value||'service').toLowerCase();
+            const winType=(document.getElementById('windowType')?.value||'choice').toLowerCase();
+            const hasWindows=winType!=='none' && (Number(document.getElementById('windowQty')?.value||1)>0);
+            const doorType=(document.getElementById('doorType')?.value||'standard').toLowerCase();
+            const hasService=!(doorType==='no'||doorType==='none'||doorType==='hidden');
+            const pos=(typeof updateOverheadDoorOffsetControl==='function')?updateOverheadDoorOffsetControl():{offset:0,leftReturn:2,rightReturn:2};
+            // Normalize window wall(s)
+            let windowWalls=[];
+            if(hasWindows){
+                if(winPlace==='front-left') windowWalls=['front-left'];
+                else if(winPlace==='front-right') windowWalls=['front-right'];
+                else if(winPlace==='rear'||winPlace==='back') windowWalls=['back'];
+                else if(winPlace==='both') windowWalls=['left','right'];
+                else if(winPlace==='service'){
+                    if(service==='front') windowWalls=['front-'+serviceFront];
+                    else if(service==='left') windowWalls=['left'];
+                    else if(service==='right') windowWalls=['right'];
+                    else if(service==='back') windowWalls=['back'];
+                    else windowWalls=['right'];
+                }
+            }
+            let serviceSlot=null;
+            if(hasService){
+                if(service==='front') serviceSlot='front-'+serviceFront;
+                else serviceSlot=service; // left | right | back
+            }
+            return {service, serviceFront, serviceSlot, windowWalls, hasWindows, hasService, leftReturn:Number(pos.leftReturn)||0, rightReturn:Number(pos.rightReturn)||0, doorOffset:Number(pos.offset)||0};
+        }
+
+        function validateGaragePlacementConflicts(){
+            const s=getGaragePlacementState();
+            const issues=[];
+            // Service door vs windows on the same wall/slot
+            if(s.hasService && s.hasWindows && s.serviceSlot){
+                if(s.windowWalls.includes(s.serviceSlot)){
+                    issues.push('Service door and a window are both on the same place ('+s.serviceSlot.replace('-',' ')+'). Move the window or the service door.');
+                }
+                // "both sides" conflicts with left or right service
+                if((s.serviceSlot==='left'||s.serviceSlot==='right') && s.windowWalls.includes(s.serviceSlot)){
+                    issues.push('Window placement overlaps the service-door wall. Choose a different window placement.');
+                }
+            }
+            // Front service door needs enough return on that side (min ~2.5' practical for a 3' door)
+            if(s.hasService && s.service==='front'){
+                const need=2.5;
+                if(s.serviceFront==='left' && s.leftReturn < need){
+                    issues.push("Service door on front-left needs about 3' clear left of the overhead door. Left return is only "+s.leftReturn+"'. Center or shift the overhead door right, or put the service door on a side wall.");
+                }
+                if(s.serviceFront==='right' && s.rightReturn < need){
+                    issues.push("Service door on front-right needs about 3' clear right of the overhead door. Right return is only "+s.rightReturn+"'. Center or shift the overhead door left, or put the service door on a side wall.");
+                }
+            }
+            // Front windows vs tight return next to offset overhead
+            if(s.hasWindows){
+                if(s.windowWalls.includes('front-left') && s.leftReturn < 2){
+                    issues.push("Front-left window needs room beside the overhead door. Left return is only "+s.leftReturn+"'.");
+                }
+                if(s.windowWalls.includes('front-right') && s.rightReturn < 2){
+                    issues.push("Front-right window needs room beside the overhead door. Right return is only "+s.rightReturn+"'.");
+                }
+            }
+            // Deduplicate
+            return [...new Set(issues)];
+        }
+
+        function updatePlacementConflictUI(){
+            const issues=validateGaragePlacementConflicts();
+            let el=document.getElementById('placementConflictAlert');
+            if(!el){
+                const anchor=document.getElementById('serviceDoorLocation')?.closest('div');
+                if(anchor && anchor.parentElement){
+                    el=document.createElement('div');
+                    el.id='placementConflictAlert';
+                    el.className='hidden mt-2 text-[11px] leading-snug rounded-xl border border-red-700/60 bg-red-950/40 text-red-200 px-3 py-2';
+                    anchor.parentElement.appendChild(el);
+                }
+            }
+            if(!el) return issues;
+            if(issues.length){
+                el.classList.remove('hidden');
+                el.innerHTML='<b>Layout conflict (calculator ↔ photo):</b><br>'+issues.map(i=>'• '+i).join('<br>');
+            } else {
+                el.classList.add('hidden');
+                el.innerHTML='';
+            }
+            return issues;
         }
 
         function saveExteriorAiKey() {
@@ -4764,6 +4861,14 @@ input, select, textarea, button { box-sizing:border-box; }
             // opts: { skipHealth, targetWindow } — targetWindow rebuilds an existing sheet popup in place
             const skipHealth = !!(opts && opts.skipHealth);
             const targetWindow = opts && opts.targetWindow ? opts.targetWindow : null;
+            try{
+                const placeIssues=(typeof validateGaragePlacementConflicts==='function')?validateGaragePlacementConflicts():[];
+                try{ updatePlacementConflictUI(); }catch(e){}
+                if(placeIssues.length){
+                    const go=confirm('Layout conflict — calculator and photo would not match:\n\n• '+placeIssues.join('\n• ')+'\n\nFix placements (service door / windows / overhead offset), or tap OK to continue anyway.');
+                    if(!go) return;
+                }
+            }catch(e){ console.warn('placement check', e); }
             if(!skipHealth){
                 try{
                     const health=updateEstimateHealthCheck(null);
@@ -5090,35 +5195,70 @@ input, select, textarea, button { box-sizing:border-box; }
                 'IMPORTANT SCALE: this is a '+w+'-foot-wide by '+d+'-foot-deep '+carWords,
                 'the building must look large and substantial, not a tiny shed',
                 'the overhead door is '+doorW+' feet wide by '+doorH+' feet tall and must dominate most of the FRONT wall width',
-                'camera pulled back so the full wide garage fits in frame with correct real-world proportions',
+                'camera pulled far enough back that the FULL width of the garage is visible with correct real-world proportions',
                 (w >= 20
-                    ? ('WIDTH EMPHASIS (MANDATORY): garage is '+w+' feet wide — show a clearly WIDE building, horizontal massing, broad front wall, not a narrow or tall-looking structure; leave space on left and right of frame so width reads true')
+                    ? ('WIDTH EMPHASIS (MANDATORY): this garage is '+w+' FEET WIDE — it must look OBVIOUSLY WIDE and large in the frame, horizontal massing, broad front elevation filling most of the width of the photo, NOT a small narrow shed, NOT zoomed-in on one corner only, show the full '+w+'-foot width so the building reads as a full two-car scale structure')
                     : '')
             ].filter(Boolean).join(', ');
 
-            const frontDoorRule = 'CRITICAL LAYOUT: the large overhead garage door is ONLY on the FRONT wall — never on the rear wall and never on the same wall as a roofed patio';
+            const frontDoorRule = 'CRITICAL LAYOUT: the large overhead garage door is ONLY on the FRONT wall — never on the rear wall, never on a side wall, and never on the same wall as a roofed patio';
+
+            // Window placement for prompt (avoid same slot as service door)
+            const winPlace = (document.getElementById('windowPlacement')?.value || 'service').toLowerCase();
+            let winPlaceWords = '';
+            if (winQty > 0) {
+                if (winPlace === 'front-left') winPlaceWords = 'wall window on the FRONT wall to the LEFT of the overhead door only';
+                else if (winPlace === 'front-right') winPlaceWords = 'wall window on the FRONT wall to the RIGHT of the overhead door only';
+                else if (winPlace === 'rear' || winPlace === 'back') winPlaceWords = 'wall window on the REAR wall only';
+                else if (winPlace === 'both') winPlaceWords = 'wall windows on BOTH the left and right SIDE walls';
+                else {
+                    // service-door side — but still not stacked on the door leaf
+                    if (service === 'front') winPlaceWords = 'wall window on the FRONT wall on the '+serviceFrontSide+' side near the service door but not on the door itself';
+                    else if (service === 'left') winPlaceWords = 'wall window on the LEFT SIDE wall near the service door';
+                    else if (service === 'back') winPlaceWords = 'wall window on the REAR wall near the service door';
+                    else winPlaceWords = 'wall window on the RIGHT SIDE wall near the service door';
+                }
+            }
 
             let serviceWords = '';
             let coachLightWords = '';
             let serviceWalkWords = '';
+            // NOTE: "right" / "left" = SIDE WALLS, not front corners.
             if(service==='no'||service==='none'||service==='hidden'){
-                serviceWords = 'no service door on the visible elevation';
+                serviceWords = 'no service door on any elevation';
             } else if(service==='front'){
-                serviceWords = 'service entry door on the FRONT elevation, '+serviceFrontSide+' of the overhead door';
-                coachLightWords = 'black coach light mounted on the wall next to the service door';
-                serviceWalkWords = 'small concrete walkway pad from the front service door connecting neatly flush into the main concrete apron';
+                serviceWords = [
+                    'service man-door on the FRONT wall only, '+serviceFrontSide+' of the large overhead door',
+                    'NOT on a side wall'
+                ].join(', ');
+                coachLightWords = 'black coach light on the front wall next to that service door';
+                serviceWalkWords = 'small concrete walk pad at the front service door flush into the apron';
             } else if(service==='back'){
-                serviceWords = 'service entry door on the REAR wall only (not on the front wall with the overhead door)';
-                coachLightWords = 'black coach light next to the rear service door if visible';
-                serviceWalkWords = 'if the rear service door is visible, a small concrete walkway pad at that door';
+                serviceWords = [
+                    'service man-door on the REAR / BACK wall only',
+                    'NOT on the front wall and NOT on a side wall'
+                ].join(', ');
+                coachLightWords = 'black coach light next to the rear service door when that wall is visible';
+                serviceWalkWords = 'small concrete pad at the rear service door when visible';
             } else if(service==='left'){
-                serviceWords = 'service entry door on the LEFT SIDE wall (not on the front overhead-door wall)';
-                coachLightWords = 'black coach light mounted on the wall next to the service door';
-                serviceWalkWords = 'small concrete sidewalk from the left-side service door connecting neatly flush to the front concrete apron so people do not step on grass';
+                serviceWords = [
+                    'CRITICAL: service man-door is on the LEFT SIDE WALL only (the long side wall on the left when facing the overhead door)',
+                    'do NOT place the service door on the front wall',
+                    'do NOT place it next to the overhead door on the front',
+                    'it belongs mid-wall or toward the front of the LEFT SIDE elevation'
+                ].join(', ');
+                coachLightWords = 'black coach light on the LEFT SIDE wall next to the service door';
+                serviceWalkWords = 'concrete walk along the left side wall from the service door toward the front apron';
             } else {
-                serviceWords = 'service entry door on the RIGHT SIDE wall (not on the front overhead-door wall)';
-                coachLightWords = 'black coach light mounted on the wall next to the service door';
-                serviceWalkWords = 'small concrete sidewalk from the right-side service door connecting neatly flush to the front concrete apron so people do not step on grass';
+                // right side wall (default)
+                serviceWords = [
+                    'CRITICAL: service man-door is on the RIGHT SIDE WALL only (the long side wall on the right when facing the overhead door)',
+                    'do NOT place the service door on the front wall',
+                    'do NOT place it on the front-right corner beside the overhead door',
+                    'it belongs on the RIGHT SIDE elevation, set into the siding of that side wall'
+                ].join(', ');
+                coachLightWords = 'black coach light on the RIGHT SIDE wall next to the service door';
+                serviceWalkWords = 'concrete walk along the right side wall from the service door toward the front apron';
             }
 
             const gutterWords = gutters
@@ -5130,7 +5270,9 @@ input, select, textarea, button { box-sizing:border-box; }
                 : 'painted white real wood trim at soffit and fascia (traditional wood trim, not aluminum)';
 
             const stoneWords = stone ? 'with a stone accent wainscot along the base' : '';
-            const winWords = winQty>0 ? ('with '+winQty+' wall window'+(winQty>1?'s':'')) : 'no wall windows';
+            const winWords = winQty>0
+                ? ('with '+winQty+' wall window'+(winQty>1?'s':'')+(winPlaceWords ? (', '+winPlaceWords) : ''))
+                : 'no wall windows';
 
             let accessWords = '';
             if (access === 'alley') {
@@ -5182,12 +5324,12 @@ input, select, textarea, button { box-sizing:border-box; }
             } else if (resolvedView === 'left') {
                 cameraWords = [
                     'CAMERA ANGLE (MANDATORY): LEFT side or left three-quarter view',
-                    'the LEFT SIDE of the garage must be clearly visible as the main subject'
+                    'the LEFT SIDE WALL of the garage must be clearly visible as the main subject'
                 ].join(', ');
             } else if (resolvedView === 'right') {
                 cameraWords = [
                     'CAMERA ANGLE (MANDATORY): RIGHT side or right three-quarter view',
-                    'the RIGHT SIDE of the garage must be clearly visible as the main subject'
+                    'the RIGHT SIDE WALL of the garage must be clearly visible as the main subject'
                 ].join(', ');
             } else if (wantsCornerView) {
                 cameraWords = 'CAMERA ANGLE (MANDATORY): three-quarter corner view showing two faces of the garage';
@@ -5196,6 +5338,48 @@ input, select, textarea, button { box-sizing:border-box; }
                 cameraWords = [
                     'CAMERA ANGLE (MANDATORY): front or front three-quarter view facing the overhead garage door',
                     accessWords
+                ].join(', ');
+            }
+
+            // Only show service door in the photo when the chosen view can see that wall
+            const serviceVisibleInView = (() => {
+                if (service==='no'||service==='none'||service==='hidden') return false;
+                if (resolvedView === 'front') return service === 'front' || service === 'left' || service === 'right'; // side doors may peek on 3/4 front
+                if (resolvedView === 'left') return service === 'left' || service === 'front' || service === 'back';
+                if (resolvedView === 'right') return service === 'right' || service === 'front' || service === 'back';
+                if (resolvedView === 'back') return service === 'back' || service === 'left' || service === 'right';
+                return true;
+            })();
+            if (!serviceVisibleInView && service!=='no' && service!=='none' && service!=='hidden') {
+                // Still state where the door is on the building, but not invent a door on the wrong wall
+                serviceWords = serviceWords + ', the service door may be out of frame or only partially visible from this camera angle — do NOT move it onto a different wall just to show it';
+                coachLightWords = '';
+                serviceWalkWords = '';
+            }
+            if (service === 'right' && resolvedView === 'front') {
+                serviceWords = [
+                    'service man-door is on the RIGHT SIDE WALL (not on the front)',
+                    'from a front view it may appear only as a side return or may be mostly out of frame',
+                    'do NOT draw a man-door on the front wall next to the overhead door'
+                ].join(', ');
+            }
+            if (service === 'left' && resolvedView === 'front') {
+                serviceWords = [
+                    'service man-door is on the LEFT SIDE WALL (not on the front)',
+                    'from a front view it may appear only as a side return or may be mostly out of frame',
+                    'do NOT draw a man-door on the front wall next to the overhead door'
+                ].join(', ');
+            }
+            if (service === 'right' && resolvedView === 'right') {
+                serviceWords = [
+                    'service man-door CLEARLY VISIBLE on the RIGHT SIDE WALL (main subject wall)',
+                    'set into the right-side siding, flush man-door, not on the front'
+                ].join(', ');
+            }
+            if (service === 'left' && resolvedView === 'left') {
+                serviceWords = [
+                    'service man-door CLEARLY VISIBLE on the LEFT SIDE WALL (main subject wall)',
+                    'set into the left-side siding, flush man-door, not on the front'
                 ].join(', ');
             }
 
@@ -5219,17 +5403,21 @@ input, select, textarea, button { box-sizing:border-box; }
                 ].join(', ');
             }
 
-            // Rear view with a blank back wall looks unfinished — add a rear service door
-            // unless the salesman already placed a service door or explicitly said no door.
+            // Rear view: only force a rear service door when calculator says back, or chat asks for it.
+            // Do NOT invent a rear door when service is on left/right/front.
             const chatBlocksRearDoor = /\b(no service door|no man door|no entry door|blank (back|rear)|plain (back|rear))\b/.test(q);
             const chatAsksRearDoor = /\b(service door|man door|entry door).{0,20}\b(back|rear)\b|\b(back|rear).{0,20}\b(service door|man door|entry door)\b/.test(q);
             if (resolvedView === 'back' && !chatBlocksRearDoor) {
-                if (service==='no'||service==='none'||service==='hidden'||service==='front'||chatAsksRearDoor) {
-                    serviceWords = 'service entry door centered or offset on the REAR wall (man door), clearly visible in the rear view';
+                if (service === 'back' || chatAsksRearDoor) {
+                    serviceWords = 'service entry door on the REAR wall (man door), clearly visible in the rear view';
                     coachLightWords = 'black coach light mounted on the wall next to the rear service door';
                     serviceWalkWords = 'small concrete walkway pad at the rear service door, flush with any patio slab if present';
-                } else if (service==='back') {
-                    // already set above
+                } else if (service === 'left' || service === 'right') {
+                    serviceWords = serviceWords + ', from the rear the side-wall service door may be visible on the '+service+' edge — do not move it to the back wall';
+                } else if (service === 'front') {
+                    serviceWords = 'service door is on the FRONT wall (not visible in a pure rear view) — do not invent a rear man-door';
+                    coachLightWords = '';
+                    serviceWalkWords = '';
                 }
             }
 

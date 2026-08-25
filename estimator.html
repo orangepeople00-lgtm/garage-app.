@@ -4611,6 +4611,58 @@ input, select, textarea, button { box-sizing:border-box; }
             const h=q.match(/(?:wall height|height)\s*(?:to|=|at)?\s*(8|9|10|11|12)\s*(?:ft|feet|foot)?/);
             if(h) setVal('wallHeight',h[1],'wall height: '+h[1]+' ft');
 
+            // Garage SIZE (width × depth) — calculator + photo
+            const sizeM=q.match(/(?:garage\s*)?(?:size|to|=|:)?\s*(\d{2})\s*(?:'|ft|foot)?\s*[x×by]\s*(\d{2})\s*(?:'|ft|foot)?/)
+                || q.match(/\b(\d{2})\s*[x×]\s*(\d{2})\b/);
+            if(sizeM && !/door|overhead|window|patio/.test(q)){
+                const gw=String(sizeM[1]);
+                const gd=String(sizeM[2]);
+                const widthEl=document.getElementById('width');
+                const depthEl=document.getElementById('depth');
+                if(widthEl){
+                    const hasOpt=[...widthEl.options].some(o=>o.value===gw);
+                    if(hasOpt) widthEl.value=gw;
+                    else {
+                        // custom width path if available
+                        try{
+                            if(document.getElementById('customWidth')){
+                                setCheck('useCustomGarageSize', true);
+                                setVal('customWidth', gw);
+                            } else widthEl.value=gw;
+                        }catch(e){ widthEl.value=gw; }
+                    }
+                }
+                if(depthEl){
+                    const hasOpt=[...depthEl.options].some(o=>o.value===gd);
+                    if(hasOpt) depthEl.value=gd;
+                    else {
+                        try{
+                            if(document.getElementById('customDepth')){
+                                setCheck('useCustomGarageSize', true);
+                                setVal('customDepth', gd);
+                            } else depthEl.value=gd;
+                        }catch(e){ depthEl.value=gd; }
+                    }
+                }
+                try{ if(typeof toggleCustomGarageSize==='function') toggleCustomGarageSize(); }catch(e){}
+                changed.push("garage size "+gw+"'×"+gd+"' (sheet + photo)");
+            }
+            // "Make it wider" / scale emphasis — photo edit (and bump width if they say a number)
+            const widerAsk=/\b(wider|make\s+(it\s+)?wider|look\s+wider|more\s+wide|scale\s+up|bigger\s+looking|appear\s+wider|seem\s+wider)\b/.test(q);
+            const widerFt=q.match(/\b(?:wider|width|wide)\s*(?:to|=|:)?\s*(\d{2})\s*(?:'|ft|foot)?\b/) || q.match(/\b(\d{2})\s*(?:'|ft|foot)?\s*wide\b/);
+            if(widerFt && widerFt[1]){
+                const gw=String(widerFt[1]);
+                const widthEl=document.getElementById('width');
+                if(widthEl){
+                    const hasOpt=[...widthEl.options].some(o=>o.value===gw);
+                    if(hasOpt){ widthEl.value=gw; changed.push("width set to "+gw+"'"); }
+                    else { try{ setVal('customWidth', gw); changed.push("width set to "+gw+"'"); }catch(e){} }
+                }
+            }
+            if(widerAsk){
+                changed.push('photo: emphasize wider garage scale');
+            }
+
             // Extra lights / outlets by location
             const mIntLights=q.match(/(\d+)\s*(?:extra\s+)?(?:interior|int\.?)\s*lights?/);
             const mExtLights=q.match(/(\d+)\s*(?:extra\s+)?(?:exterior|ext\.?)\s*lights?/);
@@ -4647,8 +4699,9 @@ input, select, textarea, button { box-sizing:border-box; }
             }
 
             // Visual changes EDIT the existing AI photo (keep windows/doors/etc.) — do not wipe and start over
-            const visualChange = changed.some(c=>/roof:|siding|color|door style|overhead door|service door|party door|french|gable|hip|patio|photo view|wall height|windows|gutters|soffit/i.test(c))
-                || /\b(photo|picture|image|render|camera|view|siding|door|roof|gable|hip|color|patio)\b/.test(q);
+            const visualChange = changed.some(c=>/roof:|siding|color|door style|overhead door|service door|party door|french|gable|hip|patio|photo view|wall height|windows|gutters|soffit|garage size|width set|wider garage|photo:/i.test(c))
+                || /\b(photo|picture|image|render|camera|view|siding|door|roof|gable|hip|color|patio|wider|wide|scale|bigger)\b/.test(q)
+                || widerAsk;
             const forceNewPhoto = /\b(new photo|regenerate|start over|brand new image|full regenerate)\b/.test(q);
 
             if(forceNewPhoto){
@@ -4664,7 +4717,12 @@ input, select, textarea, button { box-sizing:border-box; }
                 try{ syncPhotoNotesWithCalculator(raw); }catch(e){}
                 // Keep prior image; next sheet build will EDIT it with only this change
                 window._sheetPhotoMode='edit';
-                window._sheetPhotoEditPrompt=raw;
+                // Strengthen width edits so the model actually widens the building
+                if(widerAsk || /wider|wide|scale/.test(q)){
+                    window._sheetPhotoEditPrompt = raw + '. CRITICAL SCALE: make the garage look noticeably WIDER in the frame — full horizontal massing, broad front wall, camera pulled back so the full width reads correctly. Do not make it look like a small narrow shed.';
+                } else {
+                    window._sheetPhotoEditPrompt=raw;
+                }
                 changed.push('photo will EDIT prior image (keep existing windows/details)');
             } else {
                 // Text/layout-only change — reuse the same photo
@@ -5018,11 +5076,14 @@ input, select, textarea, button { box-sizing:border-box; }
             const skipHealth = !!(opts && opts.skipHealth);
             const targetWindow = opts && opts.targetWindow ? opts.targetWindow : null;
             try{
-                const placeIssues=(typeof validateGaragePlacementConflicts==='function')?validateGaragePlacementConflicts():[];
-                try{ updatePlacementConflictUI(); }catch(e){}
-                if(placeIssues.length){
-                    const go=confirm('Layout conflict — calculator and photo would not match:\n\n• '+placeIssues.join('\n• ')+'\n\nFix placements (service door / windows / overhead offset), or tap OK to continue anyway.');
-                    if(!go) return;
+                const skipPlace=!!(opts && (opts.skipHealth || opts.skipPlacement));
+                if(!skipPlace){
+                    const placeIssues=(typeof validateGaragePlacementConflicts==='function')?validateGaragePlacementConflicts():[];
+                    try{ updatePlacementConflictUI(); }catch(e){}
+                    if(placeIssues.length){
+                        const go=confirm('Layout conflict — calculator and photo would not match:\n\n• '+placeIssues.join('\n• ')+'\n\nFix placements (service door / windows / overhead offset), or tap OK to continue anyway.');
+                        if(!go) return;
+                    }
                 }
             }catch(e){ console.warn('placement check', e); }
             if(!skipHealth){
@@ -5866,10 +5927,14 @@ input, select, textarea, button { box-sizing:border-box; }
 
         function buildPhotoEditPrompt(changeText){
             const change=String(changeText||'').trim();
+            const wantsWider=/\b(wider|wide|scale|horizontal|massing|bigger looking)\b/i.test(change);
             return [
                 'Edit this existing garage photograph only.',
                 'Apply ONLY this change: '+(change||'minor refinement'),
-                'Keep the same camera angle, same building proportions, same windows, same doors, same siding color, same roof, same concrete, same background, same lighting unless the change explicitly asks to alter them.',
+                wantsWider
+                    ? 'SCALE CHANGE: stretch the perceived WIDTH of the garage — wider facade, broader front wall, camera farther back so the full width is obvious. Keep height proportion realistic for a residential garage.'
+                    : 'Keep the same building proportions unless the change asks to alter size/scale.',
+                'Keep the same camera angle, same windows, same doors, same siding color, same roof, same concrete, same background, same lighting unless the change explicitly asks to alter them.',
                 'Do NOT remove windows unless the change says to remove windows.',
                 'Do NOT redesign the whole garage. Do NOT generate a completely different building.',
                 'Preserve every detail that is not mentioned in the change request.',

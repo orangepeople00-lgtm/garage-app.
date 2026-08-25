@@ -1262,9 +1262,28 @@ input, select, textarea, button { box-sizing:border-box; }
                                 </label>
                             </div>
                             <div class="grid grid-cols-2 gap-2">
-<div><label class="text-xs text-zinc-400 block mb-1">Extra lights</label><input type="number" id="extraLights" value="0" min="0" step="1" oninput="calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2 text-sm"><div class="text-[10px] text-zinc-500">@ $150 ea above std 2</div></div>
-<div><label class="text-xs text-zinc-400 block mb-1">Extra outlets</label><input type="number" id="extraOutlets" value="0" min="0" step="1" oninput="calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2 text-sm"><div class="text-[10px] text-zinc-500">@ $150 ea · sheet shows extra + 1</div></div>
-</div>
+                                <div class="col-span-2 text-[10px] text-zinc-500">@ $150 each · standard already includes 2 INT lights, 2 INT outlets, 1 EXT light — enter extras by location</div>
+                                <div>
+                                    <label class="text-xs text-zinc-400 block mb-1">Extra INT. lights</label>
+                                    <input type="number" id="extraLightsInterior" value="" min="0" step="1" placeholder="0" oninput="syncExtraElecTotals(); calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2 text-sm">
+                                </div>
+                                <div>
+                                    <label class="text-xs text-zinc-400 block mb-1">Extra EXT. lights</label>
+                                    <input type="number" id="extraLightsExterior" value="" min="0" step="1" placeholder="0" oninput="syncExtraElecTotals(); calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2 text-sm">
+                                </div>
+                                <div>
+                                    <label class="text-xs text-zinc-400 block mb-1">Extra INT. outlets</label>
+                                    <input type="number" id="extraOutletsInterior" value="" min="0" step="1" placeholder="0" oninput="syncExtraElecTotals(); calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2 text-sm">
+                                </div>
+                                <div>
+                                    <label class="text-xs text-zinc-400 block mb-1">Extra EXT. outlets</label>
+                                    <input type="number" id="extraOutletsExterior" value="" min="0" step="1" placeholder="0" oninput="syncExtraElecTotals(); calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2 text-sm">
+                                </div>
+                                <input type="hidden" id="extraLights" value="0">
+                                <input type="hidden" id="extraOutlets" value="0">
+                                <input type="hidden" id="extraLightsLocation" value="exterior">
+                                <input type="hidden" id="extraOutletsLocation" value="interior">
+                            </div>
                         </div>
                         </div>
                         <!-- Structural Add-ons -->
@@ -1713,11 +1732,19 @@ input, select, textarea, button { box-sizing:border-box; }
                                     <option value="alley">Alley</option>
                                 </select>
                             </div>
-                            <div class="text-[9px] text-zinc-500 leading-snug pt-4">AI photo · library fallback if offline</div>
+                            <div>
+                                <label class="text-[9px] font-bold text-violet-300/80 block mb-0.5" for="garagePhotoView">VIEW</label>
+                                <select id="garagePhotoView" onchange="saveGaragePhotoView()" class="calc-input w-full bg-zinc-900 border border-violet-700/50 text-white rounded-lg px-2 py-1.5 text-xs">
+                                    <option value="front" selected>Front</option>
+                                    <option value="left">Left side</option>
+                                    <option value="right">Right side</option>
+                                    <option value="back">Back / rear</option>
+                                </select>
+                            </div>
                         </div>
                         <label class="text-[9px] font-bold text-violet-300/80 block mb-0.5" for="aiPhotoExtraInstructions">PHOTO NOTES</label>
-                        <textarea id="aiPhotoExtraInstructions" rows="2" placeholder="e.g. roofed patio in the back — rear view"
-                            oninput="saveAIPhotoExtraInstructions(); applyPhotoChatToEstimate()"
+                        <textarea id="aiPhotoExtraInstructions" rows="2" placeholder="e.g. roofed patio in the back — or type front / left / back / right"
+                            oninput="saveAIPhotoExtraInstructions(); applyPhotoChatToEstimate(); syncGaragePhotoViewFromChat()"
                             class="w-full bg-zinc-900 border border-violet-700/50 text-white rounded-lg px-2 py-1.5 text-xs resize-y min-h-[44px]"></textarea>
                         <div id="aiPhotoStatus" class="text-[9px] text-emerald-400 mt-1 hidden"></div>
                     </div>
@@ -2152,8 +2179,18 @@ input, select, textarea, button { box-sizing:border-box; }
             const ev = electricOn && document.getElementById('evCharger').checked ? 1000 : 0;
             const evPrep = electricOn && document.getElementById('evPrep').checked ? 450 : 0;
             const threeWay = electricOn && document.getElementById('threeWaySwitch').checked ? 200 : 0;
-            const extraLights = electricOn ? (parseInt(document.getElementById('extraLights').value) || 0) : 0;
-            const extraOutlets = electricOn ? (parseInt(document.getElementById('extraOutlets').value) || 0) : 0;
+            // Prefer split INT/EXT fields; fall back to legacy single totals
+            if (typeof syncExtraElecTotals === 'function') try { syncExtraElecTotals(); } catch(e) {}
+            const extraLights = electricOn
+                ? ((parseInt(document.getElementById('extraLightsInterior')?.value)||0)
+                    + (parseInt(document.getElementById('extraLightsExterior')?.value)||0)
+                    || (parseInt(document.getElementById('extraLights')?.value)||0))
+                : 0;
+            const extraOutlets = electricOn
+                ? ((parseInt(document.getElementById('extraOutletsInterior')?.value)||0)
+                    + (parseInt(document.getElementById('extraOutletsExterior')?.value)||0)
+                    || (parseInt(document.getElementById('extraOutlets')?.value)||0))
+                : 0;
             const extraWindows = parseInt(document.getElementById('extraWindows').value) || 0;
             // Openers: if No electric, still allow cost in calc unless we also zero openers — sheet hides opener row only
             const noElectricSelected = !electricOn && (typeof getElectricAltOption==='function' && getElectricAltOption()==='none');
@@ -2755,8 +2792,10 @@ input, select, textarea, button { box-sizing:border-box; }
             }
 
             try{
+                const loadInt=(document.getElementById('internalTotal')?.textContent||'$0.00').trim();
+                const loadQt=(document.getElementById('customerQuote')?.textContent||'$0.00').trim();
                 estimateWindow.document.open();
-                estimateWindow.document.write('<!doctype html><html><head><title>Option '+slot+' Estimate</title></head><body style="font-family:Arial,sans-serif;padding:40px;text-align:center"><h2>Loading Option '+slot+'…</h2><p>Preparing estimate sheet.</p></body></html>');
+                estimateWindow.document.write('<!doctype html><html><head><title>Option '+slot+' Estimate</title></head><body style="font-family:Arial,sans-serif;padding:40px;text-align:center;background:#0a0a0b;color:#e4e4e7"><h2 style="color:#fff">Loading Option '+slot+'…</h2><p style="color:#a1a1aa">Preparing estimate sheet.</p><div style="display:inline-flex;gap:16px;background:#18181b;border:1px solid #3b82f6;border-radius:14px;padding:12px 16px;margin-top:12px"><div><div style="font-size:10px;color:#71717a">INTERNAL</div><div style="font-family:monospace;font-weight:800;color:#fff">'+loadInt+'</div></div><div style="width:1px;background:#3f3f46"></div><div><div style="font-size:10px;color:#eab308">PROJECT PRICE</div><div style="font-family:monospace;font-weight:800;color:#facc15;font-size:1.2rem">'+loadQt+'</div></div></div></body></html>');
                 estimateWindow.document.close();
             }catch(e){}
 
@@ -2876,11 +2915,12 @@ input, select, textarea, button { box-sizing:border-box; }
             const inputs = document.querySelectorAll('#breakdown .summary-amt-input');
             let sum = 0;
             inputs.forEach(inp => {
-                const v = parseFloat(inp.value);
+                const raw = String(inp.value || '').replace(/[$,\s]/g, '');
+                const v = parseFloat(raw);
                 if (Number.isFinite(v)) sum += v;
                 const k = inp.getAttribute('data-line-key');
                 if (k && Number.isFinite(v)) window._summaryLineOverrides[k] = v;
-                inp.classList.add('ring-1', 'ring-amber-500/60');
+                if (Number.isFinite(v)) inp.classList.add('ring-1', 'ring-amber-500/60');
             });
             const profitSettings = typeof getProfitSettings === 'function' ? getProfitSettings(sum) : { mode: 'percent', value: 0 };
             let profit = 0;
@@ -2895,8 +2935,24 @@ input, select, textarea, button { box-sizing:border-box; }
             const profitDisplay = document.getElementById('profitAppliedDisplay');
             if (profitDisplay) profitDisplay.textContent = '+$' + profit.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
         }
+        function commitSummaryAmtInput(inp){
+            if (!inp) return;
+            const k = inp.getAttribute('data-line-key');
+            const raw = String(inp.value || '').replace(/[$,\s]/g, '');
+            const v = parseFloat(raw);
+            if (!k || !Number.isFinite(v) || v < 0) return;
+            window._summaryLineOverrides = window._summaryLineOverrides || {};
+            window._summaryLineOverrides[k] = v;
+            inp.value = String(Math.round(v * 100) / 100);
+            inp.classList.add('ring-1', 'ring-amber-500/60');
+            recomputeTotalsFromSummaryInputs();
+        }
         function updateBreakdown(data) {
             const container = document.getElementById('breakdown');
+            // Never rebuild the summary while the user is typing in a line amount
+            if (document.activeElement && document.activeElement.classList && document.activeElement.classList.contains('summary-amt-input')) {
+                return;
+            }
             container.innerHTML = '';
             
             const lines = [];
@@ -3082,9 +3138,11 @@ input, select, textarea, button { box-sizing:border-box; }
                 
                 const amt = Number(line.amount) || 0;
                 const keyEsc = String(line.key).replace(/"/g, '&quot;');
+                // Plain text box so typing is natural (no number-spinner snap / focus loss)
+                const displayAmt = line.overridden ? String(amt) : (Math.round(amt * 100) / 100).toString();
                 const amountInput = line.note && amt === 0
                     ? `<span class="text-yellow-400 text-xs">${line.note}</span>`
-                    : `<input type="number" step="1" class="summary-amt-input font-mono text-right tabular-nums bg-transparent border border-transparent hover:border-zinc-600 focus:border-blue-500 rounded px-1 py-0.5 w-[7.5rem] text-blue-300 ${line.overridden ? 'ring-1 ring-amber-500/60' : ''}" data-line-key="${keyEsc}" value="${amt.toFixed(2)}" title="Click to edit — updates internal cost">`;
+                    : `<input type="text" inputmode="decimal" autocomplete="off" class="summary-amt-input font-mono text-right tabular-nums bg-zinc-950 border border-zinc-700 focus:border-blue-500 rounded px-2 py-1 w-[7.5rem] text-blue-300 ${line.overridden ? 'ring-1 ring-amber-500/60' : ''}" data-line-key="${keyEsc}" value="${displayAmt}" title="Edit amount — totals update when you leave the box">`;
                 
                 html += `
                     <div class="estimate-line flex justify-between items-center px-2 py-[1px] hover:bg-zinc-800/40 rounded gap-2">
@@ -3096,19 +3154,20 @@ input, select, textarea, button { box-sizing:border-box; }
             
             container.innerHTML = html || '<div class="text-center text-zinc-500 py-8 text-sm">Select options to see breakdown</div>';
 
-            // Wire editable amount inputs
+            // Wire editable amount inputs — commit only on blur / Enter (never while typing)
             container.querySelectorAll('.summary-amt-input').forEach(inp => {
-                inp.addEventListener('change', () => {
-                    const k = inp.getAttribute('data-line-key');
-                    const v = parseFloat(inp.value);
-                    if (!k || !Number.isFinite(v)) return;
-                    window._summaryLineOverrides[k] = v;
-                    // Recalc totals from all visible inputs without full calculator reset
-                    recomputeTotalsFromSummaryInputs();
+                inp.addEventListener('focus', (e) => {
+                    e.stopPropagation();
+                    try { inp.select(); } catch (_) {}
                 });
+                inp.addEventListener('click', (e) => e.stopPropagation());
+                inp.addEventListener('mousedown', (e) => e.stopPropagation());
                 inp.addEventListener('keydown', (e) => {
+                    e.stopPropagation();
                     if (e.key === 'Enter') { e.preventDefault(); inp.blur(); }
                 });
+                inp.addEventListener('input', (e) => { e.stopPropagation(); });
+                inp.addEventListener('blur', () => { commitSummaryAmtInput(inp); });
             });
             
             // Update totals
@@ -3253,6 +3312,7 @@ input, select, textarea, button { box-sizing:border-box; }
                         const bootstrap=cs.filter(c=>/:\s*(?:None|NaN(?:'\s*x\s*NaN')?)\s*→/i.test(String(c||''))).length;
                         return !(bootstrap>0 && bootstrap>=Math.max(1,Math.ceil(cs.length*0.5)));
                     });
+                    const sheetAiUpdates=Array.isArray(previousSnapshot.sheet_ai_updates)?previousSnapshot.sheet_ai_updates.slice():[];
 
                     // The first time an estimate is edited, establish its ORIGINAL baseline.
                     // For modern records this is the exact calculator state saved when first created.
@@ -3281,13 +3341,25 @@ input, select, textarea, button { box-sizing:border-box; }
                         ...(record.estimate_snapshot||{}),
                         original_calculator_state: originalState,
                         original_record_baseline: originalRecord,
-                        revision_history:revisionHistory
+                        revision_history:revisionHistory,
+                        sheet_ai_updates:sheetAiUpdates,
+                        last_sheet_ai_request:previousSnapshot.last_sheet_ai_request||null,
+                        last_sheet_ai_at:previousSnapshot.last_sheet_ai_at||null
                     };
                     const result=await garageSb.from('estimate_history').update(record).eq('id',editId);
                     error=result.error;
+                    if(!error) window._lastEstimateHistoryId=editId;
                 }else{
-                    const result=await garageSb.from('estimate_history').insert(record);
+                    const result=await garageSb.from('estimate_history').insert(record).select('id').single();
                     error=result.error;
+                    if(!error && result.data?.id){
+                        window._lastEstimateHistoryId=result.data.id;
+                        try{
+                            const u=new URL(location.href);
+                            u.searchParams.set('editEstimate',String(result.data.id));
+                            history.replaceState({},'',u.toString());
+                        }catch(e){}
+                    }
                 }
                 if(error)console.error('Estimate history save failed:',error);
             }catch(err){console.error('Estimate history save failed:',err)}
@@ -3487,6 +3559,10 @@ input, select, textarea, button { box-sizing:border-box; }
                 }
                 if(!e)return alert('Could not load the saved estimate for editing. Please return to Estimate History and click Edit again.');
                 const s=e.estimate_snapshot||{};
+                if(s.sheet_presentation && typeof s.sheet_presentation==='object'){
+                    window._sheetPresentation=Object.assign(getSheetPresentation(), s.sheet_presentation);
+                    try{ saveSheetPresentationSession(); }catch(e){}
+                }
                 const state=s.calculator_state||null;
                 if(state){
                     Object.entries(state).forEach(([key,value])=>{
@@ -3703,6 +3779,21 @@ input, select, textarea, button { box-sizing:border-box; }
             const isParty=(document.getElementById('doorType')?.value||'')==='party';
             if(wrap) wrap.classList.toggle('hidden', !isParty);
         }
+        function syncExtraElecTotals(){
+            const n=(id)=>Math.max(0,parseInt(document.getElementById(id)?.value)||0);
+            const li=n('extraLightsInterior'), le=n('extraLightsExterior');
+            const oi=n('extraOutletsInterior'), oe=n('extraOutletsExterior');
+            const lightsEl=document.getElementById('extraLights');
+            const outletsEl=document.getElementById('extraOutlets');
+            if(lightsEl) lightsEl.value=String(li+le);
+            if(outletsEl) outletsEl.value=String(oi+oe);
+            // Keep legacy location fields coherent for older saved states
+            const ll=document.getElementById('extraLightsLocation');
+            const ol=document.getElementById('extraOutletsLocation');
+            if(ll) ll.value = le>0 && li===0 ? 'exterior' : (li>0 && le===0 ? 'interior' : 'exterior');
+            if(ol) ol.value = oe>0 && oi===0 ? 'exterior' : 'interior';
+        }
+        function toggleExtraElecLocationFields(){ syncExtraElecTotals(); }
         function applyOverheadDoorSizePreset(){
             const preset=document.getElementById('overheadDoorSizePreset')?.value||'16x7';
             const customWrap=document.getElementById('overheadDoorCustomWrap');
@@ -4149,6 +4240,37 @@ input, select, textarea, button { box-sizing:border-box; }
             if(best>=0){el.selectedIndex=best; return true;} return false;
         }
 
+        /** Keep AI photo prompt aligned with calculator so sheet details + image match */
+        function syncPhotoNotesWithCalculator(extraRaw){
+            const photoBox=document.getElementById('aiPhotoExtraInstructions');
+            if(!photoBox) return;
+            const get=id=>{const e=document.getElementById(id); if(!e) return ''; return (e.options&&e.selectedIndex>=0)?e.options[e.selectedIndex].text:e.value;};
+            const roof=get('roofType')||'hip';
+            const sidingType=(document.getElementById('sidingType')?.value||'vinyl');
+            const colorId=sidingType==='hardie'?'hardieColor':'vinylColor';
+            const colorTxt=get(colorId)||'White';
+            const doorW=get('overheadDoorWidth')||'16';
+            const doorH=get('overheadDoorHeight')||'7';
+            const doorStyle=get('overheadDoorStyle')||'Steel Raised Panel';
+            const view=document.getElementById('garagePhotoView')?.value||'front';
+            const syncLine=[
+                'MATCH SHEET EXACTLY:',
+                roof+' roof',
+                colorTxt+' '+(sidingType==='hardie'?'Hardie fiber cement':'vinyl')+' siding all around',
+                "overhead door "+doorW+"' x "+doorH+"' "+doorStyle+" on the FRONT wall when front is visible",
+                'camera view: '+view
+            ].join('; ');
+            let prev=(photoBox.value||'').trim();
+            // Replace prior MATCH SHEET line if present
+            prev=prev.split('\n').filter(l=>!/^MATCH SHEET EXACTLY:/i.test(l.trim())).join('\n').trim();
+            const bits=[];
+            if(prev) bits.push(prev);
+            if(extraRaw && !prev.toLowerCase().includes(String(extraRaw).toLowerCase())) bits.push(String(extraRaw).trim());
+            bits.push(syncLine);
+            photoBox.value=bits.join('\n');
+            try{ saveAIPhotoExtraInstructions(); }catch(e){}
+        }
+
         function applyLocalEstimateChange(requestText) {
             const box=document.getElementById('estimateChangeRequest');
             const status=document.getElementById('estimateChangeStatus');
@@ -4156,8 +4278,8 @@ input, select, textarea, button { box-sizing:border-box; }
             const q=raw.toLowerCase();
             if(!q){ if(status) status.textContent='Type a change first.'; return 'Type a change first.'; }
             const changed=[];
-            const setVal=(id,v,label)=>{const e=document.getElementById(id); if(e){e.value=v; changed.push(label||id);}};
-            const setCheck=(id,v,label)=>{const e=document.getElementById(id); if(e){e.checked=v; changed.push(label||id);}};
+            const setVal=(id,v,label)=>{const e=document.getElementById(id); if(e){e.value=String(v); changed.push(label||id);}};
+            const setCheck=(id,v,label)=>{const e=document.getElementById(id); if(e){e.checked=!!v; changed.push(label||id);}};
 
             if(/\bgable\b/.test(q)) setVal('roofType','gable','roof: gable');
             else if(/\bhip\b/.test(q)) setVal('roofType','hip','roof: hip');
@@ -4172,7 +4294,10 @@ input, select, textarea, button { box-sizing:border-box; }
                 if(selectOptionByText(sid,color==='grey'?'gray':color)) changed.push('siding color: '+color);
             }
 
-            if(/service door/.test(q)){
+            if(/service door|man door|side door|party door/.test(q)){
+                if(/party/.test(q)) setVal('doorType','party','party door');
+                else if(/french/.test(q)) setVal('doorType','french','french door');
+                else if(/no service|remove service|without service/.test(q)) setVal('doorType','no','no service door');
                 if(/right(?: side| wall)?/.test(q)) setVal('serviceDoorLocation','right','service door: right wall');
                 else if(/left(?: side| wall)?/.test(q)) setVal('serviceDoorLocation','left','service door: left wall');
                 else if(/back|rear/.test(q)) setVal('serviceDoorLocation','back','service door: back');
@@ -4186,20 +4311,418 @@ input, select, textarea, button { box-sizing:border-box; }
             if(/remove|no|without/.test(q) && /soffit|fascia/.test(q)) setCheck('aluminumSoffit',false,'aluminum soffit/fascia removed');
             else if(/add|include|aluminum/.test(q) && /soffit|fascia/.test(q)) setCheck('aluminumSoffit',true,'aluminum soffit/fascia added');
 
-            if(/no windows|without windows|solid overhead/.test(q) && /door|overhead/.test(q)) setVal('overheadDoorStyle','raised','solid raised-panel overhead door');
-            else if(/overhead.*windows|door.*windows|top windows/.test(q)) setVal('overheadDoorStyle','windows','overhead door with top windows');
-            if(/carriage/.test(q)) setVal('overheadDoorStyle','carriage','carriage-house overhead door');
-            if(/flush/.test(q)) setVal('overheadDoorStyle','flush','flush-panel overhead door');
-            if(/long panel/.test(q)) setVal('overheadDoorStyle','long','long-panel overhead door');
+            // Overhead door STYLE (sheet wording + photo)
+            if(/\bdoor style\b|\bstyle\b.*\bdoor\b|\boverhead\b.*\b(style|panel|carriage|flush|raised)/.test(q) || /carriage|flush|raised panel|long panel|top windows|windows across/.test(q)){
+                if(/carriage/.test(q)) setVal('overheadDoorStyle','carriage','door style: carriage');
+                else if(/flush/.test(q)) setVal('overheadDoorStyle','flush','door style: flush');
+                else if(/long\s*panel/.test(q)) setVal('overheadDoorStyle','long','door style: long panel');
+                else if(/window/.test(q)) setVal('overheadDoorStyle','windows','door style: raised with top windows');
+                else if(/raised|solid/.test(q)) setVal('overheadDoorStyle','raised','door style: solid raised panel');
+            } else {
+                if(/no windows|without windows|solid overhead/.test(q) && /door|overhead/.test(q)) setVal('overheadDoorStyle','raised','solid raised-panel overhead door');
+                else if(/overhead.*windows|door.*windows|top windows/.test(q)) setVal('overheadDoorStyle','windows','overhead door with top windows');
+                if(/carriage/.test(q)) setVal('overheadDoorStyle','carriage','carriage-house overhead door');
+                if(/flush/.test(q)) setVal('overheadDoorStyle','flush','flush-panel overhead door');
+                if(/long panel/.test(q)) setVal('overheadDoorStyle','long','long-panel overhead door');
+            }
+
+            // Overhead door SIZE — updates calculator (details on sheet) AND forces photo regenerate
+            const doorSizeM=q.match(/(?:door|overhead)\s*(?:size|to|is|=|:)?\s*(\d{1,2})\s*(?:'|ft|foot|x|\s)\s*[x×]?\s*(\d{1,2})?/)
+                || q.match(/\b(\d{2})\s*[x×]\s*(\d)\b/);
+            if(doorSizeM && (/door|overhead/.test(q) || doorSizeM[0])){
+                const dw=String(doorSizeM[1]||'16');
+                const dh=String(doorSizeM[2]||'7');
+                const preset=document.getElementById('overheadDoorSizePreset');
+                if(dw==='16' && dh==='7' && preset){
+                    preset.value='16x7'; try{applyOverheadDoorSizePreset()}catch(e){}
+                } else if(dw==='18' && dh==='7' && preset){
+                    preset.value='18x7'; try{applyOverheadDoorSizePreset()}catch(e){}
+                } else if(preset){
+                    preset.value='custom';
+                    try{applyOverheadDoorSizePreset()}catch(e){}
+                    setVal('overheadDoorCustomWidth',dw,"custom door width "+dw);
+                    setVal('overheadDoorCustomHeight',dh,"custom door height "+dh);
+                    try{syncOverheadDoorCustom()}catch(e){}
+                }
+                setVal('overheadDoorWidth',dw);
+                setVal('overheadDoorHeight',dh);
+                changed.push("overhead door size "+dw+"'×"+dh+"' (sheet + photo)");
+            } else if(/\b18\s*(?:'|ft|foot|x)/.test(q) && /door|overhead/.test(q)) {
+                const preset=document.getElementById('overheadDoorSizePreset');
+                if(preset){ preset.value='18x7'; try{applyOverheadDoorSizePreset()}catch(e){} changed.push("overhead door 18'×7' (sheet + photo)"); }
+            } else if(/\b16\s*(?:'|ft|foot|x)/.test(q) && /door|overhead/.test(q)) {
+                const preset=document.getElementById('overheadDoorSizePreset');
+                if(preset){ preset.value='16x7'; try{applyOverheadDoorSizePreset()}catch(e){} changed.push("overhead door 16'×7' (sheet + photo)"); }
+            }
 
             const h=q.match(/(?:wall height|height)\s*(?:to|=|at)?\s*(8|9|10|11|12)\s*(?:ft|feet|foot)?/);
             if(h) setVal('wallHeight',h[1],'wall height: '+h[1]+' ft');
 
-            toggleServiceDoorLocationFields();
+            // Extra lights / outlets by location
+            const mIntLights=q.match(/(\d+)\s*(?:extra\s+)?(?:interior|int\.?)\s*lights?/);
+            const mExtLights=q.match(/(\d+)\s*(?:extra\s+)?(?:exterior|ext\.?)\s*lights?/);
+            const mIntOut=q.match(/(\d+)\s*(?:extra\s+)?(?:interior|int\.?)\s*outlets?/);
+            const mExtOut=q.match(/(\d+)\s*(?:extra\s+)?(?:exterior|ext\.?)\s*outlets?/);
+            if(mIntLights){ setVal('extraLightsInterior',mIntLights[1],'extra INT lights: '+mIntLights[1]); }
+            if(mExtLights){ setVal('extraLightsExterior',mExtLights[1],'extra EXT lights: '+mExtLights[1]); }
+            if(mIntOut){ setVal('extraOutletsInterior',mIntOut[1],'extra INT outlets: '+mIntOut[1]); }
+            if(mExtOut){ setVal('extraOutletsExterior',mExtOut[1],'extra EXT outlets: '+mExtOut[1]); }
+            try{ if(typeof syncExtraElecTotals==='function') syncExtraElecTotals(); }catch(e){}
+
+            // Windows
+            const mWin=q.match(/(\d+)\s*(?:extra\s+)?windows?/);
+            if(mWin){ setVal('extraWindows',mWin[1],'extra windows: '+mWin[1]); try{syncWindowQtyFromExtras()}catch(e){} }
+            if(/no window/.test(q)) setVal('windowType','none','no windows');
+            else if(/single hung/.test(q)) setVal('windowType','single','single hung windows');
+            else if(/slider|sliding/.test(q)) setVal('windowType','sliding','slider windows');
+
+            // Roof patio / photo view
+            if(/roofed?\s*patio|covered\s*patio/.test(q)){
+                setCheck('roofPatioEnabled',true,'roof patio on');
+                if(/\b(side|left|right)\b/.test(q) && !/\b(back|rear)\b/.test(q)) setCheck('roofPatioSide',true,'side roof patio');
+                else setCheck('roofPatioSide',false,'rear roof patio');
+            }
+            if(/garagePhotoView|photo view|camera|from the|view\b/.test(q) || /\b(front|left|right|back|rear)\s*view\b/.test(q)){
+                const viewEl=document.getElementById('garagePhotoView');
+                if(viewEl){
+                    if(/\b(back|rear)\b/.test(q)) { viewEl.value='back'; changed.push('photo view: back'); }
+                    else if(/\bleft\b/.test(q)) { viewEl.value='left'; changed.push('photo view: left'); }
+                    else if(/\bright\b/.test(q)) { viewEl.value='right'; changed.push('photo view: right'); }
+                    else if(/\bfront\b/.test(q)) { viewEl.value='front'; changed.push('photo view: front'); }
+                    try{ saveGaragePhotoView(); }catch(e){}
+                }
+            }
+
+            // Anything visual on the sheet must also update the AI photo so wording + picture match
+            const visualChange = changed.some(c=>/roof:|siding|color|door style|overhead door|service door|party door|french|gable|hip|patio|photo view|wall height|windows|gutters|soffit/i.test(c))
+                || /\b(photo|picture|image|render|camera|view|siding|door|roof|gable|hip|color|patio)\b/.test(q);
+
+            if(visualChange){
+                try{ syncPhotoNotesWithCalculator(raw); }catch(e){}
+                try{
+                    Object.keys(sessionStorage).forEach(k=>{
+                        if(/^agb_ai_photo|^garageAI/i.test(k) || /openai:/i.test(k) || /photo_cache/i.test(k)) sessionStorage.removeItem(k);
+                    });
+                    // Also clear any in-memory AI photo cache maps if present
+                    if(window._garageAiPhotoCache) window._garageAiPhotoCache={};
+                }catch(e){}
+                if(!changed.some(c=>/photo|regenerate/i.test(c))) changed.push('photo will regenerate to match sheet');
+            }
+
+            // Free-form wording / layout notes that should appear on the sheet
+            if(/\b(note|wording|say|write|add text|layout|change text|include on sheet|on the sheet)\b/.test(q) || changed.length===0){
+                const notesEl=document.getElementById('additionalEstimateNotes');
+                if(notesEl){
+                    const prev=(notesEl.value||'').trim();
+                    const line='Sheet AI revision: '+raw;
+                    // Avoid exact duplicate lines
+                    if(!prev.includes(line)){
+                        notesEl.value=prev ? (prev + '\n' + line) : line;
+                        changed.push('additional notes updated');
+                    }
+                }
+            }
+
+            try{ toggleServiceDoorLocationFields(); }catch(e){}
+            try{ togglePartyDoorSize(); }catch(e){}
+            try{ toggleRoofPatio(); }catch(e){}
+            try{ toggleGableOptions(); }catch(e){}
             calculateEstimate();
-            const msg=changed.length?'Applied: '+changed.join(' • '):'I could not match that request to a local control. Use the dropdowns, or copy the estimate into ChatGPT for more complex edits.';
+            const msg=changed.length?'Applied: '+changed.join(' • '):'Saved request to notes. Rebuild will refresh the sheet.';
             if(status) status.textContent=msg;
             return msg;
+        }
+
+        function getSheetPresentation(){
+            if(!window._sheetPresentation || typeof window._sheetPresentation!=='object'){
+                window._sheetPresentation={
+                    orientation:'portrait', // portrait | landscape
+                    fontScale:1,
+                    textColor:null,
+                    headerBg:null,
+                    accentColor:null,
+                    titleText:null,
+                    hidePhoto:false,
+                    hideNotes:false,
+                    hidePrice:false,
+                    bodyFont:null,
+                    noteTextOverride:null,
+                    itemDetailOverrides:{}, // { itemLabelLower: newDetails }
+                    removedItems:[],
+                    removedNoteKeywords:[],
+                    customCss:''
+                };
+            }
+            if(!Array.isArray(window._sheetPresentation.removedItems)) window._sheetPresentation.removedItems=[];
+            if(!Array.isArray(window._sheetPresentation.removedNoteKeywords)) window._sheetPresentation.removedNoteKeywords=[];
+            if(!window._sheetPresentation.itemDetailOverrides || typeof window._sheetPresentation.itemDetailOverrides!=='object'){
+                window._sheetPresentation.itemDetailOverrides={};
+            }
+            return window._sheetPresentation;
+        }
+        function saveSheetPresentationSession(){
+            try{ sessionStorage.setItem('agb_sheet_presentation', JSON.stringify(getSheetPresentation())); }catch(e){}
+        }
+        function loadSheetPresentationSession(){
+            try{
+                const raw=sessionStorage.getItem('agb_sheet_presentation');
+                if(raw) window._sheetPresentation=Object.assign(getSheetPresentation(), JSON.parse(raw));
+            }catch(e){}
+        }
+        /** Parse presentation / layout / wording / color / font commands for THIS sheet only */
+        function applySheetPresentationChange(requestText){
+            const raw=String(requestText||'').trim();
+            const q=raw.toLowerCase();
+            if(!q) return [];
+            const p=getSheetPresentation();
+            const changed=[];
+
+            if(/\blandscape\b/.test(q) || /\bhorizontal\b/.test(q) || /sideways/.test(q)){
+                p.orientation='landscape'; changed.push('orientation: landscape');
+            } else if(/\bportrait\b/.test(q) || /\bvertical\b/.test(q)){
+                p.orientation='portrait'; changed.push('orientation: portrait');
+            }
+
+            const scaleM=q.match(/(?:font\s*size|text\s*size|make\s*(?:text|font)\s*)(larger|bigger|smaller|tinier|huge|tiny)|(?:scale|font)\s*(?:to\s*)?(\d{2,3})\s*%|(\d{2,3})\s*%\s*(?:font|text|size)/);
+            if(scaleM){
+                if(scaleM[1]==='larger'||scaleM[1]==='bigger'||scaleM[1]==='huge'){ p.fontScale=Math.min(1.45, (p.fontScale||1)+0.12); changed.push('font larger'); }
+                else if(scaleM[1]==='smaller'||scaleM[1]==='tinier'||scaleM[1]==='tiny'){ p.fontScale=Math.max(0.7, (p.fontScale||1)-0.12); changed.push('font smaller'); }
+                else {
+                    const pct=Number(scaleM[2]||scaleM[3]||100);
+                    if(pct>=50 && pct<=160){ p.fontScale=pct/100; changed.push('font scale '+pct+'%'); }
+                }
+            }
+            if(/reset\s*font|default\s*font\s*size/.test(q)){ p.fontScale=1; changed.push('font scale reset'); }
+
+            const colorWord={
+                navy:'#061d4b', blue:'#0b5bd3', black:'#111111', white:'#ffffff',
+                yellow:'#ffc400', gold:'#ffc400', gray:'#64748b', grey:'#64748b',
+                red:'#b91c1c', green:'#166534', charcoal:'#1e293b'
+            };
+            const headerColor=q.match(/(?:header|top\s*bar|banner)\s*(?:color|to|background)?\s*(navy|blue|black|white|yellow|gold|gray|grey|red|green|charcoal|#[0-9a-f]{3,8})/);
+            if(headerColor){
+                const c=headerColor[1];
+                p.headerBg=c.startsWith('#')?c:(colorWord[c]||p.headerBg);
+                changed.push('header color');
+            }
+            const accentM=q.match(/(?:accent|yellow\s*bar|sales\s*block|highlight)\s*(?:color|to)?\s*(navy|blue|black|white|yellow|gold|gray|grey|red|green|charcoal|#[0-9a-f]{3,8})/);
+            if(accentM){
+                const c=accentM[1];
+                p.accentColor=c.startsWith('#')?c:(colorWord[c]||p.accentColor);
+                changed.push('accent color');
+            }
+            const textCol=q.match(/(?:text|body|wording)\s*color\s*(?:to\s*)?(navy|blue|black|white|gray|grey|charcoal|#[0-9a-f]{3,8})/);
+            if(textCol){
+                const c=textCol[1];
+                p.textColor=c.startsWith('#')?c:(colorWord[c]||p.textColor);
+                changed.push('text color');
+            }
+
+            if(/hide\s*(the\s*)?(photo|picture|exterior)/.test(q)){ p.hidePhoto=true; changed.push('hide photo'); }
+            if(/show\s*(the\s*)?(photo|picture|exterior)/.test(q)){ p.hidePhoto=false; changed.push('show photo'); }
+            if(/hide\s*(the\s*)?(notes|inclusions)/.test(q)){ p.hideNotes=true; changed.push('hide notes'); }
+            if(/show\s*(the\s*)?(notes|inclusions)/.test(q)){ p.hideNotes=false; changed.push('show notes'); }
+            if(/hide\s*(the\s*)?(price|total)/.test(q)){ p.hidePrice=true; changed.push('hide price'); }
+            if(/show\s*(the\s*)?(price|total)/.test(q)){ p.hidePrice=false; changed.push('show price'); }
+
+            const titleM=raw.match(/(?:title|heading)\s*(?:to|as|:)\s*["“]?([^"”\n]+)["”]?/i);
+            if(titleM){ p.titleText=titleM[1].trim(); changed.push('custom title'); }
+            if(/reset\s*title|default\s*title/.test(q)){ p.titleText=null; changed.push('title reset'); }
+
+            // Change a specific line item's details: "change Siding details to ..."
+            const itemM=raw.match(/(?:change|set|update)\s+([A-Za-z0-9 &\/\-\.]+?)\s+(?:details?|wording|text|to)\s*(?:to|:)\s*["“]?([^"”\n]+)["”]?/i);
+            if(itemM){
+                const key=itemM[1].trim().toLowerCase();
+                p.itemDetailOverrides[key]=itemM[2].trim();
+                changed.push('item override: '+itemM[1].trim());
+            }
+
+            // Clear details text only (keep the row): "clear details for Siding" / "blank the Overhead Door details"
+            const clearDet=raw.match(/(?:clear|blank|empty)\s+(?:the\s+)?(?:details?(?:\s+for|\s+on)?|wording\s+(?:for|on))\s+([A-Za-z0-9 &\/\-\.]+)/i)
+                || raw.match(/(?:clear|blank|empty)\s+([A-Za-z0-9 &\/\-\.]+?)\s+details?/i);
+            if(clearDet){
+                const key=clearDet[1].trim().toLowerCase();
+                p.itemDetailOverrides[key]='';
+                changed.push('cleared details: '+clearDet[1].trim());
+            }
+
+            // Remove entire rows/items: "remove Gutters row", "delete Windows item", "remove the photo"
+            const removeItemM=raw.match(/(?:remove|delete|drop|hide)\s+(?:the\s+)?(?:row|item|line)?\s*[:\-]?\s*([A-Za-z0-9 &\/\-\.]+?)(?:\s+row|\s+item|\s+line)?(?:\s+from\s+(?:the\s+)?(?:sheet|table|estimate))?$/i)
+                || raw.match(/(?:remove|delete|drop)\s+(?:the\s+)?([A-Za-z0-9 &\/\-\.]+?)\s+(?:row|item|line)/i);
+            if(removeItemM){
+                let key=removeItemM[1].trim().toLowerCase();
+                key=key.replace(/^(the|a|an)\s+/,'');
+                // Picture / photo handled separately
+                if(!/photo|picture|exterior|image/.test(key)){
+                    if(!p.removedItems.includes(key)) p.removedItems.push(key);
+                    changed.push('removed item row: '+removeItemM[1].trim());
+                }
+            }
+            // Multi-remove: "remove gutters and windows and opener"
+            const multiRem=raw.match(/(?:remove|delete|drop)\s+(.+)/i);
+            if(multiRem && /\band\b|,/.test(multiRem[1])){
+                multiRem[1].split(/\s+and\s+|,/).map(s=>s.trim().toLowerCase().replace(/^(the|a|an)\s+/,'')).filter(Boolean).forEach(key=>{
+                    if(/photo|picture|exterior|image/.test(key)){ p.hidePhoto=true; changed.push('hide photo'); return; }
+                    if(/notes?|inclusions?/.test(key)){ p.hideNotes=true; changed.push('hide notes'); return; }
+                    if(/price|total/.test(key)){ p.hidePrice=true; changed.push('hide price'); return; }
+                    if(key.length<2) return;
+                    if(!p.removedItems.includes(key)) p.removedItems.push(key);
+                    changed.push('removed item: '+key);
+                });
+            }
+
+            // Remove a note line by keyword: "remove note about gutters"
+            const remNote=raw.match(/(?:remove|delete)\s+(?:the\s+)?note\s+(?:about|with|containing|that says)?\s*["“]?([^"”\n]+)["”]?/i);
+            if(remNote){
+                const kw=remNote[1].trim().toLowerCase();
+                if(!p.removedNoteKeywords.includes(kw)) p.removedNoteKeywords.push(kw);
+                changed.push('removed note matching: '+remNote[1].trim());
+            }
+
+            // Remove / hide picture (all photo-related UI on the sheet)
+            if(/(?:remove|delete|drop|hide)\s+(?:the\s+)?(?:photo|picture|exterior\s*view|image|garage\s*photo)/.test(q)
+                || /no\s+(?:photo|picture|exterior\s*view)/.test(q)){
+                p.hidePhoto=true;
+                changed.push('removed photo from sheet');
+            }
+
+            // Free-form note replacement
+            const noteRep=raw.match(/(?:replace notes? with|notes? should say|set notes? to)\s*[:\-]?\s*([\s\S]+)/i);
+            if(noteRep){ p.noteTextOverride=noteRep[1].trim(); changed.push('notes wording override'); }
+
+            if(/arial|helvetica|times|georgia|verdana|system/.test(q) && /font/.test(q)){
+                if(/times/.test(q)) p.bodyFont="'Times New Roman', Times, serif";
+                else if(/georgia/.test(q)) p.bodyFont="Georgia, serif";
+                else if(/verdana/.test(q)) p.bodyFont="Verdana, Geneva, sans-serif";
+                else p.bodyFont="Arial, Helvetica, sans-serif";
+                changed.push('body font');
+            }
+
+            if(/reset\s*(sheet|layout|presentation|styling)/.test(q)){
+                window._sheetPresentation={
+                    orientation:'portrait', fontScale:1, textColor:null, headerBg:null, accentColor:null,
+                    titleText:null, hidePhoto:false, hideNotes:false, hidePrice:false, bodyFont:null,
+                    noteTextOverride:null, itemDetailOverrides:{}, removedItems:[], removedNoteKeywords:[], customCss:''
+                };
+                changed.push('sheet presentation reset');
+            }
+            if(/restore\s+(?:all\s+)?(?:rows|items)/.test(q) || /show\s+all\s+(?:rows|items)/.test(q)){
+                p.removedItems=[];
+                changed.push('restored all item rows');
+            }
+
+            saveSheetPresentationSession();
+            return changed;
+        }
+
+        function buildSheetPresentationCss(pres){
+            const p=pres||getSheetPresentation();
+            const parts=[];
+            const orient=p.orientation==='landscape'?'landscape':'portrait';
+            const pageW=orient==='landscape'?'11in':'8.5in';
+            const pageH=orient==='landscape'?'8.5in':'11in';
+            parts.push(`@page { size: Letter ${orient}; margin: 0; }`);
+            parts.push(`.sheet { width:${pageW}; min-height:${pageH}; }`);
+            if(orient==='landscape'){
+                parts.push(`@media print { html,body,.sheet { width:11in!important; height:8.5in!important; min-height:8.5in!important; max-height:8.5in!important; } }`);
+            }
+            if(p.fontScale && p.fontScale!==1){
+                parts.push(`html { font-size: ${Math.round(p.fontScale*100)}%; }`);
+                parts.push(`.sheet { font-size: ${Math.round(p.fontScale*100)}%; }`);
+            }
+            if(p.bodyFont) parts.push(`html, body, .sheet { font-family: ${p.bodyFont} !important; }`);
+            if(p.textColor) parts.push(`body, .sheet, .spec-table, .notes, .customer-box { color: ${p.textColor} !important; }`);
+            if(p.headerBg) parts.push(`.topbar { background: ${p.headerBg} !important; }`);
+            if(p.accentColor){
+                parts.push(`.sales-block, .footer { background: ${p.accentColor} !important; }`);
+                parts.push(`.brand-garage, .total-price { color: ${p.accentColor} !important; }`);
+            }
+            if(p.hidePhoto) parts.push(`.exterior, .exterior-title { display:none !important; } .right { grid-template-rows: auto !important; }`);
+            if(p.hideNotes) parts.push(`.notes-panel { display:none !important; }`);
+            if(p.hidePrice) parts.push(`.total-box { display:none !important; }`);
+            if(p.customCss) parts.push(p.customCss);
+            return parts.join('\n');
+        }
+
+        /** Full post-sheet AI change pipeline: calculator + presentation + history */
+        async function applySheetAIChange(requestText){
+            const raw=String(requestText||'').trim();
+            if(!raw) return 'Type a change first.';
+            const calcMsg=applyLocalEstimateChange(raw);
+            const presChanged=applySheetPresentationChange(raw);
+            const bits=[];
+            if(calcMsg && !/^Type a change/.test(calcMsg)) bits.push(calcMsg);
+            if(presChanged.length) bits.push('Sheet layout: '+presChanged.join(' • '));
+            const msg=bits.length?bits.join(' | '):'Saved AI sheet request.';
+            await logSheetAIRevision(raw, msg);
+            return msg;
+        }
+
+        async function logSheetAIRevision(requestText, appliedMsg){
+            try{
+                const {data:{user}}=await garageSb.auth.getUser();
+                if(!user) return;
+                const {data:staff}=await garageSb.from('staff_profiles').select('username').eq('id',user.id).single();
+                const username=staff?.username||'unknown';
+                let editId=new URLSearchParams(location.search).get('editEstimate') || window._lastEstimateHistoryId || null;
+                // If no id yet, try to find the most recent history row for this customer+creator
+                if(!editId){
+                    const customer=(document.getElementById('customerName')?.value||'').trim();
+                    if(customer){
+                        const {data:rows}=await garageSb.from('estimate_history')
+                            .select('id,estimate_snapshot')
+                            .eq('created_by',user.id)
+                            .ilike('customer',customer)
+                            .order('created_at',{ascending:false})
+                            .limit(1);
+                        if(rows&&rows[0]) editId=rows[0].id;
+                    }
+                }
+                if(!editId) return; // nothing to attach to yet; next create will still save state
+                window._lastEstimateHistoryId=editId;
+                // Ensure subsequent rebuilds update this record
+                try{
+                    const u=new URL(location.href);
+                    if(!u.searchParams.get('editEstimate')){
+                        u.searchParams.set('editEstimate',String(editId));
+                        history.replaceState({},'',u.toString());
+                    }
+                }catch(e){}
+
+                const {data:prevRow}=await garageSb.from('estimate_history').select('*').eq('id',editId).maybeSingle();
+                if(!prevRow) return;
+                const snap=prevRow.estimate_snapshot||{};
+                const revisionHistory=Array.isArray(snap.revision_history)?snap.revision_history.slice():[];
+                const sheetAiUpdates=Array.isArray(snap.sheet_ai_updates)?snap.sheet_ai_updates.slice():[];
+                const entry={
+                    timestamp:new Date().toISOString(),
+                    by:username,
+                    request:requestText,
+                    applied:appliedMsg||'',
+                    type:'sheet_ai_change'
+                };
+                revisionHistory.push({
+                    timestamp:entry.timestamp,
+                    changes:[`AI sheet change by ${username}: ${requestText}`],
+                    ai_request:requestText,
+                    applied:appliedMsg||'',
+                    by:username
+                });
+                sheetAiUpdates.push(entry);
+                await garageSb.from('estimate_history').update({
+                    estimate_snapshot:{
+                        ...snap,
+                        calculator_state: (typeof captureEstimatorState==='function'?captureEstimatorState():(snap.calculator_state||{})),
+                        revision_history:revisionHistory,
+                        sheet_ai_updates:sheetAiUpdates,
+                        sheet_presentation: (typeof getSheetPresentation==='function'?getSheetPresentation():(snap.sheet_presentation||null)),
+                        last_sheet_ai_request:requestText,
+                        last_sheet_ai_at:entry.timestamp
+                    }
+                }).eq('id',editId);
+            }catch(err){
+                console.error('logSheetAIRevision failed',err);
+            }
         }
 
         function buildEstimateTextForChatGPT(){
@@ -4244,13 +4767,36 @@ input, select, textarea, button { box-sizing:border-box; }
                 return;
             }
 
-            // Give immediate visual confirmation instead of a blank window.
+            // Show real internal / project price while AI photo + sheet prepare
+            const loadingInternal = (document.getElementById('internalTotal')?.textContent || '$0.00').trim() || '$0.00';
+            const loadingQuote = (document.getElementById('customerQuote')?.textContent || '$0.00').trim() || '$0.00';
+            const escLoad = (s) => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
             estimateWindow.document.open();
-            estimateWindow.document.write(`<!doctype html><html><head><title>Opening Estimate</title></head>
-              <body style="font-family:Arial,sans-serif;padding:40px;text-align:center">
+            estimateWindow.document.write(`<!doctype html><html><head><title>Opening Estimate</title>
+              <meta name="viewport" content="width=device-width, initial-scale=1">
+              <style>
+                body{font-family:Arial,Helvetica,sans-serif;margin:0;padding:32px 20px;text-align:center;background:#0a0a0b;color:#e4e4e7}
+                h2{margin:0 0 8px;font-size:1.35rem;color:#fff}
+                p{margin:0 0 20px;color:#a1a1aa;font-size:0.95rem}
+                .prices{display:inline-flex;gap:18px;align-items:stretch;background:#18181b;border:1px solid #3b82f6;border-radius:16px;padding:14px 18px;margin:12px auto}
+                .prices .lbl{font-size:10px;letter-spacing:.06em;color:#71717a;text-transform:uppercase}
+                .prices .val{font-family:ui-monospace,Menlo,monospace;font-weight:800;margin-top:4px}
+                .prices .internal .val{color:#fff;font-size:1.1rem}
+                .prices .quote .val{color:#facc15;font-size:1.35rem}
+                .prices .div{width:1px;background:#3f3f46}
+                .spin{width:28px;height:28px;border:3px solid #3f3f46;border-top-color:#3b82f6;border-radius:50%;margin:18px auto 0;animation:s 0.8s linear infinite}
+                @keyframes s{to{transform:rotate(360deg)}}
+              </style></head>
+              <body>
                 <h2>Opening estimate…</h2>
-                <p>Your estimate sheet is being prepared.</p>
-              <div id="stickyEstimateTotal" class="fixed bottom-3 left-1/2 -translate-x-1/2 z-[80] rounded-2xl border border-blue-700 bg-zinc-950/95 shadow-2xl px-4 py-2 flex items-center gap-5 backdrop-blur max-w-[94vw]"><div><div class="text-[9px] text-zinc-500">INTERNAL</div><div id="stickyInternalTotal" class="font-mono text-sm font-bold text-white">$0.00</div></div><div class="w-px h-8 bg-zinc-700"></div><div><div class="text-[9px] text-yellow-500">PROJECT PRICE</div><div id="stickyCustomerQuote" class="font-mono text-lg font-extrabold text-yellow-400">$0.00</div></div><button type="button" onclick="document.getElementById('customerQuote')?.scrollIntoView({behavior:'smooth',block:'center'})" class="text-zinc-400 hover:text-white" title="Jump to totals"><i class="fa-solid fa-arrow-up"></i></button></div></body></html>`);
+                <p>Preparing sheet and garage photo. Prices below are from your calculator.</p>
+                <div class="prices">
+                  <div class="internal"><div class="lbl">Internal cost</div><div class="val">${escLoad(loadingInternal)}</div></div>
+                  <div class="div"></div>
+                  <div class="quote"><div class="lbl">Project price</div><div class="val">${escLoad(loadingQuote)}</div></div>
+                </div>
+                <div class="spin" aria-hidden="true"></div>
+              </body></html>`);
             estimateWindow.document.close();
 
             try {
@@ -4319,6 +4865,32 @@ input, select, textarea, button { box-sizing:border-box; }
             }catch(e){ if(el) el.value='openai'; }
             updateOpenAIKeyPanels();
         }
+        function saveGaragePhotoView(){
+            try{
+                const v=document.getElementById('garagePhotoView')?.value||'front';
+                sessionStorage.setItem('agb_garage_photo_view', v);
+            }catch(e){}
+        }
+        function loadGaragePhotoView(){
+            try{
+                const el=document.getElementById('garagePhotoView');
+                if(!el) return;
+                const v=sessionStorage.getItem('agb_garage_photo_view')||'front';
+                if(['front','left','right','back'].includes(v)) el.value=v;
+            }catch(e){}
+        }
+        function syncGaragePhotoViewFromChat(){
+            try{
+                const q=(document.getElementById('aiPhotoExtraInstructions')?.value||'').toLowerCase();
+                const el=document.getElementById('garagePhotoView');
+                if(!el||!q) return;
+                if(/\b(back|rear|behind|rear view|back view)\b/.test(q)) el.value='back';
+                else if(/\b(left side|from the left|left view)\b/.test(q)) el.value='left';
+                else if(/\b(right side|from the right|right view)\b/.test(q)) el.value='right';
+                else if(/\b(front view|from the front)\b/.test(q)) el.value='front';
+                saveGaragePhotoView();
+            }catch(e){}
+        }
         function saveAIPhotoExtraInstructions(){
             try{
                 const el=document.getElementById('aiPhotoExtraInstructions');
@@ -4381,8 +4953,8 @@ input, select, textarea, button { box-sizing:border-box; }
                 else { el.value=(city==='Chicago')?'alley':'driveway'; }
             }catch(e){}
         }
-        document.addEventListener('DOMContentLoaded', ()=>setTimeout(()=>{ loadGaragePhotoMode(); loadAIPhotoExtraInstructions(); loadGarageAccessType(); }, 100));
-        if(document.readyState!=='loading') setTimeout(()=>{ loadGaragePhotoMode(); loadAIPhotoExtraInstructions(); loadGarageAccessType(); }, 200);
+        document.addEventListener('DOMContentLoaded', ()=>setTimeout(()=>{ loadGaragePhotoMode(); loadAIPhotoExtraInstructions(); loadGarageAccessType(); loadGaragePhotoView(); }, 100));
+        if(document.readyState!=='loading') setTimeout(()=>{ loadGaragePhotoMode(); loadAIPhotoExtraInstructions(); loadGarageAccessType(); loadGaragePhotoView(); }, 200);
 
         function buildGarageAIPrompt(){
             const dim = (typeof getGarageDimensions==='function') ? getGarageDimensions() : {width:20, depth:20};
@@ -4502,35 +5074,49 @@ input, select, textarea, button { box-sizing:border-box; }
             const depthInChat = q.match(/(\d+(?:\.\d+)?)\s*(?:ft|feet|foot)/);
             if (depthInChat) roofPatioDepth = parseFloat(depthInChat[1]) || roofPatioDepth;
 
-            // Camera: chat wins for ANY feature (patio, doors, stone, walk, etc.)
-            // Rear patio implies rear view even if chat only said "roofed patio"
-            const wantsRearView = /\b(back|rear|behind|from the back|rear view|back view|backyard|from behind)\b/.test(q)
-                || (roofPatioOn && !roofPatioSide);
-            const wantsSideView = /\b(side view|from the side|left side|right side|on the side)\b/.test(q)
-                || (roofPatioOn && roofPatioSide);
-            const wantsFrontView = /\b(front view|from the front|driveway view|front only)\b/.test(q);
+            // Camera: explicit chat angle > VIEW dropdown > patio defaults > access default
+            const viewSel = (document.getElementById('garagePhotoView')?.value || sessionStorage.getItem('agb_garage_photo_view') || 'front').toLowerCase();
+            const chatRear = /\b(back|rear|behind|from the back|rear view|back view|backyard|from behind)\b/.test(q);
+            const chatLeft = /\b(left side|from the left|left view|view left)\b/.test(q);
+            const chatRight = /\b(right side|from the right|right view|view right)\b/.test(q);
+            const chatSide = /\b(side view|from the side|on the side)\b/.test(q);
+            const chatFront = /\b(front view|from the front|driveway view|front only)\b/.test(q);
             const wantsCornerView = /\b(corner|three[\s-]?quarter|3\/4)\b/.test(q);
 
+            let resolvedView = viewSel; // front | left | right | back
+            if (chatRear) resolvedView = 'back';
+            else if (chatLeft) resolvedView = 'left';
+            else if (chatRight) resolvedView = 'right';
+            else if (chatFront) resolvedView = 'front';
+            else if (chatSide) resolvedView = (roofPatioOn && roofPatioSide) ? 'left' : (viewSel === 'right' ? 'right' : 'left');
+            else if (roofPatioOn && !roofPatioSide && viewSel === 'front') resolvedView = 'back'; // rear patio defaults to back unless user picked a side/front
+            else if (roofPatioOn && roofPatioSide && viewSel === 'front') resolvedView = 'left';
+
             let cameraWords = '';
-            if (wantsRearView) {
+            if (resolvedView === 'back') {
                 cameraWords = [
                     'CAMERA ANGLE (MANDATORY): rear or rear-corner view of the garage',
                     'the BACK of the building is the main subject so the customer can see the rear elevation',
                     'do NOT use a front-only driveway portrait for this photo'
                 ].join(', ');
-            } else if (wantsSideView) {
+            } else if (resolvedView === 'left') {
                 cameraWords = [
-                    'CAMERA ANGLE (MANDATORY): side or side three-quarter view',
-                    'the SIDE of the garage must be clearly visible so the customer can see the side feature'
+                    'CAMERA ANGLE (MANDATORY): LEFT side or left three-quarter view',
+                    'the LEFT SIDE of the garage must be clearly visible as the main subject'
                 ].join(', ');
-            } else if (wantsFrontView) {
-                cameraWords = 'CAMERA ANGLE (MANDATORY): front or front three-quarter view facing the overhead garage door';
+            } else if (resolvedView === 'right') {
+                cameraWords = [
+                    'CAMERA ANGLE (MANDATORY): RIGHT side or right three-quarter view',
+                    'the RIGHT SIDE of the garage must be clearly visible as the main subject'
+                ].join(', ');
             } else if (wantsCornerView) {
                 cameraWords = 'CAMERA ANGLE (MANDATORY): three-quarter corner view showing two faces of the garage';
-            } else if (access === 'alley') {
-                cameraWords = accessWords;
             } else {
-                cameraWords = accessWords;
+                // Front view
+                cameraWords = [
+                    'CAMERA ANGLE (MANDATORY): front or front three-quarter view facing the overhead garage door',
+                    accessWords
+                ].join(', ');
             }
 
             // Full-width roofed patio: span entire garage wall, not a small centered add-on
@@ -4580,6 +5166,17 @@ input, select, textarea, button { box-sizing:border-box; }
 
             const concreteRule = 'ALL concrete surfaces (apron, patio slab, service walkways, sidewalks) are flush with each other, clean, and neatly connected with no grass strips between connected pads';
 
+            // Service (man) door sits on the siding/concrete line — does NOT dig into the ground.
+            // Overhead door correctly meets the apron/ground.
+            const serviceDoorSillRule = [
+                'SERVICE DOOR SILL (MANDATORY when a man door / service door is visible)',
+                'the small ~3-foot-wide service entry door must NOT extend into the dirt or below grade',
+                'the bottom of the service door must meet the bottom edge of the siding, flush with the top of the concrete slab or walk at the door',
+                'service door threshold sits on the concrete pad / walk — same plane as the bottom of the siding',
+                'do NOT show a deep step-down into grass under the service door',
+                'the large overhead garage door DOES go all the way down to the concrete apron / ground — that is correct and different from the service door'
+            ].join(', ');
+
             const parts = [];
             // Chat first and last so the model cannot ignore specifics
             if (extra) {
@@ -4609,6 +5206,7 @@ input, select, textarea, button { box-sizing:border-box; }
                 wall+'-foot tall walls, '+roofWords,
                 doorStyleWords+', '+doorW+' feet wide by '+doorH+' feet tall, on the FRONT wall only when the front is in view',
                 serviceWords,
+                serviceDoorSillRule,
                 coachLightWords,
                 serviceWalkWords,
                 winWords,
@@ -5043,7 +5641,7 @@ input, select, textarea, button { box-sizing:border-box; }
                 addSpec('Electric SubPanel', amp);
             }
 
-            const specRows = specs.map(([item, details]) => `
+            let specRows = specs.map(([item, details]) => `
                 <tr><td class="item">${esc(item)}</td><td class="details">${esc(details)}</td></tr>
             `).join('');
 
@@ -5090,11 +5688,37 @@ input, select, textarea, button { box-sizing:border-box; }
                 notes.push(demoDesc);
             }
 
-            // Electric notes depend on include checkbox + alt option
+            // Electric notes: standard is 2 INT lights, 2 INT outlets, 2 INT switches, 1 EXT light.
+            // Separate INT/EXT extra fields can be mixed on the same estimate.
             const electricOnNote=typeof isElectricIncluded==='function'?isElectricIncluded():true;
             const electricAltNote=typeof getElectricAltOption==='function'?getElectricAltOption():'owner';
+            const extraLi = Math.max(0, Number(val('extraLightsInterior') || 0));
+            const extraLe = Math.max(0, Number(val('extraLightsExterior') || 0));
+            const extraOi = Math.max(0, Number(val('extraOutletsInterior') || 0));
+            const extraOe = Math.max(0, Number(val('extraOutletsExterior') || 0));
+            // Legacy fallback if only old single extraLights/extraOutlets + location were saved
+            let intLights = 2 + extraLi;
+            let extLights = 1 + extraLe;
+            let intOutlets = 2 + extraOi;
+            let extOutlets = 0 + extraOe;
+            if (extraLi===0 && extraLe===0 && Number(val('extraLights')||0)>0) {
+                const n=Number(val('extraLights')||0);
+                if ((val('extraLightsLocation')||'exterior')==='interior') intLights+=n; else extLights+=n;
+            }
+            if (extraOi===0 && extraOe===0 && Number(val('extraOutlets')||0)>0) {
+                const n=Number(val('extraOutlets')||0);
+                if ((val('extraOutletsLocation')||'interior')==='exterior') extOutlets+=n; else intOutlets+=n;
+            }
+            const totalIntSwitches = 2;
             if(electricOnNote){
-                notes.push('Electric Includes; 2 INT. Lights, 2 INT. Outlets, 2 INT. Switches, 1 EXT. Light, and Connection to Existing Home Electrical System.');
+                const bits = [];
+                bits.push(`${intLights} INT. Light${intLights===1?'':'s'}`);
+                bits.push(`${intOutlets} INT. Outlet${intOutlets===1?'':'s'}`);
+                if (extOutlets > 0) bits.push(`${extOutlets} EXT. Outlet${extOutlets===1?'':'s'}`);
+                bits.push(`${totalIntSwitches} INT. Switches`);
+                bits.push(`${extLights} EXT. Light${extLights===1?'':'s'}`);
+                bits.push('Connection to Existing Home Electrical System');
+                notes.push('Electric Includes; ' + bits.join(', ') + '.');
             } else if(electricAltNote==='none'){
                 notes.push('No electrical work included.');
             } else {
@@ -5104,7 +5728,6 @@ input, select, textarea, button { box-sizing:border-box; }
             if (doorType === 'party') notes.push('Quote Includes Party Door.');
             if (doorType === 'french') notes.push('Quote Includes French Door.');
 
-            if (electricOnNote && Number(val('extraLights') || 0) > 0) notes.push(`${val('extraLights')} additional light${Number(val('extraLights')) > 1 ? 's' : ''} included.`);
             // Windows: total on sheet is extra+1; notes only mention true extras
             if (val('windowType')!=='none' && Number(val('extraWindows') || 0) > 0) notes.push(`${val('extraWindows')} additional window${Number(val('extraWindows')) > 1 ? 's' : ''} included.`);
             if (electricOnNote && checked('evCharger')) notes.push('EV charger provision included.');
@@ -5146,7 +5769,7 @@ input, select, textarea, button { box-sizing:border-box; }
                 const s=String(text ?? '');
                 return s.replace(/[A-Za-z]/, ch => ch.toUpperCase());
             };
-            const notesHtml = notes.map(n => `<li>${esc(capitalizeNoteLine(n))}</li>`).join('');
+            let notesHtml = notes.map(n => `<li>${esc(capitalizeNoteLine(n))}</li>`).join('');
 
             // Photo-based exterior example. Hip and gable use separate real photo bases; visible door/window selections are composited onto the matching photo.
             const isGable = roofType === 'gable';
@@ -5185,6 +5808,49 @@ input, select, textarea, button { box-sizing:border-box; }
             const notesCount = notes.length;
             const notesClass = notesCount <= 1 ? 'notes-1' : notesCount === 2 ? 'notes-2' : notesCount <= 4 ? 'notes-few' : notesCount <= 7 ? 'notes-medium' : 'notes-many';
 
+            // Presentation overrides for THIS sheet (orientation, colors, fonts, hide sections, wording)
+            try{ loadSheetPresentationSession(); }catch(e){}
+            const sheetPres = getSheetPresentation();
+            const sheetPresCss = buildSheetPresentationCss(sheetPres);
+            const sheetIsLandscape = sheetPres.orientation === 'landscape';
+
+            // Apply removed rows + per-item wording overrides from AI sheet chat
+            let specsForSheet = specs.slice();
+            if(Array.isArray(sheetPres.removedItems) && sheetPres.removedItems.length){
+                specsForSheet = specsForSheet.filter(([item])=>{
+                    const label=String(item||'').toLowerCase();
+                    return !sheetPres.removedItems.some(k=>{
+                        const key=String(k||'').toLowerCase();
+                        return key && (label.includes(key) || key.includes(label));
+                    });
+                });
+            }
+            if(sheetPres.itemDetailOverrides && Object.keys(sheetPres.itemDetailOverrides).length){
+                specsForSheet.forEach(pair=>{
+                    const label=String(pair[0]||'').toLowerCase();
+                    for(const [k,v] of Object.entries(sheetPres.itemDetailOverrides)){
+                        if(label.includes(String(k).toLowerCase()) || String(k).toLowerCase().includes(label)){
+                            pair[1]=v;
+                        }
+                    }
+                });
+            }
+            specRows = specsForSheet.map(([item, details]) => `
+                <tr><td class="item">${esc(item)}</td><td class="details">${esc(details)}</td></tr>
+            `).join('');
+
+            let notesForSheet = notes.slice();
+            if(Array.isArray(sheetPres.removedNoteKeywords) && sheetPres.removedNoteKeywords.length){
+                notesForSheet = notesForSheet.filter(n=>{
+                    const t=String(n||'').toLowerCase();
+                    return !sheetPres.removedNoteKeywords.some(k=>k && t.includes(String(k).toLowerCase()));
+                });
+            }
+            notesHtml = notesForSheet.map(n => `<li>${esc(capitalizeNoteLine(n))}</li>`).join('');
+            if(sheetPres.noteTextOverride){
+                notesHtml = String(sheetPres.noteTextOverride).split(/\n+/).map(n=>`<li>${esc(capitalizeNoteLine(n.trim()))}</li>`).filter(Boolean).join('');
+            }
+
             const sheetHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5193,11 +5859,13 @@ input, select, textarea, button { box-sizing:border-box; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/script>
 <title>${esc(customerName)} - Absolute Garage Builders ${salesman.wally ? "Proposal" : "Estimate"}</title>
 <style>
-    @page { size: Letter portrait; margin: 0; }
+    @page { size: Letter ${sheetIsLandscape?'landscape':'portrait'}; margin: 0; }
     * { box-sizing: border-box; }
     html, body { margin: 0; padding: 0; background: #eceff3; font-family: Arial, Helvetica, sans-serif; color: #071d48; }
     body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .sheet { width: 8.5in; min-height: 11in; margin: 0 auto; background: #fff; position: relative; overflow: hidden; display: flex; flex-direction: column; }
+    .sheet { width: ${sheetIsLandscape?'11in':'8.5in'}; min-height: ${sheetIsLandscape?'8.5in':'11in'}; margin: 0 auto; background: #fff; position: relative; overflow: hidden; display: flex; flex-direction: column; }
+    /* AI sheet presentation overrides for this estimate only */
+    ${sheetPresCss}
     .topbar { height: 1.48in; min-height: 1.48in; max-height: 1.48in; display: grid; grid-template-columns: 52% 48%; grid-template-rows: 1.48in; align-items: stretch; background: #061d4b; color: #fff; overflow: hidden; }
     .topbar > .brand-wrap, .topbar > .sales-block { height: 1.48in; min-height: 1.48in; max-height: 1.48in; margin:0; align-self:stretch; }
     .brand-wrap { display: flex; align-items: center; gap: 12px; padding: 14px 22px; min-width: 0; }
@@ -5388,10 +6056,72 @@ input, select, textarea, button { box-sizing:border-box; }
     .footer:before, .footer:after { content:""; width:78px; height:2px; background:#ffc400; margin:0 18px; }
     .footer small { display:block; color:#fff; font-size:6.8px; text-align:center; margin-top:2px; }
 
-    .actions { width: 8.5in; margin: 12px auto 28px; display:flex; justify-content:center; gap:10px; }
+    .actions { width: 8.5in; margin: 12px auto 16px; display:flex; justify-content:center; gap:10px; flex-wrap:wrap; }
     .actions button { border:0; border-radius:8px; padding:11px 18px; font-size:13px; font-weight:800; cursor:pointer; }
     .print { background:#0b5bd3; color:#fff; }
     .close { background:#d9dde4; color:#172033; }
+    .sheet-ai-panel {
+      width: min(8.5in, 96vw);
+      margin: 0 auto 36px;
+      background: #0f172a;
+      color: #e2e8f0;
+      border: 2px solid #6366f1;
+      border-radius: 16px;
+      padding: 16px 18px 18px;
+      box-shadow: 0 12px 40px rgba(15,23,42,.35);
+      font-family: Arial, Helvetica, sans-serif;
+    }
+    .sheet-ai-panel h3 {
+      margin: 0 0 6px;
+      font-size: 15px;
+      font-weight: 900;
+      color: #a5b4fc;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+    .sheet-ai-panel p {
+      margin: 0 0 10px;
+      font-size: 12px;
+      line-height: 1.45;
+      color: #94a3b8;
+    }
+    .sheet-ai-panel textarea {
+      width: 100%;
+      min-height: 110px;
+      border-radius: 12px;
+      border: 1px solid #475569;
+      background: #020617;
+      color: #f8fafc;
+      padding: 12px;
+      font-size: 14px;
+      line-height: 1.4;
+      resize: vertical;
+      box-sizing: border-box;
+    }
+    .sheet-ai-panel .ai-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+      align-items: center;
+    }
+    .sheet-ai-panel button.ai-apply {
+      background: #4f46e5;
+      color: #fff;
+      border: 0;
+      border-radius: 10px;
+      padding: 11px 18px;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .sheet-ai-panel button.ai-apply:disabled { opacity: .55; cursor: wait; }
+    .sheet-ai-panel #popupChangeStatus {
+      font-size: 12px;
+      color: #86efac;
+      min-height: 18px;
+      flex: 1;
+    }
 
     /* Configurable photo-style exterior overlays */
     .photo-config{position:relative;width:100%;height:100%;overflow:hidden;background:#dbeaf4}
@@ -5415,6 +6145,7 @@ input, select, textarea, button { box-sizing:border-box; }
     .roof-badge{position:absolute;left:2%;top:2%;z-index:8;background:rgba(8,38,84,.9);color:#fff;padding:4px 8px;font-size:8px;font-weight:900;letter-spacing:.08em;border-radius:3px}.photo-spec-badge{position:absolute;left:2%;bottom:2%;z-index:9;background:rgba(8,38,84,.9);color:#fff;padding:4px 7px;font-size:7px;font-weight:800;border-radius:3px;max-width:96%}
 
     @media print {
+        .actions, .sheet-ai-panel, .no-print { display:none !important; }
         html,body {
             margin:0!important;
             padding:0!important;
@@ -5644,6 +6375,16 @@ input, select, textarea, button { box-sizing:border-box; }
     <button class="close" onclick="window.close()">Close</button>
 </div>
 
+<div class="sheet-ai-panel no-print">
+  <h3>AI Sheet Changes</h3>
+  <p>Full control for <b>this sheet only</b>: photo, specs, notes, wording, landscape/portrait, colors, font size, hide/show sections, item details. Every request is saved to Estimate History for managers.</p>
+  <textarea id="popupChangeRequest" placeholder="Examples:&#10;• Remove photo / hide exterior view&#10;• Remove Gutters row · remove Windows item&#10;• Clear details for Siding&#10;• Change Overhead Door details to 16x7 raised panel&#10;• Remove note about demolition&#10;• Landscape · larger font · hide price"></textarea>
+  <div class="ai-row">
+    <button type="button" class="ai-apply" id="popupAiApplyBtn" onclick="applyPopupAIChange()">Apply AI Change &amp; Rebuild Sheet</button>
+    <div id="popupChangeStatus"></div>
+  </div>
+</div>
+
 <script>
 const ESTIMATE_EMAIL_TO=${JSON.stringify(customerEmail||'')};
 const ESTIMATE_CUSTOMER=${JSON.stringify(customerName||'')};
@@ -5815,12 +6556,37 @@ async function downloadEstimatePdf(){
     if(exportHost && exportHost.parentNode) exportHost.parentNode.removeChild(exportHost);
   }
 }
-function applyPopupChange(){
-  const q=document.getElementById('popupChangeRequest').value;
-  if(!window.opener || !window.opener.applyLocalEstimateChange){document.getElementById('popupChangeStatus').textContent='The estimator window is no longer available.';return;}
-  const msg=window.opener.applyLocalEstimateChange(q);
-  document.getElementById('popupChangeStatus').textContent=msg+' Rebuilding…';
-  setTimeout(()=>{ window.close(); window.opener.safePrintEstimateSheet(false); },120);
+function applyPopupChange(){ return applyPopupAIChange(); }
+async function applyPopupAIChange(){
+  const box=document.getElementById('popupChangeRequest');
+  const status=document.getElementById('popupChangeStatus');
+  const btn=document.getElementById('popupAiApplyBtn');
+  const q=(box&&box.value||'').trim();
+  if(!q){ if(status) status.textContent='Type the change you want first.'; return; }
+  if(!window.opener || window.opener.closed){
+    if(status) status.textContent='Keep the main Estimator tab open, then try again.';
+    return;
+  }
+  if(btn) btn.disabled=true;
+  if(status) status.textContent='Saving change to history and rebuilding sheet…';
+  try{
+    if(typeof window.opener.applySheetAIChange==='function'){
+      const msg=await window.opener.applySheetAIChange(q);
+      if(status) status.textContent=(msg||'Applied.')+' Rebuilding…';
+    } else if(typeof window.opener.applyLocalEstimateChange==='function'){
+      const msg=window.opener.applyLocalEstimateChange(q);
+      if(status) status.textContent=(msg||'Applied.')+' Rebuilding…';
+    }
+    setTimeout(()=>{
+      try{ window.close(); }catch(e){}
+      if(window.opener && !window.opener.closed && typeof window.opener.safePrintEstimateSheet==='function'){
+        window.opener.safePrintEstimateSheet(true);
+      }
+    }, 180);
+  }catch(err){
+    if(status) status.textContent='Error: '+(err&&err.message?err.message:String(err));
+    if(btn) btn.disabled=false;
+  }
 }
 async function openPopupChatGPT(){
   if(window.opener && window.opener.copyEstimateForChatGPT) await window.opener.copyEstimateForChatGPT();
@@ -5875,7 +6641,8 @@ async function openPopupChatGPT(){
                         notes: notes.join('\n'),
                         additional_notes: typedAdditionalNotes || '',
                         exterior_photo: garagePhotoSrc,
-                        sheet_html: sheetHtml
+                        sheet_html: sheetHtml,
+                        sheet_presentation: (typeof getSheetPresentation==='function' ? getSheetPresentation() : null)
                     }
                 });
             }
@@ -6231,7 +6998,7 @@ async function openPopupChatGPT(){
 
     window.addEventListener('load',()=>setTimeout(loadEstimateForEditing,250));
         document.addEventListener('DOMContentLoaded',()=>setTimeout(toggleOverhang,0));
-document.addEventListener('DOMContentLoaded',()=>{syncDemoPreset();syncWindowQtyFromExtras();try{togglePartyDoorSize()}catch(e){};try{applyOverheadDoorSizePreset()}catch(e){};calculateEstimate();});
+document.addEventListener('DOMContentLoaded',()=>{syncDemoPreset();syncWindowQtyFromExtras();try{togglePartyDoorSize()}catch(e){};try{applyOverheadDoorSizePreset()}catch(e){};try{toggleExtraElecLocationFields()}catch(e){};calculateEstimate();});
 </script>
 
 <!-- Sticky Total Bar — always visible while scrolling -->

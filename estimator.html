@@ -4648,13 +4648,14 @@ input, select, textarea, button { box-sizing:border-box; }
         async function applySheetAIChange(requestText){
             const raw=String(requestText||'').trim();
             if(!raw) return 'Type a change first.';
-            const calcMsg=applyLocalEstimateChange(raw);
-            const presChanged=applySheetPresentationChange(raw);
+            let calcMsg='', presChanged=[];
+            try{ calcMsg=applyLocalEstimateChange(raw); }catch(e){ console.error(e); calcMsg='Calculator change error: '+(e.message||e); }
+            try{ presChanged=applySheetPresentationChange(raw)||[]; }catch(e){ console.error(e); calcMsg+=(calcMsg?' | ':'')+'Layout change error: '+(e.message||e); }
             const bits=[];
             if(calcMsg && !/^Type a change/.test(calcMsg)) bits.push(calcMsg);
             if(presChanged.length) bits.push('Sheet layout: '+presChanged.join(' • '));
             const msg=bits.length?bits.join(' | '):'Saved AI sheet request.';
-            await logSheetAIRevision(raw, msg);
+            try{ await logSheetAIRevision(raw, msg); }catch(e){ console.error('history log failed', e); }
             return msg;
         }
 
@@ -4957,22 +4958,58 @@ input, select, textarea, button { box-sizing:border-box; }
         if(document.readyState!=='loading') setTimeout(()=>{ loadGaragePhotoMode(); loadAIPhotoExtraInstructions(); loadGarageAccessType(); loadGaragePhotoView(); }, 200);
 
         function buildGarageAIPrompt(){
+            // Never let a prompt bug kill the whole AI photo pipeline
+            try{
+                return buildGarageAIPromptInner();
+            }catch(err){
+                console.error('buildGarageAIPrompt failed', err);
+                const dim = (typeof getGarageDimensions==='function') ? getGarageDimensions() : {width:20, depth:20};
+                const extra = (document.getElementById('aiPhotoExtraInstructions')?.value || '').trim();
+                const roof = document.getElementById('roofType')?.value||'gable';
+                return [
+                    'Hyper-realistic professional photograph of a brand-new detached residential garage',
+                    (Number(dim.width)||20)+'-foot-wide by '+(Number(dim.depth)||20)+'-foot-deep garage',
+                    roof+' roof',
+                    extra ? ('SALESMAN REQUEST: '+extra) : '',
+                    'soft natural daylight, photorealistic, no text, no watermark, no people'
+                ].filter(Boolean).join(', ');
+            }
+        }
+        function buildGarageAIPromptInner(){
             const dim = (typeof getGarageDimensions==='function') ? getGarageDimensions() : {width:20, depth:20};
             const w = Number(dim.width)||20, d = Number(dim.depth)||20;
             const roof = document.getElementById('roofType')?.value||'gable';
             const eave = document.getElementById('eaveDir')?.value||'';
             let sidingType = document.getElementById('sidingType')?.value||'vinyl';
-            let colorTxt = document.getElementById('sidingColor')?.value || 'Light Gray';
-            let shingleTxt = document.getElementById('shingleColor')?.value || 'Black';
+            // Prefer visible sidingColor select; fall back to vinyl/hardie hidden selects
+            const sidingColorEl = document.getElementById('sidingColor');
+            const vinylEl = document.getElementById('vinylColor');
+            const hardieEl = document.getElementById('hardieColor');
+            let colorTxt = 'Light Gray';
+            if (sidingColorEl && sidingColorEl.selectedIndex >= 0) {
+                colorTxt = sidingColorEl.options[sidingColorEl.selectedIndex].text || sidingColorEl.value || colorTxt;
+            } else if (sidingType === 'hardie' && hardieEl && hardieEl.selectedIndex >= 0) {
+                colorTxt = hardieEl.options[hardieEl.selectedIndex].text || hardieEl.value || colorTxt;
+            } else if (vinylEl && vinylEl.selectedIndex >= 0) {
+                colorTxt = vinylEl.options[vinylEl.selectedIndex].text || vinylEl.value || colorTxt;
+            }
+            const shingleEl = document.getElementById('shingleColor');
+            let shingleTxt = (shingleEl && shingleEl.selectedIndex >= 0)
+                ? (shingleEl.options[shingleEl.selectedIndex].text || shingleEl.value || 'Black')
+                : 'Black';
             const wall = document.getElementById('wallHeight')?.value||'8';
             const doorH = document.getElementById('overheadDoorHeight')?.value||'7';
             const doorW = Number(document.getElementById('overheadDoorWidth')?.value||16) || 16;
-            const doorStyle = document.getElementById('overheadDoorStyle')?.value||document.getElementById('doorStyle')?.value||'raised';
+            const doorStyleEl = document.getElementById('overheadDoorStyle');
+            const doorStyle = doorStyleEl?.value || 'raised';
+            const doorStyleLabel = (doorStyleEl && doorStyleEl.selectedIndex >= 0)
+                ? (doorStyleEl.options[doorStyleEl.selectedIndex].text || doorStyle)
+                : doorStyle;
             const service = document.getElementById('serviceDoorLocation')?.value||'right';
             const serviceFrontSide = document.getElementById('serviceDoorFrontSide')?.value||'right';
             const gutters = !!document.getElementById('gutters')?.checked;
             const hasAlumSoffit = !!document.getElementById('aluminumSoffit')?.checked;
-            const stone = document.getElementById('stoneAccent')?.checked;
+            const stone = !!document.getElementById('stoneAccent')?.checked;
             const winQty = Number(document.getElementById('windowQty')?.value||0);
             let access = document.getElementById('garageAccessType')?.value || localStorage.getItem('agb_garage_access_type') || 'driveway';
 
@@ -4994,7 +5031,21 @@ input, select, textarea, button { box-sizing:border-box; }
 
             const roofWords = roof==='hip' ? 'hip roof' : (eave==='sides' ? 'reverse gable roof' : 'gable roof');
             const sidingWords = sidingType==='hardie' ? 'Hardie fiber cement siding' : 'vinyl siding';
-            const doorStyleWords = /window/i.test(String(doorStyle)) ? 'raised-panel overhead garage door with a row of windows across the top' : 'solid raised-panel overhead garage door';
+            let doorStyleWords = 'solid raised-panel overhead garage door';
+            const ds = String(doorStyle||'').toLowerCase();
+            if (/window/.test(ds) || /window/i.test(doorStyleLabel)) {
+                doorStyleWords = 'raised-panel overhead garage door with a row of windows across the top';
+            } else if (/carriage/.test(ds)) {
+                doorStyleWords = 'carriage-house style overhead garage door';
+            } else if (/flush/.test(ds)) {
+                doorStyleWords = 'flush-panel overhead garage door';
+            } else if (/long/.test(ds)) {
+                doorStyleWords = 'long-panel overhead garage door';
+            } else if (/raised/.test(ds)) {
+                doorStyleWords = 'solid raised-panel overhead garage door';
+            } else if (doorStyleLabel) {
+                doorStyleWords = doorStyleLabel + ' overhead garage door';
+            }
 
             const carSel = document.getElementById('carCapacity');
             let carWords = 'single-car garage';
@@ -5143,7 +5194,7 @@ input, select, textarea, button { box-sizing:border-box; }
             // unless the salesman already placed a service door or explicitly said no door.
             const chatBlocksRearDoor = /\b(no service door|no man door|no entry door|blank (back|rear)|plain (back|rear))\b/.test(q);
             const chatAsksRearDoor = /\b(service door|man door|entry door).{0,20}\b(back|rear)\b|\b(back|rear).{0,20}\b(service door|man door|entry door)\b/.test(q);
-            if (wantsRearView && !chatBlocksRearDoor) {
+            if (resolvedView === 'back' && !chatBlocksRearDoor) {
                 if (service==='no'||service==='none'||service==='hidden'||service==='front'||chatAsksRearDoor) {
                     serviceWords = 'service entry door centered or offset on the REAR wall (man door), clearly visible in the rear view';
                     coachLightWords = 'black coach light mounted on the wall next to the rear service door';
@@ -5221,7 +5272,7 @@ input, select, textarea, button { box-sizing:border-box; }
                 parts.push('Do not substitute a different view, location, or feature than what the salesman asked for');
             }
             return parts.filter(Boolean).join(', ');
-        }
+        } // end buildGarageAIPromptInner
 
         function applyPhotoChatToEstimate(){
             const box=document.getElementById('aiPhotoExtraInstructions');

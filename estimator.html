@@ -1295,7 +1295,7 @@ input, select, textarea, button { box-sizing:border-box; }
 <input type="hidden" id="windowQty" value="1"><div class="grid grid-cols-1 md:grid-cols-3 gap-3">
 <div><label class="text-xs text-zinc-400 block mb-1">Extra windows</label><input type="number" id="extraWindows" value="0" min="0" step="1" oninput="syncWindowQtyFromExtras(); calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2 text-sm"><div class="text-[10px] text-zinc-500">@ $150 ea · sheet shows extra + 1 standard</div></div>
 <div><label class="text-xs text-zinc-400 block mb-1">Window type</label><select id="windowType" onchange="syncWindowQtyFromExtras(); calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm"><option value="choice" selected>Customer Choice</option><option value="single">Single Hung</option><option value="sliding">Slider</option><option value="none">No Window</option></select></div>
-<div><label class="text-xs text-zinc-400 block mb-1">Window placement</label><select id="windowPlacement" onchange="calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm"><option value="service" selected>Service-door side</option><option value="front-left">Front left</option><option value="front-right">Front right</option><option value="both">Both sides</option><option value="rear">Rear</option></select></div>
+<div><label class="text-xs text-zinc-400 block mb-1">Window placement</label><select id="windowPlacement" onchange="calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm"><option value="front">Front wall</option><option value="left" selected>Left wall</option><option value="right">Right wall</option><option value="back">Back wall</option></select><div class="text-[10px] text-zinc-500 mt-0.5">OK on same wall as service door — photo keeps them separated, not overlapping</div></div>
 </div></div><!-- Roof Patio Section -->
                     <div class="mb-6 border border-emerald-900/70 rounded-2xl p-5 bg-emerald-950/20">
                         <div class="flex items-center justify-between mb-3">
@@ -3995,19 +3995,22 @@ input, select, textarea, button { box-sizing:border-box; }
             const doorType=(document.getElementById('doorType')?.value||'standard').toLowerCase();
             const hasService=!(doorType==='no'||doorType==='none'||doorType==='hidden');
             const pos=(typeof updateOverheadDoorOffsetControl==='function')?updateOverheadDoorOffsetControl():{offset:0,leftReturn:2,rightReturn:2};
-            // Normalize window wall(s)
+            // Normalize window wall(s) — Front / Left / Right / Back only
             let windowWalls=[];
             if(hasWindows){
-                if(winPlace==='front-left') windowWalls=['front-left'];
-                else if(winPlace==='front-right') windowWalls=['front-right'];
+                if(winPlace==='front' || winPlace==='front-left' || winPlace==='front-right') windowWalls=['front'];
                 else if(winPlace==='rear'||winPlace==='back') windowWalls=['back'];
+                else if(winPlace==='right') windowWalls=['right'];
                 else if(winPlace==='both') windowWalls=['left','right'];
                 else if(winPlace==='service'){
-                    if(service==='front') windowWalls=['front-'+serviceFront];
+                    // legacy: map old service-door-side to the service wall
+                    if(service==='front') windowWalls=['front'];
                     else if(service==='left') windowWalls=['left'];
                     else if(service==='right') windowWalls=['right'];
                     else if(service==='back') windowWalls=['back'];
-                    else windowWalls=['right'];
+                    else windowWalls=['left'];
+                } else {
+                    windowWalls=['left']; // default left wall
                 }
             }
             let serviceSlot=null;
@@ -4021,16 +4024,7 @@ input, select, textarea, button { box-sizing:border-box; }
         function validateGaragePlacementConflicts(){
             const s=getGaragePlacementState();
             const issues=[];
-            // Service door vs windows on the same wall/slot
-            if(s.hasService && s.hasWindows && s.serviceSlot){
-                if(s.windowWalls.includes(s.serviceSlot)){
-                    issues.push('Service door and a window are both on the same place ('+s.serviceSlot.replace('-',' ')+'). Move the window or the service door.');
-                }
-                // "both sides" conflicts with left or right service
-                if((s.serviceSlot==='left'||s.serviceSlot==='right') && s.windowWalls.includes(s.serviceSlot)){
-                    issues.push('Window placement overlaps the service-door wall. Choose a different window placement.');
-                }
-            }
+            // Window + service door MAY share a wall — only warn if front returns are too tight
             // Front service door needs enough return on that side (min ~2.5' practical for a 3' door)
             if(s.hasService && s.service==='front'){
                 const need=2.5;
@@ -4042,12 +4036,9 @@ input, select, textarea, button { box-sizing:border-box; }
                 }
             }
             // Front windows vs tight return next to offset overhead
-            if(s.hasWindows){
-                if(s.windowWalls.includes('front-left') && s.leftReturn < 2){
-                    issues.push("Front-left window needs room beside the overhead door. Left return is only "+s.leftReturn+"'.");
-                }
-                if(s.windowWalls.includes('front-right') && s.rightReturn < 2){
-                    issues.push("Front-right window needs room beside the overhead door. Right return is only "+s.rightReturn+"'.");
+            if(s.hasWindows && s.windowWalls.includes('front')){
+                if(s.leftReturn < 2 && s.rightReturn < 2){
+                    issues.push("Front window needs room beside the overhead door. Returns are tight (L "+s.leftReturn+"' / R "+s.rightReturn+"').");
                 }
             }
             // Deduplicate
@@ -4730,18 +4721,21 @@ input, select, textarea, button { box-sizing:border-box; }
                 window._sheetPhotoEditPrompt='';
             }
 
-            // Free-form wording / layout notes that should appear on the sheet
-            if(/\b(note|wording|say|write|add text|layout|change text|include on sheet|on the sheet)\b/.test(q) || changed.length===0){
+            // Do NOT dump AI sheet chat into Additional Estimate Notes (fills the notes box and blocks further edits).
+            // Only add to notes when the salesman explicitly asks to put text on the sheet notes section.
+            if(/\b(add note|put in notes|include note|notes should say|write on notes|sheet notes:)\b/.test(q)){
                 const notesEl=document.getElementById('additionalEstimateNotes');
                 if(notesEl){
+                    const noteText=raw.replace(/\b(add note|put in notes|include note|notes should say|write on notes|sheet notes:)\b/ig,'').trim() || raw;
                     const prev=(notesEl.value||'').trim();
-                    const line='Sheet AI revision: '+raw;
-                    // Avoid exact duplicate lines
-                    if(!prev.includes(line)){
-                        notesEl.value=prev ? (prev + '\n' + line) : line;
-                        changed.push('additional notes updated');
+                    if(noteText && !prev.includes(noteText)){
+                        notesEl.value=prev ? (prev + '\n' + noteText) : noteText;
+                        changed.push('notes updated (explicit)');
                     }
                 }
+            }
+            if(changed.length===0){
+                changed.push('request recorded for photo/sheet rebuild (not added to notes)');
             }
 
             try{ toggleServiceDoorLocationFields(); }catch(e){}
@@ -4769,6 +4763,7 @@ input, select, textarea, button { box-sizing:border-box; }
                     bodyFont:null,
                     noteTextOverride:null,
                     itemDetailOverrides:{}, // { itemLabelLower: newDetails }
+                    itemLabelOverrides:{}, // { originalKey: new label text }
                     removedItems:[],
                     removedNoteKeywords:[],
                     customCss:''
@@ -4778,6 +4773,9 @@ input, select, textarea, button { box-sizing:border-box; }
             if(!Array.isArray(window._sheetPresentation.removedNoteKeywords)) window._sheetPresentation.removedNoteKeywords=[];
             if(!window._sheetPresentation.itemDetailOverrides || typeof window._sheetPresentation.itemDetailOverrides!=='object'){
                 window._sheetPresentation.itemDetailOverrides={};
+            }
+            if(!window._sheetPresentation.itemLabelOverrides || typeof window._sheetPresentation.itemLabelOverrides!=='object'){
+                window._sheetPresentation.itemLabelOverrides={};
             }
             return window._sheetPresentation;
         }
@@ -5375,7 +5373,14 @@ input, select, textarea, button { box-sizing:border-box; }
             if (/\balley\b/.test(q)) access = 'alley';
             if (/\bdriveway\b/.test(q)) access = 'driveway';
 
-            const roofWords = roof==='hip' ? 'hip roof' : (eave==='sides' ? 'reverse gable roof' : 'gable roof');
+            // Standard gable: peaks on the left/right side walls. Reverse gable (eaveDir=sides): peaks on FRONT and BACK.
+            // User note: reverse gable image must show gable ends on LEFT and RIGHT? 
+            // Field terms: "reverse gable" here means eave on front/back so triangular gables face the sides (left & right).
+            const roofWords = roof==='hip'
+                ? 'hip roof (no triangular gable ends)'
+                : (eave==='sides'
+                    ? 'REVERSE GABLE roof — triangular gable ends on the LEFT and RIGHT side walls (not on front/back), roof ridge runs front-to-back'
+                    : 'standard GABLE roof — triangular gable ends on the FRONT and BACK walls, ridge runs left-to-right');
             const sidingWords = sidingType==='hardie' ? 'Hardie fiber cement siding' : 'vinyl siding';
             let doorStyleWords = 'solid raised-panel overhead garage door';
             const ds = String(doorStyle||'').toLowerCase();
@@ -5420,21 +5425,22 @@ input, select, textarea, button { box-sizing:border-box; }
 
             const frontDoorRule = 'CRITICAL LAYOUT: the large overhead garage door is ONLY on the FRONT wall — never on the rear wall, never on a side wall, and never on the same wall as a roofed patio';
 
-            // Window placement for prompt (avoid same slot as service door)
-            const winPlace = (document.getElementById('windowPlacement')?.value || 'service').toLowerCase();
+            // Window placement: Front / Left / Right / Back walls (may share wall with service door — not overlapping)
+            const winPlace = (document.getElementById('windowPlacement')?.value || 'left').toLowerCase();
             let winPlaceWords = '';
             if (winQty > 0) {
-                if (winPlace === 'front-left') winPlaceWords = 'wall window on the FRONT wall to the LEFT of the overhead door only';
-                else if (winPlace === 'front-right') winPlaceWords = 'wall window on the FRONT wall to the RIGHT of the overhead door only';
-                else if (winPlace === 'rear' || winPlace === 'back') winPlaceWords = 'wall window on the REAR wall only';
-                else if (winPlace === 'both') winPlaceWords = 'wall windows on BOTH the left and right SIDE walls';
-                else {
-                    // service-door side — but still not stacked on the door leaf
-                    if (service === 'front') winPlaceWords = 'wall window on the FRONT wall on the '+serviceFrontSide+' side near the service door but not on the door itself';
-                    else if (service === 'left') winPlaceWords = 'wall window on the LEFT SIDE wall near the service door';
-                    else if (service === 'back') winPlaceWords = 'wall window on the REAR wall near the service door';
-                    else winPlaceWords = 'wall window on the RIGHT SIDE wall near the service door';
+                if (winPlace === 'front' || winPlace === 'front-left' || winPlace === 'front-right') {
+                    winPlaceWords = 'wall window on the FRONT wall only, clear of the overhead door opening';
+                } else if (winPlace === 'rear' || winPlace === 'back') {
+                    winPlaceWords = 'wall window on the REAR / BACK wall only';
+                } else if (winPlace === 'right') {
+                    winPlaceWords = 'wall window on the RIGHT SIDE wall only';
+                } else if (winPlace === 'both') {
+                    winPlaceWords = 'wall windows on BOTH the left and right SIDE walls';
+                } else {
+                    winPlaceWords = 'wall window on the LEFT SIDE wall only';
                 }
+                winPlaceWords += '. If a service/man door is on the SAME wall, place the window beside it with clear separation — do NOT overlap or touch the door leaf or door trim';
             }
 
             let serviceWords = '';
@@ -5600,7 +5606,7 @@ input, select, textarea, button { box-sizing:border-box; }
                 ].join(', ');
             }
 
-            // Full-width roofed patio: span entire garage wall, not a small centered add-on
+            // Full-width roofed patio: from eave overhang, wall-to-wall, always 4 posts
             let patioWords = '';
             if (roofPatioOn) {
                 const spanDim = roofPatioSide
@@ -5612,12 +5618,26 @@ input, select, textarea, button { box-sizing:border-box; }
                 patioWords = [
                     'MUST SHOW a full-width roofed covered patio attached to the '+loc,
                     'CRITICAL PATIO SIZE: the patio roof AND the concrete slab under it MUST span the ENTIRE '+spanDim,
-                    'do NOT make a small or narrow patio in the middle — it must run wall-to-wall across the full garage face',
+                    'patio roof starts at the eave overhang line of the main garage roof and continues out',
+                    'patio concrete is flush and the same width as the garage wall it attaches to — full wall-to-wall',
+                    'do NOT make a small or narrow patio in the middle',
                     'patio is about '+roofPatioDepth+' feet deep (projection out from the garage wall)',
-                    'clean continuous concrete patio slab under the full width of the patio roof, flush and level',
-                    'four or more vertical support posts evenly spaced across the full patio width',
-                    'patio roof matches the main garage roof style and uses the same '+shingleTxt+' architectural shingles'
-                ].join(', ');
+                    'ALWAYS exactly four vertical support posts evenly spaced across the full patio width',
+                    'patio roof matches the main garage roof style and uses the same '+shingleTxt+' architectural shingles',
+                    (roof === 'gable'
+                        ? 'GABLE EXTENDED PATIO: extend the gable roof / gable-end roof plane continuously out over the patio to the outer edge of the patio concrete pad — the whole gable end continues to the end of the concrete'
+                        : ''),
+                    // When rear patio, put service door on the back wall into the patio if not already specified
+                    (!roofPatioSide && (service==='no'||service==='none'||service==='hidden'||service==='right'||service==='left'||service==='front')
+                        ? 'place a service/man door on the REAR wall opening onto the roofed patio'
+                        : '')
+                ].filter(Boolean).join(', ');
+                // Auto-bias: rear patio → rear service door in the prompt when calculator still has side default
+                if (!roofPatioSide && (service==='right'||service==='left'||service==='front'||service==='no'||service==='none')) {
+                    serviceWords = 'service man-door on the REAR wall opening onto the roofed patio, flush with siding';
+                    coachLightWords = 'black coach light next to the rear patio service door';
+                    serviceWalkWords = 'service door threshold on the patio concrete slab';
+                }
             }
 
             // Rear view: only force a rear service door when calculator says back, or chat asks for it.
@@ -5649,19 +5669,32 @@ input, select, textarea, button { box-sizing:border-box; }
                 ].join('. ') + '.';
             }
 
+            // Apron depth from calculator — keep 3' aprons looking shallow, not like a long driveway
+            let apronDepthFt = 3;
+            try {
+                const apronSelect = document.getElementById('apronDepth');
+                const apronManual = document.getElementById('apronManual');
+                if (apronSelect && apronSelect.value === 'manual') apronDepthFt = Math.max(0, parseFloat(apronManual?.value || '3') || 3);
+                else if (apronSelect) apronDepthFt = parseFloat(apronSelect.value) || 3;
+            } catch (_) {}
+            const apronRule = [
+                'FRONT APRON: shallow concrete apron only about '+apronDepthFt+' feet deep from the overhead door outward',
+                'a '+apronDepthFt+'-foot apron must look SHORT and modest — NOT a long driveway pad, NOT a huge slab filling the yard',
+                'apron width matches the garage front; depth is only ~'+apronDepthFt+' feet so it reads correctly in perspective'
+            ].join(', ');
+
             const concreteRule = 'ALL concrete surfaces (apron, patio slab, service walkways, sidewalks) are flush with each other, clean, and neatly connected with no grass strips between connected pads';
 
-            // Service (man) door: normal door flush in the wall — no bulky separate frame.
-            // Sill meets siding/concrete; overhead door still goes to the apron/ground.
+            // Service (man) door: flush with bottom of siding — not dug into concrete
             const serviceDoorSillRule = [
                 'SERVICE DOOR LOOK (MANDATORY when a man door / service door is visible)',
                 'the small ~3-foot-wide service entry door must be a normal flush-mounted residential door set INTO the siding wall plane',
                 'NO separate oversized door frame, NO protruding box frame, NO thick out-of-scale casing around the service door',
-                'door and trim sit flush with the siding — standard thin brickmold/trim only, proportional to a real man door',
-                'the bottom of the service door must meet the bottom edge of the siding, flush with the top of the concrete slab or walk at the door',
-                'service door threshold sits on the concrete pad / walk — same plane as the bottom of the siding',
+                'door and trim sit flush with the siding — standard thin brickmold/trim only',
+                'CRITICAL SILL: bottom of the service door is FLUSH with the bottom edge of the siding — sitting on top of the concrete, NOT cut down into the concrete slab',
+                'do NOT bury the door bottom into the concrete; the concrete stays continuous under the threshold line',
                 'do NOT show a deep step-down into grass under the service door',
-                'the large overhead garage door DOES go all the way down to the concrete apron / ground — that is correct and different from the service door'
+                'the large overhead garage door DOES go all the way down to the concrete apron / ground — different from the service door'
             ].join(', ');
 
             const parts = [];
@@ -5675,6 +5708,9 @@ input, select, textarea, button { box-sizing:border-box; }
             let gableEndRule = '';
             if (roof === 'gable') {
                 gableEndRule = [
+                    eave==='sides'
+                        ? 'REVERSE GABLE ORIENTATION (MANDATORY): triangular gable ends face LEFT and RIGHT side walls — ridge runs front-to-back — do NOT put gable triangles on the front or rear walls'
+                        : 'STANDARD GABLE ORIENTATION: triangular gable ends on FRONT and BACK walls — ridge runs left-to-right',
                     'GABLE END SIDING (MANDATORY): the triangular gable-end areas under the roof peak must be the SAME color and material as the walls',
                     'gable triangles match the wall field exactly — continuous '+colorTxt+' '+sidingWords+' with no color break at the gable',
                     'do NOT use a different or contrasting color on the gable ends'
@@ -5700,6 +5736,7 @@ input, select, textarea, button { box-sizing:border-box; }
                 gutterWords,
                 trimWords,
                 stoneWords,
+                apronRule,
                 concreteRule,
                 'brand-new clean garage exterior, soft natural daylight, photorealistic architectural exterior photography, sharp detail, correct real-world proportions, no text, no watermark, no people, no logo, no vehicles blocking the view'
             );
@@ -6451,8 +6488,23 @@ input, select, textarea, button { box-sizing:border-box; }
                     }
                 });
             }
-            specRows = specsForSheet.map(([item, details]) => `
-                <tr><td class="item">${esc(item)}</td><td class="details">${esc(details)}</td></tr>
+            if(sheetPres.itemLabelOverrides && Object.keys(sheetPres.itemLabelOverrides).length){
+                specsForSheet.forEach(pair=>{
+                    const label=String(pair[0]||'').toLowerCase();
+                    for(const [k,v] of Object.entries(sheetPres.itemLabelOverrides)){
+                        if(label.includes(String(k).toLowerCase()) || String(k).toLowerCase().includes(label)){
+                            if(v) pair[0]=v;
+                        }
+                    }
+                });
+            }
+            specRows = specsForSheet.map(([item, details], idx) => `
+                <tr data-row-idx="${idx}" data-item-key="${esc(String(item).toLowerCase())}">
+                  <td class="item"><span class="sheet-edit" contenteditable="true" data-field="item" data-item-key="${esc(String(item).toLowerCase())}" title="Click to edit">${esc(item)}</span></td>
+                  <td class="details"><span class="sheet-edit" contenteditable="true" data-field="details" data-item-key="${esc(String(item).toLowerCase())}" title="Click to edit">${esc(details)}</span>
+                    <button type="button" class="sheet-row-remove no-print" data-item-key="${esc(String(item).toLowerCase())}" title="Remove this row">×</button>
+                  </td>
+                </tr>
             `).join('');
 
             let notesForSheet = notes.slice();
@@ -6462,9 +6514,9 @@ input, select, textarea, button { box-sizing:border-box; }
                     return !sheetPres.removedNoteKeywords.some(k=>k && t.includes(String(k).toLowerCase()));
                 });
             }
-            notesHtml = notesForSheet.map(n => `<li>${esc(capitalizeNoteLine(n))}</li>`).join('');
+            notesHtml = notesForSheet.map((n, ni) => `<li><span class="sheet-edit" contenteditable="true" data-field="note" data-note-idx="${ni}" title="Click to edit">${esc(capitalizeNoteLine(n))}</span></li>`).join('');
             if(sheetPres.noteTextOverride){
-                notesHtml = String(sheetPres.noteTextOverride).split(/\n+/).map(n=>`<li>${esc(capitalizeNoteLine(n.trim()))}</li>`).filter(Boolean).join('');
+                notesHtml = String(sheetPres.noteTextOverride).split(/\n+/).map((n,ni)=>`<li><span class="sheet-edit" contenteditable="true" data-field="note" data-note-idx="${ni}" title="Click to edit">${esc(capitalizeNoteLine(n.trim()))}</span></li>`).filter(Boolean).join('');
             }
 
             const sheetHtml = `<!DOCTYPE html>
@@ -6732,6 +6784,35 @@ input, select, textarea, button { box-sizing:border-box; }
       cursor: pointer;
     }
     .sheet-ai-panel button.ai-apply:disabled { opacity: .55; cursor: wait; }
+    .sheet-edit {
+      display: inline-block;
+      min-width: 2em;
+      max-width: 100%;
+      outline: none;
+      border-radius: 3px;
+      padding: 0 2px;
+    }
+    .sheet-edit:focus {
+      background: #fff8d6;
+      box-shadow: 0 0 0 2px #f5c542;
+    }
+    .sheet-row-remove {
+      float: right;
+      border: none;
+      background: #fee2e2;
+      color: #b91c1c;
+      border-radius: 4px;
+      width: 18px;
+      height: 18px;
+      line-height: 16px;
+      font-size: 12px;
+      cursor: pointer;
+      margin-left: 4px;
+    }
+    @media print {
+      .sheet-edit:focus { background: transparent; box-shadow: none; }
+      .sheet-row-remove { display: none !important; }
+    }
     .sheet-ai-panel #popupChangeStatus {
       font-size: 12px;
       color: #86efac;
@@ -7172,6 +7253,60 @@ async function downloadEstimatePdf(){
     if(exportHost && exportHost.parentNode) exportHost.parentNode.removeChild(exportHost);
   }
 }
+function saveSheetInlineEdit(el){
+  if(!el || !window.opener || window.opener.closed) return;
+  try{
+    const p = (typeof window.opener.getSheetPresentation==='function')
+      ? window.opener.getSheetPresentation()
+      : (window.opener._sheetPresentation = window.opener._sheetPresentation || {});
+    if(!p.itemDetailOverrides) p.itemDetailOverrides = {};
+    if(!p.itemLabelOverrides) p.itemLabelOverrides = {};
+    if(!Array.isArray(p.removedItems)) p.removedItems = [];
+    const field = el.getAttribute('data-field');
+    const key = (el.getAttribute('data-item-key')||'').toLowerCase();
+    const text = (el.innerText||el.textContent||'').trim();
+    if(field==='details' && key){
+      p.itemDetailOverrides[key] = text;
+    } else if(field==='item' && key){
+      p.itemLabelOverrides[key] = text;
+      // also keep details keyed under original for matching
+    } else if(field==='note'){
+      // Collect all note edits into noteTextOverride
+      const notes = Array.from(document.querySelectorAll('.sheet-edit[data-field="note"]'))
+        .map(n => (n.innerText||n.textContent||'').trim()).filter(Boolean);
+      p.noteTextOverride = notes.join('\n');
+    }
+    if(typeof window.opener.saveSheetPresentationSession==='function') window.opener.saveSheetPresentationSession();
+    const st=document.getElementById('popupChangeStatus');
+    if(st) st.textContent='Saved manual edit (keeps with AI rebuilds).';
+  }catch(err){ console.warn('saveSheetInlineEdit', err); }
+}
+function removeSheetRow(btn){
+  if(!btn || !window.opener || window.opener.closed) return;
+  try{
+    const key=(btn.getAttribute('data-item-key')||'').toLowerCase();
+    if(!key) return;
+    const p = (typeof window.opener.getSheetPresentation==='function')
+      ? window.opener.getSheetPresentation()
+      : (window.opener._sheetPresentation = window.opener._sheetPresentation || {});
+    if(!Array.isArray(p.removedItems)) p.removedItems = [];
+    if(!p.removedItems.includes(key)) p.removedItems.push(key);
+    if(typeof window.opener.saveSheetPresentationSession==='function') window.opener.saveSheetPresentationSession();
+    const tr=btn.closest('tr');
+    if(tr) tr.remove();
+    const st=document.getElementById('popupChangeStatus');
+    if(st) st.textContent='Removed row: '+key+' (stays removed on rebuild).';
+  }catch(err){ console.warn('removeSheetRow', err); }
+}
+document.addEventListener('focusout', function(e){
+  if(e.target && e.target.classList && e.target.classList.contains('sheet-edit')){
+    saveSheetInlineEdit(e.target);
+  }
+});
+document.addEventListener('click', function(e){
+  const btn=e.target && e.target.closest && e.target.closest('.sheet-row-remove');
+  if(btn){ e.preventDefault(); removeSheetRow(btn); }
+});
 function applyPopupChange(){ return applyPopupAIChange(); }
 async function applyPopupAIChange(){
   const box=document.getElementById('popupChangeRequest');

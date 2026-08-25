@@ -1743,11 +1743,16 @@ input, select, textarea, button { box-sizing:border-box; }
                             </div>
                         </div>
                         <label class="text-[9px] font-bold text-violet-300/80 block mb-0.5" for="aiPhotoExtraInstructions">PHOTO NOTES</label>
-                        <textarea id="aiPhotoExtraInstructions" rows="2" placeholder="e.g. roofed patio in the back — or type front / left / back / right"
+                        <textarea id="aiPhotoExtraInstructions" rows="2" placeholder="Optional: front / left / back / right view, or other photo details only if needed"
                             oninput="saveAIPhotoExtraInstructions(); applyPhotoChatToEstimate(); syncGaragePhotoViewFromChat()"
                             class="w-full bg-zinc-900 border border-violet-700/50 text-white rounded-lg px-2 py-1.5 text-xs resize-y min-h-[44px]"></textarea>
                         <div id="aiPhotoStatus" class="text-[9px] text-emerald-400 mt-1 hidden"></div>
                     </div>
+                    <!-- Hidden bridges for sheet-page AI updates (UI only on estimate sheet) -->
+                    <textarea id="estimateChangeRequest" class="hidden" aria-hidden="true" tabindex="-1"></textarea>
+                    <span id="estimateChangeStatus" class="hidden" aria-hidden="true"></span>
+                    <button type="button" id="mainAiApplyBtn" class="hidden" aria-hidden="true" tabindex="-1"></button>
+
                     <button type="button" onclick="safePrintEstimateSheet()"
                             class="print-action col-span-2 w-full px-3 py-2.5 text-xs font-semibold bg-green-700 hover:bg-green-600 active:bg-green-800 transition-all rounded-xl flex items-center justify-center gap-x-2 text-white">
                         <i class="fa-solid fa-file-invoice"></i>
@@ -5027,6 +5032,63 @@ input, select, textarea, button { box-sizing:border-box; }
             return msg;
         };
 
+        /** Main-page Apply — always works without relying on the sheet popup */
+        async function applyMainPageSheetAI(){
+            const box=document.getElementById('estimateChangeRequest');
+            const status=document.getElementById('estimateChangeStatus');
+            const btn=document.getElementById('mainAiApplyBtn');
+            const q=(box&&box.value||'').trim();
+            if(!q){
+                if(status) status.textContent='Type a change first.';
+                try{ alert('Type a change first.'); }catch(e){}
+                return;
+            }
+            if(btn) btn.disabled=true;
+            if(status) status.textContent='Applying…';
+            try{
+                let msg='';
+                try{ msg=await applySheetAIChange(q); }catch(e){ msg='Error: '+(e&&e.message?e.message:e); }
+                if(status) status.textContent=(msg||'Applied')+' — opening/rebuilding sheet…';
+                // Always open/rebuild a sheet so the user sees the result
+                await safePrintEstimateSheet(true, { skipHealth:true, skipPlacement:true });
+                if(status) status.textContent=(msg||'Applied')+' — sheet updated.';
+            }catch(err){
+                const em=err&&err.message?err.message:String(err);
+                if(status) status.textContent='Error: '+em;
+                try{ alert('AI sheet update error: '+em); }catch(e){}
+            }finally{
+                if(btn) btn.disabled=false;
+            }
+        }
+        // localStorage bridge: sheet popup can queue a change if opener is missing
+        window.addEventListener('storage', function(ev){
+            if(ev.key==='agb_pending_sheet_ai' && ev.newValue){
+                try{
+                    const data=JSON.parse(ev.newValue);
+                    if(data && data.q && Date.now()-(data.t||0)<120000){
+                        const box=document.getElementById('estimateChangeRequest');
+                        if(box) box.value=data.q;
+                        applyMainPageSheetAI();
+                        try{ localStorage.removeItem('agb_pending_sheet_ai'); }catch(e){}
+                    }
+                }catch(e){}
+            }
+        });
+        // Also poll for same-tab sessionStorage flag
+        setInterval(function(){
+            try{
+                const raw=sessionStorage.getItem('agb_pending_sheet_ai_now');
+                if(!raw) return;
+                sessionStorage.removeItem('agb_pending_sheet_ai_now');
+                const data=JSON.parse(raw);
+                if(data && data.q){
+                    const box=document.getElementById('estimateChangeRequest');
+                    if(box) box.value=data.q;
+                    applyMainPageSheetAI();
+                }
+            }catch(e){}
+        }, 800);
+
         async function logSheetAIRevision(requestText, appliedMsg){
             try{
                 const {data:{user}}=await garageSb.auth.getUser();
@@ -5469,7 +5531,10 @@ input, select, textarea, button { box-sizing:border-box; }
                 'the overhead door is '+doorW+' feet wide by '+doorH+' feet tall and must dominate most of the FRONT wall width',
                 'camera pulled far enough back that the FULL width of the garage is visible with correct real-world proportions',
                 (w >= 20
-                    ? ('WIDTH EMPHASIS (MANDATORY): this garage is '+w+' FEET WIDE — it must look OBVIOUSLY WIDE and large in the frame, horizontal massing, broad front elevation filling most of the width of the photo, NOT a small narrow shed, NOT zoomed-in on one corner only, show the full '+w+'-foot width so the building reads as a full two-car scale structure')
+                    ? ('CRITICAL WIDTH (MANDATORY): garage is '+w+' FEET WIDE — show a WIDE rectangular building that spans most of the photo horizontally, broad front wall, large two-car proportions, door centered on a wide facade, camera back far enough to see both left and right corners of the building, NOT a tall narrow tower, NOT a small shed, NOT cropped tight on the door only')
+                    : ''),
+                (w >= 20
+                    ? ('a '+w+'x'+d+' garage is about the size of a two-car residential garage — massing must match that, wide and low, not small')
                     : '')
             ].filter(Boolean).join(', ');
 
@@ -5555,9 +5620,13 @@ input, select, textarea, button { box-sizing:border-box; }
             }
 
             // ---- Parse ANY salesman chat specifics (not only patio) ----
+            // Patio ONLY if calculator checkbox is on OR chat explicitly asks for a patio (never invent one)
             let roofPatioOn = !!document.getElementById('roofPatioEnabled')?.checked;
             let roofPatioSide = !!document.getElementById('roofPatioSide')?.checked;
-            if (/roofed?\s*patio|covered\s*patio|roof\s*patio|awning\s*patio/.test(q)) roofPatioOn = true;
+            const chatNoPatio = /\b(no\s+(roofed?\s*)?patio|without\s+(a\s+)?(roofed?\s*)?patio|remove\s+(the\s+)?(roofed?\s*)?patio|dont\s+want\s+patio|don't\s+want\s+patio)\b/.test(q);
+            const chatYesPatio = /\b(roofed?\s*patio|covered\s*patio|roof\s*patio|awning\s*patio|add\s+(a\s+)?patio|with\s+(a\s+)?(roofed?\s*)?patio)\b/.test(q);
+            if (chatNoPatio) roofPatioOn = false;
+            else if (chatYesPatio) roofPatioOn = true;
             if (roofPatioOn) {
                 if (/\b(side|left\s*side|right\s*side|on the side)\b/.test(q)) roofPatioSide = true;
                 if (/\b(back|rear|behind|in the back)\b/.test(q)) roofPatioSide = false;
@@ -5658,7 +5727,9 @@ input, select, textarea, button { box-sizing:border-box; }
 
             // Full-width roofed patio: from eave overhang, wall-to-wall, always 4 posts
             let patioWords = '';
-            if (roofPatioOn) {
+            if (!roofPatioOn) {
+                patioWords = 'NO roofed patio, NO covered patio, NO rear patio roof, NO side patio roof, NO awning structure attached — plain garage only unless salesman chat explicitly asked for a patio';
+            } else {
                 const spanDim = roofPatioSide
                     ? (d + '-foot DEPTH of the garage (full length of the side wall)')
                     : (w + '-foot WIDTH of the garage (full length of the rear wall)');
@@ -7367,57 +7438,47 @@ async function applyPopupAIChange(){
   var status=document.getElementById('popupChangeStatus');
   var btn=document.getElementById('popupAiApplyBtn');
   var q=(box&&box.value||'').trim();
+  function st(t){ if(status) status.textContent=t||''; }
   if(!q){
-    setPopupAIStatus('Type the change you want first.');
+    st('Type the change you want first.');
     try{ alert('Type the change you want first.'); }catch(e){}
     return;
   }
+  if(btn) btn.disabled=true;
+  st('Applying change…');
+  // Always queue for the main Estimator page (works even if opener is broken)
+  try{
+    localStorage.setItem('agb_pending_sheet_ai', JSON.stringify({q:q,t:Date.now()}));
+    sessionStorage.setItem('agb_pending_sheet_ai_now', JSON.stringify({q:q,t:Date.now()}));
+  }catch(e){}
   var host=null;
   try{
     if(window.opener && !window.opener.closed) host=window.opener;
-    else if(window.parent && window.parent!==window) host=window.parent;
   }catch(e){ host=null; }
-  if(!host){
-    setPopupAIStatus('Keep the main Estimator page open, then try again.');
-    try{ alert('AI changes need the main Estimator page still open behind this sheet. Go back to Estimator, open the sheet again, and keep both open.'); }catch(e){}
-    return;
-  }
-  if(btn) btn.disabled=true;
-  setPopupAIStatus('Applying change…');
   try{
-    var msg='';
-    // Preferred: single bridge on the main page
-    if(typeof host.__runPendingSheetAI==='function'){
-      msg=await host.__runPendingSheetAI(q, window);
-      setPopupAIStatus((msg||'Done.')+' Sheet rebuilt.');
+    if(host && typeof host.__runPendingSheetAI==='function'){
+      var msg=await host.__runPendingSheetAI(q, window);
+      st((msg||'Done.')+' Sheet rebuilt.');
       if(btn) btn.disabled=false;
       return;
     }
-    // Fallback: call pieces directly
-    if(typeof host.applyLocalEstimateChange==='function'){
-      try{ msg=host.applyLocalEstimateChange(q)||msg; }catch(e1){ msg='Calc: '+(e1.message||e1); }
-    }
-    if(typeof host.applySheetPresentationChange==='function'){
+    if(host && typeof host.applyMainPageSheetAI==='function'){
       try{
-        var pres=host.applySheetPresentationChange(q)||[];
-        if(pres.length) msg=(msg?msg+' | ':'')+'Layout: '+pres.join(' • ');
-      }catch(e2){ msg=(msg?msg+' | ':'')+'Layout: '+(e2.message||e2); }
-    }
-    setPopupAIStatus((msg||'Applied.')+' — rebuilding…');
-    if(typeof host.safePrintEstimateSheet==='function'){
-      await host.safePrintEstimateSheet(true, { skipHealth:true, skipPlacement:true, skipCustomer:true, targetWindow: window });
-    } else if(typeof host.printEstimateSheet==='function'){
-      await host.printEstimateSheet(true, window);
-    } else {
-      setPopupAIStatus('Change saved on Estimator — close this sheet and open Create / View again.');
-      try{ alert('Change was saved on the Estimator. Close this sheet and tap Create / View Estimate Sheet again.'); }catch(e){}
+        var box2=host.document.getElementById('estimateChangeRequest');
+        if(box2) box2.value=q;
+      }catch(e){}
+      await host.applyMainPageSheetAI();
+      st('Sent to main Estimator — check that tab for the new sheet.');
       if(btn) btn.disabled=false;
       return;
     }
+    // No opener: instruct user
+    st('Change queued. Switch to the Estimator tab and it will apply, or use AI SHEET UPDATE on the main page.');
+    try{ alert('Could not reach the main Estimator page.\\n\\nDo this:\\n1) Keep Estimator open\\n2) On the Estimator page use the yellow \"AI SHEET UPDATE\" box\\n3) Type the same change and tap Apply\\n\\nOr reopen the sheet from Estimator and try again.'); }catch(e){}
     if(btn) btn.disabled=false;
   }catch(err){
     var em=err&&err.message?err.message:String(err);
-    setPopupAIStatus('Error: '+em);
+    st('Error: '+em);
     try{ alert('AI change error: '+em); }catch(e){}
     if(btn) btn.disabled=false;
   }

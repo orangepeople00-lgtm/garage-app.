@@ -4525,17 +4525,37 @@ input, select, textarea, button { box-sizing:border-box; }
             const setVal=(id,v,label)=>{const e=document.getElementById(id); if(e){e.value=String(v); changed.push(label||id);}};
             const setCheck=(id,v,label)=>{const e=document.getElementById(id); if(e){e.checked=!!v; changed.push(label||id);}};
 
-            if(/\bgable\b/.test(q)) setVal('roofType','gable','roof: gable');
+            if(/\bgable\b/.test(q) && !/reverse\s*gable/.test(q)) setVal('roofType','gable','roof: gable');
             else if(/\bhip\b/.test(q)) setVal('roofType','hip','roof: hip');
 
+            // Siding type + color (handles "change siding", "siding to hardie", "make it white", etc.)
             if(/hardie|cement\s*board|hardieboard/.test(q)) setVal('sidingType','hardie','HardieBoard siding');
-            else if(/vinyl/.test(q)) setVal('sidingType','vinyl','vinyl siding');
+            else if(/\bvinyl\b/.test(q)) setVal('sidingType','vinyl','vinyl siding');
+            else if(/\b(change|update|switch|set)\s+siding\b/.test(q) || /\bsiding\s+to\b/.test(q)){
+                // Vague "change siding" still forces a photo edit even if type not named
+                changed.push('siding change requested');
+            }
 
-            const colors=['white','gray','grey','black','charcoal','brown','tan','beige','almond','cream','blue','navy','green','sage','red','yellow','clay','pearl'];
-            const color=colors.find(c=>new RegExp('\\b'+c+'\\b').test(q));
+            const colors=['white','gray','grey','black','charcoal','brown','tan','beige','almond','cream','blue','navy','green','sage','red','yellow','clay','pearl','light gray','light grey'];
+            const color=colors.find(c=>new RegExp('\\b'+c.replace(' ','\\s+')+'\\b').test(q));
             if(color){
+                const label=color==='grey'||color==='light grey'?(color.includes('light')?'Light Gray':'Gray'):(color==='light gray'?'Light Gray':color.replace(/\b\w/g,ch=>ch.toUpperCase()));
+                const sc=document.getElementById('sidingColor');
                 const sid=(document.getElementById('sidingType')||{}).value==='hardie'?'hardieColor':'vinylColor';
-                if(selectOptionByText(sid,color==='grey'?'gray':color)) changed.push('siding color: '+color);
+                let ok=false;
+                if(sc && typeof selectOptionByText==='function') ok=!!selectOptionByText('sidingColor', label);
+                if(!ok && typeof selectOptionByText==='function') ok=!!selectOptionByText(sid, label);
+                if(sc && !ok){
+                    // try setting value directly
+                    for(let i=0;i<sc.options.length;i++){
+                        if(new RegExp(label,'i').test(sc.options[i].text)||new RegExp(label,'i').test(sc.options[i].value)){
+                            sc.value=sc.options[i].value; ok=true; break;
+                        }
+                    }
+                }
+                if(ok) changed.push('siding color: '+label);
+                else changed.push('siding color request: '+label);
+                try{ if(typeof syncSidingColorFields==='function') syncSidingColorFields(); }catch(e){}
             }
 
             if(/service door|man door|side door|party door/.test(q)){
@@ -4691,9 +4711,10 @@ input, select, textarea, button { box-sizing:border-box; }
 
             // Visual changes EDIT the existing AI photo (keep windows/doors/etc.) — do not wipe and start over
             const visualChange = changed.some(c=>/roof:|siding|color|door style|overhead door|service door|party door|french|gable|hip|patio|photo view|wall height|windows|gutters|soffit|garage size|width set|wider garage|photo:/i.test(c))
-                || /\b(photo|picture|image|render|camera|view|siding|door|roof|gable|hip|color|patio|wider|wide|scale|bigger)\b/.test(q)
+                || /\b(photo|picture|image|render|camera|view|siding|door|roof|gable|hip|color|patio|wider|wide|scale|bigger|shingle|white|gray|grey|black|hardie|vinyl)\b/.test(q)
                 || widerAsk;
             const forceNewPhoto = /\b(new photo|regenerate|start over|brand new image|full regenerate)\b/.test(q);
+            const hasPriorPhoto = !!(window._lastAiGaragePhotoUrl || (function(){ try{ return sessionStorage.getItem('agb_last_ai_garage_photo'); }catch(e){ return ''; } })());
 
             if(forceNewPhoto){
                 try{
@@ -4706,15 +4727,22 @@ input, select, textarea, button { box-sizing:border-box; }
                 changed.push('photo will fully regenerate');
             } else if(visualChange){
                 try{ syncPhotoNotesWithCalculator(raw); }catch(e){}
-                // Keep prior image; next sheet build will EDIT it with only this change
-                window._sheetPhotoMode='edit';
-                // Strengthen width edits so the model actually widens the building
-                if(widerAsk || /wider|wide|scale/.test(q)){
-                    window._sheetPhotoEditPrompt = raw + '. CRITICAL SCALE: make the garage look noticeably WIDER in the frame — full horizontal massing, broad front wall, camera pulled back so the full width reads correctly. Do not make it look like a small narrow shed.';
+                // Edit prior image when we have one; otherwise generate fresh so the change is not skipped
+                if(hasPriorPhoto){
+                    window._sheetPhotoMode='edit';
+                    if(widerAsk || /wider|wide|scale/.test(q)){
+                        window._sheetPhotoEditPrompt = raw + '. CRITICAL SCALE: make the garage look noticeably WIDER in the frame — full horizontal massing, broad front wall, camera pulled back so the full width reads correctly. Do not make it look like a small narrow shed.';
+                    } else if(/\bsiding\b|\bhardie\b|\bvinyl\b|color|white|gray|grey|black/.test(q)){
+                        window._sheetPhotoEditPrompt = raw + '. Apply the siding/color change to the existing garage photo only. Keep the same camera, windows, doors, roof shape, and layout. Do not redesign the building.';
+                    } else {
+                        window._sheetPhotoEditPrompt=raw;
+                    }
+                    changed.push('photo will EDIT prior image (keep existing windows/details)');
                 } else {
-                    window._sheetPhotoEditPrompt=raw;
+                    window._sheetPhotoMode='generate';
+                    window._sheetPhotoEditPrompt='';
+                    changed.push('photo will regenerate (no prior AI image to edit)');
                 }
-                changed.push('photo will EDIT prior image (keep existing windows/details)');
             } else {
                 // Text/layout-only change — reuse the same photo
                 window._sheetPhotoMode='reuse';
@@ -4978,6 +5006,26 @@ input, select, textarea, button { box-sizing:border-box; }
             try{ Promise.resolve(logSheetAIRevision(raw, msg)).catch(function(){}); }catch(e){}
             return msg;
         }
+
+        // Called from the estimate-sheet popup (iOS-safe bridge)
+        window.__runPendingSheetAI = async function(requestText, targetWindow){
+            const raw=String(requestText||'').trim();
+            if(!raw) return 'Type a change first.';
+            let msg='';
+            try{ msg=await applySheetAIChange(raw); }catch(e){ msg='Error: '+(e&&e.message?e.message:e); }
+            try{
+                await safePrintEstimateSheet(true, {
+                    skipHealth:true,
+                    skipPlacement:true,
+                    skipCustomer:true,
+                    targetWindow: targetWindow || null
+                });
+            }catch(e2){
+                msg=(msg?msg+' | ':'')+'Rebuild failed: '+(e2&&e2.message?e2.message:e2);
+                throw e2;
+            }
+            return msg;
+        };
 
         async function logSheetAIRevision(requestText, appliedMsg){
             try{
@@ -7077,10 +7125,10 @@ input, select, textarea, button { box-sizing:border-box; }
 <div class="sheet-ai-panel no-print">
   <h3>AI Sheet Changes</h3>
   <p>Full control for <b>this sheet only</b>: photo, specs, notes, wording, landscape/portrait, colors, font size, hide/show sections, item details. Type a change and tap Apply to rebuild.</p>
-  <textarea id="popupChangeRequest" placeholder="Examples:&#10;• Remove photo / hide exterior view&#10;• Remove Gutters row · remove Windows item&#10;• Clear details for Siding&#10;• Change Overhead Door details to 16x7 raised panel&#10;• Remove note about demolition&#10;• Landscape · larger font · hide price"></textarea>
+  <textarea id="popupChangeRequest" placeholder="Examples:&#10;• hip roof&#10;• Remove Gutters row&#10;• make the garage wider&#10;• Landscape · larger font&#10;• Change Overhead Door details to 16x7 raised panel"></textarea>
   <div class="ai-row">
-    <button type="button" class="ai-apply" id="popupAiApplyBtn" onclick="applyPopupAIChange()">Apply AI Change &amp; Rebuild Sheet</button>
-    <div id="popupChangeStatus"></div>
+    <button type="button" class="ai-apply" id="popupAiApplyBtn">Apply AI Change &amp; Rebuild Sheet</button>
+    <div id="popupChangeStatus" style="min-height:1.2em;color:#fde68a;font-size:12px;font-weight:600;"></div>
   </div>
 </div>
 
@@ -7310,53 +7358,90 @@ document.addEventListener('click', function(e){
   if(btn){ e.preventDefault(); removeSheetRow(btn); }
 });
 function applyPopupChange(){ return applyPopupAIChange(); }
+function setPopupAIStatus(t){
+  var status=document.getElementById('popupChangeStatus');
+  if(status) status.textContent=t||'';
+}
 async function applyPopupAIChange(){
-  const box=document.getElementById('popupChangeRequest');
-  const status=document.getElementById('popupChangeStatus');
-  const btn=document.getElementById('popupAiApplyBtn');
-  const q=(box&&box.value||'').trim();
-  if(!q){ if(status) status.textContent='Type the change you want first.'; return; }
-  if(!window.opener || window.opener.closed){
-    if(status) status.textContent='Keep the main Estimator tab open, then try again.';
+  var box=document.getElementById('popupChangeRequest');
+  var status=document.getElementById('popupChangeStatus');
+  var btn=document.getElementById('popupAiApplyBtn');
+  var q=(box&&box.value||'').trim();
+  if(!q){
+    setPopupAIStatus('Type the change you want first.');
+    try{ alert('Type the change you want first.'); }catch(e){}
+    return;
+  }
+  var host=null;
+  try{
+    if(window.opener && !window.opener.closed) host=window.opener;
+    else if(window.parent && window.parent!==window) host=window.parent;
+  }catch(e){ host=null; }
+  if(!host){
+    setPopupAIStatus('Keep the main Estimator page open, then try again.');
+    try{ alert('AI changes need the main Estimator page still open behind this sheet. Go back to Estimator, open the sheet again, and keep both open.'); }catch(e){}
     return;
   }
   if(btn) btn.disabled=true;
-  if(status) status.textContent='Applying…';
+  setPopupAIStatus('Applying change…');
   try{
-    let msg='';
-    // Prefer fast local apply (do not hang on network history)
-    if(typeof window.opener.applyLocalEstimateChange==='function'){
-      try{ msg=window.opener.applyLocalEstimateChange(q)||msg; }catch(e1){ msg='Calc: '+(e1.message||e1); }
-    }
-    if(typeof window.opener.applySheetPresentationChange==='function'){
-      try{
-        const pres=window.opener.applySheetPresentationChange(q)||[];
-        if(pres.length) msg=(msg?msg+' | ':'')+'Layout: '+pres.join(' • ');
-      }catch(e2){ msg=(msg?msg+' | ':'')+'Layout error: '+(e2.message||e2); }
-    }
-    if(!msg && typeof window.opener.applySheetAIChange==='function'){
-      try{ msg=await window.opener.applySheetAIChange(q); }catch(e3){ msg='Apply error: '+(e3.message||e3); }
-    }
-    if(status) status.textContent=(msg||'Applied.')+' — rebuilding sheet…';
-    // Rebuild THIS window in place
-    if(typeof window.opener.safePrintEstimateSheet==='function'){
-      await window.opener.safePrintEstimateSheet(true, { skipHealth:true, skipPlacement:true, skipCustomer:true, targetWindow: window });
-    } else if(typeof window.opener.printEstimateSheet==='function'){
-      await window.opener.printEstimateSheet(true, window);
-    } else {
-      if(status) status.textContent='Change saved — open Create / View Estimate Sheet again.';
+    var msg='';
+    // Preferred: single bridge on the main page
+    if(typeof host.__runPendingSheetAI==='function'){
+      msg=await host.__runPendingSheetAI(q, window);
+      setPopupAIStatus((msg||'Done.')+' Sheet rebuilt.');
       if(btn) btn.disabled=false;
+      return;
     }
+    // Fallback: call pieces directly
+    if(typeof host.applyLocalEstimateChange==='function'){
+      try{ msg=host.applyLocalEstimateChange(q)||msg; }catch(e1){ msg='Calc: '+(e1.message||e1); }
+    }
+    if(typeof host.applySheetPresentationChange==='function'){
+      try{
+        var pres=host.applySheetPresentationChange(q)||[];
+        if(pres.length) msg=(msg?msg+' | ':'')+'Layout: '+pres.join(' • ');
+      }catch(e2){ msg=(msg?msg+' | ':'')+'Layout: '+(e2.message||e2); }
+    }
+    setPopupAIStatus((msg||'Applied.')+' — rebuilding…');
+    if(typeof host.safePrintEstimateSheet==='function'){
+      await host.safePrintEstimateSheet(true, { skipHealth:true, skipPlacement:true, skipCustomer:true, targetWindow: window });
+    } else if(typeof host.printEstimateSheet==='function'){
+      await host.printEstimateSheet(true, window);
+    } else {
+      setPopupAIStatus('Change saved on Estimator — close this sheet and open Create / View again.');
+      try{ alert('Change was saved on the Estimator. Close this sheet and tap Create / View Estimate Sheet again.'); }catch(e){}
+      if(btn) btn.disabled=false;
+      return;
+    }
+    if(btn) btn.disabled=false;
   }catch(err){
-    if(status) status.textContent='Error: '+(err&&err.message?err.message:String(err));
+    var em=err&&err.message?err.message:String(err);
+    setPopupAIStatus('Error: '+em);
+    try{ alert('AI change error: '+em); }catch(e){}
     if(btn) btn.disabled=false;
   }
 }
 async function openPopupChatGPT(){
   if(window.opener && window.opener.copyEstimateForChatGPT) await window.opener.copyEstimateForChatGPT();
   window.open('https://chatgpt.com/','_blank','noopener');
-  document.getElementById('popupChangeStatus').textContent='Estimate copied. Paste it into ChatGPT.';
+  setPopupAIStatus('Estimate copied. Paste it into ChatGPT.');
 }
+// Wire Apply button reliably (iOS / no inline-handler quirks)
+(function(){
+  function wire(){
+    var btn=document.getElementById('popupAiApplyBtn');
+    if(!btn || btn.__wiredAI) return;
+    btn.__wiredAI=true;
+    btn.addEventListener('click', function(ev){
+      try{ ev.preventDefault(); }catch(e){}
+      applyPopupAIChange();
+    }, false);
+  }
+  wire();
+  document.addEventListener('DOMContentLoaded', wire);
+  setTimeout(wire, 50);
+})();
 <\/script>
 
 </body>

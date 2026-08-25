@@ -5288,28 +5288,59 @@ input, select, textarea, button { box-sizing:border-box; }
         async function generateOpenAIGaragePhotoUrl(prompt){
             // Do NOT reuse cached AI images — access type + chat text must always regenerate a fresh photo
             const cacheKey=garageAICacheKey('openai:'+prompt);
+            let lastEdgeError='';
 
             // 1) Preferred: company Edge Function (key never leaves Supabase — all salesmen)
             try{
                 if(typeof garageSb!=='undefined' && garageSb?.functions?.invoke){
-                    const { data, error } = await garageSb.functions.invoke('generate-garage-photo', {
+                    const invokePromise = garageSb.functions.invoke('generate-garage-photo', {
                         body: { prompt: String(prompt||'').slice(0, 3900) }
                     });
-                    if(error) throw new Error(error.message || String(error));
+                    // Hard timeout so sheet never spins forever
+                    const timed = await Promise.race([
+                        invokePromise,
+                        new Promise((_,rej)=>setTimeout(()=>rej(new Error('generate-garage-photo timed out after 90s')), 90000))
+                    ]);
+                    const { data, error } = timed || {};
+                    if(error){
+                        // Supabase often puts the real body on error.context
+                        let detail = error.message || String(error);
+                        try{
+                            if(error.context && typeof error.context.json==='function'){
+                                const body=await error.context.json();
+                                if(body?.error) detail=String(body.error);
+                            } else if(data?.error) detail=String(data.error);
+                        }catch(_){}
+                        lastEdgeError=detail;
+                        throw new Error(detail);
+                    }
                     const url = data && (data.url || (data.b64 ? ('data:image/png;base64,'+data.b64) : null));
                     if(url){
                         try{ localStorage.setItem(cacheKey, url); }catch(e){}
                         return {url, prompt, source:'openai-company', cached:false};
                     }
-                    if(data && data.error) throw new Error(data.error);
+                    if(data && data.error){
+                        lastEdgeError=String(data.error);
+                        throw new Error(data.error);
+                    }
+                    lastEdgeError='Edge function returned no image URL';
+                    throw new Error(lastEdgeError);
+                } else {
+                    lastEdgeError='Supabase client not available';
                 }
             }catch(edgeErr){
+                lastEdgeError=String(edgeErr && edgeErr.message ? edgeErr.message : edgeErr);
                 console.warn('Company OpenAI edge function unavailable, trying device key…', edgeErr);
             }
 
             // 2) Fallback: device-locked personal key (optional)
             const apiKey=(typeof getStoredOpenAIKey==='function'?getStoredOpenAIKey():(localStorage.getItem('agb_openai_api_key')||'')).trim();
-            if(!apiKey) throw new Error('Company AI not set up yet (or offline). Ask manager to deploy the generate-garage-photo Edge Function, or lock a personal OpenAI key on this device.');
+            if(!apiKey) throw new Error(
+                (lastEdgeError
+                    ? ('Company AI failed: '+lastEdgeError+' ')
+                    : '')
+                + 'No personal OpenAI key on this device. Check Supabase function generate-garage-photo + OPENAI_API_KEY secret, or lock a key in the estimator.'
+            );
 
             let res;
             try{
@@ -5415,20 +5446,35 @@ input, select, textarea, button { box-sizing:border-box; }
                     setTimeout(()=>resolve(false), 15000);
                 });
             };
-            // Always: company OpenAI first → library if offline / AI fails
+            // Always: company OpenAI first → library only if AI fails (show real error)
             const tryOpenAI=async ()=>{
                 if(status){ status.classList.remove('hidden'); status.textContent='OpenAI: creating garage photo…'; }
+                try{
+                    if(typeof window.__estimateLoadingSetStatus==='function'){
+                        window.__estimateLoadingSetStatus('OpenAI: creating garage photo…');
+                    }
+                }catch(_){}
                 const ai=await generateAIGaragePhotoUrl(true);
                 await warm(ai.url);
-                if(status) status.textContent='OpenAI garage photo ready.';
-                return {primary:ai.url, fallbacks:libraryFallback().fallbacks, source:'openai', prompt:ai.prompt};
+                if(status) status.textContent='OpenAI garage photo ready ('+(ai.source||'openai')+').';
+                return {primary:ai.url, fallbacks:libraryFallback().fallbacks, source:'openai', prompt:ai.prompt, aiSource:ai.source};
             };
             try{ return await tryOpenAI(); }
             catch(err){
                 console.warn('OpenAI failed, using library photo', err);
                 const msg=String(err && err.message ? err.message : err);
-                if(status){ status.classList.remove('hidden'); status.textContent='AI offline — using library photo. '+msg; }
-                return libraryFallback();
+                if(status){ status.classList.remove('hidden'); status.textContent='AI failed — library photo. '+msg; }
+                try{
+                    if(typeof window.__estimateLoadingSetStatus==='function'){
+                        window.__estimateLoadingSetStatus('AI photo failed — using library. '+msg);
+                    }
+                }catch(_){}
+                // Keep failure visible briefly in console for managers
+                try{ window.__lastGaragePhotoError=msg; }catch(_){}
+                const lib=libraryFallback();
+                lib.error=msg;
+                lib.source='library';
+                return lib;
             }
         }
 
@@ -5802,8 +5848,12 @@ input, select, textarea, button { box-sizing:border-box; }
             const fb = resolvedGarage.fallbacks || [];
             const garagePhotoFallbackSrc = fb[0] || garagePhotoSrc;
             const garagePhotoOriginalSrc = fb[1] || fb[0] || garagePhotoSrc;
-            const aiBadge = resolvedGarage.source==='ai' ? 'AI preview based on this estimate' : 'Approved garage exterior example';
-            const garageSvg = `<div class="photo-config photo-only"><img src="${garagePhotoSrc}" alt="${aiBadge}" onerror="if(!this.dataset.tryRoot){this.dataset.tryRoot='1';this.src='${garagePhotoFallbackSrc}';}else if(!this.dataset.tryOriginal){this.dataset.tryOriginal='1';this.src='${garagePhotoOriginalSrc}';}else{this.style.visibility='hidden';}"></div>`;
+            const usedAI = resolvedGarage.source==='openai' || resolvedGarage.source==='ai' || resolvedGarage.aiSource;
+            const aiBadge = usedAI ? 'AI preview based on this estimate' : 'Library photo (AI unavailable)';
+            const photoFailNote = (!usedAI && resolvedGarage.error)
+                ? `<div style="font-size:9px;color:#b91c1c;padding:4px 6px;background:#fef2f2;border:1px solid #fecaca;margin-top:4px">AI photo failed: ${esc(String(resolvedGarage.error).slice(0,180))}</div>`
+                : '';
+            const garageSvg = `<div class="photo-config photo-only"><img src="${garagePhotoSrc}" alt="${aiBadge}" onerror="if(!this.dataset.tryRoot){this.dataset.tryRoot='1';this.src='${garagePhotoFallbackSrc}';}else if(!this.dataset.tryOriginal){this.dataset.tryOriginal='1';this.src='${garagePhotoOriginalSrc}';}else{this.style.visibility='hidden';}"></div>${photoFailNote}`;
 
             const notesCount = notes.length;
             const notesClass = notesCount <= 1 ? 'notes-1' : notesCount === 2 ? 'notes-2' : notesCount <= 4 ? 'notes-few' : notesCount <= 7 ? 'notes-medium' : 'notes-many';

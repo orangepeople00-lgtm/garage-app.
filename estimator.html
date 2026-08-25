@@ -1625,7 +1625,7 @@ input, select, textarea, button { box-sizing:border-box; }
                                     <select id="profitMode" onchange="onProfitModeChange()" class="calc-input w-full bg-zinc-950 border border-zinc-700 text-white rounded-xl px-3 py-2 text-sm">
                                         <option value="percent" selected>Profit Percentage</option>
                                         <option value="amount">Profit Dollar Amount</option>
-                                        <option value="total">Total Project Price</option>
+                                        <option value="total">Total Project Price ($ on sheet)</option>
                                     </select>
                                 </div>
                                 <div>
@@ -2481,7 +2481,10 @@ input, select, textarea, button { box-sizing:border-box; }
             
             const profitSettings = getProfitSettings(internalTotal);
             const profitAmount = profitSettings.profitAmount;
-            const customerQuote = internalTotal + profitAmount;
+            // In "total" mode, profitSettings.customerQuote is the exact sheet price typed by the salesman
+            const customerQuote = (profitSettings.mode === 'total' && Number.isFinite(profitSettings.customerQuote))
+                ? profitSettings.customerQuote
+                : (internalTotal + profitAmount);
             
             // === UPDATE UI ===
             updateBreakdown({
@@ -3123,12 +3126,24 @@ input, select, textarea, button { box-sizing:border-box; }
             let adjustedInternal = lines.reduce((s, L) => s + (Number(L.amount) || 0), 0);
             const profitSettingsAdj = typeof getProfitSettings === 'function' ? getProfitSettings(adjustedInternal) : { mode: 'percent', value: 0 };
             let adjustedProfit = 0;
-            if (profitSettingsAdj.mode === 'amount') adjustedProfit = Number(profitSettingsAdj.value) || 0;
-            else adjustedProfit = adjustedInternal * ((Number(profitSettingsAdj.value) || 0) / 100);
-            const adjustedQuote = adjustedInternal + adjustedProfit;
+            let adjustedQuote = adjustedInternal;
+            if (profitSettingsAdj.mode === 'total') {
+                // Value is the customer project price on the estimate sheet (e.g. 35000 = $35,000)
+                adjustedQuote = Math.max(0, Number(profitSettingsAdj.value) || 0);
+                adjustedProfit = Math.max(0, adjustedQuote - adjustedInternal);
+            } else if (profitSettingsAdj.mode === 'amount') {
+                adjustedProfit = Math.max(0, Number(profitSettingsAdj.value) || 0);
+                adjustedQuote = adjustedInternal + adjustedProfit;
+            } else {
+                // percent
+                adjustedProfit = adjustedInternal * ((Number(profitSettingsAdj.value) || 0) / 100);
+                adjustedQuote = adjustedInternal + adjustedProfit;
+            }
             data.internalTotal = adjustedInternal;
             data.customerQuote = adjustedQuote;
             data.profitAmount = adjustedProfit;
+            data.profitMode = profitSettingsAdj.mode;
+            data.profitValue = profitSettingsAdj.value;
             
             lines.forEach((line, index) => {
                 if (line.section !== currentSection) {
@@ -3180,7 +3195,11 @@ input, select, textarea, button { box-sizing:border-box; }
             if (profitDisplay) profitDisplay.textContent = '+$' + (data.profitAmount || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
             const formula = document.getElementById('customerQuoteFormula');
             const formula2 = document.getElementById('profitFormula');
-            if (data.profitMode === 'amount') {
+            if (data.profitMode === 'total') {
+                const txt = 'Customer project price locked at $' + Number(data.profitValue || data.customerQuote || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                if (formula) formula.textContent = txt;
+                if (formula2) formula2.textContent = 'Total project price $' + Number(data.profitValue || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            } else if (data.profitMode === 'amount') {
                 const txt = 'Internal cost + $' + (data.profitAmount || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' profit';
                 if (formula) formula.textContent = txt;
                 if (formula2) formula2.textContent = txt;
@@ -3218,8 +3237,21 @@ input, select, textarea, button { box-sizing:border-box; }
             const mode = modeEl ? modeEl.value : 'percent';
             let value = valueEl ? parseFloat(valueEl.value) : 24.75;
             if (!Number.isFinite(value) || value < 0) value = 0;
-            const profitAmount = mode === 'total' ? Math.max(0,value-internalTotal) : (mode === 'amount' ? value : internalTotal * (value / 100));
-            return { mode, value, profitAmount };
+            const internal = Math.max(0, Number(internalTotal) || 0);
+            let profitAmount = 0;
+            let customerQuote = internal;
+            if (mode === 'total') {
+                // Typed value IS the customer total on the estimate sheet (e.g. 35000 → $35,000.00)
+                customerQuote = value;
+                profitAmount = Math.max(0, customerQuote - internal);
+            } else if (mode === 'amount') {
+                profitAmount = value;
+                customerQuote = internal + profitAmount;
+            } else {
+                profitAmount = internal * (value / 100);
+                customerQuote = internal + profitAmount;
+            }
+            return { mode, value, profitAmount, customerQuote };
         }
 
         function syncProfitSliderToValue() {
@@ -3232,12 +3264,14 @@ input, select, textarea, button { box-sizing:border-box; }
                 slider.min = '0'; slider.step = '0.25';
                 slider.max = String(Math.max(100, Math.ceil(value / 10) * 10 || 100));
             } else {
+                // amount or total project price — dollar scale
                 slider.min = '0'; slider.step = '100';
                 const internalText = ((document.getElementById('internalTotal') || {}).textContent || '').replace(/[^0-9.]/g, '');
                 const internal = parseFloat(internalText) || 25000;
-                slider.max = String(Math.max(25000, Math.ceil(internal / 5000) * 5000, Math.ceil(value / 5000) * 5000));
+                const floor = mode === 'total' ? Math.max(internal, 10000) : 0;
+                slider.max = String(Math.max(floor, 50000, Math.ceil(internal / 5000) * 5000, Math.ceil(value / 5000) * 5000, value));
             }
-            slider.value = String(Math.min(value, parseFloat(slider.max)));
+            slider.value = String(Math.min(Math.max(value, parseFloat(slider.min)), parseFloat(slider.max)));
         }
 
         function onProfitModeChange() {
@@ -3245,10 +3279,41 @@ input, select, textarea, button { box-sizing:border-box; }
             const value=document.getElementById('profitValue'), label=document.getElementById('profitValueLabel'), unit=document.getElementById('profitUnit');
             const internal=parseFloat(((document.getElementById('internalTotal')||{}).textContent||'').replace(/[^0-9.]/g,''))||0;
             const current=parseFloat(value.value)||0;
-            if(mode==='amount'){ value.value=(internal*current/100).toFixed(2); value.step='100'; label.textContent='PROFIT AMOUNT'; unit.textContent='$'; }
-            else if(mode==='total'){ const pct=(document.getElementById('profitEffectivePercent')?.textContent||'24.75').replace('%',''); value.value=(internal*(1+(parseFloat(pct)||24.75)/100)).toFixed(2); value.step='100'; label.textContent='TOTAL PROJECT PRICE'; unit.textContent='$'; }
-            else { value.value=internal>0?((current/internal)*100).toFixed(2):'24.75'; value.step='0.25'; label.textContent='PROFIT %'; unit.textContent='%'; }
-            syncProfitSliderToValue(); calculateEstimate();
+            const prevMode=value.dataset.prevMode||'percent';
+            if(mode==='amount'){
+                // Convert from previous mode into dollar profit
+                let amt=current;
+                if(prevMode==='percent') amt=internal*(current/100);
+                else if(prevMode==='total') amt=Math.max(0,current-internal);
+                value.value=Math.max(0,amt).toFixed(2);
+                value.step='100';
+                label.textContent='PROFIT AMOUNT ($)';
+                unit.textContent='$';
+            } else if(mode==='total'){
+                // Convert into absolute customer project price
+                let total=current;
+                if(prevMode==='percent') total=internal*(1+current/100);
+                else if(prevMode==='amount') total=internal+current;
+                // If still looks like a tiny percent leftover, use internal+24.75%
+                if(total>0 && total<100 && internal>1000) total=internal*1.2475;
+                value.value=Math.max(0,total).toFixed(2);
+                value.step='100';
+                label.textContent='TOTAL PROJECT PRICE ($)';
+                unit.textContent='$';
+            } else {
+                // percent
+                let pct=24.75;
+                if(prevMode==='amount' && internal>0) pct=(current/internal)*100;
+                else if(prevMode==='total' && internal>0) pct=(Math.max(0,current-internal)/internal)*100;
+                else if(prevMode==='percent') pct=current;
+                value.value=Math.max(0,pct).toFixed(2);
+                value.step='0.25';
+                label.textContent='PROFIT %';
+                unit.textContent='%';
+            }
+            value.dataset.prevMode=mode;
+            syncProfitSliderToValue();
+            calculateEstimate();
         }
 
         function onProfitValueInput() {

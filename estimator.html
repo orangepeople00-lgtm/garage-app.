@@ -7324,7 +7324,7 @@ function saveSheetInlineEdit(el){
       // Collect all note edits into noteTextOverride
       const notes = Array.from(document.querySelectorAll('.sheet-edit[data-field="note"]'))
         .map(n => (n.innerText||n.textContent||'').trim()).filter(Boolean);
-      p.noteTextOverride = notes.join('\n');
+      p.noteTextOverride = notes.join(String.fromCharCode(10));
     }
     if(typeof window.opener.saveSheetPresentationSession==='function') window.opener.saveSheetPresentationSession();
     const st=document.getElementById('popupChangeStatus');

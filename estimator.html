@@ -4750,8 +4750,19 @@ input, select, textarea, button { box-sizing:border-box; }
             return hasGutters ? 'images/basic_hip_gutters.png' : 'images/basic_hip_no_gutters.png';
         }
 
-        async function safePrintEstimateSheet(saveToHistory = true) {
-            const health=updateEstimateHealthCheck(null);if(health.issues.length){alert('Please check the Estimate Health Check before creating the estimate sheet.\n\n'+health.issues.join('\n'));return;}
+        async function safePrintEstimateSheet(saveToHistory = true, opts = {}) {
+            // opts: { skipHealth, targetWindow } — targetWindow rebuilds an existing sheet popup in place
+            const skipHealth = !!(opts && opts.skipHealth);
+            const targetWindow = opts && opts.targetWindow ? opts.targetWindow : null;
+            if(!skipHealth){
+                try{
+                    const health=updateEstimateHealthCheck(null);
+                    if(health && health.issues && health.issues.length){
+                        alert('Please check the Estimate Health Check before creating the estimate sheet.\n\n'+health.issues.join('\n'));
+                        return;
+                    }
+                }catch(e){ console.warn('health check skipped', e); }
+            }
             const customerName = (document.getElementById('customerName')?.value || '').trim();
             const customerAddress = (document.getElementById('customerAddress')?.value || '').trim();
 
@@ -4760,9 +4771,12 @@ input, select, textarea, button { box-sizing:border-box; }
                 return;
             }
 
-            // IMPORTANT: Open the estimate window immediately inside the actual click event.
-            // This makes desktop/mobile browsers treat it as a user-requested popup.
-            const estimateWindow = window.open('', '_blank', 'width=1000,height=1000');
+            // Rebuild into the same sheet window when provided (AI sheet changes).
+            // Otherwise open a new popup — must stay inside the user click when possible.
+            let estimateWindow = targetWindow;
+            if(!estimateWindow || estimateWindow.closed){
+                estimateWindow = window.open('', '_blank', 'width=1000,height=1000');
+            }
             if (!estimateWindow) {
                 alert('Your browser blocked the estimate sheet. Please allow popups for this site and click Create / View Estimate Sheet again.');
                 return;
@@ -5054,8 +5068,10 @@ input, select, textarea, button { box-sizing:border-box; }
                 carWords = cap === 3
                     ? 'large three-car garage, very wide facade, three-car scale'
                     : 'oversized two-car garage, wide facade but still two-car scale (not three-car)';
-            } else if (w > 18) {
-                carWords = 'full-size two-car garage, wide facade';
+            } else if (w >= 20) {
+                carWords = 'full-size two-car garage, deliberately WIDE horizontal facade spanning most of the frame';
+            } else if (w > 16) {
+                carWords = 'roomy single-car or compact two-car garage';
             } else if (w >= 16) {
                 carWords = 'generous single-car or compact two-car garage';
             }
@@ -5064,8 +5080,11 @@ input, select, textarea, button { box-sizing:border-box; }
                 'IMPORTANT SCALE: this is a '+w+'-foot-wide by '+d+'-foot-deep '+carWords,
                 'the building must look large and substantial, not a tiny shed',
                 'the overhead door is '+doorW+' feet wide by '+doorH+' feet tall and must dominate most of the FRONT wall width',
-                'camera pulled back so the full wide garage fits in frame with correct real-world proportions'
-            ].join(', ');
+                'camera pulled back so the full wide garage fits in frame with correct real-world proportions',
+                (w >= 20
+                    ? ('WIDTH EMPHASIS (MANDATORY): garage is '+w+' feet wide — show a clearly WIDE building, horizontal massing, broad front wall, not a narrow or tall-looking structure; leave space on left and right of frame so width reads true')
+                    : '')
+            ].filter(Boolean).join(', ');
 
             const frontDoorRule = 'CRITICAL LAYOUT: the large overhead garage door is ONLY on the FRONT wall — never on the rear wall and never on the same wall as a roofed patio';
 
@@ -5217,11 +5236,13 @@ input, select, textarea, button { box-sizing:border-box; }
 
             const concreteRule = 'ALL concrete surfaces (apron, patio slab, service walkways, sidewalks) are flush with each other, clean, and neatly connected with no grass strips between connected pads';
 
-            // Service (man) door sits on the siding/concrete line — does NOT dig into the ground.
-            // Overhead door correctly meets the apron/ground.
+            // Service (man) door: normal door flush in the wall — no bulky separate frame.
+            // Sill meets siding/concrete; overhead door still goes to the apron/ground.
             const serviceDoorSillRule = [
-                'SERVICE DOOR SILL (MANDATORY when a man door / service door is visible)',
-                'the small ~3-foot-wide service entry door must NOT extend into the dirt or below grade',
+                'SERVICE DOOR LOOK (MANDATORY when a man door / service door is visible)',
+                'the small ~3-foot-wide service entry door must be a normal flush-mounted residential door set INTO the siding wall plane',
+                'NO separate oversized door frame, NO protruding box frame, NO thick out-of-scale casing around the service door',
+                'door and trim sit flush with the siding — standard thin brickmold/trim only, proportional to a real man door',
                 'the bottom of the service door must meet the bottom edge of the siding, flush with the top of the concrete slab or walk at the door',
                 'service door threshold sits on the concrete pad / walk — same plane as the bottom of the siding',
                 'do NOT show a deep step-down into grass under the service door',
@@ -6669,21 +6690,24 @@ async function applyPopupAIChange(){
     return;
   }
   if(btn) btn.disabled=true;
-  if(status) status.textContent='Saving change to history and rebuilding sheet…';
+  if(status) status.textContent='Applying change on the estimator…';
   try{
+    let msg='';
     if(typeof window.opener.applySheetAIChange==='function'){
-      const msg=await window.opener.applySheetAIChange(q);
-      if(status) status.textContent=(msg||'Applied.')+' Rebuilding…';
+      msg=await window.opener.applySheetAIChange(q);
     } else if(typeof window.opener.applyLocalEstimateChange==='function'){
-      const msg=window.opener.applyLocalEstimateChange(q);
-      if(status) status.textContent=(msg||'Applied.')+' Rebuilding…';
+      msg=window.opener.applyLocalEstimateChange(q);
     }
-    setTimeout(()=>{
-      try{ window.close(); }catch(e){}
-      if(window.opener && !window.opener.closed && typeof window.opener.safePrintEstimateSheet==='function'){
-        window.opener.safePrintEstimateSheet(true);
-      }
-    }, 180);
+    if(status) status.textContent=(msg||'Applied.')+' Rebuilding this sheet…';
+    // Rebuild THIS window in place (do not close + open — mobile blocks that popup)
+    if(typeof window.opener.safePrintEstimateSheet==='function'){
+      await window.opener.safePrintEstimateSheet(true, { skipHealth:true, targetWindow: window });
+    } else if(typeof window.opener.printEstimateSheet==='function'){
+      await window.opener.printEstimateSheet(true, window);
+    } else {
+      if(status) status.textContent='Change saved on estimator — open Create / View Estimate Sheet again to see it.';
+      if(btn) btn.disabled=false;
+    }
   }catch(err){
     if(status) status.textContent='Error: '+(err&&err.message?err.message:String(err));
     if(btn) btn.disabled=false;

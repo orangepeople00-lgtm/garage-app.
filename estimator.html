@@ -1084,10 +1084,11 @@ input, select, textarea, button { box-sizing:border-box; }
                             <div>
                                 <label class="text-xs text-zinc-400 block mb-1">Side / rear door</label>
                                 <select id="doorType" onchange="toggleServiceDoorLocationFields(); togglePartyDoorSize(); calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm">
-                                    <option value="standard" selected>Service door (included)</option>
-                                    <option value="party">Party door</option>
+                                    <option value="standard" selected>Service door only (included)</option>
+                                    <option value="party">Party door + service door</option>
                                     <option value="french">French door allowance (+$1,000)</option>
                                 </select>
+                                <div class="text-[10px] text-zinc-500 mt-0.5">Party door = small overhead door. Service door = 36×80 swing door. They are different and can share a wall.</div>
                             </div>
                             <div id="partyDoorSizeWrap" class="hidden md:col-span-2">
                                 <label class="text-xs text-zinc-400 block mb-1">Party door size (base 6' × 7')</label>
@@ -2311,7 +2312,7 @@ input, select, textarea, button { box-sizing:border-box; }
                 const ph = Math.max(7, Math.min(10, Math.round(Number(document.getElementById('partyDoorHeight')?.value) || 7)));
                 const extraFt = Math.max(0, (pw - 6) + (ph - 7));
                 sideDoorCost = 800 + (extraFt * 100);
-                sideDoorLabel = `Party door ${pw}' × ${ph}'`;
+                sideDoorLabel = `Party door ${pw}' × ${ph}' + standard 36x80 service door`;
             } else if (doorType === 'french') {
                 sideDoorCost = 1000;
                 sideDoorLabel = 'French door allowance';
@@ -4530,8 +4531,15 @@ input, select, textarea, button { box-sizing:border-box; }
             const setVal=(id,v,label)=>{const e=document.getElementById(id); if(e){e.value=String(v); changed.push(label||id);}};
             const setCheck=(id,v,label)=>{const e=document.getElementById(id); if(e){e.checked=!!v; changed.push(label||id);}};
 
-            if(/\bgable\b/.test(q) && !/reverse\s*gable/.test(q)) setVal('roofType','gable','roof: gable');
-            else if(/\bhip\b/.test(q)) setVal('roofType','hip','roof: hip');
+            if(/reverse\s*gable/.test(q)){
+                setVal('roofType','gable','roof: reverse gable');
+                setVal('eaveDir','sides','eaves: reverse gable (ends left/right, ridge front-to-back)');
+                try{ if(typeof toggleGableOptions==='function') toggleGableOptions(); }catch(e){}
+            } else if(/\bgable\b/.test(q) && !/reverse/.test(q)) {
+                setVal('roofType','gable','roof: gable');
+                setVal('eaveDir','front-back','standard gable');
+                try{ if(typeof toggleGableOptions==='function') toggleGableOptions(); }catch(e){}
+            } else if(/\bhip\b/.test(q)) setVal('roofType','hip','roof: hip');
 
             // Siding type + color (handles "change siding", "siding to hardie", "make it white", etc.)
             if(/hardie|cement\s*board|hardieboard/.test(q)) setVal('sidingType','hardie','HardieBoard siding');
@@ -5463,6 +5471,12 @@ input, select, textarea, button { box-sizing:border-box; }
                 : doorStyle;
             const service = document.getElementById('serviceDoorLocation')?.value||'right';
             const serviceFrontSide = document.getElementById('serviceDoorFrontSide')?.value||'right';
+            const sideDoorKind = (document.getElementById('doorType')?.value || 'standard').toLowerCase();
+            const partyWft = Math.max(6, Math.min(10, Math.round(Number(document.getElementById('partyDoorWidth')?.value) || 6)));
+            const partyHft = Math.max(7, Math.min(10, Math.round(Number(document.getElementById('partyDoorHeight')?.value) || 7)));
+            const hasPartyDoor = sideDoorKind === 'party';
+            const hasFrenchDoor = sideDoorKind === 'french';
+            const hasServiceSwingDoor = sideDoorKind !== 'no' && sideDoorKind !== 'none' && sideDoorKind !== 'hidden';
             const gutters = !!document.getElementById('gutters')?.checked;
             const hasAlumSoffit = !!document.getElementById('aluminumSoffit')?.checked;
             const stone = !!document.getElementById('stoneAccent')?.checked;
@@ -5485,14 +5499,26 @@ input, select, textarea, button { box-sizing:border-box; }
             if (/\balley\b/.test(q)) access = 'alley';
             if (/\bdriveway\b/.test(q)) access = 'driveway';
 
-            // Standard gable: peaks on the left/right side walls. Reverse gable (eaveDir=sides): peaks on FRONT and BACK.
-            // User note: reverse gable image must show gable ends on LEFT and RIGHT? 
-            // Field terms: "reverse gable" here means eave on front/back so triangular gables face the sides (left & right).
+            // Standard gable: triangular gable ENDs on FRONT + BACK; ridge/eave run LEFT ↔ RIGHT.
+            // Reverse gable (eaveDir=sides): triangular gable ENDs on LEFT + RIGHT; ridge/eave run FRONT ↔ BACK.
+            const isReverseGable = (roof==='gable' && eave==='sides');
             const roofWords = roof==='hip'
-                ? 'hip roof (no triangular gable ends)'
-                : (eave==='sides'
-                    ? 'REVERSE GABLE roof — triangular gable ends on the LEFT and RIGHT side walls (not on front/back), roof ridge runs front-to-back'
-                    : 'standard GABLE roof — triangular gable ends on the FRONT and BACK walls, ridge runs left-to-right');
+                ? 'hip roof (NO triangular gable ends on any wall)'
+                : (isReverseGable
+                    ? [
+                        'REVERSE GABLE roof (NOT a standard gable)',
+                        'the two triangular GABLE ENDS are on the LEFT SIDE WALL and the RIGHT SIDE WALL only',
+                        'the roof ridge and long eave lines run FRONT-TO-BACK (from the overhead-door wall to the rear wall)',
+                        'the FRONT wall is a RECTANGLE under a sloped eave — NO triangle on the front',
+                        'the BACK wall is a RECTANGLE under a sloped eave — NO triangle on the back',
+                        'do NOT draw standard gable peaks on the front or rear'
+                      ].join(', ')
+                    : [
+                        'STANDARD GABLE roof',
+                        'triangular GABLE ENDS on the FRONT wall and the BACK wall',
+                        'roof ridge runs LEFT-TO-RIGHT across the building',
+                        'side walls are rectangles under the long eaves'
+                      ].join(', '));
             const sidingWords = sidingType==='hardie' ? 'Hardie fiber cement siding' : 'vinyl siding';
             let doorStyleWords = 'solid raised-panel overhead garage door';
             const ds = String(doorStyle||'').toLowerCase();
@@ -5555,15 +5581,30 @@ input, select, textarea, button { box-sizing:border-box; }
                 } else {
                     winPlaceWords = 'wall window on the LEFT SIDE wall only';
                 }
-                winPlaceWords += '. If a service/man door is on the SAME wall, place the window beside it with clear separation — do NOT overlap or touch the door leaf or door trim';
+                winPlaceWords += '. If a service/man door and/or party overhead door are on the SAME wall, space the window, swing door, and party door evenly with siding between them — they must not collide or overlap';
             }
 
+            const wallName = (loc)=>{
+                if(loc==='front') return 'FRONT wall (beside the large overhead door)';
+                if(loc==='back') return 'REAR / BACK wall';
+                if(loc==='left') return 'LEFT SIDE WALL';
+                return 'RIGHT SIDE WALL';
+            };
+            const partyVisibleInView = (resolved)=>{
+                if(service==='front') return resolved==='front' || resolved==='left' || resolved==='right';
+                if(service==='back') return resolved==='back' || resolved==='left' || resolved==='right';
+                if(service==='left') return resolved==='left' || resolved==='back' || resolved==='front';
+                return resolved==='right' || resolved==='back' || resolved==='front';
+            };
+
             let serviceWords = '';
+            let partyDoorWords = '';
             let coachLightWords = '';
             let serviceWalkWords = '';
             // NOTE: "right" / "left" = SIDE WALLS, not front corners.
+            // Service door = 36"x80" swinging man-door. Party door = small RAISED-PANEL STEEL OVERHEAD door (not a swing door).
             if(service==='no'||service==='none'||service==='hidden'){
-                serviceWords = 'no service door on any elevation';
+                serviceWords = 'no swinging service/man door on any elevation';
             } else if(service==='front'){
                 serviceWords = [
                     'service man-door on the FRONT wall only, '+serviceFrontSide+' of the large overhead door',
@@ -5597,6 +5638,32 @@ input, select, textarea, button { box-sizing:border-box; }
                 ].join(', ');
                 coachLightWords = 'black coach light on the RIGHT SIDE wall next to the service door';
                 serviceWalkWords = 'concrete walk along the right side wall from the service door toward the front apron';
+            }
+
+            // Always keep the swinging service door description accurate (not a party door)
+            if (hasServiceSwingDoor && service!=='no' && service!=='none' && service!=='hidden') {
+                serviceWords = [
+                    serviceWords,
+                    'SERVICE DOOR (separate from any party door): a standard 36-inch by 80-inch steel swinging man-door that opens like a house door',
+                    'NOT an overhead door, NOT a garage-door slab on the side'
+                ].join(', ');
+            }
+
+            if (hasPartyDoor) {
+                const locTxt = wallName(service);
+                partyDoorWords = [
+                    'PARTY DOOR (MANDATORY — this is NOT the service/man door and NOT the front overhead door)',
+                    'a SMALL overhead sectional garage door, raised-panel STEEL, typically WHITE unless salesman notes another color',
+                    'party door SIZE must read as about '+partyWft+' feet wide by '+partyHft+' feet tall',
+                    'party door is on the '+locTxt+' only',
+                    'it operates like a mini garage door (rolls/lifts up), with visible overhead-door panels and a bottom seal at the concrete',
+                    'do NOT draw the party door as a swinging walk-through door',
+                    'do NOT replace the large FRONT overhead door with the party door',
+                    'if the camera view does not show that wall, omit the party door — do not invent it on another wall',
+                    'if a service/man door and/or window are on the SAME wall, space them evenly so they do not touch or overlap — party door, service door, and window each have clear siding between them'
+                ].join(', ');
+            } else if (hasFrenchDoor) {
+                partyDoorWords = 'French door unit on the '+wallName(service)+' (not an overhead party door)';
             }
 
             const gutterWords = gutters
@@ -5725,6 +5792,29 @@ input, select, textarea, button { box-sizing:border-box; }
                 ].join(', ');
             }
 
+            // Re-assert service vs party after view-specific overrides
+            if (hasServiceSwingDoor && service!=='no' && service!=='none' && service!=='hidden') {
+                serviceWords = [
+                    serviceWords,
+                    'that service door is a 36-inch by 80-inch steel SWINGING walk-through door'
+                ].join(', ');
+            }
+            if (hasPartyDoor) {
+                const showParty = partyVisibleInView(resolvedView);
+                if (showParty) {
+                    partyDoorWords = [
+                        partyDoorWords,
+                        'from this camera angle the party door MUST be clearly visible on the '+wallName(service),
+                        'show the full '+partyWft+'x'+partyHft+' raised-panel steel overhead party door'
+                    ].join(', ');
+                } else {
+                    partyDoorWords = [
+                        'a '+partyWft+'x'+partyHft+' raised-panel steel overhead PARTY DOOR exists on the '+wallName(service),
+                        'it is not visible from this camera angle — do NOT invent it on the visible walls'
+                    ].join(', ');
+                }
+            }
+
             // Full-width roofed patio: from eave overhang, wall-to-wall, always 4 posts
             let patioWords = '';
             if (!roofPatioOn) {
@@ -5829,8 +5919,17 @@ input, select, textarea, button { box-sizing:border-box; }
             let gableEndRule = '';
             if (roof === 'gable') {
                 gableEndRule = [
-                    eave==='sides'
-                        ? 'REVERSE GABLE ORIENTATION (MANDATORY): triangular gable ends face LEFT and RIGHT side walls — ridge runs front-to-back — do NOT put gable triangles on the front or rear walls'
+                    isReverseGable
+                        ? [
+                            'REVERSE GABLE GEOMETRY (MANDATORY — models often get this wrong)',
+                            'imagine turning a normal gable 90 degrees',
+                            'triangles live on the LEFT and RIGHT SIDE WALLS only',
+                            'from the FRONT you see a rectangular wall under a sloped eave, not a peak',
+                            'from the BACK you see a rectangular wall under a sloped eave, not a peak',
+                            'ridge line runs from the FRONT wall to the BACK wall (front-to-back)',
+                            'long eaves run along the FRONT and BACK edges',
+                            'FORBIDDEN: standard gable peaks on front or rear'
+                          ].join(', ')
                         : 'STANDARD GABLE ORIENTATION: triangular gable ends on FRONT and BACK walls — ridge runs left-to-right',
                     'GABLE END SIDING (MANDATORY): the triangular gable-end areas under the roof peak must be the SAME color and material as the walls',
                     'gable triangles match the wall field exactly — continuous '+colorTxt+' '+sidingWords+' with no color break at the gable',
@@ -5850,6 +5949,7 @@ input, select, textarea, button { box-sizing:border-box; }
                 wall+'-foot tall walls, '+roofWords,
                 doorStyleWords+', '+doorW+' feet wide by '+doorH+' feet tall, on the FRONT wall only when the front is in view',
                 serviceWords,
+                partyDoorWords,
                 serviceDoorSillRule,
                 coachLightWords,
                 serviceWalkWords,

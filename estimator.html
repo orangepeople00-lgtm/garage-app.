@@ -5502,22 +5502,33 @@ input, select, textarea, button { box-sizing:border-box; }
             // Standard gable: triangular gable ENDs on FRONT + BACK; ridge/eave run LEFT ↔ RIGHT.
             // Reverse gable (eaveDir=sides): triangular gable ENDs on LEFT + RIGHT; ridge/eave run FRONT ↔ BACK.
             const isReverseGable = (roof==='gable' && eave==='sides');
+            // Absolute Garage Builders "reverse gable" (from company reference photos):
+            // Doors on the LONG wall. Triangular peaks ONLY on the LEFT and RIGHT short ends.
+            // Front (door wall) is rectangular under a continuous eave — NO peak above the doors.
+            // Ridge runs LEFT↔RIGHT (parallel to the door wall). Roof slopes toward front and back.
+            // Never use the words "reverse gable" in the image prompt (confuses models).
             const roofWords = roof==='hip'
-                ? 'hip roof (NO triangular gable ends on any wall)'
+                ? 'hip roof (NO triangular gable ends on any wall — all four sides slope down)'
                 : (isReverseGable
                     ? [
-                        'REVERSE GABLE roof (NOT a standard gable)',
-                        'the two triangular GABLE ENDS are on the LEFT SIDE WALL and the RIGHT SIDE WALL only',
-                        'the roof ridge and long eave lines run FRONT-TO-BACK (from the overhead-door wall to the rear wall)',
-                        'the FRONT wall is a RECTANGLE under a sloped eave — NO triangle on the front',
-                        'the BACK wall is a RECTANGLE under a sloped eave — NO triangle on the back',
-                        'do NOT draw standard gable peaks on the front or rear'
+                        'ROOF GEOMETRY (MANDATORY — match this exactly)',
+                        'wide garage with the overhead door(s) on the LONG front wall',
+                        'triangular ROOF PEAKS only on the LEFT short end wall and the RIGHT short end wall',
+                        'FRONT elevation: perfectly RECTANGULAR wall under a continuous horizontal/sloped eave line — the roof edge runs straight across above the overhead door with NO pointed peak and NO triangle above the door',
+                        'BACK elevation: same — rectangular wall under a continuous eave, no peak',
+                        'ridge line runs LEFT to RIGHT across the building (parallel to the front door wall), connecting the left peak to the right peak',
+                        'roof planes slope down toward the FRONT and toward the BACK',
+                        'from a front or three-quarter front view: you must see a flat eave over the door and the triangular peak only on the visible end wall (left or right)',
+                        'visual reference: like a wide ranch garage where the ends are peaked and the door wall is under the long eave',
+                        'FORBIDDEN: triangular gable centered on the front above the overhead door',
+                        'FORBIDDEN: A-frame peak facing the driveway'
                       ].join(', ')
                     : [
-                        'STANDARD GABLE roof',
-                        'triangular GABLE ENDS on the FRONT wall and the BACK wall',
-                        'roof ridge runs LEFT-TO-RIGHT across the building',
-                        'side walls are rectangles under the long eaves'
+                        'ROOF GEOMETRY: classic front-gable garage',
+                        'triangular peak centered on the FRONT wall directly above the overhead door',
+                        'matching triangular peak on the BACK wall',
+                        'ridge runs from the front peak to the back peak (front-to-back)',
+                        'left and right side walls are rectangles under the long side eaves'
                       ].join(', '));
             const sidingWords = sidingType==='hardie' ? 'Hardie fiber cement siding' : 'vinyl siding';
             let doorStyleWords = 'solid raised-panel overhead garage door';
@@ -5921,16 +5932,12 @@ input, select, textarea, button { box-sizing:border-box; }
                 gableEndRule = [
                     isReverseGable
                         ? [
-                            'REVERSE GABLE GEOMETRY (MANDATORY — models often get this wrong)',
-                            'imagine turning a normal gable 90 degrees',
-                            'triangles live on the LEFT and RIGHT SIDE WALLS only',
-                            'from the FRONT you see a rectangular wall under a sloped eave, not a peak',
-                            'from the BACK you see a rectangular wall under a sloped eave, not a peak',
-                            'ridge line runs from the FRONT wall to the BACK wall (front-to-back)',
-                            'long eaves run along the FRONT and BACK edges',
-                            'FORBIDDEN: standard gable peaks on front or rear'
+                            'FINAL ROOF PEAK CHECK (MANDATORY)',
+                            'left end = triangle peak, right end = triangle peak',
+                            'front door wall = rectangle under continuous eave — zero peak above the door',
+                            'if there is any pointed gable triangle centered over the front overhead door, the image is incorrect'
                           ].join(', ')
-                        : 'STANDARD GABLE ORIENTATION: triangular gable ends on FRONT and BACK walls — ridge runs left-to-right',
+                        : 'STANDARD GABLE: triangular peaks on FRONT and BACK walls; ridge front-to-back; side walls rectangular',
                     'GABLE END SIDING (MANDATORY): the triangular gable-end areas under the roof peak must be the SAME color and material as the walls',
                     'gable triangles match the wall field exactly — continuous '+colorTxt+' '+sidingWords+' with no color break at the gable',
                     'do NOT use a different or contrasting color on the gable ends'

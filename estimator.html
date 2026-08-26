@@ -7514,6 +7514,11 @@ async function downloadEstimatePdf(){
 
   const filename=(document.title||'Absolute Garage Builders Estimate').replace(/[\\/:*?"<>|]+/g,'-')+'.pdf';
   let exportHost=null;
+  // iPad/iOS Safari: scale 3 + full PNG often OOMs → "incomplete or corrupt PNG"
+  const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  const canvasScale=isIOS?1.5:2;
+  const imgType=isIOS?'jpeg':'png';
+  const imgQuality=isIOS?0.92:0.95;
 
   try{
     let tries=0;
@@ -7523,10 +7528,6 @@ async function downloadEstimatePdf(){
     }
     if(typeof window.html2pdf!=='function') throw new Error('PDF library did not load.');
 
-    // Create an isolated export copy. The key fix here is that we measure the
-    // clone's ACTUAL rendered width after layout instead of assuming 816px.
-    // Some estimate content can make the grid's real scroll width wider than
-    // 8.5in; capturing only 816px was cutting off both sides.
     exportHost=document.createElement('div');
     exportHost.id='pdfExportHost';
     exportHost.style.cssText='position:absolute;left:-20000px;top:0;background:#fff;overflow:visible;';
@@ -7544,8 +7545,6 @@ async function downloadEstimatePdf(){
     clone.style.setProperty('margin','0','important');
     exportHost.appendChild(clone);
 
-    // Allow the lower half to grow naturally so Notes, Project Price,
-    // disclaimers and footer are all included.
     const main=clone.querySelector('.main');
     if(main){
       main.style.setProperty('height','auto','important');
@@ -7558,48 +7557,78 @@ async function downloadEstimatePdf(){
       el.style.setProperty('overflow','visible','important');
     });
 
+    // Inline remote images as data URLs so canvas is not tainted on iOS
     const imgs=[...clone.querySelectorAll('img')];
-    await Promise.all(imgs.map(img=>{
-      if(img.complete) return Promise.resolve();
-      return new Promise(resolve=>{
-        img.addEventListener('load',resolve,{once:true});
-        img.addEventListener('error',resolve,{once:true});
-        setTimeout(resolve,2500);
-      });
+    await Promise.all(imgs.map(async (img)=>{
+      try{
+        const src=img.getAttribute('src')||'';
+        if(!src || src.startsWith('data:')) return;
+        // Wait for load first
+        if(!img.complete){
+          await new Promise(resolve=>{
+            img.addEventListener('load',resolve,{once:true});
+            img.addEventListener('error',resolve,{once:true});
+            setTimeout(resolve,3000);
+          });
+        }
+        // Re-fetch as blob → data URL (works for same-origin and CORS-enabled AI URLs)
+        const res=await fetch(src,{mode:'cors',credentials:'omit'}).catch(()=>null);
+        if(res && res.ok){
+          const blob=await res.blob();
+          const dataUrl=await new Promise((resolve,reject)=>{
+            const fr=new FileReader();
+            fr.onload=()=>resolve(fr.result);
+            fr.onerror=reject;
+            fr.readAsDataURL(blob);
+          });
+          img.setAttribute('src', dataUrl);
+          img.crossOrigin='anonymous';
+        } else {
+          img.crossOrigin='anonymous';
+        }
+      }catch(_){
+        try{ img.crossOrigin='anonymous'; }catch(__){}
+      }
     }));
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
 
-    // Capture the TRUE bounding box. Include scrollWidth/scrollHeight so even
-    // text or table content extending beyond the nominal sheet is not lost.
     const rect=clone.getBoundingClientRect();
-    const fullWidth=Math.ceil(Math.max(
+    let fullWidth=Math.ceil(Math.max(
       rect.width,
-      clone.scrollWidth,
+      clone.scrollWidth||0,
       ...[...clone.querySelectorAll('*')].map(el=>{
-        const r=el.getBoundingClientRect();
-        return r.right-rect.left;
+        try{
+          const r=el.getBoundingClientRect();
+          return r.right-rect.left;
+        }catch(_){ return 0; }
       })
     ));
-    const fullHeight=Math.ceil(Math.max(
+    let fullHeight=Math.ceil(Math.max(
       rect.height,
-      clone.scrollHeight,
+      clone.scrollHeight||0,
       ...[...clone.querySelectorAll('*')].map(el=>{
-        const r=el.getBoundingClientRect();
-        return r.bottom-rect.top;
+        try{
+          const r=el.getBoundingClientRect();
+          return r.bottom-rect.top;
+        }catch(_){ return 0; }
       })
     ));
+    // Cap huge dimensions on iOS to avoid OOM
+    if(isIOS){
+      fullWidth=Math.min(fullWidth, 1100);
+      fullHeight=Math.min(fullHeight, 1600);
+    }
 
-    // Make the export host exactly match the measured content bounds.
     exportHost.style.width=fullWidth+'px';
     exportHost.style.height=fullHeight+'px';
 
     const worker=window.html2pdf().set({
       margin:0,
-      image:{type:'png',quality:1},
+      image:{type:imgType, quality:imgQuality},
       html2canvas:{
-        scale:3,
+        scale:canvasScale,
         useCORS:true,
-        allowTaint:true,
+        allowTaint:false,
         backgroundColor:'#ffffff',
         logging:false,
         scrollX:0,
@@ -7611,17 +7640,23 @@ async function downloadEstimatePdf(){
         windowWidth:fullWidth,
         windowHeight:fullHeight
       },
-      jsPDF:{unit:'in',format:'letter',orientation:'portrait',compress:false}
+      jsPDF:{unit:'in',format:'letter',orientation:'portrait',compress:true}
     }).from(clone).toCanvas();
 
     const canvas=await worker.get('canvas');
     if(!canvas || !canvas.width || !canvas.height) throw new Error('Estimate could not be rendered.');
-    const imgData=canvas.toDataURL('image/png');
+
+    // Prefer JPEG on iOS — full PNG data URLs often corrupt / incomplete in Safari
+    let imgData;
+    try{
+      imgData=canvas.toDataURL(isIOS?'image/jpeg':'image/png', imgQuality);
+    }catch(e){
+      // Tainted canvas fallback: lower scale path already used; try jpeg anyway
+      imgData=canvas.toDataURL('image/jpeg', 0.85);
+    }
+    if(!imgData || imgData.length < 1000) throw new Error('Incomplete image capture. Try again or use a computer.');
 
     await worker.toPdf().get('pdf').then(function(pdf){
-      // Keep exactly one 8.5x11 Letter page and fit the COMPLETE measured
-      // estimate inside it. 0.12in margins protect all four edges without
-      // making the estimate unnecessarily narrow.
       let count=pdf.internal.getNumberOfPages();
       while(count>1){ pdf.deletePage(count); count--; }
 
@@ -7629,7 +7664,7 @@ async function downloadEstimatePdf(){
       const marginX=0.12, marginY=0.12;
       const maxW=pageW-(marginX*2);
       const maxH=pageH-(marginY*2);
-      const scale=Math.min(maxW/canvas.width,maxH/canvas.height);
+      const scale=Math.min(maxW/canvas.width, maxH/canvas.height);
       const drawW=canvas.width*scale;
       const drawH=canvas.height*scale;
       const x=(pageW-drawW)/2;
@@ -7637,12 +7672,18 @@ async function downloadEstimatePdf(){
 
       pdf.setFillColor(255,255,255);
       pdf.rect(0,0,pageW,pageH,'F');
-      pdf.addImage(imgData,'PNG',x,y,drawW,drawH,undefined,'NONE');
+      const fmt=isIOS?'JPEG':'PNG';
+      pdf.addImage(imgData, fmt, x, y, drawW, drawH, undefined, isIOS?'FAST':'NONE');
     }).save(filename);
 
   }catch(err){
     console.error('PDF download failed:',err);
-    alert('Could not download the estimate PDF. '+(err&&err.message?err.message:'Please try again.'));
+    const msg=String(err&&err.message?err.message:err);
+    alert('Could not download the estimate PDF. '+(
+      /png|corrupt|incomplete|memory|taint/i.test(msg)
+        ? 'iPad ran out of memory capturing the sheet. Close other tabs and try again, or download from a computer.'
+        : msg
+    ));
   }finally{
     if(exportHost && exportHost.parentNode) exportHost.parentNode.removeChild(exportHost);
   }

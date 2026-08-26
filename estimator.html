@@ -5842,6 +5842,17 @@ input, select, textarea, button { box-sizing:border-box; }
                 const loc = roofPatioSide
                     ? 'SIDE wall only (not front, not rear)'
                     : 'REAR / BACK wall only (wall opposite the overhead door — not front, not side)';
+                const patioRoofExtend = isReverseGable
+                    ? [
+                        'REVERSE-GABLE + PATIO (MANDATORY): keep reverse-gable geometry on the main building — peaks only on left and right ends, front stays a flat eave over the overhead door',
+                        'do NOT turn the garage into a front-gable just because a patio was added',
+                        'extend the main roof ridge/eave RUN flush and continuously out over the patio so the patio roof is a straight continuation of the same roof plane',
+                        'patio roof is flush with the main roof edge — same pitch, same shingles, no awkward step or separate roof style',
+                        'patio does not add a new gable peak on the front'
+                      ].join(', ')
+                    : (roof === 'gable'
+                        ? 'GABLE EXTENDED PATIO: extend the gable roof plane continuously out over the patio to the outer edge of the patio concrete — same roof run, flush extension'
+                        : 'HIP/OTHER: extend the main roof eave line flush and continuously out over the patio with the same pitch and shingles');
                 patioWords = [
                     'MUST SHOW a full-width roofed covered patio attached to the '+loc,
                     'CRITICAL PATIO SIZE: the patio roof AND the concrete slab under it MUST span the ENTIRE '+spanDim,
@@ -5851,10 +5862,7 @@ input, select, textarea, button { box-sizing:border-box; }
                     'patio is about '+roofPatioDepth+' feet deep (projection out from the garage wall)',
                     'CRITICAL: EXACTLY FOUR (4) vertical support posts under the patio roof, evenly spaced wall-to-wall across the full patio width — never 2 posts, never 3 posts, never 6 posts, always 4 posts',
                     'patio roof matches the main garage roof style and uses the same '+shingleTxt+' architectural shingles',
-                    (roof === 'gable'
-                        ? 'GABLE EXTENDED PATIO: extend the gable roof / gable-end roof plane continuously out over the patio to the outer edge of the patio concrete pad — the whole gable end continues to the end of the concrete'
-                        : ''),
-                    // When rear patio, put service door on the back wall into the patio if not already specified
+                    patioRoofExtend,
                     (!roofPatioSide && (service==='no'||service==='none'||service==='hidden'||service==='right'||service==='left'||service==='front')
                         ? 'place a service/man door on the REAR wall opening onto the roofed patio'
                         : '')

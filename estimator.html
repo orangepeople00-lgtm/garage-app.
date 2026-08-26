@@ -6200,7 +6200,7 @@ input, select, textarea, button { box-sizing:border-box; }
                     // Hard timeout so sheet never spins forever
                     const timed = await Promise.race([
                         invokePromise,
-                        new Promise((_,rej)=>setTimeout(()=>rej(new Error('generate-garage-photo timed out after 90s')), 90000))
+                        new Promise((_,rej)=>setTimeout(()=>rej(new Error('generate-garage-photo timed out after 180s')), 180000))
                     ]);
                     const { data, error } = timed || {};
                     if(error){

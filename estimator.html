@@ -5754,11 +5754,20 @@ input, select, textarea, button { box-sizing:border-box; }
             } else if (wantsCornerView) {
                 cameraWords = 'CAMERA ANGLE (MANDATORY): three-quarter corner view showing two faces of the garage';
             } else {
-                // Front view
-                cameraWords = [
-                    'CAMERA ANGLE (MANDATORY): front or front three-quarter view facing the overhead garage door',
-                    accessWords
-                ].join(', ');
+                // Front view — if party door is on a side/back wall, use three-quarter so it can appear
+                if (hasPartyDoor && service!=='front') {
+                    const sideBias = (service==='left') ? 'left' : (service==='right' ? 'right' : 'right');
+                    cameraWords = [
+                        'CAMERA ANGLE (MANDATORY): front-'+sideBias+' three-quarter view',
+                        'show the FRONT overhead door AND the '+sideBias+' side wall so the party door on that wall is clearly visible',
+                        accessWords
+                    ].join(', ');
+                } else {
+                    cameraWords = [
+                        'CAMERA ANGLE (MANDATORY): front or front three-quarter view facing the overhead garage door',
+                        accessWords
+                    ].join(', ');
+                }
             }
 
             // Only show service door in the photo when the chosen view can see that wall
@@ -5844,7 +5853,7 @@ input, select, textarea, button { box-sizing:border-box; }
                     'patio concrete is flush and the same width as the garage wall it attaches to — full wall-to-wall',
                     'do NOT make a small or narrow patio in the middle',
                     'patio is about '+roofPatioDepth+' feet deep (projection out from the garage wall)',
-                    'ALWAYS exactly four vertical support posts evenly spaced across the full patio width',
+                    'CRITICAL: EXACTLY FOUR (4) vertical support posts under the patio roof, evenly spaced wall-to-wall across the full patio width — never 2 posts, never 3 posts, never 6 posts, always 4 posts',
                     'patio roof matches the main garage roof style and uses the same '+shingleTxt+' architectural shingles',
                     (roof === 'gable'
                         ? 'GABLE EXTENDED PATIO: extend the gable roof / gable-end roof plane continuously out over the patio to the outer edge of the patio concrete pad — the whole gable end continues to the end of the concrete'
@@ -5944,20 +5953,22 @@ input, select, textarea, button { box-sizing:border-box; }
                 ].join(', ');
             }
 
+            // Order: geometry + doors FIRST so they survive the 3900-char Supabase prompt cap
             parts.push(
+                'Hyper-realistic professional photograph of a brand-new detached residential garage in a suburban Midwest setting',
+                wall+'-foot tall walls',
+                roofWords,
+                gableEndRule,
                 frontDoorRule,
                 cameraWords,
-                patioWords,
-                sidingColorRule,
-                gableEndRule,
-                'MUST USE ROOF SHINGLES: architectural '+shingleTxt+' shingles',
-                'Hyper-realistic professional photograph of a brand-new detached residential garage in a suburban Midwest setting',
-                scaleWords,
-                wall+'-foot tall walls, '+roofWords,
-                doorStyleWords+', '+doorW+' feet wide by '+doorH+' feet tall, on the FRONT wall only when the front is in view',
-                serviceWords,
                 partyDoorWords,
+                serviceWords,
                 serviceDoorSillRule,
+                patioWords,
+                doorStyleWords+', '+doorW+' feet wide by '+doorH+' feet tall, on the FRONT wall only when the front is in view',
+                scaleWords,
+                sidingColorRule,
+                'MUST USE ROOF SHINGLES: architectural '+shingleTxt+' shingles',
                 coachLightWords,
                 serviceWalkWords,
                 winWords,

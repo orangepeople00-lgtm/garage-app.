@@ -6424,15 +6424,16 @@ input, select, textarea, button { box-sizing:border-box; }
                     if(needsReverseGableFix && ai.url){
                         if(status) status.textContent='OpenAI: fixing reverse-gable roof geometry…';
                         try{ if(typeof window.__estimateLoadingSetStatus==='function') window.__estimateLoadingSetStatus('Fixing reverse-gable roof (flat front eave, peaks on ends only)…'); }catch(_){}
+                        // Permanent Absolute reverse-gable fix (runs every time Reverse Gable is selected)
                         const fixPrompt=[
-                            'CRITICAL ROOF FIX — highest priority.',
-                            'The current image likely has a WRONG front-gable peak above the garage door — remove that peak completely.',
-                            'Rebuild the roof as SIDE-END GABLE only:',
-                            '1) Continuous flat/straight eave line across the entire FRONT above the overhead door — rectangular front wall, NO triangle, NO peak, NO A-frame over the door.',
-                            '2) Triangular gable peaks ONLY on the LEFT end wall and RIGHT end wall.',
-                            '3) Ridge runs left-to-right parallel to the front wall; roof slopes toward front and back.',
-                            'Do not change doors, windows, siding color, driveway, or camera angle.',
-                            'Keep width and proportions. Output must look like a wide ranch garage with peaked ends and a flat eave over the door.'
+                            'CRITICAL ROOF GEOMETRY CORRECTION — this overrides the current roof shape.',
+                            'WRONG: any triangular peak or A-frame centered above the front overhead garage door.',
+                            'REQUIRED Absolute reverse gable / side-end gable:',
+                            'FRONT: perfectly rectangular wall under a continuous horizontal eave — the roof edge runs straight across above the door with NO peak and NO triangle.',
+                            'ENDS: triangular peaks only on the LEFT short wall and RIGHT short wall.',
+                            'RIDGE: left to right, parallel to the front door wall; roof planes slope toward the front and toward the back.',
+                            'Keep the same doors, windows, siding, driveway, and camera. Keep width.',
+                            'Final look: wide ranch-style garage, peaked ends only, flat eave over the front door.'
                         ].join(' ');
                         try{
                             const fixed=await generateOpenAIGaragePhotoUrl(fixPrompt, { edit:true, editFromUrl:ai.url });

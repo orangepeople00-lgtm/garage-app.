@@ -5563,16 +5563,12 @@ input, select, textarea, button { box-sizing:border-box; }
             }
 
             const scaleWords = [
-                'IMPORTANT SCALE: this is a '+w+'-foot-wide by '+d+'-foot-deep '+carWords,
-                'the building must look large and substantial, not a tiny shed',
-                'the overhead door is '+doorW+' feet wide by '+doorH+' feet tall and must dominate most of the FRONT wall width',
-                'camera pulled far enough back that the FULL width of the garage is visible with correct real-world proportions',
+                'BUILDING SIZE (MANDATORY): '+w+' feet WIDE by '+d+' feet DEEP — dimensions are literal',
                 (w >= 20
-                    ? ('CRITICAL WIDTH (MANDATORY): garage is '+w+' FEET WIDE — show a WIDE rectangular building that spans most of the photo horizontally, broad front wall, large two-car proportions, door centered on a wide facade, camera back far enough to see both left and right corners of the building, NOT a tall narrow tower, NOT a small shed, NOT cropped tight on the door only')
-                    : ''),
-                (w >= 20
-                    ? ('a '+w+'x'+d+' garage is about the size of a two-car residential garage — massing must match that, wide and low, not small')
-                    : '')
+                    ? ('WIDTH MANDATORY: this is a '+w+'-foot-wide TWO-CAR scale garage — the building must fill most of the horizontal frame, both left and right corners visible, broad low facade, NOT a small narrow shed, NOT cropped on the door only, camera pulled back')
+                    : ('scale: '+w+'x'+d+' ft garage, full building visible')),
+                'overhead door is '+doorW+' ft wide by '+doorH+' ft tall and spans most of the front wall',
+                'correct real-world proportions for a '+w+'x'+d+' residential garage'
             ].filter(Boolean).join(', ');
 
             const frontDoorRule = 'CRITICAL LAYOUT: the large overhead garage door is ONLY on the FRONT wall — never on the rear wall, never on a side wall, and never on the same wall as a roofed patio';
@@ -5953,10 +5949,22 @@ input, select, textarea, button { box-sizing:border-box; }
                 ].join(', ');
             }
 
-            // Order: geometry + doors FIRST so they survive the 3900-char Supabase prompt cap
+            // Ultra-short critical header FIRST (survives truncation + model attention)
+            const criticalHeader = [
+                isReverseGable
+                    ? 'CRITICAL ROOF: side-end gables only — peaks on LEFT end and RIGHT end — FRONT above overhead door is FLAT eave rectangle with ZERO peak — ridge left-to-right'
+                    : (roof==='hip' ? 'CRITICAL ROOF: hip roof no gable peaks' : 'CRITICAL ROOF: front-gable peak centered above overhead door'),
+                'CRITICAL SIZE: garage is '+w+' feet wide by '+d+' feet deep — must look '+ (w>=20 ? 'WIDE two-car' : 'proper') + ' scale filling the frame',
+                hasPartyDoor ? ('CRITICAL PARTY DOOR: '+partyWft+'x'+partyHft+' ft white raised-panel overhead mini door on '+wallName(service)+' — not a swing door') : '',
+                roofPatioOn ? 'CRITICAL PATIO: full-width roofed patio with EXACTLY 4 posts' : ''
+            ].filter(Boolean).join('. ');
+
+            // Order: critical header + geometry first
             parts.push(
+                criticalHeader,
                 'Hyper-realistic professional photograph of a brand-new detached residential garage in a suburban Midwest setting',
                 wall+'-foot tall walls',
+                scaleWords,
                 roofWords,
                 gableEndRule,
                 frontDoorRule,
@@ -5966,7 +5974,6 @@ input, select, textarea, button { box-sizing:border-box; }
                 serviceDoorSillRule,
                 patioWords,
                 doorStyleWords+', '+doorW+' feet wide by '+doorH+' feet tall, on the FRONT wall only when the front is in view',
-                scaleWords,
                 sidingColorRule,
                 'MUST USE ROOF SHINGLES: architectural '+shingleTxt+' shingles',
                 coachLightWords,
@@ -6290,9 +6297,42 @@ input, select, textarea, button { box-sizing:border-box; }
                         window.__estimateLoadingSetStatus('OpenAI: creating garage photo…');
                     }
                 }catch(_){}
-                const ai=await generateAIGaragePhotoUrl(true);
+                let ai=await generateAIGaragePhotoUrl(true);
                 await warm(ai.url);
                 setLastAiGaragePhotoUrl(ai.url);
+
+                // FORCE reverse-gable geometry with a second edit pass when selected.
+                // Image models default to a front peak; this pass only fixes the roof.
+                try{
+                    const roofType=(document.getElementById('roofType')||{}).value||'';
+                    const eaveDir=(document.getElementById('eaveDir')||{}).value||'';
+                    const needsReverseGableFix=(roofType==='gable' && eaveDir==='sides');
+                    if(needsReverseGableFix && ai.url){
+                        if(status) status.textContent='OpenAI: fixing reverse-gable roof geometry…';
+                        try{ if(typeof window.__estimateLoadingSetStatus==='function') window.__estimateLoadingSetStatus('Fixing reverse-gable roof (flat front eave, peaks on ends only)…'); }catch(_){}
+                        const fixPrompt=[
+                            'ROOF GEOMETRY FIX ONLY — do not change doors, windows, siding color, driveway, or camera.',
+                            'This garage must be SIDE-END GABLE (Absolute reverse gable).',
+                            'Remove any triangular peak centered above the front overhead door.',
+                            'Front wall above the overhead door must be a RECTANGLE under a continuous straight eave — zero peak over the door.',
+                            'Put triangular roof peaks ONLY on the LEFT short end wall and the RIGHT short end wall.',
+                            'Ridge runs left-to-right parallel to the front door wall.',
+                            'Roof slopes toward the front and toward the back.',
+                            'Keep the same overall building width and proportions.'
+                        ].join(' ');
+                        try{
+                            const fixed=await generateOpenAIGaragePhotoUrl(fixPrompt, { edit:true, editFromUrl:ai.url });
+                            if(fixed && fixed.url){
+                                await warm(fixed.url);
+                                setLastAiGaragePhotoUrl(fixed.url);
+                                ai={ url:fixed.url, prompt:(ai.prompt||'')+' | reverse-gable fix', source:(ai.source||'openai')+'+rg-fix' };
+                            }
+                        }catch(fixErr){
+                            console.warn('Reverse-gable fix pass failed, keeping first image', fixErr);
+                        }
+                    }
+                }catch(rgErr){ console.warn(rgErr); }
+
                 window._sheetPhotoMode='generate';
                 window._sheetPhotoEditPrompt='';
                 if(status) status.textContent='OpenAI garage photo ready ('+(ai.source||'openai')+').';

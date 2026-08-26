@@ -6016,6 +6016,92 @@ input, select, textarea, button { box-sizing:border-box; }
                 parts.push('Do not substitute a different view, location, or feature than what the salesman asked for');
             }
             return parts.filter(Boolean).join(', ');
+
+        // Compact prompt for OpenAI — ONLY active job rules, always under budget (no clipping)
+        function buildGarageAIPromptCompact(){
+            try{
+                const dim = (typeof getGarageDimensions==='function') ? getGarageDimensions() : {width:20, depth:20};
+                const w = Number(dim.width)||20, d = Number(dim.depth)||20;
+                const roof = document.getElementById('roofType')?.value||'gable';
+                const eave = document.getElementById('eaveDir')?.value||'';
+                const isReverseGable = (roof==='gable' && eave==='sides');
+                const doorW = Number(document.getElementById('overheadDoorWidth')?.value||16)||16;
+                const doorH = document.getElementById('overheadDoorHeight')?.value||'7';
+                const wall = document.getElementById('wallHeight')?.value||'8';
+                const sideDoorKind = (document.getElementById('doorType')?.value||'standard').toLowerCase();
+                const hasPartyDoor = sideDoorKind==='party';
+                const partyW = Math.max(6, Math.min(10, Math.round(Number(document.getElementById('partyDoorWidth')?.value)||6)));
+                const partyH = Math.max(7, Math.min(10, Math.round(Number(document.getElementById('partyDoorHeight')?.value)||7)));
+                const service = document.getElementById('serviceDoorLocation')?.value||'right';
+                const serviceFrontSide = document.getElementById('serviceDoorFrontSide')?.value||'right';
+                let roofPatioOn = !!document.getElementById('roofPatioEnabled')?.checked;
+                let roofPatioSide = !!document.getElementById('roofPatioSide')?.checked;
+                const extra = (document.getElementById('aiPhotoExtraInstructions')?.value||'').trim();
+                const q = extra.toLowerCase();
+                if (/\b(no\s+(roofed?\s*)?patio)\b/.test(q)) roofPatioOn = false;
+                if (/\b(side\s+roof(ed)?\s*patio|side\s+patio)\b/.test(q)) roofPatioSide = true;
+                if (/\b(rear\s+roof(ed)?\s*patio|rear\s+patio|back\s+patio)\b/.test(q)) roofPatioSide = false;
+                const viewSel = (document.getElementById('garagePhotoView')?.value||sessionStorage.getItem('agb_garage_photo_view')||'front').toLowerCase();
+                let resolvedView = viewSel;
+                if (/\b(back|rear|rear view|back view)\b/.test(q)) resolvedView = 'back';
+                else if (/\b(left view|from the left)\b/.test(q)) resolvedView = 'left';
+                else if (/\b(right view|from the right)\b/.test(q)) resolvedView = 'right';
+                else if (/\b(front view|from the front)\b/.test(q)) resolvedView = 'front';
+                else if ((viewSel==='front'||!viewSel) && roofPatioOn && !roofPatioSide) resolvedView = 'back';
+                else if ((viewSel==='front'||!viewSel) && roofPatioOn && roofPatioSide) resolvedView = 'left';
+
+                const sidingType = document.getElementById('sidingType')?.value||'vinyl';
+                const sidingColorEl = document.getElementById('sidingColor');
+                let colorTxt = (sidingColorEl && sidingColorEl.selectedIndex>=0) ? (sidingColorEl.options[sidingColorEl.selectedIndex].text||'Light Gray') : 'Light Gray';
+                const shingleEl = document.getElementById('shingleColor');
+                let shingleTxt = (shingleEl && shingleEl.selectedIndex>=0) ? (shingleEl.options[shingleEl.selectedIndex].text||'Charcoal') : 'Charcoal';
+                const gutters = !!document.getElementById('gutters')?.checked;
+                const alum = !!document.getElementById('aluminumSoffit')?.checked;
+                const patioDepth = (roofPatioOn && typeof getRoofPatioDepth==='function') ? (getRoofPatioDepth()||6) : 6;
+
+                const lines = [];
+                // ORDER = priority. Keep total well under 2800 so edge permanent rules still fit.
+                if (extra) lines.push('SALESMAN REQUEST: '+extra.slice(0,400));
+                lines.push('CRITICAL VIEW: '+(
+                    resolvedView==='back' ? 'REAR/BACK elevation only — not front — back wall is main subject — no driveway front portrait'
+                    : resolvedView==='left' ? 'LEFT side elevation main subject'
+                    : resolvedView==='right' ? 'RIGHT side elevation main subject'
+                    : 'FRONT elevation facing overhead door'
+                ));
+                if (isReverseGable) {
+                    lines.push('CRITICAL ROOF: reverse/side-end gable — peaks ONLY on LEFT and RIGHT ends — FRONT above door is FLAT continuous eave RECTANGLE — ZERO peak over door — ridge left-to-right — slopes front and back');
+                } else if (roof==='hip') {
+                    lines.push('CRITICAL ROOF: hip roof — no triangular gable peaks');
+                } else {
+                    lines.push('CRITICAL ROOF: standard front-gable — peak centered above front overhead door');
+                }
+                lines.push('CRITICAL SIZE: '+w+' feet wide by '+d+' feet deep'+(w>=20?', WIDE two-car scale filling frame, both corners visible':'')+'; walls '+wall+' ft; main door '+doorW+'x'+doorH+' ft on FRONT only');
+                if (hasPartyDoor) {
+                    lines.push('CRITICAL PARTY DOOR: '+partyW+'x'+partyH+' ft white raised-panel overhead mini door on '+service+(service==='front'?' '+serviceFrontSide+' of main door':'')+' wall — not a swing door');
+                } else {
+                    lines.push('NO PARTY DOOR — zero extra overhead doors on back or side');
+                }
+                if (sideDoorKind!=='no' && sideDoorKind!=='none') {
+                    lines.push('SERVICE DOOR: 36x80 steel swing door on '+service+' wall, flush in siding (not overhead)');
+                }
+                if (roofPatioOn) {
+                    lines.push('CRITICAL PATIO: '+(roofPatioSide?'SIDE':'REAR')+' roofed patio on '+(roofPatioSide?'SIDE':'BACK')+' wall only — full wall width — EXACTLY 4 posts — depth ~'+patioDepth+' ft — same roof run flush extension'+(isReverseGable?', keep reverse-gable peaks on ends only':''));
+                } else {
+                    lines.push('NO ROOFED PATIO');
+                }
+                lines.push('Siding '+colorTxt+' '+(sidingType==='hardie'?'Hardie':'vinyl')+' all around including gable ends; architectural '+shingleTxt+' shingles');
+                lines.push(gutters ? 'Gutters and downspouts visible' : 'No gutters');
+                lines.push(alum ? 'White aluminum soffit and fascia' : 'Painted wood soffit/fascia');
+                lines.push('Photoreal new Midwest detached garage, sharp high detail, soft daylight, no text no people no logo');
+                let out = lines.join('. ');
+                if (out.length > 2800) out = out.slice(0, 2800);
+                return out;
+            }catch(err){
+                console.error('buildGarageAIPromptCompact failed', err);
+                return (typeof buildGarageAIPromptInner==='function' ? buildGarageAIPromptInner() : 'detached garage').slice(0, 2800);
+            }
+        }
+
         } // end buildGarageAIPromptInner
 
         function applyPhotoChatToEstimate(){
@@ -6102,7 +6188,7 @@ input, select, textarea, button { box-sizing:border-box; }
             // 1) Preferred: company Edge Function (key never leaves Supabase — all salesmen)
             try{
                 if(typeof garageSb!=='undefined' && garageSb?.functions?.invoke){
-                    const body={ prompt: String(prompt||'').slice(0, 3900) };
+                    const body={ prompt: String(prompt||'').slice(0, 4500) };
                     if(isEdit){
                         body.mode='edit';
                         // Pass prior image as data URL or https URL for the edge function to fetch/edit
@@ -6226,7 +6312,10 @@ input, select, textarea, button { box-sizing:border-box; }
         }
 
         async function generateAIGaragePhotoUrl(preferOpenAI, opts){
-            const prompt=buildGarageAIPrompt();
+            // Compact pack = all active rules, guaranteed under budget (nothing critical clipped)
+            const prompt = (typeof buildGarageAIPromptCompact==='function')
+                ? buildGarageAIPromptCompact()
+                : buildGarageAIPrompt();
             if(preferOpenAI){
                 return await generateOpenAIGaragePhotoUrl(prompt, opts);
             }
@@ -6336,14 +6425,14 @@ input, select, textarea, button { box-sizing:border-box; }
                         if(status) status.textContent='OpenAI: fixing reverse-gable roof geometry…';
                         try{ if(typeof window.__estimateLoadingSetStatus==='function') window.__estimateLoadingSetStatus('Fixing reverse-gable roof (flat front eave, peaks on ends only)…'); }catch(_){}
                         const fixPrompt=[
-                            'ROOF GEOMETRY FIX ONLY — do not change doors, windows, siding color, driveway, or camera.',
-                            'This garage must be SIDE-END GABLE (Absolute reverse gable).',
-                            'Remove any triangular peak centered above the front overhead door.',
-                            'Front wall above the overhead door must be a RECTANGLE under a continuous straight eave — zero peak over the door.',
-                            'Put triangular roof peaks ONLY on the LEFT short end wall and the RIGHT short end wall.',
-                            'Ridge runs left-to-right parallel to the front door wall.',
-                            'Roof slopes toward the front and toward the back.',
-                            'Keep the same overall building width and proportions.'
+                            'CRITICAL ROOF FIX — highest priority.',
+                            'The current image likely has a WRONG front-gable peak above the garage door — remove that peak completely.',
+                            'Rebuild the roof as SIDE-END GABLE only:',
+                            '1) Continuous flat/straight eave line across the entire FRONT above the overhead door — rectangular front wall, NO triangle, NO peak, NO A-frame over the door.',
+                            '2) Triangular gable peaks ONLY on the LEFT end wall and RIGHT end wall.',
+                            '3) Ridge runs left-to-right parallel to the front wall; roof slopes toward front and back.',
+                            'Do not change doors, windows, siding color, driveway, or camera angle.',
+                            'Keep width and proportions. Output must look like a wide ranch garage with peaked ends and a flat eave over the door.'
                         ].join(' ');
                         try{
                             const fixed=await generateOpenAIGaragePhotoUrl(fixPrompt, { edit:true, editFromUrl:ai.url });

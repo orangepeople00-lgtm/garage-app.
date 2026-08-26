@@ -5671,6 +5671,13 @@ input, select, textarea, button { box-sizing:border-box; }
                 ].join(', ');
             } else if (hasFrenchDoor) {
                 partyDoorWords = 'French door unit on the '+wallName(service)+' (not an overhead party door)';
+            } else {
+                partyDoorWords = [
+                    'NO PARTY DOOR anywhere — calculator does not include a party door',
+                    'do NOT add a small overhead door on the rear, side, or front',
+                    'do NOT invent a second garage door on the back wall',
+                    'the only overhead garage door is the large FRONT door unless the prompt explicitly says PARTY DOOR'
+                ].join(', ');
             }
 
             const gutterWords = gutters
@@ -5701,10 +5708,9 @@ input, select, textarea, button { box-sizing:border-box; }
             const chatYesPatio = /\b(roofed?\s*patio|covered\s*patio|roof\s*patio|awning\s*patio|add\s+(a\s+)?patio|with\s+(a\s+)?(roofed?\s*)?patio)\b/.test(q);
             if (chatNoPatio) roofPatioOn = false;
             else if (chatYesPatio) roofPatioOn = true;
-            if (roofPatioOn) {
-                if (/\b(side|left\s*side|right\s*side|on the side)\b/.test(q)) roofPatioSide = true;
-                if (/\b(back|rear|behind|in the back)\b/.test(q)) roofPatioSide = false;
-            }
+            // Location: calculator is source of truth unless chat EXPLICITLY says side patio / rear patio
+            if (/\b(side\s+roof(ed)?\s*patio|side\s+patio|patio\s+on\s+the\s+side)\b/.test(q)) roofPatioSide = true;
+            if (/\b(rear\s+roof(ed)?\s*patio|back\s+roof(ed)?\s*patio|rear\s+patio|back\s+patio|patio\s+on\s+the\s+(back|rear))\b/.test(q)) roofPatioSide = false;
             let roofPatioDepth = 6;
             if (roofPatioOn && typeof getRoofPatioDepth === 'function') {
                 roofPatioDepth = getRoofPatioDepth() || 6;
@@ -5733,10 +5739,14 @@ input, select, textarea, button { box-sizing:border-box; }
             let cameraWords = '';
             if (resolvedView === 'back') {
                 cameraWords = [
-                    'CAMERA ANGLE (MANDATORY): rear or rear-corner view of the garage',
-                    'the BACK of the building is the main subject so the customer can see the rear elevation',
-                    'do NOT use a front-only driveway portrait for this photo'
-                ].join(', ');
+                    'CAMERA ANGLE (MANDATORY): REAR elevation / rear-corner view of the garage',
+                    'the BACK wall is the main subject',
+                    (roofPatioOn && !roofPatioSide
+                        ? 'the roofed patio is on this BACK wall spanning the full rear width with FOUR posts — do not attach the patio to a side wall'
+                        : ''),
+                    'do NOT use a front-only driveway portrait for this photo',
+                    'do NOT add a second overhead / party door on the back unless CRITICAL PARTY DOOR is stated'
+                ].filter(Boolean).join(', ');
             } else if (resolvedView === 'left') {
                 cameraWords = [
                     'CAMERA ANGLE (MANDATORY): LEFT side or left three-quarter view',
@@ -5854,6 +5864,9 @@ input, select, textarea, button { box-sizing:border-box; }
                         ? 'GABLE EXTENDED PATIO: extend the gable roof plane continuously out over the patio to the outer edge of the patio concrete — same roof run, flush extension'
                         : 'HIP/OTHER: extend the main roof eave line flush and continuously out over the patio with the same pitch and shingles');
                 patioWords = [
+                    roofPatioSide
+                        ? 'CRITICAL PATIO LOCATION: SIDE roofed patio on a SIDE wall ONLY — do NOT put the patio on the back'
+                        : 'CRITICAL PATIO LOCATION: REAR roofed patio on the BACK wall ONLY — do NOT put the patio on the left or right side',
                     'MUST SHOW a full-width roofed covered patio attached to the '+loc,
                     'CRITICAL PATIO SIZE: the patio roof AND the concrete slab under it MUST span the ENTIRE '+spanDim,
                     'patio roof starts at the eave overhang line of the main garage roof and continues out',
@@ -5862,17 +5875,9 @@ input, select, textarea, button { box-sizing:border-box; }
                     'patio is about '+roofPatioDepth+' feet deep (projection out from the garage wall)',
                     'CRITICAL: EXACTLY FOUR (4) vertical support posts under the patio roof, evenly spaced wall-to-wall across the full patio width — never 2 posts, never 3 posts, never 6 posts, always 4 posts',
                     'patio roof matches the main garage roof style and uses the same '+shingleTxt+' architectural shingles',
-                    patioRoofExtend,
-                    (!roofPatioSide && (service==='no'||service==='none'||service==='hidden'||service==='right'||service==='left'||service==='front')
-                        ? 'place a service/man door on the REAR wall opening onto the roofed patio'
-                        : '')
+                    patioRoofExtend
                 ].filter(Boolean).join(', ');
-                // Auto-bias: rear patio → rear service door in the prompt when calculator still has side default
-                if (!roofPatioSide && (service==='right'||service==='left'||service==='front'||service==='no'||service==='none')) {
-                    serviceWords = 'service man-door on the REAR wall opening onto the roofed patio, flush with siding';
-                    coachLightWords = 'black coach light next to the rear patio service door';
-                    serviceWalkWords = 'service door threshold on the patio concrete slab';
-                }
+                // Calculator stays source of truth — do NOT invent a rear party/service door for a patio
             }
 
             // Rear view: only force a rear service door when calculator says back, or chat asks for it.
@@ -5963,8 +5968,8 @@ input, select, textarea, button { box-sizing:border-box; }
                     ? 'CRITICAL ROOF: side-end gables only — peaks on LEFT end and RIGHT end — FRONT above overhead door is FLAT eave rectangle with ZERO peak — ridge left-to-right'
                     : (roof==='hip' ? 'CRITICAL ROOF: hip roof no gable peaks' : 'CRITICAL ROOF: front-gable peak centered above overhead door'),
                 'CRITICAL SIZE: garage is '+w+' feet wide by '+d+' feet deep — must look '+ (w>=20 ? 'WIDE two-car' : 'proper') + ' scale filling the frame',
-                hasPartyDoor ? ('CRITICAL PARTY DOOR: '+partyWft+'x'+partyHft+' ft white raised-panel overhead mini door on '+wallName(service)+' — not a swing door') : '',
-                roofPatioOn ? 'CRITICAL PATIO: full-width roofed patio with EXACTLY 4 posts' : ''
+                hasPartyDoor ? ('CRITICAL PARTY DOOR: '+partyWft+'x'+partyHft+' ft white raised-panel overhead mini door on '+wallName(service)+' — not a swing door') : 'NO PARTY DOOR — do not add a second overhead door',
+                roofPatioOn ? ('CRITICAL PATIO: '+(roofPatioSide?'SIDE':'REAR')+' full-width roofed patio with EXACTLY FOUR posts — patio on the '+(roofPatioSide?'SIDE':'BACK')+' wall only') : 'NO ROOFED PATIO'
             ].filter(Boolean).join('. ');
 
             // Order: critical header + geometry first

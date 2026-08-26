@@ -5727,24 +5727,31 @@ input, select, textarea, button { box-sizing:border-box; }
             const chatFront = /\b(front view|from the front|driveway view|front only)\b/.test(q);
             const wantsCornerView = /\b(corner|three[\s-]?quarter|3\/4)\b/.test(q);
 
+            // View: chat explicit > dropdown selection ALWAYS wins over patio defaults
             let resolvedView = viewSel; // front | left | right | back
             if (chatRear) resolvedView = 'back';
             else if (chatLeft) resolvedView = 'left';
             else if (chatRight) resolvedView = 'right';
             else if (chatFront) resolvedView = 'front';
-            else if (chatSide) resolvedView = (roofPatioOn && roofPatioSide) ? 'left' : (viewSel === 'right' ? 'right' : 'left');
-            else if (roofPatioOn && !roofPatioSide && viewSel === 'front') resolvedView = 'back'; // rear patio defaults to back unless user picked a side/front
-            else if (roofPatioOn && roofPatioSide && viewSel === 'front') resolvedView = 'left';
+            else if (chatSide) resolvedView = (viewSel === 'right' ? 'right' : 'left');
+            // Only auto-shift camera for patio when user left view on default "front"
+            else if (viewSel === 'front' || !viewSel) {
+                if (roofPatioOn && !roofPatioSide) resolvedView = 'back';
+                else if (roofPatioOn && roofPatioSide) resolvedView = 'left';
+            }
+            // If user picked back/left/right in the dropdown, keep it — never force front
 
             let cameraWords = '';
             if (resolvedView === 'back') {
                 cameraWords = [
-                    'CAMERA ANGLE (MANDATORY): REAR elevation / rear-corner view of the garage',
-                    'the BACK wall is the main subject',
+                    'CAMERA ANGLE (MANDATORY — HIGHEST PRIORITY): PURE REAR / BACK elevation of the garage',
+                    'camera stands behind the building looking at the BACK wall',
+                    'the BACK wall fills the frame as the main subject',
+                    'FORBIDDEN: front view, driveway portrait, or any angle where the main overhead door is the main subject',
+                    'the large front overhead door must be hidden or only barely visible on an edge if at all',
                     (roofPatioOn && !roofPatioSide
                         ? 'the roofed patio is on this BACK wall spanning the full rear width with FOUR posts — do not attach the patio to a side wall'
                         : ''),
-                    'do NOT use a front-only driveway portrait for this photo',
                     'do NOT add a second overhead / party door on the back unless CRITICAL PARTY DOOR is stated'
                 ].filter(Boolean).join(', ');
             } else if (resolvedView === 'left') {
@@ -5963,9 +5970,14 @@ input, select, textarea, button { box-sizing:border-box; }
             }
 
             // Ultra-short critical header FIRST (survives truncation + model attention)
+            const viewLabel = resolvedView==='back' ? 'REAR/BACK elevation only — not front'
+                : resolvedView==='left' ? 'LEFT side elevation'
+                : resolvedView==='right' ? 'RIGHT side elevation'
+                : 'FRONT elevation facing the overhead door';
             const criticalHeader = [
+                'CRITICAL VIEW: '+viewLabel+' — camera must match this view exactly; do not substitute a different angle',
                 isReverseGable
-                    ? 'CRITICAL ROOF: side-end gables only — peaks on LEFT end and RIGHT end — FRONT above overhead door is FLAT eave rectangle with ZERO peak — ridge left-to-right'
+                    ? 'CRITICAL ROOF: side-end gables only — peaks on LEFT end and RIGHT end — FRONT above overhead door is FLAT eave rectangle with ZERO peak — ridge left-to-right — ALWAYS reverse-gable geometry when selected'
                     : (roof==='hip' ? 'CRITICAL ROOF: hip roof no gable peaks' : 'CRITICAL ROOF: front-gable peak centered above overhead door'),
                 'CRITICAL SIZE: garage is '+w+' feet wide by '+d+' feet deep — must look '+ (w>=20 ? 'WIDE two-car' : 'proper') + ' scale filling the frame',
                 hasPartyDoor ? ('CRITICAL PARTY DOOR: '+partyWft+'x'+partyHft+' ft white raised-panel overhead mini door on '+wallName(service)+' — not a swing door') : 'NO PARTY DOOR — do not add a second overhead door',
@@ -6159,7 +6171,7 @@ input, select, textarea, button { box-sizing:border-box; }
                         prompt: prompt.slice(0, 3000),
                         n:1,
                         size:'1024x1024',
-                        quality:'medium'
+                        quality:'high'
                     })
                 });
             }catch(netErr){

@@ -4806,11 +4806,17 @@ input, select, textarea, button { box-sizing:border-box; }
                     itemDetailOverrides:{}, // { itemLabelLower: newDetails }
                     itemLabelOverrides:{}, // { originalKey: new label text }
                     removedItems:[],
+                    extraItems:[],
+                    textOverrides:{},
                     removedNoteKeywords:[],
                     customCss:''
                 };
             }
             if(!Array.isArray(window._sheetPresentation.removedItems)) window._sheetPresentation.removedItems=[];
+            if(!Array.isArray(window._sheetPresentation.extraItems)) window._sheetPresentation.extraItems=[];
+            if(!window._sheetPresentation.textOverrides || typeof window._sheetPresentation.textOverrides!=='object'){
+                window._sheetPresentation.textOverrides={};
+            }
             if(!Array.isArray(window._sheetPresentation.removedNoteKeywords)) window._sheetPresentation.removedNoteKeywords=[];
             if(!window._sheetPresentation.itemDetailOverrides || typeof window._sheetPresentation.itemDetailOverrides!=='object'){
                 window._sheetPresentation.itemDetailOverrides={};
@@ -6892,14 +6898,28 @@ input, select, textarea, button { box-sizing:border-box; }
                     }
                 });
             }
+            if(Array.isArray(sheetPres.extraItems) && sheetPres.extraItems.length){
+                sheetPres.extraItems.forEach(ex=>{
+                    if(!ex) return;
+                    const k=String(ex.key||ex.item||'').trim();
+                    if(!k) return;
+                    specsForSheet.push([ex.item||'New Item', ex.details||'']);
+                });
+            }
             specRows = specsForSheet.map(([item, details], idx) => `
                 <tr data-row-idx="${idx}" data-item-key="${esc(String(item).toLowerCase())}">
                   <td class="item"><span class="sheet-edit" contenteditable="true" data-field="item" data-item-key="${esc(String(item).toLowerCase())}" title="Click to edit">${esc(item)}</span></td>
                   <td class="details"><span class="sheet-edit" contenteditable="true" data-field="details" data-item-key="${esc(String(item).toLowerCase())}" title="Click to edit">${esc(details)}</span>
-                    <button type="button" class="sheet-row-remove no-print" data-item-key="${esc(String(item).toLowerCase())}" title="Remove this row">×</button>
+                    <span class="sheet-row-tools no-print">
+                      <button type="button" class="sheet-row-add no-print" title="Add a row">+</button>
+                      <button type="button" class="sheet-row-remove no-print" data-item-key="${esc(String(item).toLowerCase())}" title="Remove this row">×</button>
+                    </span>
                   </td>
                 </tr>
             `).join('');
+            specRows += `<tr class="sheet-add-row no-print"><td colspan="2">
+                <button type="button" class="sheet-row-add sheet-row-add-bar no-print" title="Add item and details">+ Add item / details</button>
+            </td></tr>`;
 
             let notesForSheet = notes.slice();
             if(Array.isArray(sheetPres.removedNoteKeywords) && sheetPres.removedNoteKeywords.length){
@@ -6912,6 +6932,12 @@ input, select, textarea, button { box-sizing:border-box; }
             if(sheetPres.noteTextOverride){
                 notesHtml = String(sheetPres.noteTextOverride).split(/\n+/).map((n,ni)=>`<li><span class="sheet-edit" contenteditable="true" data-field="note" data-note-idx="${ni}" title="Click to edit">${esc(capitalizeNoteLine(n.trim()))}</span></li>`).filter(Boolean).join('');
             }
+
+            const tx = (sheetPres.textOverrides && typeof sheetPres.textOverrides==='object') ? sheetPres.textOverrides : {};
+            const se = (field, fallback)=>{
+                const raw = (tx[field]!=null && String(tx[field]).length) ? tx[field] : fallback;
+                return '<span class="sheet-edit" contenteditable="true" data-field="'+field+'">'+esc(raw)+'</span>';
+            };
 
             const sheetHtml = `<!DOCTYPE html>
 <html lang="en">
@@ -7179,33 +7205,67 @@ input, select, textarea, button { box-sizing:border-box; }
     }
     .sheet-ai-panel button.ai-apply:disabled { opacity: .55; cursor: wait; }
     .sheet-edit {
-      display: inline-block;
-      min-width: 2em;
+      display: inline;
+      min-width: 1em;
       max-width: 100%;
       outline: none;
       border-radius: 3px;
       padding: 0 2px;
+      cursor: text;
     }
+    .doc-title .sheet-edit,
+    .brand-absolute .sheet-edit,
+    .brand-garage .sheet-edit,
+    .sales-name .sheet-edit,
+    .total-price .sheet-edit,
+    .footer .sheet-edit { display: inline; }
     .sheet-edit:focus {
       background: #fff8d6;
       box-shadow: 0 0 0 2px #f5c542;
     }
-    .sheet-row-remove {
+    .sheet-row-tools {
       float: right;
+      display: inline-flex;
+      gap: 3px;
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+    .sheet-row-remove, .sheet-row-add {
       border: none;
-      background: #fee2e2;
-      color: #b91c1c;
       border-radius: 4px;
       width: 18px;
       height: 18px;
       line-height: 16px;
-      font-size: 12px;
+      font-size: 13px;
+      font-weight: 800;
       cursor: pointer;
-      margin-left: 4px;
+      padding: 0;
+    }
+    .sheet-row-remove {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+    .sheet-row-add {
+      background: #dcfce7;
+      color: #15803d;
+    }
+    .sheet-row-add-bar {
+      width: auto;
+      height: auto;
+      padding: 4px 10px;
+      font-size: 12px;
+      font-weight: 800;
+      margin: 4px 0;
+    }
+    .sheet-add-row td {
+      border: none;
+      background: transparent;
+      text-align: left;
+      padding: 4px 8px;
     }
     @media print {
       .sheet-edit:focus { background: transparent; box-shadow: none; }
-      .sheet-row-remove { display: none !important; }
+      .sheet-row-remove, .sheet-row-add, .sheet-row-tools, .sheet-add-row, .no-print { display: none !important; }
     }
     .sheet-ai-panel #popupChangeStatus {
       font-size: 12px;
@@ -7402,62 +7462,62 @@ input, select, textarea, button { box-sizing:border-box; }
                 <g stroke="#fff" stroke-width="2"><line x1="46" y1="73" x2="114" y2="73"/><line x1="46" y1="89" x2="114" y2="89"/><line x1="46" y1="105" x2="114" y2="105"/><line x1="69" y1="57" x2="69" y2="120"/><line x1="91" y1="57" x2="91" y2="120"/></g>
             </svg>
             <div class="brand-text">
-                <div class="brand-absolute">ABSOLUTE</div>
-                <div class="brand-garage">GARAGE BUILDERS</div>
-                <div class="brand-tag">BUILT RIGHT. BUILT STRONG. BUILT TO LAST.</div>
+                <div class="brand-absolute">${se('brandAbsolute','ABSOLUTE')}</div>
+                <div class="brand-garage">${se('brandGarage','GARAGE BUILDERS')}</div>
+                <div class="brand-tag">${se('brandTag','BUILT RIGHT. BUILT STRONG. BUILT TO LAST.')}</div>
             </div>
         </div>
         <div class="sales-block">
             <div class="${salesman.wally ? 'wally-contact-center' : ''}">
-                <div class="sales-name">${esc(salesmanName)}</div>
-                <div class="sales-title">${esc(salesmanTitle)}</div>
+                <div class="sales-name">${se('salesmanName', salesmanName)}</div>
+                <div class="sales-title">${se('salesmanTitle', salesmanTitle)}</div>
                 <div class="sales-contact">${salesmanPhone ? `☎ ${esc(salesmanPhone)}` : ''}${salesmanPhone && salesmanEmail ? '<br>' : ''}${salesmanEmail ? `✉ ${esc(salesmanEmail)}` : ''}${salesmanTagline ? `<br><span class="sales-tagline" style="font-size:8px;font-weight:800">${esc(salesmanTagline)}</span>` : ''}</div>
-                ${salesman.wally ? `<div class="wally-office-address">3050 W Irving Park Rd Chicago, IL 60618</div><div class="wally-website">www.absolutegaragebuilders.com</div>` : ''}
+                ${salesman.wally ? `<div class="wally-office-address">${se('wallyOffice','3050 W Irving Park Rd Chicago, IL 60618')}</div><div class="wally-website">${se('wallyWebsite','www.absolutegaragebuilders.com')}</div>` : ''}
             </div>
-            ${salesman.wally ? '' : `<div class="license">ROOFING LICENSE NUMBER:<strong>104.016731<br>105.006803</strong></div>`}
+            ${salesman.wally ? '' : `<div class="license">${se('licenseLabel','ROOFING LICENSE NUMBER:')}<strong>${se('license1','104.016731')}<br>${se('license2','105.006803')}</strong></div>`}
         </div>
-        ${salesman.wally ? `<div class="wally-license-block"><div class="license-label">ROOFING LICENSE NUMBER</div><strong>104.016731<br>105.006803</strong></div>` : ''}
+        ${salesman.wally ? `<div class="wally-license-block"><div class="license-label">${se('licenseLabelWally','ROOFING LICENSE NUMBER')}</div><strong>${se('license1','104.016731')}<br>${se('license2','105.006803')}</strong></div>` : ''}
     </div>
 
-    <div class="doc-title">${salesman.wally ? "GARAGE PROJECT PROPOSAL" : "GARAGE PROJECT ESTIMATE SHEET"}</div>
+    <div class="doc-title">${se('docTitle', salesman.wally ? 'GARAGE PROJECT PROPOSAL' : 'GARAGE PROJECT ESTIMATE SHEET')}</div>
 
     <div class="customer-box customer-contact-box">
         <div class="customer-left">
-            <div class="field"><b>Customer Name:</b><span>${esc(customerName)}</span></div>
-            ${customerEmail ? `<div class="field customer-email-field"><b>Email Address:</b><span>${esc(customerEmail)}</span></div>` : ''}
-            <div class="field"><b>Address:</b><span>${esc(customerAddress)}</span></div>
+            <div class="field"><b>${se('labelCustomerName','Customer Name:')}</b><span>${se('customerName', customerName)}</span></div>
+            <div class="field customer-email-field"><b>${se('labelEmail','Email Address:')}</b><span>${se('customerEmail', customerEmail||'')}</span></div>
+            <div class="field"><b>${se('labelAddress','Address:')}</b><span>${se('customerAddress', customerAddress)}</span></div>
         </div>
         <div class="customer-right">
-            <div class="field"><b>Customer Phone Number:</b><span>${esc(customerPhone1)}</span></div>
-            ${customerPhone2 ? `<div class="field"><b>Customer Phone Number:</b><span>${esc(customerPhone2)}</span></div>` : ''}
-            <div class="field"><b>${salesman.wally ? "Est. Date:" : "Date:"}</b><span>${esc(today)}</span></div>
+            <div class="field"><b>${se('labelPhone1','Customer Phone Number:')}</b><span>${se('customerPhone1', customerPhone1)}</span></div>
+            <div class="field"><b>${se('labelPhone2','Customer Phone Number:')}</b><span>${se('customerPhone2', customerPhone2||'')}</span></div>
+            <div class="field"><b>${se('labelDate', salesman.wally ? 'Est. Date:' : 'Date:')}</b><span>${se('sheetDate', today)}</span></div>
         </div>
     </div>
 
     <div class="main">
         <div class="left">
             <table class="spec-table">
-                <thead><tr><th>ITEM</th><th>DETAILS</th></tr></thead>
+                <thead><tr><th>${se('thItem','ITEM')}</th><th>${se('thDetails','DETAILS')}</th></tr></thead>
                 <tbody>${specRows}</tbody>
             </table>
-            ${salesman.wally ? `<div class="wally-guarantee">Price Guaranteed For 14 Days<br>All Promos Applied</div>` : ''}
+            ${salesman.wally ? `<div class="wally-guarantee">${se('wallyGuarantee','Price Guaranteed For 14 Days')}<br>${se('wallyPromos','All Promos Applied')}</div>` : ''}
             <div class="total-box">
-                <div class="total-label">TOTAL PROJECT PRICE</div>
-                <div class="total-price">${esc(quote)}</div>
-                ${isSuburb ? `<div class="suburb-price-disclaimer">${salesman.wally ? 'Proposal' : 'Estimate'} does not include any required civil engineering, stormwater grading plan, or any required surveys, based on village / city approval as outlined herein.</div>` : ''}
+                <div class="total-label">${se('totalLabel','TOTAL PROJECT PRICE')}</div>
+                <div class="total-price">${se('totalPrice', quote)}</div>
+                ${isSuburb ? `<div class="suburb-price-disclaimer">${se('suburbDisclaimer', (salesman.wally ? 'Proposal' : 'Estimate')+' does not include any required civil engineering, stormwater grading plan, or any required surveys, based on village / city approval as outlined herein.')}</div>` : ''}
             </div>
         </div>
         <div class="right">
-            <div class="panel-title exterior-title">EXTERIOR VIEW (EXAMPLE)</div>
+            <div class="panel-title exterior-title">${se('exteriorTitle','EXTERIOR VIEW (EXAMPLE)')}</div>
             <div class="exterior">${garageSvg}</div>
             <div class="notes-panel">
-                <div class="panel-title estimate-notes-page ${notesClass}">NOTES / INCLUSIONS</div>
+                <div class="panel-title estimate-notes-page ${notesClass}">${se('notesTitle','NOTES / INCLUSIONS')}</div>
                 <ul class="notes">${notesHtml}</ul>
             </div>
         </div>
     </div>
 
-    <div class="footer"><span>THANK YOU FOR CHOOSING ABSOLUTE GARAGE BUILDERS!<small>BUILT RIGHT. BUILT STRONG. BUILT TO LAST.</small></span></div>
+    <div class="footer"><span>${se('footerThanks','THANK YOU FOR CHOOSING ABSOLUTE GARAGE BUILDERS!')}<small>${se('footerTag','BUILT RIGHT. BUILT STRONG. BUILT TO LAST.')}</small></span></div>
 </div>
 <div class="actions">
     <button class="print" onclick="window.print()">Print</button>
@@ -7535,6 +7595,9 @@ async function downloadEstimatePdf(){
 
     const clone=sheet.cloneNode(true);
     clone.id='pdfExportSheet';
+    clone.querySelectorAll('.no-print, .sheet-row-remove, .sheet-row-add, .sheet-row-tools, .sheet-add-row, .actions, .sheet-ai-panel').forEach(el=>{
+      try{ el.remove(); }catch(_){}
+    });
     clone.style.setProperty('width','8.5in','important');
     clone.style.setProperty('min-width','8.5in','important');
     clone.style.setProperty('max-width','none','important');
@@ -7702,36 +7765,95 @@ function saveSheetInlineEdit(el){
     const text = (el.innerText||el.textContent||'').trim();
     if(field==='details' && key){
       p.itemDetailOverrides[key] = text;
+      if(Array.isArray(p.extraItems)){
+        p.extraItems.forEach(ex=>{
+          if(String((ex&&ex.key)||(ex&&ex.item)||'').toLowerCase()===key) ex.details=text;
+        });
+      }
     } else if(field==='item' && key){
       p.itemLabelOverrides[key] = text;
+      if(Array.isArray(p.extraItems)){
+        p.extraItems.forEach(ex=>{
+          if(String((ex&&ex.key)||(ex&&ex.item)||'').toLowerCase()===key){ ex.item=text; }
+        });
+      }
       // also keep details keyed under original for matching
     } else if(field==='note'){
-      // Collect all note edits into noteTextOverride
       const notes = Array.from(document.querySelectorAll('.sheet-edit[data-field="note"]'))
         .map(n => (n.innerText||n.textContent||'').trim()).filter(Boolean);
       p.noteTextOverride = notes.join(String.fromCharCode(10));
+    } else if(field){
+      if(!p.textOverrides || typeof p.textOverrides!=='object') p.textOverrides = {};
+      p.textOverrides[field] = text;
     }
     if(typeof window.opener.saveSheetPresentationSession==='function') window.opener.saveSheetPresentationSession();
     const st=document.getElementById('popupChangeStatus');
     if(st) st.textContent='Saved manual edit (keeps with AI rebuilds).';
   }catch(err){ console.warn('saveSheetInlineEdit', err); }
 }
+function getSheetPresFromOpener(){
+  if(!window.opener || window.opener.closed) return null;
+  return (typeof window.opener.getSheetPresentation==='function')
+    ? window.opener.getSheetPresentation()
+    : (window.opener._sheetPresentation = window.opener._sheetPresentation || {});
+}
 function removeSheetRow(btn){
-  if(!btn || !window.opener || window.opener.closed) return;
+  if(!btn) return;
   try{
     const key=(btn.getAttribute('data-item-key')||'').toLowerCase();
     if(!key) return;
-    const p = (typeof window.opener.getSheetPresentation==='function')
-      ? window.opener.getSheetPresentation()
-      : (window.opener._sheetPresentation = window.opener._sheetPresentation || {});
-    if(!Array.isArray(p.removedItems)) p.removedItems = [];
-    if(!p.removedItems.includes(key)) p.removedItems.push(key);
-    if(typeof window.opener.saveSheetPresentationSession==='function') window.opener.saveSheetPresentationSession();
+    const p = getSheetPresFromOpener();
+    if(p){
+      if(!Array.isArray(p.removedItems)) p.removedItems = [];
+      if(!p.removedItems.includes(key)) p.removedItems.push(key);
+      if(Array.isArray(p.extraItems)){
+        p.extraItems = p.extraItems.filter(ex=>String((ex&&ex.key)||(ex&&ex.item)||'').toLowerCase()!==key);
+      }
+      if(typeof window.opener.saveSheetPresentationSession==='function') window.opener.saveSheetPresentationSession();
+    }
     const tr=btn.closest('tr');
     if(tr) tr.remove();
     const st=document.getElementById('popupChangeStatus');
     if(st) st.textContent='Removed row: '+key+' (stays removed on rebuild).';
   }catch(err){ console.warn('removeSheetRow', err); }
+}
+function addSheetRow(afterTr){
+  try{
+    const tbody=document.querySelector('.spec-table tbody');
+    if(!tbody) return;
+    const n=tbody.querySelectorAll('tr:not(.sheet-add-row)').length+1;
+    const key='added item '+n;
+    const p=getSheetPresFromOpener();
+    if(p){
+      if(!Array.isArray(p.extraItems)) p.extraItems=[];
+      p.extraItems.push({key:key, item:'New Item', details:''});
+      if(!p.itemLabelOverrides) p.itemLabelOverrides={};
+      if(!p.itemDetailOverrides) p.itemDetailOverrides={};
+      p.itemLabelOverrides[key]='New Item';
+      p.itemDetailOverrides[key]='';
+      if(typeof window.opener.saveSheetPresentationSession==='function') window.opener.saveSheetPresentationSession();
+    }
+    const tr=document.createElement('tr');
+    tr.setAttribute('data-item-key', key);
+    tr.innerHTML='<td class="item"><span class="sheet-edit" contenteditable="true" data-field="item" data-item-key="'+key+'" title="Click to edit">New Item</span></td>'+
+      '<td class="details"><span class="sheet-edit" contenteditable="true" data-field="details" data-item-key="'+key+'" title="Click to edit"></span>'+
+      '<span class="sheet-row-tools no-print">'+
+      '<button type="button" class="sheet-row-add no-print" title="Add a row">+</button>'+
+      '<button type="button" class="sheet-row-remove no-print" data-item-key="'+key+'" title="Remove this row">×</button>'+
+      '</span></td>';
+    const bar=tbody.querySelector('tr.sheet-add-row');
+    if(afterTr && afterTr.parentNode===tbody && !afterTr.classList.contains('sheet-add-row')){
+      afterTr.insertAdjacentElement('afterend', tr);
+    } else if(bar){
+      tbody.insertBefore(tr, bar);
+    } else {
+      tbody.appendChild(tr);
+    }
+    const edit=tr.querySelector('.sheet-edit[data-field="item"]');
+    if(edit){ edit.focus(); try{ document.execCommand('selectAll', false, null); }catch(_){ } }
+    const st=document.getElementById('popupChangeStatus');
+    if(st) st.textContent='Added a row — type the item and details.';
+  }catch(err){ console.warn('addSheetRow', err); }
 }
 document.addEventListener('focusout', function(e){
   if(e.target && e.target.classList && e.target.classList.contains('sheet-edit')){
@@ -7739,8 +7861,10 @@ document.addEventListener('focusout', function(e){
   }
 });
 document.addEventListener('click', function(e){
-  const btn=e.target && e.target.closest && e.target.closest('.sheet-row-remove');
-  if(btn){ e.preventDefault(); removeSheetRow(btn); }
+  const rm=e.target && e.target.closest && e.target.closest('.sheet-row-remove');
+  if(rm){ e.preventDefault(); removeSheetRow(rm); return; }
+  const add=e.target && e.target.closest && e.target.closest('.sheet-row-add');
+  if(add){ e.preventDefault(); addSheetRow(add.closest('tr')); }
 });
 function applyPopupChange(){ return applyPopupAIChange(); }
 function setPopupAIStatus(t){

@@ -29,8 +29,11 @@ button.primary{background:#111;color:#fff;border-color:#111}
 button.danger{color:#b42318}
 .toolbar-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
 .main{flex:1;min-width:0;display:flex;flex-direction:column}
-.topbar{height:52px;display:flex;align-items:center;gap:8px;padding:7px 10px;background:#fff;border-bottom:1px solid #cfd5dc;flex:0 0 auto}
-.topbar .spacer{flex:1}
+.topbar{min-height:44px;height:auto;display:flex;align-items:center;flex-wrap:wrap;gap:4px;padding:4px 8px;background:#fff;border-bottom:1px solid #cfd5dc;flex:0 0 auto}
+.topbar .spacer{flex:1;min-width:8px}
+.topbar button,.topbar .badge{font-size:12px;padding:6px 8px;min-height:32px;white-space:nowrap;border-radius:8px}
+.topbar .mini{padding:6px 8px}
+#drawBuildBadge{display:none !important}
 .viewport{position:relative;flex:1;min-height:0;overflow:hidden;background:#d9dee4;touch-action:none;cursor:grab}.viewport.panning{cursor:grabbing}
 .paper{position:absolute;transform-origin:0 0;background:#fff;box-shadow:0 4px 22px rgba(0,0,0,.18)}
 .paper img.template{position:absolute;inset:0;width:100%;height:100%;display:block;user-select:none;pointer-events:none}
@@ -417,8 +420,12 @@ button.danger{color:#b42318}
 #cutBtn{font-weight:900;font-size:15px}
 .obj.stays{border:0;background:transparent}
 .obj.stays .label{font-size:25px;font-weight:1000;color:#000}
+.obj.driveway-shape{border:0!important;background:transparent!important;overflow:visible!important}
+.obj.driveway-shape .driveway-svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+.dv-handle{position:absolute;width:14px;height:14px;border-radius:50%;background:#38bdf8;border:2px solid #0369a1;z-index:95;transform:translate(-50%,-50%);touch-action:none;pointer-events:auto}
+.dv-handle.mid{width:10px;height:10px;background:#bae6fd;border-color:#0284c7}
 .obj.cutstamp{border:0;background:transparent;overflow:visible}
-.obj.cutstamp .label{border:4px solid #000;border-radius:50%;font-size:20px;font-weight:1000;width:64px;height:42px;inset:auto;left:0;top:0}
+.obj.cutstamp .label{border:3px solid #000;border-radius:50%;font-size:12px;font-weight:1000;width:56px;height:56px;inset:auto;left:0;top:0;display:flex;align-items:center;justify-content:center;letter-spacing:0;padding:0;line-height:1;text-align:center;box-sizing:border-box}
 .cut-arrow{position:absolute;left:62px;top:20px;height:0;border-top:4px solid #000;transform-origin:left center;pointer-events:none}
 .cut-arrow:after{content:"";position:absolute;right:-2px;top:-9px;border-left:14px solid #000;border-top:7px solid transparent;border-bottom:7px solid transparent}
 .sheet-text{font-size:19px!important;font-weight:900!important}
@@ -461,23 +468,23 @@ button.danger{color:#b42318}
 /* V4 workflow / layout corrections */
 #wizardModal.hidden{display:none!important}
 .field-overlay.sheet-text{
-  background:#fff!important;
+  background:transparent!important;
   color:#000!important;
   font-weight:900!important;
   text-align:center!important;
-  line-height:1.05!important;
-  display:flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  padding:0 4px!important;
+  line-height:1!important;
+  display:block!important;
+  padding:0 4px 10px 4px!important;
   box-sizing:border-box!important;
-  vertical-align:middle!important;
+  vertical-align:top!important;
 }
-/* Single-line blanks: keep text vertically centered in the printed box */
+/* Sit text on TOP of the printed underline, centered on the line */
 #paper input.field-overlay.sheet-text,
 #paper input[id^="sheet_"]:not([id="sheet_cNotes"]):not([id="sheet_oNotes"]){
-  text-align:center!important;
-  padding:0 4px!important;
+  text-align:center !important;
+  padding:0 4px 12px 4px !important;
+  line-height:1 !important;
+  transform:translateY(-7px) !important;
 }
 .locked-contractor{
   background:#fff!important;
@@ -488,6 +495,24 @@ button.danger{color:#b42318}
   align-items:center;
   justify-content:center;
 }
+
+#paper .sheet-mark.footing-on-line{
+  background:transparent !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  font-weight:900 !important;
+  line-height:1 !important;
+  padding:0 !important;
+}
+#paper .sheet-mark.footing-width{
+  transform:translateY(-3px);
+}
+#paper .sheet-mark.footing-depth{
+  writing-mode:horizontal-tb;
+  transform:translateX(-2px);
+}
+
 .sheet-mark{
   position:absolute;z-index:9;background:#fff;color:#000;font-weight:900;
   display:flex;align-items:center;justify-content:center;text-align:center;
@@ -2315,7 +2340,6 @@ button.danger{color:#b42318}
 <button data-add="arrow">Arrow</button>
 <button data-add="xmark">X Marker</button>
 <button data-add="line">Line</button>
-<button data-add="polyline">Polyline</button>
 <button data-add="text">Text Box</button>
 <button data-add="dimension">Dimension</button>
 <button type="button" id="makeConcreteToolBtn">Make Concrete</button>
@@ -2338,12 +2362,12 @@ button.danger{color:#b42318}
       <option value="10">10</option>
       <option value="12">12</option>
       <option value="14">14</option>
-      <option value="16" selected>16</option>
+      <option value="16">16</option>
       <option value="18">18</option>
       <option value="20">20</option>
       <option value="24">24</option>
       <option value="28">28</option>
-      <option value="32">32</option>
+      <option value="32" selected>32</option>
       <option value="40">40</option>
     </select>
   </div>
@@ -2925,14 +2949,13 @@ function fieldInput(id,box,value=''){
   }
   if(id==='oNotes'){inp.classList.add('notes-overlay');inp.style.lineHeight='27px';inp.style.textAlign='left';inp.style.justifyContent='flex-start';inp.style.alignItems='flex-start';}
   if(id==='cNotes'){inp.classList.add('notes-overlay');inp.style.lineHeight='30px';inp.style.textAlign='left';inp.style.justifyContent='flex-start';inp.style.alignItems='flex-start';}
-  const fontSize=Math.max(16,Math.min(22,h-4));
+  const fontSize=isNotes?18:20;
   Object.assign(inp.style,{
-    left:x+'px',top:y+'px',width:w+'px',height:h+'px',
+    left:x+'px',top:(y-6)+'px',width:w+'px',height:(h+4)+'px',
     fontSize:fontSize+'px',
     textAlign:isNotes?'left':'center',
-    // Center single-line values inside the blank (not under it)
-    lineHeight:isNotes?'':(h+'px'),
-    padding:isNotes?'4px 6px':'0 4px',
+    lineHeight:isNotes?'1.25':'20px',
+    padding:isNotes?'4px 6px':'0 4px 10px 4px',
     boxSizing:'border-box'
   });
   inp.addEventListener('input',()=>{
@@ -4331,10 +4354,10 @@ function renderConcreteMarks(){
  addSheetMark(thick+'″',338,373,86,25,22);
 
  if(footing==='yes'){
-   // First number = footing WIDTH, on the lower horizontal line.
-   addSheetMark(($('footWidth')?.value||10)+'″',298,472,72,28,19);
-   // Second number = footing DEPTH, just right of GRADE and left of the vertical leg.
-   addSheetMark(($('footDepth')?.value||20)+'″',176,404,66,28,19);
+   // WIDTH sits on the horizontal arm of the L, immediately right of CODE.
+   const wMark=addSheetMark(($('footWidth')?.value||10)+'″',226,424,54,22,16,'footing-on-line footing-width');
+   // DEPTH sits in the vertical arm of the L (same L as width).
+   const dMark=addSheetMark(($('footDepth')?.value||20)+'″',204,392,28,36,16,'footing-on-line footing-depth');
  } else if(code==='chicago'){
    // Standard Chicago no-footing detail.
    addSheetMark(thick+'″',338,411,86,25,22);
@@ -5011,13 +5034,19 @@ function addObject(kind){
       locked: false,
       hidden: false,
       highlighted: false,
-      fontSize: 16,
+      fontSize: 32,
       fontWeight: '700'
     };
     // Visual-only size fields for freeform shapes (do not affect measurements)
-    if (['custom','circle','arrow','xmark','line'].includes(kind)) {
+    if (['custom','circle','arrow','xmark','line','driveway'].includes(kind)) {
       obj.visualWpx = null;
       obj.visualHpx = null;
+    }
+    if(kind==='driveway'){
+      const p=typeof DRAW_PXF==='number'?DRAW_PXF:22;
+      const w=Math.max(40,wf*p), h=Math.max(80,hf*p);
+      obj.visualWpx=w; obj.visualHpx=h;
+      obj.pathPts=[{x:0,y:0},{x:w,y:0},{x:w,y:h},{x:0,y:h}];
     }
     state.objects.push(obj);
     state.selected = obj.id;
@@ -5248,6 +5277,33 @@ function renderObjects(){
     if(o.kind==='arrow') el.classList.add('arrow-shape');
     if(o.kind==='xmark') el.classList.add('xmark-shape');
     if(o.kind==='line' || o.kind==='polyline') el.classList.add('line-shape');
+    if(o.kind==='driveway'){
+      el.classList.add('driveway-shape');
+      ensureDrivewayPath(o);
+      const ns='http://www.w3.org/2000/svg';
+      const svg=document.createElementNS(ns,'svg');
+      svg.setAttribute('class','driveway-svg');
+      svg.setAttribute('overflow','visible');
+      const poly=document.createElementNS(ns,'polygon');
+      poly.setAttribute('points', o.pathPts.map(p=>p.x+','+p.y).join(' '));
+      poly.setAttribute('fill', o.forceHatch ? 'url(#none)' : 'rgba(255,255,255,.55)');
+      poly.setAttribute('stroke','#111');
+      poly.setAttribute('stroke-width','2');
+      if(o.forceHatch){
+        poly.setAttribute('fill','#fff');
+        const defs=document.createElementNS(ns,'defs');
+        const pat=document.createElementNS(ns,'pattern');
+        const pid='dvh_'+o.id;
+        pat.setAttribute('id',pid); pat.setAttribute('patternUnits','userSpaceOnUse');
+        pat.setAttribute('width','10'); pat.setAttribute('height','10');
+        const ln=document.createElementNS(ns,'path');
+        ln.setAttribute('d','M0,10 L10,0'); ln.setAttribute('stroke','#111'); ln.setAttribute('stroke-width','1.2');
+        pat.appendChild(ln); defs.appendChild(pat); svg.appendChild(defs);
+        poly.setAttribute('fill','url(#'+pid+')');
+      }
+      svg.appendChild(poly);
+      el.appendChild(svg);
+    }
     if(o.highlighted) el.classList.add('highlighted');
     if(o.locked) el.classList.add('locked-obj');
     // Existing vs Proposed visual distinction
@@ -5476,7 +5532,9 @@ function renderObjects(){
         'frontLeft','frontMiddle','frontRight','rearLeft','rearMiddle','rearRight',
         'leftSetback','rightSetback','rearSetback','rearGap','alleyDistance'].includes(o.role);
       if(!panelOnly){
-        if(o.kind!=='dimension'){
+        if(o.kind==='driveway'){
+          attachDrivewayHandles(el, o);
+        } else if(o.kind!=='dimension'){
           attachBoxHandles(el, o);
         }
       }
@@ -5505,6 +5563,23 @@ function renderObjects(){
   saveActiveSheetState(); if(state.mode==='obstruction'){setTimeout(()=>{fieldLayer.querySelectorAll('.ob-line-input').forEach(e=>e.remove());renderObstructionLines()},0)}
 }
 function getObj(id){return state.objects.find(o=>o.id===+id)}
+document.addEventListener('keydown',e=>{
+  const tag=(e.target&&e.target.tagName||'').toLowerCase();
+  if(tag==='input'||tag==='textarea'||tag==='select'||e.target?.isContentEditable) return;
+  const o=typeof getObj==='function'?getObj(state.selected):null;
+  if(!o || o.locked) return;
+  const step=e.shiftKey?12:3;
+  let dx=0,dy=0;
+  if(e.key==='ArrowLeft') dx=-step;
+  else if(e.key==='ArrowRight') dx=step;
+  else if(e.key==='ArrowUp') dy=-step;
+  else if(e.key==='ArrowDown') dy=step;
+  else return;
+  e.preventDefault();
+  if(!e.repeat) { try{snapshot()}catch(_){ } }
+  o.x+=dx; o.y+=dy;
+  renderObjects();
+});
 function shapeKindName(o){
   if(!o) return 'Nothing selected';
   const k=String(o.kind||'').toLowerCase();
@@ -5527,7 +5602,7 @@ function updateInspector(){
   const kindEl=document.getElementById('selectedKindLabel');
   if(kindEl) kindEl.textContent=o ? ('Selected: '+shapeKindName(o)) : 'Nothing selected';
   if($('objLabel'))$('objLabel').value=o ? String(o.customText!=null && String(o.customText).length ? o.customText : (o.label||'')) : '';
-  if($('objFontSize')) $('objFontSize').value=String(o?.fontSize||16);
+  if($('objFontSize')) $('objFontSize').value=String(o?.fontSize||32);
   if($('objFontWeight')) $('objFontWeight').value=String(o?.fontWeight||700);
   const selPanel=document.getElementById('selectedObjectPanel');
   if(selPanel && o) selPanel.open=true;
@@ -5636,6 +5711,42 @@ function hideSnapPreview(){
   if(snapPreviewEl) snapPreviewEl.style.display = 'none';
 }
 
+function ensureDrivewayPath(o){
+  if(!o || o.kind!=='driveway') return;
+  const [w,h]=typeof objPixels==='function'?objPixels(o):[o.visualWpx||120,o.visualHpx||240];
+  if(!Array.isArray(o.pathPts) || o.pathPts.length<3){
+    o.pathPts=[{x:0,y:0},{x:w,y:0},{x:w,y:h},{x:0,y:h}];
+  }
+}
+function normalizeDrivewayBBox(o){
+  if(!o||!Array.isArray(o.pathPts)||!o.pathPts.length) return;
+  let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+  o.pathPts.forEach(pt=>{minX=Math.min(minX,pt.x);minY=Math.min(minY,pt.y);maxX=Math.max(maxX,pt.x);maxY=Math.max(maxY,pt.y);});
+  const dx=minX, dy=minY;
+  o.pathPts=o.pathPts.map(pt=>({x:pt.x-dx,y:pt.y-dy}));
+  o.x+=dx; o.y+=dy;
+  o.visualWpx=Math.max(24,maxX-minX);
+  o.visualHpx=Math.max(24,maxY-minY);
+}
+function attachDrivewayHandles(el,o){
+  if(!el||!o||o.kind!=='driveway') return;
+  ensureDrivewayPath(o);
+  const pts=o.pathPts;
+  pts.forEach((pt,i)=>{
+    const h=document.createElement('div');
+    h.className='dv-handle';
+    h.dataset.dvx=String(i);
+    h.style.left=pt.x+'px'; h.style.top=pt.y+'px';
+    el.appendChild(h);
+    const n=pts[(i+1)%pts.length];
+    const m=document.createElement('div');
+    m.className='dv-handle mid';
+    m.dataset.dvx=String(i);
+    m.dataset.dvmid='1';
+    m.style.left=((pt.x+n.x)/2)+'px'; m.style.top=((pt.y+n.y)/2)+'px';
+    el.appendChild(m);
+  });
+}
 function attachBoxHandles(el, o){
   if(!el || !o) return;
   el.querySelectorAll('.corner-handle,.handle,.resize-handle').forEach(n=>n.remove());
@@ -5703,6 +5814,35 @@ function objectPointerDown(e){
     window.addEventListener('pointermove',moveLot,{passive:false});
     window.addEventListener('pointerup',upLot);
     window.addEventListener('pointercancel',upLot);
+    return;
+  }
+  if(e.target.dataset.dvx!=null && o.kind==='driveway'){
+    snapshot();
+    ensureDrivewayPath(o);
+    let idx=+e.target.dataset.dvx;
+    if(e.target.dataset.dvmid==='1'){
+      const a=o.pathPts[idx], b=o.pathPts[(idx+1)%o.pathPts.length];
+      o.pathPts.splice(idx+1,0,{x:(a.x+b.x)/2,y:(a.y+b.y)/2});
+      idx=idx+1;
+    }
+    const startX=e.clientX,startY=e.clientY, px=o.pathPts[idx].x, py=o.pathPts[idx].y;
+    const moveDv=ev=>{
+      const sc=Math.max(0.01,state.scale||1);
+      o.pathPts[idx].x=px+(ev.clientX-startX)/sc;
+      o.pathPts[idx].y=py+(ev.clientY-startY)/sc;
+      normalizeDrivewayBBox(o);
+      renderObjects();
+    };
+    const upDv=()=>{
+      unlockCanvasPan();
+      window.removeEventListener('pointermove',moveDv);
+      window.removeEventListener('pointerup',upDv);
+      window.removeEventListener('pointercancel',upDv);
+      if(typeof saveActiveSheetState==='function') saveActiveSheetState();
+    };
+    window.addEventListener('pointermove',moveDv,{passive:false});
+    window.addEventListener('pointerup',upDv);
+    window.addEventListener('pointercancel',upDv);
     return;
   }
   const resizing=e.target.dataset.handle==='1', rotating=e.target.dataset.rotate==='1', cutSizing=e.target.dataset.cutend==='1';
@@ -5934,7 +6074,7 @@ function objectPointerDown(e){
 
 document.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>addObject(b.dataset.add));
 if($('objLabel')) $('objLabel').oninput=()=>{const o=getObj(state.selected);if(o){o.label=$('objLabel').value; o.customText=$('objLabel').value; renderObjects()}};
-if($('objFontSize')) $('objFontSize').onchange=()=>{const o=getObj(state.selected);if(o){o.fontSize=Number($('objFontSize').value)||16; renderObjects()}};
+if($('objFontSize')) $('objFontSize').onchange=()=>{const o=getObj(state.selected);if(o){o.fontSize=Number($('objFontSize').value)||32; renderObjects()}};
 if($('objFontWeight')) $('objFontWeight').onchange=()=>{const o=getObj(state.selected);if(o){o.fontWeight=String($('objFontWeight').value||'700'); renderObjects()}};
 if($('objW')) $('objW').onchange=()=>{const o=getObj(state.selected);if(o){snapshot();o.wf=Math.max(.5,+$('objW').value||.5);renderObjects()}};
 if($('objH')) $('objH').onchange=()=>{const o=getObj(state.selected);if(o){snapshot();o.hf=Math.max(.5,+$('objH').value||.5);renderObjects()}};

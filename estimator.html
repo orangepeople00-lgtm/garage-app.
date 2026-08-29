@@ -2211,11 +2211,11 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
   </div>
   <h2>SPECIAL NOTES</h2>
   <div class="notes">${esc((s&&s.notes)||notes||'No special notes listed on the village code sheet.')}</div>
-  <div class="foot">Absolute Garage Builders code reference • Confirm with the village before permitting. Source packet updated 7/20/2026. Danley branding removed.</div>
+  <div class="foot">Absolute Garage Builders code reference • Confirm with the village before permitting. Source packet updated 7/20/2026.</div>
 </div>
-<script>setTimeout(()=>{try{window.focus();window.print()}catch(e){}},300)</script>
 </body></html>`);
             w.document.close();
+            setTimeout(()=>{ try{ w.focus(); w.print(); }catch(e){} }, 400);
         }
 
         function applyCityCodeDefaults(){

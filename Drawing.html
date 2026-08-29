@@ -506,7 +506,7 @@ button.danger{color:#b42318}
   padding:0 !important;
 }
 #paper .sheet-mark.footing-width{
-  transform:translateY(-3px);
+  transform:none;
 }
 #paper .sheet-mark.footing-depth{
   writing-mode:horizontal-tb;
@@ -4355,7 +4355,7 @@ function renderConcreteMarks(){
 
  if(footing==='yes'){
    // WIDTH sits on the horizontal arm of the L, immediately right of CODE.
-   const wMark=addSheetMark(($('footWidth')?.value||10)+'″',226,424,54,22,16,'footing-on-line footing-width');
+   const wMark=addSheetMark(($('footWidth')?.value||10)+'″',226,446,54,22,16,'footing-on-line footing-width');
    // DEPTH sits in the vertical arm of the L (same L as width).
    const dMark=addSheetMark(($('footDepth')?.value||20)+'″',204,392,28,36,16,'footing-on-line footing-depth');
  } else if(code==='chicago'){

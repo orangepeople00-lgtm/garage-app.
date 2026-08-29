@@ -1092,28 +1092,39 @@ input, select, textarea, button { box-sizing:border-box; }
                                 <select id="doorType" onchange="toggleServiceDoorLocationFields(); togglePartyDoorSize(); calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm">
                                     <option value="standard" selected>Service door only (included)</option>
                                     <option value="party">Party door + service door</option>
-                                    <option value="french">French door allowance (+$1,000)</option>
+                                    <option value="french">French door</option>
                                 </select>
                                 <div class="text-[10px] text-zinc-500 mt-0.5">Party door = small overhead door. Service door = 36×80 swing door. They are different and can share a wall.</div>
                             </div>
                             <div id="partyDoorSizeWrap" class="hidden md:col-span-2">
-                                <label class="text-xs text-zinc-400 block mb-1">Party door size (base 6' × 7')</label>
+                                <label class="text-xs text-zinc-400 block mb-1">Party door size (type any size — default 6' × 7')</label>
                                 <div class="flex items-center gap-2">
                                     <div class="flex-1">
                                         <label class="text-[10px] text-zinc-500">Width (ft)</label>
-                                        <input type="number" id="partyDoorWidth" value="6" min="6" max="10" step="1" inputmode="numeric"
-                                               oninput="this.value=Math.max(6,Math.min(10,Math.round(Number(this.value)||6))); calculateEstimate()"
+                                        <input type="number" id="partyDoorWidth" value="6" min="1" step="0.5" inputmode="decimal"
+                                               oninput="calculateEstimate()"
                                                class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm">
                                     </div>
                                     <span class="text-zinc-500 pt-4">×</span>
                                     <div class="flex-1">
                                         <label class="text-[10px] text-zinc-500">Height (ft)</label>
-                                        <input type="number" id="partyDoorHeight" value="7" min="7" max="10" step="1" inputmode="numeric"
-                                               oninput="this.value=Math.max(7,Math.min(10,Math.round(Number(this.value)||7))); calculateEstimate()"
+                                        <input type="number" id="partyDoorHeight" value="7" min="1" step="0.5" inputmode="decimal"
+                                               oninput="calculateEstimate()"
                                                class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm">
                                     </div>
                                 </div>
-                                <div class="text-[10px] text-zinc-500 mt-0.5">Base $800 for 6×7. +$100 per extra foot of width or height.</div>
+                                <label class="flex items-center gap-2 mt-2 text-xs text-zinc-300">
+                                    <input type="checkbox" id="partyDoorWindows" onchange="calculateEstimate()" class="rounded border-zinc-600">
+                                    Windows in party door (+$300)
+                                </label>
+                                <div class="text-[10px] text-zinc-500 mt-0.5">Base $800 for 6×7. +$100 for each extra foot of width or height. Type any custom size.</div>
+                            </div>
+                            <div id="frenchDoorStyleWrap" class="hidden">
+                                <label class="text-xs text-zinc-400 block mb-1">French door style</label>
+                                <select id="frenchDoorStyle" onchange="calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm">
+                                    <option value="9light" selected>9 Light (+$1,150)</option>
+                                    <option value="fullview">Full View (+$1,450)</option>
+                                </select>
                             </div>
                             <div>
                                 <label class="text-xs text-zinc-400 block mb-1">Service / side door location</label>
@@ -1181,6 +1192,12 @@ input, select, textarea, button { box-sizing:border-box; }
                                     </div>
                                     <div class="col-span-3 text-[10px] text-zinc-500">Size prints on the customer sheet. Extra cost is internal only — not shown to the customer.</div>
                                 </div>
+                            </div>
+                            <div id="threeCarDoorLayoutWrap" class="hidden md:col-span-4 bg-zinc-950 border border-emerald-800/50 rounded-2xl p-3">
+                                <label class="text-xs text-emerald-400 font-bold block mb-2">Overhead Door(s) Layout — 3-car</label>
+                                <div class="text-[10px] text-zinc-500 mb-2">Fill at least one opening. Leave extras blank. 16×7 standard · 18×7 +$350 · 8×7 standard · custom size typed in. Wall must be 1' taller than the tallest door. Door widths + 1' returns (2 doors = 3' returns, 3 doors = 4' returns) cannot exceed garage width.</div>
+                                <div id="threeCarDoorError" class="hidden text-[11px] font-bold text-red-400 mb-2"></div>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-3" id="threeCarDoorGrid"></div>
                             </div>
                             <div class="md:col-span-2">
                                 <div class="flex items-center justify-between gap-3 mb-1">
@@ -1997,6 +2014,7 @@ input, select, textarea, button { box-sizing:border-box; }
             if(!show){
                 delete sel.dataset.userTouched;
             }
+            try{ syncThreeCarDoorUI(); }catch(e){}
         }
 
 
@@ -2183,6 +2201,7 @@ input, select, textarea, button { box-sizing:border-box; }
             
             // Doors
             const doorType = document.getElementById('doorType').value;
+            try{ togglePartyDoorSize(); }catch(e){}
             const addlOverheadDoors = parseInt(document.getElementById('addlOverheadDoors').value) || 0;
             // Additional openers: blank = 0 extra; total openers = 1 standard + extras
             const addlOpeners = Math.max(0, parseInt(document.getElementById('addlOpenersInput')?.value) || 0);
@@ -2235,11 +2254,18 @@ input, select, textarea, button { box-sizing:border-box; }
             const forceFootingChicago = document.getElementById('forceFootingChicago').checked;
             const frostProtectedFooting = document.getElementById('frostProtectedFooting').checked;
 
-            // Auto-upgrade wall height if overhead door is taller (min wall height = door height + 1 ft)
-            if (overheadDoorHeight >= 8 && wallHeight < overheadDoorHeight + 1) {
-                wallHeight = overheadDoorHeight + 1;
+            // Wall must be at least 1 ft taller than overhead door
+            if (wallHeight < overheadDoorHeight + 1) {
+                const need = overheadDoorHeight + 1;
+                const msgEl=document.getElementById('doorWallAutoMessage');
+                if(msgEl){ msgEl.textContent='Wall height must be at least 1 ft taller than the overhead door. Raised walls to '+need+"'."; msgEl.classList.remove('hidden'); }
+                else { try{ alert('Wall height must be at least 1 ft taller than the overhead door ('+overheadDoorHeight+"' door needs "+need+"' walls)."); }catch(_){ } }
+                wallHeight = need;
                 const whEl = document.getElementById('wallHeight');
                 if (whEl) whEl.value = wallHeight;
+            } else {
+                const msgEl=document.getElementById('doorWallAutoMessage');
+                if(msgEl && !isThreeCarLayout()) msgEl.classList.add('hidden');
             }
 
             // Hardieboard siding auto calc (if selected)
@@ -2314,20 +2340,49 @@ input, select, textarea, button { box-sizing:border-box; }
                 ? Math.max(0, parseFloat(document.getElementById('overheadDoorCustomExtraCost')?.value) || 0)
                 : 0;
             const opener8500Upgrade = openerType === '8500' ? (openerQty * 400) : 0;
-            const overheadCost = 1200 + overheadUpgrade + overheadWidthUpgrade + overheadCustomExtra + (addlOverheadDoors * 800) + (addlOpeners * 450) + opener8500Upgrade;
+            let threeCarDoors = [];
+            let threeCarDoorCost = 0;
+            try{
+                syncThreeCarDoorUI();
+                const layout=validateThreeCarDoors(width, wallHeight);
+                threeCarDoors = layout.doors||[];
+                if(layout.maxH && wallHeight < layout.maxH + 1){
+                    const need=layout.maxH+1;
+                    const msgEl=document.getElementById('doorWallAutoMessage');
+                    if(msgEl){ msgEl.textContent='Wall height must be at least 1 ft taller than the overhead door. Raised walls to '+need+"'."; msgEl.classList.remove('hidden'); }
+                    wallHeight = need;
+                    const whEl=document.getElementById('wallHeight');
+                    if(whEl) whEl.value=wallHeight;
+                }
+                if(isThreeCarLayout() && threeCarDoors.length){
+                    threeCarDoors.forEach((d,idx)=>{
+                        threeCarDoorCost += (idx===0 ? 1200 : 800) + (d.extra||0);
+                    });
+                    const first=threeCarDoors[0];
+                    const wEl=document.getElementById('overheadDoorWidth');
+                    const hEl=document.getElementById('overheadDoorHeight');
+                    if(wEl) wEl.value=String(first.w);
+                    if(hEl) hEl.value=String(first.h);
+                }
+            }catch(e){ console.warn('3-car doors', e); }
+            const overheadCost = isThreeCarLayout() && threeCarDoors.length
+                ? (threeCarDoorCost + (addlOpeners * 450) + opener8500Upgrade)
+                : (1200 + overheadUpgrade + overheadWidthUpgrade + overheadCustomExtra + (addlOverheadDoors * 800) + (addlOpeners * 450) + opener8500Upgrade);
             
             // Side door — party: base 6x7 @ $800, +$100 per extra foot of W or H
             let sideDoorCost = 0;
             let sideDoorLabel = 'Service door (included)';
             if (doorType === 'party') {
-                const pw = Math.max(6, Math.min(10, Math.round(Number(document.getElementById('partyDoorWidth')?.value) || 6)));
-                const ph = Math.max(7, Math.min(10, Math.round(Number(document.getElementById('partyDoorHeight')?.value) || 7)));
-                const extraFt = Math.max(0, (pw - 6) + (ph - 7));
-                sideDoorCost = 800 + (extraFt * 100);
-                sideDoorLabel = `Party door ${pw}' × ${ph}' + standard 36x80 service door`;
+                const pw = Math.max(1, Number(document.getElementById('partyDoorWidth')?.value) || 6);
+                const ph = Math.max(1, Number(document.getElementById('partyDoorHeight')?.value) || 7);
+                const extraFt = Math.max(0, Math.ceil((pw - 6) + (ph - 7)));
+                const partyWin = !!document.getElementById('partyDoorWindows')?.checked;
+                sideDoorCost = 800 + (extraFt * 100) + (partyWin ? 300 : 0);
+                sideDoorLabel = `Party door ${pw}' × ${ph}'` + (partyWin ? ' with windows' : '') + ' + standard 36x80 service door';
             } else if (doorType === 'french') {
-                sideDoorCost = 1000;
-                sideDoorLabel = 'French door allowance';
+                const st = document.getElementById('frenchDoorStyle')?.value || '9light';
+                sideDoorCost = st === 'fullview' ? 1450 : 1150;
+                sideDoorLabel = st === 'fullview' ? 'French door — Full View' : 'French door — 9 Light';
             }
             
             // Concrete areas + two patios
@@ -2523,7 +2578,7 @@ input, select, textarea, button { box-sizing:border-box; }
                 city, roofType, doorType, ev, evPrep, threeWay, extraLights, extraLightsCost, extraOutlets, extraOutletsCost, extraWindows, extraWindowsCost, overheadWidthUpgrade, overheadCustomExtra, opener8500Upgrade, openerType, openerQty,
                 newConcrete, fiveInch, sixInch, demo, retainInches, addlOverheadDoors, addlOpeners,
                 patio1Area, patio2Area, demoSlabPreset, demoApronDepth, calculatedOldConcrete,
-                demoSlabArea, demoSlabWidth, demoApronArea
+                demoSlabArea, demoSlabWidth, demoApronArea, threeCarDoors
             });
             
             // Update gutter/soffit info lines
@@ -3057,16 +3112,20 @@ input, select, textarea, button { box-sizing:border-box; }
             
             // Electrical line amount = full electrical cost bucket (edits override and stick)
             lines.push({ label: `Electrical`, amount: data.electricalCost, section: 'core', key: 'electrical' });
-            lines.push({ label: `Overhead door + opener (1 bundled)`, amount: 1200, section: 'core', key: 'oh_door_opener' });
-            if (data.addlOverheadDoors > 0) {
+            const ohBaseAmt = Math.max(0, Number(data.overheadCost||0) - (Number(data.addlOverheadDoors||0)*800) - (Number(data.addlOpeners||0)*450));
+            lines.push({ label: `Overhead door + opener`, amount: ohBaseAmt, section: 'core', key: 'oh_door_opener' });
+            if (data.addlOverheadDoors > 0 && !(data.threeCarDoors && data.threeCarDoors.length)) {
                 lines.push({ label: `Additional overhead doors (${data.addlOverheadDoors} × $800)`, amount: data.addlOverheadDoors * 800, section: 'core', key: 'addl_oh_doors' });
+            }
+            if (data.threeCarDoors && data.threeCarDoors.length) {
+                lines.push({ label: '3-car door layout: '+data.threeCarDoors.map(d=>d.label).join(', '), amount: 0, section: 'core', note: 'priced in overhead door line', key: 'oh_layout_note' });
             }
             if (data.addlOpeners > 0) {
                 lines.push({ label: `Additional openers (${data.addlOpeners} × $450)`, amount: data.addlOpeners * 450, section: 'core', key: 'addl_openers' });
             }
             
             if (data.sideDoorCost > 0) {
-                lines.push({ label: data.sideDoorLabel, amount: data.sideDoorCost, section: 'core' });
+                lines.push({ label: data.sideDoorLabel, amount: data.sideDoorCost, section: 'core', key: 'side_door' });
             } else {
                 lines.push({ label: 'Standard service door', amount: 0, section: 'core', note: 'included' });
             }
@@ -3200,10 +3259,20 @@ input, select, textarea, button { box-sizing:border-box; }
                     // Migrate to primary key
                     overrides[line.key] = ov;
                 }
+                const prev = (window._lastComputedLines && window._lastComputedLines[line.key]);
+                if (prev != null && Number(prev) !== Number(line.amount)) {
+                    // Calculator source changed — drop stale manual override so Electrical / doors / etc. follow the field
+                    delete overrides[line.key];
+                    delete overrides[labelKey];
+                    ov = null;
+                }
                 if (ov != null) {
                     line.amount = ov;
                     line.overridden = true;
                 }
+                if (!window._lastComputedLines) window._lastComputedLines = {};
+                if (ov == null) window._lastComputedLines[line.key] = Number(line.amount)||0;
+                else window._lastComputedLines[line.key] = Number(prev);
             });
             window._summaryLineOverrides = overrides;
             saveSummaryOverrides();
@@ -3956,8 +4025,95 @@ input, select, textarea, button { box-sizing:border-box; }
 
         function togglePartyDoorSize(){
             const wrap=document.getElementById('partyDoorSizeWrap');
-            const isParty=(document.getElementById('doorType')?.value||'')==='party';
-            if(wrap) wrap.classList.toggle('hidden', !isParty);
+            const fr=document.getElementById('frenchDoorStyleWrap');
+            const t=(document.getElementById('doorType')?.value||'');
+            if(wrap) wrap.classList.toggle('hidden', t!=='party');
+            if(fr) fr.classList.toggle('hidden', t!=='french');
+        }
+        function isThreeCarLayout(){
+            const w=(typeof getGarageDimensions==='function')?(getGarageDimensions().width||0):0;
+            const cap=document.getElementById('carCapacity')?.value||'';
+            return w>=27 && cap==='3';
+        }
+        function ensureThreeCarDoorGrid(){
+            const grid=document.getElementById('threeCarDoorGrid');
+            if(!grid) return;
+            if(grid.childElementCount) return;
+            for(let i=1;i<=3;i++){
+                const box=document.createElement('div');
+                box.innerHTML=`
+                    <label class="text-[10px] text-zinc-400 block mb-1">Door Opening ${i}</label>
+                    <select id="ohLayout${i}" onchange="syncThreeCarDoorRow(${i}); calculateEstimate()" class="calc-input w-full bg-zinc-900 border border-zinc-700 rounded-xl px-2 py-2 text-sm">
+                        <option value="">— Blank —</option>
+                        <option value="16x7"${i===1?' selected':''}>16' × 7' Door</option>
+                        <option value="18x7">18' × 7' (+$350)</option>
+                        <option value="8x7">8' × 7'</option>
+                        <option value="custom">Custom dimensions</option>
+                    </select>
+                    <div id="ohLayoutCustom${i}" class="hidden grid grid-cols-2 gap-1 mt-1">
+                        <input type="number" id="ohLayoutW${i}" placeholder="W ft" min="1" step="0.5" oninput="calculateEstimate()" class="calc-input bg-zinc-900 border border-zinc-700 rounded-lg px-2 py-1 text-sm">
+                        <input type="number" id="ohLayoutH${i}" placeholder="H ft" min="1" step="0.5" oninput="calculateEstimate()" class="calc-input bg-zinc-900 border border-zinc-700 rounded-lg px-2 py-1 text-sm">
+                    </div>`;
+                grid.appendChild(box);
+            }
+        }
+        function syncThreeCarDoorRow(i){
+            const sel=document.getElementById('ohLayout'+i);
+            const wrap=document.getElementById('ohLayoutCustom'+i);
+            if(wrap) wrap.classList.toggle('hidden', (sel?.value||'')!=='custom');
+        }
+        function parseOhLayoutDoor(i){
+            const sel=document.getElementById('ohLayout'+i);
+            const v=sel?String(sel.value||''):'';
+            if(!v) return null;
+            if(v==='16x7') return {w:16,h:7,extra:0,label:"16'×7'"};
+            if(v==='18x7') return {w:18,h:7,extra:350,label:"18'×7'"};
+            if(v==='8x7') return {w:8,h:7,extra:0,label:"8'×7'"};
+            const w=Math.max(1, Number(document.getElementById('ohLayoutW'+i)?.value)||0);
+            const h=Math.max(1, Number(document.getElementById('ohLayoutH'+i)?.value)||0);
+            if(!w||!h) return null;
+            return {w,h,extra:0,label:w+"'×"+h+"'"};
+        }
+        function getThreeCarDoors(){
+            ensureThreeCarDoorGrid();
+            const doors=[];
+            for(let i=1;i<=3;i++){
+                const d=parseOhLayoutDoor(i);
+                if(d) doors.push(d);
+            }
+            return doors;
+        }
+        function validateThreeCarDoors(garageW, wallH){
+            const err=document.getElementById('threeCarDoorError');
+            const setErr=(msg)=>{ if(err){ err.textContent=msg||''; err.classList.toggle('hidden', !msg); } };
+            if(!isThreeCarLayout()){ setErr(''); return {doors:[], ok:true}; }
+            const doors=getThreeCarDoors();
+            if(!doors.length){ setErr('3-car: choose at least one overhead door opening (others can stay blank).'); return {doors, ok:false}; }
+            const maxH=Math.max(...doors.map(d=>d.h));
+            if(wallH < maxH + 1){
+                setErr('Wall height must be at least 1 ft taller than the overhead door ('+maxH+"' door needs "+(maxH+1)+"' walls).");
+                return {doors, ok:false, maxH};
+            }
+            const n=doors.length;
+            const returns=n+1; // 1 door=2, 2 doors=3, 3 doors=4
+            const need=doors.reduce((s,d)=>s+d.w,0)+returns;
+            if(garageW + 0.001 < need){
+                setErr('Doors + 1\' returns do not fit. '+n+' opening'+(n>1?'s':'')+' need '+doors.map(d=>d.w).join('+')+' + '+returns+' ft returns = '+need+"' minimum garage width.");
+                return {doors, ok:false, maxH};
+            }
+            setErr('');
+            return {doors, ok:true, maxH};
+        }
+        function syncThreeCarDoorUI(){
+            ensureThreeCarDoorGrid();
+            const wrap=document.getElementById('threeCarDoorLayoutWrap');
+            const show=isThreeCarLayout();
+            if(wrap) wrap.classList.toggle('hidden', !show);
+            const main=document.getElementById('overheadDoorSizePreset');
+            if(main && main.closest){
+                const box=main.closest('.md\\:col-span-2') || main.parentElement;
+            }
+            for(let i=1;i<=3;i++) syncThreeCarDoorRow(i);
         }
         function syncExtraElecTotals(){
             const n=(id)=>Math.max(0,parseInt(document.getElementById(id)?.value)||0);
@@ -5211,9 +5367,91 @@ input, select, textarea, button { box-sizing:border-box; }
             return hasGutters ? 'images/basic_hip_gutters.png' : 'images/basic_hip_no_gutters.png';
         }
 
+        function getVisualPhotoSignature(){
+            const v=id=>{
+                const el=document.getElementById(id);
+                if(!el) return '';
+                if(el.type==='checkbox') return el.checked?'1':'0';
+                return String(el.value||'').trim();
+            };
+            const chk=id=>v(id);
+            return [
+                v('width'), v('depth'), v('wallHeight'),
+                v('roofType'), v('eaveDir'), v('pitch'), v('eavesSize'),
+                v('sidingType'), v('vinylColor'), v('hardieColor'),
+                v('overheadDoorWidth'), v('overheadDoorHeight'), v('overheadDoorStyle'), v('overheadDoorOffset'),
+                v('serviceDoorLocation'), v('doorType'), v('partyDoorWall'), v('partyDoorW'), v('partyDoorH'),
+                v('windowType'), v('extraWindows'),
+                chk('gutters'), chk('aluminumSoffit'),
+                chk('roofPatioEnabled'), chk('roofPatioSide'),
+                v('garagePhotoView'), v('garageAccessType'),
+                v('apronDepth')
+            ].join('|');
+        }
+        function rememberPhotoVisualSignature(){
+            try{ sessionStorage.setItem('agb_photo_visual_sig', getVisualPhotoSignature()); }catch(e){}
+        }
+        function decideSheetPhotoModeBeforeCreate(){
+            // If AI sheet chat already queued an edit, honor that (edit existing photo only).
+            if(window._sheetPhotoMode==='edit' && (window._sheetPhotoEditPrompt||'').trim()){
+                return;
+            }
+            const lastUrl=(typeof getLastAiGaragePhotoUrl==='function')?getLastAiGaragePhotoUrl():(window._lastAiGaragePhotoUrl||'');
+            const hasPhoto=!!(lastUrl && (/^https?:\/\//i.test(lastUrl) || String(lastUrl).startsWith('data:image')));
+            if(!hasPhoto){
+                window._sheetPhotoMode='generate';
+                window._sheetPhotoEditPrompt='';
+                return;
+            }
+            let lastSig='';
+            try{ lastSig=sessionStorage.getItem('agb_photo_visual_sig')||''; }catch(e){}
+            const nowSig=getVisualPhotoSignature();
+            const aiBox=(document.getElementById('aiPhotoExtraInstructions')||{}).value||'';
+            const aiTyped=String(aiBox).trim();
+
+            // Photo notes / AI photo box with text → edit the existing image only
+            if(aiTyped && window._sheetPhotoMode!=='reuse'){
+                window._sheetPhotoMode='edit';
+                window._sheetPhotoEditPrompt=aiTyped;
+                return;
+            }
+
+            if(lastSig && lastSig===nowSig){
+                window._sheetPhotoMode='reuse';
+                window._sheetPhotoEditPrompt='';
+                return;
+            }
+
+            if(lastSig && lastSig!==nowSig){
+                const wantNew=confirm(
+                    'This update can change how the garage looks in the photo.\n\n' +
+                    'OK = create a new AI garage photo\n' +
+                    'Cancel = keep the current photo and only update the estimate sheet text (saves API cost).'
+                );
+                if(wantNew){
+                    window._sheetPhotoMode='generate';
+                    window._sheetPhotoEditPrompt='';
+                } else {
+                    window._sheetPhotoMode='reuse';
+                    window._sheetPhotoEditPrompt='';
+                }
+                return;
+            }
+
+            // Have a photo but no stored signature (older session) — ask
+            const wantNew=confirm(
+                'Keep the current garage photo?\n\n' +
+                'OK = create a new AI photo\n' +
+                'Cancel = keep the current photo and only update sheet wording.'
+            );
+            window._sheetPhotoMode=wantNew?'generate':'reuse';
+            window._sheetPhotoEditPrompt='';
+        }
+
         async function safePrintEstimateSheet(saveToHistory = true, opts = {}) {
             // opts: { skipHealth, targetWindow } — targetWindow rebuilds an existing sheet popup in place
             const skipHealth = !!(opts && opts.skipHealth);
+            try{ decideSheetPhotoModeBeforeCreate(); }catch(e){ console.warn('photo mode decide', e); }
             const targetWindow = opts && opts.targetWindow ? opts.targetWindow : null;
             try{
                 const skipPlace=!!(opts && (opts.skipHealth || opts.skipPlacement));
@@ -6402,6 +6640,7 @@ input, select, textarea, button { box-sizing:border-box; }
                 // Reset mode so a later full create can generate fresh if needed
                 window._sheetPhotoMode='generate';
                 window._sheetPhotoEditPrompt='';
+                try{ rememberPhotoVisualSignature(); }catch(_){}
                 return {primary:lastUrl, fallbacks:libraryFallback().fallbacks, source:'openai', aiSource:'reused', prompt:'(reused prior AI photo)'};
             }
 
@@ -6411,13 +6650,12 @@ input, select, textarea, button { box-sizing:border-box; }
                 try{ if(typeof window.__estimateLoadingSetStatus==='function') window.__estimateLoadingSetStatus('Editing previous AI photo (keeping windows & details)…'); }catch(_){}
                 try{
                     const editText=buildPhotoEditPrompt(editPrompt);
-                    // Combine edit instruction with light context from full prompt (but edit instruction first)
-                    const full=editText+' Context of current estimate: '+String(buildGarageAIPrompt()||'').slice(0,1800);
-                    const ai=await generateOpenAIGaragePhotoUrl(full, { edit:true, editFromUrl:lastUrl });
+                    const ai=await generateOpenAIGaragePhotoUrl(editText, { edit:true, editFromUrl:lastUrl });
                     await warm(ai.url);
                     setLastAiGaragePhotoUrl(ai.url);
                     window._sheetPhotoMode='generate';
                     window._sheetPhotoEditPrompt='';
+                    try{ rememberPhotoVisualSignature(); }catch(_){}
                     if(status) status.textContent='AI photo edited from previous image.';
                     return {primary:ai.url, fallbacks:libraryFallback().fallbacks, source:'openai', prompt:ai.prompt, aiSource:ai.source||'edit'};
                 }catch(editErr){
@@ -6473,6 +6711,7 @@ input, select, textarea, button { box-sizing:border-box; }
 
                 window._sheetPhotoMode='generate';
                 window._sheetPhotoEditPrompt='';
+                try{ rememberPhotoVisualSignature(); }catch(_){}
                 if(status) status.textContent='OpenAI garage photo ready ('+(ai.source||'openai')+').';
                 return {primary:ai.url, fallbacks:libraryFallback().fallbacks, source:'openai', prompt:ai.prompt, aiSource:ai.source};
             };
@@ -8454,7 +8693,7 @@ async function openPopupChatGPT(){
 
     window.addEventListener('load',()=>setTimeout(loadEstimateForEditing,250));
         document.addEventListener('DOMContentLoaded',()=>setTimeout(toggleOverhang,0));
-document.addEventListener('DOMContentLoaded',()=>{syncDemoPreset();syncWindowQtyFromExtras();try{togglePartyDoorSize()}catch(e){};try{applyOverheadDoorSizePreset()}catch(e){};try{toggleExtraElecLocationFields()}catch(e){};calculateEstimate();});
+document.addEventListener('DOMContentLoaded',()=>{syncDemoPreset();syncWindowQtyFromExtras();try{togglePartyDoorSize()}catch(e){};try{applyOverheadDoorSizePreset()}catch(e){};try{ensureThreeCarDoorGrid();syncThreeCarDoorUI()}catch(e){};try{toggleExtraElecLocationFields()}catch(e){};calculateEstimate();});
 </script>
 
 <!-- Sticky Total Bar — always visible while scrolling -->

@@ -371,6 +371,35 @@ button.danger{color:#b42318}
 .hidden{display:none!important}
 .mode-note{font-size:11px;color:#475467;line-height:1.35}
 .badge{font-size:11px;padding:5px 8px;border-radius:999px;background:#eef2f6;color:#344054}
+/* Print clean sheet: hide chrome */
+
+@media print{
+  .sidebar,.topbar,.mobile-bottom-bar,.sidebar-backdrop,.mobile-panel-btn,
+  .mobile-snap-btn,#drawBuildBadge,#objectTextEditor,#wizardModal,.modalbg,
+  #viewLockBtn,#snapToggleBtn,#emailPdfBtn{display:none !important;}
+  html,body{background:#fff !important; margin:0 !important; padding:0 !important;}
+  .main,.viewport,#viewport{
+    background:#fff !important;
+    position:static !important;
+    width:auto !important;
+    height:auto !important;
+    overflow:visible !important;
+    box-shadow:none !important;
+  }
+  #paper{
+    background:#fff !important;
+    box-shadow:none !important;
+    outline:none !important;
+  }
+  .obj.selected, #paper .obj.selected{
+    outline:none !important;
+    box-shadow:none !important;
+  }
+  .side-handle,.corner-handle,.handle,.resize-handle,.rotate-handle,.cut-end-handle{
+    display:none !important;
+  }
+}
+
 @media print {
   body{display:block;background:#fff}
   .sidebar,.topbar{display:none!important}
@@ -5440,11 +5469,6 @@ function renderObjects(){
       openObjectTextEditor(o,el);
     });
 
-    // V33: sidewalks always expose their corner resize handle so they can be
-    // grabbed and extended immediately without a separate select click.
-    if(o.kind==='sidewalk' && state.selected!==o.id){
-      attachBoxHandles(el, o);
-    }
     if(state.selected===o.id){
       // V30: normal shapes stay visually editable from their corner handles.
       // Only door-position / return / setback graphics are panel-only.
@@ -5985,6 +6009,7 @@ function setPrintZoom(){
  document.documentElement.style.setProperty('--print-zoom',String(z));
 }
 $('printBtn').onclick=()=>{
+  try{ clearDrawingSelection(); }catch(_){ state.selected=null; try{renderObjects()}catch(__){} }
   document.querySelectorAll('#paper .obj.concrete-hatched').forEach(addPrintableConcreteHatch);
   setPrintZoom();
   window.print();
@@ -6193,9 +6218,17 @@ function setViewLocked(on){
   syncViewLockButtons();
 }
 
+function clearDrawingSelection(){
+  if(!state || state.selected==null) return;
+  state.selected=null;
+  try{ updateInspector(); }catch(_){}
+  try{ renderObjects(); }catch(_){}
+}
 viewport.addEventListener('pointerdown',e=>{
   if(window._shapeInteract) return;
   if(e.target.closest('.obj') || e.target.closest('.corner-handle') || e.target.closest('.side-handle') || e.target.closest('.field-overlay') || e.target.closest('.check-overlay')) return;
+  clearDrawingSelection();
+  if(isViewLocked && isViewLocked()) return;
   if(isViewLocked() && activePointers.size<1){
     // Locked: do not start a page pan. Two-finger pinch can still zoom if unlocked later.
     return;

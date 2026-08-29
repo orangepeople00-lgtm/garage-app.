@@ -461,11 +461,48 @@ function overdue(j){
         (j.carpentry_scheduled&&j.carpentry_scheduled<t&&j.carpentry_status!=='Garage Built') ||
         (j.inspection_date&&j.inspection_date<t&&!['Passed','N/A'].includes(j.inspection_status));
 }
-async function login(e){e.preventDefault();$('loginError').classList.add('hidden');const u=$('loginUser').value.trim().toLowerCase(),p=$('loginPass').value;const {error}=await sb.auth.signInWithPassword({email:USER_EMAIL(u),password:p});if(error){$('loginError').classList.remove('hidden');return}await boot()}
+async function login(e){
+ e.preventDefault();
+ const box=$('loginError');
+ if(box){box.classList.add('hidden');box.textContent='Incorrect username or password.';}
+ const u=$('loginUser').value.trim().toLowerCase();
+ const p=String($('loginPass').value||'').trim();
+ if(!u||!p){ if(box){box.textContent='Enter username and password.';box.classList.remove('hidden');} return; }
+ const email=USER_EMAIL(u);
+ const {data,error}=await sb.auth.signInWithPassword({email,password:p});
+ if(error){
+  console.warn('login error', error);
+  if(box){
+   const msg=String(error.message||'');
+   box.textContent = /invalid login|invalid credentials|invalid email or password/i.test(msg)
+     ? 'Incorrect username or password.'
+     : ('Sign-in failed: '+msg);
+   box.classList.remove('hidden');
+  }
+  return;
+ }
+ await boot();
+}
 async function logout(){await sb.auth.signOut();profile=null;jobs=[];trashJobs=[];requests=[];editRequests=[];estimateHistory=[];$('appMain').classList.add('hidden');$('loginBg').classList.add('show');$('loginPass').value=''}
+function fallbackProfileFromUser(user){
+ const email=String(user?.email||'');
+ const uname=email.replace(/@absolute-garage\.local$/i,'').split('@')[0].toLowerCase();
+ return {
+  id:user.id,
+  username:uname,
+  display_name:DISPLAY[uname]||uname,
+  role:['randy','sam'].includes(uname)?'owner':(uname==='ramsey'?'business_manager':'salesman')
+ };
+}
 async function boot(){
  const {data:{user}}=await sb.auth.getUser(); if(!user){$('loginBg').classList.add('show');return}
- const {data:p,error}=await sb.from('staff_profiles').select('*').eq('id',user.id).single(); if(error||!p){await sb.auth.signOut();alert('This account is not configured for the Garage App.');return}
+ let p=null;
+ try{
+  const res=await sb.from('staff_profiles').select('*').eq('id',user.id).maybeSingle();
+  p=res.data||null;
+  if(res.error) console.warn('staff_profiles', res.error);
+ }catch(err){ console.warn('staff_profiles threw', err); }
+ if(!p) p=fallbackProfileFromUser(user);
  profile=p;$('loginBg').classList.remove('show');$('appMain').classList.remove('hidden');$('userBadge').classList.remove('hidden');$('logoutBtn').classList.remove('hidden');$('userBadge').textContent=`${p.display_name} • ${roleName()}`;
  $('addBtn').classList.toggle('hidden',!manager());$('requestBtn').classList.toggle('hidden',manager());$('salesFilterWrap').classList.toggle('hidden',!canViewAllJobs());$('trashTab').classList.toggle('hidden',!manager());
  if($('allPersonalCalendarsTab'))$('allPersonalCalendarsTab').classList.toggle('hidden',!privateAccessManager());$('estimateHistorySalesFilterWrap')?.classList.toggle('hidden',!privateAccessManager());

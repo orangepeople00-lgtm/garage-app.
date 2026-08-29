@@ -40,7 +40,9 @@ button.danger{color:#b42318}
 .field-overlay:focus{background:rgba(255,255,255,.85)!important;outline:1px dashed #2563eb}
 .check-overlay{position:absolute;z-index:7;border:0;background:transparent;padding:0;margin:0;width:24px;height:22px;font-size:18px;line-height:20px;font-weight:900;display:flex;align-items:center;justify-content:center}
 .check-overlay:hover{outline:1px dashed #2563eb;background:rgba(255,255,255,.35)}
-.obj{position:absolute;border:2px solid #111;background:rgba(255,255,255,.6);min-width:18px;min-height:18px;touch-action:none;user-select:none;transform-origin:center center}
+.obj{position:absolute;border:2px solid #111;background:rgba(255,255,255,.6);min-width:18px;min-height:18px;touch-action:none;user-select:none;transform-origin:center center;z-index:5}
+.obj.selected{z-index:80 !important; outline:2px solid #2563eb; outline-offset:2px}
+.obj.sidewalk,.obj.circle-shape,.obj.pad,.obj.patio{z-index:12}
 .obj.selected{outline:2px dashed #2563eb;outline-offset:2px}
 .obj .label{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:3px;font-weight:900;font-size:16px;pointer-events:none;white-space:pre-line}
 .obj.textobj{border:1px dashed transparent;background:transparent}
@@ -142,21 +144,27 @@ button.danger{color:#b42318}
   outline:2px dashed #94a3b8!important;
   opacity:.85;
 }
-/* Side / edge resize handles */
+/* Side-middle resize handles only — no corner drag */
 .side-handle{
   position:absolute;
-  background:#2563eb;
-  border:2px solid #fff;
-  z-index:60;
-  border-radius:3px;
+  background:#7dd3fc;
+  border:2px solid #0369a1;
+  z-index:90;
+  border-radius:6px;
   pointer-events:auto;
+  box-shadow:0 0 0 3px rgba(125,211,252,.45);
+  touch-action:none;
 }
-.side-handle.n,.side-handle.s{height:10px;width:28px;left:50%;transform:translateX(-50%);cursor:ns-resize}
-.side-handle.e,.side-handle.w{width:10px;height:28px;top:50%;transform:translateY(-50%);cursor:ew-resize}
-.side-handle.n{top:-6px}
-.side-handle.s{bottom:-6px}
-.side-handle.e{right:-6px}
-.side-handle.w{left:-6px}
+.side-handle.n,.side-handle.s{height:22px;width:56px;left:50%;margin-left:-28px;transform:none;cursor:ns-resize}
+.side-handle.e,.side-handle.w{width:22px;height:56px;top:50%;margin-top:-28px;transform:none;cursor:ew-resize}
+.side-handle.n{top:-11px}
+.side-handle.s{bottom:-11px}
+.side-handle.e{right:-11px}
+.side-handle.w{left:-11px}
+.corner-handle{display:none !important;}
+#paper .obj .handle,#paper .obj .resize-handle{display:none !important;}
+.obj{overflow:visible !important;}
+.obj, .side-handle{touch-action:none !important;}
 
 
 #paper .obj.lot-length-special{
@@ -186,8 +194,17 @@ button.danger{color:#b42318}
 
 /* ========== MOBILE / PHONE FRIENDLY (V81) ========== */
 .mobile-panel-btn,
-.mobile-snap-btn,
 .mobile-bottom-bar{display:none}
+.mobile-snap-btn{
+  display:inline-flex !important;
+  align-items:center;
+  justify-content:center;
+  background:#166534;
+  color:#fff;
+  border:none;
+  font-weight:800;
+}
+.mobile-snap-btn.off{background:#64748b !important;}
 
 @media (max-width: 900px){
   body{flex-direction:column; height:100dvh; overflow:hidden}
@@ -266,22 +283,27 @@ button.danger{color:#b42318}
     box-shadow:0 0 0 8px rgba(37,99,235,.22) !important;
   }
   .side-handle{
-    background:#2563eb !important;
-    border:3px solid #fff !important;
-    z-index:85 !important;
+    background:#7dd3fc !important;
+    border:3px solid #0369a1 !important;
+    z-index:90 !important;
   }
   .side-handle.n, .side-handle.s{
-    height:22px !important;
-    width:44px !important;
+    height:28px !important;
+    width:64px !important;
   }
   .side-handle.e, .side-handle.w{
-    width:22px !important;
-    height:44px !important;
+    width:28px !important;
+    height:64px !important;
   }
-  .side-handle.n{top:-12px !important}
-  .side-handle.s{bottom:-12px !important}
-  .side-handle.e{right:-12px !important}
-  .side-handle.w{left:-12px !important}
+  .side-handle.n{top:-14px !important}
+  .side-handle.s{bottom:-14px !important}
+  .side-handle.e{right:-14px !important}
+  .side-handle.w{left:-14px !important}
+  .corner-handle{width:22px !important; height:22px !important}
+  .corner-handle.nw{left:-11px !important; top:-11px !important}
+  .corner-handle.ne{right:-11px !important; top:-11px !important}
+  .corner-handle.sw{left:-11px !important; bottom:-11px !important}
+  .corner-handle.se{right:-11px !important; bottom:-11px !important}
   .rotate-handle{
     width:36px !important;
     height:36px !important;
@@ -675,6 +697,17 @@ button.danger{color:#b42318}
   padding:1px 5px!important;
 }
 
+
+
+.sidebar-fold{border:1px solid #e5e7eb;border-radius:10px;padding:6px 8px;background:#fff;margin:6px 0}
+.sidebar-fold>summary{font-weight:800;font-size:12px;cursor:pointer;list-style:none;padding:6px 2px;color:#334155}
+.sidebar-fold>summary::-webkit-details-marker{display:none}
+.sidebar-fold>summary:after{content:" ▾";float:right;color:#94a3b8}
+.sidebar-fold:not([open])>summary:after{content:" ▸"}
+.sidebar-pin{background:#f8fafc;border:1px solid #dbe3ee;border-radius:12px}
+.sidebar .drawing-tools{order:-90!important;background:#f8fbff;border:2px solid #2563eb!important;border-radius:12px}
+.sidebar .sidebar-pin{order:-110!important}
+.sidebar .status{display:none}
 
 /* V15 compact sidebar */
 .sidebar{font-size:12px}
@@ -1460,6 +1493,19 @@ button.danger{color:#b42318}
    Applied only to concrete that WILL BE POURED on Concrete,
    and concrete that WILL BE DEMOLISHED on Obstruction.
    Existing concrete marked STAYS / DO NOT TOUCH remains unhatched. */
+#paper .obj.concrete-hatched, .obj.concrete-hatched{
+  background-color:#fff !important;
+  background-image:repeating-linear-gradient(
+    45deg,
+    #111 0,
+    #111 1.5px,
+    transparent 1.5px,
+    transparent 10px
+  ) !important;
+  overflow:hidden !important;
+}
+#paper .obj.circle-shape.concrete-hatched{border-radius:50%;}
+/* orig concrete-hatched keep below */
 #paper .obj.concrete-hatched{
   background-color:rgba(255,255,255,.10)!important;
   background-image:repeating-linear-gradient(
@@ -2204,29 +2250,30 @@ button.danger{color:#b42318}
 <aside class="sidebar">
 <div class="brand">
 <h1>Absolute Garage Builders</h1>
-<small>Drawing App · V81.2 Email PDF</small>
+<small>Drawing</small>
 </div>
 <div class="scroll">
-<div class="section">
-<h3>Sheet</h3>
-<div class="field">
-<label>Drawing type</label>
+<div class="section sidebar-pin">
+<button class="primary" id="wizardBtn" style="width:100%;min-height:48px;font-weight:900;font-size:15px">Drawing Wizard</button>
+<div class="field" style="margin-top:8px">
+<label>Sheet</label>
 <select id="mode">
 <option selected="" value="concrete">Concrete Drawing</option>
 <option value="obstruction">Obstruction Work Order</option>
 <option value="siteplan">Proposed Site Plan</option>
 </select>
 </div>
-<div class="mode-note" id="modeNote">Shows where the new concrete will be poured.</div><div class="toolbar-grid" style="margin-top:8px"><button class="primary" id="wizardBtn">Start Drawing Wizard</button><button id="clearDrawingBtn">Clear Drawing</button></div>
-<div class="section" style="margin-top:10px" id="estimateImportSection">
-  <h3>Load from My Estimates</h3>
-  <div class="mode-note" style="margin-bottom:8px">Your estimate history. Tap a customer to fill the Drawing Wizard with garage size, apron, concrete, sidewalks, and customer info.</div>
+<div class="mode-note" id="modeNote" style="display:none">Shows where the new concrete will be poured.</div>
+<button id="clearDrawingBtn" type="button" style="width:100%;margin-top:4px">Clear Drawing</button>
+</div>
+<details class="section sidebar-fold" id="estimateImportSection">
+  <summary>Load job from estimates</summary>
   <input id="estimateImportSearch" placeholder="Search customer or address" style="margin-bottom:8px" oninput="renderEstimateImportList()"/>
   <div id="estimateImportStatus" class="mode-note">Loading…</div>
   <div id="estimateImportList" style="max-height:240px;overflow:auto;display:flex;flex-direction:column;gap:6px"></div>
   <button type="button" id="estimateImportRefresh" style="margin-top:8px;width:100%">Refresh My Jobs</button>
-</div>
-</div><div class="drawing-tools section" data-section="drawing-tools">
+</details>
+<div class="drawing-tools section" data-section="drawing-tools">
 <h3>Drawing Tools</h3>
 <div class="toolbar-grid">
 <button data-add="garage">Garage / Slab</button>
@@ -2242,18 +2289,45 @@ button.danger{color:#b42318}
 <button data-add="polyline">Polyline</button>
 <button data-add="text">Text Box</button>
 <button data-add="dimension">Dimension</button>
+<button type="button" id="makeConcreteToolBtn">Make Concrete</button>
 <button class="stamp-btn" id="staysBtn">STAYS</button>
 <button class="stamp-btn" id="cutBtn">◯ CUT →</button>
 <button class="stamp-btn" id="collectBtn">COLLECT</button>
 <button class="stamp-btn" id="treeBtn">TREE</button>
 <button class="stamp-btn" id="bushBtn">BUSH</button>
 </div>
-<div class="status">Drag shapes to move. Use side handles or corner to resize (visual only). Lock / Hide / Duplicate available when selected. Snapping helps placement.</div>
+<div class="status">Drag shapes to move. Blue squares on corners and bars on sides resize. Snap ON/OFF is in the top bar. Objects and lines may overlap.</div>
 </div>
 
-<div class="section" id="selectedObjectPanel">
-<h3>Selected Object</h3>
-<div class="field"><label>Label / Text</label><input id="objLabel" placeholder="Label"></div>
+<details class="section sidebar-fold" id="selectedObjectPanel">
+<summary>Selected object</summary>
+<div id="selectedKindLabel" style="font-weight:900;font-size:13px;margin:4px 0 8px;color:#1d4ed8">Nothing selected</div>
+<div class="field"><label>Text in shape</label><input id="objLabel" placeholder="Type words on this shape"></div>
+<div class="row">
+  <div class="field"><label>Text size</label>
+    <select id="objFontSize">
+      <option value="10">10</option>
+      <option value="12">12</option>
+      <option value="14">14</option>
+      <option value="16" selected>16</option>
+      <option value="18">18</option>
+      <option value="20">20</option>
+      <option value="24">24</option>
+      <option value="28">28</option>
+      <option value="32">32</option>
+      <option value="40">40</option>
+    </select>
+  </div>
+  <div class="field"><label>Boldness</label>
+    <select id="objFontWeight">
+      <option value="400">Regular</option>
+      <option value="600">Semibold</option>
+      <option value="700" selected>Bold</option>
+      <option value="800">Extra bold</option>
+      <option value="900">Black</option>
+    </select>
+  </div>
+</div>
 <div class="row">
   <div class="field"><label>Width (ft)</label><input id="objW" type="number" step="0.5" min="0.5"></div>
   <div class="field"><label>Depth (ft)</label><input id="objH" type="number" step="0.5" min="0.5"></div>
@@ -2273,11 +2347,12 @@ button.danger{color:#b42318}
   <button type="button" class="mini" id="bringForwardBtn">Bring Forward</button>
   <button type="button" class="mini" id="sendBackBtn">Send Back</button>
 </div>
+<button type="button" class="primary" id="makeConcreteBtn" style="width:100%;margin-top:8px;font-weight:900">Make Concrete (diagonal fill)</button>
 <div class="status" style="margin-top:6px">Visual resize does not change real measurements. Use Lock to protect objects.</div>
-</div>
+</details>
 
-<div class="section" id="concreteFields">
-<h3>Concrete Form Fields</h3>
+<details class="section sidebar-fold" id="concreteFields">
+<summary>Concrete details</summary>
 <div class="row compact-pair">
 <div class="field"><label>New garage slab (width x length)</label><input class="combo-dim" id="cSizeCombo" placeholder="20 x 20" value="20 x 20"/></div>
 <div class="field"><label>New apron (width x depth)</label><input class="combo-dim" id="cApronCombo" placeholder="20 x 3"/></div>
@@ -2387,9 +2462,9 @@ button.danger{color:#b42318}
 <input class="hidden-dim-source" id="cNewPadW"/><input class="hidden-dim-source" id="cNewPadH"/>
 <input class="hidden-dim-source" id="cExtraPadW"/><input class="hidden-dim-source" id="cExtraPadH"/>
 <div class="field"><label>Notes</label><textarea id="cNotes"></textarea></div>
-</div>
-<div class="section hidden" id="obstructionFields">
-<h3>Obstruction Form Fields</h3>
+</details>
+<details class="section hidden sidebar-fold" id="obstructionFields">
+<summary>Obstruction details</summary>
 <div class="field"><label>Contractor</label><input disabled="" value="Absolute Garage Builders"/></div>
 <div class="row compact-pair">
 <div class="field"><label>Existing garage / slab</label><input class="combo-dim" id="oSizeCombo" placeholder="20 x 20"/></div>
@@ -2425,9 +2500,9 @@ button.danger{color:#b42318}
 <div class="field"><label>Notes</label><textarea id="oNotes" placeholder="Type notes for the upper-right notes area"></textarea></div>
 <div class="field"><label>Contents</label><select id="oContents"><option value="no">No</option><option value="yes">Yes</option></select></div>
 <div class="field"><label>Use the checkboxes directly on the sheet.</label></div>
-</div>
-<div class="section" id="sitePlanControls">
-<h3>Proposed Site Plan</h3>
+</details>
+<details class="section sidebar-fold" id="sitePlanControls">
+<summary>Proposed site plan</summary>
 <!-- TOP: upload + place + whiteout (most-used first) -->
 <div class="field"><label>Upload current survey / plat</label><input accept="image/*" id="surveyUpload" type="file"/></div>
 <div class="field"><label>Garage placement</label><select id="spPlacement"><option value="bottom-right">Rear right</option><option value="bottom-left">Rear left</option><option value="custom">Place manually</option></select></div>
@@ -2463,11 +2538,11 @@ button.danger{color:#b42318}
 <div class="field"><label>Existing sidewalk size</label><input class="combo-dim" id="spExistingWalkCombo" placeholder="3 x 35"/></div>
 <input class="hidden-dim-source" id="spExistingWalkW"/><input class="hidden-dim-source" id="spExistingWalkH"/>
 <div class="field"><label>Rear setback (ft)</label><input id="spRearSetback" step=".5" type="number" value="5"/></div>
-</div>
+</details>
 
 
-<div class="section customer-job" data-section="customer-job">
-<h3>Customer / Job</h3>
+<details class="section customer-job sidebar-fold" data-section="customer-job">
+<summary>Customer / job</summary>
 <div class="field"><label>Customer name</label><input id="customerName"/></div>
 <div class="field"><label>Job address</label><input id="jobAddress"/></div>
 <div class="row">
@@ -2485,12 +2560,13 @@ button.danger{color:#b42318}
 </div>
 <div class="field"><label>Customer email</label><input id="customerEmail" type="email" placeholder="customer@email.com" autocomplete="email"/></div>
 <div class="field"><label>Salesman phone</label><input id="salesPhone"/></div>
-</div></div>
+</details></div>
 </aside>
 <main class="main">
 <div class="topbar">
 <button type="button" class="mobile-panel-btn" id="mobilePanelBtn" title="Open tools panel">☰ Tools</button>
 <button type="button" class="mobile-snap-btn on" id="snapToggleBtn" title="Toggle snapping">Snap ON</button>
+<button type="button" class="mobile-snap-btn on" id="viewLockBtn" title="Lock the drawing page so it cannot slide">View LOCKED</button>
 <span id="drawBuildBadge" style="font-size:10px;font-weight:900;background:#fef3c7;color:#92400e;border:1px solid #f59e0b;border-radius:6px;padding:4px 7px;white-space:nowrap">BUILD 0823-0050</span>
 <button class="primary" id="fitBtn">Fit</button>
 <button type="button" id="rotateLeftBtn" title="Rotate selected -15°">↺</button>
@@ -2527,6 +2603,7 @@ button.danger{color:#b42318}
   <button type="button" id="mobileHideBtn">Hide</button>
   <button type="button" id="mobileHlBtn">Highlight</button>
   <button type="button" class="danger" id="mobileDelBtn">Delete</button>
+  <button type="button" id="mobileViewLockBtn" class="mobile-snap-btn on">View LOCKED</button>
   <button type="button" id="mobileFitBtn">Fit</button>
   <button type="button" id="mobilePdfBtn">PDF</button>
   <button type="button" id="mobileEmailBtn" style="background:#1d4ed8;color:#fff;border-color:#1d4ed8;font-weight:900">✉ Email</button>
@@ -4134,7 +4211,7 @@ $('wSalesman')?.addEventListener('change',()=>syncDrawingSalesmanFromSelect('wSa
 
 
 const defaults={
- garage:[20,20,'NEW GARAGE SLAB'], apron:[20,5,'NEW CONCRETE APRON'], sidewalk:[3,20,'CONCRETE SIDEWALK'],
+ garage:[20,20,'NEW GARAGE SLAB'], apron:[20,5,'NEW CONCRETE APRON'], sidewalk:[3,20,''],
  pad:[10,20,'NEW PARKING PAD'], driveway:[10,30,'NEW DRIVEWAY'], custom:[10,10,''],
  circle:[8,8,'CIRCLE'], arrow:[12,3,''], xmark:[6,6,'X'], line:[15,1,''], polyline:[20,1,''],
  text:[18,4,'TEXT'], dimension:[20,2,'20\'']
@@ -4871,7 +4948,7 @@ if(viewport){
 const SHAPE_DEFAULTS={
   garage:[20,20,'NEW GARAGE SLAB'],
   apron:[20,3,'NEW CONCRETE APRON'],
-  sidewalk:[3,20,'CONCRETE SIDEWALK'],
+  sidewalk:[3,20,''],
   pad:[10,10,'NEW CONCRETE PAD'],
   driveway:[10,30,'DRIVEWAY'],
   custom:[12,8,'RECTANGLE'],
@@ -4904,7 +4981,9 @@ function addObject(kind){
       angle: 0,
       locked: false,
       hidden: false,
-      highlighted: false
+      highlighted: false,
+      fontSize: 16,
+      fontWeight: '700'
     };
     // Visual-only size fields for freeform shapes (do not affect measurements)
     if (['custom','circle','arrow','xmark','line'].includes(kind)) {
@@ -4957,17 +5036,9 @@ function tidyGeneratedLayout(){
     else {pati.x=g.x+g.wf*p;pati.y=g.y}
   }
   placeServicePadAtDoor();
-  // Free-standing sidewalks/pads get nudged to clear the two dominant structures.
-  const blockers=[g,h].filter(Boolean);
-  for(const o of state.objects){
-    if(!['newSidewalk','existingSidewalk','newPad','extraNewPad'].includes(o.role))continue;
-    let tries=0;
-    while(blockers.some(b=>boxesOverlap(o,b,8)) && tries++<20){
-      o.x=Math.max(d.x+8,o.x-18);
-      o.y=Math.max(d.y+70,o.y-22);
-    }
-  }
+  // Overlap allowed — sidewalks, pads, lines, and shapes may sit on top of each other.
 }
+
 
 /* V61: extra printed rear-return value when BOTH service + party doors are on rear wall. */
 function renderExtraRearReturnSpot(){
@@ -5037,7 +5108,8 @@ function saveObjectTextEditor(){
   if(!o || !input) return closeObjectTextEditor();
 
   // customText is display-only: typing dimensions/notes never changes the object's actual size.
-  o.customText=input.value.trim();
+  o.customText=input.value;
+  o.label=input.value;
   closeObjectTextEditor();
   if(typeof saveState==='function') saveState();
   if(typeof render==='function') render();
@@ -5094,6 +5166,9 @@ function addPrintableConcreteHatch(el){
 
 function shouldConcreteHatch(o){
   if(!o)return false;
+  // Manual toggle on any shape: fill with diagonal lines.
+  if(o.forceHatch===true) return true;
+  if(o.forceHatch===false) return false;
   const label=String(o.label||'').toUpperCase();
 
   // Never hatch concrete specifically identified as existing and staying.
@@ -5129,7 +5204,7 @@ function renderObjects(){
     if(state.mode!=='siteplan' && ['rearGap','alleyDistance','rearSetback'].includes(o.role)) return;
     if(state.mode==='siteplan' && ['rearGap','alleyDistance'].includes(o.role)) return;
     const [w,h]=objPixels(o), el=document.createElement('div');
-    el.className='obj '+(o.kind==='eraser'?'erase-patch ':'')+(o.brush?'brush-dot ':'')+(o.kind==='text'?'textobj ':'')+(o.kind==='dimension'?'dimension ':'')+(o.kind==='stays'?'stays ':'')+(o.kind==='cut'?'cutstamp ':'')+(o.kind==='collect'?'collectstamp ':'')+((o.kind==='patio')?'patio ':'')+((o.kind==='pad')?'pad ':'')+((o.role==='partyDoor')?'party-door ':'')+((o.role==='serviceDoor')?'service-door ':'')+(((o.role==='garage'||o.role==='apron')&&sameGarageApronWidth())?'shared-slab-apron ':'')+((o.role==='garage'||o.role==='proposedGarage')?'role-garage ':'')+((o.kind==='sidewalk')?'sidewalk ':'')+((o.kind==='sidewalk'&&h>w)?'vertical-label ':'')+(['frontLeft','frontMiddle','frontRight','rearLeft','rearMiddle','rearRight','leftSetback','rightSetback','rearSetback','houseGap','alleyDistance'].includes(o.role)?'big-dim ':'')+(o.role==='rearGap'?'gap-dim ':'')+(o.role==='rearSetback'?'rear-setback-clean ':'')+((o.role==='lotWidth'||o.role==='lotLength')?'lot-dim ':'')+(o.role==='lotLength'?'lot-length-special ':'')+(/SERVICE DOOR PAD/i.test(o.label||'')?'service-pad ':'')+((o.kind==='tree'||o.kind==='bush')?'circle-stamp ':'')+(state.mode==='siteplan'?'siteplan-object ':'')+((['serviceDoor','partyDoor'].includes(o.role)||['serviceReturn','partyReturnA','partyReturnB','frontLeft','frontMiddle','frontRight'].includes(o.role))?'no-direct-drag ':'')+(state.selected===o.id?'selected':'');
+    el.className='obj '+(o.kind==='eraser'?'erase-patch ':'')+(o.brush?'brush-dot ':'')+(o.kind==='text'?'textobj ':'')+(o.kind==='dimension'?'dimension ':'')+(o.kind==='stays'?'stays ':'')+(o.kind==='cut'?'cutstamp ':'')+(o.kind==='collect'?'collectstamp ':'')+((o.kind==='patio')?'patio ':'')+((o.kind==='pad')?'pad ':'')+((o.role==='partyDoor')?'party-door ':'')+((o.role==='serviceDoor')?'service-door ':'')+(((o.role==='garage'||o.role==='apron')&&sameGarageApronWidth())?'shared-slab-apron ':'')+((o.role==='garage'||o.role==='proposedGarage')?'role-garage ':'')+((o.kind==='sidewalk')?'sidewalk ':'')+((o.kind==='sidewalk')?'vertical-label ':'')+(['frontLeft','frontMiddle','frontRight','rearLeft','rearMiddle','rearRight','leftSetback','rightSetback','rearSetback','houseGap','alleyDistance'].includes(o.role)?'big-dim ':'')+(o.role==='rearGap'?'gap-dim ':'')+(o.role==='rearSetback'?'rear-setback-clean ':'')+((o.role==='lotWidth'||o.role==='lotLength')?'lot-dim ':'')+(o.role==='lotLength'?'lot-length-special ':'')+(/SERVICE DOOR PAD/i.test(o.label||'')?'service-pad ':'')+((o.kind==='tree'||o.kind==='bush')?'circle-stamp ':'')+(state.mode==='siteplan'?'siteplan-object ':'')+((['serviceDoor','partyDoor'].includes(o.role)||['serviceReturn','partyReturnA','partyReturnB','frontLeft','frontMiddle','frontRight'].includes(o.role))?'no-direct-drag ':'')+(state.selected===o.id?'selected':'');
     // Eraser patches never show the word "ERASE" / labels
     if(o.kind==='eraser'){ o.label=''; }
     // V64: attach both the screen hatch and a real SVG hatch for printing.
@@ -5235,7 +5310,7 @@ function renderObjects(){
       el.style.opacity='1';
       el.style.zIndex='6';
     } else {
-      lab.textContent=((o.role==='rearSetback'||o.role==='rearGap'||o.role==='alleyDistance')?'':(o.label || (['custom','arrow','line','polyline','eraser'].includes(o.kind)?'':o.kind.toUpperCase())));
+      lab.textContent=((o.role==='rearSetback'||o.role==='rearGap'||o.role==='alleyDistance')?'':String(o.customText!=null && String(o.customText).length?o.customText:(o.label||'')));
       if(o.kind==='arrow' && /^arrow$/i.test(String(lab.textContent||'').trim())) lab.textContent='';
     }
     if(o.role==='lotWidth'){
@@ -5243,16 +5318,9 @@ function renderObjects(){
     }
     if(!['dimension','stays','cut','collect','tree','bush'].includes(o.kind)){
       if(o.kind==='sidewalk'){
-        const vertical=h>w;
+        const vertical=true; // sidewalk wording is always sideways (head-right / 90deg)
 
-        // V54: always rebuild sidewalk wording from the actual stored width/length.
-        // This prevents a typed value such as 3 x 20 from ever displaying as 3 x 2.
-        if(o.role==='newSidewalk'){
-          o.label=`CONCRETE SIDEWALK\n${o.wf}' x ${o.hf}'`;
-        }else if(o.role==='existingSidewalk' && state.mode==='concrete'){
-          o.label=`EXISTING SIDEWALK\n${o.wf}' x ${o.hf}'`;
-        }
-        const txt=String(o.label||'SIDEWALK').replace(/\s*\n\s*/g,' ').replace(/\s+/g,' ').trim();
+        const txt=String(o.customText!=null && String(o.customText).length ? o.customText : (o.label||'')).replace(/\s*\n\s*/g,' ').replace(/\s+/g,' ').trim();
 
                 // V82: sidewalk label ALWAYS stays centered and scales with the box
         const longSide=Math.max(vertical?h:w,40);
@@ -5270,9 +5338,11 @@ function renderObjects(){
         lab.style.setProperty('width','max-content','important');
         lab.style.setProperty('max-width','95%','important');
         lab.style.setProperty('height','auto','important');
-        lab.style.setProperty('font-size',fit+'px','important');
+        const userSize=Number(o.fontSize)||fit;
+        const userWeight=String(o.fontWeight||900);
+        lab.style.setProperty('font-size',userSize+'px','important');
         lab.style.setProperty('line-height','1.05','important');
-        lab.style.setProperty('font-weight','1000','important');
+        lab.style.setProperty('font-weight',userWeight,'important');
         lab.style.setProperty('white-space','nowrap','important');
         lab.style.setProperty('overflow','hidden','important');
         lab.style.setProperty('text-align','center','important');
@@ -5346,6 +5416,12 @@ function renderObjects(){
       }
     }
 
+    if(o.kind!=='sidewalk' && o.kind!=='eraser'){
+      if(o.fontSize) lab.style.setProperty('font-size', Number(o.fontSize)+'px', 'important');
+      if(o.fontWeight) lab.style.setProperty('font-weight', String(o.fontWeight), 'important');
+    }
+    lab.style.pointerEvents='auto';
+    lab.title='Click to type text on this shape';
     if(o.role!=='lotLength' && !['serviceDoor','partyDoor'].includes(o.kind) && !['rearSetback','rearGap','alleyDistance'].includes(o.role))el.appendChild(lab);
 
     // V66: attach text editing after the label exists in the object.
@@ -5367,10 +5443,7 @@ function renderObjects(){
     // V33: sidewalks always expose their corner resize handle so they can be
     // grabbed and extended immediately without a separate select click.
     if(o.kind==='sidewalk' && state.selected!==o.id){
-      const hnd=document.createElement('div');
-      hnd.className='handle sidewalk-direct-handle';
-      hnd.dataset.handle='1';
-      el.appendChild(hnd);
+      attachBoxHandles(el, o);
     }
     if(state.selected===o.id){
       // V30: normal shapes stay visually editable from their corner handles.
@@ -5379,25 +5452,9 @@ function renderObjects(){
         'frontLeft','frontMiddle','frontRight','rearLeft','rearMiddle','rearRight',
         'leftSetback','rightSetback','rearSetback','rearGap','alleyDistance'].includes(o.role);
       if(!panelOnly){
-        const hideHandle=(o.role==='apron'&&sameGarageApronWidth());
-        if(o.kind!=='dimension' && !hideHandle){
-          // Corner handle (existing behavior)
-          const hnd=document.createElement('div');hnd.className='handle';hnd.dataset.handle='1';
-          if(o.kind==='sidewalk'){hnd.style.width='52px';hnd.style.height='52px';hnd.style.right='-28px';hnd.style.bottom='-28px'}
-          el.appendChild(hnd);
-          // Side / edge handles (AutoCAD-style)
-          if(!['line','arrow'].includes(o.kind)){
-            ['n','s','e','w'].forEach(side=>{
-              const sh=document.createElement('div');
-              sh.className='side-handle '+side;
-              sh.dataset.side=side;
-              sh.dataset.handle='1';
-              el.appendChild(sh);
-            });
-          }
+        if(o.kind!=='dimension'){
+          attachBoxHandles(el, o);
         }
-        const stem=document.createElement('div');stem.className='rotate-stem';el.appendChild(stem);
-        const rh=document.createElement('div');rh.className='rotate-handle';rh.dataset.rotate='1';el.appendChild(rh);
       }
     }
     // V56: render side setbacks again directly on the paper at a very high
@@ -5424,9 +5481,32 @@ function renderObjects(){
   saveActiveSheetState(); if(state.mode==='obstruction'){setTimeout(()=>{fieldLayer.querySelectorAll('.ob-line-input').forEach(e=>e.remove());renderObstructionLines()},0)}
 }
 function getObj(id){return state.objects.find(o=>o.id===+id)}
+function shapeKindName(o){
+  if(!o) return 'Nothing selected';
+  const k=String(o.kind||'').toLowerCase();
+  const r=String(o.role||'').toLowerCase();
+  const map={
+    sidewalk:'Sidewalk', garage:'Garage / slab', apron:'Apron', pad:'Parking pad',
+    driveway:'Driveway', custom:'Rectangle', circle:'Circle', arrow:'Arrow',
+    xmark:'X marker', line:'Line', polyline:'Polyline', text:'Text box',
+    dimension:'Dimension', patio:'Patio', tree:'Tree', bush:'Bush',
+    stays:'STAYS', cut:'CUT', collect:'COLLECT', proposedgarage:'Proposed garage'
+  };
+  if(k==='sidewalk') return 'Sidewalk';
+  if(r==='garage'||k==='garage') return 'Garage / slab';
+  if(map[k]) return map[k];
+  if(r) return r.replace(/([A-Z])/g,' $1').replace(/^./,c=>c.toUpperCase());
+  return 'Shape';
+}
 function updateInspector(){
   const o=getObj(state.selected);
-  if($('objLabel'))$('objLabel').value=o?.customText || o?.label || '';
+  const kindEl=document.getElementById('selectedKindLabel');
+  if(kindEl) kindEl.textContent=o ? ('Selected: '+shapeKindName(o)) : 'Nothing selected';
+  if($('objLabel'))$('objLabel').value=o ? String(o.customText!=null && String(o.customText).length ? o.customText : (o.label||'')) : '';
+  if($('objFontSize')) $('objFontSize').value=String(o?.fontSize||16);
+  if($('objFontWeight')) $('objFontWeight').value=String(o?.fontWeight||700);
+  const selPanel=document.getElementById('selectedObjectPanel');
+  if(selPanel && o) selPanel.open=true;
   if($('objW'))$('objW').value=o?.wf??'';
   if($('objH'))$('objH').value=o?.hf??'';
   if($('objAngle')){
@@ -5436,10 +5516,13 @@ function updateInspector(){
   }
   const lb=document.getElementById('lockSelectedBtn');
   if(lb) lb.textContent=(o&&o.locked)?'🔓 Unlock':'🔒 Lock';
+  const cb=document.getElementById('makeConcreteBtn');
+  if(cb) cb.textContent=(o&&(o.forceHatch===true || (!o.forceHatch===false && false))) ? 'Remove Concrete Fill' : 'Make Concrete (diagonal fill)';
+  if(cb && o) cb.textContent = o.forceHatch ? 'Remove Concrete Fill' : 'Make Concrete (diagonal fill)';
 }
 
 // ===== Snapping System (corner / edge / center) — sticky hysteresis to stop mobile shake =====
-const SNAP_IN = 16;   // distance to start a snap
+const SNAP_IN = 14;   // distance to start a snap
 const SNAP_OUT = 34;  // must pull farther than this to break an active snap (stops oscillation)
 let snapPreviewEl = null;
 let activeSnap = null; // sticky snap for current drag: {dx, dy, target, key}
@@ -5529,17 +5612,40 @@ function hideSnapPreview(){
   if(snapPreviewEl) snapPreviewEl.style.display = 'none';
 }
 
+function attachBoxHandles(el, o){
+  if(!el || !o) return;
+  el.querySelectorAll('.corner-handle,.handle,.resize-handle').forEach(n=>n.remove());
+  if(el.querySelector('.side-handle')) return;
+  const sides = ['line','arrow'].includes(o.kind) ? ['e','w'] : ['n','s','e','w'];
+  sides.forEach(side=>{
+    const sh=document.createElement('div');
+    sh.className='side-handle '+side;
+    sh.dataset.side=side;
+    sh.dataset.handle='1';
+    sh.title='Drag this side to resize';
+    el.appendChild(sh);
+  });
+}
+function lockCanvasPan(){ window._shapeInteract=true; try{ panStart=null; }catch(_){ } }
+function unlockCanvasPan(){ window._shapeInteract=false; }
+
 function objectPointerDown(e){
-  e.preventDefault(); const el=e.currentTarget,o=getObj(el.dataset.id); if(!o)return;
-  // Locked objects can still be selected but not moved / resized / rotated
+  e.preventDefault();
+  e.stopPropagation();
+  try{ e.currentTarget.setPointerCapture?.(e.pointerId); }catch(_){}
+  lockCanvasPan();
+  const el=e.currentTarget,o=getObj(el.dataset.id); if(!o)return;
   if(o.locked && !e.target.dataset.handle && !e.target.dataset.rotate){
-    state.selected=o.id; renderObjects(); return;
+    state.selected=o.id; el.classList.add('selected'); attachBoxHandles(el,o); return;
   }
   if(state.selected!==o.id){
     state.selected=o.id;
-    // Sidewalks + lot-length: continue this same gesture so one touch can select and drag
-    if(o.kind!=='sidewalk' && o.role!=='lotLength'){renderObjects();return}
+    el.classList.add('selected');
+    attachBoxHandles(el,o);
   }
+  // Always refresh the side panel to THIS object (do not keep garage text)
+  try{ updateInspector(); }catch(_){}
+  try{ el.style.zIndex='80'; }catch(_){}
   // V30: prevent direct sliding only for returns, door placement, and setbacks.
   // Garage/apron/patio/sidewalk/pads and other actual shapes remain movable and
   // visually resizable from their corner handles.
@@ -5563,6 +5669,7 @@ function objectPointerDown(e){
       renderObjects();
     };
     const upLot=()=>{
+      unlockCanvasPan();
       window.removeEventListener('pointermove',moveLot);
       window.removeEventListener('pointerup',upLot);
       window.removeEventListener('pointercancel',upLot);
@@ -5593,22 +5700,18 @@ function objectPointerDown(e){
       o.angle=((oa+(a-startAngle))%360+360)%360;
     } else if(resizing){
       const p=o.pxf||DRAW_PXF;
-      // Side-handle resizing (visual only for freeform / sidewalk)
+      // Side-middle handles only: grow/shrink that one side
       if(sideHandle){
-        if(['custom','circle','arrow','xmark','line','sidewalk'].includes(o.kind) || !o.role){
-          let nw = pw0, nh = ph0, nx = o.x, ny = o.y;
-          if(sideHandle==='e'){ nw = Math.max(18, pw0 + dx); }
-          else if(sideHandle==='w'){ nw = Math.max(18, pw0 - dx); nx = ox + dx; }
-          else if(sideHandle==='s'){ nh = Math.max(18, ph0 + dy); }
-          else if(sideHandle==='n'){ nh = Math.max(18, ph0 - dy); ny = oy + dy; }
-          if(o.kind==='sidewalk'){
-            o.visualWpx = nw; o.visualHpx = nh; o.x = nx; o.y = ny;
-          } else {
-            // Keep measurement fields, only change visual size for free shapes
-            o.visualWpx = nw; o.visualHpx = nh; o.x = nx; o.y = ny;
-          }
-          renderObjects(); return;
-        }
+        let nw = pw0, nh = ph0, nx = ox, ny = oy;
+        if(sideHandle==='e' || sideHandle.includes('e')){ nw = Math.max(18, pw0 + dx); }
+        if(sideHandle==='w' || sideHandle.includes('w')){ nw = Math.max(18, pw0 - dx); nx = ox + (pw0 - nw); }
+        if(sideHandle==='s' || sideHandle.includes('s')){ nh = Math.max(18, ph0 + dy); }
+        if(sideHandle==='n' || sideHandle.includes('n')){ nh = Math.max(18, ph0 - dy); ny = oy + (ph0 - nh); }
+        o.visualWpx = nw; o.visualHpx = nh; o.x = nx; o.y = ny;
+        const pp=o.pxf||DRAW_PXF;
+        o.wf=Math.max(.5, Math.round((nw/pp)*2)/2);
+        if(o.kind!=='dimension') o.hf=Math.max(.5, Math.round((nh/pp)*2)/2);
+        renderObjects(); return;
       }
       // V21: corner handles change appearance only. Entered dimensions and all return numbers stay untouched.
       if(state.mode==='concrete' && o.kind==='sidewalk'){
@@ -5794,15 +5897,21 @@ function objectPointerDown(e){
   const up=()=>{
     activeSnap = null;
     hideSnapPreview();
+    unlockCanvasPan();
     delete o._dragLeft;delete o._dragRight;delete o._dragRear;delete o._garageStartX;delete o._wallStart;
     const pd=byRole('partyDoor');if(pd)delete pd._returnStart;
     window.removeEventListener('pointermove',move);window.removeEventListener('pointerup',up);
+    window.removeEventListener('pointercancel',up);
   };
-  window.addEventListener('pointermove',move);window.addEventListener('pointerup',up);
+  window.addEventListener('pointermove',move,{passive:false});
+  window.addEventListener('pointerup',up);
+  window.addEventListener('pointercancel',up);
 }
 
 document.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>addObject(b.dataset.add));
-if($('objLabel')) $('objLabel').oninput=()=>{const o=getObj(state.selected);if(o){o.label=$('objLabel').value; if(o.customText!==undefined) o.customText=$('objLabel').value; renderObjects()}};
+if($('objLabel')) $('objLabel').oninput=()=>{const o=getObj(state.selected);if(o){o.label=$('objLabel').value; o.customText=$('objLabel').value; renderObjects()}};
+if($('objFontSize')) $('objFontSize').onchange=()=>{const o=getObj(state.selected);if(o){o.fontSize=Number($('objFontSize').value)||16; renderObjects()}};
+if($('objFontWeight')) $('objFontWeight').onchange=()=>{const o=getObj(state.selected);if(o){o.fontWeight=String($('objFontWeight').value||'700'); renderObjects()}};
 if($('objW')) $('objW').onchange=()=>{const o=getObj(state.selected);if(o){snapshot();o.wf=Math.max(.5,+$('objW').value||.5);renderObjects()}};
 if($('objH')) $('objH').onchange=()=>{const o=getObj(state.selected);if(o){snapshot();o.hf=Math.max(.5,+$('objH').value||.5);renderObjects()}};
 if($('objAngle')){
@@ -6029,7 +6138,18 @@ $('pdfBtn').onclick=saveAsPdf;
 if($('emailPdfBtn')) $('emailPdfBtn').onclick=emailDrawingPdf;
 if($('mobileEmailBtn')) $('mobileEmailBtn').onclick=emailDrawingPdf;
 
+function syncSidebarFolds(){
+  const mode=($('mode')&&$('mode').value)||'concrete';
+  const sp=document.getElementById('sitePlanControls');
+  const cf=document.getElementById('concreteFields');
+  const of=document.getElementById('obstructionFields');
+  if(sp) sp.open = mode==='siteplan';
+  if(cf) cf.open = false;
+  if(of) of.open = false;
+}
 $('mode').onchange=()=>{
+  try{syncSidebarFolds();}catch(_){}
+
   saveActiveSheetState();
   const next=$('mode').value;
   state.mode=next;
@@ -6049,11 +6169,41 @@ const activePointers=new Map();
 function pointDistance(a,b){const dx=a.clientX-b.clientX,dy=a.clientY-b.clientY;return Math.hypot(dx,dy)}
 function pointCenter(a,b){return {x:(a.clientX+b.clientX)/2,y:(a.clientY+b.clientY)/2}}
 
+window.viewLocked = true;
+function isViewLocked(){ return window.viewLocked !== false; }
+function syncViewLockButtons(){
+  const on=isViewLocked();
+  ['viewLockBtn','mobileViewLockBtn'].forEach(id=>{
+    const b=document.getElementById(id);
+    if(!b) return;
+    b.textContent = on ? 'View LOCKED' : 'View UNLOCKED';
+    b.classList.toggle('on', on);
+    b.classList.toggle('off', !on);
+  });
+  const vp=document.getElementById('viewport');
+  if(vp){
+    vp.style.touchAction = on ? 'none' : '';
+    vp.classList.toggle('view-locked', on);
+  }
+}
+function setViewLocked(on){
+  window.viewLocked = !!on;
+  panStart=null;
+  try{ viewport.classList.remove('panning'); }catch(_){}
+  syncViewLockButtons();
+}
+
 viewport.addEventListener('pointerdown',e=>{
-  if(e.target.closest('.obj') || e.target.closest('.field-overlay') || e.target.closest('.check-overlay')) return;
+  if(window._shapeInteract) return;
+  if(e.target.closest('.obj') || e.target.closest('.corner-handle') || e.target.closest('.side-handle') || e.target.closest('.field-overlay') || e.target.closest('.check-overlay')) return;
+  if(isViewLocked() && activePointers.size<1){
+    // Locked: do not start a page pan. Two-finger pinch can still zoom if unlocked later.
+    return;
+  }
   activePointers.set(e.pointerId,e);
   viewport.setPointerCapture?.(e.pointerId);
   if(activePointers.size===1){
+    if(isViewLocked()){ panStart=null; return; }
     panStart={x:e.clientX,y:e.clientY,tx:state.tx,ty:state.ty};
     viewport.classList.add('panning');
   } else if(activePointers.size===2){
@@ -6063,6 +6213,7 @@ viewport.addEventListener('pointerdown',e=>{
   }
 });
 viewport.addEventListener('pointermove',e=>{
+  if(window._shapeInteract) return;
   if(!activePointers.has(e.pointerId)) return;
   activePointers.set(e.pointerId,e);
   if(activePointers.size===2 && pinchStart){
@@ -6071,7 +6222,7 @@ viewport.addEventListener('pointermove',e=>{
     const ns=Math.max(.2,Math.min(4,pinchStart.scale*ratio));
     const px=(pinchStart.cx-pinchStart.tx)/pinchStart.scale, py=(pinchStart.cy-pinchStart.ty)/pinchStart.scale;
     setTransform(ns,c.x-px*ns,c.y-py*ns);state.view='custom';
-  } else if(activePointers.size===1 && panStart){
+  } else if(activePointers.size===1 && panStart && !isViewLocked()){
     setTransform(state.scale,panStart.tx+(e.clientX-panStart.x),panStart.ty+(e.clientY-panStart.y));state.view='custom';
   }
 });
@@ -6857,6 +7008,19 @@ if(hlBtn) hlBtn.onclick=()=>{
   renderObjects();
 };
 
+function toggleConcreteFill(){
+  const o=typeof getSelectedObj==='function'?getSelectedObj():(typeof getObj==='function'?getObj(state.selected):null);
+  if(!o){ alert('Select a shape first'); return; }
+  if(typeof snapshot==='function') snapshot();
+  o.forceHatch = !o.forceHatch;
+  if(typeof renderObjects==='function') renderObjects();
+  if(typeof updateInspector==='function') updateInspector();
+}
+const makeConc=document.getElementById('makeConcreteBtn');
+if(makeConc) makeConc.onclick=toggleConcreteFill;
+const makeConcTool=document.getElementById('makeConcreteToolBtn');
+if(makeConcTool) makeConcTool.onclick=toggleConcreteFill;
+
 const bringBtn=document.getElementById('bringForwardBtn');
 if(bringBtn) bringBtn.onclick=()=>{
   const o=getSelectedObj(); if(!o) return;
@@ -6931,6 +7095,16 @@ function toggleMobilePanel(){
       if(window.matchMedia('(max-width:900px)').matches) setTimeout(closeMobilePanel, 220);
     }, false);
   });
+
+  window.viewLocked = true;
+  syncViewLockButtons();
+  function bindViewLock(id){
+    const b=document.getElementById(id);
+    if(!b) return;
+    b.onclick=()=> setViewLocked(!isViewLocked());
+  }
+  bindViewLock('viewLockBtn');
+  bindViewLock('mobileViewLockBtn');
 
   const snapBtn=document.getElementById('snapToggleBtn');
   if(snapBtn){

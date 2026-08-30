@@ -958,16 +958,18 @@ input, select, textarea, button { box-sizing:border-box; }
                                 <i class="fa-solid fa-layer-group"></i>
                                 <span>CONCRETE &amp; SITE WORK</span>
                             </div>
-                            <label class="flex items-center cursor-pointer">
-                                <input type="checkbox" id="newConcrete" checked onchange="calculateEstimate()" class="accent-blue-500 w-4 h-4">
-                                <span class="ml-2 text-xs font-medium text-zinc-400">New slab + apron</span>
-                            </label>
+                            <select id="slabMode" onchange="onSlabModeChange(); calculateEstimate()" class="bg-zinc-900 border border-zinc-700 rounded px-1.5 py-0.5 text-xs text-zinc-300 max-w-[11rem]">
+                                <option value="new" selected>New slab + apron</option>
+                                <option value="existing">Build On Existing Slab</option>
+                            </select>
+                            <input type="checkbox" id="newConcrete" checked class="hidden" aria-hidden="true">
                         </div>
                         
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
                             <div>
                                 <label class="text-xs text-zinc-400 block mb-1">Apron depth (ft)</label>
                                 <select id="apronDepth" onchange="calculateEstimate()" class="calc-input w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-sm">
+                                    <option value="existing">Existing</option>
                                     <option value="0">0 (none)</option>
                                     <option value="1">1 ft</option>
                                     <option value="2">2 ft</option>
@@ -989,6 +991,7 @@ input, select, textarea, button { box-sizing:border-box; }
                                 <div>
                                     <label class="text-xs text-zinc-400 block mb-1">Concrete Thickness</label>
                                     <select id="concreteThickness" onchange="calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm">
+                                        <option value="existing">Existing</option>
                                         <option value="4" selected>4" Standard</option>
                                         <option value="5">5" Thick (+$1.50/sq ft)</option>
                                         <option value="6">6" Thick (+$3.00/sq ft)</option>
@@ -1036,6 +1039,7 @@ input, select, textarea, button { box-sizing:border-box; }
                                     <label class="text-xs text-zinc-400 block mb-1">Type</label>
                                     <select id="retainType" onchange="calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm">
                                         <option value="none">None</option>
+                                        <option value="existing">Existing</option>
                                         <option value="standard">Standard Retaining Wall</option>
                                         <option value="reverse">Reverse Retaining Wall</option>
                                         <option value="four">4 Sided Retaining Wall</option>
@@ -1162,7 +1166,15 @@ input, select, textarea, button { box-sizing:border-box; }
                                 </select>
                             </div>
                             <div>
-                                <label class="text-xs text-zinc-400 block mb-1">Demo apron depth (ft) — always removed with slab</label>
+                                <label class="text-xs text-zinc-400 block mb-1">Demolition cost</label>
+                                <div class="flex items-center bg-zinc-950 border border-zinc-700 rounded-2xl px-1">
+                                    <input type="number" id="demoCostInput" value="1300" step="50"
+                                           oninput="calculateEstimate()" class="calc-input flex-1 bg-transparent px-3 py-2 text-sm outline-none">
+                                    <span class="pr-3 text-xs text-zinc-500">$</span>
+                                </div>
+                            </div>
+                            <div>
+                                <label id="demoApronHelpLabel" class="text-xs text-zinc-400 block mb-1">Demo apron depth (ft) — always removed with slab</label>
                                 <select id="demoApronDepth" onchange="calculateEstimate()" class="calc-input w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-sm">
                                     <option value="1">1 ft</option>
                                     <option value="2">2 ft</option>
@@ -2264,7 +2276,8 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             }
             if(!r) return;
             const slab=document.getElementById('concreteThickness');
-            if(slab){
+            const slabModeNow=document.getElementById('slabMode')?.value||'new';
+            if(slab && slabModeNow!=='existing'){
                 const opt=[...slab.options].some(o=>o.value===String(r.slab));
                 if(opt) slab.value=String(r.slab);
             }
@@ -2317,6 +2330,64 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
         }
 
         function onDemoChange(){handleEPALogic();}
+        function ensureSelectOption(sel, value, label){
+            if(!sel) return;
+            if([...sel.options].some(o=>o.value===value)) return;
+            const opt=document.createElement('option');
+            opt.value=value; opt.textContent=label;
+            sel.appendChild(opt);
+        }
+        function syncNewConcreteFromSlabMode(){
+            const mode=document.getElementById('slabMode')?.value||'new';
+            const cb=document.getElementById('newConcrete');
+            if(cb) cb.checked = mode==='new';
+            return mode;
+        }
+        function updateExistingSlabUI(){
+            const existing=(document.getElementById('slabMode')?.value||'new')==='existing';
+            const lbl=document.getElementById('demoApronHelpLabel');
+            if(lbl) lbl.textContent=existing
+                ? 'Demo apron depth (ft) — NOT removing the slab/apron underneath (building on it)'
+                : 'Demo apron depth (ft) — always removed with slab';
+            const apronSel=document.getElementById('apronDepth');
+            const apronManual=document.getElementById('apronManual');
+            const apronHelp=document.getElementById('apronManualHelp');
+            if(apronSel && apronSel.value==='existing'){
+                if(apronManual) apronManual.classList.add('hidden');
+                if(apronHelp) apronHelp.classList.add('hidden');
+            }
+        }
+        function onSlabModeChange(){
+            const mode=syncNewConcreteFromSlabMode();
+            const apron=document.getElementById('apronDepth');
+            const thick=document.getElementById('concreteThickness');
+            const retain=document.getElementById('retainType');
+            const retainH=document.getElementById('retainWallHeight');
+            const force=document.getElementById('forceFootingChicago');
+            const frost=document.getElementById('frostProtectedFooting');
+            ensureSelectOption(apron,'existing','Existing');
+            ensureSelectOption(thick,'existing','Existing');
+            ensureSelectOption(retain,'existing','Existing');
+            if(mode==='existing'){
+                if(apron) apron.value='existing';
+                if(thick) thick.value='existing';
+                if(force) force.checked=false;
+                if(frost) frost.checked=false;
+                if(retain) retain.value='existing';
+                if(retainH) retainH.value='0';
+            } else {
+                if(apron) apron.value='3';
+                let slabDefault='4';
+                try{
+                    const r=typeof getCityCodeRules==='function' ? getCityCodeRules() : null;
+                    if(r && r.slab!=null && thick && [...thick.options].some(o=>o.value===String(r.slab))) slabDefault=String(r.slab);
+                }catch(e){}
+                if(thick) thick.value=slabDefault;
+                if(retain) retain.value='none';
+                if(retainH) retainH.value='0';
+            }
+            updateExistingSlabUI();
+        }
         function syncDemoPreset(){
             const preset=document.getElementById('demoSlabPreset')?.value||'none';
             const demo=document.getElementById('demoExisting'); if(demo)demo.checked=preset!=='none';
@@ -2585,20 +2656,24 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             updateOverheadDoorOffsetControl();
             
             // Concrete
-            const newConcrete = document.getElementById('newConcrete').checked;
+            const slabMode = syncNewConcreteFromSlabMode();
+            updateExistingSlabUI();
+            const newConcrete = slabMode === 'new';
             const apronSelect = document.getElementById('apronDepth');
             const apronManual = document.getElementById('apronManual');
             const apronIsManual = apronSelect.value === 'manual';
-            if(apronManual) apronManual.classList.toggle('hidden', !apronIsManual);
+            const apronIsExisting = apronSelect.value === 'existing';
+            if(apronManual) apronManual.classList.toggle('hidden', !apronIsManual || apronIsExisting);
             const apronManualHelp = document.getElementById('apronManualHelp');
-            if(apronManualHelp) apronManualHelp.classList.toggle('hidden', !apronIsManual);
-            const apronDepth = apronIsManual
+            if(apronManualHelp) apronManualHelp.classList.toggle('hidden', !apronIsManual || apronIsExisting);
+            const apronDepth = apronIsExisting ? 0 : (apronIsManual
                 ? (Math.max(0, parseFloat(apronManual?.value || '0')) || 0)
-                : (parseFloat(apronSelect.value) || 0);
-            const concreteThickness = Number(document.getElementById('concreteThickness').value || 4);
-            const fiveInch = concreteThickness === 5;
-            const sixInch = concreteThickness === 6;
-            const sevenInch = concreteThickness === 7;
+                : (parseFloat(apronSelect.value) || 0));
+            const concreteThicknessRaw = document.getElementById('concreteThickness').value;
+            const concreteThickness = concreteThicknessRaw === 'existing' ? 0 : Number(concreteThicknessRaw || 4);
+            const fiveInch = concreteThicknessRaw !== 'existing' && concreteThickness === 5;
+            const sixInch = concreteThicknessRaw !== 'existing' && concreteThickness === 6;
+            const sevenInch = concreteThicknessRaw !== 'existing' && concreteThickness === 7;
             function thicknessUpgradeRate(inches){
                 const n=Number(inches)||4;
                 if(n<=4) return 0;
@@ -2839,7 +2914,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             
             // Concrete areas + two patios
             let slabArea = newConcrete ? floorArea : 0;
-            let apronArea = newConcrete ? (width * apronDepth) : 0;
+            let apronArea = (newConcrete && !apronIsExisting) ? (width * apronDepth) : 0;
             
             // Calculate patio areas (custom dims override length calc)
             const patio1Area = patio1CustomArea > 0 ? patio1CustomArea : (width * patio1Length);
@@ -2897,8 +2972,9 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                 calculatedOldConcrete = demoSlabArea + demoApronArea;
             }
 
-            const demoCost = demo ? 1300 : 0;
-            const removalCost = demo ? ((demoSlabArea + demoApronArea) * 1.5) : 0;
+            const demoCost = demo ? (parseFloat(document.getElementById('demoCostInput')?.value) || 0) : 0;
+            const removalCost = (demo && slabMode !== 'existing') ? ((demoSlabArea + demoApronArea) * 1.5) : 0;
+            if (slabMode === 'existing') calculatedOldConcrete = 0;
             const additionalRemovalCost = (additionalRemovalArea + additionalRemovalArea2) * 2;
 
             // Custom extras total
@@ -2916,11 +2992,12 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                 epaCost = 360;
             }
             
-            // Footing & rods
+            // Footing & rods — existing slab: only if user re-checked forceFootingChicago (no suburb auto-add)
             let footingCost = 0;
             let rodsCost = 0;
             const isOutsideChicago = city !== 'Chicago';
-            if (isOutsideChicago || forceFootingChicago) {
+            const addFooting = slabMode === 'existing' ? forceFootingChicago : (isOutsideChicago || forceFootingChicago);
+            if (addFooting) {
                 const perimeter = 2 * (width + depth);
                 footingCost = perimeter * 40;
                 rodsCost = 300;
@@ -2928,7 +3005,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             
             // Retaining wall
             const perimeterLf = 2 * (width + depth);
-            const retainRate = retainType === 'none' ? 0 : 95;
+            const retainRate = (retainType === 'none' || retainType === 'existing') ? 0 : 95;
             const retainCost = retainRate > 0 && retainInches > 0 ? retainInches * retainRate : 0;
             const frostFootingCost = frostProtectedFooting ? perimeterLf * 200 : 0;
             
@@ -4104,7 +4181,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
         const ESTIMATE_FIELD_LABELS={
             city:'City',width:'Garage Width',depth:'Garage Depth',customWidth:'Custom Garage Width',customDepth:'Custom Garage Depth',
             wallHeight:'Wall Height',roofType:'Roof Style',eaveDir:'Gable Eaves',pitch:'Roof Pitch',eavesSize:'Eaves',manualEavesSize:'Manual Eaves Size',roofPatioEnabled:'Roof Patio',roofPatioDepth:'Roof Patio Depth',manualRoofPatioDepth:'Manual Roof Patio Depth',roofPatioSide:'Side Roof Patio',overhangEnabled:'Overhang',overhangSize:'Overhang Size',overhangMaterial:'Overhang Material',
-            newConcrete:'New Concrete',apronDepth:'Apron Depth',apronManual:'Manual Apron Depth',concreteThickness:'Concrete Thickness',excavation:'Excavation / Stone Loads',
+            slabMode:'Slab Mode',newConcrete:'New Concrete',apronDepth:'Apron Depth',apronManual:'Manual Apron Depth',concreteThickness:'Concrete Thickness',excavation:'Excavation / Stone Loads',demoCostInput:'Demolition Cost',
             frostProtectedFooting:'42" Frost Protected Footing',retainType:'Retaining Wall Type',retainWallHeight:'Retaining Wall Above 8 Inches',
             demoSlabPreset:'Demo Garage / Slab Size',demoApronDepth:'Demo Apron Depth',demoApronManual:'Manual Demo Apron Depth',
             oldConcreteOverride:'Custom Demo Slab Size',additionalRemovalDims:'Additional Concrete Removal',
@@ -4128,7 +4205,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             if(value===null||value===undefined||value==='')return 'None';
             if(key==='manualEavesSize' && !String(value).includes('"'))return `${value}"`;
             const footKeys=['width','depth','customWidth','customDepth','wallHeight','apronDepth','apronManual','demoApronDepth','demoApronManual','overheadDoorHeight','overheadDoorWidth','roofPatioDepth','manualRoofPatioDepth'];
-            if(footKeys.includes(key) && !String(value).includes("'"))return `${value}'`;
+            if(footKeys.includes(key) && value!=='existing' && value!=='manual' && !String(value).includes("'"))return `${value}'`;
             return String(value);
         }
         function normalizeEstimateChangeValue(key,value){
@@ -4262,7 +4339,10 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             if(snapshot.gutters!==undefined)setEstimatorField('gutters',!!snapshot.gutters);
             if(snapshot.aluminum_soffit_fascia!==undefined)setEstimatorField('aluminumSoffit',!!snapshot.aluminum_soffit_fascia);
             if(snapshot.demolition!==undefined)setEstimatorField('demoExisting',!!snapshot.demolition);
-            if(snapshot.new_concrete!==undefined)setEstimatorField('newConcrete',!!snapshot.new_concrete);
+            if(snapshot.new_concrete!==undefined){
+                setEstimatorField('newConcrete',!!snapshot.new_concrete);
+                setEstimatorField('slabMode', snapshot.new_concrete ? 'new' : 'existing');
+            }
             if(snapshot.additional_notes)setEstimatorField('additionalEstimateNotes',snapshot.additional_notes);
         }
 
@@ -4292,6 +4372,8 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                         if(key==='customExtras'||key==='multi_options')return;
                         setEstimatorField(key,value);
                     });
+                    if(state.slabMode===undefined) setEstimatorField('slabMode', state.newConcrete===false ? 'existing' : 'new');
+                    if(state.demoCostInput===undefined) setEstimatorField('demoCostInput','1300');
                     restoreCustomExtras(state.customExtras||[]);
                     // Restore Option A/B/C if they were saved on this estimate
                     if(state.multi_options && typeof state.multi_options==='object'){
@@ -4346,6 +4428,8 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                     setEstimatorField('aluminumSoffit',!!s.aluminum_soffit_fascia);
                     setEstimatorField('demoExisting',!!s.demolition);
                     setEstimatorField('newConcrete',!!s.new_concrete);
+                    if(s.new_concrete!==undefined) setEstimatorField('slabMode', s.new_concrete ? 'new' : 'existing');
+                    setEstimatorField('demoCostInput','1300');
                     if(s.additional_notes)setEstimatorField('additionalEstimateNotes',s.additional_notes);
 
                     // Legacy estimates saved before calculator_state can still recover extra concrete
@@ -6662,9 +6746,12 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                 const apronSelect = document.getElementById('apronDepth');
                 const apronManual = document.getElementById('apronManual');
                 if (apronSelect && apronSelect.value === 'manual') apronDepthFt = Math.max(0, parseFloat(apronManual?.value || '3') || 3);
+                else if (apronSelect && apronSelect.value === 'existing') apronDepthFt = 0;
                 else if (apronSelect) apronDepthFt = parseFloat(apronSelect.value) || 3;
             } catch (_) {}
-            const apronRule = [
+            const apronRule = apronDepthFt <= 0
+                ? 'FRONT APRON: existing apron — do NOT pour or invent a new deep apron pad; keep the existing short apron as-is'
+                : [
                 'FRONT APRON: shallow concrete apron only about '+apronDepthFt+' feet deep from the overhead door outward',
                 'a '+apronDepthFt+'-foot apron must look SHORT and modest — NOT a long driveway pad, NOT a huge slab filling the yard',
                 'apron width matches the garage front; depth is only ~'+apronDepthFt+' feet so it reads correctly in perspective'
@@ -7276,16 +7363,26 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             const sidingColorId = sidingType === 'hardie' ? 'hardieColor' : 'vinylColor';
             const sidingColor = selectedText(sidingColorId) || 'White';
             const sidingHex = val(sidingColorId) || '#F5F5F5';
-            const apronDepth = val('apronDepth') === 'manual'
+            const slabMode = val('slabMode') || (checked('newConcrete') ? 'new' : 'existing');
+            const apronRaw = val('apronDepth');
+            const apronDepth = apronRaw === 'manual'
                 ? Number(val('apronManual') || 0)
-                : Number(val('apronDepth') || 0);
+                : (apronRaw === 'existing' ? 0 : Number(apronRaw || 0));
+            const apronNumeric = apronRaw !== 'existing' && Number.isFinite(apronDepth) && apronDepth > 0;
 
             // Estimate-sheet runtime values. These must be defined inside printEstimateSheet;
             // calculateEstimate() has its own local copies that are not visible here.
-            const concreteThickness = Number(val('concreteThickness') || 4);
+            const thicknessRaw = val('concreteThickness');
+            const existingSlabBuild = slabMode === 'existing' || thicknessRaw === 'existing';
+            const concreteThickness = thicknessRaw === 'existing' ? 0 : Number(thicknessRaw || 4);
             const retainType = val('retainType') || 'none';
             const retainInches = Number(val('retainWallHeight') || 0);
             const frostProtectedFooting = checked('frostProtectedFooting');
+            const apronSpecText = (apronRaw === 'existing' || (slabMode === 'existing' && !apronNumeric))
+                ? 'Existing'
+                : ((checked('newConcrete') || slabMode === 'existing') && apronDepth > 0
+                    ? null
+                    : 'None');
 
             const quote = document.getElementById('customerQuote').textContent;
             const today = new Date().toLocaleDateString('en-US', { month:'2-digit', day:'2-digit', year:'numeric' });
@@ -7383,11 +7480,13 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                 }
 
                 addSpec('Window Type', wallyWindowDetail);
-                addSpec('Floor', `New ${width}' x ${depth}' - ${concreteThickness}" Reinforced Concrete Slab, 4,000 PSI`);
-                addSpec('Apron', checked('newConcrete') && apronDepth > 0 ? `${apronDepth}'` : 'None');
+                addSpec('Floor', existingSlabBuild
+                    ? `Build on existing ${width}' x ${depth}' slab`
+                    : `New ${width}' x ${depth}' - ${concreteThickness}" Reinforced Concrete Slab, 4,000 PSI`);
+                addSpec('Apron', apronSpecText === 'Existing' ? 'Existing' : (apronSpecText === 'None' ? 'None' : `${apronDepth}'`));
                 addSpec('Perimeter Curb', 'Water Ledge, Included');
-                // Wally: always "Included As Needed" regardless of calculator retaining-wall input
-                addSpec('Retaining Wall', 'Included As Needed');
+                // Wally: always "Included As Needed" unless building on existing retain
+                addSpec('Retaining Wall', retainType === 'existing' ? 'Existing' : 'Included As Needed');
                 addSpec('Building Permits', isSuburb ? 'Absolute Will File For And Secure All Permits. Customer Pays All Fees.' : 'Included ($550 Value)');
             } else {
                 // Standard ABG estimate-sheet format for Ramsey, Samer and Tom.
@@ -7430,11 +7529,13 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                 } else if (doorType === 'french') addSpec('French Door', 'French Door Allowance');
                 else addSpec('Service Door', '1 x 36"x80" Steel Door with Deadbolt Lock');
                 addSpec('Window Type', typeof formatWindowSheetDetail==='function' ? formatWindowSheetDetail() : (windowType === 'none' ? 'No Window' : `(${Math.max(1,Number(windowQty)||1)}) Single Hung`));
-                addSpec('Floor', `${concreteThickness}" Thick Reinforced with Steel Wire Mesh Rated 4,000 PSI`);
-                addSpec('Apron', checked('newConcrete') && apronDepth > 0 ? `${width}' x ${apronDepth}' New Concrete Apron` : 'None');
+                addSpec('Floor', existingSlabBuild
+                    ? 'Building on existing slab'
+                    : `${concreteThickness}" Thick Reinforced with Steel Wire Mesh Rated 4,000 PSI`);
+                addSpec('Apron', apronSpecText === 'Existing' ? 'Existing' : (apronSpecText === 'None' ? 'None' : `${width}' x ${apronDepth}' New Concrete Apron`));
                 addSpec('Perimeter Curb', 'Water Ledge');
-                // Non-Wally: always "Build Up Included" regardless of calculator retaining-wall input
-                addSpec('Retaining Wall', 'Build Up Included');
+                // Non-Wally: always "Build Up Included" unless building on existing retain
+                addSpec('Retaining Wall', retainType === 'existing' ? 'Existing' : 'Build Up Included');
                 addSpec('Building Codes', 'YES');
                 addSpec('Building Permits', isSuburb ? 'Absolute will file for and secure all permits. Customer pays all fees.' : 'YES - Included');
                 addSpec('Bottom Plates', 'Treated');
@@ -7457,9 +7558,15 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             const noteRoof = roofType === 'gable'
                 ? (val('eaveDir') === 'sides' ? 'reverse gable' : 'gable')
                 : 'hip';
-            const concreteOpening = checked('newConcrete')
-                ? ` with new reinforced concrete${apronDepth > 0 ? ` and ${apronDepth}' full-width apron` : ''}`
-                : '';
+            let concreteOpening = '';
+            if (existingSlabBuild) {
+                const apronBit = (apronRaw === 'existing' || !apronNumeric)
+                    ? ' and existing apron'
+                    : ` and ${apronDepth}' full-width apron`;
+                concreteOpening = `, building on the existing slab${apronBit}`;
+            } else if (checked('newConcrete')) {
+                concreteOpening = ` with new reinforced concrete${apronDepth > 0 ? ` and ${apronDepth}' full-width apron` : ''}`;
+            }
             notes.push(`Build new ${width}' x ${depth}' ${noteRoof} roof garage${concreteOpening}.`);
             if(checked('roofPatioEnabled')){const d=getRoofPatioDepth(),side=checked('roofPatioSide'),span=side?depth:width;notes.push(`${span}' x ${d}' ${side?'side':'rear'} roof patio with new reinforced concrete and four support posts included.`);}
 
@@ -7482,7 +7589,13 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                 const demoApron = val('demoApronDepth') === 'manual'
                     ? Number(val('demoApronManual') || 0)
                     : Number(val('demoApronDepth') || 0);
-                if (demoPreset !== 'custom') {
+                if (slabMode === 'existing') {
+                    const sizeBit = demoPreset !== 'custom' ? prettyDims(demoPreset)
+                        : (demoCustom ? prettyDims(demoCustom) : '');
+                    demoDesc = sizeBit
+                        ? `Demolish the existing ${sizeBit} garage structure only and build on the existing slab and apron.`
+                        : 'Demolish the garage structure only and build on the existing slab and apron.';
+                } else if (demoPreset !== 'custom') {
                     demoDesc = salesman.wally
                         ? `Demolish and remove existing ${prettyDims(demoPreset)} garage, concrete floor${demoApron ? `, and ${demoApron}' apron` : ''}.`
                         : `Demolish and remove existing ${prettyDims(demoPreset)} garage / slab${demoApron ? ` and ${demoApron}' apron` : ''}.`;
@@ -7543,9 +7656,9 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             if (Number(val('firewallWalls') || 0) > 0) notes.push(`${val('firewallWalls')} firewall wall${Number(val('firewallWalls')) > 1 ? 's' : ''} included.`);
             if (checked('hurricaneTies')) notes.push('Hurricane ties included.');
             const ctNote=Number(val('concreteThickness')||4);
-            if (ctNote===5) notes.push('5" concrete thickness upgrade included.');
-            if (ctNote===6) notes.push('6" concrete thickness upgrade included.');
-            if (ctNote===7) notes.push('7" concrete thickness upgrade included.');
+            if (thicknessRaw!=='existing' && ctNote===5) notes.push('5" concrete thickness upgrade included.');
+            if (thicknessRaw!=='existing' && ctNote===6) notes.push('6" concrete thickness upgrade included.');
+            if (thicknessRaw!=='existing' && ctNote===7) notes.push('7" concrete thickness upgrade included.');
             const excavationLoads = Number(val('excavation') || 0);
             if (Number.isFinite(excavationLoads) && excavationLoads > 0) notes.push(`Excavation and stone base included (${excavationLoads} load${excavationLoads === 1 ? '' : 's'}).`);
             if (val('additionalRemovalDims').trim()) notes.push(`Additional concrete removal: ${prettyDims(val('additionalRemovalDims'))}.`);
@@ -8936,6 +9049,7 @@ async function openPopupChatGPT(){
                 document.getElementById('width').value = '20';
                 document.getElementById('depth').value = '20';
                 document.getElementById('roofType').value = 'hip';
+                const sm1=document.getElementById('slabMode'); if(sm1) sm1.value='new';
                 document.getElementById('newConcrete').checked = true;
                 document.getElementById('apronDepth').value = '3';
             if(document.getElementById('apronManual')) document.getElementById('apronManual').value='';
@@ -8943,6 +9057,7 @@ async function openPopupChatGPT(){
                 document.getElementById('demoSlabPreset').value = '20x20';
                 document.getElementById('demoApronDepth').value = '3';
                 document.getElementById('oldConcreteOverride').value = '';
+                const dc1=document.getElementById('demoCostInput'); if(dc1) dc1.value='1300';
                 // All other basics stay at defaults (electric 1500, 1 overhead+opener included, vinyl siding, permit, etc.)
                 
             } else if (num === 2) {
@@ -8951,6 +9066,7 @@ async function openPopupChatGPT(){
                 document.getElementById('width').value = '20';
                 document.getElementById('depth').value = '20';
                 document.getElementById('roofType').value = 'hip';
+                const sm2=document.getElementById('slabMode'); if(sm2) sm2.value='new';
                 document.getElementById('newConcrete').checked = true;
                 document.getElementById('apronDepth').value = '3';
             if(document.getElementById('apronManual')) document.getElementById('apronManual').value='';
@@ -8958,6 +9074,7 @@ async function openPopupChatGPT(){
                 document.getElementById('demoSlabPreset').value = '20x20';
                 document.getElementById('demoApronDepth').value = '3';
                 document.getElementById('oldConcreteOverride').value = '';
+                const dc2=document.getElementById('demoCostInput'); if(dc2) dc2.value='1300';
                 document.getElementById('wheelingCharge').checked = true;
                 // Footing & rods added automatically because not Chicago
             }
@@ -8994,6 +9111,7 @@ async function openPopupChatGPT(){
             const roofPatioSideEl=document.getElementById('roofPatioSide'); if(roofPatioSideEl)roofPatioSideEl.checked=false;
             toggleRoofPatio();
             toggleOverhang();
+            const slabModeEl = document.getElementById('slabMode'); if (slabModeEl) slabModeEl.value = 'new';
             document.getElementById('newConcrete').checked = true;
             document.getElementById('apronDepth').value = '3';
             if(document.getElementById('apronManual')) document.getElementById('apronManual').value='';
@@ -9010,6 +9128,7 @@ async function openPopupChatGPT(){
             
             document.getElementById('demoExisting').checked = false;
             document.getElementById('demoSlabPreset').value = 'none';
+            const demoCostEl = document.getElementById('demoCostInput'); if (demoCostEl) demoCostEl.value = '1300';
             try { syncDemoPreset(); } catch (e) {}
             document.getElementById('demoApronDepth').value = '3';
             document.getElementById('oldConcreteOverride').value = '';
@@ -9109,10 +9228,10 @@ async function openPopupChatGPT(){
         function attachListeners() {
             const ids = [
                 'city', 'width', 'depth', 'wallHeight', 'roofType', 'eaveDir', 'pitch',
-                'newConcrete', 'apronDepth', 'apronManual', 'concreteThickness', 'excavation',
+                'slabMode', 'newConcrete', 'apronDepth', 'apronManual', 'concreteThickness', 'excavation',
                 'extraConcrete1Type', 'extraConcrete1Thickness', 'extraPatio1Length', 'extraPatio1Custom',
                 'extraConcrete2Type', 'extraConcrete2Thickness', 'extraPatio2Length', 'extraPatio2Custom',
-                'demoExisting', 'demoSlabPreset', 'demoApronDepth', 'oldConcreteOverride', 'additionalRemovalDims', 'epaFee',
+                'demoExisting', 'demoSlabPreset', 'demoCostInput', 'demoApronDepth', 'oldConcreteOverride', 'additionalRemovalDims', 'epaFee',
                 'doorType', 'serviceDoorLocation', 'serviceDoorFrontSide', 'addlOverheadDoors', 'overheadDoorHeight', 'overheadDoorWidth', 'overheadDoorStyle', 'doorOffset',
                 'elecBase', 'evCharger', 'threeWaySwitch', 'extraLights', 'extraWindows', 'windowType', 'windowQty', 'windowPlacement', 'salesman',
                 'retainType', 'retainWallHeight', 'frostProtectedFooting', 'gutters', 'aluminumSoffit', 'sidingType', 'vinylColor', 'hardieColor',

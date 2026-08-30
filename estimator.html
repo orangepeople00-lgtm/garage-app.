@@ -91,6 +91,28 @@
             word-break: normal;
         }
 
+        /* Option-chip labels must stay inside their grid cell. An overflowing
+           <label> hit-area was toggling Topo survey when clicking CREATE MULTIPLE ESTIMATES. */
+        .option-toggle-grid {
+            overflow: hidden;
+            position: relative;
+            z-index: 0;
+            max-width: 100%;
+        }
+        .option-toggle-grid > label {
+            overflow: hidden;
+            max-width: 100%;
+            align-self: start;
+            position: relative;
+            z-index: 0;
+            isolation: isolate;
+        }
+        #arlingtonContainer,
+        #wheelingContainer {
+            overflow: hidden;
+            max-width: 100%;
+        }
+
         select, input {
             min-width: 0;
             max-width: 100%;
@@ -372,13 +394,20 @@
         }
     
         .back-production-btn {
-            position: fixed; top: 14px; right: 16px; z-index: 99999;
+            position: static;
+            display: inline-flex;
+            align-items: center;
+            flex-shrink: 0;
             background: rgba(20,35,60,.96); color:#fff; border:1px solid #64748b;
-            border-radius:10px; padding:10px 14px; font-weight:800; font-size:13px;
+            border-radius:10px; padding:8px 12px; font-weight:800; font-size:12px;
             box-shadow:0 6px 20px rgba(0,0,0,.35); text-decoration:none;
+            white-space: nowrap;
+            z-index: 1;
         }
         .back-production-btn:hover { background:#223451; }
         @media print { .back-production-btn { display:none!important; } }
+        /* Keep RESET fully clickable next to Back */
+        button[onclick="resetForm()"] { position: relative; z-index: 2; flex-shrink: 0; }
     
     .estimate-notes-page .notes-list { font-weight:800; line-height:1.35; }
     .estimate-notes-page.notes-1 .notes-list { font-size:21px; }
@@ -606,11 +635,11 @@ input, select, textarea, button { box-sizing:border-box; }
 
 </style>
 </head>
-<body class="bg-zinc-950 text-zinc-200"><a id="backToProductionBtn" class="back-production-btn" href="index.html?v=20260818v2">← Back To Dashboard</a>
+<body class="bg-zinc-950 text-zinc-200">
     <div class="max-w-[1280px] mx-auto">
         <!-- Header -->
-        <div class="flex items-center justify-between px-8 pt-8 pb-6">
-            <div class="flex items-center gap-x-3">
+        <div class="flex items-center justify-between px-8 pt-8 pb-6 gap-3 flex-wrap">
+            <div class="flex items-center gap-x-3 min-w-0">
                 <div class="w-11 h-11 bg-blue-600 rounded-2xl flex items-center justify-center shadow-inner">
                     <i class="fa-solid fa-warehouse text-white text-3xl"></i>
                 </div>
@@ -620,13 +649,14 @@ input, select, textarea, button { box-sizing:border-box; }
                 </div>
             </div>
             
-            <div class="flex items-center gap-x-2 text-sm">
+            <div class="flex items-center gap-x-2 text-sm flex-wrap justify-end">
+                <a id="backToProductionBtn" class="back-production-btn" href="index.html?v=20260818v2">← Back To Dashboard</a>
                 <div class="px-3 py-1.5 bg-zinc-900 rounded-2xl flex items-center gap-x-2 text-xs">
                     <div class="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
                     <span class="text-yellow-400 font-medium">LIVE CALCULATOR</span>
                 </div>
-                <button onclick="resetForm()" 
-                        class="flex items-center gap-x-2 px-4 py-2 text-xs font-semibold bg-zinc-900 hover:bg-zinc-800 transition-colors rounded-2xl border border-zinc-800">
+                <button type="button" onclick="resetForm()"
+                        class="flex items-center gap-x-2 px-4 py-2 text-xs font-semibold bg-zinc-900 hover:bg-zinc-800 transition-colors rounded-2xl border border-zinc-800 relative z-[2] shrink-0">
                     <i class="fa-solid fa-undo text-xs"></i>
                     <span>RESET</span>
                 </button>
@@ -1603,8 +1633,8 @@ input, select, textarea, button { box-sizing:border-box; }
                             </div>
                         
                         <!-- Other toggles -->
-                        <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2 text-xs col-span-2 md:col-span-3">
-                            <label class="flex items-center cursor-pointer px-4 py-2.5 bg-zinc-950 border border-zinc-700 rounded-2xl">
+                        <div class="option-toggle-grid mt-3 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2 text-xs col-span-2 md:col-span-3">
+                            <label class="flex items-center cursor-pointer px-4 py-2.5 bg-zinc-950 border border-zinc-700 rounded-2xl overflow-hidden max-w-full self-start">
                                 <select id="firewallWalls" onchange="calculateEstimate()" class="bg-transparent text-xs w-8 mr-1.5">
                                     <option value="0">0</option>
                                     <option value="1">1</option>
@@ -1615,23 +1645,23 @@ input, select, textarea, button { box-sizing:border-box; }
                                 <span class="text-xs">Firewall walls ($600/ea — Chicago or suburbs)</span>
                             </label>
                             
-                            <label class="flex items-center cursor-pointer px-4 py-2.5 bg-zinc-950 border border-zinc-700 rounded-2xl">
-                                <input type="checkbox" id="hurricaneTies" onchange="calculateEstimate()" class="accent-blue-500 w-4 h-4 mr-2">
+                            <label class="flex items-center cursor-pointer px-4 py-2.5 bg-zinc-950 border border-zinc-700 rounded-2xl overflow-hidden max-w-full self-start">
+                                <input type="checkbox" id="hurricaneTies" onchange="calculateEstimate()" class="accent-blue-500 w-4 h-4 mr-2 shrink-0">
                                 <span>Hurricane ties (+$300)</span>
                             </label>
                             
-                            <label id="wheelingContainer" class="flex items-center cursor-pointer px-4 py-2.5 bg-zinc-950 border border-zinc-700 rounded-2xl">
-                                <input type="checkbox" id="wheelingCharge" onchange="calculateEstimate()" class="accent-blue-500 w-4 h-4 mr-2">
+                            <label id="wheelingContainer" class="flex items-center cursor-pointer px-4 py-2.5 bg-zinc-950 border border-zinc-700 rounded-2xl overflow-hidden max-w-full self-start">
+                                <input type="checkbox" id="wheelingCharge" onchange="calculateEstimate()" class="accent-blue-500 w-4 h-4 mr-2 shrink-0">
                                 <span>Wheeling charge (+$500)</span>
                             </label>
                             
-                            <label id="arlingtonContainer" class="flex items-center cursor-pointer px-4 py-2.5 bg-zinc-950 border border-zinc-700 rounded-2xl">
-                                <input type="checkbox" id="arlingtonSurvey" onchange="calculateEstimate()" class="accent-blue-500 w-4 h-4 mr-2">
+                            <label id="arlingtonContainer" class="flex items-center cursor-pointer px-4 py-2.5 bg-zinc-950 border border-zinc-700 rounded-2xl overflow-hidden max-w-full self-start relative z-0">
+                                <input type="checkbox" id="arlingtonSurvey" onchange="calculateEstimate()" class="accent-blue-500 w-4 h-4 mr-2 shrink-0">
                                 <span>Topo survey (+$2,500)</span>
                             </label>
 
-                            <label class="flex items-center cursor-pointer px-4 py-2.5 bg-zinc-950 border border-zinc-700 rounded-2xl">
-                                <input type="checkbox" id="andrewPermit" onchange="calculateEstimate()" class="accent-blue-500 w-4 h-4 mr-2">
+                            <label class="flex items-center cursor-pointer px-4 py-2.5 bg-zinc-950 border border-zinc-700 rounded-2xl overflow-hidden max-w-full self-start">
+                                <input type="checkbox" id="andrewPermit" onchange="calculateEstimate()" class="accent-blue-500 w-4 h-4 mr-2 shrink-0">
                                 <span>Andrew for Permit (+$850)</span>
                             </label>
                         </div>
@@ -1641,10 +1671,10 @@ input, select, textarea, button { box-sizing:border-box; }
                 </div>
 
                 <!-- RESULTS PANEL -->
-                <div class="xl:col-span-5 bg-zinc-900 border border-zinc-800 rounded-3xl p-5 sm:p-7 garage-shadow flex flex-col min-w-0">
+                <div class="xl:col-span-5 bg-zinc-900 border border-zinc-800 rounded-3xl p-5 sm:p-7 garage-shadow flex flex-col min-w-0 relative z-10">
                     <!-- Multi-estimate: collapsed by default, green accordion above Estimate Summary -->
-                    <div class="mb-3 rounded-2xl border border-emerald-700/50 bg-emerald-950/30 overflow-hidden">
-                        <button type="button" onclick="toggleMultiEstimatePanel()" class="w-full flex items-center justify-between gap-2 px-3 py-2.5 text-left" aria-expanded="false" id="multiEstimateToggle">
+                    <div class="mb-3 rounded-2xl border border-emerald-700/50 bg-emerald-950/30 overflow-hidden relative z-10">
+                        <button type="button" onclick="toggleMultiEstimatePanel()" class="w-full flex items-center justify-between gap-2 px-3 py-2.5 text-left relative z-10" aria-expanded="false" id="multiEstimateToggle">
                             <div class="flex items-center gap-x-2 text-emerald-400 font-semibold text-xs tracking-wider">
                                 <i id="multiEstimateArrow" class="fa-solid fa-chevron-right transition-transform text-emerald-400" style="transform:rotate(0deg)"></i>
                                 <i class="fa-solid fa-layer-group"></i>
@@ -2749,7 +2779,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             // Electrical
             const extraLightsCost = extraLights * 150;
             const extraOutletsCost = extraOutlets * 150;
-            const extraWindowsCost = extraWindows * 150;
+            const extraWindowsCost = (document.getElementById('windowType')?.value === 'none') ? 0 : extraWindows * 150;
             const electricalCost = elecBase + ev + evPrep + threeWay + extraLightsCost + extraOutletsCost + electricSubpanel;
             
             // Overhead doors (base 16x7 @1200 + upgrade for taller + additional)
@@ -2873,8 +2903,10 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
 
             // Custom extras total
             let extrasTotal = 0;
-            document.querySelectorAll('.extra-cost').forEach(input => {
-                extrasTotal += parseFloat(input.value) || 0;
+            document.querySelectorAll('#extrasContainer > div').forEach(row => {
+                const display = row.querySelector('.extra-display')?.value || 'included';
+                if (display === 'option') return;
+                extrasTotal += parseFloat(row.querySelector('.extra-cost')?.value) || 0;
             });
             
             let epaCost = 0;
@@ -3638,21 +3670,33 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                 lines.push({ label: `Hardieboard / Cement Board siding upgrade (${data.hardieSheets} sheets)`, amount: data.hardieSidingCost, section: 'structural' });
             }
             
-            // ADD-ONS
-            if (data.ev > 0) lines.push({ label: 'EV charger', amount: data.ev, section: 'addons' });
-            if (data.threeWay > 0) lines.push({ label: '3-way switch', amount: data.threeWay, section: 'addons' });
-            if (data.extraLightsCost > 0) lines.push({ label: `Extra lights (${data.extraLights} × $150)`, amount: data.extraLightsCost, section: 'addons' });
+            // ADD-ONS — EV / lights / outlets / 3-way / EV prep already sit in electricalCost;
+            // 18x7 and custom extra already sit in overheadCost. Notes at $0 so rebuilt quote is not double-counted.
+            if (data.ev > 0) lines.push({ label: 'EV charger', amount: 0, section: 'addons', note: 'priced in electrical', key: 'ev_note' });
+            if (data.threeWay > 0) lines.push({ label: '3-way switch', amount: 0, section: 'addons', note: 'priced in electrical', key: 'three_way_note' });
+            if (data.extraLightsCost > 0) lines.push({ label: `Extra lights (${data.extraLights} × $150)`, amount: 0, section: 'addons', note: 'priced in electrical', key: 'extra_lights_note' });
             if (data.extraWindowsCost > 0) lines.push({ label: `Extra windows (${data.extraWindows} × $150)`, amount: data.extraWindowsCost, section: 'structural', key: 'extra_windows' });
-            if (data.evPrep > 0) lines.push({ label: 'EV Prep', amount: data.evPrep, section: 'addons' });
-            if (data.extraOutletsCost > 0) lines.push({ label: `Extra outlets (${data.extraOutlets})`, amount: data.extraOutletsCost, section: 'addons' });
-            if (data.overheadWidthUpgrade > 0) lines.push({ label: "18' × 7' overhead door upgrade", amount: data.overheadWidthUpgrade, section: 'addons' });
-            if (data.overheadCustomExtra > 0) lines.push({ label: 'Custom overhead door (internal extra)', amount: data.overheadCustomExtra, section: 'addons' });
+            if (data.evPrep > 0) lines.push({ label: 'EV Prep', amount: 0, section: 'addons', note: 'priced in electrical', key: 'ev_prep_note' });
+            if (data.extraOutletsCost > 0) lines.push({ label: `Extra outlets (${data.extraOutlets})`, amount: 0, section: 'addons', note: 'priced in electrical', key: 'extra_outlets_note' });
+            if (data.overheadWidthUpgrade > 0) lines.push({ label: "18' × 7' overhead door upgrade", amount: 0, section: 'addons', note: 'priced in overhead door', key: 'oh_18x7_note' });
+            if (data.overheadCustomExtra > 0) lines.push({ label: 'Custom overhead door (internal extra)', amount: 0, section: 'addons', note: 'priced in overhead door', key: 'oh_custom_note' });
             if (data.firewall > 0) lines.push({ label: `Firewall (${data.firewall / 600} wall${data.firewall > 600 ? 's' : ''})`, amount: data.firewall, section: 'addons' });
             if (data.hurricane > 0) lines.push({ label: 'Hurricane ties', amount: data.hurricane, section: 'addons' });
             if (data.wheeling > 0) lines.push({ label: 'Wheeling charge', amount: data.wheeling, section: 'addons' });
             if (data.arlingtonSurvey > 0) lines.push({ label: 'Topographical survey', amount: data.arlingtonSurvey, section: 'addons', key: 'topo_survey' });
             if (data.andrewPermit > 0) lines.push({ label: 'Andrew for Permit', amount: data.andrewPermit, section: 'addons' });
-            document.querySelectorAll('#extrasContainer > div').forEach(row=>{const desc=String(row.querySelector('.extra-desc')?.value||'Custom Extra / Option').trim()||'Custom Extra / Option';const cost=parseFloat(row.querySelector('.extra-cost')?.value)||0;const display=row.querySelector('.extra-display')?.value||'included';if(cost>0)lines.push({label:`${desc}${display==='option'?' — customer option':' — included in price'}`,amount:cost,section:'addons'});});
+            document.querySelectorAll('#extrasContainer > div').forEach(row=>{
+                const desc=String(row.querySelector('.extra-desc')?.value||'Custom Extra / Option').trim()||'Custom Extra / Option';
+                const cost=parseFloat(row.querySelector('.extra-cost')?.value)||0;
+                const display=row.querySelector('.extra-display')?.value||'included';
+                if(cost>0){
+                    if(display==='option'){
+                        lines.push({label:`${desc} — customer option`,amount:0,section:'addons',note:'optional, not included'});
+                    } else {
+                        lines.push({label:`${desc} — included in price`,amount:cost,section:'addons'});
+                    }
+                }
+            });
             
             // Editable summary amounts — manual overrides stick across recalculation
             const overrides = loadSummaryOverrides();
@@ -3954,9 +3998,9 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
         async function saveEstimateHistoryRecord(data){
             try{
                 const {data:{user}}=await garageSb.auth.getUser();
-                if(!user)return;
+                if(!user)return false;
                 const {data:staff,error:pe}=await garageSb.from('staff_profiles').select('username').eq('id',user.id).single();
-                if(pe||!staff?.username)return;
+                if(pe||!staff?.username)return false;
                 const editId=new URLSearchParams(location.search).get('editEstimate');
                 let previous=null;
                 if(editId){
@@ -4032,8 +4076,12 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                         }catch(e){}
                     }
                 }
-                if(error)console.error('Estimate history save failed:',error);
-            }catch(err){console.error('Estimate history save failed:',err)}
+                if(error){
+                    console.error('Estimate history save failed:',error);
+                    return false;
+                }
+                return true;
+            }catch(err){console.error('Estimate history save failed:',err);return false}
         }
 
         async function syncSignedInSalesman(){
@@ -4043,9 +4091,13 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                 const {data:staff}=await garageSb.from('staff_profiles').select('username').eq('id',user.id).single();
                 const select=document.getElementById('salesman');
                 if(!select||!staff?.username)return;
-                const map={ramsey:'ramsey',wally:'wally',tom:'tom',tomb:'tomb',sam:'sam'};
-                const target=map[staff.username];
-                if(target && Array.from(select.options).some(o=>o.value===target)) select.value=target;
+                const uname=String(staff.username||'').trim();
+                const options=Array.from(select.options);
+                const direct=options.find(o=>o.value===uname || o.value.toLowerCase()===uname.toLowerCase());
+                if(direct){ select.value=direct.value; return; }
+                const map={ramsey:'ramsey',wally:'wally',tom:'tom',tomb:'tomb',sam:'sam',samer:'samer'};
+                const target=map[uname.toLowerCase()];
+                if(target && options.some(o=>o.value===target)) select.value=target;
             }catch(e){console.warn('Could not auto-select signed-in salesman',e)}
         }
 
@@ -4378,7 +4430,11 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             const helpEl = document.getElementById('doorOffsetHelp');
             if (!widthEl || !doorWidthEl || !offsetEl) return { offset: 0, leftReturn: 0, rightReturn: 0 };
 
-            const garageWidth = Number(widthEl.value || 20);
+            const dims = (typeof getGarageDimensions === 'function') ? getGarageDimensions() : null;
+            const garageWidth = Number(dims && dims.width);
+            if (!Number.isFinite(garageWidth) || garageWidth <= 0) {
+                return { offset: 0, leftReturn: 0, rightReturn: 0 };
+            }
 
             // Every overhead-door position must leave at least a 1' return at both jambs.
             Array.from(doorWidthEl.options || []).forEach(opt => {
@@ -4387,6 +4443,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             });
 
             let doorWidth = Number(doorWidthEl.value || 16);
+            if (!Number.isFinite(doorWidth) || doorWidth <= 0) doorWidth = 16;
             if (doorWidth > garageWidth - 2) {
                 const legal = Array.from(doorWidthEl.options || [])
                     .map(o => Number(o.value || 0))
@@ -7242,7 +7299,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
 
             const specs = [];
             const addSpec = (item, details) => specs.push([item, details]);
-            const returnFmt = n => Number.isInteger(n) ? String(n) : Number(n).toFixed(1);
+            const returnFmt = n => { const x = Number(n); if (!Number.isFinite(x)) return '0'; return Number.isInteger(x) ? String(x) : x.toFixed(1); };
             const doorType = val('doorType');
             const serviceDoorLocation = val('serviceDoorLocation') || 'right';
             const serviceDoorFrontSide = val('serviceDoorFrontSide') || 'right';
@@ -7252,6 +7309,21 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             const doorPlacementText = doorOffset === 0
                 ? `Centered - ${returnFmt(doorPosition.leftReturn)}' Left Return / ${returnFmt(doorPosition.rightReturn)}' Right Return`
                 : `${Math.abs(doorOffset)}' ${doorOffset < 0 ? 'Left' : 'Right'} of Center - ${returnFmt(doorPosition.leftReturn)}' Left Return / ${returnFmt(doorPosition.rightReturn)}' Right Return`;
+
+            let overheadDoorLine = `${overheadDoorWidth}' x ${overheadDoorHeight}' ${overheadDoorStyleText} Door`;
+            try {
+                if (typeof isThreeCarLayout === 'function' && isThreeCarLayout()) {
+                    const threeDoors = (typeof getThreeCarDoors === 'function') ? getThreeCarDoors() : [];
+                    if (threeDoors.length) overheadDoorLine = threeDoors.map(d => d.label).join(' + ');
+                } else {
+                    const addlN = Math.max(0, Number(val('addlOverheadDoors') || 0));
+                    if (addlN > 0) {
+                        const sizes = [`${overheadDoorWidth}' x ${overheadDoorHeight}' ${overheadDoorStyleText}`];
+                        for (let i = 0; i < addlN; i++) sizes.push(`${overheadDoorWidth}' x ${overheadDoorHeight}' ${overheadDoorStyleText}`);
+                        overheadDoorLine = `(${1 + addlN}) Overhead Doors: ${sizes.join(' + ')}`;
+                    }
+                }
+            } catch (e) {}
 
             const isSuburb = String(city || '').trim().toLowerCase() !== 'chicago';
 
@@ -7288,7 +7360,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                 addSpec('Bottom Plates', 'Treated');
                 addSpec('Headers', 'Double LVL Headers');
                 addSpec('Cross Ties', '2x6 48 O.C.');
-                addSpec('Overhead Door', `${overheadDoorWidth}' x ${overheadDoorHeight}' ${overheadDoorStyleText} Door`);
+                addSpec('Overhead Door', overheadDoorLine);
                 const electricOnPrint=typeof isElectricIncluded==='function'?isElectricIncluded():true;
                 const electricAltPrint=typeof getElectricAltOption==='function'?getElectricAltOption():'owner';
                 const hideOpener=!electricOnPrint && electricAltPrint==='none';
@@ -7327,13 +7399,20 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                 addSpec('Double Wall', '1/2" Plywood or Choice');
                 addSpec('Eaves', `${getEavesInches()}" Eaves - 4 Sides Boxed`);
                 if(checked('roofPatioEnabled')){const d=getRoofPatioDepth(),side=checked('roofPatioSide'),span=side?depth:width;addSpec('Roof Patio',`${span}' x ${d}' ${side?'Side':'Rear'} Roof Patio - 4 Support Posts`);}
-                addSpec('Overhang', checked('gutters') ? (roofType === 'gable' ? 'Seamless Gutters 2 Sides - 2 Down Spouts' : 'Seamless Gutters 4 Sides - 2 Down Spouts') : '" "');
+                if(checked('overhangEnabled')){
+                    const overhangSizePrint=Number(val('overhangSize')||6);
+                    const overhangMaterialPrint=val('overhangMaterial')==='aluminum'?'Prefinished Aluminum':'Prefinished Wood';
+                    addSpec('Overhang', `${overhangSizePrint}" - ${overhangMaterialPrint}`);
+                }
+                if(checked('gutters')){
+                    addSpec('Gutters', roofType === 'gable' ? 'Seamless Gutters 2 Sides - 2 Down Spouts' : 'Seamless Gutters 4 Sides - 2 Down Spouts');
+                }
                 addSpec('Cross Ties', '2x6 48 O.C');
                 addSpec('Roofing', 'Architectural Shingles + 15lbs Felt Paper');
                 addSpec('Studs', `${wallHeight >= 10 ? '2x6' : '2x4'} 16" O.C.`);
                 addSpec('Rafters', '2x6 16" O.C.');
                 addSpec('Headers', '2 LVL Headers');
-                addSpec('Overhead Door', `${overheadDoorWidth}' x ${overheadDoorHeight}' ${overheadDoorStyleText} Door`);
+                addSpec('Overhead Door', overheadDoorLine);
                 const electricOnPrint2=typeof isElectricIncluded==='function'?isElectricIncluded():true;
                 const electricAltPrint2=typeof getElectricAltOption==='function'?getElectricAltOption():'owner';
                 const hideOpener2=!electricOnPrint2 && electricAltPrint2==='none';
@@ -7467,11 +7546,22 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             if (ctNote===5) notes.push('5" concrete thickness upgrade included.');
             if (ctNote===6) notes.push('6" concrete thickness upgrade included.');
             if (ctNote===7) notes.push('7" concrete thickness upgrade included.');
-            if (checked('excavation')) notes.push('Excavation and stone base included.');
+            const excavationLoads = Number(val('excavation') || 0);
+            if (Number.isFinite(excavationLoads) && excavationLoads > 0) notes.push(`Excavation and stone base included (${excavationLoads} load${excavationLoads === 1 ? '' : 's'}).`);
             if (val('additionalRemovalDims').trim()) notes.push(`Additional concrete removal: ${prettyDims(val('additionalRemovalDims'))}.`);
 
             const extraDesc=[];
-            document.querySelectorAll('#extrasContainer > div').forEach(row=>{const desc=String(row.querySelector('.extra-desc')?.value||'').trim();const cost=parseFloat(row.querySelector('.extra-cost')?.value)||0;const display=row.querySelector('.extra-display')?.value||'included';if(desc)extraDesc.push(display==='option'&&cost>0?`${desc} (+$${cost.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})})`:desc);});
+            document.querySelectorAll('#extrasContainer > div').forEach(row=>{
+                const desc=String(row.querySelector('.extra-desc')?.value||'').trim();
+                const cost=parseFloat(row.querySelector('.extra-cost')?.value)||0;
+                const display=row.querySelector('.extra-display')?.value||'included';
+                if(!desc) return;
+                if(display==='option'){
+                    extraDesc.push(`Optional, not included: ${desc} — add $${cost.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}`);
+                } else {
+                    extraDesc.push(desc);
+                }
+            });
             extraDesc.forEach(text=>notes.push(text));
 
             // Customer-entered Additional Estimate Notes always flow directly
@@ -8728,7 +8818,7 @@ async function openPopupChatGPT(){
             if (saveToHistory) {
                 // History list: material only — no color wording on customer-facing sheets either
                 const sidingLabel = sidingType === 'hardie' ? 'Hardieboard / Cement Board Siding' : 'Premium Vinyl Siding';
-                saveEstimateHistoryRecord({
+                const historySaved = await saveEstimateHistoryRecord({
                     customer: customerName,
                     address: customerAddress,
                     city,
@@ -8748,7 +8838,7 @@ async function openPopupChatGPT(){
                             estimateNumberFromText(document.getElementById('customerQuote')?.textContent || quote || '0') -
                             estimateNumberFromText(document.getElementById('internalTotal')?.textContent || '0')
                         ),
-                        pitch: `${pitch}/12`,
+                        pitch: pitch,
                         overhead_door: `${overheadDoorWidth}' x ${overheadDoorHeight}' ${overheadDoorStyleText}`,
                         service_door: selectedText('doorType') || doorType || '',
                         gutters: checked('gutters'),
@@ -8762,6 +8852,9 @@ async function openPopupChatGPT(){
                         sheet_presentation: (typeof getSheetPresentation==='function' ? getSheetPresentation() : null)
                     }
                 });
+                if (!historySaved) {
+                    try { alert('Estimate sheet opened but was not saved to history.'); } catch (e) {}
+                }
             }
         }
 
@@ -8916,10 +9009,12 @@ async function openPopupChatGPT(){
             document.getElementById('extraPatio2Custom').value = '';
             
             document.getElementById('demoExisting').checked = false;
-            document.getElementById('demoSlabPreset').value = 'custom';
+            document.getElementById('demoSlabPreset').value = 'none';
+            try { syncDemoPreset(); } catch (e) {}
             document.getElementById('demoApronDepth').value = '3';
             document.getElementById('oldConcreteOverride').value = '';
             document.getElementById('additionalRemovalDims').value = '';
+            const ard2 = document.getElementById('additionalRemovalDims2'); if (ard2) ard2.value = '';
             document.getElementById('epaFee').checked = false;
             document.getElementById('epaFee').disabled = false;
             
@@ -8953,10 +9048,17 @@ async function openPopupChatGPT(){
             document.getElementById('evCharger').checked = false;
             document.getElementById('threeWaySwitch').checked = false;
             document.getElementById('extraLights').value = '0';
+            const eli = document.getElementById('extraLightsInterior'); if (eli) eli.value = '';
+            const ele = document.getElementById('extraLightsExterior'); if (ele) ele.value = '';
+            const eoi = document.getElementById('extraOutletsInterior'); if (eoi) eoi.value = '';
+            const eoe = document.getElementById('extraOutletsExterior'); if (eoe) eoe.value = '';
+            const extraOutletsEl = document.getElementById('extraOutlets'); if (extraOutletsEl) extraOutletsEl.value = '0';
+            try { syncExtraElecTotals(); } catch (e) {}
+            const evPrepEl = document.getElementById('evPrep'); if (evPrepEl) evPrepEl.checked = false;
             document.getElementById('extraWindows').value = '0';
             
             document.getElementById('retainType').value = 'none';
-            document.getElementById('retainWallHeight').value = '8';
+            document.getElementById('retainWallHeight').value = '0';
             document.getElementById('gutters').checked = false;
             document.getElementById('aluminumSoffit').checked = false;
             document.getElementById('sidingType').value = 'vinyl';

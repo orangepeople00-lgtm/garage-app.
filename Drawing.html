@@ -754,7 +754,9 @@ button.danger{color:#b42318}
 
 
 .sidebar-fold{border:1px solid #e5e7eb;border-radius:10px;padding:6px 8px;background:#fff;margin:6px 0}
-.sidebar-fold>summary{font-weight:800;font-size:12px;cursor:pointer;list-style:none;padding:6px 2px;color:#334155}
+.sidebar-fold>summary{font-weight:800;font-size:12px;cursor:pointer;list-style:none;padding:6px 2px;color:#334155;position:relative;z-index:2;pointer-events:auto}
+.sidebar details>summary{position:relative;z-index:2;pointer-events:auto!important;cursor:pointer}
+.sidebar .collapsible-section>summary{position:relative;z-index:3;pointer-events:auto!important}
 .sidebar-fold>summary::-webkit-details-marker{display:none}
 .sidebar-fold>summary:after{content:" ▾";float:right;color:#94a3b8}
 .sidebar-fold:not([open])>summary:after{content:" ▸"}
@@ -817,7 +819,10 @@ button.danger{color:#b42318}
 .compact-pair{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;gap:7px!important;align-items:end!important}
 .compact-pair .field{min-width:0!important;margin-bottom:0!important}
 .compact-pair label{font-size:10px!important;line-height:1.1!important}
-#wizardModal>div{width:min(760px,96vw)!important}
+#wizardModal>div{width:min(760px,96vw)!important;max-height:92vh!important;display:flex!important;flex-direction:column!important;overflow:hidden!important;padding:0!important}
+#wizardModal .wizard-head{flex:0 0 auto;position:sticky;top:0;z-index:3;background:#fff;padding:18px 18px 12px;border-bottom:1px solid #e5e7eb}
+#wizardModal .wizard-body{flex:1 1 auto;min-height:0;overflow:auto;padding:12px 18px}
+#wizardModal .wizard-foot{flex:0 0 auto;position:sticky;bottom:0;z-index:3;background:#fff;padding:12px 18px 18px;border-top:1px solid #e5e7eb;display:flex;gap:8px;justify-content:flex-end}
 #wizardModal .compact-pair{gap:10px!important}
 #wizardModal .field{margin-bottom:7px!important}
 #wizardModal label{font-size:11px!important}
@@ -2671,11 +2676,12 @@ button.danger{color:#b42318}
 </div>
 </main>
 <div class="hidden" id="wizardModal" style="position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:18px">
-<div style="width:min(620px,96vw);max-height:92vh;overflow:auto;background:#fff;border-radius:14px;padding:18px;box-shadow:0 18px 60px rgba(0,0,0,.25)">
-<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+<div class="wizard-card" style="width:min(620px,96vw);max-height:92vh;overflow:hidden;background:#fff;border-radius:14px;box-shadow:0 18px 60px rgba(0,0,0,.25);display:flex;flex-direction:column">
+<div class="wizard-head" style="display:flex;align-items:center;gap:10px">
 <div><div style="font-size:20px;font-weight:800">Drawing Wizard</div><div class="mode-note">Enter the basics. The app builds a starter drawing you can move, resize, rotate, and edit.</div></div>
 <div style="flex:1"></div><button id="wizardClose" type="button">Close</button>
 </div>
+<div class="wizard-body">
 <div class="row">
 <div class="field"><label>Sheet type</label><select id="wMode">
 <option selected="" value="all">All</option>
@@ -2795,7 +2801,8 @@ button.danger{color:#b42318}
 <div class="field wizard-demo-only"><label>Contents on obstruction job</label><select id="wContents"><option value="no">No</option><option value="yes">Yes</option></select></div>
 <div class="field"><label>Drawing note</label><input id="wNote" placeholder="Optional note to add to drawing"/></div>
 <div class="field"><label>Form notes</label><textarea id="wFormNotes" placeholder="Optional notes for the form"></textarea></div>
-<div style="display:flex;gap:8px;justify-content:flex-end">
+</div>
+<div class="wizard-foot" style="display:flex;gap:8px;justify-content:flex-end">
 <button id="wizardCancel" type="button">Close</button>
 <button class="primary" id="wizardBuild" type="button">Build Starter Drawing</button>
 </div>
@@ -2898,6 +2905,8 @@ function bindCombo(comboId,wId,hId,opts={}){
   const combo=$(comboId), wi=$(wId), hi=$(hId); if(!combo||!wi||!hi)return;
   const apply=()=>{
     const [w,h]=parseDims(combo.value);
+    // Ignore incomplete "20" / "20 x" parses so live typing does not zero hidden fields.
+    if(String(combo.value||'').trim() && !(w&&h)) return;
     wi.value=w||'';hi.value=h||'';
     if(opts.onchange)opts.onchange(w,h);
   };
@@ -3000,9 +3009,15 @@ function renderSheet(){
   paper.style.width=t.w+'px';paper.style.height=t.h+'px';img.style.display=state.mode==='siteplan'?'none':'block'; img.src=t.src||''; if(state.mode!=='siteplan'){img.onload=()=>{if(state.view==='fit')fitWhole()};} paper.classList.toggle('siteplan',state.mode==='siteplan');
   drawLayer.style.left='0px';drawLayer.style.top='0px';drawLayer.style.width=t.w+'px';drawLayer.style.height=t.h+'px';
   fieldLayer.innerHTML='';
+  paper.querySelectorAll('.clean-rectangle-interior-mask').forEach(n=>n.remove());
   const map=state.mode==='concrete'?concreteFields:(state.mode==='obstruction'?obstructionFields:{});
   Object.entries(map).forEach(([id,box])=>{
     let value=id==='contractor'?'Absolute Garage Builders':($(id)?.value||'');
+    const srcEl=$(id);
+    if(srcEl && srcEl.tagName==='SELECT'){
+      const opt=srcEl.selectedOptions&&srcEl.selectedOptions[0];
+      if(srcEl.value && opt) value=opt.text||value;
+    }
     const input=fieldInput(id,box,value);
     if(id==='contractor'){input.readOnly=true;input.style.fontWeight='700'}
     if(id==='cCollect'){
@@ -3365,6 +3380,8 @@ function redrawGeneratedConcrete(opts={}){
  // without requiring Start Drawing Wizard.
  let a=byRole('apron');
  const awPanel=+$('cApronW').value||0, ahPanel=+$('cApronL').value||0;
+ const apronComboTxt=String($('cApronCombo')?.value||'').trim();
+ const apronIncomplete=!!apronComboTxt && !(awPanel&&ahPanel);
  if(awPanel && ahPanel && !a){
    a={
      id:uid++,kind:'apron',role:'apron',
@@ -3375,7 +3392,7 @@ function redrawGeneratedConcrete(opts={}){
    };
    state.objects.push(a);
  }
- if((!awPanel || !ahPanel) && a){
+ if((!awPanel || !ahPanel) && a && !apronIncomplete){
    state.objects=state.objects.filter(o=>o.role!=='apron');
    a=null;
  }
@@ -3386,10 +3403,14 @@ function redrawGeneratedConcrete(opts={}){
  }
  let sp=byRole('servicePad');
  const sw=+$('cServicePadW').value||0, sh=+$('cServicePadL').value||0;
+ const padComboTxt=String($('cServicePadCombo')?.value||'').trim();
+ const padIncomplete=!!padComboTxt && !(sw&&sh);
  if(sw&&sh&&!sp){sp={id:uid++,kind:'pad',role:'servicePad',x:g.x,y:g.y,wf:sw,hf:sh,label:`SERVICE DOOR PAD\n${sw}' x ${sh}'`,angle:0,pxf:p};state.objects.push(sp)}
- if((!sw||!sh)&&sp){state.objects=state.objects.filter(o=>o.role!=='servicePad');sp=null}
+ if((!sw||!sh)&&sp && !padIncomplete){state.objects=state.objects.filter(o=>o.role!=='servicePad');sp=null}
  if(sp){
-   sp.wf=sw;sp.hf=sh;sp.pxf=p;sp.label=`SERVICE DOOR PAD\n${sw}' x ${sh}'`;
+   if(!padIncomplete && sw && sh){
+     sp.wf=sw;sp.hf=sh;sp.pxf=p;sp.label=`SERVICE DOOR PAD\n${sw}' x ${sh}'`;
+   }
    placeServicePadAtDoor();
  }
  function ensureDim(role,id,y){
@@ -3435,14 +3456,14 @@ $('cReturnFM')?.addEventListener('input',()=>calcPanelReturns('middle'));
 $('cSizeCombo')?.addEventListener('input',()=>calcPanelReturns('garage'));
 ['cSizeCombo','cApronCombo','cServicePadCombo','cReturnFL','cReturnFM','cReturnFR','cReturnRL','cReturnRM','cReturnRR'].forEach(id=>{
  $(id)?.addEventListener('input',()=>setTimeout(()=>{
-   redrawGeneratedConcrete();
+   redrawGeneratedConcrete({keepView:true});
    if(id==='cApronCombo'||id==='cSizeCombo')syncRearSetbackDrawing();
    // Once a manually-entered slab exists, all the normal panel additions work
    // exactly like they do after using the wizard.
    if(id==='cSizeCombo' && byRole('garage')) liveGarageDoors();
  },0));
  $(id)?.addEventListener('change',()=>setTimeout(()=>{
-   redrawGeneratedConcrete();
+   redrawGeneratedConcrete({keepView:true});
    if(id==='cApronCombo'||id==='cSizeCombo')syncRearSetbackDrawing();
    if(id==='cSizeCombo' && byRole('garage')) liveGarageDoors();
  },0));
@@ -3702,9 +3723,9 @@ function syncRearSetbackDrawing(){
     // This includes every garage-attached slab/pad/patio/sidewalk/return/opening and
     // their drawing dimensions so nothing is left behind or visually crushed.
     const attachedRoles=new Set([
-      'apron','servicePad','newPad','extraPad','newSidewalk','patio',
+      'apron','servicePad','newPad','extraNewPad','newSidewalk','patio',
       'frontLeft','frontMiddle','frontRight','rearLeft','rearMiddle','rearRight',
-      'serviceReturn','partyReturnLeft','partyReturnRight'
+      'serviceReturn','partyReturnA','partyReturnB'
     ]);
     const attachedKinds=new Set(['serviceDoor','partyDoor']);
     (state.objects||[]).forEach(o=>{
@@ -4103,8 +4124,8 @@ function renderEstimateImportList(){
     return;
   }
   list.innerHTML=rows.map((r,i)=>{
-    const when=(r.created_at||'').slice(0,10);
-    const size=r.garage_size||'';
+    const when=String(r.created_at||'').slice(0,10).replace(/</g,'&lt;');
+    const size=String(r.garage_size||'').replace(/</g,'&lt;');
     const title=String(r.customer||'Unnamed').replace(/</g,'&lt;');
     const addr=String(r.address||'').replace(/</g,'&lt;');
     return `<button type="button" data-est-idx="${i}" class="estimate-import-item" style="text-align:left;padding:10px;border:1px solid #d0d7de;border-radius:10px;background:#f8fafc">
@@ -4312,6 +4333,7 @@ function renderConcreteMarks(){
  const pageBottomFrame=document.createElement('div');
  pageBottomFrame.className='page-bottom-frame';
  fieldLayer.appendChild(pageBottomFrame);
+ paper.querySelectorAll('.clean-rectangle-interior-mask').forEach(n=>n.remove());
  const cleanInteriorMask=document.createElement('div');
  cleanInteriorMask.className='clean-rectangle-interior-mask';
  paper.insertBefore(cleanInteriorMask, fieldLayer);
@@ -4471,9 +4493,19 @@ function renderSitePlanBackground(){
  let bg=$('surveyBg');
  if(!bg){bg=document.createElement('img');bg.id='surveyBg';paper.insertBefore(bg,paper.firstChild)}
  bg.src=surveyData||'';bg.style.display=surveyData?'block':'none';
- // Remove the old centered "Upload survey" message — blank page until a survey is uploaded
+ const hasSurvey=!!(surveyData&&String(surveyData).trim()) || !!(bg&&bg.getAttribute('src')&&bg.style.display!=='none'&&bg.naturalWidth);
  let ph=$('sitePlanPlaceholder');
- if(ph){ ph.remove(); }
+ if(hasSurvey){
+   if(ph) ph.style.display='none';
+   return;
+ }
+ if(!ph){
+   ph=document.createElement('div');
+   ph.id='sitePlanPlaceholder';
+   ph.innerHTML='<div class="card"><div style="font-size:18px;font-weight:800;margin-bottom:8px">Upload a current plat survey to start the city site plan</div><div class="mode-note">Use the survey upload control in the Proposed site plan panel to add the current plat.</div></div>';
+   paper.appendChild(ph);
+ }
+ ph.style.display='flex';
 }
 /** Pull garage size + setbacks from Wizard / Concrete sheet into Site Plan fields */
 function syncSitePlanDimsFromWizardAndConcrete(){
@@ -4849,13 +4881,23 @@ async function aiPlaceProposedGarageOnSurvey(){
 $('surveyUpload').onchange=e=>{
  const f=e.target.files[0];if(!f)return;
  const r=new FileReader();
- r.onload=()=>{
+ r.onload=async ()=>{
   surveyData=r.result;
-  localStorage.setItem('agbSurveyImage',surveyData);
-  // Ensure site plan mode so the survey is visible
+  try{
+    if(typeof compressSurveyForAI==='function'){
+      const compressed=await compressSurveyForAI(surveyData,2000);
+      if(compressed) surveyData=compressed;
+    }
+  }catch(_){}
+  try{
+    localStorage.setItem('agbSurveyImage',surveyData);
+  }catch(err){
+    console.warn('Could not persist survey image',err);
+  }
+  // Switch via the existing mode onchange path so the active sheet is saved first.
   if($('mode') && $('mode').value!=='siteplan'){
     $('mode').value='siteplan';
-    if(typeof renderSheet==='function') renderSheet();
+    $('mode').dispatchEvent(new Event('change'));
   }else{
     renderSitePlanBackground();
   }
@@ -5234,7 +5276,7 @@ function shouldConcreteHatch(o){
 
   if(state.mode==='concrete'){
     // NEW concrete to be poured on the Concrete sheet.
-    return ['garage','apron','patio','newPad','extraPad','newSidewalk','servicePad'].includes(o.role)
+    return ['garage','apron','patio','newPad','extraNewPad','newSidewalk','servicePad'].includes(o.role)
       || (['garage','apron','patio','pad','sidewalk'].includes(o.kind) && !label.includes('EXISTING'));
   }
 
@@ -5768,7 +5810,6 @@ function objectPointerDown(e){
   e.preventDefault();
   e.stopPropagation();
   try{ e.currentTarget.setPointerCapture?.(e.pointerId); }catch(_){}
-  lockCanvasPan();
   const el=e.currentTarget,o=getObj(el.dataset.id); if(!o)return;
   if(o.locked && !e.target.dataset.handle && !e.target.dataset.rotate){
     state.selected=o.id; el.classList.add('selected'); attachBoxHandles(el,o); return;
@@ -5790,6 +5831,19 @@ function objectPointerDown(e){
     'leftSetback','rightSetback','rearSetback','rearGap','alleyDistance'
   ];
   if(state.mode==='concrete' && panelOnlyDrawingRoles.includes(o.role)) return;
+  // Lock pan only once a real drag can start. Always unlock on pointerup/cancel
+  // so a throw or early path cannot leave window._shapeInteract stuck true.
+  let panLocked=false;
+  const lockPan=()=>{ if(!panLocked){ lockCanvasPan(); panLocked=true; } };
+  const unlockPan=()=>{
+    if(panLocked){ unlockCanvasPan(); panLocked=false; }
+    window.removeEventListener('pointerup',unlockPan);
+    window.removeEventListener('pointercancel',unlockPan);
+  };
+  lockPan();
+  window.addEventListener('pointerup',unlockPan);
+  window.addEventListener('pointercancel',unlockPan);
+  try {
   // Lot length: entire LOT LENGTH + number block slides up/down
   if(o.role==='lotLength'){
     e.preventDefault();
@@ -6070,6 +6124,10 @@ function objectPointerDown(e){
   window.addEventListener('pointermove',move,{passive:false});
   window.addEventListener('pointerup',up);
   window.addEventListener('pointercancel',up);
+  } catch(err){
+    unlockPan();
+    throw err;
+  }
 }
 
 document.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>addObject(b.dataset.add));
@@ -6180,19 +6238,55 @@ function makeJpegPdf(jpegBytes,imgW,imgH){
  push(`trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`);
  return new Blob(parts,{type:'application/pdf'});
 }
+function xhtmlSelfCloseVoids(html){
+  return String(html).replace(/<(img|br|hr|input)([^>]*?)>/gi,(_,tag,attrs)=>'<'+tag+String(attrs||'').replace(/\/\s*$/,'')+'/>');
+}
+function clonePaperForExport(){
+  const clone=paper.cloneNode(true);
+  clone.style.transform='none';clone.style.zoom='1';clone.style.boxShadow='none';clone.style.margin='0';
+  clone.querySelectorAll('.handle,.rotate-handle,.cut-end-handle,.side-handle').forEach(e=>e.remove());
+  clone.querySelectorAll('.selected').forEach(e=>e.classList.remove('selected'));
+  return clone;
+}
+function fallbackPrintDrawing(){
+  const clone=clonePaperForExport();
+  const cssText=[...document.querySelectorAll('style')].map(x=>x.textContent).join('\n');
+  let w=null;
+  try{w=window.open('','_blank');}catch(_){w=null}
+  if(w){
+    w.document.open();
+    w.document.write('<!DOCTYPE html><html><head><title>Print drawing</title><style>html,body{margin:0;background:#fff}'+cssText+'</style></head><body>'+clone.outerHTML+'</body></html>');
+    w.document.close();
+    try{w.focus();}catch(_){}
+    try{w.print();}catch(_){}
+    return;
+  }
+  try{ clearDrawingSelection(); }catch(_){ state.selected=null; try{renderObjects()}catch(__){} }
+  document.querySelectorAll('#paper .obj.concrete-hatched').forEach(addPrintableConcreteHatch);
+  setPrintZoom();
+  window.print();
+}
+function exportFailMessage(err){
+  if(!err) return 'Unknown export error';
+  if(typeof err==='string') return err;
+  if(err.message) return String(err.message);
+  if(err.type) return 'Image/export failed ('+err.type+')';
+  return String(err);
+}
 async function buildDrawingExport(){
  // Returns { pdfBlob, jpegBlob, fileBase, customer, address }
- const t=currentTemplate(),clone=paper.cloneNode(true);
- clone.style.transform='none';clone.style.zoom='1';clone.style.boxShadow='none';clone.style.margin='0';
- clone.querySelectorAll('.handle,.rotate-handle,.cut-end-handle,.side-handle').forEach(e=>e.remove());
- clone.querySelectorAll('.selected').forEach(e=>e.classList.remove('selected'));
+ const t=currentTemplate(),clone=clonePaperForExport();
  const cssText=[...document.querySelectorAll('style')].map(x=>x.textContent).join('\n');
- const html=`<div xmlns="http://www.w3.org/1999/xhtml"><style>${cssText}</style>${clone.outerHTML}</div>`;
+ const html=`<div xmlns="http://www.w3.org/1999/xhtml"><style>${cssText}</style>${xhtmlSelfCloseVoids(clone.outerHTML)}</div>`;
  const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${t.w}" height="${t.h}"><foreignObject width="100%" height="100%">${html}</foreignObject></svg>`;
  const url=URL.createObjectURL(new Blob([svg],{type:'image/svg+xml;charset=utf-8'}));
  try{
    const im=new Image();
-   await new Promise((res,rej)=>{im.onload=res;im.onerror=rej;im.src=url});
+   await new Promise((res,rej)=>{
+     im.onload=res;
+     im.onerror=()=>rej(new Error('SVG rasterize failed: drawing image could not be loaded'));
+     im.src=url;
+   });
    const c=document.createElement('canvas');c.width=t.w;c.height=t.h;
    const ctx=c.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,c.width,c.height);ctx.drawImage(im,0,0);
    const jpgData=c.toDataURL('image/jpeg',.96);
@@ -6221,7 +6315,12 @@ async function saveAsPdf(){
    a.download=exp.fileBase+'.pdf';
    document.body.appendChild(a);a.click();a.remove();
    setTimeout(()=>URL.revokeObjectURL(a.href),2000);
- }catch(err){console.error(err);alert('Could not create PDF in this browser.');}
+ }catch(err){
+   const msg=exportFailMessage(err);
+   console.error(msg, err);
+   alert("Couldn't generate a PDF file in this browser. Use the Print dialog and choose Save as PDF.");
+   fallbackPrintDrawing();
+ }
 }
 async function emailDrawingPdf(){
  // Opens iPhone share sheet so salesman can pick Gmail / Mail and send from their personal account.
@@ -6295,8 +6394,10 @@ async function emailDrawingPdf(){
      alert('PDF downloaded. Open the Gmail app, compose a message, and attach the PDF from Files / Downloads.');
    }
  }catch(err){
-   console.error(err);
-   alert('Could not prepare the drawing for email: '+(err&&err.message?err.message:err));
+   const msg=exportFailMessage(err);
+   console.error(msg, err);
+   alert('Could not prepare the drawing for email: '+msg+'\n\nCouldn\'t generate a PDF file in this browser. Use the Print dialog and choose Save as PDF.');
+   fallbackPrintDrawing();
  }
 }
 $('pdfBtn').onclick=saveAsPdf;
@@ -7073,7 +7174,8 @@ function organizeLeftPanel(){
     make('Lot Dimensions',groups.lot,false);
     make('Notes',groups.notes,false);
     const cb=concreteDet.querySelector('.collapsible-body');
-    [...host.children].filter(n=>n!==concreteDet&&!n.matches('details')&&n.tagName!=='H3'&&!n.classList.contains('hidden-dim-source')).forEach(n=>cb.appendChild(n));
+    [...host.children].filter(n=>n!==concreteDet&&!n.matches('details')&&n.tagName!=='H3'&&n.tagName!=='SUMMARY'&&!n.classList.contains('hidden-dim-source')).forEach(n=>cb.appendChild(n));
+    host.querySelectorAll(':scope > details.collapsible-section > summary').forEach(s=>s.addEventListener('click',e=>e.stopPropagation()));
   }
   const cust=document.querySelector('.customer-job');
   if(cust&&!cust.dataset.organized){
@@ -7081,8 +7183,9 @@ function organizeLeftPanel(){
     const det=document.createElement('details');det.className='collapsible-section';
     const sum=document.createElement('summary');sum.textContent='Customer Information';det.appendChild(sum);
     const body=document.createElement('div');body.className='collapsible-body';det.appendChild(body);
-    [...cust.children].filter(n=>n.tagName!=='H3').forEach(n=>body.appendChild(n));
+    [...cust.children].filter(n=>n.tagName!=='H3'&&n.tagName!=='SUMMARY').forEach(n=>body.appendChild(n));
     cust.appendChild(det);
+    det.querySelector('summary')?.addEventListener('click',e=>e.stopPropagation());
   }
 }
 
@@ -7091,15 +7194,23 @@ function initializeApp(){
   hydrateSheetStates();loadSharedInfo();defaultDrawingSalesmanFromSignedInUser();
   loadMyEstimatesForDrawing();
   $('estimateImportRefresh')?.addEventListener('click',()=>loadMyEstimatesForDrawing());
-  // Fresh app launch starts with blank canvases. Saved form/job info may remain,
-  // but no random/sample shapes are drawn until the user builds or adds them.
-  state.sheetStates={
-    concrete:{objects:[],history:[],future:[]},
-    obstruction:{objects:[],history:[],future:[]},
-    siteplan:{objects:[],history:[],future:[]}
-  };
-  state.mode='concrete';state.objects=[];state.history=[];state.future=[];state.selected=null;
+  // Restore hydrated sheets. Only initialize empty sheets if nothing was stored.
+  const emptySheets=!['concrete','obstruction','siteplan'].some(m=>(state.sheetStates[m]?.objects||[]).length);
+  if(emptySheets){
+    state.sheetStates={
+      concrete:{objects:[],history:[],future:[]},
+      obstruction:{objects:[],history:[],future:[]},
+      siteplan:{objects:[],history:[],future:[]}
+    };
+  }
+  state.mode='concrete';
   $('mode').value='concrete';
+  loadSheetState('concrete');
+  let maxId=0;
+  ['concrete','obstruction','siteplan'].forEach(m=>{
+    (state.sheetStates[m]?.objects||[]).forEach(o=>{ if(o&&typeof o.id==='number'&&o.id>maxId) maxId=o.id; });
+  });
+  uid=Math.max(1,maxId+1);
   if($('cWater'))$('cWater').value='Yes';if($('cNewWalkCombo'))$('cNewWalkCombo').value='';if($('cExistingWalkCombo'))$('cExistingWalkCombo').value='';if($('wWalkCombo'))$('wWalkCombo').value='';if($('wExistingWalkCombo'))$('wExistingWalkCombo').value='';
   syncSidebarFooting();syncShedWallHeight();syncDoorControls();
   renderSheet();
@@ -7312,6 +7423,9 @@ function toggleMobilePanel(){
     const el=document.getElementById(id);
     if(!el) return;
     const go=e=>{
+      if(el._touchFired) return;
+      el._touchFired=true;
+      setTimeout(()=>{el._touchFired=false},400);
       if(e){ e.preventDefault(); e.stopPropagation(); }
       try{
         if(typeof addObject==='function') addObject(kind);
@@ -7351,11 +7465,11 @@ function toggleMobilePanel(){
       fireAdd(kind,e);
     };
   });
-  function addStamp(kind,label,wf,hf){
+  function addStamp(kind,label,wf,hf,extra){
     try{
       snapshot();
       const d=currentTemplate().draw;
-      state.objects.push({id:uid++,kind,x:d.x+40,y:d.y+60,wf,hf,label,angle:0});
+      state.objects.push(Object.assign({id:uid++,kind,x:d.x+40,y:d.y+60,wf,hf,label,angle:0},extra||{}));
       state.selected=state.objects.at(-1).id;
       renderObjects();
       saveActiveSheetState();
@@ -7363,8 +7477,14 @@ function toggleMobilePanel(){
   }
   const stampMap={
     staysBtn:()=>addStamp('stays','STAYS',6,2),
-    cutBtn:()=>addStamp('cut','CUT →',8,2),
-    collectBtn:()=>addStamp('collect','COLLECT',8,2),
+    cutBtn:()=>addStamp('cut','CUT →',8,2,{arrowLen:120}),
+    collectBtn:()=>{
+      const amount=prompt('Amount to collect (example: 250 or $250):','');
+      if(amount===null)return;
+      const clean=String(amount).trim();if(!clean)return;
+      const text=/^\$/.test(clean)?'COLLECT '+clean:'COLLECT $'+clean;
+      addStamp('collect',text,8,2);
+    },
     treeBtn:()=>addStamp('tree','TREE',4,4),
     bushBtn:()=>addStamp('bush','BUSH',3,3)
   };
@@ -7373,8 +7493,15 @@ function toggleMobilePanel(){
     if(!el) return;
     el.style.touchAction='manipulation';
     el.style.minHeight='44px';
-    el.onclick=e=>{e.preventDefault();stampMap[id]()};
-    el.ontouchend=e=>{e.preventDefault();stampMap[id]()};
+    const go=e=>{
+      if(el._touchFired) return;
+      el._touchFired=true;
+      setTimeout(()=>{el._touchFired=false},400);
+      if(e){ e.preventDefault(); e.stopPropagation(); }
+      stampMap[id]();
+    };
+    el.onclick=go;
+    el.ontouchend=go;
   });
 })();
 

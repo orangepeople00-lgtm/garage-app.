@@ -181,6 +181,7 @@ body.estimator-mode .estimator-exit,body.drawing-mode .estimator-exit{display:bl
  <section id="weekView" class="hidden"><div id="weekContent"></div></section>
  <section id="calendarView" class="hidden"><div class="card calendar-card"><div class="calendar-head"><div><h3 id="calendarTitle">Project Calendar</h3><div class="muted small" id="calendarSubtitle"></div></div><div class="calendar-actions"><button class="btn light sm" onclick="changeCalendarMonth(-1)">← Previous</button><button class="btn light sm" onclick="calendarMonth=new Date();renderCalendar()">This Month</button><button class="btn light sm" onclick="changeCalendarMonth(1)">Next →</button></div></div><div class="calendar-weekdays"><div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div></div><div id="calendarGrid" class="month-grid"></div></div></section>
  <section id="personalCalendarView" class="hidden">
+  <div id="calNearbyBanner" class="card hidden" style="margin-bottom:12px;border:2px solid #93c5fd;background:#eff6ff"></div>
   <div class="personal-calendar-layout">
    <div class="card calendar-card">
     <div class="calendar-head"><div><h3 id="personalCalendarTitle">Personal Calendar</h3><div class="muted small">Your appointments and scheduled personal tasks</div></div><div class="calendar-actions"><button class="btn primary sm" onclick="openCalendarEntry()">+ Add</button><button class="btn light sm" onclick="changePersonalCalendarMonth(-1)">← Previous</button><button class="btn light sm" onclick="personalCalendarMonth=new Date();renderPersonalCalendar()">This Month</button><button class="btn light sm" onclick="changePersonalCalendarMonth(1)">Next →</button></div></div>
@@ -252,7 +253,7 @@ body.estimator-mode .estimator-exit,body.drawing-mode .estimator-exit{display:bl
   </div>
   <div class="formsec"><h4>Customer & Sale</h4><div class="grid">
    <div class="field"><label>Customer</label><input id="f_customer" required></div><div class="field"><label>Job #</label><input id="f_job_number"></div>
-   <div class="field"><label>Salesman</label><select id="f_salesman_username"><option>ramsey</option><option>sam</option><option>randy</option><option>wally</option><option>tom</option><option>tomb</option></select></div><div class="field"><label>Sold Date</label><input id="f_sold_date" type="date"></div>
+   <div class="field"><label>Salesman</label><select id="f_salesman_username"><option value="ramsey">Ramsey</option><option value="sam">Sam</option><option value="randy">Randy</option><option value="wally">Wally</option><option value="tom">Tom</option><option value="tomb">Tom Bartyzel</option></select></div><div class="field"><label>Sold Date</label><input id="f_sold_date" type="date"></div>
    <div class="field span2"><label>Address</label><input id="f_address"></div><div class="field"><label>City</label><input id="f_city"></div><div class="field"><label>Phone</label><input id="f_phone"></div>
    <div class="field"><label>Garage Size</label><input id="f_garage_size"></div>
    <div class="field"><label>Contract Price</label><input id="f_price" type="number" step=".01"></div><div class="field"><label>Deposit</label><input id="f_deposit" type="number" step=".01"></div>
@@ -352,10 +353,11 @@ const DISPLAY={randy:'Randy',sam:'Sam',ramsey:'Ramsey',wally:'Wally',tom:'Tom',t
 let profile=null,jobs=[],trashJobs=[],requests=[],documents=[],editRequests=[],estimateHistory=[],calendarEntries=[],currentView='dashboard',openJobId=null,calendarMonth=new Date();
 const ESTIMATOR_URL='estimator.html';
 let estimatorLoaded=false,drawingLoaded=false;
-function loadEstimator(){
+function loadEstimator(extraQuery){
  const frame=$('estimatorFrame'); if(!frame) return;
- if(estimatorLoaded && frame.src && frame.src !== 'about:blank') return;
- frame.src = 'estimator.html?v=' + Date.now();
+ if(!extraQuery && estimatorLoaded && frame.src && frame.src !== 'about:blank') return;
+ const q=extraQuery?String(extraQuery).replace(/^\?/,''):'';
+ frame.src = 'estimator.html?v=' + Date.now() + (q?('&'+q):'');
  estimatorLoaded = true;
 }
 function loadDrawing(){
@@ -498,13 +500,15 @@ async function login(e){
 }
 async function logout(){await sb.auth.signOut();profile=null;jobs=[];trashJobs=[];requests=[];editRequests=[];estimateHistory=[];$('appMain').classList.add('hidden');$('loginBg').classList.add('show');$('loginPass').value=''}
 function fallbackProfileFromUser(user){
- const email=String(user?.email||'');
- const uname=email.replace(/@absolute-garage\.local$/i,'').split('@')[0].toLowerCase();
+ const email=String(user?.email||'').toLowerCase();
+ let uname=email.replace(/@absolute-garage\.local$/i,'').split('@')[0].toLowerCase();
+ if(/tombartyzel|tom\.bartyzel|tom bartyzel/.test(uname) || uname==='tomb') uname='tomb';
+ const role=['randy','sam'].includes(uname)?'owner':(uname==='ramsey'?'business_manager':'salesman');
  return {
   id:user.id,
   username:uname,
   display_name:DISPLAY[uname]||uname,
-  role:['randy','sam'].includes(uname)?'owner':(uname==='ramsey'?'business_manager':'salesman')
+  role
  };
 }
 async function boot(){
@@ -516,6 +520,9 @@ async function boot(){
   if(res.error) console.warn('staff_profiles', res.error);
  }catch(err){ console.warn('staff_profiles threw', err); }
  if(!p) p=fallbackProfileFromUser(user);
+ if(p.username) p.username=String(p.username).toLowerCase();
+ if(/tombartyzel|tom\.bartyzel|tom bartyzel/.test(p.username)) p.username='tomb';
+ if(!p.display_name || /tombartyzel/.test(String(p.display_name).toLowerCase())) p.display_name=DISPLAY[p.username]||p.display_name||p.username;
  profile=p;$('loginBg').classList.remove('show');$('appMain').classList.remove('hidden');$('userBadge').classList.remove('hidden');$('logoutBtn').classList.remove('hidden');$('userBadge').textContent=`${p.display_name} • ${roleName()}`;
  $('addBtn').classList.toggle('hidden',!manager());$('requestBtn').classList.toggle('hidden',manager());$('salesFilterWrap').classList.toggle('hidden',!canViewAllJobs());$('trashTab').classList.toggle('hidden',!manager());
  if($('allPersonalCalendarsTab'))$('allPersonalCalendarsTab').classList.toggle('hidden',!privateAccessManager());$('estimateHistorySalesFilterWrap')?.classList.toggle('hidden',!privateAccessManager());
@@ -711,13 +718,12 @@ function findMatchingCalendarEntry(parsed){
       if(h && h.length>=3 && blob.includes(h)) score+=h.length+10;
     });
     if(fromIso && e.appointment_at){
-      const ed=localISODate?localISODate(e.appointment_at):String(e.appointment_at).slice(0,10);
+      const ed=localISODate(e.appointment_at);
       if(ed===fromIso) score+=50;
     }
     // If only one appointment on fromIso and no name, still match
     if(fromIso && e.appointment_at && score===0){
-      const ed=String(e.appointment_at).slice(0,10);
-      const onDay=mine.filter(x=>x.appointment_at && String(x.appointment_at).slice(0,10)===fromIso);
+      const onDay=mine.filter(x=>x.appointment_at && localISODate(x.appointment_at)===fromIso);
       if(onDay.length===1 && onDay[0].id===e.id) score+=30;
     }
     if(score>bestScore){best=e;bestScore=score;}
@@ -777,7 +783,7 @@ function parseQuickJobText(raw){
   // Match existing job by customer name, street/address, or city phrase
   // Examples: "job on Marquette just poured", "Smith concrete tomorrow", "123 Main electric Monday"
   let best=null,bestScore=0;
-  (jobs||[]).forEach(j=>{
+  visibleJobs().forEach(j=>{
     let score=0;
     const name=String(j.customer||'').trim();
     const addr=String(j.address||'').trim();
@@ -1158,8 +1164,8 @@ async function submitQuickJobCommand(){
     if(status)status.textContent='Error: '+(e.message||e);
   }
 }
-function populateFilters(){const fill=(id,vals,label)=>{const e=$(id),v=e.value;e.innerHTML=`<option value="">${label}</option>`+[...new Set(vals.filter(Boolean))].sort().map(x=>`<option value="${esc(x)}">${esc(DISPLAY[x]||x)}</option>`).join('');e.value=v};fill('salesFilter',jobs.map(j=>j.salesman_username),'All Salespeople');fill('statusFilter',jobs.map(status),'All Statuses');fill('cityFilter',jobs.map(j=>j.city),'All Cities')}
-function filteredJobs(){const q=$('search').value.toLowerCase(),s=$('salesFilter').value,st=$('statusFilter').value,c=$('cityFilter').value;return visibleJobs().filter(j=>status(j)!=='Completed'&&(!q||[j.customer,j.address,j.city,j.job_number,j.garage_size].join(' ').toLowerCase().includes(q))&&(!s||j.salesman_username===s)&&(!st||status(j)===st)&&(!c||j.city===c))}
+function populateFilters(){const vj=visibleJobs();const fill=(id,vals,label)=>{const e=$(id),v=e.value;e.innerHTML=`<option value="">${label}</option>`+[...new Set(vals.filter(Boolean))].sort().map(x=>`<option value="${esc(x)}">${esc(DISPLAY[String(x).toLowerCase()]||x)}</option>`).join('');e.value=v};fill('salesFilter',vj.map(j=>j.salesman_username),'All Salespeople');fill('statusFilter',vj.map(status),'All Statuses');fill('cityFilter',vj.map(j=>j.city),'All Cities')}
+function filteredJobs(){const q=$('search').value.toLowerCase(),s=$('salesFilter').value,st=$('statusFilter').value,c=$('cityFilter').value;return visibleJobs().filter(j=>status(j)!=='Completed'&&(!q||[j.customer,j.address,j.city,j.job_number,j.garage_size].join(' ').toLowerCase().includes(q))&&(!s||String(j.salesman_username||'').toLowerCase()===String(s).toLowerCase())&&(!st||status(j)===st)&&(!c||j.city===c))}
 function renderJobs(){const rows=filteredJobs();$('jobRows').innerHTML=rows.length?rows.map(j=>`<tr><td><div class="cust">${esc(j.customer)}</div><div class="sub">${esc(DISPLAY[j.salesman_username]||j.salesman_username)}${j.job_number?` • ${esc(j.job_number)}`:''}</div></td><td><div class="job-address">${esc(j.address||'Address not entered')}</div><div class="sub">${esc(j.city||'')}</div></td><td><span class="pill ${tone(status(j))}">${esc(status(j))}</span>${j.hold_status?`<div class="sub hold">ON HOLD — ${esc(j.hold_reason||'Reason not entered')}</div>`:''}${overdue(j)?'<div class="sub overdue">OVERDUE</div>':''}${lastComplete(j)?`<div class="sub progress-last"><strong>Last Complete:</strong> ${esc(lastComplete(j))}</div>`:''}<div class="sub progress-next"><strong>Next Step:</strong> ${esc(next(j))}</div><div class="sub job-age">Job age: ${esc(jobAgeLabel(j))}</div></td><td><button class="btn primary summary-btn" onclick="openDrawer('${j.id}')">View Summary</button></td></tr>`).join(''):`<tr><td colspan="4" style="text-align:center;padding:40px;color:#6f7a8d">No active jobs match these filters.</td></tr>`}
 function cell(s,d){return `<span class="pill ${tone(s)}">${esc(s||'—')}</span><div class="sub">${fmt(d)}</div>`}
 function clearFilters(){['search','salesFilter','statusFilter','cityFilter'].forEach(id=>$(id).value='');renderJobs()}
@@ -1183,12 +1189,12 @@ function setView(v,btn){
 }
 function exitEstimator(){const b=document.querySelector('.tab[data-view="dashboard"]');setView('dashboard',b)}
 function jobEvents(j){return [['Demo',j.scheduled_demo,j.demo_crew],['Concrete / Framing',j.concrete_scheduled,j.concrete_crew],['Carpentry',j.carpentry_scheduled,j.carpentry_crew],['Electric',j.electric_date,j.electric_crew],['Gutters / Extras',j.extras_scheduled,''],['Inspection',j.inspection_date,'']].filter(x=>x[1])}
-function renderWeek(){const iso=todayISO(),events=[];visibleJobs().forEach(j=>jobEvents(j).forEach(([type,date,crew])=>{if(date===iso)events.push({type,date,crew,j})}));$('weekContent').innerHTML=`<div class="card" style="margin-bottom:12px"><h3>Today — ${new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'})}</h3><div class="muted small">${manager()?'All company jobs scheduled today':'Only your jobs scheduled today'}</div></div><div class="today-grid">${events.length?events.map(e=>`<div class="today-job"><div class="split"><div><h4>${esc(e.j.customer)}</h4><div class="sub">${esc(e.j.address||'')} ${esc(e.j.city||'')}</div></div><span class="pill blue">${esc(e.type)}</span></div><div class="today-meta">${e.type==='Gutters / Extras'?`<span><strong>Extra Notes:</strong> ${esc(e.j.extras_notes||'No extra notes entered')}</span>`:`<span><strong>Crew:</strong> ${esc(e.crew||'Not assigned')}</span>`}<span><strong>Phone:</strong> ${esc(e.j.phone||'Not entered')}</span>${manager()?`<span><strong>Salesman:</strong> ${esc(DISPLAY[e.j.salesman_username]||e.j.salesman_username)}</span>`:''}</div><div style="margin-top:10px"><button class="btn primary sm" onclick="openDrawer('${e.j.id}')">View Summary</button></div></div>`).join(''):'<div class="card muted">No work is scheduled for today.</div>'}</div>`}
+function renderWeek(){const iso=todayISO(),events=[];visibleJobs().forEach(j=>jobEvents(j).forEach(([type,date,crew])=>{if(date===iso)events.push({type,date,crew,j})}));$('weekContent').innerHTML=`<div class="card" style="margin-bottom:12px"><h3>Today — ${new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'})}</h3><div class="muted small">${canViewAllJobs()?'All company jobs scheduled today':'Only your jobs scheduled today'}</div></div><div class="today-grid">${events.length?events.map(e=>`<div class="today-job"><div class="split"><div><h4>${esc(e.j.customer)}</h4><div class="sub">${esc(e.j.address||'')} ${esc(e.j.city||'')}</div></div><span class="pill blue">${esc(e.type)}</span></div><div class="today-meta">${e.type==='Gutters / Extras'?`<span><strong>Extra Notes:</strong> ${esc(e.j.extras_notes||'No extra notes entered')}</span>`:`<span><strong>Crew:</strong> ${esc(e.crew||'Not assigned')}</span>`}<span><strong>Phone:</strong> ${esc(e.j.phone||'Not entered')}</span>${canViewAllJobs()?`<span><strong>Salesman:</strong> ${esc(DISPLAY[String(e.j.salesman_username||'').toLowerCase()]||e.j.salesman_username)}</span>`:''}</div><div style="margin-top:10px"><button class="btn primary sm" onclick="openDrawer('${e.j.id}')">View Summary</button></div></div>`).join(''):'<div class="card muted">No work is scheduled for today.</div>'}</div>`}
 function openCalendarEntry(){$('cal_customer').value='';$('cal_address').value='';$('cal_date').value='';$('cal_time').value='';$('cal_task').value='';$('calSuggestion').classList.add('hidden');$('calSuggestion').innerHTML='';$('calendarEntryBg').classList.add('show')}
 function closeCalendarEntry(){$('calendarEntryBg').classList.remove('show')}
 async function geocodeCalendarAddress(address){try{const u='https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=us&q='+encodeURIComponent(address);const r=await fetch(u,{headers:{Accept:'application/json'}});if(!r.ok)return null;const x=(await r.json())[0];return x?{lat:Number(x.lat),lon:Number(x.lon)}:null}catch(e){return null}}
 async function drivingMinutes(a,b){try{const u=`https://router.project-osrm.org/route/v1/driving/${a.lon},${a.lat};${b.lon},${b.lat}?overview=false`;const r=await fetch(u);if(!r.ok)return null;const x=await r.json();return x.routes?.[0]?Math.round(x.routes[0].duration/60):null}catch(e){return null}}
-async function findNearbyCalendarSuggestion(point,appointmentAt){if(!point||!appointmentAt)return null;const same=calendarEntries.filter(x=>x.appointment_at&&x.salesman_username===profile.username&&x.latitude!=null&&x.longitude!=null);let best=null;for(const x of same){const mins=await drivingMinutes(point,{lat:Number(x.latitude),lon:Number(x.longitude)});if(mins!=null&&mins<=40&&(!best||mins<best.mins))best={entry:x,mins}}if(!best)return null;const existing=new Date(best.entry.appointment_at),suggested=new Date(existing);suggested.setMinutes(suggested.getMinutes()+90);return {...best,suggested}}
+async function findNearbyCalendarSuggestion(point,appointmentAt,excludeId){if(!point||!appointmentAt)return null;const u=String(profile?.username||'').toLowerCase();const same=calendarEntries.filter(x=>x.id!==excludeId&&x.appointment_at&&String(x.salesman_username||'').toLowerCase()===u&&x.latitude!=null&&x.longitude!=null);let best=null;for(const x of same){const mins=await drivingMinutes(point,{lat:Number(x.latitude),lon:Number(x.longitude)});if(mins!=null&&mins<=40&&(!best||mins<best.mins))best={entry:x,mins}}if(!best)return null;const existing=new Date(best.entry.appointment_at),suggested=new Date(existing);suggested.setMinutes(suggested.getMinutes()+90);return {...best,suggested}}
 async function saveCalendarEntry(e){
  e.preventDefault();
  const customer=$('cal_customer').value.trim(),address=$('cal_address').value.trim(),date=$('cal_date').value,time=$('cal_time').value,task=$('cal_task').value.trim();
@@ -1245,17 +1251,41 @@ async function saveCalendarEntry(e){
        const point=await geocodeCalendarAddress(address);
        if(!point)return;
        await sb.from('salesman_calendar_entries').update({latitude:point.lat,longitude:point.lon}).eq('id',inserted.id);
-       const s=await findNearbyCalendarSuggestion(point,appointmentAt);
-       if(s){
-         const pretty=s.suggested.toLocaleString([],{weekday:'long',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
-         $('calSuggestion').innerHTML=`<strong>Nearby Appointment Recommendation</strong><div style="margin-top:5px">${esc(`A nearby appointment is about ${s.mins} minutes away. Suggested time: ${pretty}.`)}</div>`;
-       }
+       const s=await findNearbyCalendarSuggestion(point,appointmentAt,inserted.id);
+       if(s) showNearbyRecommendation(inserted,s);
      })().catch(err=>console.warn('Nearby appointment lookup failed',err));
    }
  }catch(err){
    console.error('Personal calendar save failed',err);
    alert('Could not add personal calendar item: '+(err?.message||'Unknown error'));
  }
+}
+let pendingNearby=null;
+function showNearbyRecommendation(inserted,s){
+  pendingNearby={id:inserted.id,iso:s.suggested.toISOString(),mins:s.mins,other:s.entry};
+  const pretty=s.suggested.toLocaleString([],{weekday:'long',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
+  const otherName=s.entry.customer_name||s.entry.task||'another appointment';
+  const banner=$('calNearbyBanner');
+  const msg=`"${otherName}" is about ${s.mins} minutes away. Suggested grouping time: ${pretty}.`;
+  if(banner){
+    banner.classList.remove('hidden');
+    banner.innerHTML=`<div class="split"><div><strong>Nearby appointment recommendation</strong><div class="muted small" style="margin-top:4px">${esc(msg)}</div></div><div style="display:flex;gap:7px;flex-wrap:wrap"><button class="btn primary sm" type="button" onclick="applyNearbySuggestion()">Apply suggested time</button><button class="btn light sm" type="button" onclick="dismissNearbySuggestion()">Dismiss</button></div></div>`;
+  }else if(confirm(msg+' Apply suggested time?')) applyNearbySuggestion();
+}
+async function applyNearbySuggestion(){
+  if(!pendingNearby)return;
+  const {id,iso}=pendingNearby;
+  const {data,error}=await sb.from('salesman_calendar_entries').update({appointment_at:iso}).eq('id',id).select('*').single();
+  if(error)return alert('Could not apply suggested time: '+error.message);
+  if(data){calendarEntries=calendarEntries.filter(x=>x.id!==id);calendarEntries.push(data);}
+  dismissNearbySuggestion();
+  renderPersonalCalendar();
+  renderUpcomingAppointments();
+}
+function dismissNearbySuggestion(){
+  pendingNearby=null;
+  const b=$('calNearbyBanner');
+  if(b){b.classList.add('hidden');b.innerHTML='';}
 }
 function viewCalendarEntry(id){const a=calendarEntries.find(x=>x.id===id);if(!a)return;const when=a.appointment_at?new Date(a.appointment_at).toLocaleString():'Unscheduled Task';if(confirm(`${a.customer_name||''}\n${a.address||''}\n${a.task||''}\n${when}\n\nDelete this personal calendar item?`))deleteCalendarEntry(id)}
 async function deleteCalendarEntry(id){const {error}=await sb.from('salesman_calendar_entries').delete().eq('id',id);if(error)return alert(error.message);await refresh()}
@@ -1265,7 +1295,7 @@ function timeOnly(v){return new Date(v).toLocaleTimeString([],{hour:'numeric',mi
 function renderCalendar(){
  const y=calendarMonth.getFullYear(),m=calendarMonth.getMonth();
  $('calendarTitle').textContent=new Date(y,m,1).toLocaleDateString(undefined,{month:'long',year:'numeric'})+' Project Calendar';
- $('calendarSubtitle').textContent=manager()?'Company project schedule — crews, trades and job stages':'Your project schedule — crews, trades and job stages';
+ $('calendarSubtitle').textContent=canViewAllJobs()?'Company project schedule — crews, trades and job stages':'Your project schedule — crews, trades and job stages';
  const first=new Date(y,m,1),start=new Date(y,m,1-first.getDay()),cells=[];
  for(let i=0;i<42;i++){
   const d=new Date(start);d.setDate(start.getDate()+i);
@@ -1326,7 +1356,7 @@ function renderAllPersonalCalendars(){
  if(!privateAccessManager()){ $('allPersonalCalendarsView')?.classList.add('hidden'); return; }
  populateAllPersonalCalendarFilter();
  const filter=$('allPersonalCalendarUserFilter')?.value||'';
- const entries=calendarEntries.filter(x=>!filter||x.salesman_username===filter);
+ const entries=calendarEntries.filter(x=>!filter||String(x.salesman_username||'').toLowerCase()===String(filter).toLowerCase());
  const y=allPersonalCalendarMonth.getFullYear(),m=allPersonalCalendarMonth.getMonth();
  $('allPersonalCalendarsTitle').textContent=new Date(y,m,1).toLocaleDateString(undefined,{month:'long',year:'numeric'})+' — All Personal Calendars';
  const first=new Date(y,m,1),start=new Date(y,m,1-first.getDay()),cells=[];
@@ -1344,7 +1374,7 @@ function renderAllPersonalCalendars(){
 
 function clearEstimateHistoryFilters(){if($('estimateHistorySearch'))$('estimateHistorySearch').value='';if($('estimateHistorySalesFilter'))$('estimateHistorySalesFilter').value='';renderEstimateHistory()}
 function estimatePricingAccess(e){
- const own=!!(profile&&e&&e.salesman_username===profile.username);
+ const own=!!(profile&&e&&String(e.salesman_username||'').toLowerCase()===String(profile.username||'').toLowerCase());
  return {own,canSeeInternal:own||privateAccessManager(),canSeeMethod:privateAccessManager()};
 }
 function estimatePricingDetails(e){
@@ -1413,7 +1443,7 @@ function estimateHistorySummary(e){
 async function deleteEstimateHistory(id){
  const estimate=estimateHistory.find(e=>e.id===id);
  if(!estimate)return alert('Estimate not found.');
- const canDelete=privateAccessManager() || (profile && estimate.salesman_username===profile.username);
+ const canDelete=privateAccessManager() || (profile && String(estimate.salesman_username||'').toLowerCase()===String(profile.username||'').toLowerCase());
  if(!canDelete)return alert('You can only delete your own saved estimates.');
  const customer=estimate.customer||'Estimate';
  if(!confirm(`Delete saved estimate for "${customer}"?
@@ -1452,7 +1482,9 @@ async function editEstimateHistory(id){
  const own=!!(profile&&String(e.salesman_username||'').toLowerCase()===String(profile.username||'').toLowerCase());
  if(!own&&!privateAccessManager()&&!manager())return alert('You can edit your own estimates. Sam and Ramsey can edit any salesperson’s estimate.');
  try{sessionStorage.setItem('garage_edit_estimate_record',JSON.stringify(e));}catch(err){console.warn('Could not cache estimate edit record',err)}
- window.location.href=`estimator.html?editEstimate=${encodeURIComponent(id)}&v=20260820edit3`;
+ const btn=document.querySelector('[data-view="estimator"]');
+ setView('estimator',btn);
+ loadEstimator('editEstimate='+encodeURIComponent(id)+'&v=20260820edit3');
 }
 function renderEstimateHistory(){
  const rows=$('estimateHistoryRows');if(!rows)return;
@@ -1486,6 +1518,8 @@ const fields=['customer','job_number','salesman_username','sold_date','address',
 function managerJobCamera(){const e=$('f_doc_camera');if(!e)return;e.value='';e.click()}
 function managerJobChooseFiles(){const e=$('f_doc_files');if(!e)return;e.value='';e.click()}
 function showManagerJobFiles(inputId){
+ if(inputId==='f_doc_camera' && $('f_doc_files')) $('f_doc_files').value='';
+ if(inputId==='f_doc_files' && $('f_doc_camera')) $('f_doc_camera').value='';
  const files=[...($(inputId)?.files||[])],box=$('f_doc_selected');
  if(!box)return;
  box.textContent=files.length?`${files.length} file${files.length===1?'':'s'} selected: `+files.map(f=>f.name).join(', '):'No paperwork selected.';
@@ -1509,9 +1543,9 @@ async function uploadManagerJobPaperwork(jobId,user){
  await sb.from('job_activity').insert({job_id:jobId,actor_id:user.id,action:'Paperwork uploaded',details:{count:files.length,type,method:camera.length?'add-job camera/file':'add-job file'}});
  return null;
 }
-function openJobForm(id=null){if(!manager())return;openJobId=id;resetManagerJobPaperwork();$('jobFormTitle').textContent=id?'Edit Job — Attach Paperwork':'Add Job — Attach Paperwork';$('deleteJobBtn').classList.toggle('hidden',!id);fields.forEach(k=>{const e=$('f_'+k);if(e)e.value=''});$('f_id').value=id||'';$('f_city').value='Chicago';$('f_priority').value='Normal';$('f_hold_status').value='false';$('f_salesman_username').value=String(profile?.username||'ramsey').toLowerCase();$('f_sold_date').value=todayISO();$('f_permit_status').value='Not Submitted';$('f_demolition_required').value='true';$('f_demo_status').value='Pending';$('f_concrete_status').value='Pending';$('f_carpentry_status').value='Pending';$('f_electric_status').value='Pending';$('f_extras_required').value='false';$('f_extras_status').value='N/A';if(id){const j=jobs.find(x=>x.id===id);fields.forEach(k=>{const e=$('f_'+k);if(e)e.value=(['hold_status','demolition_required','extras_required'].includes(k)?((j[k]==null||j[k]==='')?'':String(j[k]===true||j[k]==='true')):(j[k]??''))})}syncDemoRequirement();syncExtrasRequirement();$('jobBg').classList.add('show')}
+function openJobForm(id=null){if(!manager())return;openJobId=id;resetManagerJobPaperwork();$('jobFormTitle').textContent=id?'Edit Job — Attach Paperwork':'Add Job — Attach Paperwork';$('deleteJobBtn').classList.toggle('hidden',!id);fields.forEach(k=>{const e=$('f_'+k);if(e)e.value=''});$('f_id').value=id||'';$('f_city').value='Chicago';$('f_priority').value='Normal';$('f_hold_status').value='false';$('f_salesman_username').value=String(profile?.username||'ramsey').toLowerCase();$('f_sold_date').value=todayISO();$('f_permit_status').value='Not Submitted';$('f_demolition_required').value='true';$('f_demo_status').value='Pending';$('f_concrete_status').value='Pending';$('f_carpentry_status').value='Pending';$('f_electric_status').value='Pending';$('f_extras_required').value='false';$('f_extras_status').value='N/A';if(id){const j=jobs.find(x=>x.id===id);fields.forEach(k=>{const e=$('f_'+k);if(!e)return;if(['hold_status','demolition_required','extras_required'].includes(k))e.value=((j[k]==null||j[k]==='')?'':String(j[k]===true||j[k]==='true'));else if(k==='salesman_username')e.value=String(j[k]??'').toLowerCase();else e.value=(j[k]??'')})}syncDemoRequirement();syncExtrasRequirement();$('jobBg').classList.add('show')}
 function closeJobForm(){$('jobBg').classList.remove('show');openJobId=null}
-async function saveJob(e){e.preventDefault();if(!manager())return;const {data:{user}}=await sb.auth.getUser();const rec={};fields.forEach(k=>{let v=$('f_'+k).value;if(['sold_date','deposit_date','permit_date','scheduled_demo','demo_date','concrete_scheduled','concrete_poured','concrete_ready','carpentry_scheduled','built_date','electric_date','extras_scheduled','extras_complete_date','inspection_date','completed_date'].includes(k))v=v||null;if(['price','deposit'].includes(k))v=Number(v)||0;if(['hold_status','demolition_required','extras_required'].includes(k))v=v==='true';rec[k]=v});if($('f_demolition_required').value==='false')rec.demo_status='N/A';else if(rec.demolition_required===true&&rec.demo_status==='N/A')rec.demo_status='Pending';if($('f_extras_required').value==='false')rec.extras_status='N/A';else if(rec.extras_required===true&&rec.extras_status==='N/A')rec.extras_status='Pending';let id=$('f_id').value,err;if(id){({error:err}=await sb.from('jobs').update(rec).eq('id',id));if(!err)await sb.from('job_activity').insert({job_id:id,actor_id:user.id,action:'Job updated',details:{status:status({...jobs.find(x=>x.id===id),...rec})}})}else{rec.created_by=user.id;const res=await sb.from('jobs').insert(rec).select().single();err=res.error;id=res.data?.id;if(id)await sb.from('job_activity').insert({job_id:id,actor_id:user.id,action:'Job created',details:{}})}if(err)return alert(err.message);
+async function saveJob(e){e.preventDefault();if(!manager())return;const {data:{user}}=await sb.auth.getUser();const rec={};fields.forEach(k=>{let v=$('f_'+k).value;if(['sold_date','deposit_date','permit_date','scheduled_demo','demo_date','concrete_scheduled','concrete_poured','concrete_ready','carpentry_scheduled','built_date','electric_date','extras_scheduled','extras_complete_date','inspection_date','completed_date'].includes(k))v=v||null;if(['price','deposit'].includes(k))v=Number(v)||0;if(['hold_status','demolition_required','extras_required'].includes(k))v=v==='true';if(k==='salesman_username')v=String(v||'').toLowerCase();rec[k]=v});if($('f_demolition_required').value==='false')rec.demo_status='N/A';else if(rec.demolition_required===true&&rec.demo_status==='N/A')rec.demo_status='Pending';if($('f_extras_required').value==='false')rec.extras_status='N/A';else if(rec.extras_required===true&&rec.extras_status==='N/A')rec.extras_status='Pending';let id=$('f_id').value,err;if(id){({error:err}=await sb.from('jobs').update(rec).eq('id',id));if(!err)await sb.from('job_activity').insert({job_id:id,actor_id:user.id,action:'Job updated',details:{status:status({...jobs.find(x=>x.id===id),...rec})}})}else{rec.created_by=user.id;const res=await sb.from('jobs').insert(rec).select().single();err=res.error;id=res.data?.id;if(id)await sb.from('job_activity').insert({job_id:id,actor_id:user.id,action:'Job created',details:{}})}if(err)return alert(err.message);
  const uploadErr=await uploadManagerJobPaperwork(id,user);
  if(uploadErr)return alert('Job was saved, but paperwork upload failed: '+uploadErr.message);
  closeJobForm();await refresh()}
@@ -1525,7 +1559,7 @@ async function openDrawer(id){openJobId=id;const j=jobs.find(x=>x.id===id);if(!j
 <div class="card"><h4>Job Information</h4>${info('Salesman',DISPLAY[j.salesman_username]||j.salesman_username)}${info('Phone',j.phone)}${info('Garage',j.garage_size)}${info('Job Age',jobAgeLabel(j))}${info('Contract',money(j.price))}${info('Deposit',money(j.deposit))}${info('Priority',j.priority)}</div>
 <div class="card"><h4>Next Action</h4><div style="font-size:18px;font-weight:900">${esc(next(j))}</div><div class="sub">Current stage: ${esc(status(j))}</div></div>
 <div class="card full"><h4>Key Dates</h4><div class="grid">${ibox('Demo Scheduled',fmt(j.scheduled_demo))}${ibox('Demo Crew',j.demo_crew||'—')}${ibox('Concrete Scheduled',fmt(j.concrete_scheduled))}${ibox('Concrete Crew',j.concrete_crew||'—')}${ibox('Concrete Poured',fmt(j.concrete_poured))}${ibox('Carpentry Scheduled',fmt(j.carpentry_scheduled))}${ibox('Carpentry Crew',j.carpentry_crew||'—')}${ibox('Garage Built',fmt(j.built_date))}${ibox('Electric',fmt(j.electric_date))}${ibox('Electric Crew',j.electric_crew||'—')}${ibox('Inspection',fmt(j.inspection_date))}</div></div>
-<div class="card full"><h4>Contract & Paperwork</h4>${!docs.some(x=>x.document_type==='Contract')?`<div style="margin-bottom:10px;padding:12px;border:2px solid #b91c1c;background:#fef2f2;color:#b91c1c;font-size:19px;font-weight:1000;text-align:center;border-radius:9px">MISSING PAPERWORK</div>`:''}<div class="scan-paperwork-box"><div class="scan-paperwork-title">📷 Scan / Upload Paperwork</div><div class="scan-paperwork-help">On a phone, tap <b>Scan with Camera</b> to photograph handwritten paperwork. You can also choose an existing PDF or photo. Pick the paperwork type first so it is filed correctly under this customer.</div><div class="scan-actions"><div class="field"><label>Paperwork Type</label><select id="docType"><option>Contract</option><option>Deposit Check / Proof of Payment</option><option>Plat of Survey</option><option>Demolition Sheet</option><option>Concrete Sheet</option><option>Permit</option><option>Inspection</option><option>Photo</option><option>Other</option></select></div><button class="btn primary scan-btn" onclick="startPaperworkScan('${j.id}')">📷 Scan with Camera</button><button class="btn light scan-btn" onclick="choosePaperworkFiles('${j.id}')">Choose PDF / Photos</button><input id="docCameraFile" type="file" accept="image/*" capture="environment" style="display:none" onchange="uploadSelectedPaperwork('${j.id}','docCameraFile')"><input id="docFile" type="file" multiple accept=".pdf,image/*" style="display:none" onchange="uploadSelectedPaperwork('${j.id}','docFile')"></div></div><div class="list">${docs.length?docs.map(x=>`<div class="rowbox split"><div><strong>${esc(x.document_type||'Document')}: ${esc(x.file_name)}</strong><div class="sub">${new Date(x.created_at).toLocaleString()}</div></div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn light sm" onclick="viewDoc('${esc(x.storage_path)}','${esc(x.file_name)}')">Pop Up</button><button type="button" onclick="deleteSavedPaperwork('${x.id}','${j.id}')" style="display:inline-block!important;visibility:visible!important;opacity:1!important;background:#dc2626!important;color:#fff!important;border:2px solid #b91c1c!important;border-radius:8px!important;padding:9px 14px!important;font-weight:1000!important;cursor:pointer!important;min-width:88px!important">Delete</button></div></div>`).join(''):'<div class="muted small">No paperwork uploaded yet.</div>'}</div></div>
+<div class="card full"><h4>Contract & Paperwork</h4>${!docs.some(x=>x.document_type==='Contract')?`<div style="margin-bottom:10px;padding:12px;border:2px solid #b91c1c;background:#fef2f2;color:#b91c1c;font-size:19px;font-weight:1000;text-align:center;border-radius:9px">MISSING PAPERWORK</div>`:''}${manager()?`<div class="scan-paperwork-box"><div class="scan-paperwork-title">📷 Scan / Upload Paperwork</div><div class="scan-paperwork-help">On a phone, tap <b>Scan with Camera</b> to photograph handwritten paperwork. You can also choose an existing PDF or photo. Pick the paperwork type first so it is filed correctly under this customer.</div><div class="scan-actions"><div class="field"><label>Paperwork Type</label><select id="docType"><option>Contract</option><option>Deposit Check / Proof of Payment</option><option>Plat of Survey</option><option>Demolition Sheet</option><option>Concrete Sheet</option><option>Permit</option><option>Inspection</option><option>Photo</option><option>Other</option></select></div><button class="btn primary scan-btn" onclick="startPaperworkScan('${j.id}')">📷 Scan with Camera</button><button class="btn light scan-btn" onclick="choosePaperworkFiles('${j.id}')">Choose PDF / Photos</button><input id="docCameraFile" type="file" accept="image/*" capture="environment" style="display:none" onchange="uploadSelectedPaperwork('${j.id}','docCameraFile')"><input id="docFile" type="file" multiple accept=".pdf,image/*" style="display:none" onchange="uploadSelectedPaperwork('${j.id}','docFile')"></div></div>`:''}<div class="list">${docs.length?docs.map(x=>`<div class="rowbox split"><div><strong>${esc(x.document_type||'Document')}: ${esc(x.file_name)}</strong><div class="sub">${new Date(x.created_at).toLocaleString()}</div></div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn light sm" data-path="${esc(x.storage_path)}" data-name="${esc(x.file_name)}" onclick="viewDoc(this.getAttribute('data-path'),this.getAttribute('data-name'))">Pop Up</button>${manager()?`<button type="button" onclick="deleteSavedPaperwork('${x.id}','${j.id}')" style="display:inline-block!important;visibility:visible!important;opacity:1!important;background:#dc2626!important;color:#fff!important;border:2px solid #b91c1c!important;border-radius:8px!important;padding:9px 14px!important;font-weight:1000!important;cursor:pointer!important;min-width:88px!important">Delete</button>`:''}</div></div>`).join(''):'<div class="muted small">No paperwork uploaded yet.</div>'}</div></div>
 <div class="card full"><h4>Activity History</h4><div class="list">${activity.length?activity.map(x=>`<div class="rowbox"><strong>${esc(x.action)}</strong><div class="sub">${new Date(x.created_at).toLocaleString()}</div></div>`).join(''):'<div class="muted small">No activity recorded yet.</div>'}</div></div>
 <div class="card full"><h4>Notes</h4><div style="white-space:pre-wrap">${esc(j.notes||'No notes.')}</div>${!manager()?`<div class="request-box"><strong>Need Randy or Sam to change something?</strong><div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:8px"><button class="btn light sm" onclick="submitJobChangeRequest('${j.id}','Edit')">Request an Edit</button><button class="btn light sm" onclick="submitJobChangeRequest('${j.id}','Note')">Request a Note</button></div></div>`:''}</div>
 </div>`;$('drawerBg').classList.add('show')}
@@ -1556,9 +1590,12 @@ function printJobSummary(id){
 function info(l,v){return `<div style="margin:8px 0"><div class="small muted" style="font-weight:900;text-transform:uppercase">${l}</div><div style="font-weight:800">${esc(v||'—')}</div></div>`}function ibox(l,v){return `<div><div class="small muted" style="font-weight:900;text-transform:uppercase">${l}</div><div style="font-weight:800">${esc(v)}</div></div>`}
 function closeDrawer(){$('drawerBg').classList.remove('show');openJobId=null}
 async function uploadPaperworkFile({file,jobId=null,requestId=null,type,user}){const safe=file.name.replace(/[^a-zA-Z0-9._-]/g,'_'),ctx=jobId?`jobs/${jobId}`:`requests/${requestId}`,path=`${user.id}/${ctx}/${Date.now()}-${safe}`;let res=await sb.storage.from('job-documents').upload(path,file,{upsert:false});if(res.error)return res.error;res=await sb.from('job_documents').insert({job_id:jobId,request_id:requestId,uploaded_by:user.id,file_name:file.name,storage_path:path,document_type:type});if(res.error)return res.error;return null}
-function startPaperworkScan(jobId){const el=$('docCameraFile');if(!el)return;el.value='';el.click()}
-function choosePaperworkFiles(jobId){const el=$('docFile');if(!el)return;el.value='';el.click()}
+function startPaperworkScan(jobId){if(!manager())return;const el=$('docCameraFile');if(!el)return;if($('docFile'))$('docFile').value='';el.value='';el.click()}
+function choosePaperworkFiles(jobId){if(!manager())return;const el=$('docFile');if(!el)return;if($('docCameraFile'))$('docCameraFile').value='';el.value='';el.click()}
 async function uploadSelectedPaperwork(jobId,inputId){
+ if(!manager())return alert('Only Randy, Sam, or Ramsey can upload job paperwork.');
+ if(inputId==='docCameraFile' && $('docFile')) $('docFile').value='';
+ if(inputId==='docFile' && $('docCameraFile')) $('docCameraFile').value='';
  const input=$(inputId),files=[...(input?.files||[])];
  if(!files.length)return;
  const type=$('docType')?.value||'Other';
@@ -1572,8 +1609,9 @@ async function uploadSelectedPaperwork(jobId,inputId){
  await refresh();
  await openDrawer(jobId);
 }
-async function uploadDoc(jobId){const files=[...$('docFile').files];if(!files.length)return alert('Choose at least one file first.');const {data:{user}}=await sb.auth.getUser();for(const file of files){const er=await uploadPaperworkFile({file,jobId,type:$('docType').value,user});if(er)return alert(er.message)}if(manager())await sb.from('job_activity').insert({job_id:jobId,actor_id:user.id,action:'Paperwork uploaded',details:{count:files.length,type:$('docType').value}});await refresh();await openDrawer(jobId)}
+async function uploadDoc(jobId){if(!manager())return;const files=[...$('docFile').files];if(!files.length)return alert('Choose at least one file first.');const {data:{user}}=await sb.auth.getUser();for(const file of files){const er=await uploadPaperworkFile({file,jobId,type:$('docType').value,user});if(er)return alert(er.message)}await sb.from('job_activity').insert({job_id:jobId,actor_id:user.id,action:'Paperwork uploaded',details:{count:files.length,type:$('docType').value}});await refresh();await openDrawer(jobId)}
 async function deleteSavedPaperwork(docId,jobId){
+ if(!manager())return alert('Only Randy, Sam, or Ramsey can delete saved paperwork.');
  const {data:doc,error:findError}=await sb.from('job_documents').select('*').eq('id',docId).single();
  if(findError||!doc)return alert('Could not find this saved file: '+(findError?.message||'Unknown error'));
  if(!confirm(`Delete "${doc.file_name}"?\n\nThis will permanently remove this saved upload from the customer file.`))return;

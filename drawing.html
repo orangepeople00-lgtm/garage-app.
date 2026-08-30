@@ -608,8 +608,7 @@ button.danger{color:#b42318}
   .main,.viewport{position:static!important;width:8in!important;height:10.5in!important;overflow:visible!important;background:#fff!important}
   #paper{
     position:relative!important;left:0!important;top:0!important;
-    transform:none!important;transform-origin:top left!important;
-    zoom:var(--print-zoom,0.65)!important;
+    transform:scale(var(--print-zoom,0.65))!important;transform-origin:top left!important;
     box-shadow:none!important;margin:0 auto!important
   }
   .handle,.rotate-handle,.cut-end-handle{display:none!important}
@@ -845,7 +844,7 @@ button.danger{color:#b42318}
   .main{display:block!important;position:static!important;width:100%!important;height:auto!important;margin:0!important;padding:0!important;background:#fff!important}
   .main>.topbar{display:none!important}
   .viewport{display:block!important;position:static!important;width:100%!important;height:auto!important;margin:0!important;padding:0!important;overflow:visible!important;background:#fff!important}
-  #paper{display:block!important;position:relative!important;left:0!important;top:0!important;margin:0 auto!important;transform:none!important;box-shadow:none!important}
+  #paper{display:block!important;position:relative!important;left:0!important;top:0!important;margin:0 auto!important;transform:scale(var(--print-zoom,0.65))!important;transform-origin:top left!important;box-shadow:none!important}
   #paper .handle,#paper .rotate-handle,#paper .rotate-stem,#paper .cut-end-handle{display:none!important}
 }
 
@@ -965,7 +964,7 @@ button.danger{color:#b42318}
   z-index:90!important;
 }
 .obj.gap-dim{display:none!important}
-.obj.rear-setback-clean .label{display:none!important;background:transparent!important}
+.obj.rear-setback-clean .label{display:flex!important;align-items:center!important;justify-content:center!important;background:rgba(255,255,255,.92)!important;font-size:18px!important;font-weight:1000!important}
 
 
 /* V27: long readable sidewalks + permanent empty-dimension-label removal */
@@ -983,9 +982,9 @@ button.danger{color:#b42318}
   padding:0 5px!important;
   box-sizing:border-box!important;
 }
-/* Empty rear/alley dimension labels are not created in JS; these are defensive. */
-.obj.rear-setback-clean .label,
+/* Empty alley/gap labels stay hidden; rear setback number must print for the crew. */
 .obj.gap-dim .label{display:none!important;background:transparent!important}
+.obj.rear-setback-clean .label{display:flex!important;background:rgba(255,255,255,.92)!important}
 
 
 /* V28: permanently hide legacy rear-gap/alley guide graphics that caused the stray black line */
@@ -2429,7 +2428,7 @@ button.danger{color:#b42318}
 <div class="field"><label>Footing</label><select id="footingMode"><option value="na">N/A</option><option value="yes">Use footing</option></select></div>
 <div class="field"><label>Footing width (first number, in.)</label><input disabled="" id="footWidth" step="1" type="number" value="10"/></div>
 </div>
-<div class="field"><label>Footing depth (second number, in.)</label><input disabled="" id="footDepth" step="1" type="number" value="20"/></div>
+<div class="field"><label>Footing depth (second number, in.)</label><input disabled="" id="footDepth" step="1" type="number" value="42"/></div>
 <div class="field"><label>Stub pipe</label><select id="stubPipe"><option value="3/4">3/4" pipe (default)</option><option value="1/2">1/2" pipe</option><option value="none">None</option></select></div>
 <div class="field"><label>Front returns — left / middle / right</label>
 <div class="segment-grid">
@@ -2759,7 +2758,7 @@ button.danger{color:#b42318}
 <div class="field"><label>Footing</label><select id="wFooting"><option value="na">N/A (Chicago default)</option><option value="yes">Use footing</option></select></div>
 <div class="field"><label>Footing width (first number, in.)</label><input disabled="" id="wFootWidth" type="number" value="10"/></div>
 </div>
-<div class="field wizard-concrete-only"><label>Footing depth (second number, in.)</label><input disabled="" id="wFootDepth" type="number" value="20"/></div>
+<div class="field wizard-concrete-only"><label>Footing depth (second number, in.)</label><input disabled="" id="wFootDepth" type="number" value="42"/></div>
 <div class="field wizard-concrete-only"><label>Overhead door width (ft)</label><input id="wDoor" step="1" min="1" type="number" value="16"/></div>
 <input id="wReturnLeft" type="hidden" value="2"/><input id="wReturnRight" type="hidden" value="2"/>
 <div class="field wizard-concrete-only"><label>Rear opening / returns (ft)</label>
@@ -3618,8 +3617,12 @@ ${nwk}' x ${nlh}'`,angle:0,pxf:p}));
  });
  const [nw,nh]=parseDims($('cNewPadCombo').value);
  ensureOrRemoveRole('newPad',nw&&nh,()=>({id:uid++,kind:'pad',role:'newPad',x:d.x+d.w-nw*p-28,y:d.y+240,wf:nw,hf:nh,label:`NEW CONCRETE PAD\n${nw}' x ${nh}'`,angle:0,pxf:p}));
+ const newPadObj=byRole('newPad');
+ if(newPadObj&&nw&&nh){newPadObj.wf=nw;newPadObj.hf=nh;newPadObj.label=`NEW CONCRETE PAD\n${nw}' x ${nh}'`;}
  const [xw,xh]=parseDims($('cExtraPadCombo')?.value||'');
  ensureOrRemoveRole('extraNewPad',xw&&xh,()=>({id:uid++,kind:'pad',role:'extraNewPad',x:d.x+34,y:d.y+260,wf:xw,hf:xh,label:`EXTRA NEW PAD\n${xw}' x ${xh}'`,angle:0,pxf:p}));
+ const extraPadObj=byRole('extraNewPad');
+ if(extraPadObj&&xw&&xh){extraPadObj.wf=xw;extraPadObj.hf=xh;extraPadObj.label=`EXTRA NEW PAD\n${xw}' x ${xh}'`;}
  renderObjects();
 }
 $('cPatioLocation')?.addEventListener('change',()=>{patioWidthManual=false;setTimeout(()=>{liveConcreteExtras();syncConcretePatioToGarage();updateLotAndSetbacksFromPanel()},0)});
@@ -4055,7 +4058,16 @@ function fillWizardFromEstimate(rec){
     $('wServiceDoorLocation').value=st.serviceDoorLocation;
     if($('cServiceDoorLocation'))$('cServiceDoorLocation').value=st.serviceDoorLocation;
   }
-  if($('wServiceDoor'))$('wServiceDoor').value='yes';
+  const sdRaw=String(st.serviceDoor||st.serviceDoorIncluded||'').toLowerCase();
+  const hasServiceDoor=!!st.serviceDoorLocation || sdRaw==='yes' || sdRaw==='true' || sdRaw==='1';
+  const noServiceDoor=sdRaw==='no' || sdRaw==='false' || sdRaw==='none';
+  if(hasServiceDoor){
+    if($('wServiceDoor'))$('wServiceDoor').value='yes';
+    if($('cServiceDoor'))$('cServiceDoor').value='yes';
+  }else if(noServiceDoor){
+    if($('wServiceDoor'))$('wServiceDoor').value='no';
+    if($('cServiceDoor'))$('cServiceDoor').value='no';
+  }
 
   // Overhead door width
   if(st.overheadDoorWidth && $('wDoor'))$('wDoor').value=String(st.overheadDoorWidth);
@@ -4141,6 +4153,14 @@ function renderEstimateImportList(){
       const light=rows[idx];
       if(!light) return;
       const status=$('estimateImportStatus');
+      const hasWork=(state.objects||[]).length>0
+        || ['concrete','obstruction','siteplan'].some(m=>((state.sheetStates||{})[m]?.objects||[]).length)
+        || !!String($('customerName')?.value||'').trim()
+        || !!String($('jobAddress')?.value||'').trim();
+      if(hasWork){
+        const ok=confirm('Load estimate for '+(light.customer||'this customer')+'? This replaces customer/job fields and wizard sizes. Current drawing objects stay until you tap Build Starter Drawing.');
+        if(!ok) return;
+      }
       try{
         if(status) status.textContent='Loading full estimate for '+(light.customer||'customer')+'…';
         let rec=light;
@@ -4378,8 +4398,8 @@ function renderConcreteMarks(){
  if(footing==='yes'){
    // WIDTH sits on the horizontal arm of the L, immediately right of CODE.
    const wMark=addSheetMark(($('footWidth')?.value||10)+'″',226,446,54,22,16,'footing-on-line footing-width');
-   // DEPTH sits in the vertical arm of the L (same L as width).
-   const dMark=addSheetMark(($('footDepth')?.value||20)+'″',204,392,28,36,16,'footing-on-line footing-depth');
+   // DEPTH sits in the vertical arm of the L (same L as width). Suburb frost footing is 42".
+   const dMark=addSheetMark(($('footDepth')?.value||42)+'″',196,384,44,48,16,'footing-on-line footing-depth');
  } else if(code==='chicago'){
    // Standard Chicago no-footing detail.
    addSheetMark(thick+'″',338,411,86,25,22);
@@ -4581,7 +4601,7 @@ function placeProposedGarageOnSurvey(opts={}){
  if($('spPlacement')&&opts.placement)$('spPlacement').value=placement;
  // Clear previous AI/manual proposed garage pieces (keep other brush whiteouts)
  state.objects=state.objects.filter(o=>!(
-   o.role==='proposedGarage' ||
+   o.role==='proposedGarage' || o.role==='proposedApron' ||
    o.role==='surveyEraseGarage' ||
    o.role==='spLeftSb' || o.role==='spRightSb' || o.role==='spRearSb' ||
    o.role==='garageWallDimN' || o.role==='garageWallDimS' || o.role==='garageWallDimE' || o.role==='garageWallDimW' ||
@@ -4681,6 +4701,17 @@ function placeProposedGarageOnSurvey(opts={}){
    label:'PROPOSED GARAGE',
    angle:0,pxf:sc
  });
+ const apron=typeof getApronDimsForSurvey==='function'?getApronDimsForSurvey():{w:null,h:null};
+ if(apron && apron.h){
+   const apronW=apron.w||gw, apronH=apron.h;
+   state.objects.push({
+     id:uid++,kind:'apron',role:'proposedApron',
+     x:x, y:y+gh*sc,
+     wf:apronW, hf:apronH,
+     label:`PROPOSED APRON\n${apronW}' x ${apronH}'`,
+     angle:0,pxf:sc
+   });
+ }
  // Inner-wall dimensions: number on each inside wall (survey style, e.g. 20 on each side for 20x20)
  const dimStyle={kind:'text',angle:0,pxf:sc};
  const wallPad=Math.max(10, sc*0.45);
@@ -4909,6 +4940,14 @@ $('surveyUpload').onchange=e=>{
 };
 if($('placeProposedGarage'))$('placeProposedGarage').onclick=()=>{
  setTapExistingGarageMode(false);
+ if(state.mode!=='siteplan'){
+   alert('Switch Drawing type to Proposed Site Plan first.');
+   return;
+ }
+ if(!surveyData){
+   const status=$('aiSurveyStatus');
+   if(status) status.textContent='Upload a survey first, then place the proposed garage on the plat.';
+ }
  placeProposedGarageOnSurvey({autoErase:false});
 };
 if($('aiPlaceOnSurveyBtn'))$('aiPlaceOnSurveyBtn').onclick=()=>{
@@ -5211,8 +5250,8 @@ function saveObjectTextEditor(){
   o.customText=input.value;
   o.label=input.value;
   closeObjectTextEditor();
-  if(typeof saveState==='function') saveState();
-  if(typeof render==='function') render();
+  try{ saveActiveSheetState(); }catch(_){}
+  try{ renderObjects(); }catch(_){}
 }
 
 document.addEventListener('DOMContentLoaded',()=>{
@@ -5301,10 +5340,9 @@ function renderObjects(){
     if(o.hidden) return;
     // V38: on concrete/obstruction, hide legacy rear gap / alley distance lines.
     // On Proposed Site Plan we DO show rear setback markers.
-    if(state.mode!=='siteplan' && ['rearGap','alleyDistance','rearSetback'].includes(o.role)) return;
-    if(state.mode==='siteplan' && ['rearGap','alleyDistance'].includes(o.role)) return;
+    if(['rearGap','alleyDistance'].includes(o.role)) return;
     const [w,h]=objPixels(o), el=document.createElement('div');
-    el.className='obj '+(o.kind==='eraser'?'erase-patch ':'')+(o.brush?'brush-dot ':'')+(o.kind==='text'?'textobj ':'')+(o.kind==='dimension'?'dimension ':'')+(o.kind==='stays'?'stays ':'')+(o.kind==='cut'?'cutstamp ':'')+(o.kind==='collect'?'collectstamp ':'')+((o.kind==='patio')?'patio ':'')+((o.kind==='pad')?'pad ':'')+((o.role==='partyDoor')?'party-door ':'')+((o.role==='serviceDoor')?'service-door ':'')+(((o.role==='garage'||o.role==='apron')&&sameGarageApronWidth())?'shared-slab-apron ':'')+((o.role==='garage'||o.role==='proposedGarage')?'role-garage ':'')+((o.kind==='sidewalk')?'sidewalk ':'')+((o.kind==='sidewalk')?'vertical-label ':'')+(['frontLeft','frontMiddle','frontRight','rearLeft','rearMiddle','rearRight','leftSetback','rightSetback','rearSetback','houseGap','alleyDistance'].includes(o.role)?'big-dim ':'')+(o.role==='rearGap'?'gap-dim ':'')+(o.role==='rearSetback'?'rear-setback-clean ':'')+((o.role==='lotWidth'||o.role==='lotLength')?'lot-dim ':'')+(o.role==='lotLength'?'lot-length-special ':'')+(/SERVICE DOOR PAD/i.test(o.label||'')?'service-pad ':'')+((o.kind==='tree'||o.kind==='bush')?'circle-stamp ':'')+(state.mode==='siteplan'?'siteplan-object ':'')+((['serviceDoor','partyDoor'].includes(o.role)||['serviceReturn','partyReturnA','partyReturnB','frontLeft','frontMiddle','frontRight'].includes(o.role))?'no-direct-drag ':'')+(state.selected===o.id?'selected':'');
+    el.className='obj '+(o.kind==='eraser'?'erase-patch ':'')+(o.brush?'brush-dot ':'')+(o.kind==='text'?'textobj ':'')+(o.kind==='dimension'?'dimension ':'')+(o.kind==='stays'?'stays ':'')+(o.kind==='cut'?'cutstamp ':'')+(o.kind==='collect'?'collectstamp ':'')+((o.kind==='patio')?'patio ':'')+((o.kind==='pad')?'pad ':'')+((o.role==='partyDoor')?'party-door ':'')+((o.role==='serviceDoor')?'service-door ':'')+(((o.role==='garage'||o.role==='apron')&&sameGarageApronWidth())?'shared-slab-apron ':'')+((o.role==='garage'||o.role==='proposedGarage')?'role-garage ':'')+((o.kind==='sidewalk')?'sidewalk ':'')+((o.kind==='sidewalk')?'vertical-label ':'')+(['frontLeft','frontMiddle','frontRight','rearLeft','rearMiddle','rearRight','leftSetback','rightSetback','rearSetback','houseGap','alleyDistance','partyReturnA','partyReturnB'].includes(o.role)?'big-dim ':'')+(o.role==='rearGap'?'gap-dim ':'')+(o.role==='rearSetback'?'rear-setback-clean ':'')+((o.role==='lotWidth'||o.role==='lotLength')?'lot-dim ':'')+(o.role==='lotLength'?'lot-length-special ':'')+(/SERVICE DOOR PAD/i.test(o.label||'')?'service-pad ':'')+((o.kind==='tree'||o.kind==='bush')?'circle-stamp ':'')+(state.mode==='siteplan'?'siteplan-object ':'')+((['serviceDoor','partyDoor'].includes(o.role)||['serviceReturn','partyReturnA','partyReturnB','frontLeft','frontMiddle','frontRight'].includes(o.role))?'no-direct-drag ':'')+(state.selected===o.id?'selected':'');
     // Eraser patches never show the word "ERASE" / labels
     if(o.kind==='eraser'){ o.label=''; }
     // V64: attach both the screen hatch and a real SVG hatch for printing.
@@ -6239,13 +6277,16 @@ function makeJpegPdf(jpegBytes,imgW,imgH){
  return new Blob(parts,{type:'application/pdf'});
 }
 function xhtmlSelfCloseVoids(html){
-  return String(html).replace(/<(img|br|hr|input)([^>]*?)>/gi,(_,tag,attrs)=>'<'+tag+String(attrs||'').replace(/\/\s*$/,'')+'/>');
+  return String(html)
+    .replace(/&(?![a-zA-Z]+;|#\d+;|#x[0-9a-fA-F]+;)/g,'&amp;')
+    .replace(/<(img|br|hr|input|col|source|embed|wbr|meta|link|area|base|param|track)([^>]*?)>/gi,(_,tag,attrs)=>'<'+tag+String(attrs||'').replace(/\/\s*$/,'')+'/>');
 }
 function clonePaperForExport(){
   const clone=paper.cloneNode(true);
   clone.style.transform='none';clone.style.zoom='1';clone.style.boxShadow='none';clone.style.margin='0';
   clone.querySelectorAll('.handle,.rotate-handle,.cut-end-handle,.side-handle').forEach(e=>e.remove());
   clone.querySelectorAll('.selected').forEach(e=>e.classList.remove('selected'));
+  clone.querySelectorAll('svg').forEach(sv=>{ if(!sv.getAttribute('xmlns')) sv.setAttribute('xmlns','http://www.w3.org/2000/svg'); });
   return clone;
 }
 function fallbackPrintDrawing(){
@@ -6278,7 +6319,7 @@ async function buildDrawingExport(){
  const t=currentTemplate(),clone=clonePaperForExport();
  const cssText=[...document.querySelectorAll('style')].map(x=>x.textContent).join('\n');
  const html=`<div xmlns="http://www.w3.org/1999/xhtml"><style>${cssText}</style>${xhtmlSelfCloseVoids(clone.outerHTML)}</div>`;
- const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${t.w}" height="${t.h}"><foreignObject width="100%" height="100%">${html}</foreignObject></svg>`;
+ const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${t.w}" height="${t.h}"><foreignObject x="0" y="0" width="${t.w}" height="${t.h}">${html}</foreignObject></svg>`;
  const url=URL.createObjectURL(new Blob([svg],{type:'image/svg+xml;charset=utf-8'}));
  try{
    const im=new Image();
@@ -6289,6 +6330,14 @@ async function buildDrawingExport(){
    });
    const c=document.createElement('canvas');c.width=t.w;c.height=t.h;
    const ctx=c.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,c.width,c.height);ctx.drawImage(im,0,0);
+   try{
+     const sample=ctx.getImageData(Math.floor(c.width*0.25),Math.floor(c.height*0.25),Math.max(8,Math.floor(c.width*0.5)),8).data;
+     let ink=0;
+     for(let i=0;i<sample.length;i+=16){ if(sample[i]<248||sample[i+1]<248||sample[i+2]<248) ink++; }
+     if(!ink) throw new Error('PDF raster was blank');
+   }catch(blankErr){
+     if(String(blankErr.message||blankErr).includes('blank')) throw blankErr;
+   }
    const jpgData=c.toDataURL('image/jpeg',.96);
    const bytes=dataUrlBytes(jpgData);
    const pdfBlob=makeJpegPdf(bytes,c.width,c.height);
@@ -6415,6 +6464,8 @@ function syncSidebarFolds(){
 }
 $('mode').onchange=()=>{
   try{syncSidebarFolds();}catch(_){}
+  try{ if(typeof setTapExistingGarageMode==='function') setTapExistingGarageMode(false); }catch(_){}
+  try{ if(typeof setWhiteoutBrush==='function' && whiteoutBrushOn && ($('mode')?.value!=='siteplan')) setWhiteoutBrush(false); }catch(_){}
 
   saveActiveSheetState();
   const next=$('mode').value;
@@ -6612,13 +6663,23 @@ function calcFrontReturnsFrom(changed){
 }
 
 function syncFrontReturns(){calcFrontReturnsFrom('garage')}
-function syncLotMath(){
- const lot=+$('wLotWidth').value||0,gw=+$('wGarageW').value||0,left=+$('wLeftSetback').value||0;
+function syncLotMath(changedId){
+ const lot=+$('wLotWidth').value||0,gw=+$('wGarageW').value||0;
+ let left=Math.max(0,+$('wLeftSetback').value||0);
+ let right=Math.max(0,+$('wRightSetback').value||0);
  const [pw,ph]=parseDims($('wPatioCombo')?.value||''),loc=$('wPatioLocation')?.value||'back';
  const sidePatio=(pw&&ph&&(loc==='left'||loc==='right'))?pw:0;
  if(lot>0&&gw>0){
-   const right=Math.max(0,Math.round((lot-left-gw-sidePatio)*2)/2);
-   $('wRightSetback').value=right;
+   const available=Math.max(0,lot-gw-sidePatio);
+   if(changedId==='wRightSetback'){
+     right=Math.min(available,right);
+     left=Math.max(0,+(Math.round((available-right)*2)/2).toFixed(1));
+   }else{
+     left=Math.min(available,left);
+     right=Math.max(0,+(Math.round((available-left)*2)/2).toFixed(1));
+   }
+   if($('wLeftSetback'))$('wLeftSetback').value=left;
+   if($('wRightSetback'))$('wRightSetback').value=right;
  }
 }
 
@@ -6628,7 +6689,11 @@ function syncFootingControls(){
 }
 function setWizardCodeDefaults(){
  if($('wCode').value==='chicago') $('wFooting').value='na';
- else $('wFooting').value='yes';
+ else {
+  $('wFooting').value='yes';
+  if($('wFootWidth') && (!$('wFootWidth').value || $('wFootWidth').value==='20')) $('wFootWidth').value=10;
+  if($('wFootDepth') && (!$('wFootDepth').value || $('wFootDepth').value==='20')) $('wFootDepth').value=42;
+ }
  syncFootingControls();
 }
 function syncSidebarFooting(){
@@ -6637,7 +6702,11 @@ function syncSidebarFooting(){
 }
 function setSidebarCodeDefaults(){
  if($('jobCode').value==='chicago') $('footingMode').value='na';
- else $('footingMode').value='yes';
+ else {
+  $('footingMode').value='yes';
+  if($('footWidth') && (!$('footWidth').value || $('footWidth').value==='20')) $('footWidth').value=10;
+  if($('footDepth') && (!$('footDepth').value || $('footDepth').value==='20')) $('footDepth').value=42;
+ }
  syncSidebarFooting();
 }
 
@@ -6651,7 +6720,7 @@ function openWizard(){
     updateCombo('wApronCombo',+$('cApronW').value||(+($('cSizeW').value)||20),+$('cApronL').value||3);
     $('wStubPipe').value=$('stubPipe').value||'3/4';$('wWater').value=$('cWater').value||'Yes';if($('wServiceDoor'))$('wServiceDoor').value=$('cServiceDoor')?.value||'yes';if($('wServiceDoorLocation'))$('wServiceDoorLocation').value=$('cServiceDoorLocation')?.value||'right';if($('wServiceDoorSwing'))$('wServiceDoorSwing').value=$('cServiceDoorSwing')?.value||'in';if($('wPartyDoor'))$('wPartyDoor').value=$('cPartyDoor')?.value||'none';if($('wPartyDoorLocation'))$('wPartyDoorLocation').value=$('cPartyDoorLocation')?.value||'back';syncDoorControls();
     $('wCode').value=$('jobCode').value||'chicago';$('wFooting').value=$('footingMode').value||'na';
-    $('wFootDepth').value=$('footDepth').value||20;$('wFootWidth').value=$('footWidth').value||10;
+    $('wFootDepth').value=$('footDepth').value||42;$('wFootWidth').value=$('footWidth').value||10;
     apronManual=!!$('cApronCombo').value;
     $('wLotWidth').value=$('cLotWidth').value||40;$('wLotLength').value=$('cLotLength').value||125;
     $('wLeftSetback').value=$('cLeftSetback').value||0;$('wRightSetback').value=$('cRightSetback').value||0;
@@ -6661,6 +6730,7 @@ function openWizard(){
     $('wExistingWalkCombo').value=$('cExistingWalkCombo').value||'';if($('cNewWalkCombo'))$('wWalkCombo').value=$('cNewWalkCombo').value||'';if($('wShowExistingWalk'))$('wShowExistingWalk').value=$('cShowExistingWalk').value||'yes';
     $('wPatioLocation').value=$('cPatioLocation').value||'back';$('wPatioCombo').value=$('cPatioCombo').value||'';
     $('wNewPadCombo').value=$('cNewPadCombo').value||'';
+    if($('wPadCombo')) $('wPadCombo').value=$('cExtraPadCombo')?.value||'';
   }else if(state.mode==='obstruction'){
     updateCombo('wGarageCombo',+$('oSizeW').value||20,+$('oSizeL').value||20);
     $('wShed').value=$('oShed').value||'no';$('wWallHeight').value=$('oWallHeight').value||'';syncWizardShed();
@@ -6692,6 +6762,22 @@ function buildWizardForMode(forcedMode){
   $('mode').value=mode; state.mode=mode;
   // Customer/job information is edited only in the side panel. The wizard never overwrites it.
   $('salesman').value=$('wSalesman').value;$('salesPhone').value=$('wSalesPhone').value;
+  // Never wipe a loaded survey / placed garage when building All or Site Plan.
+  if(mode==='siteplan' && surveyData){
+    const gwKeep=+$('wGarageW').value||0, ghKeep=+$('wGarageH').value||0;
+    if(gwKeep&&ghKeep){
+      if($('spGarageW'))$('spGarageW').value=gwKeep;
+      if($('spGarageH'))$('spGarageH').value=ghKeep;
+      if(typeof updateCombo==='function') updateCombo('spGarageCombo',gwKeep,ghKeep);
+    }
+    if($('spLeftSetback'))$('spLeftSetback').value=$('wLeftSetback').value;
+    if($('spRightSetback'))$('spRightSetback').value=$('wRightSetback').value;
+    if($('spRearSetback'))$('spRearSetback').value=$('wRearSetback').value;
+    if($('spLotWidth'))$('spLotWidth').value=$('wLotWidth').value||$('spLotWidth').value;
+    if($('spLotLength'))$('spLotLength').value=$('wLotLength').value||$('spLotLength').value;
+    saveActiveSheetState();renderSheet();renderObjects();
+    return;
+  }
   state.objects=[];state.selected=null;state.history=[];state.future=[];
 
   const t=TEMPLATES[mode], d=t.draw, P=DRAW_PXF;
@@ -6904,7 +6990,10 @@ function buildWizardForMode(forcedMode){
     state.objects.at(-1).visualWpx=Math.max(38,swVisW*layoutScale);
     state.objects.at(-1).visualHpx=Math.max(520,swVisH*layoutScale,swVisW*layoutScale*14);
   }
-  if(!sitePlanOnlyNew && pw&&ph){wizardObj('pad',pw,ph,demo?`DEMOLISH PAD\n${pw}' x ${ph}'`:`NEW CONCRETE PAD\n${pw}' x ${ph}'`,d.x+d.w-pw*layoutScale-18,d.y+200,0);state.objects.at(-1).pxf=layoutScale}
+  if(mode==='concrete' && pw&&ph){
+    wizardObj('pad',pw,ph,`EXTRA NEW PAD\n${pw}' x ${ph}'`,d.x+34,d.y+260,0,'extraNewPad');
+    state.objects.at(-1).pxf=layoutScale;
+  }
   if(!sitePlanOnlyNew && sw&&sh){
     wizardObj('pad',sw,sh,`SERVICE DOOR PAD\n${sw}' x ${sh}'`,xGarage+garagePxW,yGarage+garagePxH*.35,0,'servicePad');
     state.objects.at(-1).pxf=layoutScale;
@@ -6916,7 +7005,7 @@ function buildWizardForMode(forcedMode){
   // (Do not redeclare garagePxW/H — already defined above from layoutScale.)
   const setbackPxH=sitePlanOnlyNew?siteGaragePxH:wizardGaragePxH;
   const setbackPxW=sitePlanOnlyNew?siteGaragePxW:wizardGaragePxW;
-  const setbackScale=sitePlanOnlyNew?siteGarageScale:layoutScale;
+  const setbackScale=sitePlanOnlyNew?siteGarageScale:wizardGarageScale;
   if(ls){
     const labelW=sitePlanOnlyNew?36:58, gap=sitePlanOnlyNew?6:10;
     const leftX = xGarage - labelW - gap;
@@ -6943,6 +7032,7 @@ function buildWizardForMode(forcedMode){
       state.objects.at(-1).pxf=setbackScale;
     }
   }
+  if(!sitePlanOnlyNew && typeof syncVisualSetbacksToGarage==='function') syncVisualSetbacksToGarage();
 
   if(mode==='concrete'){
     // Front opening: clean 2' / 16' / 2' style numbers with no extra wording.
@@ -7062,6 +7152,7 @@ function buildWizardForMode(forcedMode){
     $('cExistingWalkCombo').value=$('wExistingWalkCombo').value||'';if($('cNewWalkCombo'))$('cNewWalkCombo').value=$('wWalkCombo').value||'';if($('cShowExistingWalk'))$('cShowExistingWalk').value=$('wShowExistingWalk')?.value||'yes';
     $('cPatioLocation').value=$('wPatioLocation').value;$('cPatioCombo').value=$('wPatioCombo').value||'';
     $('cNewPadCombo').value=$('wNewPadCombo').value||'';
+    if($('cExtraPadCombo')) $('cExtraPadCombo').value=$('wPadCombo').value||'';
   } else if(mode==='obstruction'){
     $('oSizeW').value=gw||'';$('oSizeL').value=gh||'';updateCombo('oSizeCombo',gw,gh);if($('oApronCombo'))updateCombo('oApronCombo',aw,ah);
     if($('oLotWidth'))$('oLotWidth').value=lotW||40;if($('oLotLength'))$('oLotLength').value=lotL||125;
@@ -7087,9 +7178,9 @@ function buildWizardCore(){
     closeWizard();setTimeout(focusDrawing,60);
     return;
   }
-  const activeBefore=state.mode;
   buildWizardForMode(requested);
-  $('mode').value=activeBefore;state.mode=activeBefore;loadSheetState(activeBefore);renderSheet();renderObjects();
+  try{syncSidebarFolds();}catch(_){}
+  try{syncMainModePanels();}catch(_){}
   closeWizard();setTimeout(focusDrawing,60);
 }
 
@@ -7108,8 +7199,9 @@ $('wizardClose').addEventListener('click',e=>{e.preventDefault();closeWizard()})
 $('wizardCancel').addEventListener('click',e=>{e.preventDefault();closeWizard()});
 $('wMode').addEventListener('change',()=>{updateWizardLabels();syncWizardShed()});
 $('wDoor').addEventListener('input',()=>{calcFrontReturnsFrom('door');syncLotMath()});
-$('wLotWidth').addEventListener('input',syncLotMath);
-$('wLeftSetback').addEventListener('input',syncLotMath);
+$('wLotWidth').addEventListener('input',()=>syncLotMath('wLotWidth'));
+$('wLeftSetback').addEventListener('input',()=>syncLotMath('wLeftSetback'));
+$('wRightSetback')?.addEventListener('input',()=>syncLotMath('wRightSetback'));
 $('wCode').addEventListener('change',setWizardCodeDefaults);
 $('wFooting').addEventListener('change',syncFootingControls);
 $('wShed').addEventListener('change',syncWizardShed);
@@ -7307,7 +7399,7 @@ if(makeConcTool) makeConcTool.onclick=toggleConcreteFill;
 
 const bringBtn=document.getElementById('bringForwardBtn');
 if(bringBtn) bringBtn.onclick=()=>{
-  const o=getSelectedObj(); if(!o) return;
+  const o=getSelectedObj(); if(!o) return alert('Select an object first');
   const idx=state.objects.findIndex(x=>x.id===o.id);
   if(idx<0 || idx===state.objects.length-1) return;
   snapshot();
@@ -7318,7 +7410,7 @@ if(bringBtn) bringBtn.onclick=()=>{
 
 const sendBtn=document.getElementById('sendBackBtn');
 if(sendBtn) sendBtn.onclick=()=>{
-  const o=getSelectedObj(); if(!o) return;
+  const o=getSelectedObj(); if(!o) return alert('Select an object first');
   const idx=state.objects.findIndex(x=>x.id===o.id);
   if(idx<=0) return;
   snapshot();

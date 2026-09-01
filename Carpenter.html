@@ -184,6 +184,7 @@ html,body{margin:0;min-height:100%;background:#e8edf3;color:var(--ink);font-fami
       <div class="tiny">
         <button type="button" onclick="nudgeOh(-0.5)">← 0.5'</button>
         <button type="button" onclick="nudgeOh(0.5)">0.5' →</button>
+        <button type="button" onclick="flipDoors()" title="Swap OH and service door sides">Flip doors</button>
       </div>
       <label>Left return (ft)</label>
       <input id="ohLeftRet" type="number" min="0" step="0.5" value="" placeholder="auto center" oninput="recalcReturns('left')"/>
@@ -547,6 +548,7 @@ function nudgeSvc(dir){
   }
   const next=Math.max(0, Math.min(Math.max(0,wall-2.5), +(cur+dir).toFixed(1)));
   $('svcOffset').value=String(next);
+  separateDoors();
   touch();
 }
 function fillIfEmpty(id, value){
@@ -751,7 +753,71 @@ function nudgeOh(dir){
   let right=+(r.right-dir).toFixed(1);
   if(left<0 || right<0) return;
   writeReturns(left,right);
+  separateDoors();
   touch();
+}
+function sameWall(){
+  return String(val('ohWall')||'FRONT').toUpperCase()===String(val('svcWall')||'RIGHT').toUpperCase();
+}
+function svcWidthFt(){ return 3; }
+function svcFeet(){
+  const wall=wallLengthFor(val('svcWall')||val('ohWall')||'FRONT');
+  let off=parseFloat(val('svcOffset')||'');
+  const pos=val('svcPos')||'right';
+  if(!Number.isFinite(off)) off = pos==='left'?0.5 : pos==='center'?(wall/2-1.5):Math.max(0,wall-svcWidthFt()-0.5);
+  off=Math.max(0, Math.min(wall-svcWidthFt(), off));
+  return {off, width:svcWidthFt(), wall};
+}
+function separateDoors(){
+  if(!sameWall()) return;
+  const r=currentReturns();
+  const svc=svcFeet();
+  const gap=0.5;
+  const oh0=r.left, oh1=r.left+r.door;
+  const s0=svc.off, s1=svc.off+svc.width;
+  const overlap = !(oh1+gap<=s0 || s1+gap<=oh0);
+  if(!overlap) return;
+  const svcRight = (s0+s1)/2 >= r.wall/2;
+  if(svcRight){
+    const need=+(svc.width+gap).toFixed(1);
+    let right=Math.max(need, r.right);
+    let left=+(r.wall-r.door-right).toFixed(1);
+    if(left<0){ left=0; right=+(r.wall-r.door).toFixed(1); }
+    writeReturns(left,right);
+    $('svcOffset').value=String(Math.max(left+r.door+gap, Math.min(svc.off, r.wall-svc.width)).toFixed(1));
+    if($('svcPos')) $('svcPos').value='right';
+  } else {
+    const need=+(svc.width+gap).toFixed(1);
+    let left=Math.max(need, r.left);
+    let right=+(r.wall-r.door-left).toFixed(1);
+    if(right<0){ right=0; left=+(r.wall-r.door).toFixed(1); }
+    writeReturns(left,right);
+    $('svcOffset').value=String(Math.max(0, Math.min(left-svc.width-gap, svc.off)).toFixed(1));
+    if($('svcPos')) $('svcPos').value='left';
+  }
+}
+function flipDoors(){
+  pushUndo();
+  if(!sameWall()){
+    if($('svcWall')) $('svcWall').value=val('ohWall')||'FRONT';
+  }
+  const wall=wallLengthFor(val('ohWall')||'FRONT');
+  const door=ohWidthFt();
+  const need=+(svcWidthFt()+0.5).toFixed(1);
+  const svc=svcFeet();
+  const r=currentReturns();
+  const svcOnRight=(svc.off+svc.width/2) >= (r.left+r.door/2);
+  if(svcOnRight){
+    writeReturns(need, +(wall-door-need).toFixed(1));
+    $('svcOffset').value='0.5';
+    if($('svcPos')) $('svcPos').value='left';
+  } else {
+    writeReturns(+(wall-door-need).toFixed(1), need);
+    $('svcOffset').value=String(+(wall-svcWidthFt()-0.5).toFixed(1));
+    if($('svcPos')) $('svcPos').value='right';
+  }
+  persist();
+  makePlans();
 }
 
 function sidingHatch(x,y,w,h){
@@ -884,6 +950,7 @@ function elevSvg(side){
   </svg>`;
 }
 function makePlans(){
+  if(sameWall()) separateDoors();
   if($('pitchLine') && val('pitch') && !document.activeElement?.id?.includes('pitchLine')) $('pitchLine').value=val('pitch');
   if($('eaveColorLine') && val('eaveColor')) $('eaveColorLine').value=val('eaveColor');
   if($('sidingColorLine') && val('sidingColor')) $('sidingColorLine').value=val('sidingColor');

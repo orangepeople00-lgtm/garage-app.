@@ -528,8 +528,10 @@ function addDoorKind(kind){
   if(!selectedView){ alert('Click the FRONT, BACK, LEFT, or RIGHT plan view first, then Add Door.'); return; }
   pushUndo();
   const isParty=kind==='party';
-  const w=Math.max(2,parseFloat($('newDoorW').value)|| (isParty?8:16));
-  const h=Math.max(6,parseFloat($('newDoorH').value)||7);
+  if($('newDoorW')) $('newDoorW').value=isParty?'6':'16';
+  if($('newDoorH')) $('newDoorH').value='7';
+  const w=isParty?6:16;
+  const h=7;
   const id='d'+Date.now();
   extraDoors.push({id,wall:selectedView,w,h,kind:isParty?'party':'oh',x:0.15});
   selectedId=id; persist(); renderDoorList(); makePlans();
@@ -887,10 +889,9 @@ function elevSvg(side){
     const dx=origin + r.left*scale;
     const dw=Math.max(24, r.door*scale);
     const dy=118, dh=122;
-    const cols=4, rows=4;
     let panels='';
-    for(let c=1;c<cols;c++) panels+=`<line x1="${dx+dw*c/cols}" y1="${dy+4}" x2="${dx+dw*c/cols}" y2="${dy+dh-4}" stroke="#7a8aa0" stroke-width=".8"/>`;
-    for(let row=1;row<rows;row++) panels+=`<line x1="${dx+4}" y1="${dy+dh*row/rows}" x2="${dx+dw-4}" y2="${dy+dh*row/rows}" stroke="#7a8aa0" stroke-width=".8"/>`;
+    for(let c=1;c<=2;c++) panels+=`<line x1="${dx+dw*c/3}" y1="${dy+4}" x2="${dx+dw*c/3}" y2="${dy+dh-4}" stroke="#7a8aa0" stroke-width=".8"/>`;
+    for(let row=1;row<=3;row++) panels+=`<line x1="${dx+4}" y1="${dy+dh*row/4}" x2="${dx+dw-4}" y2="${dy+dh*row/4}" stroke="#7a8aa0" stroke-width=".8"/>`;
     openings+=`<rect x="${dx}" y="${dy}" width="${dw}" height="${dh}" fill="#cfdcea" stroke="#111" stroke-width="2"/>
       ${panels}
       <rect x="${dx+dw/2-10}" y="${dy+dh/2-4}" width="20" height="8" rx="2" fill="#9aa8b8" stroke="#111" stroke-width=".6"/>
@@ -906,8 +907,8 @@ function elevSvg(side){
     const y=wallBot-dh;
     let panels='';
     if(d.kind!=='party'){
-      for(let c=1;c<4;c++) panels+=`<line x1="${x+dw*c/4}" y1="${y+3}" x2="${x+dw*c/4}" y2="${y+dh-3}" stroke="#7a8aa0" stroke-width=".7"/>`;
-      for(let r=1;r<4;r++) panels+=`<line x1="${x+3}" y1="${y+dh*r/4}" x2="${x+dw-3}" y2="${y+dh*r/4}" stroke="#7a8aa0" stroke-width=".7"/>`;
+      for(let c=1;c<=2;c++) panels+=`<line x1="${x+dw*c/3}" y1="${y+3}" x2="${x+dw*c/3}" y2="${y+dh-3}" stroke="#7a8aa0" stroke-width=".7"/>`;
+      for(let r=1;r<=3;r++) panels+=`<line x1="${x+3}" y1="${y+dh*r/4}" x2="${x+dw-3}" y2="${y+dh*r/4}" stroke="#7a8aa0" stroke-width=".7"/>`;
     }
     openings+=`<g class="xd" data-id="${d.id}">
       <rect class="xd-body" x="${x}" y="${y}" width="${dw}" height="${dh}" fill="${d.kind==='party'?'#e8eef8':'#cfdcea'}" stroke="#111" stroke-width="1.6"/>

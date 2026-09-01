@@ -501,7 +501,11 @@ const CITY_BUILD = {"Addison": {"rafters": "2X6 16\" or 24\" OC W/ H CLIPS", "he
 
 const FIELDS=['collectLumber','collectCarpentry','jobDate','carpenter','rep','customer','phone','address','city','citySel','sizeW','sizeL','ohDoors','wallHeight','rafters','wallCenters','crossties','doorJamb','doorJambColor','jambColor','winHung','winSlider','winOther','sidingColor','sidingColorLine','sidingOther','sidingOtherPanel','sidingDir','corners','wallSheath','roofSheath','shingleColor','shingleColorLine','eaveColor','eaveColorLine','patioRoof','patioPosts','ceiling','notes','pitch','pitchLine','ohWall','ohWidth','ohLeftRet','ohRightRet','svcWall','svcPos','svcOffset'];
 let sb=null, profile=null;
-let extraDoors=[], selectedId=null, texts=[], planTexts=[], undoStack=[];
+let extraDoors=[], selectedId=null, texts=[], planTexts=[], planLabels={}, undoStack=[];
+function lbl(side,key,fallback){
+  const v=planLabels[side] && planLabels[side][key];
+  return (v!=null && String(v).trim()!=='') ? String(v) : fallback;
+}
 let selectedView='FRONT';
 let choices={roof:'Gable',eaves:'Realwood',siding:'D4',shingles:'ARCH',header:'2-2x12 w/ 1/2 Flitchplate',jamb:'',gutters:false,firewall:false};
 
@@ -510,7 +514,7 @@ function val(id){return String($(id)?.value||'').trim()}
 function syncTwin(a,b){ if($(a)&&$(b)&& document.activeElement!==$(b)) $(b).value=$(a).value; }
 
 function snapshot(){
-  const o={choices:{...choices}, extraDoors:JSON.parse(JSON.stringify(extraDoors)), texts:texts.map(t=>({id:t.id,x:t.el.style.left,y:t.el.style.top,html:t.el.innerHTML,size:t.el.style.fontSize,weight:t.el.style.fontWeight})), planTexts:planTexts.map(t=>({id:t.id,side:t.side,x:t.el.style.left,y:t.el.style.top,w:t.el.style.width,h:t.el.style.height,html:t.el.innerHTML,size:t.el.style.fontSize,weight:t.el.style.fontWeight,color:t.el.style.color}))};
+  const o={choices:{...choices}, extraDoors:JSON.parse(JSON.stringify(extraDoors)), planLabels:JSON.parse(JSON.stringify(planLabels)), texts:texts.map(t=>({id:t.id,x:t.el.style.left,y:t.el.style.top,html:t.el.innerHTML,size:t.el.style.fontSize,weight:t.el.style.fontWeight})), planTexts:planTexts.map(t=>({id:t.id,side:t.side,x:t.el.style.left,y:t.el.style.top,w:t.el.style.width,h:t.el.style.height,html:t.el.innerHTML,size:t.el.style.fontSize,weight:t.el.style.fontWeight,color:t.el.style.color}))};
   FIELDS.forEach(id=>o[id]=$(id)?$(id).value:'');
   return o;
 }
@@ -533,6 +537,7 @@ function applySnap(o){
   FIELDS.forEach(id=>{ if(o[id]!=null && $(id)) $(id).value=o[id]; });
   if(o.choices){ Object.assign(choices,o.choices); Object.keys(choices).forEach(k=>setChoiceSilent(k,choices[k])); }
   extraDoors=o.extraDoors||[];
+  planLabels=o.planLabels||{};
   planTextsData=o.planTexts||[];
   renderDoorList();
   document.querySelectorAll('.free-text').forEach(n=>n.remove());
@@ -1080,10 +1085,10 @@ function elevSvg(side){
     const ohShort=/x/i.test(ohLabel)?ohLabel.replace(/\s+/g,' '):(r.door+'x7');
     openings+=`<rect x="${dx}" y="${dy}" width="${dw}" height="${dh}" fill="#cfdcea" stroke="#111" stroke-width="2"/>
       ${panels}
-      <text x="${dx+dw/2}" y="${dy+dh/2-6}" text-anchor="middle" font-size="${Math.max(11,Math.min(18,dw/8))}" font-family="Arial" font-weight="800">${ohShort}</text>
-      <text x="${dx+dw/2}" y="${dy+dh/2+12}" text-anchor="middle" font-size="${Math.max(10,Math.min(16,dw/9))}" font-family="Arial" font-weight="800">Overhead Door</text>
-      <text x="${origin+6}" y="112" font-size="10" font-family="Arial">${r.left}' RET</text>
-      <text x="${origin+wallPx-6}" y="112" text-anchor="end" font-size="10" font-family="Arial">${r.right}' RET</text>`;
+      <text class="edit-lbl" data-edit="ohSize" data-side="${side}" x="${dx+dw/2}" y="${dy+dh/2-6}" text-anchor="middle" font-size="${Math.max(11,Math.min(18,dw/8))}" font-family="Arial" font-weight="800">${lbl(side,'ohSize', ohShort)}</text>
+      <text class="edit-lbl" data-edit="ohName" data-side="${side}" x="${dx+dw/2}" y="${dy+dh/2+12}" text-anchor="middle" font-size="${Math.max(10,Math.min(16,dw/9))}" font-family="Arial" font-weight="800">${lbl(side,'ohName','Overhead Door')}</text>
+      <text class="edit-lbl" data-edit="leftRet" data-side="${side}" x="${origin+6}" y="112" font-size="10" font-family="Arial">${lbl(side,'leftRet', r.left+"' RET")}</text>
+      <text class="edit-lbl" data-edit="rightRet" data-side="${side}" x="${origin+wallPx-6}" y="112" text-anchor="end" font-size="10" font-family="Arial">${lbl(side,'rightRet', r.right+"' RET")}</text>`;
   }
   extraDoors.filter(d=>String(d.wall).toUpperCase()===side).forEach((d,i)=>{
     const wallFt=wallLengthFor(side);
@@ -1109,8 +1114,8 @@ function elevSvg(side){
         ? '<line x1="'+(x+dw/2)+'" y1="'+winY+'" x2="'+(x+dw/2)+'" y2="'+(winY+winH)+'" stroke="#111" stroke-width="0.8"/>'
         : '<line x1="'+x+'" y1="'+(winY+winH/2)+'" x2="'+(x+dw)+'" y2="'+(winY+winH/2)+'" stroke="#111" stroke-width="0.8"/>'
       ):panels}
-      <text x="${x+dw/2}" y="${(isWin?winY:y)+(isWin?winH:dh)/2-6}" text-anchor="middle" font-size="${Math.max(10,Math.min(16,dw/7))}" font-family="Arial" font-weight="800">${d.w}x${d.h}</text>
-      <text x="${x+dw/2}" y="${(isWin?winY:y)+(isWin?winH:dh)/2+10}" text-anchor="middle" font-size="${Math.max(9,Math.min(14,dw/8))}" font-family="Arial" font-weight="800">${kindName}</text>
+      <text class="edit-lbl" data-edit="item-${d.id}-size" data-side="${side}" x="${x+dw/2}" y="${(isWin?winY:y)+(isWin?winH:dh)/2-6}" text-anchor="middle" font-size="${Math.max(10,Math.min(16,dw/7))}" font-family="Arial" font-weight="800">${lbl(side,'item-'+d.id+'-size', d.w+'x'+d.h)}</text>
+      <text class="edit-lbl" data-edit="item-${d.id}-name" data-side="${side}" x="${x+dw/2}" y="${(isWin?winY:y)+(isWin?winH:dh)/2+10}" text-anchor="middle" font-size="${Math.max(9,Math.min(14,dw/8))}" font-family="Arial" font-weight="800">${lbl(side,'item-'+d.id+'-name', kindName)}</text>
       <rect class="xd-handle" x="${x+dw-10}" y="${(isWin?winY:y)-10}" width="${sel?16:12}" height="${sel?16:12}" fill="#c9a227" stroke="#111"/>
     </g>`;
   });
@@ -1123,7 +1128,7 @@ function elevSvg(side){
     const x=origin + Math.max(0, Math.min(wallPx-26, (off/Math.max(1,wallFt))*wallPx));
     openings+=`<rect x="${x}" y="150" width="26" height="78" fill="#fff" stroke="#111" stroke-width="1.6"/>
       <line x1="${x+20}" y1="168" x2="${x+20}" y2="176" stroke="#111" stroke-width="1"/>
-      <text x="${x+13}" y="144" text-anchor="middle" font-size="8" font-family="Arial" font-weight="700">36"x80"</text>`;
+      <text class="edit-lbl" data-edit="svcSize" data-side="${side}" x="${x+13}" y="144" text-anchor="middle" font-size="8" font-family="Arial" font-weight="700">${lbl(side,'svcSize','36"x80"')}</text>`;
   }
   const wallDim=(side==='FRONT'||side==='BACK') ? (w+"'") : (l+"'");
   const pitch=val('pitchLine')||val('pitch')||'4/12';
@@ -1132,19 +1137,19 @@ function elevSvg(side){
     <line x1="22" y1="${wallTop}" x2="22" y2="${wallBot}" stroke="#111" stroke-width="1"/>
     <line x1="18" y1="${wallTop}" x2="26" y2="${wallTop}" stroke="#111"/>
     <line x1="18" y1="${wallBot}" x2="26" y2="${wallBot}" stroke="#111"/>
-    <text x="16" y="${(wallTop+wallBot)/2}" text-anchor="middle" font-size="11" font-family="Arial" font-weight="700" transform="rotate(-90 16 ${(wallTop+wallBot)/2})">${wh}' WALL</text>
+    <text class="edit-lbl" data-edit="wallH" data-side="${side}" x="16" y="${(wallTop+wallBot)/2}" text-anchor="middle" font-size="11" font-family="Arial" font-weight="700" transform="rotate(-90 16 ${(wallTop+wallBot)/2})">${lbl(side,'wallH', wh+"' WALL")}</text>
     <line x1="${origin}" y1="254" x2="${origin+wallPx}" y2="254" stroke="#111" stroke-width="1"/>
     <line x1="${origin}" y1="250" x2="${origin}" y2="258" stroke="#111"/>
     <line x1="${origin+wallPx}" y1="250" x2="${origin+wallPx}" y2="258" stroke="#111"/>
-    <text x="${origin+wallPx/2}" y="268" text-anchor="middle" font-size="11" font-family="Arial" font-weight="700">${wallDim}</text>
-    <text x="372" y="30" font-size="12" font-family="Arial" font-weight="700">${pitch}</text>
+    <text class="edit-lbl" data-edit="wallDim" data-side="${side}" x="${origin+wallPx/2}" y="268" text-anchor="middle" font-size="11" font-family="Arial" font-weight="700">${lbl(side,'wallDim', wallDim)}</text>
+    <text class="edit-lbl" data-edit="pitch" data-side="${side}" x="372" y="30" font-size="12" font-family="Arial" font-weight="700">${lbl(side,'pitch', pitch)}</text>
     <line x1="200" y1="8" x2="200" y2="22" stroke="#111" stroke-width="1.2" marker-end="url(#arr)"/>
-    <text x="206" y="16" font-size="10" font-family="Arial" font-weight="700">RAFTERS ${rafters}</text>
-    <text x="448" y="88" font-size="10" font-family="Arial" font-weight="700">HDR ${choices.header||''}</text>
-    <text x="448" y="104" font-size="10" font-family="Arial" font-weight="700">EAVES ${choices.eaves||''}</text>
-    <text x="448" y="120" font-size="10" font-family="Arial" font-weight="700">SIDING ${choices.siding||''}${val('sidingDir')==='vertical'?' VERT':' HORIZ'}</text>
-    ${choices.gutters && ((choices.roof==='Hip') || (choices.roof==='Reverse Gable' ? (side==='LEFT'||side==='RIGHT') : (side==='FRONT'||side==='BACK'))) ? `<rect x="38" y="68" width="324" height="7" fill="#4b5563" stroke="#111"/><text x="200" y="66" text-anchor="middle" font-size="9" font-family="Arial" font-weight="700">GUTTER</text>` : ''}
-    ${choices.firewall && side==='BACK' ? `<text x="200" y="248" text-anchor="middle" font-size="11" font-family="Arial" font-weight="800">FIRE WALL NOTE — RATED ASSEMBLY THIS WALL AS REQUIRED</text>` : ''}
+    <text class="edit-lbl" data-edit="rafters" data-side="${side}" x="206" y="16" font-size="10" font-family="Arial" font-weight="700">${lbl(side,'rafters', 'RAFTERS '+rafters)}</text>
+    <text class="edit-lbl" data-edit="hdr" data-side="${side}" x="448" y="88" font-size="10" font-family="Arial" font-weight="700">${lbl(side,'hdr', 'HDR '+(choices.header||''))}</text>
+    <text class="edit-lbl" data-edit="eaves" data-side="${side}" x="448" y="104" font-size="10" font-family="Arial" font-weight="700">${lbl(side,'eaves', 'EAVES '+(choices.eaves||''))}</text>
+    <text class="edit-lbl" data-edit="siding" data-side="${side}" x="448" y="120" font-size="10" font-family="Arial" font-weight="700">${lbl(side,'siding', 'SIDING '+(choices.siding||'')+(val('sidingDir')==='vertical'?' VERT':' HORIZ'))}</text>
+    ${choices.gutters && ((choices.roof==='Hip') || (choices.roof==='Reverse Gable' ? (side==='LEFT'||side==='RIGHT') : (side==='FRONT'||side==='BACK'))) ? `<rect x="38" y="68" width="324" height="7" fill="#4b5563" stroke="#111"/><text class="edit-lbl" data-edit="gutter" data-side="${side}" x="200" y="66" text-anchor="middle" font-size="9" font-family="Arial" font-weight="700">${lbl(side,'gutter','GUTTER')}</text>` : ''}
+    ${choices.firewall && side==='BACK' ? `<text class="edit-lbl" data-edit="firewall" data-side="${side}" x="200" y="248" text-anchor="middle" font-size="11" font-family="Arial" font-weight="800">${lbl(side,'firewall','FIRE WALL NOTE — RATED ASSEMBLY THIS WALL AS REQUIRED')}</text>` : ''}
   `;
   return `<svg viewBox="0 0 620 280">
     <defs><marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#111"/></marker></defs>
@@ -1174,7 +1179,37 @@ function makePlans(){
   $('elevs').innerHTML=['FRONT','BACK','LEFT','RIGHT'].map(s=>'<div class="elev'+(s===selectedView?' picked':'')+'" data-side="'+s+'" onclick="pickView(\''+s+'\',event)"><h3>'+s+'</h3>'+elevSvg(s)+'</div>').join('');
   bindDoorDrag();
   mountPlanTexts();
+  bindLabelEdit();
   fitNotes();
+}
+function bindLabelEdit(){
+  document.querySelectorAll('.edit-lbl').forEach(t=>{
+    t.style.cursor='text';
+    t.addEventListener('pointerdown', ev=>ev.stopPropagation());
+    t.addEventListener('click', ev=>{
+      ev.stopPropagation(); ev.preventDefault();
+      const side=t.getAttribute('data-side');
+      const key=t.getAttribute('data-edit');
+      const host=t.ownerSVGElement?.parentElement;
+      if(!host) return;
+      const r=t.getBoundingClientRect();
+      const hr=host.getBoundingClientRect();
+      const inp=document.createElement('input');
+      inp.value=t.textContent||'';
+      inp.style.cssText='position:absolute;left:'+(r.left-hr.left)+'px;top:'+(r.top-hr.top-2)+'px;min-width:'+Math.max(80,r.width+20)+'px;font:700 12px Arial;z-index:20;border:1px solid #c9a227;padding:2px 4px';
+      host.style.position='relative';
+      host.appendChild(inp);
+      inp.focus(); inp.select();
+      function save(){
+        if(!planLabels[side]) planLabels[side]={};
+        planLabels[side][key]=inp.value;
+        inp.remove();
+        persist(); makePlans();
+      }
+      inp.addEventListener('blur', save);
+      inp.addEventListener('keydown', e=>{ if(e.key==='Enter') inp.blur(); if(e.key==='Escape'){ inp.remove(); }});
+    });
+  });
 }
 function fitNotes(){
   const ta=$('notes'); if(!ta) return;

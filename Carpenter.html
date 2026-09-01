@@ -749,9 +749,12 @@ function applyDefaults(){
       if(/LVL/i.test(code.header)) setChoiceSilent('header','2 LVL');
       else setChoiceSilent('header','2-2x12 w/ 1/2 Flitchplate');
     }
+    const kept=val('notes').split(/\n+/).filter(l=>l && !/\bCODE\s*:/i.test(l)).join('\n');
     if(code.notes){
       const line=city.toUpperCase()+' CODE: '+code.notes;
-      if(!val('notes').includes(line.slice(0,20))) $('notes').value=(val('notes')?val('notes')+'\n':'')+line;
+      $('notes').value=(kept?kept+'\n':'')+line;
+    } else {
+      $('notes').value=kept;
     }
   }
   persist();

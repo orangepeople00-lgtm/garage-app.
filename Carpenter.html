@@ -103,6 +103,7 @@ html,body{margin:0;min-height:100%;background:#e8edf3;color:var(--ink);font-fami
     <button class="ghost" type="button" onclick="deleteSelected()">Delete</button>
     <button class="primary" type="button" onclick="addFrontDoor()">Add Door</button>
     <button class="primary" type="button" onclick="addTextBox()">Add Text</button>
+    <button class="primary" type="button" onclick="applyChanges()">Apply Changes</button>
     <button class="primary" type="button" onclick="makePlans()">Garage Plans</button>
     <button class="primary" type="button" onclick="window.print()">Print</button>
   </div>
@@ -118,7 +119,7 @@ html,body{margin:0;min-height:100%;background:#e8edf3;color:var(--ink);font-fami
       </div>
       <label>Pitch</label>
       <select id="pitch" onchange="touch()">
-        <option>4/12</option><option>5/12</option><option selected>6/12</option>
+        <option value="">Pitch</option><option>4/12</option><option>5/12</option><option>6/12</option>
         <option>7/12</option><option>8/12</option><option>10/12</option><option>12/12</option>
       </select>
       <label>Eaves</label>
@@ -160,7 +161,7 @@ html,body{margin:0;min-height:100%;background:#e8edf3;color:var(--ink);font-fami
         <option value="RIGHT">Right side</option>
       </select>
       <label>OH door width (ft)</label>
-      <input id="ohWidth" type="number" min="8" max="20" step="0.5" value="16" oninput="recalcReturns('width')"/>
+      <input id="ohWidth" type="number" min="8" max="20" step="0.5" value="" placeholder="16" oninput="recalcReturns('width')"/>
       <label>Move OH on wall (½ ft)</label>
       <div class="tiny">
         <button type="button" onclick="nudgeOh(-0.5)">← 0.5'</button>
@@ -192,8 +193,8 @@ html,body{margin:0;min-height:100%;background:#e8edf3;color:var(--ink);font-fami
       <div id="viewHint" style="font-size:11px;color:#334155;margin-top:8px">Click a plan view, then Add Door.</div>
       <label>Add extra door size</label>
       <div class="tiny">
-        <input id="newDoorW" type="number" value="16" min="2" max="18"/>
-        <input id="newDoorH" type="number" value="7" min="6" max="12"/>
+        <input id="newDoorW" type="number" value="" placeholder="16" min="2" max="18"/>
+        <input id="newDoorH" type="number" value="" placeholder="7" min="6" max="12"/>
       </div>
       <label>Text</label>
       <div class="tiny">
@@ -223,14 +224,113 @@ html,body{margin:0;min-height:100%;background:#e8edf3;color:var(--ink);font-fami
             <div class="row"><span class="k">PHONE</span><input class="f" id="phone"/></div>
           </div>
           <div class="row"><span class="k">JOB ADDRESS</span><input class="f" id="address"/></div>
-          <div class="row"><span class="k">CITY</span><input class="f" id="city"/></div>
+          <div class="row"><span class="k">CITY</span>
+            <select class="f" id="citySel" style="flex:1;border:0;border-bottom:1px solid #111;background:transparent;font:700 14px Times,serif">
+              <option value="">Select city</option>
+        <option value="Chicago">Chicago, IL</option>
+        <option value="Addison">Addison, IL</option>
+        <option value="Algonquin">Algonquin, IL</option>
+        <option value="Alsip">Alsip, IL</option>
+        <option value="Antioch">Antioch, IL</option>
+        <option value="Arlington Heights">Arlington Heights, IL</option>
+        <option value="Aurora">Aurora, IL</option>
+        <option value="Bannockburn">Bannockburn, IL</option>
+        <option value="Barrington">Barrington, IL</option>
+        <option value="Barrington Hills">Barrington Hills, IL</option>
+        <option value="Bartlett">Bartlett, IL</option>
+        <option value="Batavia">Batavia, IL</option>
+        <option value="Beach Park">Beach Park, IL</option>
+        <option value="Bedford Park">Bedford Park, IL</option>
+        <option value="Beecher">Beecher, IL</option>
+        <option value="Bellwood">Bellwood, IL</option>
+        <option value="Belvidere">Belvidere, IL</option>
+        <option value="Bensenville">Bensenville, IL</option>
+        <option value="Berkeley">Berkeley, IL</option>
+        <option value="Berwyn">Berwyn, IL</option>
+        <option value="Big Rock">Big Rock, IL</option>
+        <option value="Bloomingdale">Bloomingdale, IL</option>
+        <option value="Blue Island">Blue Island, IL</option>
+        <option value="Bolingbrook">Bolingbrook, IL</option>
+        <option value="Bourbonnais">Bourbonnais, IL</option>
+        <option value="Bradley">Bradley, IL</option>
+        <option value="Braidwood">Braidwood, IL</option>
+        <option value="Bridgeview">Bridgeview, IL</option>
+        <option value="Broadview">Broadview, IL</option>
+        <option value="Brookfield">Brookfield, IL</option>
+        <option value="Buffalo Grove">Buffalo Grove, IL</option>
+        <option value="Burbank">Burbank, IL</option>
+        <option value="Burnham">Burnham, IL</option>
+        <option value="Burr Ridge">Burr Ridge, IL</option>
+        <option value="Calumet City">Calumet City, IL</option>
+        <option value="Calumet Park">Calumet Park, IL</option>
+        <option value="Carol Stream">Carol Stream, IL</option>
+        <option value="Carpentersville">Carpentersville, IL</option>
+        <option value="Cary">Cary, IL</option>
+        <option value="Chicago Heights">Chicago Heights, IL</option>
+        <option value="Chicago Ridge">Chicago Ridge, IL</option>
+        <option value="Cicero">Cicero, IL</option>
+        <option value="Clarendon Hills">Clarendon Hills, IL</option>
+        <option value="Coal City">Coal City, IL</option>
+        <option value="Country Club Hills">Country Club Hills, IL</option>
+        <option value="Countryside">Countryside, IL</option>
+        <option value="Crest Hill">Crest Hill, IL</option>
+        <option value="Crestwood">Crestwood, IL</option>
+        <option value="Crete">Crete, IL</option>
+        <option value="Crystal Lake">Crystal Lake, IL</option>
+        <option value="Darien">Darien, IL</option>
+        <option value="Deer Park">Deer Park, IL</option>
+        <option value="Deerfield">Deerfield, IL</option>
+        <option value="DeKalb">DeKalb, IL</option>
+        <option value="DeKalb County">DeKalb County, IL</option>
+        <option value="Des Plaines">Des Plaines, IL</option>
+        <option value="Dixmoor">Dixmoor, IL</option>
+        <option value="Dolton">Dolton, IL</option>
+        <option value="Downers Grove">Downers Grove, IL</option>
+        <option value="East Dundee">East Dundee, IL</option>
+        <option value="East Hazel Crest">East Hazel Crest, IL</option>
+        <option value="Elburn">Elburn, IL</option>
+        <option value="Elgin">Elgin, IL</option>
+        <option value="Elk Grove Village">Elk Grove Village, IL</option>
+        <option value="Elmhurst">Elmhurst, IL</option>
+        <option value="Elmwood Park">Elmwood Park, IL</option>
+        <option value="Elwood">Elwood, IL</option>
+        <option value="Evanston">Evanston, IL</option>
+        <option value="Evergreen Park">Evergreen Park, IL</option>
+        <option value="Flossmoor">Flossmoor, IL</option>
+        <option value="Ford Heights">Ford Heights, IL</option>
+        <option value="Forest Park">Forest Park, IL</option>
+        <option value="Forest View">Forest View, IL</option>
+        <option value="Fox Lake">Fox Lake, IL</option>
+        <option value="Fox River Grove">Fox River Grove, IL</option>
+        <option value="Frankfort">Frankfort, IL</option>
+        <option value="Franklin Park">Franklin Park, IL</option>
+        <option value="Geneva">Geneva, IL</option>
+        <option value="Glen Ellyn">Glen Ellyn, IL</option>
+        <option value="Glencoe">Glencoe, IL</option>
+        <option value="Glendale Heights">Glendale Heights, IL</option>
+        <option value="Glenview">Glenview, IL</option>
+        <option value="Glenwood">Glenwood, IL</option>
+        <option value="Golf">Golf, IL</option>
+        <option value="Grayslake">Grayslake, IL</option>
+        <option value="Gurnee">Gurnee, IL</option>
+              <option value="Other">Other / type below</option>
+            </select>
+          </div>
+          <div class="row"><span class="k">CITY (if other)</span><input class="f" id="city" placeholder=""/></div>
           <hr class="rule"/>
 
           <div class="row">
-            <span class="k">GARAGE SIZE</span><input class="f" id="sizeW" style="flex:0 0 70px;text-align:center"/>
+            <span class="k">GARAGE SIZE</span>
+            <select class="f" id="sizeWSel" style="flex:0 0 90px;border:0;border-bottom:1px solid #111;background:transparent;font:700 14px Times,serif">
+              <option value="">W</option><option>20</option><option>22</option><option>24</option><option>26</option><option>28</option><option>30</option><option>32</option><option value="custom">Custom</option>
+            </select>
+            <input class="f" id="sizeW" placeholder="" style="flex:0 0 54px;text-align:center"/>
             <span class="k">X</span>
-            <input class="f" id="sizeL" style="flex:0 0 70px;text-align:center"/>
-            <span class="k">PITCH</span><input class="f" id="pitchLine" placeholder="6/12" style="flex:0 0 90px;text-align:center"/>
+            <select class="f" id="sizeLSel" style="flex:0 0 90px;border:0;border-bottom:1px solid #111;background:transparent;font:700 14px Times,serif">
+              <option value="">L</option><option>20</option><option>22</option><option>24</option><option>26</option><option>28</option><option>30</option><option>32</option><option value="custom">Custom</option>
+            </select>
+            <input class="f" id="sizeL" placeholder="" style="flex:0 0 54px;text-align:center"/>
+            <span class="k">PITCH</span><input class="f" id="pitchLine" placeholder="" style="flex:0 0 70px;text-align:center"/>
           </div>
           <div class="choice-row">
             <span class="k">ROOF</span>
@@ -295,7 +395,7 @@ html,body{margin:0;min-height:100%;background:#e8edf3;color:var(--ink);font-fami
           <div class="notes-row">
             <div>
               <div class="row"><span class="k">NOTES:</span></div>
-              <textarea class="f" id="notes">INSTALL SILL PAN FOR SERVICE DOOR</textarea>
+              <textarea class="f" id="notes"></textarea>
             </div>
             <div class="bluebox"></div>
           </div>
@@ -315,6 +415,8 @@ html,body{margin:0;min-height:100%;background:#e8edf3;color:var(--ink);font-fami
 const SB_URL='https://iomcekniylxfptswcxoi.supabase.co';
 const SB_KEY='sb_publishable_G_ZAnQ_CoJjWsn8-HgduLw_IziPWEmn';
 const ALLOWED=['randy','sam'];
+const CITY_BUILD = {"Addison": {"rafters": "2X6 16\" or 24\" OC W/ H CLIPS", "header": "2 LVL", "ties": "2\" x 6\" 16\" OC", "slab": "4\"", "notes": "Shear wall required if returns are less than 48\" Gutters required min setback from house 5' NO FIRE WALL Zoning is enforcing a residential rear yard lot coverage limit of 30% of th"}, "Algonquin": {"rafters": "2X6 24\" OC", "header": "2 2x6", "ties": "2\" x 6\" 48\" OC", "slab": "4\"", "notes": ""}, "Alsip": {"rafters": "2X6 24\" OC", "header": "3 2X12", "ties": "2X6 48\"OC", "slab": "4\" 5\"", "notes": ""}, "Antioch": {"rafters": "2X6 16\"OC OR 24\" W/H CLIPS", "header": "3 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "Need Sheer wall for returns under 32\" Need 5/8\" plywood roof sheathing Need asbestos report - $150 cost Need separate app for demo ASBESTOS TESTING REQUIRED"}, "Arlington Heights": {"rafters": "2X6 16\" OC", "header": "3 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "Siding must be installed with no greater than 6\" exposure of concrete wall Homeowner must put up $200 bond due to backfill requirements Driveways sold must be 3' from lot line if f"}, "Aurora": {"rafters": "2X6 16\" OC", "header": "2 LVL", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "REBAR IN FOOTINGS REQUIRED METAL ROOF EDGE CRIPPLE ALL OPENINGS HANGER FROM RIDGE TO TIES ANCHOR BOLTS TO CODE Have to drop off App in person"}, "Bannockburn": {"rafters": "2X6 16\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "5\"", "notes": "MUST CHECK WITH VILLAGE FOR ADDITIONAL CODES Current 7/20/2026"}, "Barrington": {"rafters": "2X6 24\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": ""}, "Barrington Hills": {"rafters": "2X6 24\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "REQUIRED: Architectural stamp for square footage of house: COST $500 ICE/WATER SHIELD OVERWEIGHT PERMITS ARE REQUIRED AND IN MARCH UNTIL APRIL OR MAY (DEPENDING ON WEATHER - HOW WE"}, "Bartlett": {"rafters": "2X6 2 X 8 16\" OC", "header": "3 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "Overhead door less than 16' wide can use 2 2 x 12 headers 5/8 plywood roof required with H clips"}, "Batavia": {"rafters": "2X6 16\"OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "Need to call J.U.L.I.E. to stake out utilities berfore permit will be issued."}, "Beach Park": {"rafters": "2X6 24\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "Topo survey costs $700"}, "Bedford Park": {"rafters": "2X6 24\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "5\"", "notes": "Gutters Required"}, "Beecher": {"rafters": "2X6 16\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": ""}, "Bellwood": {"rafters": "2X6 16\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "5\"", "notes": "1/2\" Plywood roof required Check all jobs if in flood plain Need F.E.M.A. certificate Must be 3' away from easement's No new garages will be approved within the floodway"}, "Belvidere": {"rafters": "2X6 16\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": ""}, "Bensenville": {"rafters": "2X6 16\" OC", "header": "3 2X12", "ties": "2X6 48\"OC", "slab": "5\"", "notes": "Sell 3 x 3 landing if service door is on a side wall"}, "Berkeley": {"rafters": "2X6 16\" OC", "header": "3 2X12", "ties": "2X6 48\"OC", "slab": "5\"", "notes": "Electrician must call for trench inspection before backfill. Must be rigid pipe underground."}, "Berwyn": {"rafters": "2X6 16\" OVER 22' WIDE 2 X 8 16\" OC", "header": "3 2 X 12", "ties": "2\" x 6\" 48\" OC", "slab": "4\"", "notes": "If lot is 50' wide Maximum size is 768' on lots less than 40' wide linit to 528 s.f. - patio roofs count to the size limit (an 18x22 w/ a 6' dise patio is ok) Can't go into yard mo"}, "Big Rock": {"rafters": "2X6 16\" OVER 22' WIDE 2 X 8 16\" OC", "header": "3 2 X 12", "ties": "2\" x 6\" 48\" OC", "slab": "4\"", "notes": ""}, "Bloomingdale": {"rafters": "2X6 16\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "1/2\" PLYWOOD ROOF ONLY No more than 1 garage per lot 30% max lot cvg. (everything counts)"}, "Blue Island": {"rafters": "2X6 16\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "If width of alley is: 14' 5' apron 15' 4' apron 16' 3' apron 17' 2' apron 18' 1' apron PLYWOOD WALLS & ROOF MUST HAVE HOUSE WRAP"}, "Bolingbrook": {"rafters": "2X6 24\" OC 1/2\" PLYWOOD H CLIPS", "header": "3 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "1/2\" PLYWOOD FLITCH PLATE IN BETWEEN SERVICE DOOR AND WINDOW HEADERS SELL DRIP EDGE FOR ROOF SELL HURRICANE TIES SELL DRIVEWAYS 3' OFF LOT LINE OR NEED VARIANCE"}, "Bourbonnais": {"rafters": "2X6 16\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": ""}, "Bradley": {"rafters": "2X6 24\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": ""}, "Braidwood": {"rafters": "2X6 24\" OC WITH H CLIPS", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": ""}, "Bridgeview": {"rafters": "2X6 16\" OC", "header": "2 LVL", "ties": "2X6 48\"OC", "slab": "5\"", "notes": "MAX SIZE: CANNOT EXCEED 26' IN LEGNTH AND 34' IN WIDTH SELL 1/2\" PLYWOOD WALLS AND ROOF NEED COPY OF CONTRACT WITH APPLICATION CAN'T HAVE 2 SERVICE DOORS"}, "Broadview": {"rafters": "2X6 24'OC W/ 1/2\" PLYWOOD ONLY", "header": "3 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "1/2\" PLYWOOD ROOF ONLY Submit copy of contract with application ALLEY JOBS MUST HAVE ADDRESS NUMBERS"}, "Brookfield": {"rafters": "2X6 16\" OC", "header": "3 2X12", "ties": "2X6 32\"OC", "slab": "5\"", "notes": "1/2\" PLYWOOD ON ROOF MAXIMUM SIZE GARAGE 625 SF to 10% of lot UNDER 50' LOT 440' SF Approved plans must be on site for prepour Put these specs. On all appl: wall ties and collar ti"}, "Buffalo Grove": {"rafters": "2X6 24\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "Sell wheel in all jobs or $500 fine Driveway 8' minimum OK to mail"}, "Burbank": {"rafters": "2X6 24\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "MUST HAVE WATER LEDGE ON ALL 4 SIDES OWNER MUST EMPTY GARAGE FOR RODENT ABATEMENT CHECK BEFORE PERMIT CAN BE ISSUED SELL 1/2\" PLYWOOD WALLS AND ROOFS NEED EPA PERMIT TO APPLY VAPOR"}, "Burnham": {"rafters": "2X6 24\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": ""}, "Burr Ridge": {"rafters": "2X6 16\"OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "DRIVEWAY'S 9' MINIMUM $5,000 cash bond"}, "Calumet City": {"rafters": "2X6 24\" OC WITH 5/8\"", "header": "3 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "NEED GRADES SET BY ROBINSON ENGINEERING COST $300 ANY ADDRESS SOUTH OF RIVER OAKS DRIVE COULD BE A FLOOD PLAIN WHICH REQUIRES SPECIAL SPECS. OK TO MAIL"}, "Calumet Park": {"rafters": "2X6 24\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "OK to mail IF RAFTERS ARE 24\" ON CENTER, MUST USE H CLIPS ON ROOF SHEETING"}, "Carol Stream": {"rafters": "2X6 16\" OC", "header": "3 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "ANY GARAGE OVER 400 SF NEEDS 42\" FOUNDATION. GUTTERS REQUIRED CAN ONLY HAVE 1 DRIVEWAY"}, "Carpentersville": {"rafters": "2X6 16\" OC", "header": "3 2 X 12", "ties": "2X6 48\"OC", "slab": "5\"", "notes": "NEED DRIVEWAY FORM IF ADDING ANYTHING MORE THAN 3' APRON If lot size is less than 7000 sq ft. max size garage is 550 sq ft. If lot is 7000 sq. ft., max size garage 750 sq. ft. 2 Ca"}, "Cary": {"rafters": "2X6 16\" OC", "header": "3 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "Minimum driveway width 10'"}, "Chicago Heights": {"rafters": "2X6 24\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "Minimum driveway width 8' EPA required"}, "Chicago Ridge": {"rafters": "2X8 16\" OC", "header": "3 - 2x12", "ties": "2X10 48\"OC", "slab": "4\"", "notes": "Plywood Roof and Walls Plywood wind bracing Minimum 8\" eaves Minimum 2\" x 10\" hip and ridge"}, "Cicero": {"rafters": "2\" X 6\" 16\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "5\"", "notes": "PARTY DOORS MAX 6FT WIDE ONLY Submit copy of contract with application Driveway's minimum 1' off lot line PLYWOOD ROOF RAT ABATEMENT MUST BE COMPLETED ON ALL JOBS **Setback excepti"}, "Clarendon Hills": {"rafters": "2X6 16\" O.C.", "header": "3 - 2X12", "ties": "2X6 48\"OC", "slab": "5\"", "notes": "HOMEOWNER MUST PAY FOR PERMITS MUST ALSO APPLY TO FLAGCREEK RECLAMATION DISTRICT FOR REPORT COST IS $50 FOR LOCATION OF UNDERGROUND SEWER LINES COST RECOVERY FORM MUST BE SIGNED BY"}, "Coal City": {"rafters": "2X6 24\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "5\"", "notes": ""}, "Country Club Hills": {"rafters": "2X6 24\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "HOUSE TO GARAGE 20' IF IN NO HILL AREA"}, "Countryside": {"rafters": "2X6 16\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "DRIVEWAYS 9' MINIMUM WIDTH IRC 2006 $5,000 cash permit bond (owner to post) 720 max s.f. Limit of combined accessory buildings (Detached garage and shed), max 15' to peak"}, "Crest Hill": {"rafters": "2X6 24\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "MUST EXCAVATE TO REMOVE ALL BLACK DIRT AND VEGETATION TELL CUSTOMER FOOTING MAY VARY IN PRICE OR HAVE CONCRETE MAN CHECK JOB BEFORE QUOTING PRICE. SELL HURRICANE TIES DRIVEWAY MINI"}, "Crestwood": {"rafters": "2X6 24\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "MAXIMUM LEGNTH 25' OVERHEAD DOOR HEIGHT NOT TO EXCEED 8'"}, "Crete": {"rafters": "2X6 24\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": ""}, "Crystal Lake": {"rafters": "2X6 24\" OC", "header": "2 LVL", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "SUBMIT COPY OF CONTRACT WITH APPLICATION H-CLIPS OF 24\"OC RAFTERS Hurricane Ties Required"}, "Darien": {"rafters": "2X6 24\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "MINIMUM DRIVEWAY WIDTH IS 12' 3 2x12 OH DOOR HEADER"}, "Des Plaines": {"rafters": "2X6 16\" OC", "header": "3 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "OSB walls and 5/8\" Plywood Roof 2- #5 continuous rebar in footing Des Plaines\u2019 roof sheathing code is 5/8\u201d thickness. OSB is fine for roof & walls OUTLET ON 3 WALLS REQUIRED. NEED "}, "Dixmoor": {"rafters": "2X6 24\"", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "Grades - Robinson Engineering cost $250 Use separate app for demo"}, "DeKalb": {"rafters": "2X6 16\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "IRC 2003"}, "DeKalb County": {"rafters": "2X6 16\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "IRC 2006 SPECS INCLUDING BRACED SHORT WALLS ALL ZONING SETBACKS TBD OVER 800 REQUIRES 42\" TRENCHED FOUNDATION"}, "Dolton": {"rafters": "2X6 24\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "5\"", "notes": "SIDEWALKS MUST BE 3' WIDE PLYWOOD BETWEEN ALL HEADERS"}, "Deerfield": {"rafters": "2X6 16\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "POTENTIAL LARGE FEE IF REMOVAL OF TREES CREATE ROOT DAMAGE SPOT SURVEY AFTER SLAB"}, "Deer Park": {"rafters": "2X6 16\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "POTENTIAL LARGE FEE IF REMOVAL OF TREES CREATE ROOT DAMAGE SPOT SURVEY AFTER SLAB"}, "Downers Grove": {"rafters": "2X6 16\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "5\"", "notes": "IF NEW GARAGE IS GOING IN THE SAME LOCATION, TOPO MAY NOT BE REQUIRED CHECK WITH VILLAGE. NEED 4 X 4 LANDING AT SERVICE DOOR IF ON SIDE WALL MUST SUBMIT STORMWATER FORM WITH APPLIC"}, "East Dundee": {"rafters": "2X6 24\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "MINIMUM DRIVEWAY WIDTH 10' ICE AND WATER SHIELD REQUIRED 3X3 SERVICE DOOR PAD OF ON SIDE WALK COPY OF CONSUMER RIGHTS"}, "East Hazel Crest": {"rafters": "2X6 24\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "DRIVEWAY MINIMUM WIDTH 9'"}, "Elburn": {"rafters": "2X6 24\" OC", "header": "3 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "DRIVEWAY MINIMUM WIDTH 12'"}, "Elk Grove Village": {"rafters": "2X6 24\" UP TO 20' THEN 16\" OC", "header": "2 LVL", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "SUBMIT 2 SURVEYS 1 WITH PROPOSED GARAGE, 1 WITHOUT 10' MINIMUM DRIVEWAY WIDTH 5/8\" PLYWOOD ROOF SHEATHING REQUIRED"}, "Elgin": {"rafters": "2X6 16\"OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "MAXIMUM OVERHANG 18\" ALL GARAGES OVER 484 SF NEEDS 42\" FOUNDATION IF IN HISTORICAL DISTRICT ROOF PITCH MUST BE AT LEAST 6/12 DRIP EDGE ON ROOF REQUIRED MINIMUM DRIVEWAY WIDTH 9' MA"}, "Elmhurst": {"rafters": "2X6 16\" OC", "header": "3 2 X 12", "ties": "2 2X6 48\"OC", "slab": "5\"", "notes": "1/2\" PLYWOOD WALLS REQUIRED 5/8\" PLYWOOD ROOF REQUIRED #240 LB SHINGLES REQUIRED Topo with grading plan $900 Permit $500 to $1,500 depending on amout of job If near Salt Creek or i"}, "Elmwood Park": {"rafters": "2X6 16\" OC", "header": "2 LVL", "ties": "2 2X6 48\"OC", "slab": "4\"", "notes": "Submit Copy Of Contract With Application REQUIRES REBAR IN FOOTING COST $300 SELLING $600"}, "Elwood": {"rafters": "2X6", "header": "TOPO SURVEY", "ties": "EPA REVIEW", "slab": "4\" 5\"", "notes": "See Will County Codes"}, "Evanston": {"rafters": "2X6 16\" OC", "header": "3 2X12", "ties": "2 2X6 48\"OC", "slab": "4\"", "notes": "SELL MINIMUM 2' RETURN WALLS TO AVOID SHEER WALL OK to mail SEND 3 COPIES OF PLANS AND PLAT. MAKE SURE NAME AND ADDRESS ON ALL FORMS"}, "Evergreen Park": {"rafters": "2X6 24\" OC", "header": "2 2X12", "ties": "2 2X6 48\"OC", "slab": "4\"", "notes": "VAPOR BARRIER MINIMUM DRIVEWAY WIDTH 9' Need Certification from Pest Control Co that garage doesn\u2019t have rodents and if it does, needs to be baited. Certification is $55/Baiting is"}, "Flossmoor": {"rafters": "2X6 16\" OC", "header": "3 2X12", "ties": "2X8 48\"OC", "slab": "5\"", "notes": "CANT HAVE MORE THAN 1 DRIVEWAY"}, "Ford Heights": {"rafters": "2X6 16\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "MUST BE 3' AWAY FROM ANY EASEMENT 1/2\" PLYWOOD WALLS & ROOF REQUIRED"}, "Forest Park": {"rafters": "2X6 24\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "MINIMUM DRIVEWAY WIDTH 9' IRC2009 CODE BOOK WITH AMENDMENT REQUIRING A 20\" X 10\" DEEP PERIMETER GRADE BEAM FOOTING, 6\" ABOVE GRADE MIN. (INSTEAD OF THE 12X12 THE BOOK SAYS) 5/8\" RO"}, "Forest View": {"rafters": "2X6 16\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "5\"", "notes": ""}, "Fox Lake": {"rafters": "2X6 16\" OC OVER 22' 2X8 16\"OC", "header": "2 LVL", "ties": "2X8 48\"OC", "slab": "5\"", "notes": "MINIMUM DRIVEWAY WIDTH 10' OK To mail app"}, "Fox River Grove": {"rafters": "2X6 24\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": ""}, "Frankfort": {"rafters": "2X6 16\"", "header": "TOPO SURVEY NO", "ties": "EPA REVIEW NO", "slab": "4\"", "notes": ""}, "Franklin Park": {"rafters": "2X6 16\" OC", "header": "3 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "MINIMUM DRIVEWAY WIDTH 10' SPACE ROOF/WALL SHEATHING 1/8\" 3 - 2X4 CORNERS OK to mail app 9-7-12 1/2\" CDX PLYWOOD ROOF MINIMUM 7/16 osb WALL IS OK"}, "Geneva": {"rafters": "2X6 16\" OC", "header": "2 LVL", "ties": "2 X 8 16\"OC", "slab": "4\"", "notes": "3X3 LANDING REQUIRED OUTSIDE SERVICE DOOR TREE PRESERVATION PLAN AND TREE FENCING IS REQUIRED"}, "Glencoe": {"rafters": "2X6 24\" OC", "header": "3 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "NEED TREE FENCE PROTECTION"}, "Glendale Heights": {"rafters": "2X6 24\" OC", "header": "3 2 X 12", "ties": "2 X 6 48\"OC", "slab": "4\"", "notes": "CAN ONLY HAVE 1 GARAGE"}, "Glen Ellyn": {"rafters": "2X6 16\" OC", "header": "2 2 X 12", "ties": "2 X 6 48\"OC", "slab": "4\"", "notes": "NEED TREE PRESERVATION FORM. HOMEOWNER CAN DO OR NEED ARBORIST TO COMPLETE. MUST SHOW WHERE TREES ARE ON SURVEY WHEN YOU DO 3' SETBACK YOU MUST GET SPOT SURVEY 300 s.f. or more new"}, "Glenview": {"rafters": "2X6 16\" OC", "header": "3 2 X 12", "ties": "2 X 6 48\"OC", "slab": "4\"", "notes": "Silt fencing to be installed 6' chain link fencing to be installed 1/2\" plywood walls and roof OK to mail 24\" O.C. RAFTERS O.K. CROSSTIES NEED TO BE SAME AS RAFTERS. 24\" O.C."}, "Glenwood": {"rafters": "2X6 16\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": ""}, "Golf": {"rafters": "2X6 16\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": ""}, "Grayslake": {"rafters": "2X6 24\" OC", "header": "3 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "MUST HAUL DIRT AWAY"}, "Gurnee": {"rafters": "2X6 16\" OC", "header": "3 2 X 12", "ties": "EPA REVIEW NO", "slab": "4\"", "notes": "MINIMUM DRIVEWAY WIDTH 12' Over 400 SQ needs stamped to scale acrhitectural drawing. Must add 3 x 3 landing with service door OVER 400 SQ REQUIRED 42' FOUNDATION"}};
+
 const FIELDS=['collectLumber','collectCarpentry','jobDate','carpenter','rep','customer','phone','address','city','sizeW','sizeL','ohDoors','wallHeight','rafters','wallCenters','crossties','doorJamb','winHung','winSlider','winOther','sidingColor','sidingColorLine','sidingOther','sidingOtherPanel','sidingDir','corners','wallSheath','roofSheath','shingleColor','shingleColorLine','eaveColor','eaveColorLine','patioRoof','patioPosts','ceiling','notes','pitch','pitchLine','ohWall','ohWidth','ohLeftRet','ohRightRet','svcWall','svcPos','svcOffset'];
 let sb=null, profile=null;
 let extraDoors=[], selectedId=null, texts=[], undoStack=[];
@@ -399,30 +501,58 @@ function fillIfEmpty(id, value){
   const el=$(id); if(!el) return;
   if(String(el.value||'').trim()==='') el.value=value;
 }
-function applyGarageDefaults(){
-  const W=parseFloat(val('sizeW'))||0, L=parseFloat(val('sizeL'))||0;
-  if(!W || !L) return;
-  const size=W+'x'+L;
-  fillIfEmpty('ohDoors', (W>=27?'8x7 / 16x7':'16 x 7'));
-  fillIfEmpty('ohWidth', W>=18?'16':'9');
-  fillIfEmpty('wallHeight','8');
-  fillIfEmpty('rafters','2x6 16" O.C.');
-  fillIfEmpty('wallCenters','16" O.C.');
-  fillIfEmpty('crossties','2x6 48" O.C.');
-  fillIfEmpty('wallSheath','1/2"');
-  fillIfEmpty('roofSheath','1/2"');
-  fillIfEmpty('winHung','1');
-  fillIfEmpty('doorJamb','Aluminum / white');
-  fillIfEmpty('corners','White');
-  fillIfEmpty('pitchLine', val('pitch')||'6/12');
-  if(W>=16) fillIfEmpty('ohWidth','16');
+function selectedCity(){
+  const sel=val('citySel');
+  if(sel && sel!=='Other') return sel;
+  return val('city');
+}
+function syncSizeFromSelect(){
+  const ws=val('sizeWSel'), ls=val('sizeLSel');
+  if(ws && ws!=='custom' && $('sizeW')) $('sizeW').value=ws;
+  if(ls && ls!=='custom' && $('sizeL')) $('sizeL').value=ls;
+  if($('citySel') && val('citySel') && val('citySel')!=='Other') $('city').value=val('citySel');
+}
+function applyChanges(){
+  pushUndo();
+  syncSizeFromSelect();
+  if(!val('sizeW')) $('sizeW').value='20';
+  if(!val('sizeL')) $('sizeL').value='20';
+  if($('sizeWSel') && !val('sizeWSel')) $('sizeWSel').value='20';
+  if($('sizeLSel') && !val('sizeLSel')) $('sizeLSel').value='20';
+  const W=parseFloat(val('sizeW'))||20;
+  const city=selectedCity();
+  if(!val('wallHeight')) $('wallHeight').value='8';
+  if($('pitch') && !val('pitch')) $('pitch').value='6/12';
+  if(!val('pitchLine')) $('pitchLine').value=val('pitch')||'6/12';
+  if(!val('ohDoors')) $('ohDoors').value='16 x 7';
+  if(!val('ohWidth')) $('ohWidth').value=(W>=16?'16':'9');
+  if(!val('rafters')) $('rafters').value='2x6 16" O.C.';
+  if(!val('wallCenters')) $('wallCenters').value='16" O.C.';
+  if(!val('crossties')) $('crossties').value='2x6 48" O.C.';
+  if(!val('wallSheath')) $('wallSheath').value='1/2"';
+  if(!val('roofSheath')) $('roofSheath').value='1/2"';
+  if(!val('winHung')) $('winHung').value='1';
+  if(!val('notes')) $('notes').value='INSTALL SILL PAN FOR SERVICE DOOR';
+  const code=(typeof CITY_BUILD==='object' && city) ? CITY_BUILD[city] : null;
+  if(code){
+    if(code.rafters) $('rafters').value=code.rafters;
+    if(code.ties && code.ties.indexOf('EPA')<0 && code.ties.indexOf('TOPO')<0) $('crossties').value=code.ties;
+    if(code.header){
+      if(/LVL/i.test(code.header)) setChoiceSilent('header','2 LVL');
+      else setChoiceSilent('header','2-2x12 w/ 1/2 Flitchplate');
+    }
+    if(code.notes){
+      const line=city.toUpperCase()+' CODE: '+code.notes;
+      if(!val('notes').includes(line.slice(0,20))) $('notes').value=(val('notes')?val('notes')+'\n':'')+line;
+    }
+  }
   const d=defaultReturns();
   if(!val('ohLeftRet') && !val('ohRightRet')) writeReturns(d.left,d.right);
-  const city=val('city');
-  if(city && !val('notes').includes(city.toUpperCase())){
-    /* keep sill pan note; city is already on the city line */
-  }
+  persist();
+  makePlans();
 }
+function applyGarageDefaults(){ applyChanges(); }
+
 function renderDoorList(){
   const box=$('extraDoorList');
   if(!box) return;
@@ -655,14 +785,7 @@ function makePlans(){
 }
 
 function loadLocal(){
-  try{
-    const raw=localStorage.getItem('agb_carpenter_ticket');
-    if(raw) applySnap(JSON.parse(raw));
-  }catch(e){}
-  if(!val('ohLeftRet') && !val('ohRightRet')){
-    const d=defaultReturns();
-    writeReturns(d.left,d.right);
-  }
+  // Start blank. Nothing is typed until Apply Changes.
   makePlans();
 }
 
@@ -671,9 +794,7 @@ document.addEventListener('input', e=>{
   if(!e.target.classList?.contains('f') && e.target.tagName!=='SELECT' && !e.target.isContentEditable) return;
   if(e.target.id==='pitch') $('pitchLine').value=e.target.value;
   if(e.target.id==='sidingOther' && $('sidingOtherPanel')) $('sidingOtherPanel').value=e.target.value;
-  if(e.target.id==='sizeW' || e.target.id==='sizeL' || e.target.id==='city') applyGarageDefaults();
   persist();
-  if(e.target.id==='sizeW' || e.target.id==='sizeL' || e.target.id==='ohDoors' || e.target.id==='wallHeight') makePlans();
 });
 document.addEventListener('click', e=>{
   if(!e.target.closest('.free-text')) document.querySelectorAll('.free-text').forEach(n=>n.classList.remove('sel'));

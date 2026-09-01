@@ -533,7 +533,7 @@ function addDoorKind(kind){
   const w=isParty?6:16;
   const h=7;
   const id='d'+Date.now();
-  extraDoors.push({id,wall:selectedView,w,h,kind:isParty?'party':'oh',x:0.15});
+  extraDoors.push({id,wall:selectedView,w,h,kind:isParty?'party':'oh',x:0.15,visW:null,visH:null});
   selectedId=id; persist(); renderDoorList(); makePlans();
 }
 function pickView(side){
@@ -892,17 +892,21 @@ function elevSvg(side){
     let panels='';
     for(let c=1;c<=2;c++) panels+=`<line x1="${dx+dw*c/3}" y1="${dy+4}" x2="${dx+dw*c/3}" y2="${dy+dh-4}" stroke="#7a8aa0" stroke-width=".8"/>`;
     for(let row=1;row<=3;row++) panels+=`<line x1="${dx+4}" y1="${dy+dh*row/4}" x2="${dx+dw-4}" y2="${dy+dh*row/4}" stroke="#7a8aa0" stroke-width=".8"/>`;
+    const ohLabel=(val('ohDoors')|| (r.door+' x 7')) + '';
+    const ohShort=/x/i.test(ohLabel)?ohLabel.replace(/\s+/g,' '):(r.door+'x7');
     openings+=`<rect x="${dx}" y="${dy}" width="${dw}" height="${dh}" fill="#cfdcea" stroke="#111" stroke-width="2"/>
       ${panels}
-      <rect x="${dx+dw/2-10}" y="${dy+dh/2-4}" width="20" height="8" rx="2" fill="#9aa8b8" stroke="#111" stroke-width=".6"/>
+      <text x="${dx+dw/2}" y="${dy+dh/2-6}" text-anchor="middle" font-size="${Math.max(11,Math.min(18,dw/8))}" font-family="Arial" font-weight="800">${ohShort}</text>
+      <text x="${dx+dw/2}" y="${dy+dh/2+12}" text-anchor="middle" font-size="${Math.max(10,Math.min(16,dw/9))}" font-family="Arial" font-weight="800">Overhead Door</text>
       <text x="${origin+6}" y="112" font-size="10" font-family="Arial">${r.left}' RET</text>
       <text x="${origin+wallPx-6}" y="112" text-anchor="end" font-size="10" font-family="Arial">${r.right}' RET</text>`;
   }
   extraDoors.filter(d=>String(d.wall).toUpperCase()===side).forEach((d,i)=>{
     const wallFt=wallLengthFor(side);
     const scale=wallPx/Math.max(1,wallFt);
-    const dw=Math.max(18, Number(d.w)*scale);
-    const dh=Math.min(130, Number(d.h)*12);
+    const drawW=Number(d.visW||d.w), drawH=Number(d.visH||d.h);
+    const dw=Math.max(18, drawW*scale);
+    const dh=Math.min(150, drawH*12);
     const x=origin + Math.max(0, Math.min(wallPx-dw, (Number(d.x)||0.15)*wallPx));
     const y=wallBot-dh;
     let panels='';
@@ -910,10 +914,12 @@ function elevSvg(side){
       for(let c=1;c<=2;c++) panels+=`<line x1="${x+dw*c/3}" y1="${y+3}" x2="${x+dw*c/3}" y2="${y+dh-3}" stroke="#7a8aa0" stroke-width=".7"/>`;
       for(let r=1;r<=3;r++) panels+=`<line x1="${x+3}" y1="${y+dh*r/4}" x2="${x+dw-3}" y2="${y+dh*r/4}" stroke="#7a8aa0" stroke-width=".7"/>`;
     }
+    const kindName=d.kind==='party'?'Party Door':'Overhead Door';
     openings+=`<g class="xd" data-id="${d.id}">
       <rect class="xd-body" x="${x}" y="${y}" width="${dw}" height="${dh}" fill="${d.kind==='party'?'#e8eef8':'#cfdcea'}" stroke="#111" stroke-width="1.6"/>
       ${panels}
-      <text x="${x+dw/2}" y="${y+14}" text-anchor="middle" font-size="9" font-family="Arial">${d.w}x${d.h}</text>
+      <text x="${x+dw/2}" y="${y+dh/2-6}" text-anchor="middle" font-size="${Math.max(11,Math.min(18,dw/7))}" font-family="Arial" font-weight="800">${d.w}x${d.h}</text>
+      <text x="${x+dw/2}" y="${y+dh/2+12}" text-anchor="middle" font-size="${Math.max(10,Math.min(16,dw/8))}" font-family="Arial" font-weight="800">${kindName}</text>
       <rect class="xd-handle" x="${x+dw-8}" y="${y-8}" width="12" height="12" fill="#c9a227" stroke="#111"/>
     </g>`;
   });
@@ -992,13 +998,13 @@ function bindDoorDrag(){
       handle.addEventListener('pointerdown', ev=>{
         ev.stopPropagation(); ev.preventDefault();
         const d=extraDoors.find(x=>x.id===id); if(!d) return;
-        const start=pt(ev), sw=d.w, sh=d.h;
+        const start=pt(ev), sw=Number(d.visW||d.w), sh=Number(d.visH||d.h);
         function move(e2){
           const p=pt(e2);
-          d.w=Math.max(4, +(sw+(p.x-start.x)/10).toFixed(1));
-          d.h=Math.max(6, +(sh+(start.y-p.y)/12).toFixed(1));
+          d.visW=Math.max(4, +(sw+(p.x-start.x)/10).toFixed(1));
+          d.visH=Math.max(6, +(sh+(start.y-p.y)/12).toFixed(1));
         }
-        function up(){ window.removeEventListener('pointermove',move); window.removeEventListener('pointerup',up); persist(); renderDoorList(); makePlans(); }
+        function up(){ window.removeEventListener('pointermove',move); window.removeEventListener('pointerup',up); persist(); makePlans(); }
         window.addEventListener('pointermove',move);
         window.addEventListener('pointerup',up);
       });

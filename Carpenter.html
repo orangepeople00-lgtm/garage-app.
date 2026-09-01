@@ -287,7 +287,8 @@ async function afterAuth(user){
   }catch(e){}
   if(!uname) uname=String(user.email||'').split('@')[0].toLowerCase();
   profile={username:uname};
-  if(!ALLOWED.includes(uname)){
+  const blob=[uname, user.email||''].join(' ').toLowerCase();
+  if(!(ALLOWED.includes(uname) || /\b(randy|sam|samer)\b/.test(blob))){
     $('app').style.display='none';
     $('gate').style.display='block';
     $('gateMsg').textContent='Carpenter Ticket is on Randy and Sam’s accounts only.';

@@ -129,6 +129,7 @@ body.estimator-mode .estimator-exit{display:block}
   <div id="userBadge" class="user hidden"></div>
   <button id="requestBtn" class="btn primary hidden" onclick="openRequest()">+ Request Sold Job</button>
   <button id="addBtn" class="btn primary hidden" onclick="openJobForm()">+ Add Job</button>
+  <button id="carpenterHeaderBtn" class="btn primary hidden" onclick="window.location.href='Carpenter.html?v='+Date.now()">Carpenter Ticket</button>
   <button id="logoutBtn" class="btn dark hidden" onclick="logout()">Log Out</button>
  </div>
 </header>
@@ -167,6 +168,15 @@ body.estimator-mode .estimator-exit{display:block}
  <div id="editRequestsCard" class="card hidden" style="margin-bottom:12px"><h3 class="split"><span>Salesman Edit / Note Requests</span><span id="editRequestCount" class="pill yellow">0</span></h3><div id="editRequestList" class="list"></div></div>
 
  <section id="dashboardView">
+  <div id="carpenterDashCard" class="card hidden" style="margin-bottom:12px">
+    <div class="split">
+      <div>
+        <h3 style="margin-bottom:3px">Carpenter Ticket</h3>
+        <div class="muted small">Fill the collect-lumber sheet, print it, and make carpenter build plans.</div>
+      </div>
+      <button class="btn primary sm" type="button" onclick="window.location.href='Carpenter.html?v='+Date.now()">Open Carpenter Ticket</button>
+    </div>
+  </div>
   <div id="upcomingAppointmentsCard" class="card upcoming-appointments hidden" style="margin-bottom:12px"><div class="split"><div><h3 style="margin-bottom:3px">Upcoming Appointments</h3><div class="muted small">Your personal appointments coming up soon</div></div><button class="btn primary sm" onclick="setView('personalCalendar',document.querySelector('[data-view=&quot;personalCalendar&quot;]'))">Open Personal Calendar</button></div><div id="upcomingAppointmentsList"></div></div>
   <div class="card toolbar">
    <div class="field"><label>Search</label><input id="search" placeholder="Customer, address, city, job #" oninput="renderJobs()"></div>
@@ -369,6 +379,16 @@ function jobAgeLabel(j){const d=jobAgeDays(j);return d===null?'—':`${d} day${d
 
 const manager=()=>profile&&['owner','business_manager'].includes(profile.role);
 const privateAccessManager=()=>profile&&['sam','ramsey','randy'].includes(String(profile.username||'').toLowerCase());
+function carpenterAccount(){
+  const blob=[profile?.username,profile?.display_name,profile?.email,profile?.role].map(x=>String(x||'').toLowerCase()).join(' ');
+  return /\b(randy|sam|samer)\b/.test(blob) || (profile && profile.role==='owner');
+}
+function showCarpenterNav(){
+  const on=carpenterAccount();
+  $('carpenterTab')?.classList.toggle('hidden', !on);
+  $('carpenterHeaderBtn')?.classList.toggle('hidden', !on);
+  $('carpenterDashCard')?.classList.toggle('hidden', !on);
+}
 // Ramsey + Sam can see everyone's jobs on the dashboard (same visibility as management for job list)
 const canViewAllJobs=()=>manager()||privateAccessManager();
 
@@ -507,7 +527,7 @@ async function boot(){
  profile=p;$('loginBg').classList.remove('show');$('appMain').classList.remove('hidden');$('userBadge').classList.remove('hidden');$('logoutBtn').classList.remove('hidden');$('userBadge').textContent=`${p.display_name} • ${roleName()}`;
  $('addBtn').classList.toggle('hidden',!manager());$('requestBtn').classList.toggle('hidden',manager());$('salesFilterWrap').classList.toggle('hidden',!canViewAllJobs());$('trashTab').classList.toggle('hidden',!manager());
  if($('allPersonalCalendarsTab'))$('allPersonalCalendarsTab').classList.toggle('hidden',!privateAccessManager());$('estimateHistorySalesFilterWrap')?.classList.toggle('hidden',!privateAccessManager());
- if($('carpenterTab'))$('carpenterTab').classList.toggle('hidden', !['randy','sam'].includes(String(profile?.username||'').toLowerCase()));
+ showCarpenterNav();
  $('subtitle').textContent=canViewAllJobs()?'All company jobs • live shared data':'Your sold jobs • live production status';
  const qh=$('quickJobHint');
  if(qh)qh.textContent=manager()||privateAccessManager()
@@ -548,7 +568,7 @@ async function refresh(){
  }catch(e){}
  renderAll();
 }
-function renderAll(){if($('allPersonalCalendarsTab'))$('allPersonalCalendarsTab').classList.toggle('hidden',!privateAccessManager());renderStats();renderRequests();renderEditRequests();renderJobs();renderWeek();renderCalendar();renderPersonalCalendar();renderAllPersonalCalendars();renderUpcomingAppointments();renderEstimateHistory();renderCompleted();renderTrash()}
+function renderAll(){if($('allPersonalCalendarsTab'))$('allPersonalCalendarsTab').classList.toggle('hidden',!privateAccessManager());try{showCarpenterNav()}catch(e){}renderStats();renderRequests();renderEditRequests();renderJobs();renderWeek();renderCalendar();renderPersonalCalendar();renderAllPersonalCalendars();renderUpcomingAppointments();renderEstimateHistory();renderCompleted();renderTrash()}
 function renderStats(){const active=jobs.filter(j=>status(j)!=='Completed').length,p=jobs.filter(j=>['Applied/Submitted','Submitted','Corrections Needed'].includes(j.permit_status)).length,c=jobs.filter(j=>j.concrete_status==='Scheduled').length,carp=jobs.filter(j=>['Scheduled','In Progress'].includes(j.carpentry_status)).length,h=jobs.filter(j=>j.hold_status).length,o=jobs.filter(overdue).length,done=jobs.filter(j=>status(j)==='Completed').length;$('stats').innerHTML=[['Active Jobs',active,''],['Permits Pending',p,''],['Concrete Scheduled',c,''],['Carpentry Active',carp,''],['On Hold',h,h?'alert':''],['Overdue',o,o?'alert':''],['Completed',done,'']].map(x=>`<div class="stat ${x[2]}"><div class="n">${x[1]}</div><div class="l">${x[0]}</div></div>`).join('')}
 function renderRequests(){
  const pend=requests.filter(r=>r.status==='Pending');$('managerRequests').classList.toggle('hidden',!manager()||!pend.length);$('pendingCount').textContent=pend.length;

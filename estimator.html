@@ -874,6 +874,58 @@ input, select, textarea, button { box-sizing:border-box; }
                         <div class="text-[9px] text-zinc-500 mt-0.5">Each foot above 8' adds $1.50 × garage square footage.</div>
                     </div>
 
+                    <!-- Sheathing -->
+                    <div class="mb-6">
+                        <div class="section-header mb-2 flex items-center gap-x-2">
+                            <i class="fa-solid fa-layer-group"></i>
+                            <span>SHEATHING</span>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="bg-zinc-950 border border-zinc-800 rounded-2xl p-3">
+                                <label class="text-xs text-zinc-400 font-bold block mb-2">Wall Sheathing</label>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div>
+                                        <label class="text-[10px] text-zinc-500 block mb-1">Size</label>
+                                        <select id="wallSheathSize" onchange="calculateEstimate()" class="calc-input w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm">
+                                            <option value='7/16"' selected>7/16"</option>
+                                            <option value='1/2"'>1/2"</option>
+                                            <option value='5/8"'>5/8"</option>
+                                            <option value='3/4"'>3/4"</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="text-[10px] text-zinc-500 block mb-1">Type</label>
+                                        <select id="wallSheathType" onchange="calculateEstimate()" class="calc-input w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm">
+                                            <option value="OSB" selected>OSB</option>
+                                            <option value="Plywood">Plywood</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-zinc-950 border border-zinc-800 rounded-2xl p-3">
+                                <label class="text-xs text-zinc-400 font-bold block mb-2">Roof Sheathing</label>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div>
+                                        <label class="text-[10px] text-zinc-500 block mb-1">Size</label>
+                                        <select id="roofSheathSize" onchange="calculateEstimate()" class="calc-input w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm">
+                                            <option value='7/16"' selected>7/16"</option>
+                                            <option value='1/2"'>1/2"</option>
+                                            <option value='5/8"'>5/8"</option>
+                                            <option value='3/4"'>3/4"</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="text-[10px] text-zinc-500 block mb-1">Type</label>
+                                        <select id="roofSheathType" onchange="calculateEstimate()" class="calc-input w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm">
+                                            <option value="OSB" selected>OSB</option>
+                                            <option value="Plywood">Plywood</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Roof -->
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                         <div>
@@ -2526,6 +2578,15 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             const sel=document.getElementById('eavesSize');
             const wrap=document.getElementById('manualEavesWrap');
             if(wrap)wrap.classList.toggle('hidden',!sel||sel.value!=='manual');
+        }
+        function sheathingSheetText(kind){
+            const size=(kind==='roof'
+                ? (document.getElementById('roofSheathSize')?.value||'7/16"')
+                : (document.getElementById('wallSheathSize')?.value||'7/16"'));
+            const type=(kind==='roof'
+                ? (document.getElementById('roofSheathType')?.value||'OSB')
+                : (document.getElementById('wallSheathType')?.value||'OSB'));
+            return String(size)+' '+String(type);
         }
         function getEavesInches(){
             const sel=document.getElementById('eavesSize');
@@ -7511,7 +7572,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                 addSpec('Garage Size', `${width}' x ${depth}'`);
                 addSpec('Roof Style', `${roofLabel} - ${pitch} Pitch`);
                 addSpec('Roofing', 'Architectural Shingles + 15lbs Felt Paper + Roof Vents');
-                addSpec('Roof Sheathing', '1/2"');
+                addSpec('Roof Sheathing', (typeof sheathingSheetText==='function'?sheathingSheetText('roof'):(val('roofSheathSize')||'7/16"')+' '+(val('roofSheathType')||'OSB')));
                 if(checked('overhangEnabled')){
                     const overhangSizePrint=Number(val('overhangSize')||6);
                     const overhangMaterialPrint=val('overhangMaterial')==='aluminum'?'Prefinished Aluminum':'Prefinished Wood';
@@ -7523,7 +7584,9 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                 addSpec('Wall Height', `${wallHeight}'`);
                 // Never print chosen color on the estimate sheet — material wording only
                 addSpec('Siding', sidingType === 'hardie' ? hardieWally : vinylWally);
-                addSpec(salesman.wally ? 'Wall Sheathing' : 'Double Wall', salesman.wally ? '1/2"' : '1/2" Sheathing');
+                addSpec(salesman.wally ? 'Wall Sheathing' : 'Double Wall', salesman.wally
+                    ? (typeof sheathingSheetText==='function'?sheathingSheetText('wall'):((val('wallSheathSize')||'7/16"')+' '+(val('wallSheathType')||'OSB')))
+                    : ((typeof sheathingSheetText==='function'?sheathingSheetText('wall'):((val('wallSheathSize')||'7/16"')+' '+(val('wallSheathType')||'OSB')))));
                 addSpec('Studs', `${wallHeight >= 10 ? '2x6' : '2x4'} 16" O.C.`);
                 addSpec('Bottom Plates', 'Treated');
                 addSpec('Headers', 'Double LVL Headers');
@@ -7573,7 +7636,8 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                 addSpec('Roof Style', `${roofType === 'gable' ? ((val('eaveDir') === 'sides' ? 'Reverse Gable' : 'Standard Gable')) : 'Hip'} - ${pitch} Pitch with Vents`);
                 // Never print chosen color on the estimate sheet — material wording only
                 addSpec('Siding', sidingType === 'hardie' ? 'Hardieboard / Cement Board Siding' : 'Premium Vinyl Siding');
-                addSpec('Double Wall', '1/2" Plywood or Choice');
+                addSpec('Double Wall', (typeof sheathingSheetText==='function'?sheathingSheetText('wall'):((val('wallSheathSize')||'7/16"')+' '+(val('wallSheathType')||'OSB'))));
+                addSpec('Roof Sheathing', (typeof sheathingSheetText==='function'?sheathingSheetText('roof'):((val('roofSheathSize')||'7/16"')+' '+(val('roofSheathType')||'OSB'))));
                 addSpec('Eaves', `${getEavesInches()}" Eaves - 4 Sides Boxed`);
                 if(checked('roofPatioEnabled')){const d=getRoofPatioDepth(),side=checked('roofPatioSide'),span=side?depth:width;addSpec('Roof Patio',`${span}' x ${d}' ${side?'Side':'Rear'} Roof Patio - 4 Support Posts`);}
                 addSpec('Overhang', checked('gutters') ? (roofType === 'gable' ? 'Seamless Gutters 2 Sides - 2 Down Spouts' : 'Seamless Gutters 4 Sides - 2 Down Spouts') : '" "');
@@ -9298,7 +9362,7 @@ async function openPopupChatGPT(){
                 'demoExisting', 'demoSlabPreset', 'demoApronDepth', 'oldConcreteOverride', 'additionalRemovalDims', 'epaFee',
                 'doorType', 'serviceDoorLocation', 'serviceDoorFrontSide', 'addlOverheadDoors', 'overheadDoorHeight', 'overheadDoorWidth', 'overheadDoorStyle', 'doorOffset',
                 'elecBase', 'evCharger', 'threeWaySwitch', 'extraLights', 'extraWindows', 'windowType', 'windowQty', 'windowPlacement', 'salesman',
-                'retainType', 'retainWallHeight', 'frostProtectedFooting', 'footingWidth', 'footingDepth', 'ohDoorQty', 'ohDoorOpenerPrice', 'ohInsulated', 'ohInsulType', 'svcInsulated', 'svcInsulType', 'partyInsulated', 'partyInsulType', 'customCity', 'suburbPermitFee', 'gutters', 'aluminumSoffit', 'sidingType', 'vinylColor', 'hardieColor',
+                'retainType', 'retainWallHeight', 'frostProtectedFooting', 'footingWidth', 'footingDepth', 'ohDoorQty', 'ohDoorOpenerPrice', 'ohInsulated', 'ohInsulType', 'svcInsulated', 'svcInsulType', 'partyInsulated', 'partyInsulType', 'customCity', 'suburbPermitFee', 'wallSheathSize', 'wallSheathType', 'roofSheathSize', 'roofSheathType', 'gutters', 'aluminumSoffit', 'sidingType', 'vinylColor', 'hardieColor',
                 'firewallWalls', 'hurricaneTies', 'wheelingCharge', 'arlingtonSurvey', 'andrewPermit', 'forceFootingChicago'
             ];
             

@@ -1238,7 +1238,7 @@ input, select, textarea, button { box-sizing:border-box; }
                             <div class="md:col-span-4 flex items-end">
                                 <label class="flex items-center cursor-pointer text-sm w-full">
                                     <input type="checkbox" id="epaFee" onchange="calculateEstimate()" class="accent-blue-500 w-4 h-4 mr-2">
-                                    <span class="text-xs">EPA fee (+$360) — auto for Mundelein when demo checked</span>
+                                    <span class="text-xs">EPA fee (+$360)</span>
                                 </label>
                             </div>
                         </div>
@@ -2345,11 +2345,21 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             applyCityExtraThickness(1);
             applyCityExtraThickness(2);
             const gut=document.getElementById('gutters');
-            if(gut && r.gutters) gut.checked=true;
+            if(gut) gut.checked=!!r.gutters;
             const topo=document.getElementById('arlingtonSurvey');
             if(topo) topo.checked=!!r.topo;
             const wheeling=document.getElementById('wheelingCharge');
             if(wheeling) wheeling.checked=(city==='Wheeling');
+            const footingBox=document.getElementById('forceFootingChicago');
+            if(footingBox) footingBox.checked=(city!=='Chicago');
+            try{ applyCityFootingDims(city); }catch(e){}
+            try{ applyCitySheathing(city); }catch(e){}
+            const epaBox=document.getElementById('epaFee');
+            if(epaBox){
+                epaBox.disabled=false;
+                const demoOn=!!document.getElementById('demoExisting')?.checked;
+                epaBox.checked=!!(r.epa && demoOn);
+            }
             const notesEl=document.getElementById('citySpecialNotes');
             const notesCity=document.getElementById('citySpecialNotesCity');
             if(notesCity) notesCity.textContent=city||'CITY';
@@ -2404,7 +2414,16 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             handleEPALogic();
         }
 
-        function onDemoChange(){handleEPALogic();}
+        function onDemoChange(){
+            handleEPALogic();
+            const r=(typeof getCityCodeRules==='function')?getCityCodeRules():null;
+            const epa=document.getElementById('epaFee');
+            const demo=!!document.getElementById('demoExisting')?.checked;
+            if(epa){
+                epa.disabled=false;
+                if(r&&r.epa&&demo) epa.checked=true;
+            }
+        }
         function syncDemoPreset(){
             const preset=document.getElementById('demoSlabPreset')?.value||'none';
             const demo=document.getElementById('demoExisting'); if(demo)demo.checked=preset!=='none';
@@ -2447,22 +2466,59 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             return `(${total}) Single Hung`;
         }
 
-        function handleEPALogic() {
-            const city = document.getElementById('city').value;
-            const demo = document.getElementById('demoExisting').checked;
-            const epaCheckbox = document.getElementById('epaFee');
-            if(!epaCheckbox) return;
-            const r = (typeof getCityCodeRules==='function') ? getCityCodeRules() : null;
-            const epaCity = !!(r && r.epa) || city === 'Mundelein' || city === 'Arlington Heights';
-            if (demo && epaCity) {
-                epaCheckbox.checked = true;
-                epaCheckbox.disabled = true;
-            } else {
-                epaCheckbox.disabled = false;
-                if (city === 'Chicago' || !demo) {
-                    if (city === 'Chicago') epaCheckbox.checked = false;
-                }
+        function parseCityFootingDims(city){
+            const s=(typeof CITY_CODE_SHEETS==='object' && CITY_CODE_SHEETS[city]) ? CITY_CODE_SHEETS[city] : null;
+            const raw=String((s&&s.footings)||'');
+            if(!raw.trim()) return null;
+            const w=raw.match(/WIDTH:\s*([^D]+?)(?=DEPTH|$)/i);
+            const d=raw.match(/DEPTH:\s*(.+)$/i);
+            const clean=(x)=>String(x||'').replace(/WIDTH:|DEPTH:/ig,'').trim();
+            const width=clean(w&&w[1]);
+            const depth=clean(d&&d[1]);
+            if(!width && !depth) return null;
+            return {width, depth};
+        }
+        function applyCityFootingDims(city){
+            const dims=parseCityFootingDims(city);
+            const wEl=document.getElementById('footingWidth');
+            const dEl=document.getElementById('footingDepth');
+            if(city==='Chicago' || city==='Other'){
+                if(wEl) wEl.value='';
+                if(dEl) dEl.value='';
+                return;
             }
+            if(!dims) return;
+            if(wEl) wEl.value=dims.width||'';
+            if(dEl) dEl.value=dims.depth||'';
+        }
+        function normalizeSheathSize(s){
+            const t=String(s||'').replace(/\s+/g,'');
+            if(/7\/16/.test(t)) return '7/16"';
+            if(/5\/8/.test(t)) return '5/8"';
+            if(/3\/4/.test(t)) return '3/4"';
+            if(/1\/2/.test(t)) return '1/2"';
+            return '';
+        }
+        function applyCitySheathing(city){
+            const notes=String((typeof CITY_CODE_NOTES==='object' && CITY_CODE_NOTES[city])||'')+' '+String((CITY_CODE_SHEETS[city]&&CITY_CODE_SHEETS[city].notes)||'');
+            let wallSize='7/16"', roofSize='7/16"', wallType='OSB', roofType='OSB';
+            if(/5\/8[^.]{0,40}roof|roof[^.]{0,40}5\/8/i.test(notes)) roofSize='5/8"';
+            if(/1\/2[^.]{0,40}roof|roof[^.]{0,40}1\/2/i.test(notes)) roofSize='1/2"';
+            if(/5\/8[^.]{0,40}wall|wall[^.]{0,40}5\/8/i.test(notes)) wallSize='5/8"';
+            if(/1\/2[^.]{0,40}wall|wall[^.]{0,40}1\/2/i.test(notes)) wallSize='1/2"';
+            if(/plywood[^.]{0,30}roof|roof[^.]{0,30}plywood/i.test(notes)) roofType='Plywood';
+            if(/plywood[^.]{0,30}wall|wall[^.]{0,30}plywood|plywood walls/i.test(notes)) wallType='Plywood';
+            if(/osb[^.]{0,20}wall|wall[^.]{0,20}osb/i.test(notes)) wallType='OSB';
+            if(/osb[^.]{0,20}roof|roof[^.]{0,20}osb/i.test(notes)) roofType='OSB';
+            const setSel=(id,val)=>{ const el=document.getElementById(id); if(!el) return; if([...el.options].some(o=>o.value===val)) el.value=val; };
+            setSel('wallSheathSize', wallSize);
+            setSel('roofSheathSize', roofSize);
+            setSel('wallSheathType', wallType);
+            setSel('roofSheathType', roofType);
+        }
+        function handleEPALogic() {
+            const epaCheckbox = document.getElementById('epaFee');
+            if(epaCheckbox) epaCheckbox.disabled = false;
         }
 
         function toggleGableOptions() {
@@ -3014,15 +3070,13 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             let epaCost = 0;
             if (epaChecked) {
                 epaCost = 360;
-            } else if (demo && city === 'Mundelein') {
-                epaCost = 360;
             }
             
             // Footing & rods
             let footingCost = 0;
             let rodsCost = 0;
             const isOutsideChicago = city !== 'Chicago';
-            if (isOutsideChicago || forceFootingChicago) {
+            if (forceFootingChicago || (isOutsideChicago && forceFootingChicago)) {
                 const perimeter = 2 * (width + depth);
                 footingCost = perimeter * 40;
                 rodsCost = 300;

@@ -1443,14 +1443,52 @@ async function fetchFullEstimateRecord(id){
  }catch(err){ console.warn('fetchFullEstimateRecord',err); }
  return e;
 }
+async function saveEditedEstimateSheetHtml(html, meta){
+ try{
+  const editId=(meta&&meta.id)||window._lastEstimateHistoryId||'';
+  if(!editId){ alert('No estimate selected to save.'); return false; }
+  const {data:row,error:loadErr}=await sb.from('estimate_history').select('*').eq('id',editId).maybeSingle();
+  if(loadErr||!row){ alert('Could not load the saved estimate.'); return false; }
+  const snap=Object.assign({}, row.estimate_snapshot||{});
+  snap.sheet_html=String(html||'');
+  snap.sheet_edits_at=new Date().toISOString();
+  const patch={ estimate_snapshot: snap };
+  const price=Number(meta&&meta.price);
+  if(Number.isFinite(price)&&price>0){
+   patch.estimate_price=price;
+   snap.final_project_price=price;
+  }
+  const {error}=await sb.from('estimate_history').update(patch).eq('id',editId);
+  if(error){ alert('Save failed: '+error.message); return false; }
+  const i=estimateHistory.findIndex(x=>x.id===editId);
+  if(i>=0) estimateHistory[i]={...estimateHistory[i],...row,estimate_snapshot:snap,estimate_price:patch.estimate_price||row.estimate_price};
+  return true;
+ }catch(err){
+  console.error(err);
+  alert('Save failed.');
+  return false;
+ }
+}
 async function viewEstimateHistory(id){
  const e=await fetchFullEstimateRecord(id);if(!e)return alert('Estimate not found.');
  const snap=e.estimate_snapshot||{},savedSheet=snap.sheet_html||'';
+ window._lastEstimateHistoryId=id;
  const w=window.open('','_blank','width=1100,height=1000');if(!w)return alert('Your browser blocked the popup. Please allow popups and try again.');
  const hasSheet=!!savedSheet;
- w.document.write(`<!doctype html><html><head><title>${esc(e.customer)} - Estimate History</title><style>body{font-family:Arial,sans-serif;margin:0;background:#e9eef5;color:#172033}.top{position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid #cbd5e1;padding:14px 18px}.head{max-width:1050px;margin:auto;display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap}h1{font-size:20px;margin:0;color:#14233c}.muted{color:#64748b}.small{font-size:11px}.summary{max-width:1050px;margin:14px auto;background:#fff;border:1px solid #dbe2ea;border-radius:12px;padding:16px}.summary h3{margin:0 0 10px}.summary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px 18px;font-size:12px}.frame-wrap{max-width:1050px;margin:14px auto 30px;background:#d7dde6;padding:12px;border-radius:12px}iframe{width:100%;height:1250px;border:0;background:#fff;border-radius:6px}button{padding:9px 13px;border:0;border-radius:8px;font-weight:800;cursor:pointer;background:#14233c;color:#fff}@media(max-width:700px){.summary-grid{grid-template-columns:1fr 1fr}.frame-wrap{padding:4px;margin:8px}.summary{margin:8px}iframe{height:1050px}}</style></head><body><div class="top"><div class="head"><div><h1>${esc(e.customer)}</h1><div class="muted small">Saved ${new Date(e.created_at).toLocaleString()} • Created by ${esc(DISPLAY[e.salesman_username]||e.salesman_username)}</div></div><button onclick="window.close()">Close</button></div></div><div class="summary"><h3>Estimate Summary</h3><div class="summary-grid"><div><b>Price</b><br>${money(e.estimate_price)}</div><div><b>Garage</b><br>${esc(e.garage_size||'—')}</div><div><b>Roof</b><br>${esc(e.roof_type||'—')}</div><div><b>Wall Height</b><br>${esc(e.wall_height||'—')}</div><div><b>Address</b><br>${esc(e.address||'—')}</div><div><b>City</b><br>${esc(e.city||'—')}</div><div><b>Siding</b><br>${esc(e.siding||'—')}</div><div><b>Salesperson</b><br>${esc(DISPLAY[e.salesman_username]||e.salesman_username)}</div></div><div style="margin-top:12px">${estimatePricingDetails(e)}</div></div>${hasSheet?`<div class="frame-wrap"><iframe id="savedEstimateFrame" title="Saved Estimate Sheet"></iframe></div>`:`<div class="summary"><b>Older estimate record:</b> this was saved before full estimate-sheet snapshots were enabled.<div style="margin-top:12px">${estimateHistorySummary(e)}</div></div>`}</body></html>`);
+ w.document.write(`<!doctype html><html><head><title>${esc(e.customer)} - Estimate History</title><style>body{font-family:Arial,sans-serif;margin:0;background:#e9eef5;color:#172033}.top{position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid #cbd5e1;padding:14px 18px}.head{max-width:1050px;margin:auto;display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap}h1{font-size:20px;margin:0;color:#14233c}.muted{color:#64748b}.small{font-size:11px}.summary{max-width:1050px;margin:14px auto;background:#fff;border:1px solid #dbe2ea;border-radius:12px;padding:16px}.summary h3{margin:0 0 10px}.summary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px 18px;font-size:12px}.frame-wrap{max-width:1050px;margin:14px auto 30px;background:#d7dde6;padding:12px;border-radius:12px}iframe{width:100%;height:1250px;border:0;background:#fff;border-radius:6px}button{padding:9px 13px;border:0;border-radius:8px;font-weight:800;cursor:pointer;background:#14233c;color:#fff}.save{background:#0f766e}@media(max-width:700px){.summary-grid{grid-template-columns:1fr 1fr}.frame-wrap{padding:4px;margin:8px}.summary{margin:8px}iframe{height:1050px}}</style></head><body><div class="top"><div class="head"><div><h1>${esc(e.customer)}</h1><div class="muted small">Saved ${new Date(e.created_at).toLocaleString()} • Created by ${esc(DISPLAY[e.salesman_username]||e.salesman_username)}</div></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="save" onclick="saveHistorySheetEdits()">Save Changes</button><button onclick="window.close()">Close</button></div></div></div><div class="summary"><h3>Estimate Summary</h3><div class="summary-grid"><div><b>Price</b><br>${money(e.estimate_price)}</div><div><b>Garage</b><br>${esc(e.garage_size||'—')}</div><div><b>Roof</b><br>${esc(e.roof_type||'—')}</div><div><b>Wall Height</b><br>${esc(e.wall_height||'—')}</div><div><b>Address</b><br>${esc(e.address||'—')}</div><div><b>City</b><br>${esc(e.city||'—')}</div><div><b>Siding</b><br>${esc(e.siding||'—')}</div><div><b>Salesperson</b><br>${esc(DISPLAY[e.salesman_username]||e.salesman_username)}</div></div><div style="margin-top:12px">${estimatePricingDetails(e)}</div></div>${hasSheet?`<div class="frame-wrap"><iframe id="savedEstimateFrame" title="Saved Estimate Sheet"></iframe></div>`:`<div class="summary"><b>Older estimate record:</b> this was saved before full estimate-sheet snapshots were enabled.<div style="margin-top:12px">${estimateHistorySummary(e)}</div></div>`}</body></html>`);
  w.document.close();
  if(hasSheet){const frame=w.document.getElementById('savedEstimateFrame');if(frame)frame.srcdoc=savedSheet}
+ w.saveHistorySheetEdits=async function(){
+  try{
+   const frame=w.document.getElementById('savedEstimateFrame');
+   const doc=frame&&frame.contentDocument;
+   if(!doc){ alert('Sheet is not loaded yet.'); return; }
+   const html='<!DOCTYPE html>\\n'+doc.documentElement.outerHTML;
+   const priceTxt=(doc.querySelector('.total-price')?.innerText||'').replace(/[^0-9.]/g,'');
+   const ok=await saveEditedEstimateSheetHtml(html,{id:id,price:parseFloat(priceTxt)||0});
+   alert(ok?'Sheet changes saved. Open this estimate again to see them.':'Save failed.');
+  }catch(err){ console.error(err); alert('Save failed.'); }
+ };
  w.focus();
 }
 async function editEstimateHistory(id){

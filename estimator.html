@@ -4129,6 +4129,37 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             }catch(err){console.error('Estimate history save failed:',err)}
         }
 
+        async function saveEditedEstimateSheetHtml(html, meta){
+            try{
+                const {data:{user}}=await garageSb.auth.getUser();
+                if(!user){ alert('Sign in to save sheet changes.'); return false; }
+                let editId=new URLSearchParams(location.search).get('editEstimate') || window._lastEstimateHistoryId || (meta&&meta.id) || '';
+                if(!editId){
+                    alert('This sheet is not in Estimate History yet. Close and create the sheet once, then Save Changes.');
+                    return false;
+                }
+                const {data:row,error:loadErr}=await garageSb.from('estimate_history').select('*').eq('id',editId).maybeSingle();
+                if(loadErr||!row){ alert('Could not load the saved estimate to update.'); return false; }
+                const snap=Object.assign({}, row.estimate_snapshot||{});
+                snap.sheet_html=String(html||'');
+                snap.sheet_edits_at=new Date().toISOString();
+                const patch={ estimate_snapshot: snap };
+                const price=Number(meta&&meta.price);
+                if(Number.isFinite(price)&&price>0){
+                    patch.estimate_price=price;
+                    snap.final_project_price=price;
+                }
+                const {error}=await garageSb.from('estimate_history').update(patch).eq('id',editId);
+                if(error){ alert('Save failed: '+error.message); return false; }
+                window._lastEstimateHistoryId=editId;
+                return true;
+            }catch(err){
+                console.error('saveEditedEstimateSheetHtml',err);
+                alert('Save failed.');
+                return false;
+            }
+        }
+
         async function syncSignedInSalesman(){
             try{
                 const {data:{user}}=await garageSb.auth.getUser();
@@ -8435,6 +8466,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
 <div class="actions">
     <button class="print" onclick="window.print()">Print</button>
     <button type="button" class="sheet-undo-btn no-print" id="sheetUndoBtn" onclick="undoSheetEdit()" style="background:#92400e;color:#fff" disabled>Undo</button>
+    <button type="button" class="no-print" id="sheetSaveBtn" onclick="saveSheetEditsNow()" style="background:#0f766e;color:#fff">Save Changes</button>
     <button class="download" onclick="downloadEstimatePdf()" style="background:#166534;color:#fff">Download PDF</button>
     <button class="email" onclick="emailEstimateToCustomer()" style="background:#1d4ed8;color:#fff">Email Customer</button>
     <button class="close" onclick="window.close()">Close</button>
@@ -8735,6 +8767,32 @@ function pushSheetUndo(label, fn){
   sheetUndoStack.push({label:label||'edit', undo:fn});
   if(sheetUndoStack.length>40) sheetUndoStack.shift();
   setSheetUndoBtn();
+}
+async function saveSheetEditsNow(){
+  const st=document.getElementById('popupChangeStatus');
+  const btn=document.getElementById('sheetSaveBtn');
+  try{
+    document.querySelectorAll('.sheet-edit').forEach(function(el){ try{ saveSheetInlineEdit(el); }catch(e){} });
+    if(st) st.textContent='Saving sheet changes…';
+    if(btn){ btn.disabled=true; btn.textContent='Saving…'; }
+    const html='<!DOCTYPE html>\\n'+document.documentElement.outerHTML;
+    const priceTxt=(document.querySelector('.total-price')?.innerText||'').replace(/[^0-9.]/g,'');
+    const price=parseFloat(priceTxt)||0;
+    if(!window.opener || window.opener.closed || typeof window.opener.saveEditedEstimateSheetHtml!=='function'){
+      if(st) st.textContent='Open this sheet from the estimator or Estimate History to save.';
+      alert('Keep the estimator or dashboard tab open, then press Save Changes again.');
+      return;
+    }
+    const ok=await window.opener.saveEditedEstimateSheetHtml(html,{price:price});
+    if(st) st.textContent=ok?'Sheet changes saved. They will be there when you view this estimate again.':'Save failed.';
+    if(ok && btn) btn.textContent='Saved';
+  }catch(err){
+    console.warn(err);
+    if(st) st.textContent='Save failed.';
+    alert('Could not save sheet changes.');
+  }finally{
+    if(btn){ btn.disabled=false; if(btn.textContent==='Saving…') btn.textContent='Save Changes'; }
+  }
 }
 function undoSheetEdit(){
   const last=sheetUndoStack.pop();

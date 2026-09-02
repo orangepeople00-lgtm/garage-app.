@@ -522,10 +522,11 @@ function persist(){ try{ localStorage.setItem('agb_carpenter_ticket', JSON.strin
 function pushUndo(){ undoStack.push(snapshot()); if(undoStack.length>40) undoStack.shift(); }
 function touch(){ persist(); makePlans(); }
 
+const OPTS_IDS={roof:'roofOpts',eaves:'eaveOpts',siding:'sidingOpts',shingles:'shingleOpts',header:'headerOpts',jamb:'jambOpts'};
 function setChoice(key, value, btn){
   pushUndo();
   choices[key]=value;
-  document.querySelectorAll('#'+key+'Opts button').forEach(b=>b.classList.toggle('on', b.dataset.v===value));
+  document.querySelectorAll('#'+(OPTS_IDS[key]||(key+'Opts'))+' button').forEach(b=>b.classList.toggle('on', b.dataset.v===value));
   document.querySelectorAll('#'+({roof:'roofCircles',eaves:'eaveCircles',siding:'sidingCircles',shingles:'shingleCircles',header:'headerCircles',jamb:'jambCircles'}[key]||'')+' .circ').forEach(c=>c.classList.toggle('on', c.dataset.v===value));
   if(key==='roof') makePlans();
   if(key==='jamb' && $('doorJamb')) $('doorJamb').value=value;
@@ -548,7 +549,7 @@ function applySnap(o){
 }
 function setChoiceSilent(key,value){
   choices[key]=value;
-  document.querySelectorAll('#'+key+'Opts button').forEach(b=>b.classList.toggle('on', b.dataset.v===value));
+  document.querySelectorAll('#'+(OPTS_IDS[key]||(key+'Opts'))+' button').forEach(b=>b.classList.toggle('on', b.dataset.v===value));
   const map={roof:'roofCircles',eaves:'eaveCircles',siding:'sidingCircles',shingles:'shingleCircles',header:'headerCircles',jamb:'jambCircles'};
   document.querySelectorAll('#'+(map[key]||'')+' .circ').forEach(c=>c.classList.toggle('on', c.dataset.v===value));
 }

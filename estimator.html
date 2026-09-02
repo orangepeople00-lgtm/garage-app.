@@ -758,13 +758,29 @@ input, select, textarea, button { box-sizing:border-box; }
                                 <option value="Schaumburg">Schaumburg, IL</option>
                                 <option value="Skokie">Skokie, IL</option>
                                 <option value="Wheeling">Wheeling, IL</option>
-                                <option value="Other Suburb">Other Suburb (outside Chicago)</option>
+                                <option value="Other">Other (type city)</option>
                             </select>
+                            <div id="customCityWrap" class="hidden mt-2">
+                                <label class="text-xs text-zinc-400 block mb-1">Type city name</label>
+                                <input type="text" id="customCity" value="" placeholder="City name"
+                                       oninput="calculateEstimate()"
+                                       class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm">
+                            </div>
                             <div id="cityCodeHint" class="text-[10px] text-zinc-500 mt-1">City codes auto-set slab / driveway / parkway thickness, EPA, topo, and gutters when required.</div>
                             <div id="citySpecialNotesBox" class="mt-3 bg-amber-950/40 border border-amber-700/50 rounded-2xl p-3">
-                                <div class="flex items-center justify-between gap-2 mb-1">
+                                <div class="flex items-center justify-between gap-2 mb-1 flex-wrap">
                                     <div class="text-[10px] font-extrabold tracking-wide text-amber-400">SPECIAL NOTES — <span id="citySpecialNotesCity">CITY</span></div>
-                                    <button type="button" id="cityCodesPrintBtn" onclick="printCityCodeSheet()" class="shrink-0 bg-amber-400 text-black font-extrabold text-[11px] tracking-wide px-3 py-1.5 rounded-lg">CODES</button>
+                                    <div class="flex items-center gap-2">
+                                        <div id="suburbPermitWrap" class="hidden flex items-center gap-1">
+                                            <label class="text-[10px] font-bold text-zinc-300 whitespace-nowrap">Permit Fee</label>
+                                            <div class="flex items-center bg-zinc-950 border border-zinc-600 rounded-lg px-1">
+                                                <span class="pl-1 text-[10px] text-zinc-500">$</span>
+                                                <input type="number" id="suburbPermitFee" value="0" min="0" step="50"
+                                                       oninput="calculateEstimate()" class="w-20 bg-transparent px-1 py-1 text-xs outline-none">
+                                            </div>
+                                        </div>
+                                        <button type="button" id="cityCodesPrintBtn" onclick="printCityCodeSheet()" class="shrink-0 bg-amber-400 text-black font-extrabold text-[11px] tracking-wide px-3 py-1.5 rounded-lg">CODES</button>
+                                    </div>
                                 </div>
                                 <div id="citySpecialNotes" class="text-xs text-amber-100 leading-relaxed">Select a city to load village code notes for the salesman.</div>
                             </div>
@@ -2291,8 +2307,22 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                 notesEl.textContent=n;
             }
         }
+        function isChicagoCity(){
+            return String(document.getElementById('city')?.value||'').trim()==='Chicago';
+        }
+        function syncCityPermitUI(){
+            const city=document.getElementById('city')?.value||'';
+            if(city==='Other Suburb'){
+                const sel=document.getElementById('city');
+                if(sel) sel.value='Other';
+            }
+            const other=!isChicagoCity() && (document.getElementById('city')?.value==='Other');
+            document.getElementById('customCityWrap')?.classList.toggle('hidden', !other);
+            document.getElementById('suburbPermitWrap')?.classList.toggle('hidden', isChicagoCity());
+        }
         function onCityChange() {
             const city = document.getElementById('city')?.value || '';
+            try{ syncCityPermitUI(); }catch(e){}
             const wheelingContainer = document.getElementById('wheelingContainer');
             const arlingtonContainer = document.getElementById('arlingtonContainer');
             
@@ -2976,8 +3006,11 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                 soffitCost = Math.round(soffitFt * 10.75 * 100) / 100;
             }
             
-            // Permit always included
-            const permitCost = 550;
+            // Chicago permit $550 included. All other cities: typed Permit Fee (default $0).
+            try{ syncCityPermitUI(); }catch(e){}
+            const permitCost = isChicagoCity()
+                ? 550
+                : Math.max(0, parseFloat(document.getElementById('suburbPermitFee')?.value) || 0);
             
             // === INTERNAL TOTAL ===
             const internalTotal = 
@@ -3606,7 +3639,13 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                 lines.push({ label: 'Standard service door', amount: 0, section: 'core', note: 'included' });
             }
             
-            lines.push({ label: 'Permit', amount: data.permitCost, section: 'core', key: 'permit' });
+            if (isChicagoCity()) {
+                lines.push({ label: 'Permit', amount: data.permitCost, section: 'core', key: 'permit' });
+            } else if (Number(data.permitCost||0) > 0) {
+                lines.push({ label: 'Permit fee', amount: data.permitCost, section: 'core', key: 'permit' });
+            } else {
+                lines.push({ label: 'Permit not included in price', amount: 0, section: 'core', key: 'permit', note: 'not included' });
+            }
             
             // CONCRETE
             if (data.newConcrete || data.totalConcreteArea > 0) {
@@ -9201,7 +9240,7 @@ async function openPopupChatGPT(){
                 'demoExisting', 'demoSlabPreset', 'demoApronDepth', 'oldConcreteOverride', 'additionalRemovalDims', 'epaFee',
                 'doorType', 'serviceDoorLocation', 'serviceDoorFrontSide', 'addlOverheadDoors', 'overheadDoorHeight', 'overheadDoorWidth', 'overheadDoorStyle', 'doorOffset',
                 'elecBase', 'evCharger', 'threeWaySwitch', 'extraLights', 'extraWindows', 'windowType', 'windowQty', 'windowPlacement', 'salesman',
-                'retainType', 'retainWallHeight', 'frostProtectedFooting', 'footingWidth', 'footingDepth', 'ohDoorQty', 'ohDoorOpenerPrice', 'ohInsulated', 'ohInsulType', 'svcInsulated', 'svcInsulType', 'partyInsulated', 'partyInsulType', 'gutters', 'aluminumSoffit', 'sidingType', 'vinylColor', 'hardieColor',
+                'retainType', 'retainWallHeight', 'frostProtectedFooting', 'footingWidth', 'footingDepth', 'ohDoorQty', 'ohDoorOpenerPrice', 'ohInsulated', 'ohInsulType', 'svcInsulated', 'svcInsulType', 'partyInsulated', 'partyInsulType', 'customCity', 'suburbPermitFee', 'gutters', 'aluminumSoffit', 'sidingType', 'vinylColor', 'hardieColor',
                 'firewallWalls', 'hurricaneTies', 'wheelingCharge', 'arlingtonSurvey', 'andrewPermit', 'forceFootingChicago'
             ];
             

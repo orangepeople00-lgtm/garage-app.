@@ -10,11 +10,11 @@
 *{box-sizing:border-box}
 html,body{margin:0;min-height:100%;background:#e8edf3;color:var(--ink);font-family:"Times New Roman",Times,serif}
 .gate{max-width:440px;margin:12vh auto;background:#fff;padding:28px;border:1px solid #cfd6df}
-.gate a{color:#10203a}
 .bar{position:sticky;top:0;z-index:30;display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:8px 12px;background:#10203a;color:#fff;font-family:Arial,Helvetica,sans-serif}
 .bar button{border:0;border-radius:6px;padding:8px 11px;font-weight:800;cursor:pointer;font-size:12px}
 .bar .primary{background:#c9a227;color:#10203a}
 .bar .ghost{background:#2a3d5c;color:#fff}
+.add-wrap{position:relative}
 .add-wrap:hover .menu,.add-wrap:focus-within .menu{display:block!important}
 .shell{display:grid;grid-template-columns:250px 1fr;gap:14px;padding:14px;align-items:start}
 .panel{background:#fff;border:1px solid #c5ced8;padding:12px;font-family:Arial,Helvetica,sans-serif;position:sticky;top:56px;max-height:calc(100vh - 72px);overflow-y:auto}
@@ -27,117 +27,76 @@ html,body{margin:0;min-height:100%;background:#e8edf3;color:var(--ink);font-fami
 .tiny{display:flex;gap:6px}
 .tiny input{width:50%}
 .paper-wrap{display:flex;justify-content:center}
-.paper{
-  width:8.5in;min-height:11in;background:#fff;color:#10203a;
-  padding:.55in .6in .5in;position:relative;
-  border:1px solid #d0d5dd;
-}
+.paper{width:8.5in;min-height:11in;background:#fff;color:#10203a;padding:.55in .6in .5in;position:relative;border:1px solid #d0d5dd}
 .brandline{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}
 .logo-box{display:flex;align-items:center;gap:8px;min-width:210px}
 .logo-mark{width:48px;height:48px;flex:0 0 48px}
-.logo-box b{display:block;font:800 13px/1.05 Arial,sans-serif;letter-spacing:.04em;color:#10203a}
+.logo-box b{display:block;font:800 13px/1.05 Arial,sans-serif;letter-spacing:.04em}
 .logo-box span{display:block;font:800 9px/1.1 Arial,sans-serif;letter-spacing:.12em;color:#c9a227}
 .collect{font-family:Arial,sans-serif;font-size:13px;font-weight:800;text-align:right;display:flex;flex-direction:column;gap:10px;min-width:280px}
 .collect .crow{display:flex;align-items:flex-end;justify-content:flex-end;gap:8px}
-.collect .crow span{white-space:nowrap}
-.collect .crow input{width:150px;border:0;border-bottom:2px solid #111;font:800 26px/1.1 "Times New Roman",Times,serif;color:#111;background:transparent;text-align:left}
-.row{display:flex;align-items:flex-end;gap:10px;margin:8px 0;font-size:13px;font-weight:700;color:#111;flex-wrap:nowrap}
-.row.wrap{flex-wrap:wrap}
-.row .k{white-space:nowrap;color:#111;font-weight:800}
-.row input,.grow{
-  flex:1;border:0;border-bottom:1px solid #111;background:transparent;
-  font:700 14px/1.2 "Times New Roman",Times,serif;color:#111;padding:0 4px 1px;
-  outline:none;min-width:40px;
-}
-.row input:focus{background:#fffbe6}
+.collect .crow input{width:150px;border:0;border-bottom:2px solid #111;font:800 26px/1.1 "Times New Roman",Times,serif;background:transparent}
+.row{display:flex;align-items:flex-end;gap:10px;margin:8px 0;font-size:13px;font-weight:700;flex-wrap:nowrap}
+.row .k{white-space:nowrap;font-weight:800}
+.row input,.grow{flex:1;border:0;border-bottom:1px solid #111;background:transparent;font:700 14px/1.2 "Times New Roman",Times,serif;padding:0 4px 1px;min-width:40px}
 .split{display:grid;grid-template-columns:1fr 1fr;gap:10px 18px}
-.choice-row{display:flex;align-items:center;gap:14px;margin:8px 0 10px;flex-wrap:nowrap}
-.choice-row .k{white-space:nowrap;font-weight:800;color:#111}
-.choices{display:flex;gap:16px;align-items:center;flex-wrap:nowrap}
-.circ{
-  display:inline-flex;align-items:center;gap:6px;cursor:pointer;
-  font:800 13px/1 "Times New Roman",Times,serif;color:#111;padding:0;background:none;border:0;
-}
-.circ:hover{color:#111}
-.circ i{width:15px;height:15px;border:2px solid #111;border-radius:50%;display:inline-block;position:relative;flex:0 0 15px;background:#fff;box-sizing:border-box}
+.choice-row{display:flex;align-items:center;gap:14px;margin:8px 0 10px}
+.circ{display:inline-flex;align-items:center;gap:6px;cursor:pointer;font:800 13px/1 "Times New Roman",Times,serif;background:none;border:0}
+.circ i{width:15px;height:15px;border:2px solid #111;border-radius:50%;display:inline-block;background:#fff}
 .circ.on i{background:#111;box-shadow:inset 0 0 0 2px #fff;print-color-adjust:exact;-webkit-print-color-adjust:exact}
 .rule{border:0;border-top:1px solid #10203a;margin:10px 0}
-.notes-row{display:grid;grid-template-columns:1fr 1.6in;gap:12px;align-items:start}
-.notes-row textarea{width:100%;min-height:64px;height:auto;overflow:hidden;border:0;border-bottom:1px solid #10203a;resize:none;font:700 13px/1.25 "Times New Roman",Times,serif;background:transparent}
+.notes-row{display:grid;grid-template-columns:1fr 1.6in;gap:12px}
+.notes-row textarea{width:100%;min-height:64px;border:0;border-bottom:1px solid #10203a;resize:none;font:700 13px/1.25 "Times New Roman",Times,serif;background:transparent}
 .bluebox{height:1.35in;background:#c5d6ea;border:1px solid #9aafc4}
-.free-text{
-  position:absolute;min-width:80px;padding:2px 6px;cursor:move;text-align:center;
-  border:1px dashed transparent;background:transparent;z-index:5;
-}
-.free-text:hover,.free-text.sel{border-color:#2563eb;background:#fff8}
-.free-text[contenteditable]:focus{outline:1px dashed #2563eb}
 .draw-page{width:8.5in;min-height:11in;background:#fff;margin:16px auto 28px;padding:.5in;border:1px solid #d0d5dd}
-.draw-page h2{margin:0 0 6px;font-family:Arial,sans-serif;font-size:16px;letter-spacing:.06em}
 .elevs{display:grid;grid-template-columns:1fr;gap:16px;margin-top:10px}
-.elev{border:2px solid #10203a;padding:8px 8px 8px 8px;cursor:pointer;position:relative;overflow:visible}
-.plan-text{position:absolute;min-width:80px;min-height:24px;resize:both;overflow:auto;padding:2px 6px;border:1px dashed #2563eb;background:transparent;z-index:6;text-align:center;font-family:Arial,sans-serif;font-weight:800}
-.plan-text.sel{outline:2px solid #c9a227}
+.elev{border:2px solid #10203a;padding:8px;cursor:pointer;position:relative;overflow:visible}
 .elev.picked{outline:3px solid #c9a227}
 .elev h3{margin:0 0 6px;font:800 12px Arial;letter-spacing:.08em}
 .elev svg{width:100%;height:280px;display:block;background:#fff;touch-action:none}
-.xd-handle,.oh-handle{cursor:nwse-resize}
-.plan-text{touch-action:none}
-.plan-text .sz{position:absolute;right:-7px;bottom:-7px;width:16px;height:16px;background:#2563eb;border:2px solid #fff;border-radius:3px;cursor:nwse-resize;z-index:8}
+.plan-text{position:absolute;min-width:80px;min-height:24px;resize:both;overflow:auto;padding:2px 6px;border:1px dashed #2563eb;background:transparent;z-index:6;text-align:center;font-family:Arial,sans-serif;font-weight:800;touch-action:none}
+.plan-text.sel{outline:2px solid #c9a227}
+.plan-text .sz{position:absolute;right:-7px;bottom:-7px;width:16px;height:16px;background:#2563eb;border:2px solid #fff;border-radius:3px;cursor:nwse-resize}
+.free-text{position:absolute;min-width:80px;padding:2px 6px;cursor:move;border:1px dashed transparent;z-index:5}
+.modal{position:fixed;inset:0;background:#0f172acc;display:none;align-items:center;justify-content:center;z-index:80;font-family:Arial,sans-serif}
+.modal.on{display:flex}
+.modal .box{width:min(560px,94vw);max-height:82vh;overflow:auto;background:#fff;border-radius:12px;padding:18px}
+.modal h3{margin:0 0 10px}
+.job-row{display:flex;gap:8px;align-items:center;border-bottom:1px solid #e2e8f0;padding:10px 0}
+.job-row b{flex:1}
 @media print{
-  .xd-handle,.oh-handle,.plan-text .sz,.ret-live{display:none!important}
-}
-@media print{
+  .bar,.panel,.modal,.sz,.xd-handle,.oh-handle{display:none!important}
+  .shell{display:block;padding:0}
+  .paper,.draw-page{border:0;margin:0;box-shadow:none}
   .elevs{grid-template-columns:1fr;gap:18px}
-  .elev{break-inside:avoid;page-break-inside:avoid}
+  .elev{break-inside:avoid}
   .elev:nth-child(2n){page-break-after:always}
   .elev svg{height:4.8in;width:100%}
-  .draw-page{page-break-before:always}
-  .plan-text{border:0!important;outline:none!important;background:transparent!important;resize:none!important}
-}
-@media print{
-  html,body,.paper,.draw-page,.circ,.circ i,.bluebox,svg{
-    -webkit-print-color-adjust:exact!important;
-    print-color-adjust:exact!important;
-    color-adjust:exact!important;
-  }
-  .bar,.panel,.gate{display:none!important}
-  body{background:#fff;color:#000}
-  .shell{display:block;padding:0}
-  .paper,.draw-page{border:0;margin:0 auto;box-shadow:none;background:#fff}
-  .row,.choice-row,.k,.circ{color:#000!important}
-  .circ i{border:2px solid #000!important}
-  .circ.on i{background:#000!important;box-shadow:inset 0 0 0 2px #fff!important}
-  .free-text{border-color:transparent!important;background:transparent!important;color:#000!important}
-  .notes-row textarea{overflow:visible!important;height:auto!important;min-height:0!important;color:#000!important}
-  .row input,.collect input{color:#000!important;border-bottom:1px solid #000!important}
-  .bluebox{display:none!important}
-  .xd-handle{display:none!important}
-  .add-wrap .menu{display:none!important}
+  .plan-text{border:0!important;outline:none!important;resize:none!important}
+  .circ.on i{background:#111!important;print-color-adjust:exact;-webkit-print-color-adjust:exact}
 }
 </style>
 </head>
 <body>
-<div class="gate" id="gate" style="display:none">
-  <h1>Carpenter Ticket</h1>
-  <p id="gateMsg">This page is on Randy and Sam’s office accounts only.</p>
+<div id="gate" class="gate" style="display:none">
+  <h2>Carpenter Ticket</h2>
+  <p>This page is for office carpentry tickets. Sign in from the dashboard first.</p>
   <p><a href="index.html">Back to dashboard</a></p>
 </div>
-
-<div id="app" style="display:none">
+<div id="app">
   <div class="bar">
-    <strong>Carpenter Job Ticket</strong>
+    <strong>Carpenter Ticket</strong>
     <span id="who" style="opacity:.8;font-size:12px"></span>
-    <span style="flex:1"></span>
-    <button class="ghost" type="button" onclick="location.href='index.html'">Dashboard</button>
-    <button class="ghost" type="button" onclick="undoTicket()">Undo</button>
-    <button class="ghost" type="button" onclick="deleteSelected()">Delete</button>
-    <div class="add-wrap" style="position:relative">
+    <span id="currentJobName" style="margin-left:8px;font-size:12px;color:#fde68a"></span>
+    <button class="primary" type="button" onclick="saveJobPrompt()">Save Job</button>
+    <button class="ghost" type="button" onclick="openJobLibrary()">Previous Jobs</button>
+    <div class="add-wrap">
       <button class="primary" type="button">Add Door ▾</button>
       <div class="menu" style="display:none;position:absolute;top:100%;left:0;background:#fff;color:#111;border:1px solid #cbd5e1;min-width:160px;z-index:40">
-        <button type="button" style="display:block;width:100%;text-align:left;border:0;background:#fff;color:#111;padding:8px 10px;font-weight:800" onclick="addDoorKind('oh')">Overhead door</button>
-        <button type="button" style="display:block;width:100%;text-align:left;border:0;background:#fff;color:#111;padding:8px 10px;font-weight:800" onclick="addDoorKind('party')">Party door</button>
+        <button type="button" style="display:block;width:100%;text-align:left;border:0;background:#fff;padding:8px 10px;font-weight:800" onclick="addDoorKind('oh')">Overhead door</button>
+        <button type="button" style="display:block;width:100%;text-align:left;border:0;background:#fff;padding:8px 10px;font-weight:800" onclick="addDoorKind('party')">Party door</button>
       </div>
-      <div id="doorPrompt" style="display:none;position:absolute;top:100%;left:0;background:#fff;color:#111;border:1px solid #cbd5e1;padding:10px;z-index:50;min-width:200px;font-family:Arial,sans-serif">
+      <div id="doorPrompt" style="display:none;position:absolute;top:100%;left:0;background:#fff;color:#111;border:1px solid #cbd5e1;padding:10px;z-index:50;min-width:200px">
         <div id="doorPromptTitle" style="font-weight:800;margin-bottom:6px">Door size</div>
         <div style="display:flex;gap:6px;align-items:center">
           <input id="promptW" type="number" step="0.5" min="2" style="width:64px;padding:4px"/>
@@ -147,11 +106,11 @@ html,body{margin:0;min-height:100%;background:#e8edf3;color:var(--ink);font-fami
         <button class="primary" type="button" style="margin-top:8px;width:100%" onclick="confirmAddDoor()">Place door</button>
       </div>
     </div>
-    <div class="add-wrap" style="position:relative">
+    <div class="add-wrap">
       <button class="primary" type="button">Add Window ▾</button>
       <div class="menu" style="display:none;position:absolute;top:100%;left:0;background:#fff;color:#111;border:1px solid #cbd5e1;min-width:170px;z-index:40">
-        <button type="button" style="display:block;width:100%;text-align:left;border:0;background:#fff;color:#111;padding:8px 10px;font-weight:800" onclick="addWindowKind('hung')">Single hung</button>
-        <button type="button" style="display:block;width:100%;text-align:left;border:0;background:#fff;color:#111;padding:8px 10px;font-weight:800" onclick="addWindowKind('slider')">Sliding</button>
+        <button type="button" style="display:block;width:100%;text-align:left;border:0;background:#fff;padding:8px 10px;font-weight:800" onclick="addWindowKind('hung')">Single hung</button>
+        <button type="button" style="display:block;width:100%;text-align:left;border:0;background:#fff;padding:8px 10px;font-weight:800" onclick="addWindowKind('slider')">Sliding</button>
       </div>
     </div>
     <button class="ghost" type="button" onclick="toggleGutter()">Gutters</button>
@@ -161,6 +120,9 @@ html,body{margin:0;min-height:100%;background:#e8edf3;color:var(--ink);font-fami
     <button class="primary" type="button" onclick="applyChanges()">Apply Changes</button>
     <button class="primary" type="button" onclick="makePlans()">Garage Plans</button>
     <button class="primary" type="button" onclick="window.print()">Print</button>
+    <button class="ghost" type="button" onclick="undoLast()">Undo</button>
+    <button class="ghost" type="button" onclick="deleteSelected()">Delete</button>
+    <a class="ghost" href="index.html" style="text-decoration:none;display:inline-block;padding:8px 11px;border-radius:6px">Dashboard</a>
   </div>
 
   <div class="shell">
@@ -173,10 +135,7 @@ html,body{margin:0;min-height:100%;background:#e8edf3;color:var(--ink);font-fami
         <button type="button" data-v="Hip" onclick="setChoice('roof','Hip',this)">Hip</button>
       </div>
       <label>Pitch</label>
-      <select id="pitch" onchange="touch()">
-        <option value="">Pitch</option><option>4/12</option><option>5/12</option><option>6/12</option>
-        <option>7/12</option><option>8/12</option><option>10/12</option><option>12/12</option>
-      </select>
+      <select id="pitch" onchange="touch()"><option value="">Pitch</option><option>4/12</option><option>5/12</option><option>6/12</option><option>7/12</option><option>8/12</option><option>10/12</option><option>12/12</option></select>
       <label>Eaves</label>
       <div class="opts" id="eaveOpts">
         <button type="button" data-v="Realwood" class="on" onclick="setChoice('eaves','Realwood',this)">Realwood</button>
@@ -190,12 +149,9 @@ html,body{margin:0;min-height:100%;background:#e8edf3;color:var(--ink);font-fami
         <button type="button" data-v="Other" onclick="setChoice('siding','Other',this)">Other</button>
       </div>
       <input id="sidingColor" placeholder="Siding color" oninput="touch()"/>
-      <input id="sidingOtherPanel" placeholder="If Other, type siding" oninput="$('sidingOther').value=this.value; touch()"/>
+      <input id="sidingOtherPanel" placeholder="If Other, type siding" oninput="if($('sidingOther'))$('sidingOther').value=this.value; touch()"/>
       <label>Siding direction</label>
-      <select id="sidingDir" onchange="touch()">
-        <option value="horizontal" selected>Horizontal vinyl (default)</option>
-        <option value="vertical">Vertical</option>
-      </select>
+      <select id="sidingDir" onchange="touch()"><option value="horizontal" selected>Horizontal vinyl (default)</option><option value="vertical">Vertical</option></select>
       <label>Shingles</label>
       <div class="opts" id="shingleOpts">
         <button type="button" data-v="ARCH" class="on" onclick="setChoice('shingles','ARCH',this)">ARCH</button>
@@ -212,65 +168,44 @@ html,body{margin:0;min-height:100%;background:#e8edf3;color:var(--ink);font-fami
         <button type="button" data-v="Aluminum" onclick="setChoice('jamb','Aluminum',this)">Aluminum</button>
         <button type="button" data-v="Realwood" onclick="setChoice('jamb','Realwood',this)">Realwood</button>
       </div>
-      <input id="jambColor" placeholder="Jamb color" oninput="$('doorJambColor').value=this.value; touch()"/>
       <h3 style="margin-top:14px">DOORS</h3>
       <label>Overhead door wall</label>
-      <select id="ohWall" onchange="touch()">
-        <option value="FRONT" selected>Front (default)</option>
-        <option value="BACK">Back</option>
-        <option value="LEFT">Left side</option>
-        <option value="RIGHT">Right side</option>
-      </select>
+      <select id="ohWall" onchange="touch()"><option value="FRONT" selected>Front (default)</option><option value="BACK">Back</option><option value="LEFT">Left side</option><option value="RIGHT">Right side</option></select>
       <label>OH door width (ft)</label>
       <input id="ohWidth" type="number" min="8" max="20" step="0.5" value="" placeholder="16" oninput="recalcReturns('width')"/>
       <label>Move OH on wall (½ ft)</label>
       <div class="tiny">
         <button type="button" onclick="nudgeOh(-0.5)">← 0.5'</button>
         <button type="button" onclick="nudgeOh(0.5)">0.5' →</button>
-        <button type="button" onclick="flipDoors()" title="Swap OH and service door sides">Flip doors</button>
+        <button type="button" onclick="flipDoors()">Flip doors</button>
       </div>
       <label>Left return (ft)</label>
       <input id="ohLeftRet" type="number" min="0" step="0.5" value="" placeholder="auto center" oninput="recalcReturns('left')"/>
       <label>Right return (ft)</label>
       <input id="ohRightRet" type="number" min="0" step="0.5" value="" placeholder="auto center" oninput="recalcReturns('right')"/>
       <div id="ohReturnNote" style="font-size:11px;color:#334155;margin:4px 0 8px"></div>
-      <label style="display:flex;align-items:center;gap:8px;font-weight:800">
+      <label style="display:flex;align-items:center;gap:8px">
         <input id="showReturns" type="checkbox" checked onchange="choices.showReturns=this.checked; persist(); makePlans()"/>
         Show returns / gaps live
       </label>
       <div id="liveReturnBox" style="font-size:11px;color:#1d4ed8;font-weight:800;line-height:1.35;margin:4px 0 8px"></div>
       <label>Service door wall</label>
-      <select id="svcWall" onchange="touch()">
-        <option value="RIGHT" selected>Right side</option>
-        <option value="LEFT">Left side</option>
-        <option value="FRONT">Front</option>
-        <option value="BACK">Back</option>
-      </select>
+      <select id="svcWall" onchange="touch()"><option value="RIGHT" selected>Right side</option><option value="LEFT">Left side</option><option value="FRONT">Front</option><option value="BACK">Back</option></select>
       <label>Service door on that wall</label>
-      <select id="svcPos" onchange="touch()">
-        <option value="left">Toward left / front</option>
-        <option value="center">Centered</option>
-        <option value="right" selected>Toward right / rear</option>
-      </select>
+      <select id="svcPos" onchange="touch()"><option value="left">Toward left / front</option><option value="center">Centered</option><option value="right" selected>Toward right / rear</option></select>
       <label>Move service door (½ ft)</label>
       <div class="tiny">
         <button type="button" onclick="nudgeSvc(-0.5)">← 0.5'</button>
         <button type="button" onclick="nudgeSvc(0.5)">0.5' →</button>
       </div>
+      <input id="svcOffset" type="hidden"/>
       <div id="viewHint" style="font-size:11px;color:#334155;margin-top:8px">Click a plan view, then Add Door.</div>
-      <label>Add extra door size</label>
-      <div class="tiny">
-        <input id="newDoorW" type="number" value="" placeholder="16" min="2" max="18"/>
-        <input id="newDoorH" type="number" value="" placeholder="7" min="6" max="12"/>
-      </div>
-      <label>Text</label>
-      <div class="tiny">
-        <input id="fontSize" type="number" value="16" min="8" max="48" title="Font size" onchange="applyTextStyle()"/>
-        <select id="fontBold" onchange="applyTextStyle()"><option value="700">Bold</option><option value="400">Regular</option></select>
-        <input id="fontColor" type="color" value="#111111" onchange="applyTextStyle()" title="Text color"/>
-      </div>
-      <input type="hidden" id="svcOffset" value="0"/>
-      <div id="extraDoorList" style="margin-top:10px;font-size:11px"></div>
+      <div id="extraDoorList" style="margin-top:8px"></div>
+      <label>Font size</label>
+      <input id="fontSize" type="number" value="16" oninput="applyTextStyle()"/>
+      <label>Bold</label>
+      <select id="fontBold" onchange="applyTextStyle()"><option value="700">Bold</option><option value="400">Regular</option><option value="900">Black</option></select>
+      <input id="fontColor" type="color" value="#111111" oninput="applyTextStyle()"/>
     </aside>
 
     <div>
@@ -278,228 +213,83 @@ html,body{margin:0;min-height:100%;background:#e8edf3;color:var(--ink);font-fami
         <div class="paper" id="paper">
           <div class="brandline">
             <div class="logo-box">
-              <svg class="logo-mark" viewBox="0 0 48 48" aria-hidden="true">
-                <rect x="1" y="1" width="46" height="46" fill="#fff" stroke="#10203a" stroke-width="2"/>
-                <path d="M8 28 L24 12 L40 28 V40 H8 Z" fill="#10203a"/>
-                <rect x="20" y="30" width="8" height="10" fill="#c9a227"/>
-              </svg>
-              <div><b>ABSOLUTE</b><span>GARAGE BUILDERS</span></div>
+              <svg class="logo-mark" viewBox="0 0 48 48"><rect width="48" height="48" rx="6" fill="#10203a"/><text x="24" y="31" text-anchor="middle" fill="#c9a227" font-size="22" font-family="Arial" font-weight="800">A</text></svg>
+              <div><b>ABSOLUTE GARAGE BUILDERS</b><span>CARPENTER JOB TICKET</span></div>
             </div>
             <div class="collect">
-              <div class="crow"><span>COLLECT LUMBER</span><input class="f" id="collectLumber"/></div>
-              <div class="crow"><span>COLLECT CARPENTRY</span><input class="f" id="collectCarpentry"/></div>
+              <div class="crow"><span>COLLECT CARPENTRY</span><input id="collectCarpentry" class="f"/></div>
+              <div class="crow"><span>COLLECT LUMBER</span><input id="collectLumber" class="f"/></div>
             </div>
           </div>
-
-          <div class="row"><span class="k">JOB DATE:</span><input class="f" id="jobDate"/></div>
           <div class="split">
-            <div class="row"><span class="k">CARPENTER</span><input class="f" id="carpenter"/></div>
+            <div class="row"><span class="k">DATE</span><input id="jobDate" class="f" type="date"/></div>
+            <div class="row"><span class="k">CARPENTER</span><input id="carpenter" class="f"/></div>
             <div class="row"><span class="k">REP</span>
-              <select class="f" id="rep" onchange="onRepChange()" style="flex:0 0 130px;border:0;border-bottom:1px solid #111;background:transparent;font:700 14px Times,serif">
-                <option value="">Select</option>
-                <option value="Sam">Sam</option>
-                <option value="Ramsey">Ramsey</option>
-                <option value="Wally">Wally</option>
-                <option value="Tomas">Tomas</option>
-                <option value="Tom">Tom</option>
-                <option value="Luis">Luis</option>
+              <select id="rep" class="f" onchange="touch()"><option value=""></option><option>Sam</option><option>Ramsey</option><option>Wally</option><option>Tomas</option><option>Tom</option><option>Luis</option></select>
+            </div>
+            <div class="row"><span class="k">CUSTOMER</span><input id="customer" class="f" placeholder="Customer name"/></div>
+            <div class="row"><span class="k">PHONE</span><input id="phone" class="f"/></div>
+            <div class="row"><span class="k">ADDRESS</span><input id="address" class="f"/></div>
+            <div class="row"><span class="k">CITY</span>
+              <select id="citySel" class="f" onchange="if(this.value!=='__manual__') $('city').value=this.value; touch()">
+                <option value="">City</option>
               </select>
-              <span id="repContact" style="font:700 12px Times,serif;white-space:nowrap"></span>
             </div>
-            <div class="row"><span class="k">CUSTOMER</span><input class="f" id="customer"/></div>
-            <div class="row"><span class="k">PHONE</span><input class="f" id="phone"/></div>
+            <div class="row"><span class="k">CITY (TYPE)</span><input id="city" class="f" placeholder="Type city if needed"/></div>
           </div>
-          <div class="row"><span class="k">JOB ADDRESS</span><input class="f" id="address"/></div>
-          <div class="row"><span class="k">CITY</span>
-            <select class="f" id="citySel" onchange="onCitySel()" style="flex:1;border:0;border-bottom:1px solid #111;background:transparent;font:700 14px Times,serif">
-              <option value="">Select city</option>
-        <option value="Chicago">Chicago, IL</option>
-        <option value="Addison">Addison, IL</option>
-        <option value="Algonquin">Algonquin, IL</option>
-        <option value="Alsip">Alsip, IL</option>
-        <option value="Antioch">Antioch, IL</option>
-        <option value="Arlington Heights">Arlington Heights, IL</option>
-        <option value="Aurora">Aurora, IL</option>
-        <option value="Bannockburn">Bannockburn, IL</option>
-        <option value="Barrington">Barrington, IL</option>
-        <option value="Barrington Hills">Barrington Hills, IL</option>
-        <option value="Bartlett">Bartlett, IL</option>
-        <option value="Batavia">Batavia, IL</option>
-        <option value="Beach Park">Beach Park, IL</option>
-        <option value="Bedford Park">Bedford Park, IL</option>
-        <option value="Beecher">Beecher, IL</option>
-        <option value="Bellwood">Bellwood, IL</option>
-        <option value="Belvidere">Belvidere, IL</option>
-        <option value="Bensenville">Bensenville, IL</option>
-        <option value="Berkeley">Berkeley, IL</option>
-        <option value="Berwyn">Berwyn, IL</option>
-        <option value="Big Rock">Big Rock, IL</option>
-        <option value="Bloomingdale">Bloomingdale, IL</option>
-        <option value="Blue Island">Blue Island, IL</option>
-        <option value="Bolingbrook">Bolingbrook, IL</option>
-        <option value="Bourbonnais">Bourbonnais, IL</option>
-        <option value="Bradley">Bradley, IL</option>
-        <option value="Braidwood">Braidwood, IL</option>
-        <option value="Bridgeview">Bridgeview, IL</option>
-        <option value="Broadview">Broadview, IL</option>
-        <option value="Brookfield">Brookfield, IL</option>
-        <option value="Buffalo Grove">Buffalo Grove, IL</option>
-        <option value="Burbank">Burbank, IL</option>
-        <option value="Burnham">Burnham, IL</option>
-        <option value="Burr Ridge">Burr Ridge, IL</option>
-        <option value="Calumet City">Calumet City, IL</option>
-        <option value="Calumet Park">Calumet Park, IL</option>
-        <option value="Carol Stream">Carol Stream, IL</option>
-        <option value="Carpentersville">Carpentersville, IL</option>
-        <option value="Cary">Cary, IL</option>
-        <option value="Chicago Heights">Chicago Heights, IL</option>
-        <option value="Chicago Ridge">Chicago Ridge, IL</option>
-        <option value="Cicero">Cicero, IL</option>
-        <option value="Clarendon Hills">Clarendon Hills, IL</option>
-        <option value="Coal City">Coal City, IL</option>
-        <option value="Country Club Hills">Country Club Hills, IL</option>
-        <option value="Countryside">Countryside, IL</option>
-        <option value="Crest Hill">Crest Hill, IL</option>
-        <option value="Crestwood">Crestwood, IL</option>
-        <option value="Crete">Crete, IL</option>
-        <option value="Crystal Lake">Crystal Lake, IL</option>
-        <option value="Darien">Darien, IL</option>
-        <option value="Deer Park">Deer Park, IL</option>
-        <option value="Deerfield">Deerfield, IL</option>
-        <option value="DeKalb">DeKalb, IL</option>
-        <option value="DeKalb County">DeKalb County, IL</option>
-        <option value="Des Plaines">Des Plaines, IL</option>
-        <option value="Dixmoor">Dixmoor, IL</option>
-        <option value="Dolton">Dolton, IL</option>
-        <option value="Downers Grove">Downers Grove, IL</option>
-        <option value="East Dundee">East Dundee, IL</option>
-        <option value="East Hazel Crest">East Hazel Crest, IL</option>
-        <option value="Elburn">Elburn, IL</option>
-        <option value="Elgin">Elgin, IL</option>
-        <option value="Elk Grove Village">Elk Grove Village, IL</option>
-        <option value="Elmhurst">Elmhurst, IL</option>
-        <option value="Elmwood Park">Elmwood Park, IL</option>
-        <option value="Elwood">Elwood, IL</option>
-        <option value="Evanston">Evanston, IL</option>
-        <option value="Evergreen Park">Evergreen Park, IL</option>
-        <option value="Flossmoor">Flossmoor, IL</option>
-        <option value="Ford Heights">Ford Heights, IL</option>
-        <option value="Forest Park">Forest Park, IL</option>
-        <option value="Forest View">Forest View, IL</option>
-        <option value="Fox Lake">Fox Lake, IL</option>
-        <option value="Fox River Grove">Fox River Grove, IL</option>
-        <option value="Frankfort">Frankfort, IL</option>
-        <option value="Franklin Park">Franklin Park, IL</option>
-        <option value="Geneva">Geneva, IL</option>
-        <option value="Glen Ellyn">Glen Ellyn, IL</option>
-        <option value="Glencoe">Glencoe, IL</option>
-        <option value="Glendale Heights">Glendale Heights, IL</option>
-        <option value="Glenview">Glenview, IL</option>
-        <option value="Glenwood">Glenwood, IL</option>
-        <option value="Golf">Golf, IL</option>
-        <option value="Grayslake">Grayslake, IL</option>
-        <option value="Gurnee">Gurnee, IL</option>
-              <option value="__manual__">Type city…</option>
-            </select>
-            <input class="f" id="city" placeholder="Type city" style="display:none;flex:1"/>
-          </div>
-          <hr class="rule"/>
-
-          <div class="row">
-            <span class="k">GARAGE SIZE</span>
-            <select class="f" id="sizeWSel" style="flex:0 0 90px;border:0;border-bottom:1px solid #111;background:transparent;font:700 14px Times,serif">
-              <option value="">W</option><option>20</option><option>22</option><option>24</option><option>26</option><option>28</option><option>30</option><option>32</option><option value="custom">Custom</option>
-            </select>
-            <input class="f" id="sizeW" placeholder="" style="flex:0 0 54px;text-align:center"/>
-            <span class="k">X</span>
-            <select class="f" id="sizeLSel" style="flex:0 0 90px;border:0;border-bottom:1px solid #111;background:transparent;font:700 14px Times,serif">
-              <option value="">L</option><option>20</option><option>22</option><option>24</option><option>26</option><option>28</option><option>30</option><option>32</option><option value="custom">Custom</option>
-            </select>
-            <input class="f" id="sizeL" placeholder="" style="flex:0 0 54px;text-align:center"/>
-            <span class="k">PITCH</span><input class="f" id="pitchLine" placeholder="" style="flex:0 0 70px;text-align:center"/>
-          </div>
-          <div class="choice-row">
-            <span class="k">ROOF</span>
-            <span class="choices" id="roofCircles">
-              <span class="circ on" data-v="Gable" onclick="setChoice('roof','Gable')"><i></i> GABLE</span>
-              <span class="circ" data-v="Reverse Gable" onclick="setChoice('roof','Reverse Gable')"><i></i> REV GABLE</span>
-              <span class="circ" data-v="Hip" onclick="setChoice('roof','Hip')"><i></i> HIP</span>
-            </span>
-          </div>
-
           <div class="split">
-            <div class="row"><span class="k">OH DOORS</span><input class="f" id="ohDoors"/></div>
-            <div class="row"><span class="k">WALL HEIGHT</span><input class="f" id="wallHeight"/></div>
+            <div class="row"><span class="k">SIZE W</span><input id="sizeW" class="f" placeholder="20"/></div>
+            <div class="row"><span class="k">SIZE L</span><input id="sizeL" class="f" placeholder="20"/></div>
+            <div class="row"><span class="k">WALL HT</span><input id="wallHeight" class="f" placeholder="8"/></div>
+            <div class="row"><span class="k">OH DOORS</span><input id="ohDoors" class="f" placeholder="16x7"/></div>
+            <div class="row"><span class="k">RAFTERS</span><input id="rafters" class="f"/></div>
+            <div class="row"><span class="k">CROSSTIES</span><input id="crossties" class="f"/></div>
+            <div class="row"><span class="k">WALL SHEATH</span><input id="wallSheath" class="f"/></div>
+            <div class="row"><span class="k">ROOF SHEATH</span><input id="roofSheath" class="f"/></div>
           </div>
-          <div class="row">
-            <span class="k">RAFTERS</span><input class="f" id="rafters"/>
-            <span class="k">WALLCENTERS</span><input class="f" id="wallCenters"/>
-            <span class="k">CROSSTIES</span><input class="f" id="crossties"/>
-          </div>
-          <div class="choice-row">
-            <span class="k">EAVES</span>
-            <span class="choices" id="eaveCircles">
-              <span class="circ on" data-v="Realwood" onclick="setChoice('eaves','Realwood')"><i></i> REALWOOD</span>
-              <span class="circ" data-v="Aluminum" onclick="setChoice('eaves','Aluminum')"><i></i> ALUM</span>
-            </span>
-            <span class="k">COLOR</span><input class="f" id="eaveColorLine" style="flex:1;border:0;border-bottom:1px solid #111;font:700 14px Times,serif"/>
-          </div>
-          <div class="choice-row">
-            <span class="k">DOOR JAMB</span>
-            <span class="choices" id="jambCircles">
-              <span class="circ" data-v="Aluminum" onclick="setChoice('jamb','Aluminum')"><i></i> ALUM</span>
-              <span class="circ" data-v="Realwood" onclick="setChoice('jamb','Realwood')"><i></i> REALWOOD</span>
-            </span>
-            <span class="k">COLOR</span><input class="f" id="doorJambColor" style="flex:1;border:0;border-bottom:1px solid #111;font:700 14px Times,serif"/>
-          </div>
-          <div class="row">
-            <span class="k">WINDOWS: SINGLE HUNG</span><input class="f" id="winHung" style="flex:0 0 70px"/>
-            <span class="k">SLIDER</span><input class="f" id="winSlider" style="flex:0 0 70px"/>
-            <span class="k">OTHER</span><input class="f" id="winOther"/>
-          </div>
-          <div class="choice-row">
-            <span class="k">SIDING</span>
-            <span class="choices" id="sidingCircles">
-              <span class="circ on" data-v="D4" onclick="setChoice('siding','D4')"><i></i> D4</span>
-              <span class="circ" data-v="Dutchlap" onclick="setChoice('siding','Dutchlap')"><i></i> DUTCHLAP</span>
-              <span class="circ" data-v="Other" onclick="setChoice('siding','Other')"><i></i> OTHER</span>
-            </span>
-            <input class="f" id="sidingOther" placeholder="other siding type" style="flex:1;min-width:120px;border:0;border-bottom:1px solid #111;font:700 14px Times,serif"/>
-          </div>
-          <div class="row"><span class="k">COLOR</span><input class="f" id="sidingColorLine"/><span class="k">CORNERS</span><input class="f" id="corners"/></div>
-          <div class="row"><span class="k">WALL SHEATHING</span><input class="f" id="wallSheath"/><span class="k">ROOF SHEATHING</span><input class="f" id="roofSheath"/></div>
-          <div class="choice-row">
-            <span class="k">SHINGLES</span>
-            <span class="choices" id="shingleCircles">
-              <span class="circ on" data-v="ARCH" onclick="setChoice('shingles','ARCH')"><i></i> ARCH</span>
-              <span class="circ" data-v="3 TAB" onclick="setChoice('shingles','3 TAB')"><i></i> 3 TAB</span>
-            </span>
-            <span class="k">COLOR</span><input class="f" id="shingleColorLine" style="flex:1;border:0;border-bottom:1px solid #111;font:700 14px Times,serif"/>
-          </div>
-          <div class="choice-row">
-            <span class="k">HEADER</span>
-            <span class="choices" id="headerCircles">
-              <span class="circ on" data-v="2-2x12 w/ 1/2 Flitchplate" onclick="setChoice('header','2-2x12 w/ 1/2 Flitchplate')"><i></i> 2-2x12 W/ ½ FLITCHPLATE</span>
-              <span class="circ" data-v="2 LVL" onclick="setChoice('header','2 LVL')"><i></i> 2 LVL</span>
-            </span>
-          </div>
-          <div class="row"><span class="k">PATIO ROOF</span><input class="f" id="patioRoof"/></div>
-          <div class="row"><span class="k">PATIO ROOFPOSTS</span><input class="f" id="patioPosts"/><span class="k">CEILING FINISH</span><input class="f" id="ceiling"/></div>
+          <input id="pitchLine" class="f" type="hidden"/>
+          <input id="sidingOther" class="f" type="hidden"/>
+          <input id="eaveColorLine" class="f" type="hidden"/>
+          <input id="sidingColorLine" class="f" type="hidden"/>
+          <input id="shingleColorLine" class="f" type="hidden"/>
+          <input id="doorJamb" class="f" type="hidden"/>
+          <input id="doorJambColor" class="f" type="hidden"/>
+          <hr class="rule"/>
           <div class="notes-row">
-            <div>
-              <div class="row"><span class="k">NOTES:</span></div>
-              <textarea class="f" id="notes"></textarea>
-            </div>
+            <div><div class="k" style="font-weight:800">NOTES</div><textarea id="notes" class="f"></textarea></div>
             <div class="bluebox"></div>
           </div>
+          <div id="planMeta" style="margin-top:10px;font:700 11px Arial;color:#334155"></div>
         </div>
       </div>
-
-      <div class="draw-page" id="drawPage">
+      <div class="draw-page">
         <h2>GARAGE PLANS</h2>
-        <div id="planMeta" style="font:700 12px Arial;margin-bottom:8px"></div>
         <div class="elevs" id="elevs"></div>
       </div>
+    </div>
+  </div>
+</div>
+
+<div id="saveModal" class="modal">
+  <div class="box">
+    <h3>Save carpenter job</h3>
+    <p style="color:#475569;font-size:13px">This name is how the file will show in Previous Jobs.</p>
+    <label style="font-weight:800;font-size:12px">Saved file name</label>
+    <input id="saveJobName" style="width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:8px;font-weight:800;margin:8px 0 14px"/>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="ghost" type="button" onclick="closeModals()">Cancel</button>
+      <button class="primary" type="button" onclick="confirmSaveJob()">Save Job</button>
+    </div>
+    <div id="saveJobMsg" style="margin-top:10px;font-size:12px;color:#334155"></div>
+  </div>
+</div>
+<div id="libModal" class="modal">
+  <div class="box">
+    <h3>Previous carpenter jobs</h3>
+    <p style="color:#475569;font-size:13px">Open a saved ticket to keep editing, then Save Job again or print.</p>
+    <div id="jobLibList"></div>
+    <div style="display:flex;justify-content:flex-end;margin-top:12px">
+      <button class="ghost" type="button" onclick="closeModals()">Close</button>
     </div>
   </div>
 </div>
@@ -507,1015 +297,259 @@ html,body{margin:0;min-height:100%;background:#e8edf3;color:var(--ink);font-fami
 <script>
 const SB_URL='https://iomcekniylxfptswcxoi.supabase.co';
 const SB_KEY='sb_publishable_G_ZAnQ_CoJjWsn8-HgduLw_IziPWEmn';
-const ALLOWED=['randy','sam'];
-const CITY_BUILD = {"Addison": {"rafters": "2X6 16\" or 24\" OC W/ H CLIPS", "header": "2 LVL", "ties": "2\" x 6\" 16\" OC", "slab": "4\"", "notes": "Shear wall required if returns are less than 48\" Gutters required min setback from house 5' NO FIRE WALL Zoning is enforcing a residential rear yard lot coverage limit of 30% of th"}, "Algonquin": {"rafters": "2X6 24\" OC", "header": "2 2x6", "ties": "2\" x 6\" 48\" OC", "slab": "4\"", "notes": ""}, "Alsip": {"rafters": "2X6 24\" OC", "header": "3 2X12", "ties": "2X6 48\"OC", "slab": "4\" 5\"", "notes": ""}, "Antioch": {"rafters": "2X6 16\"OC OR 24\" W/H CLIPS", "header": "3 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "Need Sheer wall for returns under 32\" Need 5/8\" plywood roof sheathing Need asbestos report - $150 cost Need separate app for demo ASBESTOS TESTING REQUIRED"}, "Arlington Heights": {"rafters": "2X6 16\" OC", "header": "3 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "Siding must be installed with no greater than 6\" exposure of concrete wall Homeowner must put up $200 bond due to backfill requirements Driveways sold must be 3' from lot line if f"}, "Aurora": {"rafters": "2X6 16\" OC", "header": "2 LVL", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "REBAR IN FOOTINGS REQUIRED METAL ROOF EDGE CRIPPLE ALL OPENINGS HANGER FROM RIDGE TO TIES ANCHOR BOLTS TO CODE Have to drop off App in person"}, "Bannockburn": {"rafters": "2X6 16\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "5\"", "notes": "MUST CHECK WITH VILLAGE FOR ADDITIONAL CODES Current 7/20/2026"}, "Barrington": {"rafters": "2X6 24\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": ""}, "Barrington Hills": {"rafters": "2X6 24\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "REQUIRED: Architectural stamp for square footage of house: COST $500 ICE/WATER SHIELD OVERWEIGHT PERMITS ARE REQUIRED AND IN MARCH UNTIL APRIL OR MAY (DEPENDING ON WEATHER - HOW WE"}, "Bartlett": {"rafters": "2X6 2 X 8 16\" OC", "header": "3 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "Overhead door less than 16' wide can use 2 2 x 12 headers 5/8 plywood roof required with H clips"}, "Batavia": {"rafters": "2X6 16\"OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "Need to call J.U.L.I.E. to stake out utilities berfore permit will be issued."}, "Beach Park": {"rafters": "2X6 24\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "Topo survey costs $700"}, "Bedford Park": {"rafters": "2X6 24\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "5\"", "notes": "Gutters Required"}, "Beecher": {"rafters": "2X6 16\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": ""}, "Bellwood": {"rafters": "2X6 16\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "5\"", "notes": "1/2\" Plywood roof required Check all jobs if in flood plain Need F.E.M.A. certificate Must be 3' away from easement's No new garages will be approved within the floodway"}, "Belvidere": {"rafters": "2X6 16\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": ""}, "Bensenville": {"rafters": "2X6 16\" OC", "header": "3 2X12", "ties": "2X6 48\"OC", "slab": "5\"", "notes": "Sell 3 x 3 landing if service door is on a side wall"}, "Berkeley": {"rafters": "2X6 16\" OC", "header": "3 2X12", "ties": "2X6 48\"OC", "slab": "5\"", "notes": "Electrician must call for trench inspection before backfill. Must be rigid pipe underground."}, "Berwyn": {"rafters": "2X6 16\" OVER 22' WIDE 2 X 8 16\" OC", "header": "3 2 X 12", "ties": "2\" x 6\" 48\" OC", "slab": "4\"", "notes": "If lot is 50' wide Maximum size is 768' on lots less than 40' wide linit to 528 s.f. - patio roofs count to the size limit (an 18x22 w/ a 6' dise patio is ok) Can't go into yard mo"}, "Big Rock": {"rafters": "2X6 16\" OVER 22' WIDE 2 X 8 16\" OC", "header": "3 2 X 12", "ties": "2\" x 6\" 48\" OC", "slab": "4\"", "notes": ""}, "Bloomingdale": {"rafters": "2X6 16\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "1/2\" PLYWOOD ROOF ONLY No more than 1 garage per lot 30% max lot cvg. (everything counts)"}, "Blue Island": {"rafters": "2X6 16\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "If width of alley is: 14' 5' apron 15' 4' apron 16' 3' apron 17' 2' apron 18' 1' apron PLYWOOD WALLS & ROOF MUST HAVE HOUSE WRAP"}, "Bolingbrook": {"rafters": "2X6 24\" OC 1/2\" PLYWOOD H CLIPS", "header": "3 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "1/2\" PLYWOOD FLITCH PLATE IN BETWEEN SERVICE DOOR AND WINDOW HEADERS SELL DRIP EDGE FOR ROOF SELL HURRICANE TIES SELL DRIVEWAYS 3' OFF LOT LINE OR NEED VARIANCE"}, "Bourbonnais": {"rafters": "2X6 16\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": ""}, "Bradley": {"rafters": "2X6 24\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": ""}, "Braidwood": {"rafters": "2X6 24\" OC WITH H CLIPS", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": ""}, "Bridgeview": {"rafters": "2X6 16\" OC", "header": "2 LVL", "ties": "2X6 48\"OC", "slab": "5\"", "notes": "MAX SIZE: CANNOT EXCEED 26' IN LEGNTH AND 34' IN WIDTH SELL 1/2\" PLYWOOD WALLS AND ROOF NEED COPY OF CONTRACT WITH APPLICATION CAN'T HAVE 2 SERVICE DOORS"}, "Broadview": {"rafters": "2X6 24'OC W/ 1/2\" PLYWOOD ONLY", "header": "3 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "1/2\" PLYWOOD ROOF ONLY Submit copy of contract with application ALLEY JOBS MUST HAVE ADDRESS NUMBERS"}, "Brookfield": {"rafters": "2X6 16\" OC", "header": "3 2X12", "ties": "2X6 32\"OC", "slab": "5\"", "notes": "1/2\" PLYWOOD ON ROOF MAXIMUM SIZE GARAGE 625 SF to 10% of lot UNDER 50' LOT 440' SF Approved plans must be on site for prepour Put these specs. On all appl: wall ties and collar ti"}, "Buffalo Grove": {"rafters": "2X6 24\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "Sell wheel in all jobs or $500 fine Driveway 8' minimum OK to mail"}, "Burbank": {"rafters": "2X6 24\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "MUST HAVE WATER LEDGE ON ALL 4 SIDES OWNER MUST EMPTY GARAGE FOR RODENT ABATEMENT CHECK BEFORE PERMIT CAN BE ISSUED SELL 1/2\" PLYWOOD WALLS AND ROOFS NEED EPA PERMIT TO APPLY VAPOR"}, "Burnham": {"rafters": "2X6 24\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": ""}, "Burr Ridge": {"rafters": "2X6 16\"OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "DRIVEWAY'S 9' MINIMUM $5,000 cash bond"}, "Calumet City": {"rafters": "2X6 24\" OC WITH 5/8\"", "header": "3 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "NEED GRADES SET BY ROBINSON ENGINEERING COST $300 ANY ADDRESS SOUTH OF RIVER OAKS DRIVE COULD BE A FLOOD PLAIN WHICH REQUIRES SPECIAL SPECS. OK TO MAIL"}, "Calumet Park": {"rafters": "2X6 24\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "OK to mail IF RAFTERS ARE 24\" ON CENTER, MUST USE H CLIPS ON ROOF SHEETING"}, "Carol Stream": {"rafters": "2X6 16\" OC", "header": "3 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "ANY GARAGE OVER 400 SF NEEDS 42\" FOUNDATION. GUTTERS REQUIRED CAN ONLY HAVE 1 DRIVEWAY"}, "Carpentersville": {"rafters": "2X6 16\" OC", "header": "3 2 X 12", "ties": "2X6 48\"OC", "slab": "5\"", "notes": "NEED DRIVEWAY FORM IF ADDING ANYTHING MORE THAN 3' APRON If lot size is less than 7000 sq ft. max size garage is 550 sq ft. If lot is 7000 sq. ft., max size garage 750 sq. ft. 2 Ca"}, "Cary": {"rafters": "2X6 16\" OC", "header": "3 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "Minimum driveway width 10'"}, "Chicago Heights": {"rafters": "2X6 24\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "Minimum driveway width 8' EPA required"}, "Chicago Ridge": {"rafters": "2X8 16\" OC", "header": "3 - 2x12", "ties": "2X10 48\"OC", "slab": "4\"", "notes": "Plywood Roof and Walls Plywood wind bracing Minimum 8\" eaves Minimum 2\" x 10\" hip and ridge"}, "Cicero": {"rafters": "2\" X 6\" 16\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "5\"", "notes": "PARTY DOORS MAX 6FT WIDE ONLY Submit copy of contract with application Driveway's minimum 1' off lot line PLYWOOD ROOF RAT ABATEMENT MUST BE COMPLETED ON ALL JOBS **Setback excepti"}, "Clarendon Hills": {"rafters": "2X6 16\" O.C.", "header": "3 - 2X12", "ties": "2X6 48\"OC", "slab": "5\"", "notes": "HOMEOWNER MUST PAY FOR PERMITS MUST ALSO APPLY TO FLAGCREEK RECLAMATION DISTRICT FOR REPORT COST IS $50 FOR LOCATION OF UNDERGROUND SEWER LINES COST RECOVERY FORM MUST BE SIGNED BY"}, "Coal City": {"rafters": "2X6 24\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "5\"", "notes": ""}, "Country Club Hills": {"rafters": "2X6 24\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "HOUSE TO GARAGE 20' IF IN NO HILL AREA"}, "Countryside": {"rafters": "2X6 16\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "DRIVEWAYS 9' MINIMUM WIDTH IRC 2006 $5,000 cash permit bond (owner to post) 720 max s.f. Limit of combined accessory buildings (Detached garage and shed), max 15' to peak"}, "Crest Hill": {"rafters": "2X6 24\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "MUST EXCAVATE TO REMOVE ALL BLACK DIRT AND VEGETATION TELL CUSTOMER FOOTING MAY VARY IN PRICE OR HAVE CONCRETE MAN CHECK JOB BEFORE QUOTING PRICE. SELL HURRICANE TIES DRIVEWAY MINI"}, "Crestwood": {"rafters": "2X6 24\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "MAXIMUM LEGNTH 25' OVERHEAD DOOR HEIGHT NOT TO EXCEED 8'"}, "Crete": {"rafters": "2X6 24\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": ""}, "Crystal Lake": {"rafters": "2X6 24\" OC", "header": "2 LVL", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "SUBMIT COPY OF CONTRACT WITH APPLICATION H-CLIPS OF 24\"OC RAFTERS Hurricane Ties Required"}, "Darien": {"rafters": "2X6 24\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "MINIMUM DRIVEWAY WIDTH IS 12' 3 2x12 OH DOOR HEADER"}, "Des Plaines": {"rafters": "2X6 16\" OC", "header": "3 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "OSB walls and 5/8\" Plywood Roof 2- #5 continuous rebar in footing Des Plaines\u2019 roof sheathing code is 5/8\u201d thickness. OSB is fine for roof & walls OUTLET ON 3 WALLS REQUIRED. NEED "}, "Dixmoor": {"rafters": "2X6 24\"", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "Grades - Robinson Engineering cost $250 Use separate app for demo"}, "DeKalb": {"rafters": "2X6 16\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "IRC 2003"}, "DeKalb County": {"rafters": "2X6 16\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "IRC 2006 SPECS INCLUDING BRACED SHORT WALLS ALL ZONING SETBACKS TBD OVER 800 REQUIRES 42\" TRENCHED FOUNDATION"}, "Dolton": {"rafters": "2X6 24\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "5\"", "notes": "SIDEWALKS MUST BE 3' WIDE PLYWOOD BETWEEN ALL HEADERS"}, "Deerfield": {"rafters": "2X6 16\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "POTENTIAL LARGE FEE IF REMOVAL OF TREES CREATE ROOT DAMAGE SPOT SURVEY AFTER SLAB"}, "Deer Park": {"rafters": "2X6 16\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "POTENTIAL LARGE FEE IF REMOVAL OF TREES CREATE ROOT DAMAGE SPOT SURVEY AFTER SLAB"}, "Downers Grove": {"rafters": "2X6 16\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "5\"", "notes": "IF NEW GARAGE IS GOING IN THE SAME LOCATION, TOPO MAY NOT BE REQUIRED CHECK WITH VILLAGE. NEED 4 X 4 LANDING AT SERVICE DOOR IF ON SIDE WALL MUST SUBMIT STORMWATER FORM WITH APPLIC"}, "East Dundee": {"rafters": "2X6 24\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "MINIMUM DRIVEWAY WIDTH 10' ICE AND WATER SHIELD REQUIRED 3X3 SERVICE DOOR PAD OF ON SIDE WALK COPY OF CONSUMER RIGHTS"}, "East Hazel Crest": {"rafters": "2X6 24\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "DRIVEWAY MINIMUM WIDTH 9'"}, "Elburn": {"rafters": "2X6 24\" OC", "header": "3 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "DRIVEWAY MINIMUM WIDTH 12'"}, "Elk Grove Village": {"rafters": "2X6 24\" UP TO 20' THEN 16\" OC", "header": "2 LVL", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "SUBMIT 2 SURVEYS 1 WITH PROPOSED GARAGE, 1 WITHOUT 10' MINIMUM DRIVEWAY WIDTH 5/8\" PLYWOOD ROOF SHEATHING REQUIRED"}, "Elgin": {"rafters": "2X6 16\"OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "MAXIMUM OVERHANG 18\" ALL GARAGES OVER 484 SF NEEDS 42\" FOUNDATION IF IN HISTORICAL DISTRICT ROOF PITCH MUST BE AT LEAST 6/12 DRIP EDGE ON ROOF REQUIRED MINIMUM DRIVEWAY WIDTH 9' MA"}, "Elmhurst": {"rafters": "2X6 16\" OC", "header": "3 2 X 12", "ties": "2 2X6 48\"OC", "slab": "5\"", "notes": "1/2\" PLYWOOD WALLS REQUIRED 5/8\" PLYWOOD ROOF REQUIRED #240 LB SHINGLES REQUIRED Topo with grading plan $900 Permit $500 to $1,500 depending on amout of job If near Salt Creek or i"}, "Elmwood Park": {"rafters": "2X6 16\" OC", "header": "2 LVL", "ties": "2 2X6 48\"OC", "slab": "4\"", "notes": "Submit Copy Of Contract With Application REQUIRES REBAR IN FOOTING COST $300 SELLING $600"}, "Elwood": {"rafters": "2X6", "header": "TOPO SURVEY", "ties": "EPA REVIEW", "slab": "4\" 5\"", "notes": "See Will County Codes"}, "Evanston": {"rafters": "2X6 16\" OC", "header": "3 2X12", "ties": "2 2X6 48\"OC", "slab": "4\"", "notes": "SELL MINIMUM 2' RETURN WALLS TO AVOID SHEER WALL OK to mail SEND 3 COPIES OF PLANS AND PLAT. MAKE SURE NAME AND ADDRESS ON ALL FORMS"}, "Evergreen Park": {"rafters": "2X6 24\" OC", "header": "2 2X12", "ties": "2 2X6 48\"OC", "slab": "4\"", "notes": "VAPOR BARRIER MINIMUM DRIVEWAY WIDTH 9' Need Certification from Pest Control Co that garage doesn\u2019t have rodents and if it does, needs to be baited. Certification is $55/Baiting is"}, "Flossmoor": {"rafters": "2X6 16\" OC", "header": "3 2X12", "ties": "2X8 48\"OC", "slab": "5\"", "notes": "CANT HAVE MORE THAN 1 DRIVEWAY"}, "Ford Heights": {"rafters": "2X6 16\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "MUST BE 3' AWAY FROM ANY EASEMENT 1/2\" PLYWOOD WALLS & ROOF REQUIRED"}, "Forest Park": {"rafters": "2X6 24\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "MINIMUM DRIVEWAY WIDTH 9' IRC2009 CODE BOOK WITH AMENDMENT REQUIRING A 20\" X 10\" DEEP PERIMETER GRADE BEAM FOOTING, 6\" ABOVE GRADE MIN. (INSTEAD OF THE 12X12 THE BOOK SAYS) 5/8\" RO"}, "Forest View": {"rafters": "2X6 16\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "5\"", "notes": ""}, "Fox Lake": {"rafters": "2X6 16\" OC OVER 22' 2X8 16\"OC", "header": "2 LVL", "ties": "2X8 48\"OC", "slab": "5\"", "notes": "MINIMUM DRIVEWAY WIDTH 10' OK To mail app"}, "Fox River Grove": {"rafters": "2X6 24\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": ""}, "Frankfort": {"rafters": "2X6 16\"", "header": "TOPO SURVEY NO", "ties": "EPA REVIEW NO", "slab": "4\"", "notes": ""}, "Franklin Park": {"rafters": "2X6 16\" OC", "header": "3 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "MINIMUM DRIVEWAY WIDTH 10' SPACE ROOF/WALL SHEATHING 1/8\" 3 - 2X4 CORNERS OK to mail app 9-7-12 1/2\" CDX PLYWOOD ROOF MINIMUM 7/16 osb WALL IS OK"}, "Geneva": {"rafters": "2X6 16\" OC", "header": "2 LVL", "ties": "2 X 8 16\"OC", "slab": "4\"", "notes": "3X3 LANDING REQUIRED OUTSIDE SERVICE DOOR TREE PRESERVATION PLAN AND TREE FENCING IS REQUIRED"}, "Glencoe": {"rafters": "2X6 24\" OC", "header": "3 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "NEED TREE FENCE PROTECTION"}, "Glendale Heights": {"rafters": "2X6 24\" OC", "header": "3 2 X 12", "ties": "2 X 6 48\"OC", "slab": "4\"", "notes": "CAN ONLY HAVE 1 GARAGE"}, "Glen Ellyn": {"rafters": "2X6 16\" OC", "header": "2 2 X 12", "ties": "2 X 6 48\"OC", "slab": "4\"", "notes": "NEED TREE PRESERVATION FORM. HOMEOWNER CAN DO OR NEED ARBORIST TO COMPLETE. MUST SHOW WHERE TREES ARE ON SURVEY WHEN YOU DO 3' SETBACK YOU MUST GET SPOT SURVEY 300 s.f. or more new"}, "Glenview": {"rafters": "2X6 16\" OC", "header": "3 2 X 12", "ties": "2 X 6 48\"OC", "slab": "4\"", "notes": "Silt fencing to be installed 6' chain link fencing to be installed 1/2\" plywood walls and roof OK to mail 24\" O.C. RAFTERS O.K. CROSSTIES NEED TO BE SAME AS RAFTERS. 24\" O.C."}, "Glenwood": {"rafters": "2X6 16\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": ""}, "Golf": {"rafters": "2X6 16\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": ""}, "Grayslake": {"rafters": "2X6 24\" OC", "header": "3 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "MUST HAUL DIRT AWAY"}, "Gurnee": {"rafters": "2X6 16\" OC", "header": "3 2 X 12", "ties": "EPA REVIEW NO", "slab": "4\"", "notes": "MINIMUM DRIVEWAY WIDTH 12' Over 400 SQ needs stamped to scale acrhitectural drawing. Must add 3 x 3 landing with service door OVER 400 SQ REQUIRED 42' FOUNDATION"}};
-
-const FIELDS=['collectLumber','collectCarpentry','jobDate','carpenter','rep','customer','phone','address','city','citySel','sizeW','sizeL','ohDoors','wallHeight','rafters','wallCenters','crossties','doorJamb','doorJambColor','jambColor','winHung','winSlider','winOther','sidingColor','sidingColorLine','sidingOther','sidingOtherPanel','sidingDir','corners','wallSheath','roofSheath','shingleColor','shingleColorLine','eaveColor','eaveColorLine','patioRoof','patioPosts','ceiling','notes','pitch','pitchLine','ohWall','ohWidth','ohLeftRet','ohRightRet','svcWall','svcPos','svcOffset'];
-let sb=null, profile=null;
-let extraDoors=[], selectedId=null, texts=[], planTexts=[], planLabels={}, undoStack=[];
-function lbl(side,key,fallback){
-  const v=planLabels[side] && planLabels[side][key];
-  return (v!=null && String(v).trim()!=='') ? String(v) : fallback;
-}
-let selectedView='FRONT';
+const ALLOWED=['randy','sam','ramsey','samer'];
+const CITY_BUILD = {"Addison": {"rafters": "2X6 16\" or 24\" OC W/ H CLIPS", "header": "2 LVL", "ties": "2\" x 6\" 16\" OC", "slab": "6 BAG MIX", "notes": "Shear wall required if returns are less than 48\" Gutters required min setback from house 5' NO FIRE WALL Zoning is enforcing a residential rear yard lot coverage limit of 30% of the required 30' back yard x width of lot; i.e. 60' lot x 30' rear yard = 1800 s.f. X 30% = 540 max coverage including the garage, apron, walk or any other impervious surface that is located in the 30' rear yard. To go over requires a ZBA with a $252 app fee Topo may or may not be required (each job site is different)"}, "Algonquin": {"rafters": "2X6 24\" OC", "header": "2 2x6", "ties": "2\" x 6\" 48\" OC", "slab": "6 BAG MIX", "notes": ""}, "Alsip": {"rafters": "2X6 24\" OC", "header": "3 2X12", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": ""}, "Antioch": {"rafters": "2X6 16\"OC OR 24\" W/H CLIPS", "header": "3 2X12", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": "Need Sheer wall for returns under 32\" Need 5/8\" plywood roof sheathing Need asbestos report - $150 cost Need separate app for demo ASBESTOS TESTING REQUIRED"}, "Arlington Heights": {"rafters": "2X6 16\" OC", "header": "3 2X12", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": "Siding must be installed with no greater than 6\" exposure of concrete wall Homeowner must put up $200 bond due to backfill requirements Driveways sold must be 3' from lot line if front of property is 70' wide or greater If less than 70' driveway can go to lot line Can only have 1 driveway Must submit electricians license with each application Review fee due with application: $11 per $1,000 HURICANE TIES REQUIRED NEED 2 LIGHT FIXTURES INSIDE GARAGE 3-WAY LIGHTS SWITCH SYSTEM FOR GARAGE EXTERIOR LIGHT WITH 1 SWITCH AT HOME ADD ELECTRICAL NOTE TO PLANS: *15 AMP, #14 GAUGE WIRE, BURIAL DEPTH 1/2\" STEEL RIGID METAL CONDUIT, 18\" DEEP, WIRING SEPARATE CIRCUIT TO SEVICE PANEL* Roof sheathing must be 5/8\" minimum, wall sheathing must be 1/2' minimum"}, "Aurora": {"rafters": "2X6 16\" OC", "header": "2 LVL", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": "REBAR IN FOOTINGS REQUIRED METAL ROOF EDGE CRIPPLE ALL OPENINGS HANGER FROM RIDGE TO TIES ANCHOR BOLTS TO CODE Have to drop off App in person"}, "Bannockburn": {"rafters": "2X6 16\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": "MUST CHECK WITH VILLAGE FOR ADDITIONAL CODES Current 7/20/2026"}, "Barrington": {"rafters": "2X6 24\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": ""}, "Barrington Hills": {"rafters": "2X6 24\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": "REQUIRED: Architectural stamp for square footage of house: COST $500 ICE/WATER SHIELD OVERWEIGHT PERMITS ARE REQUIRED AND IN MARCH UNTIL APRIL OR MAY (DEPENDING ON WEATHER - HOW WET IT IS) NO TRUCKS/EQUIPMENT ALLOWED OVER 10 TONS AT ALL UNLESS VILLAGE ENGINEER APPROVES AND WE PAY EXTRA $100 PER VEHICLE PER TRIP"}, "Bartlett": {"rafters": "2X6 2 X 8 16\" OC", "header": "3 2X12", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": "Overhead door less than 16' wide can use 2 2 x 12 headers 5/8 plywood roof required with H clips"}, "Batavia": {"rafters": "2X6 16\"OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": "Need to call J.U.L.I.E. to stake out utilities berfore permit will be issued."}, "Beach Park": {"rafters": "2X6 24\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": "Topo survey costs $700"}, "Bedford Park": {"rafters": "2X6 24\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": "Gutters Required"}, "Beecher": {"rafters": "2X6 16\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": ""}, "Bellwood": {"rafters": "2X6 16\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": "1/2\" Plywood roof required Check all jobs if in flood plain Need F.E.M.A. certificate Must be 3' away from easement's No new garages will be approved within the floodway"}, "Belvidere": {"rafters": "2X6 16\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": ""}, "Bensenville": {"rafters": "2X6 16\" OC", "header": "3 2X12", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": "Sell 3 x 3 landing if service door is on a side wall"}, "Berkeley": {"rafters": "2X6 16\" OC", "header": "3 2X12", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": "Electrician must call for trench inspection before backfill. Must be rigid pipe underground."}, "Berwyn": {"rafters": "2X6 16\" OVER 22' WIDE 2 X 8 16\" OC", "header": "3 2 X 12", "ties": "2\" x 6\" 48\" OC", "slab": "6 BAG MIX", "notes": "If lot is 50' wide Maximum size is 768' on lots less than 40' wide linit to 528 s.f. - patio roofs count to the size limit (an 18x22 w/ a 6' dise patio is ok) Can't go into yard more than 26' Sell 1/2\" plywood walls and roof App can be mailed, must have neighbor letter, Demo permit & Copy Of Contrac t& LETTERS FROM CONTRAC Electrical inspection with Dino 1st before final!! Footing is 20\" wide x 12\" deep with minimum 6\" above grade. HAS TO BE 35 DEGREES TO POUR CEMENT"}, "Big Rock": {"rafters": "2X6 16\" OVER 22' WIDE 2 X 8 16\" OC", "header": "3 2 X 12", "ties": "2\" x 6\" 48\" OC", "slab": "6 BAG MIX", "notes": ""}, "Bloomingdale": {"rafters": "2X6 16\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": "1/2\" PLYWOOD ROOF ONLY No more than 1 garage per lot 30% max lot cvg. (everything counts)"}, "Blue Island": {"rafters": "2X6 16\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": "If width of alley is: 14' 5' apron 15' 4' apron 16' 3' apron 17' 2' apron 18' 1' apron PLYWOOD WALLS & ROOF MUST HAVE HOUSE WRAP"}, "Bolingbrook": {"rafters": "2X6 24\" OC 1/2\" PLYWOOD H CLIPS", "header": "3 2X12", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": "1/2\" PLYWOOD FLITCH PLATE IN BETWEEN SERVICE DOOR AND WINDOW HEADERS SELL DRIP EDGE FOR ROOF SELL HURRICANE TIES SELL DRIVEWAYS 3' OFF LOT LINE OR NEED VARIANCE"}, "Bourbonnais": {"rafters": "2X6 16\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": ""}, "Bradley": {"rafters": "2X6 24\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": ""}, "Braidwood": {"rafters": "2X6 24\" OC WITH H CLIPS", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": ""}, "Bridgeview": {"rafters": "2X6 16\" OC", "header": "2 LVL", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": "MAX SIZE: CANNOT EXCEED 26' IN LEGNTH AND 34' IN WIDTH SELL 1/2\" PLYWOOD WALLS AND ROOF NEED COPY OF CONTRACT WITH APPLICATION CAN'T HAVE 2 SERVICE DOORS"}, "Broadview": {"rafters": "2X6 24'OC W/ 1/2\" PLYWOOD ONLY", "header": "3 2X12", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": "1/2\" PLYWOOD ROOF ONLY Submit copy of contract with application ALLEY JOBS MUST HAVE ADDRESS NUMBERS"}, "Brookfield": {"rafters": "2X6 16\" OC", "header": "3 2X12", "ties": "2X6 32\"OC", "slab": "6 BAG MIX", "notes": "1/2\" PLYWOOD ON ROOF MAXIMUM SIZE GARAGE 625 SF to 10% of lot UNDER 50' LOT 440' SF Approved plans must be on site for prepour Put these specs. On all appl: wall ties and collar ties 32\" O.C. 5\" thick concrete 6 bag mix Install address numbers on alley side using 4\" numerals Garage Height 14 ' - The maximum allowable height changed from 16' measured at peak, to 14' to the mean height between eave and ridge of the roof 40% impervious lot coverage Danley representative or carpenter need to be there for final inspection;not homeowner. Step required if job has retaining wall Asphalt residential 5\" compacted stone 3\" compressed asphalt."}, "Buffalo Grove": {"rafters": "2X6 24\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": "Sell wheel in all jobs or $500 fine Driveway 8' minimum OK to mail"}, "Burbank": {"rafters": "2X6 24\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": "MUST HAVE WATER LEDGE ON ALL 4 SIDES OWNER MUST EMPTY GARAGE FOR RODENT ABATEMENT CHECK BEFORE PERMIT CAN BE ISSUED SELL 1/2\" PLYWOOD WALLS AND ROOFS NEED EPA PERMIT TO APPLY VAPOR BARRIER UNDER SIDING Rat Abatement procedure: Homeowner must place D-con in all 4 corners of empty garage and call village and let them know. In 10 days they must call Village again to have them come out and inspect. Must drop off application in person Don't need our spec. sheet Epa must go in with application"}, "Burnham": {"rafters": "2X6 24\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": ""}, "Burr Ridge": {"rafters": "2X6 16\"OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": "DRIVEWAY'S 9' MINIMUM $5,000 cash bond"}, "Calumet City": {"rafters": "2X6 24\" OC WITH 5/8\"", "header": "3 2X12", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": "NEED GRADES SET BY ROBINSON ENGINEERING COST $300 ANY ADDRESS SOUTH OF RIVER OAKS DRIVE COULD BE A FLOOD PLAIN WHICH REQUIRES SPECIAL SPECS. OK TO MAIL"}, "Calumet Park": {"rafters": "2X6 24\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": "OK to mail IF RAFTERS ARE 24\" ON CENTER, MUST USE H CLIPS ON ROOF SHEETING"}, "Carol Stream": {"rafters": "2X6 16\" OC", "header": "3 2 X 12", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": "ANY GARAGE OVER 400 SF NEEDS 42\" FOUNDATION. GUTTERS REQUIRED CAN ONLY HAVE 1 DRIVEWAY"}, "Carpentersville": {"rafters": "2X6 16\" OC", "header": "3 2 X 12", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": "NEED DRIVEWAY FORM IF ADDING ANYTHING MORE THAN 3' APRON If lot size is less than 7000 sq ft. max size garage is 550 sq ft. If lot is 7000 sq. ft., max size garage 750 sq. ft. 2 Car Minimum Town now has imperviously coverage requirements 10/24/12 - 2x4 COLLAR TIES @ 4' O.C. IN UPPER THIRD 10/24/12 - ELECTRICAL DISCONNECT REQUIRED (snap switch OK) 10/24/12 - (3) 2X4'S REQUIRED AT CORNERS BUT (2) 2X4'S @ OPENINGS"}, "Cary": {"rafters": "2X6 16\" OC", "header": "3 2 X 12", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": "Minimum driveway width 10'"}, "Chicago Heights": {"rafters": "2X6 24\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": "Minimum driveway width 8' EPA required"}, "Chicago Ridge": {"rafters": "2X8 16\" OC", "header": "3 - 2x12", "ties": "2X10 48\"OC", "slab": "6 BAG MIX", "notes": "Plywood Roof and Walls Plywood wind bracing Minimum 8\" eaves Minimum 2\" x 10\" hip and ridge"}, "Cicero": {"rafters": "2\" X 6\" 16\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": "PARTY DOORS MAX 6FT WIDE ONLY Submit copy of contract with application Driveway's minimum 1' off lot line PLYWOOD ROOF RAT ABATEMENT MUST BE COMPLETED ON ALL JOBS **Setback exception for 25' lots, you can build a 20' wide 2 car garage on a 25' lot with 2'6\" sideyard on both sides. 1/2\" cdx plywood roof with 16\" oc rafters required. PRIVATE SIDEWALKS MUST BE MINIMUM 3\" FROM SIDE LOT LINE"}, "Clarendon Hills": {"rafters": "2X6 16\" O.C.", "header": "3 - 2X12", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": "HOMEOWNER MUST PAY FOR PERMITS MUST ALSO APPLY TO FLAGCREEK RECLAMATION DISTRICT FOR REPORT COST IS $50 FOR LOCATION OF UNDERGROUND SEWER LINES COST RECOVERY FORM MUST BE SIGNED BY HOMEOWNER AND NOTARIZED PLYWOOD ROOF 2 - 2X10 OVER SERVICE DOOR 3 - 2X4 CORNERS"}, "Coal City": {"rafters": "2X6 24\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": ""}, "Country Club Hills": {"rafters": "2X6 24\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": "HOUSE TO GARAGE 20' IF IN NO HILL AREA"}, "Countryside": {"rafters": "2X6 16\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": "DRIVEWAYS 9' MINIMUM WIDTH IRC 2006 $5,000 cash permit bond (owner to post) 720 max s.f. Limit of combined accessory buildings (Detached garage and shed), max 15' to peak"}, "Crest Hill": {"rafters": "2X6 24\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": "MUST EXCAVATE TO REMOVE ALL BLACK DIRT AND VEGETATION TELL CUSTOMER FOOTING MAY VARY IN PRICE OR HAVE CONCRETE MAN CHECK JOB BEFORE QUOTING PRICE. SELL HURRICANE TIES DRIVEWAY MINIMUM WIDTH 12' REQUIRED: MAX SIZE BASED ON MAX LOT COVERAGE 50% - EVERYTHING COUNTS (DECKS, SIDEWA MAX HEIGHT IS 15 TO PEAK AND CANNOT ABE TALLER THAN HOUSE. MUST HAVE MIN 6\" CONCRETE ABOVE GRADE AT SIDES AND REAR MUST EXCAVATE OUT ALL ORGANIC SOIL DOWN TO CLAY FOR ENTIRE FLOOR AND APRON FOOTING INTERIOR OF FLOOR TO BE SILLED WITH STONE FILL CAPPED WITH CRUSHED GRAVEL TO ACHIEVE AMOUNT OF FILL IS BASED ON HOW FAR DOWN WE DIG TO HIT CLAY AND MAINTAIN 6\" ABOVE GRAD ANY QUESTIONS CALL CITY OF CREST HILL. THEY DO A PRE-STONE INSPECTION TO MAKE SURE AL Per village, roof 7/20/2026"}, "Crestwood": {"rafters": "2X6 24\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": "MAXIMUM LEGNTH 25' OVERHEAD DOOR HEIGHT NOT TO EXCEED 8'"}, "Crete": {"rafters": "2X6 24\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": ""}, "Crystal Lake": {"rafters": "2X6 24\" OC", "header": "2 LVL", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": "SUBMIT COPY OF CONTRACT WITH APPLICATION H-CLIPS OF 24\"OC RAFTERS Hurricane Ties Required"}, "Darien": {"rafters": "2X6 24\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": "MINIMUM DRIVEWAY WIDTH IS 12' 3 2x12 OH DOOR HEADER"}, "Des Plaines": {"rafters": "2X6 16\" OC", "header": "3 2 X 12", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": "OSB walls and 5/8\" Plywood Roof 2- #5 continuous rebar in footing Des Plaines’ roof sheathing code is 5/8” thickness. OSB is fine for roof & walls OUTLET ON 3 WALLS REQUIRED. NEED HURRICANE TIES The (average) mid-point between eave edge and ridge"}, "Dixmoor": {"rafters": "2X6 24\"", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": "Grades - Robinson Engineering cost $250 Use separate app for demo"}, "DeKalb": {"rafters": "2X6 16\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": "IRC 2003"}, "DeKalb County": {"rafters": "2X6 16\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": "IRC 2006 SPECS INCLUDING BRACED SHORT WALLS ALL ZONING SETBACKS TBD OVER 800 REQUIRES 42\" TRENCHED FOUNDATION"}, "Dolton": {"rafters": "2X6 24\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": "SIDEWALKS MUST BE 3' WIDE PLYWOOD BETWEEN ALL HEADERS"}, "Deerfield": {"rafters": "2X6 16\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": "POTENTIAL LARGE FEE IF REMOVAL OF TREES CREATE ROOT DAMAGE SPOT SURVEY AFTER SLAB"}, "Deer Park": {"rafters": "2X6 16\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": "POTENTIAL LARGE FEE IF REMOVAL OF TREES CREATE ROOT DAMAGE SPOT SURVEY AFTER SLAB"}, "Downers Grove": {"rafters": "2X6 16\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": "IF NEW GARAGE IS GOING IN THE SAME LOCATION, TOPO MAY NOT BE REQUIRED CHECK WITH VILLAGE. NEED 4 X 4 LANDING AT SERVICE DOOR IF ON SIDE WALL MUST SUBMIT STORMWATER FORM WITH APPLICATION OWNER TO POST BOND OVER 600 SQ FT. MASSIVE CASH BOND OWNER TO PAY FOR PERMITS 9-14-12 6mil vapor barrier under concrete is required. DK"}, "East Dundee": {"rafters": "2X6 24\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": "MINIMUM DRIVEWAY WIDTH 10' ICE AND WATER SHIELD REQUIRED 3X3 SERVICE DOOR PAD OF ON SIDE WALK COPY OF CONSUMER RIGHTS"}, "East Hazel Crest": {"rafters": "2X6 24\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": "DRIVEWAY MINIMUM WIDTH 9'"}, "Elburn": {"rafters": "2X6 24\" OC", "header": "3 2 X 12", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": "DRIVEWAY MINIMUM WIDTH 12'"}, "Elk Grove Village": {"rafters": "2X6 24\" UP TO 20' THEN 16\" OC", "header": "2 LVL", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": "SUBMIT 2 SURVEYS 1 WITH PROPOSED GARAGE, 1 WITHOUT 10' MINIMUM DRIVEWAY WIDTH 5/8\" PLYWOOD ROOF SHEATHING REQUIRED"}, "Elgin": {"rafters": "2X6 16\"OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": "MAXIMUM OVERHANG 18\" ALL GARAGES OVER 484 SF NEEDS 42\" FOUNDATION IF IN HISTORICAL DISTRICT ROOF PITCH MUST BE AT LEAST 6/12 DRIP EDGE ON ROOF REQUIRED MINIMUM DRIVEWAY WIDTH 9' MAKE SURE ANCHOR BOLTS ARE TO CODE 5/8\" PLYWOOD ALUMINUM DRIP MOLDING ROOF SHEATHING 5/8\" THICK PLYWOOD OK TO MAIL APPLICATION 2009 IRC"}, "Elmhurst": {"rafters": "2X6 16\" OC", "header": "3 2 X 12", "ties": "2 2X6 48\"OC", "slab": "6 BAG MIX", "notes": "1/2\" PLYWOOD WALLS REQUIRED 5/8\" PLYWOOD ROOF REQUIRED #240 LB SHINGLES REQUIRED Topo with grading plan $900 Permit $500 to $1,500 depending on amout of job If near Salt Creek or in a low spot, might need flood prevention and/or sewer work to the yard or drywell Do not put on gutters because will have to tie to sewer line Spot Survey after slab $300 See notes in Pony file for Cicero before submitting permit app 5\" thick fill"}, "Elmwood Park": {"rafters": "2X6 16\" OC", "header": "2 LVL", "ties": "2 2X6 48\"OC", "slab": "6 BAG MIX", "notes": "Submit Copy Of Contract With Application REQUIRES REBAR IN FOOTING COST $300 SELLING $600"}, "Elwood": {"rafters": "2X6", "header": "TOPO SURVEY", "ties": "EPA REVIEW", "slab": "6 BAG MIX", "notes": "See Will County Codes"}, "Evanston": {"rafters": "2X6 16\" OC", "header": "3 2X12", "ties": "2 2X6 48\"OC", "slab": "6 BAG MIX", "notes": "SELL MINIMUM 2' RETURN WALLS TO AVOID SHEER WALL OK to mail SEND 3 COPIES OF PLANS AND PLAT. MAKE SURE NAME AND ADDRESS ON ALL FORMS"}, "Evergreen Park": {"rafters": "2X6 24\" OC", "header": "2 2X12", "ties": "2 2X6 48\"OC", "slab": "6 BAG MIX", "notes": "VAPOR BARRIER MINIMUM DRIVEWAY WIDTH 9' Need Certification from Pest Control Co that garage doesn’t have rodents and if it does, needs to be baited. Certification is $55/Baiting is $88 (Awesome Pests/Dave 708-484-6126) 2009 IRC"}, "Flossmoor": {"rafters": "2X6 16\" OC", "header": "3 2X12", "ties": "2X8 48\"OC", "slab": "6 BAG MIX", "notes": "CANT HAVE MORE THAN 1 DRIVEWAY"}, "Ford Heights": {"rafters": "2X6 16\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": "MUST BE 3' AWAY FROM ANY EASEMENT 1/2\" PLYWOOD WALLS & ROOF REQUIRED"}, "Forest Park": {"rafters": "2X6 24\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": "MINIMUM DRIVEWAY WIDTH 9' IRC2009 CODE BOOK WITH AMENDMENT REQUIRING A 20\" X 10\" DEEP PERIMETER GRADE BEAM FOOTING, 6\" ABOVE GRADE MIN. (INSTEAD OF THE 12X12 THE BOOK SAYS) 5/8\" ROOF SHEATHING (OSB OR PLYWOOD) AND 16\" O.C. ROOF FRAMING & ALTERNATE BRACED SHORT WALL FRAMING IN LIEU OF SHEAR WALLS RETURNS TO ANY OPENING ARE TO BE MIN. 16\" REINFORCED, NO 12\" RETURNS ALLOWED. CANNOT BUILD AN 18 X 20 GARAGE WITH A 16' DOOR"}, "Forest View": {"rafters": "2X6 16\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": ""}, "Fox Lake": {"rafters": "2X6 16\" OC OVER 22' 2X8 16\"OC", "header": "2 LVL", "ties": "2X8 48\"OC", "slab": "6 BAG MIX", "notes": "MINIMUM DRIVEWAY WIDTH 10' OK To mail app"}, "Fox River Grove": {"rafters": "2X6 24\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": ""}, "Frankfort": {"rafters": "2X6 16\"", "header": "TOPO SURVEY NO", "ties": "EPA REVIEW NO", "slab": "6 BAG MIX", "notes": ""}, "Franklin Park": {"rafters": "2X6 16\" OC", "header": "3 2X12", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": "MINIMUM DRIVEWAY WIDTH 10' SPACE ROOF/WALL SHEATHING 1/8\" 3 - 2X4 CORNERS OK to mail app 9-7-12 1/2\" CDX PLYWOOD ROOF MINIMUM 7/16 osb WALL IS OK"}, "Geneva": {"rafters": "2X6 16\" OC", "header": "2 LVL", "ties": "2 X 8 16\"OC", "slab": "6 BAG MIX", "notes": "3X3 LANDING REQUIRED OUTSIDE SERVICE DOOR TREE PRESERVATION PLAN AND TREE FENCING IS REQUIRED"}, "Glencoe": {"rafters": "2X6 24\" OC", "header": "3 2X12", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": "NEED TREE FENCE PROTECTION"}, "Glendale Heights": {"rafters": "2X6 24\" OC", "header": "3 2 X 12", "ties": "2 X 6 48\"OC", "slab": "6 BAG MIX", "notes": "CAN ONLY HAVE 1 GARAGE"}, "Glen Ellyn": {"rafters": "2X6 16\" OC", "header": "2 2 X 12", "ties": "2 X 6 48\"OC", "slab": "6 BAG MIX", "notes": "NEED TREE PRESERVATION FORM. HOMEOWNER CAN DO OR NEED ARBORIST TO COMPLETE. MUST SHOW WHERE TREES ARE ON SURVEY WHEN YOU DO 3' SETBACK YOU MUST GET SPOT SURVEY 300 s.f. or more new impervious coverage will require a Topo with D&G."}, "Glenview": {"rafters": "2X6 16\" OC", "header": "3 2 X 12", "ties": "2 X 6 48\"OC", "slab": "6 BAG MIX", "notes": "Silt fencing to be installed 6' chain link fencing to be installed 1/2\" plywood walls and roof OK to mail 24\" O.C. RAFTERS O.K. CROSSTIES NEED TO BE SAME AS RAFTERS. 24\" O.C."}, "Glenwood": {"rafters": "2X6 16\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": ""}, "Golf": {"rafters": "2X6 16\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": ""}, "Grayslake": {"rafters": "2X6 24\" OC", "header": "3 2 X 12", "ties": "2X6 48\"OC", "slab": "6 BAG MIX", "notes": "MUST HAUL DIRT AWAY"}, "Gurnee": {"rafters": "2X6 16\" OC", "header": "3 2 X 12", "ties": "EPA REVIEW NO", "slab": "6 BAG MIX", "notes": "MINIMUM DRIVEWAY WIDTH 12' Over 400 SQ needs stamped to scale acrhitectural drawing. Must add 3 x 3 landing with service door OVER 400 SQ REQUIRED 42' FOUNDATION"}};
+const FIELDS=['collectLumber','collectCarpentry','jobDate','carpenter','rep','customer','phone','address','city','citySel','sizeW','sizeL','ohDoors','wallHeight','rafters','crossties','doorJamb','doorJambColor','sidingColor','sidingColorLine','sidingOther','sidingOtherPanel','sidingDir','wallSheath','roofSheath','shingleColor','shingleColorLine','eaveColor','eaveColorLine','notes','pitch','pitchLine','ohWall','ohWidth','ohLeftRet','ohRightRet','svcWall','svcPos','svcOffset'];
+const JOBS_KEY='agb_carpenter_jobs';
+const DRAFT_KEY='agb_carpenter_ticket';
+let sb=null, profile=null, currentJobId=null, currentJobTitle='';
+let extraDoors=[], selectedId=null, texts=[], planTexts=[], planTextsData=[], planLabels={}, undoStack=[];
 let choices={roof:'Gable',eaves:'Realwood',siding:'D4',shingles:'ARCH',header:'2-2x12 w/ 1/2 Flitchplate',jamb:'',gutters:false,firewall:false,showReturns:true};
-
-function $(id){return document.getElementById(id)}
-function val(id){return String($(id)?.value||'').trim()}
-function syncTwin(a,b){ if($(a)&&$(b)&& document.activeElement!==$(b)) $(b).value=$(a).value; }
-
+let selectedView='FRONT';
+const $=id=>document.getElementById(id);
+const val=id=>{const e=$(id); return e?String(e.value||''):''};
+function lbl(side,key,fallback){const v=planLabels[side]&&planLabels[side][key]; return (v!=null && String(v).trim()!=='')?String(v):fallback;}
+function selectedCity(){return val('city')||val('citySel')||'';}
+function fillCitySelect(){
+  const sel=$('citySel'); if(!sel) return;
+  const cur=sel.value;
+  sel.innerHTML='<option value="">City</option>'+Object.keys(CITY_BUILD).sort().map(c=>'<option value="'+c+'">'+c+'</option>').join('')+'<option value="__manual__">Type city…</option>';
+  sel.value=cur||'';
+}
+function setChoice(key,v,btn){
+  choices[key]=v;
+  const map={roof:'roofOpts',eaves:'eaveOpts',siding:'sidingOpts',shingles:'shingleOpts',header:'headerOpts',jamb:'jambOpts'};
+  const box=$(map[key]);
+  if(box) box.querySelectorAll('button').forEach(b=>b.classList.toggle('on', b.getAttribute('data-v')===v));
+  if(key==='jamb' && $('doorJamb')) $('doorJamb').value=v;
+  persist(); makePlans();
+}
+function setChoiceSilent(key,v){
+  choices[key]=v;
+  const map={roof:'roofOpts',eaves:'eaveOpts',siding:'sidingOpts',shingles:'shingleOpts',header:'headerOpts',jamb:'jambOpts'};
+  const box=$(map[key]);
+  if(box) box.querySelectorAll('button').forEach(b=>b.classList.toggle('on', b.getAttribute('data-v')===v));
+}
 function snapshot(){
-  const o={choices:{...choices}, extraDoors:JSON.parse(JSON.stringify(extraDoors)), planLabels:JSON.parse(JSON.stringify(planLabels)), texts:texts.map(t=>({id:t.id,x:t.el.style.left,y:t.el.style.top,html:t.el.innerHTML,size:t.el.style.fontSize,weight:t.el.style.fontWeight})), planTexts:planTexts.map(t=>({id:t.id,side:t.side,x:t.el.style.left,y:t.el.style.top,w:t.el.style.width,h:t.el.style.height,html:t.el.innerHTML,size:t.el.style.fontSize,weight:t.el.style.fontWeight,color:t.el.style.color}))};
-  FIELDS.forEach(id=>o[id]=$(id)?$(id).value:'');
-  return o;
+  return {
+    id:currentJobId,
+    title:currentJobTitle,
+    choices:{...choices},
+    extraDoors:JSON.parse(JSON.stringify(extraDoors)),
+    planLabels:JSON.parse(JSON.stringify(planLabels)),
+    planTextsData:JSON.parse(JSON.stringify(planTextsData)),
+    fields:Object.fromEntries(FIELDS.map(id=>[id,val(id)]))
+  };
 }
-function persist(){ try{ localStorage.setItem('agb_carpenter_ticket', JSON.stringify(snapshot())); }catch(e){} }
-function pushUndo(){ undoStack.push(snapshot()); if(undoStack.length>40) undoStack.shift(); }
+function persist(){ try{ localStorage.setItem(DRAFT_KEY, JSON.stringify(snapshot())); }catch(e){} }
 function touch(){ persist(); makePlans(); }
-
-const OPTS_IDS={roof:'roofOpts',eaves:'eaveOpts',siding:'sidingOpts',shingles:'shingleOpts',header:'headerOpts',jamb:'jambOpts'};
-function setChoice(key, value, btn){
-  pushUndo();
-  choices[key]=value;
-  document.querySelectorAll('#'+(OPTS_IDS[key]||(key+'Opts'))+' button').forEach(b=>b.classList.toggle('on', b.dataset.v===value));
-  document.querySelectorAll('#'+({roof:'roofCircles',eaves:'eaveCircles',siding:'sidingCircles',shingles:'shingleCircles',header:'headerCircles',jamb:'jambCircles'}[key]||'')+' .circ').forEach(c=>c.classList.toggle('on', c.dataset.v===value));
-  if(key==='roof') makePlans();
-  if(key==='jamb' && $('doorJamb')) $('doorJamb').value=value;
-  persist();
-}
-
-function applySnap(o){
+function applySnapshot(o){
   if(!o) return;
-  FIELDS.forEach(id=>{ if(o[id]!=null && $(id)) $(id).value=o[id]; });
-  if(o.choices){ Object.assign(choices,o.choices); Object.keys(choices).forEach(k=>setChoiceSilent(k,choices[k])); }
+  choices=Object.assign({roof:'Gable',eaves:'Realwood',siding:'D4',shingles:'ARCH',header:'2-2x12 w/ 1/2 Flitchplate',jamb:'',gutters:false,firewall:false,showReturns:true}, o.choices||{});
   extraDoors=o.extraDoors||[];
   planLabels=o.planLabels||{};
-  planTextsData=o.planTexts||[];
+  planTextsData=o.planTextsData||o.planTexts||[];
+  currentJobId=o.id||currentJobId;
+  currentJobTitle=o.title||currentJobTitle||'';
+  Object.entries(o.fields||{}).forEach(([id,v])=>{ if($(id)!=null) $(id).value=v==null?'':v; });
+  ['roof','eaves','siding','shingles','header','jamb'].forEach(k=>setChoiceSilent(k, choices[k]));
+  if($('showReturns')) $('showReturns').checked=choices.showReturns!==false;
+  updateJobBadge();
   renderDoorList();
-  document.querySelectorAll('.free-text').forEach(n=>n.remove());
-  texts=[];
-  (o.texts||[]).forEach(t=>restoreText(t));
-  onRepChange();
-  onCitySel();
+  makePlans();
 }
-function setChoiceSilent(key,value){
-  choices[key]=value;
-  document.querySelectorAll('#'+(OPTS_IDS[key]||(key+'Opts'))+' button').forEach(b=>b.classList.toggle('on', b.dataset.v===value));
-  const map={roof:'roofCircles',eaves:'eaveCircles',siding:'sidingCircles',shingles:'shingleCircles',header:'headerCircles',jamb:'jambCircles'};
-  document.querySelectorAll('#'+(map[key]||'')+' .circ').forEach(c=>c.classList.toggle('on', c.dataset.v===value));
+function pushUndo(){ undoStack.push(JSON.stringify(snapshot())); if(undoStack.length>30) undoStack.shift(); }
+function undoLast(){ const last=undoStack.pop(); if(!last) return; applySnapshot(JSON.parse(last)); }
+function updateJobBadge(){
+  const el=$('currentJobName');
+  if(el) el.textContent=currentJobTitle?('Working on: '+currentJobTitle):'Unsaved ticket';
+}
+function readLocalJobs(){
+  try{ const a=JSON.parse(localStorage.getItem(JOBS_KEY)||'[]'); return Array.isArray(a)?a:[]; }catch(e){ return []; }
+}
+function writeLocalJobs(list){ localStorage.setItem(JOBS_KEY, JSON.stringify(list)); }
+function saveJobPrompt(){
+  const name=val('customer').trim()||currentJobTitle||'';
+  $('saveJobName').value=name;
+  $('saveJobMsg').textContent=name?'':'Enter the customer / file name to save this ticket.';
+  $('saveModal').classList.add('on');
+  setTimeout(()=>$('saveJobName').focus(), 50);
+}
+function closeModals(){ $('saveModal').classList.remove('on'); $('libModal').classList.remove('on'); }
+async function confirmSaveJob(){
+  const name=($('saveJobName').value||'').trim();
+  if(!name){ $('saveJobMsg').textContent='A name is required.'; $('saveJobName').focus(); return; }
+  if($('customer') && !val('customer').trim()) $('customer').value=name;
+  currentJobTitle=name;
+  if(!currentJobId) currentJobId='c'+Date.now();
+  const rec={id:currentJobId, name, customer:val('customer')||name, address:val('address'), city:selectedCity(), updated_at:new Date().toISOString(), saved_by:profile?.username||$('who')?.textContent||'', payload:snapshot()};
+  rec.payload.id=currentJobId; rec.payload.title=name;
+  const list=readLocalJobs().filter(j=>j.id!==currentJobId);
+  list.unshift(rec);
+  writeLocalJobs(list);
+  persist();
+  updateJobBadge();
+  let cloud='Saved on this device.';
+  try{
+    if(sb){
+      const row={id:currentJobId, name, customer:rec.customer, address:rec.address, city:rec.city, payload:rec.payload, updated_at:rec.updated_at, saved_by:rec.saved_by};
+      const {error}=await sb.from('carpenter_tickets').upsert(row);
+      if(!error) cloud='Saved on this device and in the office library.';
+    }
+  }catch(e){}
+  $('saveJobMsg').textContent=cloud;
+  setTimeout(closeModals, 700);
+}
+async function openJobLibrary(){
+  $('libModal').classList.add('on');
+  let rows=readLocalJobs();
+  try{
+    if(sb){
+      const {data,error}=await sb.from('carpenter_tickets').select('id,name,customer,address,city,updated_at,saved_by,payload').order('updated_at',{ascending:false}).limit(200);
+      if(!error && data){
+        const map={};
+        rows.forEach(r=>map[r.id]=r);
+        data.forEach(r=>map[r.id]=r);
+        rows=Object.values(map);
+      }
+    }
+  }catch(e){}
+  rows.sort((a,b)=>String(b.updated_at||'').localeCompare(String(a.updated_at||'')));
+  const box=$('jobLibList');
+  if(!rows.length){ box.innerHTML='<div style="color:#64748b;padding:16px 0">No saved carpenter jobs yet. Click Save Job first.</div>'; return; }
+  box.innerHTML=rows.map(j=>{
+    const when=j.updated_at?new Date(j.updated_at).toLocaleString():'';
+    return `<div class="job-row">
+      <b>${esc(j.name||j.customer||'Untitled')}</b>
+      <span style="color:#64748b;font-size:12px">${esc(j.address||'')} ${esc(j.city||'')}<br>${esc(when)}</span>
+      <button class="primary" type="button" onclick="loadSavedJob('${j.id}')">Open</button>
+      <button class="ghost" type="button" onclick="deleteSavedJob('${j.id}')">Delete</button>
+    </div>`;
+  }).join('');
+}
+function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function loadSavedJob(id){
+  const local=readLocalJobs().find(j=>j.id===id);
+  function apply(rec){
+    if(!rec){ alert('Could not open that job.'); return; }
+    currentJobId=rec.id;
+    currentJobTitle=rec.name||rec.customer||'';
+    applySnapshot(rec.payload||rec);
+    closeModals();
+  }
+  if(local && local.payload){ apply(local); return; }
+  if(!sb){ apply(local); return; }
+  sb.from('carpenter_tickets').select('*').eq('id',id).maybeSingle().then(({data})=>apply(data||local)).catch(()=>apply(local));
+}
+function deleteSavedJob(id){
+  if(!confirm('Delete this saved carpenter job?')) return;
+  writeLocalJobs(readLocalJobs().filter(j=>j.id!==id));
+  if(currentJobId===id){ currentJobId=null; }
+  try{ if(sb) sb.from('carpenter_tickets').delete().eq('id',id); }catch(e){}
+  openJobLibrary();
 }
 
-function undoTicket(){
-  const prev=undoStack.pop(); if(!prev) return;
-  applySnap(prev); persist(); makePlans();
-}
-function deleteSelected(){
-  pushUndo();
-  const psel=document.querySelector('.plan-text.sel');
-  if(psel){
-    const hit=planTexts.find(t=>t.el===psel);
-    if(hit) planTextsData=planTextsData.filter(p=>p.id!==hit.id);
-    psel.remove(); persist(); return;
-  }
-  const sel=document.querySelector('.free-text.sel');
-  if(sel){ texts=texts.filter(t=>t.el!==sel); sel.remove(); persist(); return; }
-  if(!extraDoors.length){ alert('Select a text box or extra door first.'); return; }
-  extraDoors=selectedId?extraDoors.filter(d=>d.id!==selectedId):extraDoors.slice(0,-1);
-  selectedId=extraDoors.at(-1)?.id||null;
-  renderDoorList(); persist(); makePlans();
-}
+function wallLengthFor(side){ const W=parseFloat(val('sizeW'))||20, L=parseFloat(val('sizeL'))||20; return (side==='FRONT'||side==='BACK')?W:L; }
+function wallWords(side){ const s=String(side||'').toUpperCase(); return s==='FRONT'?'front wall':s==='BACK'?'back wall':s==='LEFT'?'left wall':s==='RIGHT'?'right wall':(side||'')+' wall'; }
+function ohWidthFt(){ const typed=parseFloat(val('ohWidth')); if(Number.isFinite(typed)&&typed>0) return typed; const m=String(val('ohDoors')||'').match(/(\d+(?:\.\d+)?)/); return m?parseFloat(m[1]):16; }
+function defaultReturns(){ const wall=wallLengthFor(val('ohWall')||'FRONT'); const door=ohWidthFt(); const rem=Math.max(0,+(wall-door).toFixed(1)); const left=+(rem/2).toFixed(1); return {left,right:+(rem-left).toFixed(1),wall,door}; }
+function currentReturns(){ const d=defaultReturns(); let left=parseFloat(val('ohLeftRet')), right=parseFloat(val('ohRightRet')); if(!Number.isFinite(left)&&!Number.isFinite(right)) return d; if(!Number.isFinite(left)) left=+(d.wall-d.door-(Number.isFinite(right)?right:0)).toFixed(1); if(!Number.isFinite(right)) right=+(d.wall-d.door-left).toFixed(1); return {left:Math.max(0,left),right:Math.max(0,right),wall:d.wall,door:d.door}; }
+function writeReturns(left,right){ if($('ohLeftRet')) $('ohLeftRet').value=String(left); if($('ohRightRet')) $('ohRightRet').value=String(right); const n=$('ohReturnNote'); if(n) n.textContent="Wall "+currentReturns().wall+"'  ·  door "+currentReturns().door+"'  ·  left "+left+"'  ·  right "+right+"'"; }
+function recalcReturns(which){ const d=defaultReturns(); let left=parseFloat(val('ohLeftRet')), right=parseFloat(val('ohRightRet')); if(which==='width' && !Number.isFinite(left) && !Number.isFinite(right)){ writeReturns(d.left,d.right); touch(); return; } if(which==='left' && Number.isFinite(left)) right=+(d.wall-d.door-left).toFixed(1); else if(which==='right' && Number.isFinite(right)) left=+(d.wall-d.door-right).toFixed(1); else { left=d.left; right=d.right; } if(left<0){left=0;right=+(d.wall-d.door).toFixed(1);} if(right<0){right=0;left=+(d.wall-d.door).toFixed(1);} writeReturns(+left.toFixed(1),+right.toFixed(1)); touch(); }
+function nudgeOh(dir){ const r=currentReturns(); let left=+(r.left+dir).toFixed(1), right=+(r.right-dir).toFixed(1); if(left<0||right<0) return; writeReturns(left,right); separateDoors(); touch(); }
+function sameWall(){ return String(val('ohWall')||'FRONT').toUpperCase()===String(val('svcWall')||'RIGHT').toUpperCase(); }
+function svcWidthFt(){ return 3; }
+function svcFeet(){ const wall=wallLengthFor(val('svcWall')||val('ohWall')||'FRONT'); let off=parseFloat(val('svcOffset')||''); const pos=val('svcPos')||'right'; if(!Number.isFinite(off)) off=pos==='left'?0.5:pos==='center'?(wall/2-1.5):Math.max(0,wall-svcWidthFt()-0.5); off=Math.max(0,Math.min(wall-svcWidthFt(),off)); return {off,width:svcWidthFt(),wall}; }
+function separateDoors(){ if(!sameWall()) return; const r=currentReturns(), svc=svcFeet(), gap=0.5; const oh0=r.left, oh1=r.left+r.door, s0=svc.off, s1=svc.off+svc.width; if(oh1+gap<=s0 || s1+gap<=oh0) return; const svcRight=(s0+s1)/2>=r.wall/2; if(svcRight){ const need=+(svc.width+gap).toFixed(1); let right=Math.max(need,r.right), left=+(r.wall-r.door-right).toFixed(1); if(left<0){left=0;right=+(r.wall-r.door).toFixed(1);} writeReturns(left,right); $('svcOffset').value=String(Math.max(left+r.door+gap, Math.min(svc.off, r.wall-svc.width)).toFixed(1)); } else { const need=+(svc.width+gap).toFixed(1); let left=Math.max(need,r.left), right=+(r.wall-r.door-left).toFixed(1); if(right<0){right=0;left=+(r.wall-r.door).toFixed(1);} writeReturns(left,right); $('svcOffset').value=String(Math.max(0,Math.min(left-svc.width-gap,svc.off)).toFixed(1)); } }
+function flipDoors(){ pushUndo(); if(!sameWall() && $('svcWall')) $('svcWall').value=val('ohWall')||'FRONT'; const wall=wallLengthFor(val('ohWall')||'FRONT'), door=ohWidthFt(), need=+(svcWidthFt()+0.5).toFixed(1), svc=svcFeet(), r=currentReturns(); const svcOnRight=(svc.off+svc.width/2)>=(r.left+r.door/2); if(svcOnRight){ writeReturns(need, +(wall-door-need).toFixed(1)); $('svcOffset').value='0.5'; if($('svcPos')) $('svcPos').value='left'; } else { writeReturns(+(wall-door-need).toFixed(1), need); $('svcOffset').value=String(+(wall-svcWidthFt()-0.5).toFixed(1)); if($('svcPos')) $('svcPos').value='right'; } persist(); makePlans(); }
+function nudgeSvc(dir){ const wall=wallLengthFor((val('svcWall')||'RIGHT').toUpperCase()); let cur=parseFloat(val('svcOffset')||''); if(!Number.isFinite(cur)){ const pos=val('svcPos')||'right'; cur=pos==='left'?1:pos==='center'?(wall/2-1.5):Math.max(0,wall-3); } $('svcOffset').value=String(Math.max(0,Math.min(Math.max(0,wall-2.5),+(cur+dir).toFixed(1)))); separateDoors(); touch(); }
+
+function itemLeftFt(d,side){ const wall=wallLengthFor(side||d.wall); if(Number.isFinite(Number(d.xFt))) return Number(d.xFt); return (Number(d.x)||0)*wall; }
+function occOnWall(side, skipId){ const wall=wallLengthFor(side); const items=[]; if(String(val('ohWall')||'FRONT').toUpperCase()===side){ const r=currentReturns(); items.push({a:r.left,b:r.left+r.door}); } if(String(val('svcWall')||'RIGHT').toUpperCase()===side){ const s=svcFeet(); items.push({a:s.off,b:s.off+s.width}); } extraDoors.forEach(d=>{ if(String(d.wall).toUpperCase()!==side || d.id===skipId) return; if(d.kind==='hung'||d.kind==='slider') return; const wf=Number(d.w)||3; const a=itemLeftFt(d,side); items.push({a,b:a+wf}); }); return items.sort((p,q)=>p.a-q.a); }
+function freeSpot(side,widthFt){ const wall=wallLengthFor(side), need=Number(widthFt)||3, gap=0.5, items=occOnWall(side); let x=0.5; for(const it of items){ if(x+need+gap<=it.a) break; x=it.b+gap; } if(x+need>wall) x=Math.max(0,wall-need); return Math.max(0,Math.min(0.85,x/Math.max(1,wall))); }
+function clampNoOverlap(d){ const side=String(d.wall).toUpperCase(), wall=wallLengthFor(side), isWin=d.kind==='hung'||d.kind==='slider', wf=Number(d.w)||3; let a=itemLeftFt(d,side); if(!isWin){ occOnWall(side,d.id).forEach(it=>{ if(a+wf+0.4>it.a && a<it.b+0.4){ if(it.a>a) a=it.a-wf-0.5; else a=it.b+0.5; } }); } a=Math.max(0,Math.min(wall-wf,a)); d.xFt=+a.toFixed(2); d.x=a/Math.max(1,wall); }
+function wallItems(side){ const items=[], wall=wallLengthFor(side); if(String(val('ohWall')||'FRONT').toUpperCase()===side){ const r=currentReturns(); items.push({id:'MAIN-OH',kind:'oh',name:'OH',a:+r.left,b:+(r.left+r.door)}); } if(String(val('svcWall')||'RIGHT').toUpperCase()===side){ const s=svcFeet(); items.push({id:'SVC',kind:'svc',name:'SVC',a:+s.off,b:+(s.off+s.width)}); } extraDoors.filter(d=>String(d.wall).toUpperCase()===side).forEach(d=>{ const wft=Number(d.w)||3, a=itemLeftFt(d,side), isWin=d.kind==='hung'||d.kind==='slider'; items.push({id:d.id,kind:d.kind,name:isWin?'WIN':(d.kind==='party'?'PARTY':'OH'),a:+a,b:+(a+wft)}); }); return items.sort((p,q)=>p.a-q.a); }
+function returnGaps(side){ const wall=wallLengthFor(side), items=wallItems(side), gaps=[]; let cursor=0; items.forEach(it=>{ const span=+(it.a-cursor).toFixed(1); if(span>=0.15) gaps.push({a:cursor,b:it.a,ft:span}); cursor=Math.max(cursor,it.b); }); const right=+(wall-cursor).toFixed(1); if(right>=0.15) gaps.push({a:cursor,b:wall,ft:right}); if(gaps.length){ if(gaps[0].a<=0.05) gaps[0].label='L RET'; if(Math.abs(gaps[gaps.length-1].b-wall)<0.08) gaps[gaps.length-1].label='R RET'; gaps.forEach((g,i)=>{ if(!g.label) g.label=(i===0||i===gaps.length-1)?'GAP':'MID RET'; }); if(gaps.length===3 && gaps[1].label==='GAP') gaps[1].label='MID RET'; } return {wall,items,gaps}; }
+function returnSvg(side){ if(choices.showReturns===false) return ''; const info=returnGaps(side); if(!info.items.length) return ''; const origin=40, wallPx=320, scale=wallPx/Math.max(1,info.wall); return `<g class="ret-marks" data-side="${side}">`+info.gaps.map(g=>{ const x1=origin+g.a*scale, x2=origin+g.b*scale, mid=(x1+x2)/2; return `<line x1="${x1}" y1="108" x2="${x2}" y2="108" stroke="#1d4ed8" stroke-width="1.3"/><line x1="${x1}" y1="104" x2="${x1}" y2="112" stroke="#1d4ed8"/><line x1="${x2}" y1="104" x2="${x2}" y2="112" stroke="#1d4ed8"/><text x="${mid}" y="102" text-anchor="middle" font-size="9" font-family="Arial" font-weight="800" fill="#1d4ed8">${g.ft}' ${g.label}</text>`; }).join('')+'</g>'; }
+function updateLiveReturnReadout(side){ const box=$('liveReturnBox'); if(!box) return; const info=returnGaps(side||selectedView||'FRONT'); if(!info.items.length){ box.textContent=''; return; } box.textContent=(side||selectedView)+'  ·  '+info.gaps.map(g=>g.ft+"' "+g.label).join('   ·   '); }
 
 let pendingDoorKind='oh';
-function addFrontDoor(){ addDoorKind('oh'); }
-function addDoorKind(kind){
-  if(!selectedView){ alert('Click the FRONT, BACK, LEFT, or RIGHT plan view first, then Add Door.'); return; }
-  pendingDoorKind=kind==='party'?'party':'oh';
-  const isParty=pendingDoorKind==='party';
-  if($('doorPromptTitle')) $('doorPromptTitle').textContent=(isParty?'Party door':'Overhead door')+' size  ·  '+selectedView;
-  if($('promptW')) $('promptW').value=isParty?'6':'16';
-  if($('promptH')) $('promptH').value='7';
-  if($('doorPrompt')) $('doorPrompt').style.display='block';
-}
-function confirmAddDoor(){
-  if(!selectedView){ alert('Click a plan view first.'); return; }
-  pushUndo();
-  const kind=pendingDoorKind||'oh';
-  const isWin=kind==='hung'||kind==='slider';
-  const isParty=kind==='party';
-  const defW=kind==='slider'?4:kind==='hung'?2:isParty?6:16;
-  const defH=kind==='slider'?3:kind==='hung'?4:7;
-  let w=Math.max(1,parseFloat($('promptW')?.value)||defW);
-  let h=Math.max(1,parseFloat($('promptH')?.value)||defH);
-  if(kind==='hung' && w>=h){ const t=w; w=Math.min(w,h); h=Math.max(t,defH); }
-  if(kind==='slider' && h>=w){ const t=h; h=Math.min(h,w); w=Math.max(t,defW); }
-  if($('newDoorW')) $('newDoorW').value=String(w);
-  if($('newDoorH')) $('newDoorH').value=String(h);
-  const id='d'+Date.now();
-  const xf=freeSpot(selectedView,w);
-  extraDoors.push({id,wall:selectedView,w,h,kind,x:xf,xFt:+(xf*wallLengthFor(selectedView)).toFixed(2),yPx:kind==='hung'||kind==='slider'?108:null,visW:null,visH:null});
-  selectedId=id;
-  if($('doorPrompt')) $('doorPrompt').style.display='none';
-  persist(); renderDoorList(); makePlans();
-}
-function addWindowKind(kind){
-  if(!selectedView){ alert('Click the FRONT, BACK, LEFT, or RIGHT plan view first, then Add Window.'); return; }
-  pendingDoorKind=kind==='slider'?'slider':'hung';
-  const slider=pendingDoorKind==='slider';
-  if($('doorPromptTitle')) $('doorPromptTitle').textContent=(slider?'Sliding window':'Single hung window')+' size  ·  '+selectedView;
-  if($('promptW')) $('promptW').value=slider?'4':'2';
-  if($('promptH')) $('promptH').value=slider?'3':'4';
-  if($('doorPrompt')) $('doorPrompt').style.display='block';
-}
-function confirmAddWindow(){
-  confirmAddDoor();
-}
-function toggleGutter(){
-  choices.gutters=!choices.gutters;
-  persist(); makePlans();
-}
-function toggleFirewall(){
-  choices.firewall=!choices.firewall;
-  persist(); makePlans();
-}
-function occOnWall(side, skipId){
-  const wall=wallLengthFor(side);
-  const items=[];
-  if(String(val('ohWall')||'FRONT').toUpperCase()===side){
-    const r=currentReturns();
-    items.push({a:r.left,b:r.left+r.door});
-  }
-  if(String(val('svcWall')||'RIGHT').toUpperCase()===side){
-    const s=svcFeet();
-    items.push({a:s.off,b:s.off+s.width});
-  }
-  extraDoors.forEach(d=>{
-    if(String(d.wall).toUpperCase()!==side || d.id===skipId) return;
-    if(d.kind==='hung'||d.kind==='slider') return;
-    const wf=Number(d.w)||3;
-    const a=itemLeftFt(d,side);
-    items.push({a,b:a+wf});
-  });
-  return items.sort((p,q)=>p.a-q.a);
-}
-function freeSpot(side, widthFt){
-  const wall=wallLengthFor(side);
-  const need=Number(widthFt)||3;
-  const gap=0.5;
-  const items=occOnWall(side);
-  let x=0.5;
-  for(const it of items){
-    if(x+need+gap<=it.a) break;
-    x=it.b+gap;
-  }
-  if(x+need>wall) x=Math.max(0, wall-need);
-  return Math.max(0, Math.min(0.85, x/Math.max(1,wall)));
-}
-function itemLeftFt(d, side){
-  const wall=wallLengthFor(side||d.wall);
-  if(Number.isFinite(Number(d.xFt))) return Number(d.xFt);
-  return (Number(d.x)||0)*wall;
-}
-function clampNoOverlap(d){
-  const side=String(d.wall).toUpperCase();
-  const wall=wallLengthFor(side);
-  const isWin=d.kind==='hung'||d.kind==='slider';
-  const wf=Number(d.w)||3;
-  let a=itemLeftFt(d,side);
-  if(!isWin){
-    occOnWall(side,d.id).forEach(it=>{
-      if(a+wf+0.4>it.a && a<it.b+0.4){
-        if(it.a>a) a=it.a-wf-0.5;
-        else a=it.b+0.5;
-      }
-    });
-  }
-  a=Math.max(0, Math.min(wall-wf, a));
-  d.xFt=+a.toFixed(2);
-  d.x=a/Math.max(1,wall);
-}
-function wallItems(side){
-  const items=[];
-  const wall=wallLengthFor(side);
-  if(String(val('ohWall')||'FRONT').toUpperCase()===side){
-    const r=currentReturns();
-    items.push({id:'MAIN-OH', kind:'oh', name:'OH', a:+r.left, b:+(r.left+r.door)});
-  }
-  if(String(val('svcWall')||'RIGHT').toUpperCase()===side){
-    const s=svcFeet();
-    items.push({id:'SVC', kind:'svc', name:'SVC', a:+s.off, b:+(s.off+s.width)});
+function addDoorKind(kind){ if(!selectedView){ alert('Click FRONT, BACK, LEFT, or RIGHT first, then Add Door.'); return; } pendingDoorKind=kind==='party'?'party':'oh'; $('doorPromptTitle').textContent=(pendingDoorKind==='party'?'Party door':'Overhead door')+' size  ·  '+selectedView; $('promptW').value=pendingDoorKind==='party'?'6':'16'; $('promptH').value='7'; $('doorPrompt').style.display='block'; }
+function addWindowKind(kind){ if(!selectedView){ alert('Click a plan view first, then Add Window.'); return; } pendingDoorKind=kind==='slider'?'slider':'hung'; $('doorPromptTitle').textContent=(pendingDoorKind==='slider'?'Sliding window':'Single hung')+' size  ·  '+selectedView; $('promptW').value=pendingDoorKind==='slider'?'4':'2'; $('promptH').value=pendingDoorKind==='slider'?'3':'4'; $('doorPrompt').style.display='block'; }
+function confirmAddDoor(){ if(!selectedView) return; pushUndo(); const kind=pendingDoorKind||'oh'; const isParty=kind==='party'; const defW=kind==='slider'?4:kind==='hung'?2:isParty?6:16; const defH=kind==='slider'?3:kind==='hung'?4:7; let w=Math.max(1,parseFloat($('promptW')?.value)||defW); let h=Math.max(1,parseFloat($('promptH')?.value)||defH); const id='d'+Date.now(); const xf=freeSpot(selectedView,w); extraDoors.push({id,wall:selectedView,w,h,kind,x:xf,xFt:+(xf*wallLengthFor(selectedView)).toFixed(2),yPx:(kind==='hung'||kind==='slider')?108:null,visW:null,visH:null}); selectedId=id; $('doorPrompt').style.display='none'; persist(); renderDoorList(); makePlans(); }
+function renderDoorList(){ const box=$('extraDoorList'); if(!box) return; box.innerHTML=extraDoors.length?extraDoors.map(d=>'<div style="margin-top:6px;display:flex;gap:4px;align-items:center"><button type="button" onclick="selectedId=\''+d.id+'\';renderDoorList();makePlans()" style="border:0;background:'+(d.id===selectedId?'#c9a227':'#e2e8f0')+';font-weight:800;padding:4px 6px">'+(d.kind==='party'?'Party':d.kind==='hung'?'Hung':d.kind==='slider'?'Slider':'OH')+' '+d.wall+'</button><input style="width:44px" value="'+d.w+'" onchange="setDoorSize(\''+d.id+'\',this.value,null)"/><span>x</span><input style="width:44px" value="'+d.h+'" onchange="setDoorSize(\''+d.id+'\',null,this.value)"/></div>').join(''):'<div style="color:#64748b">No extra doors</div>'; }
+function setDoorSize(id,w,h){ const d=extraDoors.find(x=>x.id===id); if(!d) return; if(w!=null) d.w=Math.max(2,parseFloat(w)||d.w); if(h!=null) d.h=Math.max(1,parseFloat(h)||d.h); persist(); makePlans(); }
+function deleteSelected(){ pushUndo(); const psel=document.querySelector('.plan-text.sel'); if(psel){ const hit=planTexts.find(t=>t.el===psel); if(hit) planTextsData=planTextsData.filter(p=>p.id!==hit.id); psel.remove(); persist(); return; } if(!extraDoors.length){ alert('Select a door, window, or text first.'); return; } extraDoors=selectedId?extraDoors.filter(d=>d.id!==selectedId):extraDoors.slice(0,-1); selectedId=extraDoors.at(-1)?.id||null; renderDoorList(); persist(); makePlans(); }
+function pickView(side,ev){ if(ev && ev.target && ev.target.closest && ev.target.closest('.xd, .plan-text, .xd-handle, .xd-body, .oh-main')) return; selectedView=side; document.querySelectorAll('.elev').forEach(el=>el.classList.toggle('picked', el.dataset.side===side)); if($('viewHint')) $('viewHint').textContent='Adding to '+side+' wall.'; updateLiveReturnReadout(side); }
+function toggleGutter(){ choices.gutters=!choices.gutters; persist(); makePlans(); }
+function toggleFirewall(){ choices.firewall=!choices.firewall; persist(); makePlans(); }
+
+function addTextBox(){ if(!selectedView){ alert('Click a FRONT, BACK, LEFT, or RIGHT plan first, then Add Text.'); return; } pushUndo(); planTextsData.push({id:'p'+Date.now(), side:selectedView, x:'30%', y:'40%', w:'140px', h:'40px', html:'Text', size:($('fontSize').value||16)+'px', weight:$('fontBold').value||'700', color:$('fontColor')?$('fontColor').value:'#111'}); persist(); makePlans(); }
+function mountPlanTexts(){ planTexts=[]; (planTextsData||[]).forEach(t=>{ const host=document.querySelector('.elev[data-side="'+t.side+'"]'); if(!host) return; const el=document.createElement('div'); el.className='plan-text'; el.contentEditable='true'; el.innerHTML=t.html||'Text'; el.style.left=t.x||'30%'; el.style.top=t.y||'40%'; if(t.w) el.style.width=t.w; if(t.h) el.style.height=t.h; el.style.fontSize=t.size||'16px'; el.style.fontWeight=t.weight||'700'; el.style.color=t.color||'#111'; const sz=document.createElement('div'); sz.className='sz'; el.appendChild(sz); el.addEventListener('pointerdown', ev=>{ ev.stopPropagation(); document.querySelectorAll('.plan-text').forEach(n=>n.classList.remove('sel')); el.classList.add('sel'); }); el.addEventListener('input', ()=>{ const rec=planTextsData.find(p=>p.id===t.id); if(rec) rec.html=el.innerHTML; persist(); }); host.appendChild(el); planTexts.push({id:t.id, side:t.side, el}); makeDraggable(el, ()=>{ const rec=planTextsData.find(p=>p.id===t.id); if(!rec) return; rec.x=el.style.left; rec.y=el.style.top; rec.w=el.style.width; rec.h=el.style.height; }); bindTextResize(el, sz, ()=>{ const rec=planTextsData.find(p=>p.id===t.id); if(!rec) return; rec.w=el.style.width; rec.h=el.style.height; }); }); }
+function applyTextStyle(){ const sel=document.querySelector('.plan-text.sel'); if(!sel) return; sel.style.fontSize=($('fontSize').value||16)+'px'; sel.style.fontWeight=$('fontBold').value||'700'; if($('fontColor')) sel.style.color=$('fontColor').value; const rec=planTextsData.find(p=>planTexts.some(t=>t.el===sel && t.id===p.id)); if(rec){ rec.size=sel.style.fontSize; rec.weight=sel.style.fontWeight; rec.color=sel.style.color; rec.html=sel.innerHTML; } persist(); }
+function makeDraggable(el,onUp){ el.addEventListener('pointerdown', e=>{ document.querySelectorAll('.plan-text').forEach(n=>n.classList.remove('sel')); el.classList.add('sel'); if(e.target.classList && e.target.classList.contains('sz')) return; if(e.target!==el && e.target.isContentEditable) return; const box=el.offsetParent||$('paper'); const r=box.getBoundingClientRect(); const ox=e.clientX-(r.left+el.offsetLeft), oy=e.clientY-(r.top+el.offsetTop); function move(ev){ el.style.left=Math.max(0,ev.clientX-r.left-ox)+'px'; el.style.top=Math.max(0,ev.clientY-r.top-oy)+'px'; if(onUp) onUp(); } function up(){ window.removeEventListener('pointermove',move); window.removeEventListener('pointerup',up); if(onUp) onUp(); persist(); } window.addEventListener('pointermove',move); window.addEventListener('pointerup',up); }); }
+function bindTextResize(el,handle,onMove){ if(!handle) return; handle.addEventListener('pointerdown', e=>{ e.stopPropagation(); e.preventDefault(); el.classList.add('sel'); const startX=e.clientX, startY=e.clientY, sw=el.offsetWidth, sh=el.offsetHeight; function move(ev){ el.style.width=Math.max(60,sw+(ev.clientX-startX))+'px'; el.style.height=Math.max(22,sh+(ev.clientY-startY))+'px'; if(onMove) onMove(); } function up(){ window.removeEventListener('pointermove',move); window.removeEventListener('pointerup',up); if(onMove) onMove(); persist(); } window.addEventListener('pointermove',move); window.addEventListener('pointerup',up); }); }
+
+function sidingHatch(x,y,w,h){ const vert=(val('sidingDir')||'horizontal')==='vertical'; let s=''; if(vert){ for(let i=x+8;i<x+w;i+=10) s+=`<line x1="${i}" y1="${y}" x2="${i}" y2="${y+h}" stroke="#d7c7a6" stroke-width=".6"/>`; } else { for(let i=y+8;i<y+h;i+=8) s+=`<line x1="${x}" y1="${i}" x2="${x+w}" y2="${i}" stroke="#d7c7a6" stroke-width=".6"/>`; } return s; }
+function fillIfEmpty(id,value){ const el=$(id); if(!el) return; if(String(el.value||'').trim()==='') el.value=value; }
+function applyDefaults(){ pushUndo(); fillIfEmpty('sizeW','20'); fillIfEmpty('sizeL','20'); fillIfEmpty('wallHeight','8'); fillIfEmpty('ohDoors','16x7'); fillIfEmpty('pitch','4/12'); if($('pitchLine')&&!val('pitchLine')) $('pitchLine').value='4/12'; fillIfEmpty('wallSheath','7/16" OSB'); fillIfEmpty('roofSheath','7/16" OSB'); fillIfEmpty('notes','INSTALL SILL PAN FOR SERVICE DOOR'); const city=selectedCity(); const code=CITY_BUILD[city]; if(code){ if(code.rafters) $('rafters').value=code.rafters; if(code.ties) $('crossties').value=code.ties; if(code.header){ if(/LVL/i.test(code.header)) setChoiceSilent('header','2 LVL'); else setChoiceSilent('header','2-2x12 w/ 1/2 Flitchplate'); } const kept=val('notes').split(/\n+/).filter(l=>l && !/\bCODE\s*:/i.test(l)).join('\n'); $('notes').value=code.notes?((kept?kept+'\n':'')+city.toUpperCase()+' CODE: '+code.notes):kept; } persist(); makePlans(); }
+function applyChanges(){ pushUndo(); if($('pitch')&&val('pitch')) $('pitchLine').value=val('pitch'); persist(); makePlans(); }
+
+function elevSvg(side){
+  const type=choices.roof; const w=val('sizeW')||'20', l=val('sizeL')||'20', wh=val('wallHeight')||'8';
+  const ohWall=(val('ohWall')||'FRONT').toUpperCase(), svcWall=(val('svcWall')||'RIGHT').toUpperCase(), svcPos=val('svcPos')||'right';
+  const showOH=side===ohWall, showSvc=side===svcWall;
+  const gableEnd=(type==='Gable'&&(side==='FRONT'||side==='BACK'))||(type==='Reverse Gable'&&(side==='LEFT'||side==='RIGHT'));
+  const revRun=type==='Reverse Gable'&&(side==='FRONT'||side==='BACK');
+  let roof;
+  if(type==='Hip'){ roof=`<polygon points="40,72 360,72 310,18 90,18" fill="#5b616a" stroke="#111" stroke-width="1.6"/><line x1="90" y1="18" x2="200" y2="72" stroke="#2a2f36"/><line x1="310" y1="18" x2="200" y2="72" stroke="#2a2f36"/>`; }
+  else if(gableEnd){ roof=`<polygon points="40,72 200,10 360,72" fill="#5b6160" stroke="#111" stroke-width="1.6"/>`; }
+  else if(revRun){ roof=`<rect x="40" y="28" width="320" height="44" fill="#5b616a" stroke="#111" stroke-width="1.6"/>`; }
+  else { roof=`<polygon points="40,72 360,72 360,28 40,28" fill="#5b616a" stroke="#111" stroke-width="1.6"/>`; }
+  const wallPx=320, origin=40, wallTop=72, wallH=168, wallBot=240;
+  let openings='', siding=sidingHatch(origin,wallTop,wallPx,wallH);
+  if(showOH){
+    const r=currentReturns(); const scale=wallPx/Math.max(1,r.wall); const dx=origin+r.left*scale; const dw=Math.max(24,r.door*scale); const dy=118, dh=122;
+    let panels=''; for(let c=1;c<=2;c++) panels+=`<line x1="${dx+dw*c/3}" y1="${dy+4}" x2="${dx+dw*c/3}" y2="${dy+dh-4}" stroke="#7a8aa0"/>`;
+    for(let row=1;row<=3;row++) panels+=`<line x1="${dx+4}" y1="${dy+dh*row/4}" x2="${dx+dw-4}" y2="${dy+dh*row/4}" stroke="#7a8aa0"/>`;
+    const ohShort=(val('ohDoors')|| (r.door+'x7'));
+    openings+=`<g class="oh-main" data-kind="oh-main" data-side="${side}" style="cursor:move"><rect class="oh-body" x="${dx}" y="${dy}" width="${dw}" height="${dh}" fill="#cfdcea" stroke="#111" stroke-width="2"/>${panels}<text class="edit-lbl oh-size" data-edit="ohSize" data-side="${side}" x="${dx+dw/2}" y="${dy+dh/2-6}" text-anchor="middle" font-size="14" font-family="Arial" font-weight="800">${lbl(side,'ohSize', ohShort)}</text><text class="edit-lbl oh-name" data-edit="ohName" data-side="${side}" x="${dx+dw/2}" y="${dy+dh/2+12}" text-anchor="middle" font-size="12" font-family="Arial" font-weight="800">${lbl(side,'ohName','Overhead Door')}</text><rect class="oh-handle" x="${dx+dw-12}" y="${dy+dh-12}" width="14" height="14" fill="#c9a227" stroke="#111"/></g>`;
   }
   extraDoors.filter(d=>String(d.wall).toUpperCase()===side).forEach(d=>{
-    const wft=Number(d.w)||3;
-    const a=itemLeftFt(d,side);
-    const isWin=d.kind==='hung'||d.kind==='slider';
-    items.push({id:d.id, kind:d.kind, name:isWin?'WIN':(d.kind==='party'?'PARTY':'OH'), a:+a, b:+(a+wft)});
-  });
-  return items.sort((p,q)=>p.a-q.a);
-}
-function returnGaps(side){
-  const wall=wallLengthFor(side);
-  const items=wallItems(side);
-  const gaps=[];
-  let cursor=0;
-  items.forEach(it=>{
-    const span=+(it.a-cursor).toFixed(1);
-    if(span>=0.15) gaps.push({a:cursor,b:it.a,ft:span,kind:'gap'});
-    cursor=Math.max(cursor, it.b);
-  });
-  const right=+(wall-cursor).toFixed(1);
-  if(right>=0.15) gaps.push({a:cursor,b:wall,ft:right,kind:'gap'});
-  if(gaps.length){
-    if(gaps[0].a<=0.05) gaps[0].label="L RET";
-    if(Math.abs(gaps[gaps.length-1].b-wall)<0.08) gaps[gaps.length-1].label="R RET";
-    gaps.forEach((g,i)=>{ if(!g.label) g.label = (i===0 || i===gaps.length-1) ? 'GAP' : 'MID RET'; });
-    if(gaps.length===3 && gaps[1].label==='GAP') gaps[1].label='MID RET';
-  }
-  return {wall, items, gaps};
-}
-function returnSvg(side){
-  if(choices.showReturns===false) return '';
-  const info=returnGaps(side);
-  if(!info.items.length) return '';
-  const origin=40, wallPx=320, scale=wallPx/Math.max(1,info.wall);
-  return `<g class="ret-marks" data-side="${side}">`+info.gaps.map(g=>{
-    const x1=origin+g.a*scale, x2=origin+g.b*scale, mid=(x1+x2)/2;
-    return `<line x1="${x1}" y1="108" x2="${x2}" y2="108" stroke="#1d4ed8" stroke-width="1.3"/>
-      <line x1="${x1}" y1="104" x2="${x1}" y2="112" stroke="#1d4ed8"/>
-      <line x1="${x2}" y1="104" x2="${x2}" y2="112" stroke="#1d4ed8"/>
-      <text x="${mid}" y="102" text-anchor="middle" font-size="9" font-family="Arial" font-weight="800" fill="#1d4ed8">${g.ft}' ${g.label}</text>`;
-  }).join('')+'</g>';
-}
-function updateLiveReturnReadout(side){
-  const box=$('liveReturnBox');
-  if(!box) return;
-  const info=returnGaps(side||selectedView||'FRONT');
-  if(!info.items.length){ box.textContent=''; return; }
-  const bits=info.gaps.map(g=>g.ft+"' "+g.label);
-  const names=info.items.map(it=>it.name+' '+it.a.toFixed(1)+"-"+it.b.toFixed(1));
-  box.textContent=(side||selectedView)+'  ·  '+bits.join('   ·   ')+(names.length?('  |  '+names.join(', ')): '');
-}
-function pickView(side, ev){
-  if(ev && ev.target && ev.target.closest && ev.target.closest('.xd, .plan-text, .xd-handle, .xd-body, .oh-main')) return;
-  selectedView=side;
-  document.querySelectorAll('.elev').forEach(el=>el.classList.toggle('picked', el.dataset.side===side));
-  if($('viewHint')) $('viewHint').textContent='Adding doors to '+side+' wall. Then click Add Door.';
-  updateLiveReturnReadout(side);
-}
-function nudgeSvc(dir){
-  const wall=wallLengthFor((val('svcWall')||'RIGHT').toUpperCase());
-  let cur=parseFloat(val('svcOffset')||'');
-  if(!Number.isFinite(cur)){
-    const pos=val('svcPos')||'right';
-    cur = pos==='left'?1 : pos==='center'?(wall/2-1.5):Math.max(0,wall-3);
-  }
-  const next=Math.max(0, Math.min(Math.max(0,wall-2.5), +(cur+dir).toFixed(1)));
-  $('svcOffset').value=String(next);
-  separateDoors();
-  touch();
-}
-function fillIfEmpty(id, value){
-  const el=$(id); if(!el) return;
-  if(String(el.value||'').trim()==='') el.value=value;
-}
-const REPS={
-  Sam:{phone:'708-351-6287', email:'samgarageman@yahoo.com'},
-  Ramsey:{phone:'708-663-0197', email:'ramsey.barakat@outlook.com'},
-  Wally:{phone:'708-205-2882', email:'wally.absolutegarages@gmail.com'},
-  Tomas:{phone:'', email:''},
-  Tom:{phone:'708-334-9470', email:''},
-  Luis:{phone:'', email:''}
-};
-function onRepChange(){
-  const r=REPS[val('rep')]||{};
-  const bits=[r.phone,r.email].filter(Boolean).join('  ·  ');
-  if($('repContact')) $('repContact').textContent=bits;
-  persist();
-}
-function onCitySel(){
-  const manual=val('citySel')==='__manual__';
-  if($('city')) $('city').style.display=manual?'block':'none';
-  if(!manual && val('citySel')) $('city').value=val('citySel');
-  persist();
-}
-function selectedCity(){
-  const sel=val('citySel');
-  if(sel && sel!=='__manual__' && sel!=='Other') return sel;
-  return val('city');
-}
-function syncSizeFromSelect(){
-  const ws=val('sizeWSel'), ls=val('sizeLSel');
-  if(ws && ws!=='custom' && $('sizeW')) $('sizeW').value=ws;
-  if(ls && ls!=='custom' && $('sizeL')) $('sizeL').value=ls;
-  if($('citySel') && val('citySel') && val('citySel')!=='__manual__' && val('citySel')!=='Other') $('city').value=val('citySel');
-}
-function applyDefaults(){
-  pushUndo();
-  syncSizeFromSelect();
-  // Size stays empty unless they already typed one.
-  const W=parseFloat(val('sizeW'))||0;
-  fillIfEmpty('wallHeight','8');
-  if($('pitch') && !val('pitch')) $('pitch').value='4/12';
-  fillIfEmpty('pitchLine', val('pitchLine')||val('pitch')||'4/12');
-  fillIfEmpty('ohDoors','16 x 7');
-  fillIfEmpty('ohWidth', W>=16?'16':(W?String(Math.min(16,W-2)):'16'));
-  fillIfEmpty('rafters','2x6 16" O.C.');
-  fillIfEmpty('wallCenters','16" O.C.');
-  fillIfEmpty('crossties','2x6 48" O.C.');
-  fillIfEmpty('wallSheath','1/2"');
-  fillIfEmpty('roofSheath','1/2"');
-  fillIfEmpty('winHung','1');
-  fillIfEmpty('notes','INSTALL SILL PAN FOR SERVICE DOOR');
-  const city=selectedCity();
-  const code=(typeof CITY_BUILD==='object' && city) ? CITY_BUILD[city] : null;
-  if(code){
-    if(code.rafters) $('rafters').value=code.rafters;
-    if(code.ties && code.ties.indexOf('EPA')<0 && code.ties.indexOf('TOPO')<0) $('crossties').value=code.ties;
-    if(code.header){
-      if(/LVL/i.test(code.header)) setChoiceSilent('header','2 LVL');
-      else setChoiceSilent('header','2-2x12 w/ 1/2 Flitchplate');
-    }
-    const kept=val('notes').split(/\n+/).filter(l=>l && !/\bCODE\s*:/i.test(l)).join('\n');
-    if(code.notes){
-      const line=city.toUpperCase()+' CODE: '+code.notes;
-      $('notes').value=(kept?kept+'\n':'')+line;
-    } else {
-      $('notes').value=kept;
-    }
-  }
-  persist();
-  makePlans();
-}
-function applyChanges(){
-  pushUndo();
-  syncSizeFromSelect();
-  persist();
-  makePlans();
-}
-function applyGarageDefaults(){ applyDefaults(); }
-
-function renderDoorList(){
-  const box=$('extraDoorList');
-  if(!box) return;
-  box.innerHTML=extraDoors.length
-    ? extraDoors.map(d=>'<div style="margin-top:6px;display:flex;gap:4px;align-items:center"><button type="button" onclick="selectedId=\''+d.id+'\';renderDoorList();makePlans()" style="border:0;background:'+(d.id===selectedId?'#c9a227':'#e2e8f0')+';font-weight:800;padding:4px 6px">'+(d.kind==='party'?'Party':d.kind==='hung'?'Hung':d.kind==='slider'?'Slider':'OH')+' '+d.wall+'</button><input style="width:44px" value="'+d.w+'" onchange="setDoorSize(\''+d.id+'\',this.value,null)"/><span>x</span><input style="width:44px" value="'+d.h+'" onchange="setDoorSize(\''+d.id+'\',null,this.value)"/></div>').join('')
-    : '<div style="color:#64748b">No extra doors</div>';
-}
-function setDoorSize(id,w,h){
-  const d=extraDoors.find(x=>x.id===id); if(!d) return;
-  if(w!=null) d.w=Math.max(2,parseFloat(w)||d.w);
-  if(h!=null) d.h=Math.max(6,parseFloat(h)||d.h);
-  persist(); makePlans();
-}
-
-function addTextBox(){
-  if(selectedView && $('elevs')){
-    addPlanText();
-    return;
-  }
-  pushUndo();
-  const el=document.createElement('div');
-  el.className='free-text sel';
-  el.contentEditable='true';
-  el.textContent='Text';
-  el.style.left='40%'; el.style.top='48%';
-  el.style.fontSize=($('fontSize').value||16)+'px';
-  el.style.fontWeight=$('fontBold').value||'700';
-  el.style.color=$('fontColor')?$('fontColor').value:'#111';
-  el.style.textAlign='center';
-  $('paper').appendChild(el);
-  texts.push({id:'t'+Date.now(), el});
-  makeDraggable(el);
-  el.focus();
-  persist();
-}
-let planTextsData=[];
-function addPlanText(){
-  if(!selectedView){ alert('Click a FRONT, BACK, LEFT, or RIGHT plan first, then Add Text.'); return; }
-  pushUndo();
-  const rec={id:'p'+Date.now(), side:selectedView, x:'30%', y:'40%', w:'140px', h:'40px', html:'Text', size:($('fontSize').value||16)+'px', weight:$('fontBold').value||'700', color:$('fontColor')?$('fontColor').value:'#111'};
-  planTextsData.push(rec);
-  persist();
-  makePlans();
-}
-function mountPlanTexts(){
-  planTexts=[];
-  (planTextsData||[]).forEach(t=>{
-    const host=document.querySelector('.elev[data-side="'+t.side+'"]');
-    if(!host) return;
-    const el=document.createElement('div');
-    el.className='plan-text';
-    el.contentEditable='true';
-    el.innerHTML=t.html||'Text';
-    el.style.left=t.x||'30%'; el.style.top=t.y||'40%';
-    if(t.w) el.style.width=t.w; if(t.h) el.style.height=t.h;
-    el.style.fontSize=t.size||'16px';
-    el.style.fontWeight=t.weight||'700';
-    el.style.color=t.color||'#111';
-    el.addEventListener('pointerdown', ev=>{ ev.stopPropagation(); document.querySelectorAll('.plan-text').forEach(n=>n.classList.remove('sel')); el.classList.add('sel'); });
-    el.addEventListener('input', ()=>{ const rec=planTextsData.find(p=>p.id===t.id); if(rec) rec.html=el.innerHTML; persist(); });
-    const sz=document.createElement('div'); sz.className='sz'; el.appendChild(sz);
-    host.appendChild(el);
-    planTexts.push({id:t.id, side:t.side, el});
-    makeDraggable(el, ()=>{
-      const rec=planTextsData.find(p=>p.id===t.id); if(!rec) return;
-      rec.x=el.style.left; rec.y=el.style.top; rec.w=el.style.width; rec.h=el.style.height;
-    });
-    bindTextResize(el, sz, ()=>{
-      const rec=planTextsData.find(p=>p.id===t.id); if(!rec) return;
-      rec.w=el.style.width; rec.h=el.style.height;
-    });
-  });
-}
-function restoreText(t){
-  const el=document.createElement('div');
-  el.className='free-text';
-  el.contentEditable='true';
-  el.innerHTML=t.html||'Text';
-  el.style.left=t.x||'40%'; el.style.top=t.y||'48%';
-  el.style.fontSize=t.size||'16px'; el.style.fontWeight=t.weight||'700';
-  el.style.textAlign='center';
-  $('paper').appendChild(el);
-  texts.push({id:t.id, el});
-  makeDraggable(el);
-}
-function applyTextStyle(){
-  const sel=document.querySelector('.free-text.sel, .plan-text.sel');
-  if(!sel) return;
-  sel.style.fontSize=($('fontSize').value||16)+'px';
-  sel.style.fontWeight=$('fontBold').value||'700';
-  if($('fontColor')) sel.style.color=$('fontColor').value;
-  const rec=planTextsData.find(p=>planTexts.some(t=>t.el===sel && t.id===p.id));
-  if(rec){ rec.size=sel.style.fontSize; rec.weight=sel.style.fontWeight; rec.color=sel.style.color; rec.html=sel.innerHTML; }
-  persist();
-}
-function makeDraggable(el, onUp){
-  el.addEventListener('pointerdown', e=>{
-    document.querySelectorAll('.free-text,.plan-text').forEach(n=>n.classList.remove('sel'));
-    el.classList.add('sel');
-    if(e.target.classList && e.target.classList.contains('sz')) return;
-    if(e.target!==el && e.target.isContentEditable) return;
-    const box=el.offsetParent||$('paper');
-    const r=box.getBoundingClientRect();
-    const ox=e.clientX-(r.left+el.offsetLeft), oy=e.clientY-(r.top+el.offsetTop);
-    function move(ev){
-      el.style.left=Math.max(0, ev.clientX-r.left-ox)+'px';
-      el.style.top=Math.max(0, ev.clientY-r.top-oy)+'px';
-      if(onUp) onUp();
-    }
-    function up(){
-      window.removeEventListener('pointermove',move); window.removeEventListener('pointerup',up);
-      if(onUp) onUp();
-      persist();
-    }
-    window.addEventListener('pointermove',move); window.addEventListener('pointerup',up);
-  });
-}
-function bindTextResize(el, handle, onMove){
-  if(!handle) return;
-  handle.addEventListener('pointerdown', e=>{
-    e.stopPropagation(); e.preventDefault();
-    el.classList.add('sel');
-    const startX=e.clientX, startY=e.clientY;
-    const sw=el.offsetWidth, sh=el.offsetHeight;
-    function move(ev){
-      el.style.width=Math.max(60, sw+(ev.clientX-startX))+'px';
-      el.style.height=Math.max(22, sh+(ev.clientY-startY))+'px';
-      if(onMove) onMove();
-    }
-    function up(){
-      window.removeEventListener('pointermove',move); window.removeEventListener('pointerup',up);
-      if(onMove) onMove(); persist();
-    }
-    window.addEventListener('pointermove',move); window.addEventListener('pointerup',up);
-  });
-}
-
-function wallWords(side){
-  const s=String(side||'').toUpperCase();
-  if(s==='FRONT') return 'front wall';
-  if(s==='BACK') return 'back wall';
-  if(s==='LEFT') return 'left wall';
-  if(s==='RIGHT') return 'right wall';
-  return (side||'').toLowerCase()+' wall';
-}
-function wallLengthFor(side){
-  const W=parseFloat(val('sizeW'))||20;
-  const L=parseFloat(val('sizeL'))||20;
-  return (side==='FRONT'||side==='BACK') ? W : L;
-}
-function ohWidthFt(){
-  const typed=parseFloat(val('ohWidth'));
-  if(Number.isFinite(typed)&&typed>0) return typed;
-  const m=String(val('ohDoors')||'').match(/(\d+(?:\.\d+)?)/);
-  return m?parseFloat(m[1]):16;
-}
-function defaultReturns(){
-  const wall=wallLengthFor(val('ohWall')||'FRONT');
-  const door=ohWidthFt();
-  const rem=Math.max(0, +(wall-door).toFixed(1));
-  const left=+(rem/2).toFixed(1);
-  return {left, right:+(rem-left).toFixed(1), wall, door};
-}
-function currentReturns(){
-  const d=defaultReturns();
-  let left=parseFloat(val('ohLeftRet'));
-  let right=parseFloat(val('ohRightRet'));
-  if(!Number.isFinite(left) && !Number.isFinite(right)) return d;
-  if(!Number.isFinite(left)) left=+(d.wall-d.door-(Number.isFinite(right)?right:0)).toFixed(1);
-  if(!Number.isFinite(right)) right=+(d.wall-d.door-left).toFixed(1);
-  if(left<0) left=0;
-  if(right<0) right=0;
-  return {left, right, wall:d.wall, door:d.door};
-}
-function writeReturns(left,right){
-  if($('ohLeftRet')) $('ohLeftRet').value=String(left);
-  if($('ohRightRet')) $('ohRightRet').value=String(right);
-  const n=$('ohReturnNote');
-  if(n) n.textContent='Wall '+currentReturns().wall+"'  ·  door "+currentReturns().door+"'  ·  left "+left+"'  ·  right "+right+"'";
-}
-function recalcReturns(which){
-  const d=defaultReturns();
-  let left=parseFloat(val('ohLeftRet'));
-  let right=parseFloat(val('ohRightRet'));
-  if(which==='width' && !Number.isFinite(left) && !Number.isFinite(right)){
-    writeReturns(d.left,d.right); touch(); return;
-  }
-  if(which==='left' && Number.isFinite(left)){
-    right=+(d.wall-d.door-left).toFixed(1);
-  } else if(which==='right' && Number.isFinite(right)){
-    left=+(d.wall-d.door-right).toFixed(1);
-  } else {
-    left=d.left; right=d.right;
-  }
-  if(left<0){ left=0; right=+(d.wall-d.door).toFixed(1); }
-  if(right<0){ right=0; left=+(d.wall-d.door).toFixed(1); }
-  writeReturns(+left.toFixed(1), +right.toFixed(1));
-  touch();
-}
-function nudgeOh(dir){
-  const r=currentReturns();
-  let left=+(r.left+dir).toFixed(1);
-  let right=+(r.right-dir).toFixed(1);
-  if(left<0 || right<0) return;
-  writeReturns(left,right);
-  separateDoors();
-  touch();
-}
-function sameWall(){
-  return String(val('ohWall')||'FRONT').toUpperCase()===String(val('svcWall')||'RIGHT').toUpperCase();
-}
-function svcWidthFt(){ return 3; }
-function svcFeet(){
-  const wall=wallLengthFor(val('svcWall')||val('ohWall')||'FRONT');
-  let off=parseFloat(val('svcOffset')||'');
-  const pos=val('svcPos')||'right';
-  if(!Number.isFinite(off)) off = pos==='left'?0.5 : pos==='center'?(wall/2-1.5):Math.max(0,wall-svcWidthFt()-0.5);
-  off=Math.max(0, Math.min(wall-svcWidthFt(), off));
-  return {off, width:svcWidthFt(), wall};
-}
-function separateDoors(){
-  if(!sameWall()) return;
-  const r=currentReturns();
-  const svc=svcFeet();
-  const gap=0.5;
-  const oh0=r.left, oh1=r.left+r.door;
-  const s0=svc.off, s1=svc.off+svc.width;
-  const overlap = !(oh1+gap<=s0 || s1+gap<=oh0);
-  if(!overlap) return;
-  const svcRight = (s0+s1)/2 >= r.wall/2;
-  if(svcRight){
-    const need=+(svc.width+gap).toFixed(1);
-    let right=Math.max(need, r.right);
-    let left=+(r.wall-r.door-right).toFixed(1);
-    if(left<0){ left=0; right=+(r.wall-r.door).toFixed(1); }
-    writeReturns(left,right);
-    $('svcOffset').value=String(Math.max(left+r.door+gap, Math.min(svc.off, r.wall-svc.width)).toFixed(1));
-    if($('svcPos')) $('svcPos').value='right';
-  } else {
-    const need=+(svc.width+gap).toFixed(1);
-    let left=Math.max(need, r.left);
-    let right=+(r.wall-r.door-left).toFixed(1);
-    if(right<0){ right=0; left=+(r.wall-r.door).toFixed(1); }
-    writeReturns(left,right);
-    $('svcOffset').value=String(Math.max(0, Math.min(left-svc.width-gap, svc.off)).toFixed(1));
-    if($('svcPos')) $('svcPos').value='left';
-  }
-}
-function flipDoors(){
-  pushUndo();
-  if(!sameWall()){
-    if($('svcWall')) $('svcWall').value=val('ohWall')||'FRONT';
-  }
-  const wall=wallLengthFor(val('ohWall')||'FRONT');
-  const door=ohWidthFt();
-  const need=+(svcWidthFt()+0.5).toFixed(1);
-  const svc=svcFeet();
-  const r=currentReturns();
-  const svcOnRight=(svc.off+svc.width/2) >= (r.left+r.door/2);
-  if(svcOnRight){
-    writeReturns(need, +(wall-door-need).toFixed(1));
-    $('svcOffset').value='0.5';
-    if($('svcPos')) $('svcPos').value='left';
-  } else {
-    writeReturns(+(wall-door-need).toFixed(1), need);
-    $('svcOffset').value=String(+(wall-svcWidthFt()-0.5).toFixed(1));
-    if($('svcPos')) $('svcPos').value='right';
-  }
-  persist();
-  makePlans();
-}
-
-function sidingHatch(x,y,w,h){
-  const vert=(val('sidingDir')||'horizontal')==='vertical';
-  let s=`<clipPath id="sid${x}${y}"><rect x="${x}" y="${y}" width="${w}" height="${h}"/></clipPath><g clip-path="url(#sid${x}${y})">`;
-  if(vert){
-    for(let i=x;i<x+w;i+=7) s+=`<line x1="${i}" y1="${y}" x2="${i}" y2="${y+h}" stroke="#8a8476" stroke-width=".6"/>`;
-  } else {
-    for(let i=y+6;i<y+h;i+=7) s+=`<line x1="${x}" y1="${i}" x2="${x+w}" y2="${i}" stroke="#8a8476" stroke-width=".7"/>`;
-  }
-  return s+`</g>`;
-}
-function shingleHatch(pts,id){
-  return `<polygon points="${pts}" fill="#5b616a" stroke="#10203a" stroke-width="1.6"/>
-    <g opacity=".45" stroke="#d7dbe0" stroke-width=".6">
-      <line x1="40" y1="28" x2="360" y2="28"/>
-      <line x1="40" y1="38" x2="360" y2="38"/>
-      <line x1="40" y1="48" x2="360" y2="48"/>
-    </g>`;
-}
-function elevSvg(side){
-  const type=choices.roof;
-  const w=val('sizeW')||'20', l=val('sizeL')||'20', wh=val('wallHeight')||'8';
-  const ohWall=(val('ohWall')||'FRONT').toUpperCase();
-  const svcWall=(val('svcWall')||'RIGHT').toUpperCase();
-  const svcPos=val('svcPos')||'right';
-  const showOH = side===ohWall;
-  const showSvc = side===svcWall;
-  const gableEnd = (type==='Gable' && (side==='FRONT'||side==='BACK')) || (type==='Reverse Gable' && (side==='LEFT'||side==='RIGHT'));
-  const revRun = type==='Reverse Gable' && (side==='FRONT'||side==='BACK');
-  let roof;
-  if(type==='Hip'){
-    roof=`<polygon points="40,72 360,72 310,18 90,18" fill="#5b616a" stroke="#111" stroke-width="1.6"/>
-      <line x1="90" y1="18" x2="200" y2="72" stroke="#2a2f36" stroke-width="1"/>
-      <line x1="310" y1="18" x2="200" y2="72" stroke="#2a2f36" stroke-width="1"/>
-      <line x1="90" y1="22" x2="310" y2="22" stroke="#cfd3d8" stroke-width=".6"/>
-      <line x1="96" y1="32" x2="304" y2="32" stroke="#cfd3d8" stroke-width=".6"/>
-      <line x1="104" y1="44" x2="296" y2="44" stroke="#cfd3d8" stroke-width=".6"/>
-      <line x1="112" y1="56" x2="288" y2="56" stroke="#cfd3d8" stroke-width=".6"/>`;
-  } else if(gableEnd){
-    roof=`<polygon points="40,72 200,10 360,72" fill="#5b6160" stroke="#111" stroke-width="1.6"/>
-      <line x1="70" y1="60" x2="200" y2="16" stroke="#cfd3d8" stroke-width=".6"/>
-      <line x1="330" y1="60" x2="200" y2="16" stroke="#cfd3d8" stroke-width=".6"/>
-      <line x1="100" y1="48" x2="300" y2="48" stroke="#cfd3d8" stroke-width=".5"/>
-      <line x1="120" y1="36" x2="280" y2="36" stroke="#cfd3d8" stroke-width=".5"/>
-      <line x1="145" y1="24" x2="255" y2="24" stroke="#cfd3d8" stroke-width=".5"/>`;
-  } else if(revRun){
-    roof=`<rect x="40" y="28" width="320" height="44" fill="#5b616a" stroke="#111" stroke-width="1.6"/>
-      <line x1="40" y1="36" x2="360" y2="36" stroke="#cfd3d8" stroke-width=".7"/>
-      <line x1="40" y1="44" x2="360" y2="44" stroke="#cfd3d8" stroke-width=".7"/>
-      <line x1="40" y1="52" x2="360" y2="52" stroke="#cfd3d8" stroke-width=".7"/>
-      <line x1="40" y1="60" x2="360" y2="60" stroke="#cfd3d8" stroke-width=".7"/>
-      <line x1="40" y1="68" x2="360" y2="68" stroke="#cfd3d8" stroke-width=".7"/>`;
-  } else {
-    roof=`<polygon points="40,72 360,72 360,28 40,28" fill="#5b616a" stroke="#111" stroke-width="1.6"/>
-      <line x1="40" y1="36" x2="360" y2="36" stroke="#cfd3d8" stroke-width=".7"/>
-      <line x1="40" y1="46" x2="360" y2="46" stroke="#cfd3d8" stroke-width=".7"/>
-      <line x1="40" y1="56" x2="360" y2="56" stroke="#cfd3d8" stroke-width=".7"/>
-      <line x1="40" y1="66" x2="360" y2="66" stroke="#cfd3d8" stroke-width=".7"/>`;
-  }
-  const wallPx=320, origin=40, wallTop=72, wallH=168, wallBot=240;
-  let siding=sidingHatch(origin,wallTop,wallPx,wallH);
-  let openings='';
-  if(showOH){
-    const r=currentReturns();
-    const scale=wallPx/Math.max(1,r.wall);
-    const dx=origin + r.left*scale;
-    const dw=Math.max(24, r.door*scale);
-    const dy=118, dh=122;
-    let panels='';
-    for(let c=1;c<=2;c++) panels+=`<line x1="${dx+dw*c/3}" y1="${dy+4}" x2="${dx+dw*c/3}" y2="${dy+dh-4}" stroke="#7a8aa0" stroke-width=".8"/>`;
-    for(let row=1;row<=3;row++) panels+=`<line x1="${dx+4}" y1="${dy+dh*row/4}" x2="${dx+dw-4}" y2="${dy+dh*row/4}" stroke="#7a8aa0" stroke-width=".8"/>`;
-    const ohLabel=(val('ohDoors')|| (r.door+' x 7')) + '';
-    const ohShort=/x/i.test(ohLabel)?ohLabel.replace(/\s+/g,' '):(r.door+'x7');
-    openings+=`<g class="oh-main" data-kind="oh-main" data-side="${side}" style="cursor:move">
-      <rect class="oh-body" x="${dx}" y="${dy}" width="${dw}" height="${dh}" fill="#cfdcea" stroke="#111" stroke-width="2"/>
-      ${panels}
-      <text class="edit-lbl oh-size" data-edit="ohSize" data-side="${side}" x="${dx+dw/2}" y="${dy+dh/2-6}" text-anchor="middle" font-size="${Math.max(11,Math.min(18,dw/8))}" font-family="Arial" font-weight="800">${lbl(side,'ohSize', ohShort)}</text>
-      <text class="edit-lbl oh-name" data-edit="ohName" data-side="${side}" x="${dx+dw/2}" y="${dy+dh/2+12}" text-anchor="middle" font-size="${Math.max(10,Math.min(16,dw/9))}" font-family="Arial" font-weight="800">${lbl(side,'ohName','Overhead Door')}</text>
-      <rect class="oh-handle" x="${dx+dw-12}" y="${dy+dh-12}" width="14" height="14" fill="#c9a227" stroke="#111"/>
-    </g>`;
-  }
-  extraDoors.filter(d=>String(d.wall).toUpperCase()===side).forEach((d,i)=>{
-    const wallFt=wallLengthFor(side);
-    const scale=wallPx/Math.max(1,wallFt);
+    const wallFt=wallLengthFor(side), scale=wallPx/Math.max(1,wallFt);
     const drawW=Number(d.visW||d.w), drawH=Number(d.visH||d.h);
-    const dw=Math.max(18, drawW*scale);
-    const dh=Math.min(150, drawH*12);
-    const leftFt=itemLeftFt(d,side);
-    const x=origin + Math.max(0, Math.min(wallPx-dw, leftFt*scale));
+    const dw=Math.max(18, drawW*scale), dh=Math.min(150, drawH*12);
+    const x=origin+Math.max(0,Math.min(wallPx-dw, itemLeftFt(d,side)*scale));
     const isWin=d.kind==='hung'||d.kind==='slider';
-    const y=isWin ? (Number.isFinite(Number(d.yPx))?Number(d.yPx):(wallTop+36)) : (wallBot-dh);
-    let panels='';
-    if(d.kind!=='party' && !isWin){
-      for(let c=1;c<=2;c++) panels+=`<line x1="${x+dw*c/3}" y1="${y+3}" x2="${x+dw*c/3}" y2="${y+dh-3}" stroke="#7a8aa0" stroke-width=".7"/>`;
-      for(let r=1;r<=3;r++) panels+=`<line x1="${x+3}" y1="${y+dh*r/4}" x2="${x+dw-3}" y2="${y+dh*r/4}" stroke="#7a8aa0" stroke-width=".7"/>`;
-    }
+    const y=isWin?(Number.isFinite(Number(d.yPx))?Number(d.yPx):(wallTop+36)):(wallBot-dh);
+    const boxH=isWin?Math.max(28,Math.min(90,dh)):dh;
     const kindName=d.kind==='party'?'Party Door':isWin?(d.kind==='slider'?'Sliding Window':'Single Hung'):'Overhead Door';
-    const boxH=isWin? Math.max(28, Math.min(90, dh)) : dh;
     const sel=d.id===selectedId;
-    openings+=`<g class="xd" data-id="${d.id}" data-side="${side}" style="cursor:move">
-      <rect class="xd-body" x="${x}" y="${y}" width="${dw}" height="${boxH}" fill="${isWin?'#dbeafe':(d.kind==='party'?'#e8eef8':'#cfdcea')}" stroke="${sel?'#c9a227':'#111'}" stroke-width="${sel?3:1.6}"/>
-      ${isWin?(d.kind==='slider'
-        ? '<line class="xd-mull" x1="'+(x+dw/2)+'" y1="'+y+'" x2="'+(x+dw/2)+'" y2="'+(y+boxH)+'" stroke="#111" stroke-width="0.8"/>'
-        : '<line class="xd-mull" x1="'+x+'" y1="'+(y+boxH/2)+'" x2="'+(x+dw)+'" y2="'+(y+boxH/2)+'" stroke="#111" stroke-width="0.8"/>'
-      ):panels}
-      <text class="edit-lbl xd-size" data-edit="item-${d.id}-size" data-side="${side}" x="${x+dw/2}" y="${y+boxH/2-6}" text-anchor="middle" font-size="${Math.max(10,Math.min(16,dw/7))}" font-family="Arial" font-weight="800">${lbl(side,'item-'+d.id+'-size', d.w+'x'+d.h)}</text>
-      <text class="edit-lbl xd-name" data-edit="item-${d.id}-name" data-side="${side}" x="${x+dw/2}" y="${y+boxH/2+10}" text-anchor="middle" font-size="${Math.max(9,Math.min(14,dw/8))}" font-family="Arial" font-weight="800">${lbl(side,'item-'+d.id+'-name', kindName)}</text>
-      <rect class="xd-handle" x="${x+dw-12}" y="${y+boxH-12}" width="${sel?16:14}" height="${sel?16:14}" fill="#c9a227" stroke="#111"/>
-    </g>`;
+    openings+=`<g class="xd" data-id="${d.id}" data-side="${side}" style="cursor:move"><rect class="xd-body" x="${x}" y="${y}" width="${dw}" height="${boxH}" fill="${isWin?'#dbeafe':(d.kind==='party'?'#e8eef8':'#cfdcea')}" stroke="${sel?'#c9a227':'#111'}" stroke-width="${sel?3:1.6}"/>${isWin?(d.kind==='slider'?`<line class="xd-mull" x1="${x+dw/2}" y1="${y}" x2="${x+dw/2}" y2="${y+boxH}" stroke="#111"/>`:`<line class="xd-mull" x1="${x}" y1="${y+boxH/2}" x2="${x+dw}" y2="${y+boxH/2}" stroke="#111"/>`):''}<text class="edit-lbl xd-size" data-edit="item-${d.id}-size" data-side="${side}" x="${x+dw/2}" y="${y+boxH/2-6}" text-anchor="middle" font-size="12" font-family="Arial" font-weight="800">${lbl(side,'item-'+d.id+'-size', d.w+'x'+d.h)}</text><text class="edit-lbl xd-name" data-edit="item-${d.id}-name" data-side="${side}" x="${x+dw/2}" y="${y+boxH/2+10}" text-anchor="middle" font-size="11" font-family="Arial" font-weight="800">${lbl(side,'item-'+d.id+'-name', kindName)}</text><rect class="xd-handle" x="${x+dw-12}" y="${y+boxH-12}" width="14" height="14" fill="#c9a227" stroke="#111"/></g>`;
   });
   openings+=returnSvg(side);
-  if(showSvc){
-    const wallFt=wallLengthFor(side);
-    let off=parseFloat(val('svcOffset')||'');
-    if(!Number.isFinite(off)){
-      off = svcPos==='left'?1 : svcPos==='center'?(wallFt/2-1.5):Math.max(0,wallFt-3);
-    }
-    const x=origin + Math.max(0, Math.min(wallPx-26, (off/Math.max(1,wallFt))*wallPx));
-    openings+=`<rect x="${x}" y="150" width="26" height="78" fill="#fff" stroke="#111" stroke-width="1.6"/>
-      <line x1="${x+20}" y1="168" x2="${x+20}" y2="176" stroke="#111" stroke-width="1"/>
-      <text class="edit-lbl" data-edit="svcSize" data-side="${side}" x="${x+13}" y="144" text-anchor="middle" font-size="8" font-family="Arial" font-weight="700">${lbl(side,'svcSize','36"x80"')}</text>`;
-  }
-  const wallDim=(side==='FRONT'||side==='BACK') ? (w+"'") : (l+"'");
+  if(showSvc){ const wallFt=wallLengthFor(side); let off=parseFloat(val('svcOffset')||''); if(!Number.isFinite(off)) off=svcPos==='left'?1:svcPos==='center'?(wallFt/2-1.5):Math.max(0,wallFt-3); const x=origin+Math.max(0,Math.min(wallPx-26,(off/Math.max(1,wallFt))*wallPx)); openings+=`<rect x="${x}" y="150" width="26" height="78" fill="#fff" stroke="#111" stroke-width="1.6"/><text class="edit-lbl" data-edit="svcSize" data-side="${side}" x="${x+13}" y="144" text-anchor="middle" font-size="8" font-family="Arial" font-weight="700">${lbl(side,'svcSize','36"x80"')}</text>`; }
+  const wallDim=(side==='FRONT'||side==='BACK')?(w+"'"):(l+"'");
   const pitch=val('pitchLine')||val('pitch')||'4/12';
   const rafters=val('rafters')||'2x6 16" O.C.';
-  const dims=`
-    <line x1="22" y1="${wallTop}" x2="22" y2="${wallBot}" stroke="#111" stroke-width="1"/>
-    <line x1="18" y1="${wallTop}" x2="26" y2="${wallTop}" stroke="#111"/>
-    <line x1="18" y1="${wallBot}" x2="26" y2="${wallBot}" stroke="#111"/>
-    <text class="edit-lbl" data-edit="wallH" data-side="${side}" x="16" y="${(wallTop+wallBot)/2}" text-anchor="middle" font-size="11" font-family="Arial" font-weight="700" transform="rotate(-90 16 ${(wallTop+wallBot)/2})">${lbl(side,'wallH', wh+"' WALL")}</text>
-    <line x1="${origin}" y1="254" x2="${origin+wallPx}" y2="254" stroke="#111" stroke-width="1"/>
-    <line x1="${origin}" y1="250" x2="${origin}" y2="258" stroke="#111"/>
-    <line x1="${origin+wallPx}" y1="250" x2="${origin+wallPx}" y2="258" stroke="#111"/>
-    <text class="edit-lbl" data-edit="wallDim" data-side="${side}" x="${origin+wallPx/2}" y="268" text-anchor="middle" font-size="11" font-family="Arial" font-weight="700">${lbl(side,'wallDim', wallDim)}</text>
-    <text class="edit-lbl" data-edit="pitch" data-side="${side}" x="372" y="30" font-size="12" font-family="Arial" font-weight="700">${lbl(side,'pitch', pitch)}</text>
-    <line x1="200" y1="8" x2="200" y2="22" stroke="#111" stroke-width="1.2" marker-end="url(#arr)"/>
-    <text class="edit-lbl" data-edit="rafters" data-side="${side}" x="206" y="16" font-size="10" font-family="Arial" font-weight="700">${lbl(side,'rafters', 'RAFTERS '+rafters)}</text>
-    <text class="edit-lbl" data-edit="hdr" data-side="${side}" x="448" y="88" font-size="10" font-family="Arial" font-weight="700">${lbl(side,'hdr', 'HDR '+(choices.header||''))}</text>
-    <text class="edit-lbl" data-edit="eaves" data-side="${side}" x="448" y="104" font-size="10" font-family="Arial" font-weight="700">${lbl(side,'eaves', 'EAVES '+(choices.eaves||''))}</text>
-    <text class="edit-lbl" data-edit="siding" data-side="${side}" x="448" y="120" font-size="10" font-family="Arial" font-weight="700">${lbl(side,'siding', 'SIDING '+(choices.siding||'')+(val('sidingDir')==='vertical'?' VERT':' HORIZ'))}</text>
-    ${choices.gutters && ((choices.roof==='Hip') || (choices.roof==='Reverse Gable' ? (side==='LEFT'||side==='RIGHT') : (side==='FRONT'||side==='BACK'))) ? `<rect x="38" y="68" width="324" height="7" fill="#4b5563" stroke="#111"/><text class="edit-lbl" data-edit="gutter" data-side="${side}" x="200" y="66" text-anchor="middle" font-size="9" font-family="Arial" font-weight="700">${lbl(side,'gutter','GUTTER')}</text>` : ''}
-    ${choices.firewall && side==='BACK' ? `<text class="edit-lbl" data-edit="firewall" data-side="${side}" x="200" y="248" text-anchor="middle" font-size="11" font-family="Arial" font-weight="800">${lbl(side,'firewall','FIRE WALL NOTE — RATED ASSEMBLY THIS WALL AS REQUIRED')}</text>` : ''}
-  `;
-  return `<svg viewBox="0 0 620 280">
-    <defs><marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#111"/></marker></defs>
-    ${roof}
-    <rect x="40" y="72" width="320" height="168" fill="#efe8d8" stroke="#111" stroke-width="1.8"/>
-    ${siding}${openings}${dims}
-  </svg>`;
+  const dims=`<line x1="22" y1="${wallTop}" x2="22" y2="${wallBot}" stroke="#111"/><text class="edit-lbl" data-edit="wallH" data-side="${side}" x="16" y="${(wallTop+wallBot)/2}" text-anchor="middle" font-size="11" font-family="Arial" font-weight="700" transform="rotate(-90 16 ${(wallTop+wallBot)/2})">${lbl(side,'wallH', wh+"' WALL")}</text><line x1="${origin}" y1="254" x2="${origin+wallPx}" y2="254" stroke="#111"/><text class="edit-lbl" data-edit="wallDim" data-side="${side}" x="${origin+wallPx/2}" y="268" text-anchor="middle" font-size="11" font-family="Arial" font-weight="700">${lbl(side,'wallDim', wallDim)}</text><text class="edit-lbl" data-edit="pitch" data-side="${side}" x="372" y="30" font-size="12" font-family="Arial" font-weight="700">${lbl(side,'pitch', pitch)}</text><text class="edit-lbl" data-edit="rafters" data-side="${side}" x="206" y="16" font-size="10" font-family="Arial" font-weight="700">${lbl(side,'rafters', 'RAFTERS '+rafters)}</text><text class="edit-lbl" data-edit="hdr" data-side="${side}" x="448" y="88" font-size="10" font-family="Arial" font-weight="700">${lbl(side,'hdr', 'HDR '+(choices.header||''))}</text><text class="edit-lbl" data-edit="eaves" data-side="${side}" x="448" y="104" font-size="10" font-family="Arial" font-weight="700">${lbl(side,'eaves', 'EAVES '+(choices.eaves||''))}</text><text class="edit-lbl" data-edit="siding" data-side="${side}" x="448" y="120" font-size="10" font-family="Arial" font-weight="700">${lbl(side,'siding', 'SIDING '+(choices.siding||''))}</text>${choices.gutters?`<rect x="38" y="68" width="324" height="7" fill="#4b5563"/><text x="200" y="66" text-anchor="middle" font-size="9" font-family="Arial" font-weight="700">GUTTER</text>`:''}${choices.firewall&&side==='BACK'?`<text x="200" y="248" text-anchor="middle" font-size="11" font-family="Arial" font-weight="800">FIRE WALL NOTE</text>`:''}`;
+  return `<svg viewBox="0 0 620 280"><rect x="40" y="72" width="320" height="168" fill="#efe8d8" stroke="#111" stroke-width="1.8"/>${roof}${siding}${openings}${dims}</svg>`;
 }
-function makePlans(){
-  if(sameWall()) separateDoors();
-  if($('pitch') && val('pitchLine') && document.activeElement?.id!=='pitch') $('pitch').value=val('pitchLine');
-  if($('eaveColorLine') && val('eaveColor')) $('eaveColorLine').value=val('eaveColor');
-  if($('sidingColorLine') && val('sidingColor')) $('sidingColorLine').value=val('sidingColor');
-  if($('shingleColorLine') && val('shingleColor')) $('shingleColorLine').value=val('shingleColor');
-  const meta=[
-    (val('sizeW')||'__')+"' x "+(val('sizeL')||'__')+"'",
-    choices.roof,
-    'Pitch '+(val('pitchLine')||val('pitch')||'4/12'),
-    'Siding '+choices.siding+(val('sidingColor')||val('sidingColorLine')?(' / '+(val('sidingColor')||val('sidingColorLine'))):''),
-    'Roofing '+choices.shingles+(val('shingleColor')||val('shingleColorLine')?(' / '+(val('shingleColor')||val('shingleColorLine'))):''),
-    'Header '+choices.header,
-    'Eaves '+choices.eaves,
-    'OH Door '+wallWords(val('ohWall')||'FRONT')+'  L '+currentReturns().left+"' / R "+currentReturns().right+"'",
-    'Service door '+wallWords(val('svcWall')||'RIGHT')
-  ].join('  ·  ');
-  $('planMeta').textContent=meta;
-  $('elevs').innerHTML=['FRONT','BACK','LEFT','RIGHT'].map(s=>'<div class="elev'+(s===selectedView?' picked':'')+'" data-side="'+s+'" onclick="pickView(\''+s+'\',event)"><h3>'+s+'</h3>'+elevSvg(s)+'</div>').join('');
-  bindDoorDrag();
-  bindOhMainDrag();
-  mountPlanTexts();
-  bindLabelEdit();
-  fitNotes();
-  updateLiveReturnReadout(selectedView);
-  if($('showReturns')) $('showReturns').checked=choices.showReturns!==false;
-}
-function bindLabelEdit(){
-  document.querySelectorAll('.edit-lbl').forEach(t=>{
-    t.style.cursor='text';
-    t.addEventListener('pointerdown', ev=>ev.stopPropagation());
-    t.addEventListener('click', ev=>{
-      ev.stopPropagation(); ev.preventDefault();
-      const side=t.getAttribute('data-side');
-      const key=t.getAttribute('data-edit');
-      const host=t.ownerSVGElement?.parentElement;
-      if(!host) return;
-      const r=t.getBoundingClientRect();
-      const hr=host.getBoundingClientRect();
-      const inp=document.createElement('input');
-      inp.value=t.textContent||'';
-      inp.style.cssText='position:absolute;left:'+(r.left-hr.left)+'px;top:'+(r.top-hr.top-2)+'px;min-width:'+Math.max(80,r.width+20)+'px;font:700 12px Arial;z-index:20;border:1px solid #c9a227;padding:2px 4px';
-      host.style.position='relative';
-      host.appendChild(inp);
-      inp.focus(); inp.select();
-      function save(){
-        if(!planLabels[side]) planLabels[side]={};
-        planLabels[side][key]=inp.value;
-        inp.remove();
-        persist(); makePlans();
-      }
-      inp.addEventListener('blur', save);
-      inp.addEventListener('keydown', e=>{ if(e.key==='Enter') inp.blur(); if(e.key==='Escape'){ inp.remove(); }});
-    });
-  });
-}
-function fitNotes(){
-  const ta=$('notes'); if(!ta) return;
-  ta.style.height='auto';
-  ta.style.height=Math.max(64, ta.scrollHeight)+'px';
-}
-function svgPt(svg, ev){
-  const ctm=svg.getScreenCTM();
-  return {x:(ev.clientX-ctm.e)/ctm.a, y:(ev.clientY-ctm.f)/ctm.d};
-}
-function layoutExtra(g, d, side){
-  const wallFt=wallLengthFor(side);
-  const scale=320/Math.max(1,wallFt);
-  const isWin=d.kind==='hung'||d.kind==='slider';
-  const drawW=Number(d.visW||d.w), drawH=Number(d.visH||d.h);
-  const dw=Math.max(18, drawW*scale);
-  const dh=isWin? Math.max(28, Math.min(90, drawH*12)) : Math.min(150, drawH*12);
-  const x=40 + Math.max(0, Math.min(320-dw, itemLeftFt(d,side)*scale));
-  const y=isWin ? (Number.isFinite(Number(d.yPx))?Number(d.yPx):108) : (240-dh);
-  const body=g.querySelector('.xd-body');
-  const handle=g.querySelector('.xd-handle');
-  const size=g.querySelector('.xd-size');
-  const name=g.querySelector('.xd-name');
-  const mull=g.querySelector('.xd-mull');
-  if(body){ body.setAttribute('x',x); body.setAttribute('y',y); body.setAttribute('width',dw); body.setAttribute('height',dh); }
-  if(handle){ handle.setAttribute('x',x+dw-12); handle.setAttribute('y',y+dh-12); }
-  if(size){ size.setAttribute('x',x+dw/2); size.setAttribute('y',y+dh/2-6); }
-  if(name){ name.setAttribute('x',x+dw/2); name.setAttribute('y',y+dh/2+10); }
-  if(mull){
-    if(d.kind==='slider'){ mull.setAttribute('x1',x+dw/2); mull.setAttribute('x2',x+dw/2); mull.setAttribute('y1',y); mull.setAttribute('y2',y+dh); }
-    else { mull.setAttribute('x1',x); mull.setAttribute('x2',x+dw); mull.setAttribute('y1',y+dh/2); mull.setAttribute('y2',y+dh/2); }
-  }
-}
-function refreshReturnMarks(side){
-  document.querySelectorAll('.ret-marks[data-side="'+side+'"]').forEach(g=>{
-    const host=g.ownerSVGElement;
-    if(!host) return;
-    const tmp=document.createElement('div');
-    tmp.innerHTML='<svg xmlns="http://www.w3.org/2000/svg">'+returnSvg(side)+'</svg>';
-    const neu=tmp.querySelector('g');
-    if(neu) g.replaceWith(host.ownerDocument.importNode(neu,true));
-  });
-  updateLiveReturnReadout(side);
-}
-function bindDoorDrag(){
-  document.querySelectorAll('.xd').forEach(g=>{
-    const id=g.getAttribute('data-id');
-    const side=(g.getAttribute('data-side')||selectedView||'FRONT').toUpperCase();
-    const handle=g.querySelector('.xd-handle');
-    const svg=g.ownerSVGElement;
-    if(!svg) return;
-    if(handle){
-      handle.addEventListener('pointerdown', ev=>{
-        ev.stopPropagation(); ev.preventDefault();
-        const d=extraDoors.find(x=>x.id===id); if(!d) return;
-        selectedId=id;
-        const start=svgPt(svg,ev), sw=Number(d.visW||d.w), sh=Number(d.visH||d.h);
-        function move(e2){
-          const p=svgPt(svg,e2);
-          d.visW=Math.max(2, +(sw+(p.x-start.x)/16).toFixed(1));
-          d.visH=Math.max(2, +(sh+(p.y-start.y)/12).toFixed(1));
-          layoutExtra(g,d,side);
-        }
-        function up(){ window.removeEventListener('pointermove',move); window.removeEventListener('pointerup',up); persist(); }
-        window.addEventListener('pointermove',move);
-        window.addEventListener('pointerup',up);
-      });
-    }
-    g.addEventListener('pointerdown', ev=>{
-      ev.stopPropagation();
-      const d=extraDoors.find(x=>x.id===id); if(!d) return;
-      selectedId=id;
-      renderDoorList();
-      document.querySelectorAll('.xd-body').forEach(r=>{
-        r.setAttribute('stroke', r.parentNode.getAttribute('data-id')===id?'#c9a227':'#111');
-        r.setAttribute('stroke-width', r.parentNode.getAttribute('data-id')===id?'3':'1.6');
-      });
-      if(ev.target.classList && ev.target.classList.contains('xd-handle')) return;
-      if(ev.target.classList && ev.target.classList.contains('edit-lbl')) return;
-      const start=svgPt(svg,ev);
-      const sx=itemLeftFt(d,side);
-      const sy=Number.isFinite(Number(d.yPx))?Number(d.yPx):108;
-      const isWin=d.kind==='hung'||d.kind==='slider';
-      const wall=wallLengthFor(side);
-      function move(e2){
-        const p=svgPt(svg,e2);
-        d.xFt=Math.max(0, Math.min(wall-(Number(d.w)||2), +(sx+(p.x-start.x)*wall/320).toFixed(2)));
-        d.x=d.xFt/Math.max(1,wall);
-        if(isWin) d.yPx=Math.max(72, Math.min(220, +(sy+(p.y-start.y)).toFixed(1)));
-        if(!isWin) clampNoOverlap(d);
-        layoutExtra(g,d,side);
-        refreshReturnMarks(side);
-      }
-      function up(){ window.removeEventListener('pointermove',move); window.removeEventListener('pointerup',up); if(!isWin) clampNoOverlap(d); persist(); refreshReturnMarks(side); }
-      window.addEventListener('pointermove',move);
-      window.addEventListener('pointerup',up);
-    });
-  });
-}
-function bindOhMainDrag(){
-  document.querySelectorAll('.oh-main').forEach(g=>{
-    const svg=g.ownerSVGElement; if(!svg) return;
-    const side=(g.getAttribute('data-side')||'FRONT').toUpperCase();
-    const handle=g.querySelector('.oh-handle');
-    const body=g.querySelector('.oh-body');
-    function place(){
-      const r=currentReturns();
-      const scale=320/Math.max(1,r.wall);
-      const dx=40+r.left*scale, dw=Math.max(24,r.door*scale), dy=118, dh=122;
-      if(body){ body.setAttribute('x',dx); body.setAttribute('width',dw); }
-      const size=g.querySelector('.oh-size'), name=g.querySelector('.oh-name');
-      if(size){ size.setAttribute('x',dx+dw/2); }
-      if(name){ name.setAttribute('x',dx+dw/2); }
-      if(handle){ handle.setAttribute('x',dx+dw-12); handle.setAttribute('y',dy+dh-12); }
-    }
-    if(handle){
-      handle.addEventListener('pointerdown', ev=>{
-        ev.stopPropagation(); ev.preventDefault();
-        const start=svgPt(svg,ev), sw=ohWidthFt();
-        function move(e2){
-          const p=svgPt(svg,e2);
-          const wall=wallLengthFor(side);
-          const next=Math.max(8, Math.min(wall-1, +(sw+(p.x-start.x)*wall/320).toFixed(1)));
-          if($('ohWidth')) $('ohWidth').value=String(next);
-          recalcReturns('width');
-          place();
-          refreshReturnMarks(side);
-        }
-        function up(){ window.removeEventListener('pointermove',move); window.removeEventListener('pointerup',up); persist(); }
-        window.addEventListener('pointermove',move);
-        window.addEventListener('pointerup',up);
-      });
-    }
-    g.addEventListener('pointerdown', ev=>{
-      ev.stopPropagation();
-      if(ev.target.classList && (ev.target.classList.contains('oh-handle')||ev.target.classList.contains('edit-lbl'))) return;
-      const start=svgPt(svg,ev);
-      const sl=currentReturns().left;
-      const wall=wallLengthFor(side);
-      function move(e2){
-        const p=svgPt(svg,e2);
-        let left=+(sl+(p.x-start.x)*wall/320).toFixed(1);
-        const door=ohWidthFt();
-        if(left<0) left=0;
-        if(left+door>wall) left=+(wall-door).toFixed(1);
-        writeReturns(left, +(wall-door-left).toFixed(1));
-        place();
-        refreshReturnMarks(side);
-      }
-      function up(){ window.removeEventListener('pointermove',move); window.removeEventListener('pointerup',up); persist(); }
-      window.addEventListener('pointermove',move);
-      window.addEventListener('pointerup',up);
-    });
-  });
-}
+function makePlans(){ if(sameWall()) separateDoors(); if($('pitch') && val('pitchLine') && document.activeElement?.id!=='pitch') $('pitch').value=val('pitchLine'); $('planMeta').textContent=[(val('sizeW')||'__')+"' x "+(val('sizeL')||'__')+"'", choices.roof, 'Pitch '+(val('pitchLine')||val('pitch')||'4/12'), 'OH Door '+wallWords(val('ohWall')||'FRONT')+' L '+currentReturns().left+"' / R "+currentReturns().right+"'", 'Service '+wallWords(val('svcWall')||'RIGHT')].join('  ·  '); $('elevs').innerHTML=['FRONT','BACK','LEFT','RIGHT'].map(s=>'<div class="elev'+(s===selectedView?' picked':'')+'" data-side="'+s+'" onclick="pickView(\''+s+'\',event)"><h3>'+s+'</h3>'+elevSvg(s)+'</div>').join(''); bindDoorDrag(); bindOhMainDrag(); mountPlanTexts(); bindLabelEdit(); updateLiveReturnReadout(selectedView); }
+function bindLabelEdit(){ document.querySelectorAll('.edit-lbl').forEach(t=>{ t.style.cursor='text'; t.addEventListener('pointerdown', ev=>ev.stopPropagation()); t.addEventListener('click', ev=>{ ev.stopPropagation(); ev.preventDefault(); const side=t.getAttribute('data-side'), key=t.getAttribute('data-edit'), host=t.ownerSVGElement?.parentElement; if(!host) return; const r=t.getBoundingClientRect(), hr=host.getBoundingClientRect(); const inp=document.createElement('input'); inp.value=t.textContent||''; inp.style.cssText='position:absolute;left:'+(r.left-hr.left)+'px;top:'+(r.top-hr.top-2)+'px;min-width:'+Math.max(80,r.width+20)+'px;font:700 12px Arial;z-index:20;border:1px solid #c9a227;padding:2px 4px'; host.style.position='relative'; host.appendChild(inp); inp.focus(); inp.select(); function save(){ if(!planLabels[side]) planLabels[side]={}; planLabels[side][key]=inp.value; inp.remove(); persist(); makePlans(); } inp.addEventListener('blur', save); inp.addEventListener('keydown', e=>{ if(e.key==='Enter') inp.blur(); if(e.key==='Escape') inp.remove(); }); }); }); }
+function svgPt(svg,ev){ const ctm=svg.getScreenCTM(); return {x:(ev.clientX-ctm.e)/ctm.a, y:(ev.clientY-ctm.f)/ctm.d}; }
+function layoutExtra(g,d,side){ const wallFt=wallLengthFor(side), scale=320/Math.max(1,wallFt), isWin=d.kind==='hung'||d.kind==='slider'; const drawW=Number(d.visW||d.w), drawH=Number(d.visH||d.h); const dw=Math.max(18,drawW*scale), dh=isWin?Math.max(28,Math.min(90,drawH*12)):Math.min(150,drawH*12); const x=40+Math.max(0,Math.min(320-dw,itemLeftFt(d,side)*scale)); const y=isWin?(Number.isFinite(Number(d.yPx))?Number(d.yPx):108):(240-dh); const body=g.querySelector('.xd-body'), handle=g.querySelector('.xd-handle'), size=g.querySelector('.xd-size'), name=g.querySelector('.xd-name'), mull=g.querySelector('.xd-mull'); if(body){ body.setAttribute('x',x); body.setAttribute('y',y); body.setAttribute('width',dw); body.setAttribute('height',dh); } if(handle){ handle.setAttribute('x',x+dw-12); handle.setAttribute('y',y+dh-12); } if(size){ size.setAttribute('x',x+dw/2); size.setAttribute('y',y+dh/2-6); } if(name){ name.setAttribute('x',x+dw/2); name.setAttribute('y',y+dh/2+10); } if(mull){ if(d.kind==='slider'){ mull.setAttribute('x1',x+dw/2); mull.setAttribute('x2',x+dw/2); mull.setAttribute('y1',y); mull.setAttribute('y2',y+dh); } else { mull.setAttribute('x1',x); mull.setAttribute('x2',x+dw); mull.setAttribute('y1',y+dh/2); mull.setAttribute('y2',y+dh/2); } } }
+function refreshReturnMarks(side){ document.querySelectorAll('.ret-marks[data-side="'+side+'"]').forEach(g=>{ const host=g.ownerSVGElement; if(!host) return; const tmp=document.createElement('div'); tmp.innerHTML='<svg xmlns="http://www.w3.org/2000/svg">'+returnSvg(side)+'</svg>'; const neu=tmp.querySelector('g'); if(neu) g.replaceWith(host.ownerDocument.importNode(neu,true)); }); updateLiveReturnReadout(side); }
+function bindDoorDrag(){ document.querySelectorAll('.xd').forEach(g=>{ const id=g.getAttribute('data-id'); const side=(g.getAttribute('data-side')||selectedView||'FRONT').toUpperCase(); const handle=g.querySelector('.xd-handle'); const svg=g.ownerSVGElement; if(!svg) return; if(handle){ handle.addEventListener('pointerdown', ev=>{ ev.stopPropagation(); ev.preventDefault(); const d=extraDoors.find(x=>x.id===id); if(!d) return; selectedId=id; const start=svgPt(svg,ev), sw=Number(d.visW||d.w), sh=Number(d.visH||d.h); function move(e2){ const p=svgPt(svg,e2); d.visW=Math.max(2,+(sw+(p.x-start.x)/16).toFixed(1)); d.visH=Math.max(2,+(sh+(p.y-start.y)/12).toFixed(1)); layoutExtra(g,d,side); } function up(){ window.removeEventListener('pointermove',move); window.removeEventListener('pointerup',up); persist(); } window.addEventListener('pointermove',move); window.addEventListener('pointerup',up); }); } g.addEventListener('pointerdown', ev=>{ ev.stopPropagation(); const d=extraDoors.find(x=>x.id===id); if(!d) return; selectedId=id; renderDoorList(); if(ev.target.classList && (ev.target.classList.contains('xd-handle')||ev.target.classList.contains('edit-lbl'))) return; const start=svgPt(svg,ev), sx=itemLeftFt(d,side), sy=Number.isFinite(Number(d.yPx))?Number(d.yPx):108; const isWin=d.kind==='hung'||d.kind==='slider', wall=wallLengthFor(side); function move(e2){ const p=svgPt(svg,e2); d.xFt=Math.max(0,Math.min(wall-(Number(d.w)||2), +(sx+(p.x-start.x)*wall/320).toFixed(2))); d.x=d.xFt/Math.max(1,wall); if(isWin) d.yPx=Math.max(72,Math.min(220, +(sy+(p.y-start.y)).toFixed(1))); if(!isWin) clampNoOverlap(d); layoutExtra(g,d,side); refreshReturnMarks(side); } function up(){ window.removeEventListener('pointermove',move); window.removeEventListener('pointerup',up); persist(); refreshReturnMarks(side); } window.addEventListener('pointermove',move); window.addEventListener('pointerup',up); }); }); }
+function bindOhMainDrag(){ document.querySelectorAll('.oh-main').forEach(g=>{ const svg=g.ownerSVGElement; if(!svg) return; const side=(g.getAttribute('data-side')||'FRONT').toUpperCase(); const handle=g.querySelector('.oh-handle'); const body=g.querySelector('.oh-body'); function place(){ const r=currentReturns(), scale=320/Math.max(1,r.wall), dx=40+r.left*scale, dw=Math.max(24,r.door*scale); if(body){ body.setAttribute('x',dx); body.setAttribute('width',dw); } const size=g.querySelector('.oh-size'), name=g.querySelector('.oh-name'); if(size) size.setAttribute('x',dx+dw/2); if(name) name.setAttribute('x',dx+dw/2); if(handle) handle.setAttribute('x',dx+dw-12); } if(handle){ handle.addEventListener('pointerdown', ev=>{ ev.stopPropagation(); ev.preventDefault(); const start=svgPt(svg,ev), sw=ohWidthFt(); function move(e2){ const p=svgPt(svg,e2); const wall=wallLengthFor(side); const next=Math.max(8,Math.min(wall-1, +(sw+(p.x-start.x)*wall/320).toFixed(1))); if($('ohWidth')) $('ohWidth').value=String(next); recalcReturns('width'); place(); refreshReturnMarks(side); } function up(){ window.removeEventListener('pointermove',move); window.removeEventListener('pointerup',up); persist(); } window.addEventListener('pointermove',move); window.addEventListener('pointerup',up); }); } g.addEventListener('pointerdown', ev=>{ ev.stopPropagation(); if(ev.target.classList && (ev.target.classList.contains('oh-handle')||ev.target.classList.contains('edit-lbl'))) return; const start=svgPt(svg,ev), sl=currentReturns().left, wall=wallLengthFor(side); function move(e2){ const p=svgPt(svg,e2); let left=+(sl+(p.x-start.x)*wall/320).toFixed(1); const door=ohWidthFt(); if(left<0) left=0; if(left+door>wall) left=+(wall-door).toFixed(1); writeReturns(left, +(wall-door-left).toFixed(1)); place(); refreshReturnMarks(side); } function up(){ window.removeEventListener('pointermove',move); window.removeEventListener('pointerup',up); persist(); } window.addEventListener('pointermove',move); window.addEventListener('pointerup',up); }); }); }
 
-function loadLocal(){
-  // Start blank. Nothing is typed until Apply Changes.
-  makePlans();
-}
-
-document.addEventListener('focusin', e=>{ if(e.target.classList?.contains('f')) pushUndo(); });
-document.addEventListener('input', e=>{
-  if(!e.target.classList?.contains('f') && e.target.tagName!=='SELECT' && !e.target.isContentEditable) return;
-  if(e.target.id==='pitch') $('pitchLine').value=e.target.value;
-  if(e.target.id==='sidingOther' && $('sidingOtherPanel')) $('sidingOtherPanel').value=e.target.value;
-  if(e.target.id==='notes') fitNotes();
-  persist();
-});
-window.addEventListener('beforeprint', fitNotes);
-document.addEventListener('click', e=>{
-  if(!e.target.closest('.free-text')) document.querySelectorAll('.free-text').forEach(n=>n.classList.remove('sel'));
-});
-
+function loadLocal(){ fillCitySelect(); try{ const raw=localStorage.getItem(DRAFT_KEY); if(raw) applySnapshot(JSON.parse(raw)); else makePlans(); }catch(e){ makePlans(); } updateJobBadge(); }
 async function afterAuth(user){
   let uname='';
-  try{
-    const {data:p}=await sb.from('staff_profiles').select('username,role').eq('id',user.id).maybeSingle();
-    uname=String(p?.username||'').toLowerCase();
-  }catch(e){}
+  try{ const {data:p}=await sb.from('staff_profiles').select('username,role').eq('id',user.id).maybeSingle(); uname=String(p?.username||'').toLowerCase(); profile=p||{username:uname}; }catch(e){}
   if(!uname) uname=String(user.email||'').split('@')[0].toLowerCase();
-  const blob=[uname,user.email||''].join(' ').toLowerCase();
-  if(!(ALLOWED.includes(uname)||/\b(randy|sam|samer)\b/.test(blob))){
-    $('app').style.display='none'; $('gate').style.display='block'; return;
-  }
-  $('gate').style.display='none'; $('app').style.display='block';
-  $('who').textContent=uname; loadLocal();
+  if(!(ALLOWED.includes(uname)||/\b(randy|sam|samer|ramsey)\b/.test(uname))){ $('app').style.display='none'; $('gate').style.display='block'; return; }
+  $('gate').style.display='none'; $('app').style.display='block'; $('who').textContent=uname; loadLocal();
 }
 async function boot(){
   sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true}});
@@ -1523,6 +557,7 @@ async function boot(){
   if(session?.user) return afterAuth(session.user);
   location.href='index.html';
 }
+document.addEventListener('input', e=>{ if(e.target.classList?.contains('f') || e.target.tagName==='SELECT') persist(); });
 boot();
 </script>
 </body>

@@ -79,7 +79,13 @@ html,body{margin:0;min-height:100%;background:#e8edf3;color:var(--ink);font-fami
 .plan-text.sel{outline:2px solid #c9a227}
 .elev.picked{outline:3px solid #c9a227}
 .elev h3{margin:0 0 6px;font:800 12px Arial;letter-spacing:.08em}
-.elev svg{width:100%;height:280px;display:block;background:#fff}
+.elev svg{width:100%;height:280px;display:block;background:#fff;touch-action:none}
+.xd-handle,.oh-handle{cursor:nwse-resize}
+.plan-text{touch-action:none}
+.plan-text .sz{position:absolute;right:-7px;bottom:-7px;width:16px;height:16px;background:#2563eb;border:2px solid #fff;border-radius:3px;cursor:nwse-resize;z-index:8}
+@media print{
+  .xd-handle,.oh-handle,.plan-text .sz,.ret-live{display:none!important}
+}
 @media print{
   .elevs{grid-template-columns:1fr;gap:18px}
   .elev{break-inside:avoid;page-break-inside:avoid}
@@ -228,6 +234,11 @@ html,body{margin:0;min-height:100%;background:#e8edf3;color:var(--ink);font-fami
       <label>Right return (ft)</label>
       <input id="ohRightRet" type="number" min="0" step="0.5" value="" placeholder="auto center" oninput="recalcReturns('right')"/>
       <div id="ohReturnNote" style="font-size:11px;color:#334155;margin:4px 0 8px"></div>
+      <label style="display:flex;align-items:center;gap:8px;font-weight:800">
+        <input id="showReturns" type="checkbox" checked onchange="choices.showReturns=this.checked; persist(); makePlans()"/>
+        Show returns / gaps live
+      </label>
+      <div id="liveReturnBox" style="font-size:11px;color:#1d4ed8;font-weight:800;line-height:1.35;margin:4px 0 8px"></div>
       <label>Service door wall</label>
       <select id="svcWall" onchange="touch()">
         <option value="RIGHT" selected>Right side</option>
@@ -507,7 +518,7 @@ function lbl(side,key,fallback){
   return (v!=null && String(v).trim()!=='') ? String(v) : fallback;
 }
 let selectedView='FRONT';
-let choices={roof:'Gable',eaves:'Realwood',siding:'D4',shingles:'ARCH',header:'2-2x12 w/ 1/2 Flitchplate',jamb:'',gutters:false,firewall:false};
+let choices={roof:'Gable',eaves:'Realwood',siding:'D4',shingles:'ARCH',header:'2-2x12 w/ 1/2 Flitchplate',jamb:'',gutters:false,firewall:false,showReturns:true};
 
 function $(id){return document.getElementById(id)}
 function val(id){return String($(id)?.value||'').trim()}
@@ -600,7 +611,8 @@ function confirmAddDoor(){
   if($('newDoorW')) $('newDoorW').value=String(w);
   if($('newDoorH')) $('newDoorH').value=String(h);
   const id='d'+Date.now();
-  extraDoors.push({id,wall:selectedView,w,h,kind,x:freeSpot(selectedView,w),visW:null,visH:null});
+  const xf=freeSpot(selectedView,w);
+  extraDoors.push({id,wall:selectedView,w,h,kind,x:xf,xFt:+(xf*wallLengthFor(selectedView)).toFixed(2),yPx:kind==='hung'||kind==='slider'?108:null,visW:null,visH:null});
   selectedId=id;
   if($('doorPrompt')) $('doorPrompt').style.display='none';
   persist(); renderDoorList(); makePlans();
@@ -638,8 +650,9 @@ function occOnWall(side, skipId){
   }
   extraDoors.forEach(d=>{
     if(String(d.wall).toUpperCase()!==side || d.id===skipId) return;
+    if(d.kind==='hung'||d.kind==='slider') return;
     const wf=Number(d.w)||3;
-    const a=(Number(d.x)||0)*wall;
+    const a=itemLeftFt(d,side);
     items.push({a,b:a+wf});
   });
   return items.sort((p,q)=>p.a-q.a);
@@ -657,25 +670,96 @@ function freeSpot(side, widthFt){
   if(x+need>wall) x=Math.max(0, wall-need);
   return Math.max(0, Math.min(0.85, x/Math.max(1,wall)));
 }
+function itemLeftFt(d, side){
+  const wall=wallLengthFor(side||d.wall);
+  if(Number.isFinite(Number(d.xFt))) return Number(d.xFt);
+  return (Number(d.x)||0)*wall;
+}
 function clampNoOverlap(d){
   const side=String(d.wall).toUpperCase();
   const wall=wallLengthFor(side);
+  const isWin=d.kind==='hung'||d.kind==='slider';
   const wf=Number(d.w)||3;
-  let a=(Number(d.x)||0)*wall;
-  occOnWall(side,d.id).forEach(it=>{
-    if(a+wf+0.4>it.a && a<it.b+0.4){
-      if(it.a>a) a=it.a-wf-0.5;
-      else a=it.b+0.5;
-    }
-  });
+  let a=itemLeftFt(d,side);
+  if(!isWin){
+    occOnWall(side,d.id).forEach(it=>{
+      if(a+wf+0.4>it.a && a<it.b+0.4){
+        if(it.a>a) a=it.a-wf-0.5;
+        else a=it.b+0.5;
+      }
+    });
+  }
   a=Math.max(0, Math.min(wall-wf, a));
+  d.xFt=+a.toFixed(2);
   d.x=a/Math.max(1,wall);
 }
+function wallItems(side){
+  const items=[];
+  const wall=wallLengthFor(side);
+  if(String(val('ohWall')||'FRONT').toUpperCase()===side){
+    const r=currentReturns();
+    items.push({id:'MAIN-OH', kind:'oh', name:'OH', a:+r.left, b:+(r.left+r.door)});
+  }
+  if(String(val('svcWall')||'RIGHT').toUpperCase()===side){
+    const s=svcFeet();
+    items.push({id:'SVC', kind:'svc', name:'SVC', a:+s.off, b:+(s.off+s.width)});
+  }
+  extraDoors.filter(d=>String(d.wall).toUpperCase()===side).forEach(d=>{
+    const wft=Number(d.w)||3;
+    const a=itemLeftFt(d,side);
+    const isWin=d.kind==='hung'||d.kind==='slider';
+    items.push({id:d.id, kind:d.kind, name:isWin?'WIN':(d.kind==='party'?'PARTY':'OH'), a:+a, b:+(a+wft)});
+  });
+  return items.sort((p,q)=>p.a-q.a);
+}
+function returnGaps(side){
+  const wall=wallLengthFor(side);
+  const items=wallItems(side);
+  const gaps=[];
+  let cursor=0;
+  items.forEach(it=>{
+    const span=+(it.a-cursor).toFixed(1);
+    if(span>=0.15) gaps.push({a:cursor,b:it.a,ft:span,kind:'gap'});
+    cursor=Math.max(cursor, it.b);
+  });
+  const right=+(wall-cursor).toFixed(1);
+  if(right>=0.15) gaps.push({a:cursor,b:wall,ft:right,kind:'gap'});
+  if(gaps.length){
+    if(gaps[0].a<=0.05) gaps[0].label="L RET";
+    if(Math.abs(gaps[gaps.length-1].b-wall)<0.08) gaps[gaps.length-1].label="R RET";
+    gaps.forEach((g,i)=>{ if(!g.label) g.label = (i===0 || i===gaps.length-1) ? 'GAP' : 'MID RET'; });
+    if(gaps.length===3 && gaps[1].label==='GAP') gaps[1].label='MID RET';
+  }
+  return {wall, items, gaps};
+}
+function returnSvg(side){
+  if(choices.showReturns===false) return '';
+  const info=returnGaps(side);
+  if(!info.items.length) return '';
+  const origin=40, wallPx=320, scale=wallPx/Math.max(1,info.wall);
+  return `<g class="ret-marks" data-side="${side}">`+info.gaps.map(g=>{
+    const x1=origin+g.a*scale, x2=origin+g.b*scale, mid=(x1+x2)/2;
+    return `<line x1="${x1}" y1="108" x2="${x2}" y2="108" stroke="#1d4ed8" stroke-width="1.3"/>
+      <line x1="${x1}" y1="104" x2="${x1}" y2="112" stroke="#1d4ed8"/>
+      <line x1="${x2}" y1="104" x2="${x2}" y2="112" stroke="#1d4ed8"/>
+      <text x="${mid}" y="102" text-anchor="middle" font-size="9" font-family="Arial" font-weight="800" fill="#1d4ed8">${g.ft}' ${g.label}</text>`;
+  }).join('')+'</g>';
+}
+function updateLiveReturnReadout(side){
+  const box=$('liveReturnBox');
+  if(!box) return;
+  const info=returnGaps(side||selectedView||'FRONT');
+  if(!info.items.length){ box.textContent=''; return; }
+  const bits=info.gaps.map(g=>g.ft+"' "+g.label);
+  const names=info.items.map(it=>it.name+' '+it.a.toFixed(1)+"-"+it.b.toFixed(1));
+  box.textContent=(side||selectedView)+'  ·  '+bits.join('   ·   ')+(names.length?('  |  '+names.join(', ')): '');
+}
 function pickView(side, ev){
-  if(ev && ev.target && ev.target.closest && ev.target.closest('.xd, .plan-text, .xd-handle, .xd-body')) return;
+  if(ev && ev.target && ev.target.closest && ev.target.closest('.xd, .plan-text, .xd-handle, .xd-body, .oh-main')) return;
   selectedView=side;
   document.querySelectorAll('.elev').forEach(el=>el.classList.toggle('picked', el.dataset.side===side));
   if($('viewHint')) $('viewHint').textContent='Adding doors to '+side+' wall. Then click Add Door.';
+  updateLiveReturnReadout(side);
 }
 function nudgeSvc(dir){
   const wall=wallLengthFor((val('svcWall')||'RIGHT').toUpperCase());
@@ -829,11 +913,16 @@ function mountPlanTexts(){
     el.style.color=t.color||'#111';
     el.addEventListener('pointerdown', ev=>{ ev.stopPropagation(); document.querySelectorAll('.plan-text').forEach(n=>n.classList.remove('sel')); el.classList.add('sel'); });
     el.addEventListener('input', ()=>{ const rec=planTextsData.find(p=>p.id===t.id); if(rec) rec.html=el.innerHTML; persist(); });
+    const sz=document.createElement('div'); sz.className='sz'; el.appendChild(sz);
     host.appendChild(el);
     planTexts.push({id:t.id, side:t.side, el});
     makeDraggable(el, ()=>{
       const rec=planTextsData.find(p=>p.id===t.id); if(!rec) return;
       rec.x=el.style.left; rec.y=el.style.top; rec.w=el.style.width; rec.h=el.style.height;
+    });
+    bindTextResize(el, sz, ()=>{
+      const rec=planTextsData.find(p=>p.id===t.id); if(!rec) return;
+      rec.w=el.style.width; rec.h=el.style.height;
     });
   });
 }
@@ -863,6 +952,7 @@ function makeDraggable(el, onUp){
   el.addEventListener('pointerdown', e=>{
     document.querySelectorAll('.free-text,.plan-text').forEach(n=>n.classList.remove('sel'));
     el.classList.add('sel');
+    if(e.target.classList && e.target.classList.contains('sz')) return;
     if(e.target!==el && e.target.isContentEditable) return;
     const box=el.offsetParent||$('paper');
     const r=box.getBoundingClientRect();
@@ -870,11 +960,31 @@ function makeDraggable(el, onUp){
     function move(ev){
       el.style.left=Math.max(0, ev.clientX-r.left-ox)+'px';
       el.style.top=Math.max(0, ev.clientY-r.top-oy)+'px';
+      if(onUp) onUp();
     }
     function up(){
       window.removeEventListener('pointermove',move); window.removeEventListener('pointerup',up);
       if(onUp) onUp();
       persist();
+    }
+    window.addEventListener('pointermove',move); window.addEventListener('pointerup',up);
+  });
+}
+function bindTextResize(el, handle, onMove){
+  if(!handle) return;
+  handle.addEventListener('pointerdown', e=>{
+    e.stopPropagation(); e.preventDefault();
+    el.classList.add('sel');
+    const startX=e.clientX, startY=e.clientY;
+    const sw=el.offsetWidth, sh=el.offsetHeight;
+    function move(ev){
+      el.style.width=Math.max(60, sw+(ev.clientX-startX))+'px';
+      el.style.height=Math.max(22, sh+(ev.clientY-startY))+'px';
+      if(onMove) onMove();
+    }
+    function up(){
+      window.removeEventListener('pointermove',move); window.removeEventListener('pointerup',up);
+      if(onMove) onMove(); persist();
     }
     window.addEventListener('pointermove',move); window.addEventListener('pointerup',up);
   });
@@ -1087,12 +1197,13 @@ function elevSvg(side){
     for(let row=1;row<=3;row++) panels+=`<line x1="${dx+4}" y1="${dy+dh*row/4}" x2="${dx+dw-4}" y2="${dy+dh*row/4}" stroke="#7a8aa0" stroke-width=".8"/>`;
     const ohLabel=(val('ohDoors')|| (r.door+' x 7')) + '';
     const ohShort=/x/i.test(ohLabel)?ohLabel.replace(/\s+/g,' '):(r.door+'x7');
-    openings+=`<rect x="${dx}" y="${dy}" width="${dw}" height="${dh}" fill="#cfdcea" stroke="#111" stroke-width="2"/>
+    openings+=`<g class="oh-main" data-kind="oh-main" data-side="${side}" style="cursor:move">
+      <rect class="oh-body" x="${dx}" y="${dy}" width="${dw}" height="${dh}" fill="#cfdcea" stroke="#111" stroke-width="2"/>
       ${panels}
-      <text class="edit-lbl" data-edit="ohSize" data-side="${side}" x="${dx+dw/2}" y="${dy+dh/2-6}" text-anchor="middle" font-size="${Math.max(11,Math.min(18,dw/8))}" font-family="Arial" font-weight="800">${lbl(side,'ohSize', ohShort)}</text>
-      <text class="edit-lbl" data-edit="ohName" data-side="${side}" x="${dx+dw/2}" y="${dy+dh/2+12}" text-anchor="middle" font-size="${Math.max(10,Math.min(16,dw/9))}" font-family="Arial" font-weight="800">${lbl(side,'ohName','Overhead Door')}</text>
-      <text class="edit-lbl" data-edit="leftRet" data-side="${side}" x="${origin+6}" y="112" font-size="10" font-family="Arial">${lbl(side,'leftRet', r.left+"' RET")}</text>
-      <text class="edit-lbl" data-edit="rightRet" data-side="${side}" x="${origin+wallPx-6}" y="112" text-anchor="end" font-size="10" font-family="Arial">${lbl(side,'rightRet', r.right+"' RET")}</text>`;
+      <text class="edit-lbl oh-size" data-edit="ohSize" data-side="${side}" x="${dx+dw/2}" y="${dy+dh/2-6}" text-anchor="middle" font-size="${Math.max(11,Math.min(18,dw/8))}" font-family="Arial" font-weight="800">${lbl(side,'ohSize', ohShort)}</text>
+      <text class="edit-lbl oh-name" data-edit="ohName" data-side="${side}" x="${dx+dw/2}" y="${dy+dh/2+12}" text-anchor="middle" font-size="${Math.max(10,Math.min(16,dw/9))}" font-family="Arial" font-weight="800">${lbl(side,'ohName','Overhead Door')}</text>
+      <rect class="oh-handle" x="${dx+dw-12}" y="${dy+dh-12}" width="14" height="14" fill="#c9a227" stroke="#111"/>
+    </g>`;
   }
   extraDoors.filter(d=>String(d.wall).toUpperCase()===side).forEach((d,i)=>{
     const wallFt=wallLengthFor(side);
@@ -1100,29 +1211,30 @@ function elevSvg(side){
     const drawW=Number(d.visW||d.w), drawH=Number(d.visH||d.h);
     const dw=Math.max(18, drawW*scale);
     const dh=Math.min(150, drawH*12);
-    const x=origin + Math.max(0, Math.min(wallPx-dw, (Number(d.x)||0.15)*wallPx));
-    const y=wallBot-dh;
+    const leftFt=itemLeftFt(d,side);
+    const x=origin + Math.max(0, Math.min(wallPx-dw, leftFt*scale));
+    const isWin=d.kind==='hung'||d.kind==='slider';
+    const y=isWin ? (Number.isFinite(Number(d.yPx))?Number(d.yPx):(wallTop+36)) : (wallBot-dh);
     let panels='';
-    if(d.kind!=='party'){
+    if(d.kind!=='party' && !isWin){
       for(let c=1;c<=2;c++) panels+=`<line x1="${x+dw*c/3}" y1="${y+3}" x2="${x+dw*c/3}" y2="${y+dh-3}" stroke="#7a8aa0" stroke-width=".7"/>`;
       for(let r=1;r<=3;r++) panels+=`<line x1="${x+3}" y1="${y+dh*r/4}" x2="${x+dw-3}" y2="${y+dh*r/4}" stroke="#7a8aa0" stroke-width=".7"/>`;
     }
-    const isWin=d.kind==='hung'||d.kind==='slider';
     const kindName=d.kind==='party'?'Party Door':isWin?(d.kind==='slider'?'Sliding Window':'Single Hung'):'Overhead Door';
-    const winY=isWin? (wallTop+36) : y;
-    const winH=isWin? Math.min(70, dh) : dh;
+    const boxH=isWin? Math.max(28, Math.min(90, dh)) : dh;
     const sel=d.id===selectedId;
-    openings+=`<g class="xd" data-id="${d.id}" style="cursor:pointer">
-      <rect class="xd-body" x="${x}" y="${isWin?winY:y}" width="${dw}" height="${isWin?winH:dh}" fill="${isWin?'#dbeafe':(d.kind==='party'?'#e8eef8':'#cfdcea')}" stroke="${sel?'#c9a227':'#111'}" stroke-width="${sel?3:1.6}"/>
+    openings+=`<g class="xd" data-id="${d.id}" data-side="${side}" style="cursor:move">
+      <rect class="xd-body" x="${x}" y="${y}" width="${dw}" height="${boxH}" fill="${isWin?'#dbeafe':(d.kind==='party'?'#e8eef8':'#cfdcea')}" stroke="${sel?'#c9a227':'#111'}" stroke-width="${sel?3:1.6}"/>
       ${isWin?(d.kind==='slider'
-        ? '<line x1="'+(x+dw/2)+'" y1="'+winY+'" x2="'+(x+dw/2)+'" y2="'+(winY+winH)+'" stroke="#111" stroke-width="0.8"/>'
-        : '<line x1="'+x+'" y1="'+(winY+winH/2)+'" x2="'+(x+dw)+'" y2="'+(winY+winH/2)+'" stroke="#111" stroke-width="0.8"/>'
+        ? '<line class="xd-mull" x1="'+(x+dw/2)+'" y1="'+y+'" x2="'+(x+dw/2)+'" y2="'+(y+boxH)+'" stroke="#111" stroke-width="0.8"/>'
+        : '<line class="xd-mull" x1="'+x+'" y1="'+(y+boxH/2)+'" x2="'+(x+dw)+'" y2="'+(y+boxH/2)+'" stroke="#111" stroke-width="0.8"/>'
       ):panels}
-      <text class="edit-lbl" data-edit="item-${d.id}-size" data-side="${side}" x="${x+dw/2}" y="${(isWin?winY:y)+(isWin?winH:dh)/2-6}" text-anchor="middle" font-size="${Math.max(10,Math.min(16,dw/7))}" font-family="Arial" font-weight="800">${lbl(side,'item-'+d.id+'-size', d.w+'x'+d.h)}</text>
-      <text class="edit-lbl" data-edit="item-${d.id}-name" data-side="${side}" x="${x+dw/2}" y="${(isWin?winY:y)+(isWin?winH:dh)/2+10}" text-anchor="middle" font-size="${Math.max(9,Math.min(14,dw/8))}" font-family="Arial" font-weight="800">${lbl(side,'item-'+d.id+'-name', kindName)}</text>
-      <rect class="xd-handle" x="${x+dw-10}" y="${(isWin?winY:y)-10}" width="${sel?16:12}" height="${sel?16:12}" fill="#c9a227" stroke="#111"/>
+      <text class="edit-lbl xd-size" data-edit="item-${d.id}-size" data-side="${side}" x="${x+dw/2}" y="${y+boxH/2-6}" text-anchor="middle" font-size="${Math.max(10,Math.min(16,dw/7))}" font-family="Arial" font-weight="800">${lbl(side,'item-'+d.id+'-size', d.w+'x'+d.h)}</text>
+      <text class="edit-lbl xd-name" data-edit="item-${d.id}-name" data-side="${side}" x="${x+dw/2}" y="${y+boxH/2+10}" text-anchor="middle" font-size="${Math.max(9,Math.min(14,dw/8))}" font-family="Arial" font-weight="800">${lbl(side,'item-'+d.id+'-name', kindName)}</text>
+      <rect class="xd-handle" x="${x+dw-12}" y="${y+boxH-12}" width="${sel?16:14}" height="${sel?16:14}" fill="#c9a227" stroke="#111"/>
     </g>`;
   });
+  openings+=returnSvg(side);
   if(showSvc){
     const wallFt=wallLengthFor(side);
     let off=parseFloat(val('svcOffset')||'');
@@ -1182,9 +1294,12 @@ function makePlans(){
   $('planMeta').textContent=meta;
   $('elevs').innerHTML=['FRONT','BACK','LEFT','RIGHT'].map(s=>'<div class="elev'+(s===selectedView?' picked':'')+'" data-side="'+s+'" onclick="pickView(\''+s+'\',event)"><h3>'+s+'</h3>'+elevSvg(s)+'</div>').join('');
   bindDoorDrag();
+  bindOhMainDrag();
   mountPlanTexts();
   bindLabelEdit();
   fitNotes();
+  updateLiveReturnReadout(selectedView);
+  if($('showReturns')) $('showReturns').checked=choices.showReturns!==false;
 }
 function bindLabelEdit(){
   document.querySelectorAll('.edit-lbl').forEach(t=>{
@@ -1220,28 +1335,64 @@ function fitNotes(){
   ta.style.height='auto';
   ta.style.height=Math.max(64, ta.scrollHeight)+'px';
 }
+function svgPt(svg, ev){
+  const ctm=svg.getScreenCTM();
+  return {x:(ev.clientX-ctm.e)/ctm.a, y:(ev.clientY-ctm.f)/ctm.d};
+}
+function layoutExtra(g, d, side){
+  const wallFt=wallLengthFor(side);
+  const scale=320/Math.max(1,wallFt);
+  const isWin=d.kind==='hung'||d.kind==='slider';
+  const drawW=Number(d.visW||d.w), drawH=Number(d.visH||d.h);
+  const dw=Math.max(18, drawW*scale);
+  const dh=isWin? Math.max(28, Math.min(90, drawH*12)) : Math.min(150, drawH*12);
+  const x=40 + Math.max(0, Math.min(320-dw, itemLeftFt(d,side)*scale));
+  const y=isWin ? (Number.isFinite(Number(d.yPx))?Number(d.yPx):108) : (240-dh);
+  const body=g.querySelector('.xd-body');
+  const handle=g.querySelector('.xd-handle');
+  const size=g.querySelector('.xd-size');
+  const name=g.querySelector('.xd-name');
+  const mull=g.querySelector('.xd-mull');
+  if(body){ body.setAttribute('x',x); body.setAttribute('y',y); body.setAttribute('width',dw); body.setAttribute('height',dh); }
+  if(handle){ handle.setAttribute('x',x+dw-12); handle.setAttribute('y',y+dh-12); }
+  if(size){ size.setAttribute('x',x+dw/2); size.setAttribute('y',y+dh/2-6); }
+  if(name){ name.setAttribute('x',x+dw/2); name.setAttribute('y',y+dh/2+10); }
+  if(mull){
+    if(d.kind==='slider'){ mull.setAttribute('x1',x+dw/2); mull.setAttribute('x2',x+dw/2); mull.setAttribute('y1',y); mull.setAttribute('y2',y+dh); }
+    else { mull.setAttribute('x1',x); mull.setAttribute('x2',x+dw); mull.setAttribute('y1',y+dh/2); mull.setAttribute('y2',y+dh/2); }
+  }
+}
+function refreshReturnMarks(side){
+  document.querySelectorAll('.ret-marks[data-side="'+side+'"]').forEach(g=>{
+    const host=g.ownerSVGElement;
+    if(!host) return;
+    const tmp=document.createElement('div');
+    tmp.innerHTML='<svg xmlns="http://www.w3.org/2000/svg">'+returnSvg(side)+'</svg>';
+    const neu=tmp.querySelector('g');
+    if(neu) g.replaceWith(host.ownerDocument.importNode(neu,true));
+  });
+  updateLiveReturnReadout(side);
+}
 function bindDoorDrag(){
   document.querySelectorAll('.xd').forEach(g=>{
     const id=g.getAttribute('data-id');
+    const side=(g.getAttribute('data-side')||selectedView||'FRONT').toUpperCase();
     const handle=g.querySelector('.xd-handle');
-    const body=g.querySelector('.xd-body');
     const svg=g.ownerSVGElement;
     if(!svg) return;
-    function pt(ev){
-      const ctm=svg.getScreenCTM();
-      return {x:(ev.clientX-ctm.e)/ctm.a, y:(ev.clientY-ctm.f)/ctm.d};
-    }
     if(handle){
       handle.addEventListener('pointerdown', ev=>{
         ev.stopPropagation(); ev.preventDefault();
         const d=extraDoors.find(x=>x.id===id); if(!d) return;
-        const start=pt(ev), sw=Number(d.visW||d.w), sh=Number(d.visH||d.h);
+        selectedId=id;
+        const start=svgPt(svg,ev), sw=Number(d.visW||d.w), sh=Number(d.visH||d.h);
         function move(e2){
-          const p=pt(e2);
-          d.visW=Math.max(4, +(sw+(p.x-start.x)/10).toFixed(1));
-          d.visH=Math.max(6, +(sh+(start.y-p.y)/12).toFixed(1));
+          const p=svgPt(svg,e2);
+          d.visW=Math.max(2, +(sw+(p.x-start.x)/16).toFixed(1));
+          d.visH=Math.max(2, +(sh+(p.y-start.y)/12).toFixed(1));
+          layoutExtra(g,d,side);
         }
-        function up(){ window.removeEventListener('pointermove',move); window.removeEventListener('pointerup',up); persist(); makePlans(); }
+        function up(){ window.removeEventListener('pointermove',move); window.removeEventListener('pointerup',up); persist(); }
         window.addEventListener('pointermove',move);
         window.addEventListener('pointerup',up);
       });
@@ -1256,13 +1407,78 @@ function bindDoorDrag(){
         r.setAttribute('stroke-width', r.parentNode.getAttribute('data-id')===id?'3':'1.6');
       });
       if(ev.target.classList && ev.target.classList.contains('xd-handle')) return;
-      const start=pt(ev), sx=Number(d.x)||0.15;
+      if(ev.target.classList && ev.target.classList.contains('edit-lbl')) return;
+      const start=svgPt(svg,ev);
+      const sx=itemLeftFt(d,side);
+      const sy=Number.isFinite(Number(d.yPx))?Number(d.yPx):108;
+      const isWin=d.kind==='hung'||d.kind==='slider';
+      const wall=wallLengthFor(side);
+      function move(e2){
+        const p=svgPt(svg,e2);
+        d.xFt=Math.max(0, Math.min(wall-(Number(d.w)||2), +(sx+(p.x-start.x)*wall/320).toFixed(2)));
+        d.x=d.xFt/Math.max(1,wall);
+        if(isWin) d.yPx=Math.max(72, Math.min(220, +(sy+(p.y-start.y)).toFixed(1)));
+        if(!isWin) clampNoOverlap(d);
+        layoutExtra(g,d,side);
+        refreshReturnMarks(side);
+      }
+      function up(){ window.removeEventListener('pointermove',move); window.removeEventListener('pointerup',up); if(!isWin) clampNoOverlap(d); persist(); refreshReturnMarks(side); }
+      window.addEventListener('pointermove',move);
+      window.addEventListener('pointerup',up);
+    });
+  });
+}
+function bindOhMainDrag(){
+  document.querySelectorAll('.oh-main').forEach(g=>{
+    const svg=g.ownerSVGElement; if(!svg) return;
+    const side=(g.getAttribute('data-side')||'FRONT').toUpperCase();
+    const handle=g.querySelector('.oh-handle');
+    const body=g.querySelector('.oh-body');
+    function place(){
+      const r=currentReturns();
+      const scale=320/Math.max(1,r.wall);
+      const dx=40+r.left*scale, dw=Math.max(24,r.door*scale), dy=118, dh=122;
+      if(body){ body.setAttribute('x',dx); body.setAttribute('width',dw); }
+      const size=g.querySelector('.oh-size'), name=g.querySelector('.oh-name');
+      if(size){ size.setAttribute('x',dx+dw/2); }
+      if(name){ name.setAttribute('x',dx+dw/2); }
+      if(handle){ handle.setAttribute('x',dx+dw-12); handle.setAttribute('y',dy+dh-12); }
+    }
+    if(handle){
+      handle.addEventListener('pointerdown', ev=>{
+        ev.stopPropagation(); ev.preventDefault();
+        const start=svgPt(svg,ev), sw=ohWidthFt();
         function move(e2){
-          const p=pt(e2);
-          d.x=Math.max(0, Math.min(0.85, sx+(p.x-start.x)/320));
-          clampNoOverlap(d);
+          const p=svgPt(svg,e2);
+          const wall=wallLengthFor(side);
+          const next=Math.max(8, Math.min(wall-1, +(sw+(p.x-start.x)*wall/320).toFixed(1)));
+          if($('ohWidth')) $('ohWidth').value=String(next);
+          recalcReturns('width');
+          place();
+          refreshReturnMarks(side);
         }
-        function up(){ window.removeEventListener('pointermove',move); window.removeEventListener('pointerup',up); clampNoOverlap(d); persist(); makePlans(); }
+        function up(){ window.removeEventListener('pointermove',move); window.removeEventListener('pointerup',up); persist(); }
+        window.addEventListener('pointermove',move);
+        window.addEventListener('pointerup',up);
+      });
+    }
+    g.addEventListener('pointerdown', ev=>{
+      ev.stopPropagation();
+      if(ev.target.classList && (ev.target.classList.contains('oh-handle')||ev.target.classList.contains('edit-lbl'))) return;
+      const start=svgPt(svg,ev);
+      const sl=currentReturns().left;
+      const wall=wallLengthFor(side);
+      function move(e2){
+        const p=svgPt(svg,e2);
+        let left=+(sl+(p.x-start.x)*wall/320).toFixed(1);
+        const door=ohWidthFt();
+        if(left<0) left=0;
+        if(left+door>wall) left=+(wall-door).toFixed(1);
+        writeReturns(left, +(wall-door-left).toFixed(1));
+        place();
+        refreshReturnMarks(side);
+      }
+      function up(){ window.removeEventListener('pointermove',move); window.removeEventListener('pointerup',up); persist(); }
       window.addEventListener('pointermove',move);
       window.addEventListener('pointerup',up);
     });

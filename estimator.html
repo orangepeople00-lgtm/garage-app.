@@ -4159,13 +4159,14 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             const n=Number(String(text||'').replace(/[^0-9.-]/g,''));
             return Number.isFinite(n)?n:0;
         }
-        async function saveEstimateHistoryRecord(data){
+        async function saveEstimateHistoryRecord(data, opts){
             try{
+                const forceNew=!(opts && opts.updateExisting);
                 const {data:{user}}=await garageSb.auth.getUser();
-                if(!user)return;
+                if(!user)return null;
                 const {data:staff,error:pe}=await garageSb.from('staff_profiles').select('username').eq('id',user.id).single();
-                if(pe||!staff?.username)return;
-                const editId=new URLSearchParams(location.search).get('editEstimate');
+                if(pe||!staff?.username)return null;
+                const editId=forceNew?null:(new URLSearchParams(location.search).get('editEstimate')||window._lastEstimateHistoryId||null);
                 let previous=null;
                 if(editId){
                     const prevResult=await garageSb.from('estimate_history').select('*').eq('id',editId).single();
@@ -4227,28 +4228,31 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                     };
                     const result=await garageSb.from('estimate_history').update(record).eq('id',editId);
                     error=result.error;
-                    if(!error) window._lastEstimateHistoryId=editId;
+                    if(!error){
+                        window._lastEstimateHistoryId=editId;
+                        setBoundEstimateIdentity(record.customer, record.address);
+                        return editId;
+                    }
                 }else{
                     const result=await garageSb.from('estimate_history').insert(record).select('id').single();
                     error=result.error;
                     if(!error && result.data?.id){
                         window._lastEstimateHistoryId=result.data.id;
-                        try{
-                            const u=new URL(location.href);
-                            u.searchParams.set('editEstimate',String(result.data.id));
-                            history.replaceState({},'',u.toString());
-                        }catch(e){}
+                        setBoundEstimateIdentity(record.customer, record.address);
+                        // Do NOT put editEstimate in the URL. Create Sheet must stay a new record next time.
+                        return result.data.id;
                     }
                 }
                 if(error)console.error('Estimate history save failed:',error);
-            }catch(err){console.error('Estimate history save failed:',err)}
+                return window._lastEstimateHistoryId||null;
+            }catch(err){console.error('Estimate history save failed:',err); return null;}
         }
 
         async function saveEditedEstimateSheetHtml(html, meta){
             try{
                 const {data:{user}}=await garageSb.auth.getUser();
                 if(!user){ alert('Sign in to save sheet changes.'); return false; }
-                let editId=new URLSearchParams(location.search).get('editEstimate') || window._lastEstimateHistoryId || (meta&&meta.id) || '';
+                let editId=(meta&&meta.id) || window._lastEstimateHistoryId || new URLSearchParams(location.search).get('editEstimate') || '';
                 if(!editId){
                     alert('This sheet is not in Estimate History yet. Close and create the sheet once, then Save Changes.');
                     return false;
@@ -4468,6 +4472,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                     e=result.data||null;
                 }
                 if(!e)return alert('Could not load the saved estimate for editing. Please return to Estimate History and click Edit again.');
+                setBoundEstimateIdentity(e.customer||'', e.address||'');
                 const s=e.estimate_snapshot||{};
                 if(s.sheet_presentation && typeof s.sheet_presentation==='object'){
                     window._sheetPresentation=Object.assign(getSheetPresentation(), s.sheet_presentation);
@@ -5753,6 +5758,76 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                 if(raw) window._sheetPresentation=Object.assign(getSheetPresentation(), JSON.parse(raw));
             }catch(e){}
         }
+        function resetSheetPresentationFresh(){
+            window._sheetPresentation=null;
+            getSheetPresentation();
+            try{ sessionStorage.removeItem('agb_sheet_presentation'); }catch(e){}
+            try{ sessionStorage.removeItem('agb_pending_sheet_ai'); }catch(e){}
+        }
+        function boundEstimateIdentity(){
+            return {
+                name:String(window._boundEstimateCustomer||'').trim().toLowerCase(),
+                address:String(window._boundEstimateAddress||'').trim().toLowerCase()
+            };
+        }
+        function setBoundEstimateIdentity(name, address){
+            window._boundEstimateCustomer=String(name||'').trim();
+            window._boundEstimateAddress=String(address||'').trim();
+        }
+        function currentEstimateIdentity(){
+            return {
+                name:(document.getElementById('customerName')?.value||'').trim().toLowerCase(),
+                address:(document.getElementById('customerAddress')?.value||'').trim().toLowerCase()
+            };
+        }
+        function clearEstimateEditBinding(){
+            window._lastEstimateHistoryId=null;
+            try{
+                const u=new URL(location.href);
+                if(u.searchParams.has('editEstimate')){
+                    u.searchParams.delete('editEstimate');
+                    history.replaceState({},'',u.toString());
+                }
+            }catch(e){}
+            try{ sessionStorage.removeItem('garage_edit_estimate_record'); }catch(e){}
+        }
+        function detachEstimateIfDifferentCustomer(){
+            const cur=currentEstimateIdentity();
+            const bound=boundEstimateIdentity();
+            const editing=!!(new URLSearchParams(location.search).get('editEstimate')||window._lastEstimateHistoryId);
+            const nameChanged=!!(bound.name && cur.name && bound.name!==cur.name);
+            const addrChanged=!!(bound.address && cur.address && bound.address!==cur.address);
+            if(editing && (nameChanged || addrChanged)){
+                clearEstimateEditBinding();
+                resetSheetPresentationFresh();
+                try{
+                    window._lastAiGaragePhotoUrl=null;
+                    sessionStorage.removeItem('agb_last_ai_garage_photo');
+                    window._sheetPhotoMode='generate';
+                    window._sheetPhotoEditPrompt='';
+                }catch(e){}
+                return true;
+            }
+            if(!editing){
+                // Brand-new sheet: never keep the previous customer's wording / price / photo overrides
+                resetSheetPresentationFresh();
+                try{
+                    window._sheetPhotoMode='generate';
+                    window._sheetPhotoEditPrompt='';
+                    if(bound.name && cur.name && bound.name!==cur.name){
+                        window._lastAiGaragePhotoUrl=null;
+                        sessionStorage.removeItem('agb_last_ai_garage_photo');
+                    }
+                }catch(e){}
+            }
+            return false;
+        }
+        document.addEventListener('change', function(ev){
+            const id=ev.target && ev.target.id;
+            if(id==='customerName' || id==='customerAddress'){
+                try{ detachEstimateIfDifferentCustomer(); }catch(e){}
+            }
+        });
         /** Parse presentation / layout / wording / color / font commands for THIS sheet only */
         function applySheetPresentationChange(requestText){
             const raw=String(requestText||'').trim();
@@ -5955,6 +6030,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                     skipHealth:true,
                     skipPlacement:true,
                     skipCustomer:true,
+                    updateExisting:true,
                     targetWindow: targetWindow || null
                 });
             }catch(e2){
@@ -5982,7 +6058,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                 try{ msg=await applySheetAIChange(q); }catch(e){ msg='Error: '+(e&&e.message?e.message:e); }
                 if(status) status.textContent=(msg||'Applied')+' — opening/rebuilding sheet…';
                 // Always open/rebuild a sheet so the user sees the result
-                await safePrintEstimateSheet(true, { skipHealth:true, skipPlacement:true });
+                await safePrintEstimateSheet(true, { skipHealth:true, skipPlacement:true, updateExisting:true });
                 if(status) status.textContent=(msg||'Applied')+' — sheet updated.';
             }catch(err){
                 const em=err&&err.message?err.message:String(err);
@@ -6271,7 +6347,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             estimateWindow.document.close();
 
             try {
-                await printEstimateSheet(saveToHistory, estimateWindow);
+                await printEstimateSheet(saveToHistory, estimateWindow, { updateExisting: !!(opts && opts.updateExisting) });
             } catch (err) {
                 console.error('Estimate sheet error:', err);
                 try {
@@ -7514,7 +7590,8 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             }
         }
 
-        async function printEstimateSheet(saveToHistory = true, estimateWindow = null) {
+        async function printEstimateSheet(saveToHistory = true, estimateWindow = null, histOpts = null) {
+            try{ detachEstimateIfDifferentCustomer(); }catch(e){}
             const customerName = (document.getElementById('customerName').value || '').trim();
             const customerEmail = (document.getElementById('customerEmail')?.value || '').trim();
             const customerPhone1 = (document.getElementById('customerPhone1')?.value || '').trim();
@@ -8602,6 +8679,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
 
 <script>
 const ESTIMATE_EMAIL_TO=${JSON.stringify(customerEmail||'')};
+var ESTIMATE_HISTORY_ID=window.ESTIMATE_HISTORY_ID||null;
 const ESTIMATE_CUSTOMER=${JSON.stringify(customerName||'')};
 const ESTIMATE_QUOTE=${JSON.stringify(quote||'')};
 const ESTIMATE_ADDRESS=${JSON.stringify(customerAddress||'')};
@@ -8901,7 +8979,8 @@ async function saveSheetEditsNow(){
       alert('Keep the estimator or dashboard tab open, then press Save Changes again.');
       return;
     }
-    const ok=await window.opener.saveEditedEstimateSheetHtml(html,{price:price});
+    const saveId=window.ESTIMATE_HISTORY_ID||ESTIMATE_HISTORY_ID||null;
+    const ok=await window.opener.saveEditedEstimateSheetHtml(html,{price:price,id:saveId});
     if(st) st.textContent=ok?'Sheet changes saved. They will be there when you view this estimate again.':'Save failed.';
     if(ok && btn) btn.textContent='Saved';
   }catch(err){
@@ -9131,7 +9210,7 @@ async function openPopupChatGPT(){
             if (saveToHistory) {
                 // History list: material only — no color wording on customer-facing sheets either
                 const sidingLabel = sidingType === 'hardie' ? 'Hardieboard / Cement Board Siding' : 'Premium Vinyl Siding';
-                saveEstimateHistoryRecord({
+                const savedId=await saveEstimateHistoryRecord({
                     customer: customerName,
                     address: customerAddress,
                     city,
@@ -9164,7 +9243,12 @@ async function openPopupChatGPT(){
                         sheet_html: sheetHtml,
                         sheet_presentation: (typeof getSheetPresentation==='function' ? getSheetPresentation() : null)
                     }
-                });
+                }, { updateExisting: !!(histOpts && histOpts.updateExisting) });
+                try{
+                    if(printWindow && savedId){
+                        printWindow.ESTIMATE_HISTORY_ID=savedId;
+                    }
+                }catch(e){}
             }
         }
 
@@ -9284,6 +9368,15 @@ async function openPopupChatGPT(){
         }
 
         function resetForm(runCalc = true) {
+            try{
+                clearEstimateEditBinding();
+                resetSheetPresentationFresh();
+                setBoundEstimateIdentity('','');
+                window._lastAiGaragePhotoUrl=null;
+                sessionStorage.removeItem('agb_last_ai_garage_photo');
+                window._sheetPhotoMode='generate';
+                window._sheetPhotoEditPrompt='';
+            }catch(e){}
             // Reset most fields to sensible defaults
             document.getElementById('city').value = 'Chicago';
             document.getElementById('width').value = '20';

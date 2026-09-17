@@ -44,8 +44,8 @@ button{border:0;border-radius:7px;padding:8px 10px;font-weight:800;cursor:pointe
 .notes-col h3{margin:10px 0 6px;font-size:15px;letter-spacing:.04em}
 .notes-col ul{margin:4px 0 8px;padding-left:18px}
 .notes-col li{margin:0 0 4px}
-.split{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
-.elevpage{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;min-height:8.2in}
+.split{display:grid;grid-template-columns:1.05fr .95fr;gap:10px;align-items:start}
+.elevpage{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start;min-height:8.6in}
 .caption{text-align:center;font-weight:800;letter-spacing:.06em;font-size:16px;margin-top:6px}
 .subcap{text-align:center;font-size:12px;margin-bottom:4px}
 .elecbox{border:1.4px solid #111;padding:10px 12px;margin-top:10px}
@@ -136,7 +136,7 @@ button{border:0;border-radius:7px;padding:8px 10px;font-weight:800;cursor:pointe
   <label>Overhead door</label>
   <div class="row3">
     <input id="ohW" type="number" step="0.5" value="16" title="OH width">
-    <input id="ohH" type="number" step="0.5" value="8" title="OH height">
+    <input id="ohH" type="number" step="0.5" value="7" title="OH height">
     <select id="ohWall"><option value="front">Front</option><option value="back">Back</option><option value="left">Left</option><option value="right">Right</option></select>
   </div>
   <div class="row2">
@@ -248,7 +248,11 @@ function $(id){return document.getElementById(id)}
 function val(id){const el=$(id);return (el&&el.value!=null?String(el.value):'').trim()}
 function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
 function cityName(){return val('cityManual')||val('city')||'Village'}
-function hasLanding(){return val('svcWall')!=='none' && val('landing')!=='' && !/^none$/i.test(val('landing'))}
+function hasLanding(){
+  if(val('svcWall')==='none') return false;
+  if(cityStruct().landing) return true;
+  return val('landing')!=='' && !/^none$/i.test(val('landing'));
+}
 function hasApron(){return Number(val('apronFt'))>0}
 function winQty(){const n=Number(val('winCount')); if(val('winWall')==='none') return 0; return Number.isFinite(n)?Math.max(0,n):1}
 function gfiQty(){const n=Number(val('gfiCount')); return Number.isFinite(n)?Math.max(0,n):0}
@@ -509,23 +513,61 @@ function doorReturns(){
   if(R<0){R=0;L=leftover}
   return {W,oh,left:L,right:R,min:Math.min(L,R)};
 }
-function braceCutoffFt(){
-  const p=packet();
-  if(p && Number(p.braceReturnFt)>0) return Number(p.braceReturnFt);
-  const n=((code()||{}).notes)||'';
-  if(/less than 48/i.test(n)) return 4;
-  const m=n.match(/returns?[^0-9]{0,24}(\d+)\s*(?:'|ft|feet|")/i);
-  if(m){ const n0=Number(m[1]); return n0>=12?n0/12:n0; }
-  return 4;
+function cityStruct(){
+  const name=cityName();
+  const N=String(((code()||{}).notes)||'').toUpperCase();
+  const s={alwaysBrace:false,cutoffFt:4,minReturnIn:12,roofSheath:'',wallSheath:'',hurricane:false,gutters:null,vapor:false,rebar:false,landing:false,housewrap:false,noGutters:false,noFire:false};
+  const known={
+    'Addison':{cutoffFt:4},
+    'Antioch':{cutoffFt:32/12,roofSheath:'5/8" PLYWOOD ROOF'},
+    'Evanston':{cutoffFt:2},
+    'Forest Park':{alwaysBrace:true,minReturnIn:16,roofSheath:'5/8" ROOF SHEATHING'},
+    'DeKalb County':{alwaysBrace:true},
+    'Mundelein':{alwaysBrace:true},
+    'Bartlett':{roofSheath:'5/8" PLYWOOD ROOF',hurricane:true},
+    'Bedford Park':{gutters:true},
+    'Bolingbrook':{hurricane:true},
+    'Blue Island':{housewrap:true},
+    'Cicero':{noGutters:true,roofSheath:'5/8" PLYWOOD ROOF'},
+    'Evergreen Park':{vapor:true},
+    'Geneva':{landing:true},
+    'Gurnee':{landing:true},
+    'Bensenville':{landing:true},
+    'Aurora':{rebar:true},
+    'Elmwood Park':{rebar:true},
+    'Arlington Heights':{hurricane:true}
+  };
+  Object.assign(s, known[name]||{});
+  let m=N.match(/RETURNS?\s+(?:ARE\s+)?(?:LESS THAN|UNDER)\s+(\d+)/);
+  if(m){ const v=Number(m[1]); s.cutoffFt=v>=12?v/12:v; }
+  m=N.match(/LESS THAN\s+(\d+)\s*"/);
+  if(m) s.cutoffFt=Number(m[1])/12;
+  if(/PORTAL|METHOD PFG|PFG PORTAL/.test(N)) s.alwaysBrace=true;
+  if(/BRACED SHORT WALL/.test(N)) s.alwaysBrace=true;
+  if(/AVOID SHEER|AVOID SHEAR/.test(N)){
+    const m2=N.match(/MINIMUM\s+(\d+)\s*'/); if(m2) s.cutoffFt=Number(m2[1]);
+  }
+  if(/NO FIRE WALL/.test(N)) s.noFire=true;
+  if(/GUTTERS REQUIRED/.test(N)) s.gutters=true;
+  if(/DO NOT PUT ON GUTTERS/.test(N)) s.noGutters=true;
+  if(/HURICAN|HURRICANE|H CLIPS|H-CLIPS/.test(N)) s.hurricane=true;
+  if(/VAPOR/.test(N)) s.vapor=true;
+  if(/REBAR/.test(N)) s.rebar=true;
+  if(/3\s*X\s*3 LANDING|3X3 LANDING/.test(N)) s.landing=true;
+  if(/HOUSE WRAP/.test(N)) s.housewrap=true;
+  if(/5\/8/.test(N) && /ROOF/.test(N)) s.roofSheath=s.roofSheath||'5/8" ROOF SHEATHING';
+  const pkt=packet();
+  if(pkt && Number(pkt.braceReturnFt)>0) s.cutoffFt=Number(pkt.braceReturnFt);
+  if(pkt && pkt.flags){
+    if(pkt.flags.shear && !pkt.flags.braceIfShortReturns) s.alwaysBrace=true;
+    if(pkt.flags.hurricane) s.hurricane=true;
+    if(pkt.flags.gutters) s.gutters=true;
+    if(pkt.flags.vapor) s.vapor=true;
+  }
+  return s;
 }
-function cityForcesBrace(){
-  const p=packet();
-  if(p && p.flags && p.flags.shear && !p.flags.braceIfShortReturns) return true;
-  const c=code()||{};
-  const blob=[c.notes,c.ohHeader].join(' ');
-  if(/NO SHEAR|SHEAR NOT/i.test(blob)) return false;
-  return /PORTAL|PFG|METHOD PFG|SHEAR WALL REQUIRED/i.test(blob);
-}
+function braceCutoffFt(){ return cityStruct().cutoffFt; }
+function cityForcesBrace(){ return !!cityStruct().alwaysBrace; }
 function computeBraceRequired(){
   const r=doorReturns();
   if(r.oh>=r.W) return true;
@@ -533,6 +575,7 @@ function computeBraceRequired(){
   return r.min < braceCutoffFt();
 }
 function computeFirewallRequired(){
+  if(cityStruct().noFire) return false;
   const p=packet();
   if(p && p.flags && p.flags.firewall) return true;
   const c=code()||{};
@@ -565,16 +608,20 @@ function headerCallout(){
 function rafterCallout(){ return (code()&&code().rafters)||'2x6 16" O.C.'; }
 function tieCallout(){ return (code()&&code().wallTies)||'2x6 TIES 48" O.C.'; }
 function hurricaneRequired(){
+  if(cityStruct().hurricane) return true;
   const p=packet();
   if(p && p.flags && p.flags.hurricane) return true;
   return /H\s*CLIP|HURRICANE|H-TIE|STRAPS/i.test(cityBlob()) || ($('flagTies')&&$('flagTies').checked);
 }
 function guttersRequired(){
+  if(cityStruct().noGutters) return false;
+  if(cityStruct().gutters) return true;
   const p=packet();
   if(p && p.flags && p.flags.gutters) return true;
-  return /GUTTER/.test(String((code()||{}).notes||'').toUpperCase()) || val('gutters')==='yes' || ($('flagGutters')&&$('flagGutters').checked);
+  return /GUTTERS REQUIRED/.test(String((code()||{}).notes||'').toUpperCase()) || val('gutters')==='yes' || ($('flagGutters')&&$('flagGutters').checked);
 }
 function vaporRequired(){
+  if(cityStruct().vapor) return true;
   const p=packet();
   if(p && p.flags && p.flags.vapor) return true;
   return /VAPOR|VISQUEEN/i.test(cityBlob());
@@ -614,17 +661,26 @@ function applyJobRules(){
   const box=$('ruleBox');
   if(box){
     const warns=jobWarnings();
+    const specials=[];
+    if(brace) specials.push(withCite('BRACE / PORTAL / SHEAR WALL  ON', 'brace'));
+    if(fire) specials.push(withCite('FIRE WALL / 5/8" TYPE X  ON', 'fire'));
+    if(ties) specials.push(withCite('HURRICANE TIES / H CLIPS  ON', 'hurricane'));
+    if(gut) specials.push(withCite('GUTTERS  ON eaves', 'gutters'));
+    if(vaporRequired()) specials.push(withCite('VAPOR BARRIER  ON slab', 'vapor'));
+    if(waterLedgeRequired()) specials.push(withCite('WATER LEDGE + 1/8"/FT SLOPE', 'waterLedge'));
+    if(showOnPlan('collar')) specials.push(withCite('COLLAR TIES', 'collar'));
+    if(showOnPlan('crossTies')) specials.push(withCite('CROSS TIES', 'crossTies'));
+    if(cityStruct().landing && val('svcWall')!=='none') specials.push(withCite('3x3 SERVICE LANDING', 'landing'));
+    if(cityStruct().rebar) specials.push(withCite('REBAR IN FOOTING', 'rebar'));
+    if(cityStruct().housewrap) specials.push(withCite('HOUSE WRAP', 'housewrap'));
+    if(cityStruct().roofSheath) specials.push(withCite(cityStruct().roofSheath, 'roof58'));
     box.textContent=[
       'RETURNS  '+r.left+"' L  ·  "+r.right+"' R   (brace under "+braceCutoffFt()+"')",
-      'BRACE  '+(brace?'ON plans':'off'),
-      'FIRE WALL  '+(fire?'ON plans':'off'),
       'STUDS  '+studCallout(),
       'HEADER  '+headerCallout(),
       'RAFTERS  '+rafterCallout(),
-      'TIES  '+tieCallout()+(ties?' + hurricane / H clips':''),
-      'GUTTERS  '+(gut?'ON eaves':'none'),
-      vaporRequired()?'VAPOR BARRIER  ON slab':'',
-      waterLedgeRequired()?'WATER LEDGE / 1/8" SLOPE  ON slab':'SLOPE SLAB 1/8" / FT TO O.H. DOOR',
+      'TIES  '+tieCallout(),
+      ...specials,
       warns.length?('CHECK  '+warns.join(' | ')):'OK  door, walls, and footprint check out'
     ].filter(Boolean).join('\n');
   }
@@ -632,146 +688,205 @@ function applyJobRules(){
 }
 function needsBraceDetail(){ return computeBraceRequired(); }
 function sheetTotal(){ return needsBraceDetail()?3:2; }
+function reqBlob(){
+  const p=packet()||{};
+  const c=code()||{};
+  return [c.notes,c.rafters,c.ohHeader,c.wallTies,c.footings,c.slab,
+    (p.requiredOnPlans||[]).join(' '),(p.extraNotes||[]).join(' '),val('notes')].join(' ');
+}
+function showOnPlan(kind){
+  const b=reqBlob().toUpperCase();
+  if(kind==='brace') return needsBraceDetail();
+  if(kind==='returns') return needsBraceDetail() || /RETURN|EACH SIDE OF OPEN|MIN\.?\s*2['’]?\s*WALL|2'\s*WALL EACH/i.test(b);
+  if(kind==='returnSheath') return showOnPlan('returns') || /STRUCTURAL SHEATH|SHEATHING INCLUDING GABLE|GABLE.*SHEATH/i.test(b);
+  if(kind==='anchors') return true;
+  if(kind==='sill') return true;
+  if(kind==='rafters') return true;
+  if(kind==='ridge') return true;
+  if(kind==='lvl') return true;
+  if(kind==='slab') return true;
+  if(kind==='footing') return true;
+  if(kind==='collar') return /COLLAR/i.test(b);
+  if(kind==='crossTies') return /CROSS|CEILING JOIST|TIES/i.test(b+((code()||{}).wallTies||''));
+  if(kind==='wallSheath') return /WALL SHEATH|OSB|OSB WALL|1\/2"|7\/16/i.test(b) || true;
+  if(kind==='roofSheath') return true;
+  if(kind==='osb') return /OSB|SHEATH/i.test(b) || true;
+  if(kind==='gutters') return guttersRequired();
+  if(kind==='hurricane') return hurricaneRequired();
+  if(kind==='vapor') return vaporRequired();
+  if(kind==='fire') return computeFirewallRequired();
+  return false;
+}
+function cite(kind){
+  const city=cityName();
+  const fromPkt=((packet()&&packet().citations)||[]).find(c=>String(c.item||'').toLowerCase().includes(kind));
+  if(fromPkt && (fromPkt.code||fromPkt.source)) return [fromPkt.code, fromPkt.source].filter(Boolean).join(' — ');
+  const map={
+    brace: city==='Mundelein' ? 'Mundelein packet / IRC R602.10.6.3 Method PFG'
+      : city==='Forest Park' ? 'Forest Park IRC 2009 amd. — braced short wall'
+      : city==='DeKalb County' ? 'DeKalb Co. IRC 2006 — braced short walls'
+      : city==='Addison' ? 'Addison codebook — shear if returns < 48"'
+      : city==='Antioch' ? 'Antioch codebook — shear if returns < 32"'
+      : city==='Evanston' ? 'Evanston codebook — 2\' min return to avoid shear'
+      : 'IRC R602.10.6.3 Method PFG',
+    hurricane: city==='Bartlett' ? 'Bartlett codebook — H clips'
+      : city==='Bolingbrook' ? 'Bolingbrook codebook — hurricane ties'
+      : city==='Arlington Heights' ? 'Arlington Heights packet — hurricane ties'
+      : 'IRC R802.11 roof tie-down',
+    collar: 'IRC R802.3 collar ties',
+    crossTies: 'IRC R802.3.1 ceiling joists / cross ties',
+    anchors: 'IRC R403.1.6 foundation anchorage',
+    sill: 'IRC R317 / R403.1.6 treated sill',
+    vapor: city==='Evergreen Park' ? 'Evergreen Park codebook / IRC R506.2.3'
+      : 'IRC R506.2.3 vapor retarder',
+    fire: 'IRC R302.1 exterior wall rating',
+    gutters: city==='Addison' ? 'Addison codebook — gutters required'
+      : city==='Bedford Park' ? 'Bedford Park codebook — gutters required'
+      : 'Village packet',
+    landing: 'Village codebook — 3x3 landing at service door',
+    rebar: 'Village codebook — continuous rebar in footing',
+    waterLedge: 'Mundelein packet — water ledge + 1/8"/ft pitch',
+    housewrap: 'Blue Island codebook — house wrap',
+    roof58: 'Village codebook — 5/8" roof sheathing'
+  };
+  return map[kind]||'';
+}
+function withCite(label, kind){
+  const c=cite(kind);
+  return c? label+' ('+c+')' : label;
+}
 function floorPlanSvg(){
   const W=Number(val('width'))||22, D=Number(val('depth'))||24;
-  const ohW=Number(val('ohW'))||16, ohH=Number(val('ohH'))||8;
+  const ohW=Number(val('ohW'))||16, ohH=Number(val('ohH'))||7;
   const apron=Number(val('apronFt'))||0;
   const ret=doorReturns();
-  const leftRet=ret.left, rightRet=ret.right;
-  const sx=16, ox=150, oy=56;
+  const L=ret.left, R=ret.right;
+  const sx=14, ox=90, oy=70;
   const gw=W*sx, gd=D*sx;
-  const hdr=headerCallout();
-  const doorX=ox+leftRet*sx, doorW=ohW*sx;
-  const ties=tieCallout();
-  const raft=rafterCallout();
+  const doorX=ox+L*sx, doorW=ohW*sx;
   let extra='';
-  if(val('partyWall')!=='none'){
-    extra+=`<text x="${ox+gw/2}" y="${oy-12}" text-anchor="middle" font-size="12">${esc(val('partySize')||'6x7')} PARTY DOOR</text>`;
-  }
   if(val('svcWall')!=='none'){
-    extra+=`<rect x="${ox+gw}" y="${oy+gd*0.55}" width="12" height="30" fill="#fff" stroke="#111"/>
-      <text x="${ox+gw+18}" y="${oy+gd*0.55+14}" font-size="12">36"x80"</text>`;
-    if(hasLanding()) extra+=`<rect x="${ox+gw+12}" y="${oy+gd*0.55+30}" width="${Math.max(40, (parseFloat(val('landing'))||3)*sx)}" height="28" fill="#fff" stroke="#111"/>
-      <text x="${ox+gw+18}" y="${oy+gd*0.55+48}" font-size="12">${esc(val('landing'))} LANDING</text>`;
+    extra+=`<rect x="${ox+gw}" y="${oy+gd*0.52}" width="14" height="32" fill="#fff" stroke="#111"/>`;
+    if(hasLanding()) extra+=`<rect x="${ox+gw+14}" y="${oy+gd*0.52+32}" width="40" height="22" fill="#fff" stroke="#111"/>`;
   }
-  if(winQty()>0){
-    extra+=`<text x="${ox+gw/2}" y="${oy+20}" text-anchor="middle" font-size="12">${winQty()} ${esc(val('winType'))} ${esc(val('winSize'))}</text>`;
+  if(val('partyWall')==='back'){
+    extra+=`<line x1="${ox+gw*0.3}" y1="${oy}" x2="${ox+gw*0.7}" y2="${oy}" stroke="#fff" stroke-width="6"/>`;
   }
-  const apr=hasApron()?`<rect x="${ox}" y="${oy+gd}" width="${gw}" height="44" fill="#fff" stroke="#111" stroke-width="1.8"/>
-    <text x="${ox+gw/2}" y="${oy+gd+28}" text-anchor="middle" font-size="16" font-weight="700">${apron}' APRON</text>`:'';
-  return `<svg viewBox="0 0 760 700" width="100%" style="max-height:8.4in">
-    <text x="380" y="22" text-anchor="middle" font-size="16" font-weight="800" letter-spacing="2">FLOOR PLAN</text>
-    <rect x="${ox}" y="${oy}" width="${gw}" height="${gd}" fill="#fff" stroke="#111" stroke-width="2"/>
+  if(showOnPlan('returns')){
+    extra+=`<rect x="${ox}" y="${oy+gd-18}" width="${L*sx}" height="18" fill="url(#hatchRet)" stroke="#111"/>
+      <rect x="${doorX+doorW}" y="${oy+gd-18}" width="${R*sx}" height="18" fill="url(#hatchRet)" stroke="#111"/>
+      <text x="${ox+L*sx/2}" y="${oy+gd-22}" text-anchor="middle" font-size="11">${L}' RETURN</text>
+      <text x="${doorX+doorW+R*sx/2}" y="${oy+gd-22}" text-anchor="middle" font-size="11">${R}' RETURN</text>`;
+  }
+  if(showOnPlan('brace')) extra+=`<text x="${ox+gw/2}" y="${oy+22}" text-anchor="middle" font-size="10">${esc(withCite('PORTAL / BRACE AT O.H.', 'brace'))}</text>`;
+  const apr=hasApron()?`<rect x="${ox}" y="${oy+gd}" width="${gw}" height="40" fill="#fff" stroke="#111" stroke-width="1.8"/>
+    <text x="${ox+gw/2}" y="${oy+gd+26}" text-anchor="middle" font-size="14" font-weight="700">${apron}' APRON</text>`:'';
+  return `<svg viewBox="0 0 520 640" width="100%" style="max-height:9.2in">
+    <defs><pattern id="hatchRet" width="6" height="6" patternUnits="userSpaceOnUse"><path d="M0 6 L6 0" stroke="#444" stroke-width=".8"/></pattern></defs>
+    <text x="260" y="22" text-anchor="middle" font-size="15" font-weight="800" letter-spacing="2">FLOOR PLAN</text>
+    <rect x="${ox}" y="${oy}" width="${gw}" height="${gd}" fill="#fff" stroke="#111" stroke-width="2.2"/>
     <line x1="${doorX}" y1="${oy+gd}" x2="${doorX+doorW}" y2="${oy+gd}" stroke="#fff" stroke-width="8"/>
-    <line x1="${doorX+8}" y1="${oy+gd-18}" x2="${doorX+doorW-8}" y2="${oy+gd-18}" stroke="#111"/>
-    <line x1="${doorX+8}" y1="${oy+gd-28}" x2="${doorX+doorW-8}" y2="${oy+gd-28}" stroke="#111"/>
-    <text x="${doorX+doorW/2}" y="${oy+gd-36}" text-anchor="middle" font-size="13">${ohW}' x ${ohH}' OVERHEAD DOOR</text>
-    <text x="${doorX+doorW/2}" y="${oy+gd-50}" text-anchor="middle" font-size="12">${esc(hdr)}</text>
+    <line x1="${doorX+6}" y1="${oy+gd-16}" x2="${doorX+doorW-6}" y2="${oy+gd-16}" stroke="#111"/>
+    <line x1="${doorX+6}" y1="${oy+gd-24}" x2="${doorX+doorW-6}" y2="${oy+gd-24}" stroke="#111"/>
+    <text x="${doorX+doorW/2}" y="${oy+gd-32}" text-anchor="middle" font-size="12">${ohW}' x ${ohH}' O.H. DOOR</text>
     ${apr}
-    <text x="${ox+leftRet*sx/2}" y="${oy+gd-6}" text-anchor="middle" font-size="13">${leftRet}'</text>
-    <text x="${doorX+doorW/2}" y="${oy+gd+16}" text-anchor="middle" font-size="13">${ohW}'</text>
-    <text x="${doorX+doorW+rightRet*sx/2}" y="${oy+gd-6}" text-anchor="middle" font-size="13">${rightRet}'</text>
-    <line x1="${ox+gw+18}" y1="${oy}" x2="${ox+gw+18}" y2="${oy+gd}" stroke="#111"/>
-    <text x="${ox+gw+36}" y="${oy+gd/2}" font-size="16" font-weight="800" transform="rotate(-90 ${ox+gw+36} ${oy+gd/2})">${D}'</text>
-    <line x1="${ox}" y1="${oy-8}" x2="${ox+gw}" y2="${oy-8}" stroke="#111"/>
-    <text x="${ox+gw/2}" y="${oy-14}" text-anchor="middle" font-size="16" font-weight="800">${W}'</text>
-    <text x="${ox+gw/2}" y="${oy+gd*0.28}" text-anchor="middle" font-size="13">${esc(raft)}</text>
-    <text x="${ox+gw/2}" y="${oy+gd*0.28+16}" text-anchor="middle" font-size="13">${esc(ties)}</text>
-    <text x="${ox+gw/2}" y="${oy+gd*0.48}" text-anchor="middle" font-size="13">${esc(val('slab')||'4\" CONCRETE · 6x6 #10 WWM')}</text>
-    <text x="${ox+gw/2}" y="${oy+gd*0.48+16}" text-anchor="middle" font-size="13">${vaporRequired()?'VAPOR BARRIER + 4\" STONE':'4\" STONE'}</text>
-    <text x="${ox+gw/2}" y="${oy+gd*0.62}" text-anchor="middle" font-size="12">${studCallout()}</text>
-    <text x="${ox+16}" y="${oy+gd-70}" font-size="12">SLOPE 1/8\" / FT TO O.H.</text>
-    ${waterLedgeRequired()?`<text x="${ox+16}" y="${oy+gd-54}" font-size="12">WATER LEDGE 3 SIDES</text>`:''}
-    ${computeFirewallRequired()?`<text x="${ox+8}" y="${oy+gd*0.72}" font-size="12">5/8\" TYPE X FIRE WALL</text>`:''}
-    ${winQty()>0?`<text x="${ox+gw/2}" y="${oy+36}" text-anchor="middle" font-size="12">${esc(windowHeaderCallout())}</text>`:''}
+    <text x="${ox+L*sx/2}" y="${oy+gd-4}" text-anchor="middle" font-size="12">${L}'</text>
+    <text x="${doorX+doorW+R*sx/2}" y="${oy+gd-4}" text-anchor="middle" font-size="12">${R}'</text>
+    <line x1="${ox+gw+16}" y1="${oy}" x2="${ox+gw+16}" y2="${oy+gd}" stroke="#111"/>
+    <text x="${ox+gw+32}" y="${oy+gd/2}" font-size="14" font-weight="800" transform="rotate(-90 ${ox+gw+32} ${oy+gd/2})">${D}'</text>
+    <line x1="${ox}" y1="${oy-14}" x2="${ox+gw}" y2="${oy-14}" stroke="#111"/>
+    <text x="${ox+gw/2}" y="${oy-20}" text-anchor="middle" font-size="14" font-weight="800">${W}'</text>
+    <text x="${ox+gw/2}" y="${oy+gd*0.32}" text-anchor="middle" font-size="12">${esc(rafterCallout())}</text>
+    <text x="${ox+gw/2}" y="${oy+gd*0.32+16}" text-anchor="middle" font-size="12">${esc(tieCallout())}</text>
+    <text x="${ox+gw/2}" y="${oy+gd*0.50}" text-anchor="middle" font-size="12">${esc((val('slab')||'4\" SLAB / WWM').slice(0,28))}</text>
     ${extra}
   </svg>`;
+}
+function tag(x,y,t, anchor){
+  return `<text x="${x}" y="${y}" text-anchor="${anchor||'start'}" font-size="11" font-family="Arial">${esc(t)}</text>`;
 }
 function buildingSectionSvg(){
   const wall=Number(val('wallH'))||8;
   const tot=totalH();
   const p=pitchNum();
-  const raft=rafterCallout();
-  const hdr=headerCallout();
-  const sheathW=val('wallSheath')||'7/16" OSB';
-  const sheathR=val('roofSheath')||'7/16" OSB';
-  const slab=val('slab')||'4" CONCRETE / 6 BAG / WWM';
-  const foot=val('footing')||'THICKENED EDGE';
-  return `<svg viewBox="0 0 780 620" width="100%" style="max-height:8in">
-    <text x="390" y="20" text-anchor="middle" font-size="16" font-weight="800" letter-spacing="2">BUILDING SECTION</text>
-    <line x1="430" y1="70" x2="620" y2="150" stroke="#111" stroke-width="3"/>
-    <rect x="608" y="146" width="18" height="18" fill="#fff" stroke="#111"/>
-    <text x="640" y="160" font-size="11">2x8 RIDGE</text>
-    <rect x="418" y="148" width="14" height="14" fill="#fff" stroke="#111"/>
-    <line x1="418" y1="162" x2="418" y2="430" stroke="#111" stroke-width="2.2"/>
-    <line x1="432" y1="162" x2="432" y2="430" stroke="#111" stroke-width="2.2"/>
-    ${Array.from({length:14},(_,i)=>`<line x1="418" y1="${180+i*16}" x2="432" y2="${188+i*16}" stroke="#111"/>`).join('')}
-    <rect x="400" y="430" width="50" height="12" fill="#ddd" stroke="#111"/>
-    <rect x="390" y="442" width="70" height="28" fill="#bbb" stroke="#111"/>
-    <rect x="380" y="470" width="90" height="22" fill="#999" stroke="#111"/>
-    <line x1="360" y1="430" x2="520" y2="430" stroke="#111" stroke-dasharray="4 3"/>
-    <text x="250" y="58" font-size="12">${esc(val('shingles')||'235# SHINGLES')} / 15# FELT</text>
-    <text x="250" y="76" font-size="12">${esc(sheathR)} ROOF SHEATHING</text>
-    <text x="250" y="118" font-size="12">${p}/12 PITCH</text>
-    <text x="250" y="136" font-size="12">${esc(raft)}</text>
-    <text x="250" y="154" font-size="12">${esc(tieCallout())}</text>
-    <text x="250" y="170" font-size="12">${hurricaneRequired()?'HURRICANE TIES / H CLIPS AT RAFTERS':''}</text>
-    <text x="250" y="186" font-size="12">${guttersRequired()?'GUTTERS AT EAVES':'NO GUTTERS'}</text>
-    <text x="250" y="206" font-size="12">${esc(hdr)}</text>
-    <text x="250" y="250" font-size="12">${studCallout()}</text>
-    ${computeFirewallRequired()?`<text x="250" y="284" font-size="12">5/8" TYPE X FIRE WALL AT CLOSE LOT LINE</text>`:''}
-    <text x="250" y="268" font-size="12">${esc(sheathW)} WALL SHEATHING</text>
-    <text x="250" y="300" font-size="12">${esc(val('siding')||'VINYL')} SIDING / HOUSEWRAP</text>
-    <text x="250" y="360" font-size="12">1/2" ANCHOR BOLTS 6' O.C.</text>
-    <text x="250" y="378" font-size="12">2x4 WOLMANIZED SILL</text>
-    <text x="250" y="410" font-size="12">${esc(slab)}</text>
-    <text x="250" y="448" font-size="12">4" GRAVEL</text>
-    <text x="250" y="470" font-size="12">GRADE BEAM / THICKENED EDGE</text>
-    <text x="250" y="488" font-size="12">${esc(foot)}</text>
-    <text x="250" y="506" font-size="12">${wall}'-0" PLATE   T/RIDGE ${tot}'-0"</text>
-    <text x="640" y="90" font-size="12">2 ROOF VENTS</text>
-    <line x1="248" y1="54" x2="500" y2="100" stroke="#111" stroke-width=".8"/>
-    <line x1="248" y1="250" x2="418" y2="250" stroke="#111" stroke-width=".8"/>
-    <line x1="248" y1="410" x2="420" y2="436" stroke="#111" stroke-width=".8"/>
+  const wx=300, ww=26, plate=200, wh=Math.min(210, wall*20), slab=plate+wh, foot=slab+42;
+  const eaveX=wx+ww, eaveY=plate, ridgeX=520, ridgeY=70;
+  const midRafterX=(eaveX+ridgeX)/2, midRafterY=(eaveY+ridgeY+18)/2;
+  const ridge = showOnPlan('ridge') ? `<rect x="${ridgeX-7}" y="${ridgeY}" width="20" height="16" fill="#fff" stroke="#111"/>${tag(ridgeX+16, ridgeY+12, '2x8 RIDGE')}` : '';
+  const raft = showOnPlan('rafters') ? tag(midRafterX-100, midRafterY+4, rafterCallout()) : '';
+  const sheathR = showOnPlan('roofSheath') ? tag(midRafterX+8, midRafterY+6, cityStruct().roofSheath||val('roofSheath')||'7/16" OSB ROOF') : '';
+  const collar = showOnPlan('collar') ? `<line x1="${eaveX+30}" y1="${eaveY-40}" x2="${midRafterX+20}" y2="${midRafterY-8}" stroke="#111" stroke-width="2"/>${tag(eaveX+34, eaveY-46, withCite('COLLAR TIE','collar'))}` : '';
+  const xtie = showOnPlan('crossTies') ? `<line x1="${wx-40}" y1="${plate+6}" x2="${wx+90}" y2="${plate+6}" stroke="#111" stroke-width="2"/>${tag(wx-118, plate+18, tieCallout())}` : '';
+  const lvl = showOnPlan('lvl') ? `<rect x="${wx-4}" y="${plate-22}" width="${ww+8}" height="10" fill="#e8d7a8" stroke="#111"/>${tag(wx-130, plate-16, headerCallout())}` : '';
+  const osb = showOnPlan('osb') ? Array.from({length:8},(_,i)=>`<line x1="${wx-6}" y1="${plate+12+i*24}" x2="${wx}" y2="${plate+i*24}" stroke="#666"/>`).join('') + tag(wx-120, plate+wh*0.55, (val('wallSheath')||'7/16" OSB')+' SHEATH') : '';
+  const bolts = showOnPlan('anchors') ? [0.2,0.5,0.8].map(f=>`<line x1="${wx+ww/2}" y1="${slab-8}" x2="${wx+ww/2}" y2="${slab+18+f*8}" stroke="#111"/><circle cx="${wx+ww/2}" cy="${slab-10}" r="2.2" fill="#111"/>`).join('') + tag(wx-108, slab-2, '1/2" ANCHOR BOLTS') : '';
+  const sill = showOnPlan('sill') ? `<rect x="${wx-6}" y="${slab-8}" width="${ww+12}" height="8" fill="#c9b48a" stroke="#111"/>${tag(wx-118, slab+8, 'TREATED SILL PLATE')}` : `<rect x="${wx-6}" y="${slab-8}" width="${ww+12}" height="8" fill="#eee" stroke="#111"/>`;
+  const gut = showOnPlan('gutters') ? `<ellipse cx="${eaveX-8}" cy="${plate-2}" rx="7" ry="5" fill="none" stroke="#111"/>${tag(eaveX-78, plate-8, 'GUTTER')}` : '';
+  const ht = showOnPlan('hurricane') ? tag(eaveX+8, plate+14, withCite('H-TIE','hurricane')) : '';
+  const vap = showOnPlan('vapor') ? tag(wx+ww+10, slab+26, withCite('VAPOR','vapor')) : '';
+  return `<svg viewBox="0 0 700 560" width="100%" style="max-height:9in">
+    <text x="350" y="18" text-anchor="middle" font-size="14" font-weight="800" letter-spacing="2">BUILDING SECTION</text>
+    <line x1="${eaveX}" y1="${eaveY}" x2="${ridgeX}" y2="${ridgeY+16}" stroke="#111" stroke-width="3"/>
+    <line x1="${eaveX-5}" y1="${eaveY+7}" x2="${ridgeX-6}" y2="${ridgeY+22}" stroke="#111" stroke-width="1.1"/>
+    ${ridge}${raft}${sheathR}${collar}${xtie}
+    ${tag(midRafterX+8, midRafterY-10, (val('shingles')||'235# SHINGLES')+' / 15# FELT')}
+    <polygon points="${midRafterX-70},${midRafterY-28} ${midRafterX-70},${midRafterY-12} ${midRafterX-54},${midRafterY-12}" fill="none" stroke="#111"/>
+    ${tag(midRafterX-68, midRafterY-32, p+'/12')}
+    <rect x="${wx-8}" y="${plate-12}" width="${ww+16}" height="12" fill="#fff" stroke="#111"/>
+    ${gut}${tag(wx-118, plate-2, 'BOXED EAVE 6"')}${ht}${lvl}
+    <rect x="${wx}" y="${plate}" width="${ww}" height="${wh}" fill="#fff" stroke="#111" stroke-width="1.7"/>
+    ${Array.from({length:7},(_,i)=>`<line x1="${wx}" y1="${plate+18+i*26}" x2="${wx+ww}" y2="${plate+6+i*26}" stroke="#111"/>`).join('')}
+    ${osb}
+    ${tag(wx+ww+10, plate+wh*0.42, studCallout())}
+    ${tag(wx-120, plate+wh*0.68, (val('siding')||'VINYL')+' SIDING')}
+    ${sill}${bolts}
+    <rect x="${wx-14}" y="${slab}" width="${ww+28}" height="12" fill="#ccc" stroke="#111"/>
+    ${tag(wx+ww+10, slab+10, (val('slab')||'4\" SLAB / WWM').slice(0,24))}
+    <polygon points="${wx-20},${slab+12} ${wx-26},${foot} ${wx+ww+26},${foot} ${wx+ww+20},${slab+12}" fill="#bbb" stroke="#111"/>
+    ${tag(wx+ww+10, slab+22, '4" GRAVEL')}${vap}
+    ${showOnPlan('footing')?tag(wx+ww+10, foot-2, val('footing')||'THICKENED EDGE'):''}
+    <line x1="${wx-36}" y1="${slab}" x2="${wx+ww+48}" y2="${slab}" stroke="#111" stroke-dasharray="4 3"/>
+    ${tag(wx-70, slab-16, wall+"'-0\" PLATE")}
+    ${tag(ridgeX-40, 36, "T/RIDGE "+tot+"'-0\"")}
   </svg>`;
 }
-function scallops(x,y,w,h){
+function isGableEnd(view){
+  const t=val('roof');
+  return (t==='gable'&&(view==='front'||view==='back'))||(t==='revgable'&&(view==='left'||view==='right'));
+}
+function isRunFace(view){
+  const t=val('roof');
+  return (t==='gable'&&(view==='left'||view==='right'))||(t==='revgable'&&(view==='front'||view==='back'));
+}
+function shingleFill(x,y,w,h){
   let s='';
-  for(let r=0;r<6;r++){
-    for(let i=0;i<18;i++){
-      const cx=x+8+i*((w-16)/17), cy=y+8+r*10;
-      if(cy<y+h-4) s+=`<path d="M${cx-6} ${cy} A6 6 0 0 0 ${cx+6} ${cy}" fill="none" stroke="#666" stroke-width=".7"/>`;
+  for(let r=0;r<Math.max(3,Math.floor(h/8));r++){
+    for(let i=0;i<12;i++){
+      const cx=x+8+i*((w-10)/11), cy=y+6+r*8;
+      if(cy<y+h-2) s+=`<path d="M${cx-5} ${cy} A5 5 0 0 0 ${cx+5} ${cy}" fill="none" stroke="#555" stroke-width=".6"/>`;
     }
   }
   return s;
 }
-function boxedRoof(x,y,w){
-  return `<rect x="${x-8}" y="${y-28}" width="${w+16}" height="28" fill="#fff" stroke="#111" stroke-width="1.5"/>
-    <text x="${x+w/2}" y="${y-10}" text-anchor="middle" font-size="12">${esc(val('pitch'))}</text>`;
-}
-function gableRoof(x,y,w){
-  return `<polygon points="${x-10},${y} ${x+w/2},${y-42} ${x+w+10},${y}" fill="#fff" stroke="#111" stroke-width="1.6"/>
-    <polygon points="${x+w-70},${y-8} ${x+w-40},${y-8} ${x+w-40},${y+4} ${x+w-54},${y+4}" fill="#fff" stroke="#111"/>
-    <text x="${x+w+16}" y="${y-18}" font-size="12">${pitchNum()}/12</text>`;
-}
-function hipRoof(x,y,w){
-  return `<polygon points="${x-8},${y} ${x+24},${y-30} ${x+w-24},${y-30} ${x+w+8},${y}" fill="#fff" stroke="#111" stroke-width="1.6"/>`;
-}
 function roofFor(view,x,y,w){
   const t=val('roof');
-  const gableEnd=(t==='gable'&&(view==='front'||view==='back'))||(t==='revgable'&&(view==='left'||view==='right'));
-  if(t==='hip') return hipRoof(x,y,w);
-  if(gableEnd) return gableRoof(x,y,w)+scallops(x,y-42,w,42);
-  return boxedRoof(x,y,w);
+  if(t==='hip'){
+    return `<polygon points="${x-6},${y} ${x+28},${y-32} ${x+w-28},${y-32} ${x+w+6},${y}" fill="#fff" stroke="#111" stroke-width="1.7"/>
+      ${shingleFill(x+24,y-30,w-48,26)}`;
+  }
+  if(isGableEnd(view)){
+    return `<polygon points="${x-8},${y} ${x+w/2},${y-46} ${x+w+8},${y}" fill="#fff" stroke="#111" stroke-width="1.7"/>
+      ${shingleFill(x+8,y-40,w-16,34)}
+      <polygon points="${x+w-64},${y-6} ${x+w-38},${y-6} ${x+w-38},${y+5} ${x+w-50},${y+5}" fill="#fff" stroke="#111"/>`;
+  }
+  return `<rect x="${x-8}" y="${y-30}" width="${w+16}" height="30" fill="#fff" stroke="#111" stroke-width="1.7"/>
+    ${shingleFill(x-6,y-28,w+12,26)}`;
 }
 function raisedPanelDoor(x,y,w,h){
   const rows=4;
-  let s=`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#f2f2f2" stroke="#111" stroke-width="1.7"/>`;
+  let s=`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#f3f3f3" stroke="#111" stroke-width="1.6"/>`;
   const rh=h/rows;
-  for(let i=0;i<rows;i++){
-    const yy=y+i*rh+3;
-    s+=`<rect x="${x+6}" y="${yy}" width="${w-12}" height="${rh-6}" fill="#fafafa" stroke="#222"/>`;
-  }
+  for(let i=0;i<rows;i++) s+=`<rect x="${x+5}" y="${y+i*rh+3}" width="${w-10}" height="${rh-6}" fill="#fafafa" stroke="#333"/>`;
   return s;
 }
 function elevLarge(view, title){
@@ -779,62 +894,70 @@ function elevLarge(view, title){
   const span=(view==='front'||view==='back')?W:D;
   const wall=Number(val('wallH'))||8;
   const tot=totalH();
-  const x=90, y=70, ww=340, wh=170;
-  let hatch='';
-  for(let i=0;i<10;i++) hatch+=`<line x1="${x}" y1="${y+14+i*14}" x2="${x+ww}" y2="${y+14+i*14}" stroke="#bbb"/>`;
+  const x=50, y=86, ww=360, wh=180;
+  let vinyl='';
+  for(let i=0;i<9;i++) vinyl+=`<line x1="${x+1}" y1="${y+16+i*14}" x2="${x+ww-1}" y2="${y+16+i*14}" stroke="#cfcfcf"/>`;
   let ops='';
   if(val('ohWall')===view){
     const dw=ww*((Number(val('ohW'))||16)/Math.max(span,1));
     const dx=x+(ww-dw)/2;
     const dh=wh*((Number(val('ohH'))||7)/Math.max(wall,1));
     ops+=raisedPanelDoor(dx,y+wh-dh,dw,dh);
-    ops+=`<text x="${dx+dw/2}" y="${y+wh-dh/2}" text-anchor="middle" font-size="13">${val('ohW')||16}' x ${val('ohH')||7}' O.H. DOOR</text>`;
     const retE=doorReturns();
-    ops+=`<text x="${x+18}" y="${y+wh-8}" font-size="12">${retE.left}'</text>
-      <text x="${x+ww-28}" y="${y+wh-8}" font-size="12">${retE.right}'</text>`;
-    const hdr=(code()&&code().ohHeader)||'LVL HEADER';
-    ops+=`<text x="${x+ww/2}" y="${y+18}" text-anchor="middle" font-size="11">${esc(hdr)}</text>`;
+    ops+=`<text x="${x+10}" y="${y+wh-6}" font-size="11">${retE.left}'</text>
+      <text x="${x+ww-22}" y="${y+wh-6}" font-size="11">${retE.right}'</text>`;
+    if(showOnPlan('returns')){
+      ops+=`<rect x="${x}" y="${y}" width="${dx-x}" height="${wh}" fill="none" stroke="#111"/>
+        <rect x="${dx+dw}" y="${y}" width="${Math.max(4,x+ww-dx-dw)}" height="${wh}" fill="none" stroke="#111"/>`;
+    }
+    if(showOnPlan('returnSheath')){
+      const hatch=(x0,w0)=>Array.from({length:6},(_,i)=>`<line x1="${x0}" y1="${y+10+i*28}" x2="${x0+w0}" y2="${y+i*28}" stroke="#666"/>`).join('');
+      ops+=hatch(x,Math.max(8,dx-x))+hatch(dx+dw,Math.max(8,x+ww-dx-dw));
+      ops+=`<text x="${x+4}" y="${y+14}" font-size="10">OSB RET.</text>`;
+    }
   }
   if(val('partyWall')===view){
     const pd=partyDim();
-    const dw=Math.max(64, ww*(pd.w/Math.max(span,1)));
-    const dh=Math.max(64, wh*(pd.h/Math.max(wall,1)));
-    const same=val('ohWall')===view;
-    const dx=same?x+10:x+(ww-dw)/2;
+    const dw=Math.max(56, ww*(pd.w/Math.max(span,1)));
+    const dh=Math.max(56, wh*(pd.h/Math.max(wall,1)));
+    const dx=val('ohWall')===view?x+8:x+(ww-dw)/2;
     ops+=raisedPanelDoor(dx,y+wh-dh,dw,dh);
-    ops+=`<text x="${dx+dw/2}" y="${y+wh-dh-6}" text-anchor="middle" font-size="11">${pd.w}'x${pd.h}' PARTY DOOR</text>`;
   }
   if(val('svcWall')===view){
-    ops+=`<rect x="${x+28}" y="${y+wh*0.28}" width="28" height="${wh*0.72}" fill="#fff" stroke="#111"/>
-      <circle cx="${x+50}" cy="${y+wh*0.62}" r="1.6" fill="#111"/>
-      <text x="${x+10}" y="${y+wh*0.22}" font-size="11">36"x80"</text>`;
+    ops+=`<rect x="${x+22}" y="${y+wh*0.30}" width="24" height="${wh*0.70}" fill="#fff" stroke="#111"/>
+      <circle cx="${x+40}" cy="${y+wh*0.62}" r="1.5" fill="#111"/>`;
   }
   if(val('winWall')===view && winQty()>0){
-    const q=winQty();
-    const wd=winDim();
-    const slider=/slider/i.test(val('winType'));
-    const wwnd=slider?46:26, hh=slider?26:40;
+    const q=winQty(); const slider=/slider/i.test(val('winType'));
+    const wwnd=slider?40:22, hh=slider?22:36;
     for(let i=0;i<q;i++){
-      const wx=x+70+i*((ww-90)/Math.max(q,1));
-      ops+=`<rect x="${wx}" y="${y+42}" width="${wwnd}" height="${hh}" fill="#fff" stroke="#111"/>
-        <line x1="${wx}" y1="${y+42+hh/2}" x2="${wx+wwnd}" y2="${y+42+hh/2}" stroke="#111"/>
-        <text x="${wx+wwnd/2}" y="${y+36}" text-anchor="middle" font-size="11">${wd.w}'x${wd.h}'</text>`;
+      const wx=x+64+i*((ww-90)/Math.max(q,1));
+      ops+=`<rect x="${wx}" y="${y+40}" width="${wwnd}" height="${hh}" fill="#fff" stroke="#111"/>
+        <line x1="${wx}" y1="${y+40+hh/2}" x2="${wx+wwnd}" y2="${y+40+hh/2}" stroke="#111"/>`;
     }
   }
-  const gableEnd=(val('roof')==='gable'&&(view==='front'||view==='back'))||(val('roof')==='revgable'&&(view==='left'||view==='right'));
-  const roofFace=(!gableEnd && val('roof')!=='hip')?scallops(x-8,y-28,ww+16,28):'';
+  if(val('ohWall')===view){
+    ops+=`<text x="${x+ww/2}" y="${y+16}" text-anchor="middle" font-size="10">${esc(headerCallout())}</text>
+      <text x="${x+ww/2}" y="${y+wh-24}" text-anchor="middle" font-size="11">${val('ohW')||16}' x ${val('ohH')||7}' O.H.</text>`;
+  }
+  if(val('svcWall')===view) ops+=`<text x="${x+34}" y="${y+wh*0.26}" font-size="10">36x80</text>`;
+  const eaveY=y;
+  const gutterBit=guttersRequired()&&isRunFace(view)?`<line x1="${x-6}" y1="${eaveY+2}" x2="${x+ww+6}" y2="${eaveY+2}" stroke="#111" stroke-width="2"/>
+    <text x="${x-8}" y="${eaveY-6}" font-size="10">GUTTER</text>`:'';
+  const tieBit=hurricaneRequired()?`<text x="${x+ww-4}" y="${y-6}" font-size="10">H-TIE</text>`:'';
   return `<div>
-    <svg viewBox="0 0 560 360" width="100%" style="max-height:4.7in">
+    <svg viewBox="0 0 520 400" width="100%" style="max-height:5.6in">
       ${roofFor(view,x,y,ww)}
-      ${roofFace}
-      <rect x="${x}" y="${y}" width="${ww}" height="${wh}" fill="#fff" stroke="#111" stroke-width="1.6"/>
-      ${hatch}${ops}
-      <line x1="${x-10}" y1="${y+wh+8}" x2="${x+ww+10}" y2="${y+wh+8}" stroke="#111" stroke-dasharray="5 3"/>
-      <line x1="${x-16}" y1="${y-40}" x2="${x-16}" y2="${y+wh}" stroke="#111"/>
-      <text x="${x-28}" y="${y+wh/2}" font-size="13" font-weight="700" transform="rotate(-90 ${x-28} ${y+wh/2})">${tot}'</text>
-      <line x1="${x}" y1="${y+wh+22}" x2="${x+ww}" y2="${y+wh+22}" stroke="#111"/>
-      <text x="${x+ww/2}" y="${y+wh+36}" text-anchor="middle" font-size="13" font-weight="700">${span}'</text>
-      <text x="${x+ww/2}" y="${y+wh/2}" text-anchor="middle" font-size="12">${esc(val('siding')||'VINYL SIDING')}</text>
+      <rect x="${x}" y="${y}" width="${ww}" height="${wh}" fill="#fff" stroke="#111" stroke-width="1.7"/>
+      ${vinyl}${ops}${gutterBit}${tieBit}
+      <polygon points="${x+ww+6},${y-22} ${x+ww+6},${y-8} ${x+ww+20},${y-8}" fill="none" stroke="#111"/>
+      <text x="${x+ww+8}" y="${y-26}" font-size="11">${pitchNum()}/12</text>
+      <text x="${x+8}" y="${y+wh/2}" font-size="10">${esc(val('siding')||'VINYL')}</text>
+      <line x1="${x-8}" y1="${y+wh+6}" x2="${x+ww+8}" y2="${y+wh+6}" stroke="#111" stroke-dasharray="4 3"/>
+      <line x1="${x-18}" y1="${y-44}" x2="${x-18}" y2="${y+wh}" stroke="#111"/>
+      <text x="${x-30}" y="${(y+wh)/2+20}" font-size="12" font-weight="700" transform="rotate(-90 ${x-30} ${(y+wh)/2+20})">${tot}'</text>
+      <line x1="${x}" y1="${y+wh+18}" x2="${x+ww}" y2="${y+wh+18}" stroke="#111"/>
+      <text x="${x+ww/2}" y="${y+wh+32}" text-anchor="middle" font-size="12" font-weight="700">${span}'</text>
     </svg>
     <div class="caption">VIEW — ${esc(title)}</div>
   </div>`;

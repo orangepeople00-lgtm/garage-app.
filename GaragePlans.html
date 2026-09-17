@@ -74,6 +74,7 @@ button{border:0;border-radius:7px;padding:8px 10px;font-weight:800;cursor:pointe
   .main{padding:0;overflow:visible}
   .sheet-fit{overflow:visible;height:auto!important}
   .sheet{box-shadow:none;margin:0;page-break-after:always;transform:none!important;width:17in!important}
+  .sheet.letter{width:11in!important;min-height:8.5in!important}
 }
 @media(max-width:900px){
   body{flex-direction:column}
@@ -319,7 +320,17 @@ function packet(){
   return null;
 }
 function code(){
-  const base=CITY_CODE_SHEETS[val('city')]||null;
+  let base=CITY_CODE_SHEETS[val('city')]||null;
+  if(!base){
+    const n=cityName();
+    if(n && n!=='Village' && n!=='Other'){
+      base=CITY_CODE_SHEETS[n]||null;
+      if(!base){
+        const hit=Object.keys(CITY_CODE_SHEETS).find(k=>k.toLowerCase()===n.toLowerCase());
+        if(hit) base=CITY_CODE_SHEETS[hit];
+      }
+    }
+  }
   const p=packet();
   if(!base && !p) return null;
   const o=Object.assign({}, base||{});
@@ -488,8 +499,13 @@ function villageSummaryHTML(c){
   return '<b>'+esc(c.kind||'VILLAGE')+' OF '+esc(c.name)+'</b> · '+esc(c.county)+' County\n'+esc(c.address||'')+'  '+esc(c.phone||'')+'\nRafters: '+esc(c.rafters||'')+'\nOH header: '+esc(c.ohHeader||'')+'\n'+esc(c.notes||'');
 }
 function openVillageSite(){
-  const known=VILLAGE_SITES[val('city')];
-  const q=encodeURIComponent(cityName()+' Illinois village building department garage permit');
+  const name=cityName();
+  let known=VILLAGE_SITES[val('city')]||VILLAGE_SITES[name]||null;
+  if(!known && name){
+    const hit=Object.keys(VILLAGE_SITES).find(k=>k.toLowerCase()===name.toLowerCase());
+    if(hit) known=VILLAGE_SITES[hit];
+  }
+  const q=encodeURIComponent((name||'village')+' Illinois village building department garage permit');
   window.open(known||('https://www.google.com/search?q='+q),'_blank','noopener');
 }
 function sheetClass(){return ($('sheetSize')&&$('sheetSize').value==='letter')?'sheet letter':'sheet'}
@@ -830,8 +846,21 @@ function floorPlanSvg(){
   const doorX=ox+L*sx, doorW=ohW*sx;
   let extra='';
   if(val('svcWall')!=='none'){
-    extra+=`<rect x="${ox+gw}" y="${oy+gd*0.52}" width="14" height="32" fill="#fff" stroke="#111"/>`;
-    if(hasLanding()) extra+=`<rect x="${ox+gw+14}" y="${oy+gd*0.52+32}" width="40" height="22" fill="#fff" stroke="#111"/>`;
+    const sw=val('svcWall');
+    let sdx,sdy,sdw=14,sdh=32;
+    if(sw==='left'){ sdx=ox-14; sdy=oy+gd*0.52; }
+    else if(sw==='back'){ sdx=ox+gw*0.52; sdy=oy-14; sdw=32; sdh=14; }
+    else if(sw==='front'){ sdx=ox+gw*0.52; sdy=oy+gd; sdw=32; sdh=14; }
+    else { sdx=ox+gw; sdy=oy+gd*0.52; }
+    extra+=`<rect x="${sdx}" y="${sdy}" width="${sdw}" height="${sdh}" fill="#fff" stroke="#111"/>`;
+    if(hasLanding()){
+      let lx=sdx, ly=sdy, lw=40, lh=22;
+      if(sw==='right'){ lx=sdx+sdw; ly=sdy+sdh; }
+      else if(sw==='left'){ lx=sdx-40; ly=sdy+sdh; }
+      else if(sw==='back'){ lx=sdx; ly=sdy-22; lw=32; lh=22; }
+      else { lx=sdx; ly=sdy+sdh; lw=32; lh=22; }
+      extra+=`<rect x="${lx}" y="${ly}" width="${lw}" height="${lh}" fill="#fff" stroke="#111"/>`;
+    }
   }
   if(val('partyWall')==='back'){
     extra+=`<line x1="${ox+gw*0.3}" y1="${oy}" x2="${ox+gw*0.7}" y2="${oy}" stroke="#fff" stroke-width="6"/>`;
@@ -1215,12 +1244,18 @@ function pageFire(){
 let planItems=[], planHist=[], selectedItem=null;
 function itemId(){return 'i'+Date.now()+Math.floor(Math.random()*99)}
 function seedPlanItems(){
-  const want=gfiQty();
-  const have=planItems.filter(i=>i.type==='gfi').length;
-  if(have===want) return;
-  planItems=planItems.filter(i=>i.type!=='gfi');
-  const spots=[{x:26,y:36},{x:68,y:36},{x:26,y:72},{x:68,y:72}];
-  for(let i=0;i<want;i++) planItems.push({id:itemId(),type:'gfi',x:spots[i].x,y:spots[i].y,w:6,h:7,text:'GFI'});
+  const want=Math.max(0, Math.min(8, gfiQty()));
+  let gfis=planItems.filter(i=>i.type==='gfi');
+  const others=planItems.filter(i=>i.type!=='gfi');
+  if(gfis.length===want) return;
+  const spots=[{x:26,y:36},{x:68,y:36},{x:26,y:72},{x:68,y:72},{x:47,y:28},{x:47,y:78},{x:20,y:54},{x:74,y:54}];
+  while(gfis.length<want){
+    const i=gfis.length;
+    const s=spots[i]||{x:30+(i%4)*12,y:40+Math.floor(i/4)*14};
+    gfis.push({id:itemId(),type:'gfi',x:s.x,y:s.y,w:6,h:7,text:'GFI'});
+  }
+  if(gfis.length>want) gfis=gfis.slice(0,want);
+  planItems=others.concat(gfis);
 }
 function pushHist(){ planHist.push(JSON.stringify(planItems)); if(planHist.length>40) planHist.shift(); }
 function renderOverlay(){
@@ -1242,11 +1277,13 @@ function bindOverlay(){
       if(el.classList.contains('txt') && e.detail>1) return;
       e.preventDefault();
       selectedItem=el.dataset.id;
-      renderOverlay();
+      host.querySelectorAll('.ov').forEach(n=>n.classList.toggle('sel', n.dataset.id===selectedItem));
       const it=planItems.find(x=>x.id===selectedItem); if(!it) return;
       const r=host.getBoundingClientRect();
       const sx=e.clientX, sy=e.clientY, ox=it.x, oy=it.y;
+      let moved=false;
       const move=ev=>{
+        moved=true;
         it.x=Math.max(0,Math.min(92, ox+(ev.clientX-sx)/r.width*100));
         it.y=Math.max(0,Math.min(92, oy+(ev.clientY-sy)/r.height*100));
         el.style.left=it.x+'%'; el.style.top=it.y+'%';
@@ -1254,7 +1291,7 @@ function bindOverlay(){
       const up=()=>{
         window.removeEventListener('pointermove',move);
         window.removeEventListener('pointerup',up);
-        pushHist();
+        if(moved) pushHist();
       };
       window.addEventListener('pointermove',move);
       window.addEventListener('pointerup',up);
@@ -1269,7 +1306,7 @@ function toolAddRect(){ pushHist(); planItems.push({id:itemId(),type:'box',x:40,
 function toolAddLine(){ pushHist(); planItems.push({id:itemId(),type:'line',x:30,y:50,w:20}); renderOverlay(); }
 function toolAddGfi(){ pushHist(); planItems.push({id:itemId(),type:'gfi',x:50,y:50,text:'GFI'}); const n=planItems.filter(i=>i.type==='gfi').length; if($('gfiCount')) $('gfiCount').value=String(n); renderOverlay(); }
 function toolUndo(){ if(!planHist.length) return; planItems=JSON.parse(planHist.pop()); selectedItem=null; renderOverlay(); }
-function toolDelete(){ if(!selectedItem) return; pushHist(); planItems=planItems.filter(i=>i.id!==selectedItem); selectedItem=null; renderOverlay(); }
+function toolDelete(){ if(!selectedItem) return; pushHist(); planItems=planItems.filter(i=>i.id!==selectedItem); selectedItem=null; if($('gfiCount')) $('gfiCount').value=String(planItems.filter(i=>i.type==='gfi').length); renderOverlay(); }
 function makeSheetTextEditable(){
   document.querySelectorAll('.sheet .caption,.sheet .subcap,.sheet .notes-col,.sheet .tblock,.sheet .elecbox').forEach(el=>{
     el.setAttribute('contenteditable','true');
@@ -1290,9 +1327,15 @@ function fitSheetsToPanel(){
   });
 }
 function buildPlans(){
+  const W=Number(val('width')), D=Number(val('depth'));
+  if(!Number.isFinite(W)||W<=0||!Number.isFinite(D)||D<=0){
+    alert('Enter garage width and depth (feet) before generating plans.');
+    return;
+  }
   applyJobRules();
   seedPlanItems();
-  $('pages').innerHTML=pageFloorSection()+pageElevations()+pageSectionRoof()+pageDetail()+pageFire();
+  const pages=$('pages'); if(!pages) return;
+  pages.innerHTML=pageFloorSection()+pageElevations()+pageSectionRoof()+pageDetail()+pageFire();
   document.querySelectorAll('#pages > .sheet').forEach(s=>{
     const wrap=document.createElement('div');
     wrap.className='sheet-fit';
@@ -1356,18 +1399,36 @@ function restore(o){
 function saveJob(){
   const name=prompt('Save as customer / job name', val('customer')||'Untitled');
   if(!name) return;
-  const jobs=JSON.parse(localStorage.getItem('agb_garageplans_jobs')||'[]');
-  jobs.unshift({id:Date.now(),name,when:new Date().toISOString(),data:snapshot()});
-  localStorage.setItem('agb_garageplans_jobs', JSON.stringify(jobs.slice(0,80)));
-  alert('Saved '+name);
+  let jobs;
+  try{ jobs=JSON.parse(localStorage.getItem('agb_garageplans_jobs')||'[]'); if(!Array.isArray(jobs)) jobs=[]; }
+  catch(e){ jobs=[]; }
+  const data=snapshot();
+  const idx=jobs.findIndex(j=>j && j.name===name);
+  const entry={id:(idx>=0&&jobs[idx].id)||Date.now(),name,when:new Date().toISOString(),data};
+  if(idx>=0) jobs[idx]=entry; else jobs.unshift(entry);
+  const write=list=>{ localStorage.setItem('agb_garageplans_jobs', JSON.stringify(list)); };
+  try{
+    write(jobs.slice(0,80));
+    alert('Saved '+name);
+  }catch(err){
+    try{
+      write(jobs.slice(0,20));
+      alert('Saved '+name+' (trimmed older jobs — storage was full)');
+    }catch(e2){
+      alert('Could not save — browser storage is full. Open Previous Jobs, load what you need, or clear site data for this page.');
+    }
+  }
 }
 function showJobs(){
-  const jobs=JSON.parse(localStorage.getItem('agb_garageplans_jobs')||'[]');
+  let jobs;
+  try{ jobs=JSON.parse(localStorage.getItem('agb_garageplans_jobs')||'[]'); if(!Array.isArray(jobs)) jobs=[]; }
+  catch(e){ jobs=[]; alert('Saved jobs data was corrupt and could not be read.'); return; }
   if(!jobs.length){alert('No saved garage plan jobs on this device.');return;}
-  const pick=prompt('Open job #\\n'+jobs.map((j,i)=>(i+1)+'. '+j.name).join('\\n'));
+  const pick=prompt('Open job #\n'+jobs.map((j,i)=>(i+1)+'. '+j.name+'  ('+(j.when||'').slice(0,10)+')').join('\n'));
   const n=Number(pick)-1;
-  if(jobs[n]) restore(jobs[n].data);
+  if(jobs[n] && jobs[n].data) restore(jobs[n].data);
 }
+
 document.addEventListener('DOMContentLoaded',()=>{
   fillCitySelect();
   if($('planDate')&&!$('planDate').value) $('planDate').value=new Date().toISOString().slice(0,10);

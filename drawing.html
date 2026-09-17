@@ -2561,12 +2561,20 @@ button.danger{color:#b42318}
 <details class="section sidebar-fold" id="sitePlanControls">
 <summary>Proposed site plan</summary>
 <!-- TOP: upload + place + whiteout (most-used first) -->
-<div class="field"><label>Upload current survey / plat</label><input accept="image/*" id="surveyUpload" type="file"/></div>
+<div style="border:2px solid #0f274b;border-radius:12px;padding:10px;background:#f8fafc;margin:0 0 12px">
+  <div style="font-size:12px;font-weight:900;color:#0f274b;margin-bottom:6px;text-transform:uppercase;letter-spacing:.03em">City plat workflow</div>
+  <div style="font-size:12px;line-height:1.45;color:#1e293b;margin-bottom:8px">
+    <b>1</b> Upload plat &nbsp;·&nbsp; <b>2</b> Remove old garage &nbsp;·&nbsp; <b>3</b> Place proposed garage &nbsp;·&nbsp; <b>4</b> Adjust &amp; print
+  </div>
+  <div class="field" style="margin:0 0 8px"><label>Upload current survey / plat</label><input accept="image/*" id="surveyUpload" type="file"/></div>
+  <button id="replaceGarageBtn" type="button" style="width:100%;min-height:48px;font-weight:900;margin-bottom:6px;background:#b45309;color:#fff;border:0;border-radius:10px">Remove Old Garage + Place New One</button>
+  <div class="mode-note" id="aiSurveyStatus" style="margin:0;background:#fff;border:1px solid #e2e8f0;padding:8px;border-radius:8px">Upload a plat, then tap the orange button and click the <b>center</b> of the old garage. We cover that footprint and place your proposed garage with dimensions and setbacks.</div>
+</div>
+<div class="mode-note" style="margin:0 0 10px;border:1px solid #bfdbfe;background:#eff6ff;color:#1e3a8a;padding:9px;border-radius:8px;line-height:1.35"><b>Survey editing:</b> the uploaded plat is a locked image background. Use <b>Whiteout Brush</b> for leftover lines/words, then add <b>Text Box</b>, <b>Line</b>, <b>Rectangle</b>, or <b>Dimension</b> overlays. Overlays can be selected, dragged, edited, and deleted.</div>
 <div class="field"><label>Garage placement</label><select id="spPlacement"><option value="bottom-right">Rear right</option><option value="bottom-left">Rear left</option><option value="custom">Place manually</option></select></div>
 <button id="placeProposedGarage" class="primary" type="button" style="width:100%;min-height:44px;font-weight:900;margin-bottom:8px">Place Proposed Garage</button>
 <button id="aiPlaceOnSurveyBtn" type="button" style="width:100%;min-height:44px;font-weight:900;margin-bottom:8px;background:#0f274b;color:#fff;border:0;border-radius:10px">AI Place from Wizard + Survey</button>
 <button id="tapExistingGarageBtn" type="button" style="width:100%;min-height:44px;font-weight:900;margin-bottom:10px;background:#14532d;color:#fff;border:0;border-radius:10px">Tap Existing Garage on Survey</button>
-<div class="mode-note" id="aiSurveyStatus" style="margin:0 0 10px">AI tries to find the existing garage first. If it cannot, tap <b>Tap Existing Garage</b> then click the <b>center</b> of the old garage on the survey — we white out that footprint and place your Wizard garage with wall dimensions + setbacks.</div>
 <div style="border:2px solid #2563eb;border-radius:10px;padding:10px;background:#f8fbff;margin-bottom:10px">
   <div style="font-size:11px;font-weight:900;color:#1d4ed8;margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em">Whiteout / Erase Old Lines</div>
   <button id="eraseSurveyBtn" type="button" class="primary" style="width:100%;min-height:44px;font-weight:900;margin-bottom:8px">Whiteout Brush</button>
@@ -2909,7 +2917,10 @@ function bindCombo(comboId,wId,hId,opts={}){
     wi.value=w||'';hi.value=h||'';
     if(opts.onchange)opts.onchange(w,h);
   };
-  combo.addEventListener('input',apply);combo.addEventListener('change',apply);apply();
+  // commitOnly: do not push partial "20 x 2" while user is still typing "20 x 22"
+  if(opts.commitOnly){ combo.addEventListener('change',apply); }
+  else { combo.addEventListener('input',apply); combo.addEventListener('change',apply); }
+  apply();
 }
 function updateCombo(comboId,w,h){const e=$(comboId);if(e)e.value=(w&&h)?`${w} x ${h}`:''}
 
@@ -2973,6 +2984,13 @@ function fieldInput(id,box,value=''){
         side.dispatchEvent(new Event('input',{bubbles:true}));
       }
     });
+  // Rebuild generated geometry only after the crew-facing size field is committed,
+  // not on every partial keystroke (which used to make the slab jump or vanish).
+  if(['cSizeW','cSizeL','cApronW','cApronL'].includes(id)){
+    inp.addEventListener('change',()=>{
+      if(state.mode==='concrete' && typeof redrawGeneratedConcrete==='function') redrawGeneratedConcrete({fromSheet:true});
+    });
+  }
   fieldLayer.appendChild(inp);
   return inp;
 }
@@ -3003,6 +3021,14 @@ function updateCollectDisplay(){
 
 function renderSheet(){
   state.mode=$('mode').value; const t=currentTemplate();
+  // Keep the printed concrete size/apron fields tied to the actual generated objects.
+  // This prevents a stale wizard default (for example 20x20) from disagreeing with
+  // a slab that was built as 20x22.
+  if(state.mode==='concrete'){
+    const rg=byRole('garage'), ra=byRole('apron');
+    if(rg){ if($('cSizeW'))$('cSizeW').value=String(rg.wf||''); if($('cSizeL'))$('cSizeL').value=String(rg.hf||''); }
+    if(ra){ if($('cApronW'))$('cApronW').value=String(ra.wf||''); if($('cApronL'))$('cApronL').value=String(ra.hf||''); }
+  }
   // Turn whiteout off when leaving site plan so it cannot keep painting
   if(state.mode!=='siteplan' && typeof setWhiteoutBrush==='function' && whiteoutBrushOn) setWhiteoutBrush(false);
   paper.style.width=t.w+'px';paper.style.height=t.h+'px';img.style.display=state.mode==='siteplan'?'none':'block'; img.src=t.src||''; if(state.mode!=='siteplan'){img.onload=()=>{if(state.view==='fit')fitWhole()};} paper.classList.toggle('siteplan',state.mode==='siteplan');
@@ -3068,10 +3094,10 @@ document.querySelectorAll('.sidebar input,.sidebar textarea,.sidebar select').fo
 });
 
 
-bindCombo('cSizeCombo','cSizeW','cSizeL', {onchange:(w,h)=>{syncSideToSheet('cSizeW');syncSideToSheet('cSizeL');setTimeout(()=>updateLotAndSetbacksFromPanel('cSizeW'),0)}});
-bindCombo('cApronCombo','cApronW','cApronL', {onchange:(w,h)=>{syncSideToSheet('cApronW');syncSideToSheet('cApronL')}});
-bindCombo('cServicePadCombo','cServicePadW','cServicePadL',{onchange:()=>{syncSideToSheet('cServicePadW');syncSideToSheet('cServicePadL')}});
-bindCombo('oSizeCombo','oSizeW','oSizeL',{onchange:()=>{syncSideToSheet('oSizeW');syncSideToSheet('oSizeL')}});
+bindCombo('cSizeCombo','cSizeW','cSizeL', {commitOnly:true,onchange:(w,h)=>{syncSideToSheet('cSizeW');syncSideToSheet('cSizeL');setTimeout(()=>updateLotAndSetbacksFromPanel('cSizeW'),0)}});
+bindCombo('cApronCombo','cApronW','cApronL', {commitOnly:true,onchange:(w,h)=>{syncSideToSheet('cApronW');syncSideToSheet('cApronL')}});
+bindCombo('cServicePadCombo','cServicePadW','cServicePadL',{commitOnly:true,onchange:()=>{syncSideToSheet('cServicePadW');syncSideToSheet('cServicePadL')}});
+bindCombo('oSizeCombo','oSizeW','oSizeL',{commitOnly:true,onchange:()=>{syncSideToSheet('oSizeW');syncSideToSheet('oSizeL')}});
 bindCombo('oApronCombo','oApronW','oApronH');
 bindCombo('spGarageCombo','spGarageW','spGarageH');
 bindCombo('spExistingWalkCombo','spExistingWalkW','spExistingWalkH');
@@ -3452,23 +3478,24 @@ function redrawGeneratedObstruction(){
 $('cReturnFL')?.addEventListener('input',()=>calcPanelReturns('left'));
 $('cReturnFR')?.addEventListener('input',()=>calcPanelReturns('right'));
 $('cReturnFM')?.addEventListener('input',()=>calcPanelReturns('middle'));
-$('cSizeCombo')?.addEventListener('input',()=>calcPanelReturns('garage'));
-['cSizeCombo','cApronCombo','cServicePadCombo','cReturnFL','cReturnFM','cReturnFR','cReturnRL','cReturnRM','cReturnRR'].forEach(id=>{
- $(id)?.addEventListener('input',()=>setTimeout(()=>{
-   redrawGeneratedConcrete({keepView:true});
-   if(id==='cApronCombo'||id==='cSizeCombo')syncRearSetbackDrawing();
-   // Once a manually-entered slab exists, all the normal panel additions work
-   // exactly like they do after using the wizard.
-   if(id==='cSizeCombo' && byRole('garage')) liveGarageDoors();
- },0));
+$('cSizeCombo')?.addEventListener('change',()=>calcPanelReturns('garage'));
+// Size/apron/pad combos: rebuild only on change (not every keystroke) so "20 x 2" mid-type does not shrink the slab
+['cSizeCombo','cApronCombo','cServicePadCombo'].forEach(id=>{
  $(id)?.addEventListener('change',()=>setTimeout(()=>{
    redrawGeneratedConcrete({keepView:true});
    if(id==='cApronCombo'||id==='cSizeCombo')syncRearSetbackDrawing();
    if(id==='cSizeCombo' && byRole('garage')) liveGarageDoors();
  },0));
 });
-$('oSizeCombo')?.addEventListener('input',()=>setTimeout(redrawGeneratedObstruction,0));
-$('oApronCombo')?.addEventListener('input',()=>setTimeout(refreshObstructionCalculations,0));
+['cReturnFL','cReturnFM','cReturnFR','cReturnRL','cReturnRM','cReturnRR'].forEach(id=>{
+ $(id)?.addEventListener('input',()=>setTimeout(()=>{
+   redrawGeneratedConcrete({keepView:true});
+ },0));
+ $(id)?.addEventListener('change',()=>setTimeout(()=>{
+   redrawGeneratedConcrete({keepView:true});
+ },0));
+});
+$('oSizeCombo')?.addEventListener('change',()=>setTimeout(redrawGeneratedObstruction,0));
 $('oApronCombo')?.addEventListener('change',()=>setTimeout(refreshObstructionCalculations,0));
 
 
@@ -4747,9 +4774,14 @@ function setTapExistingGarageMode(on){
     btn.textContent=tapExistingGarageMode?'TAP the center of the old garage…':'Tap Existing Garage on Survey';
     btn.style.background=tapExistingGarageMode?'#b45309':'#14532d';
   }
+  const replaceBtn=$('replaceGarageBtn');
+  if(replaceBtn){
+    replaceBtn.textContent=tapExistingGarageMode?'TAP the center of the old garage…':'Remove Old Garage + Place New One';
+    replaceBtn.style.background=tapExistingGarageMode?'#9a3412':'#b45309';
+  }
   const status=$('aiSurveyStatus');
   if(status && tapExistingGarageMode){
-    status.textContent='Tap the CENTER of the existing garage on the survey. We will white out that area and place your Wizard proposed garage there.';
+    status.textContent='Tap the CENTER of the old garage on the plat. We will cover it and place your proposed garage with dimensions and setbacks.';
   }
   if(drawLayer) drawLayer.style.cursor=tapExistingGarageMode?'crosshair':'';
   if(viewport) viewport.style.cursor=tapExistingGarageMode?'crosshair':'';
@@ -4770,7 +4802,7 @@ function placeProposedGarageFromUserTap(pt){
   setTapExistingGarageMode(false);
   const status=$('aiSurveyStatus');
   if(status){
-    status.textContent=`Placed ${gw}'×${gh}' PROPOSED GARAGE at your tap · setbacks L ${ls}' / R ${rsd}' / Rear ${rs}'. Drag to fine-tune; Whiteout Brush for any leftover lines.`;
+    status.textContent=`Old garage covered. Proposed ${gw}'×${gh}' garage placed (setbacks L ${ls}' / R ${rsd}' / Rear ${rs}'). Drag to adjust, then Print/PDF. Use Whiteout Brush for leftover lines.`;
   }
 }
 /** Shrink survey image for Vision (speed + cost) */
@@ -4954,7 +4986,38 @@ if($('aiPlaceOnSurveyBtn'))$('aiPlaceOnSurveyBtn').onclick=()=>{
  setTapExistingGarageMode(false);
  aiPlaceProposedGarageOnSurvey();
 };
-if($('tapExistingGarageBtn'))$('tapExistingGarageBtn').onclick=()=>{
+function startReplaceOldGarageFlow(){
+  const status=$('aiSurveyStatus');
+  if(state.mode!=='siteplan'){
+    if($('mode')){
+      $('mode').value='siteplan';
+      $('mode').dispatchEvent(new Event('change'));
+    }
+  }
+  if(!surveyData){
+    if(status)status.textContent='Upload a survey first.';
+    return;
+  }
+  setTapExistingGarageMode(true);
+  if(status)status.textContent='Tap the CENTER of the old garage on the plat. We will cover it and place the proposed garage.';
+  const btn=$('replaceGarageBtn');
+  if(btn){ btn.textContent='TAP the center of the old garage…'; btn.style.background='#9a3412'; }
+}
+function bindTapSafe(id, handler){
+  const el=$(id); if(!el) return;
+  el.style.touchAction='manipulation';
+  const go=e=>{
+    if(el._touchFired) return;
+    el._touchFired=true;
+    setTimeout(()=>{el._touchFired=false},400);
+    if(e){ try{e.preventDefault();}catch(_){} }
+    handler(e);
+  };
+  el.onclick=go;
+  el.ontouchend=go;
+}
+bindTapSafe('replaceGarageBtn',()=>startReplaceOldGarageFlow());
+bindTapSafe('tapExistingGarageBtn',()=>{
   if(state.mode!=='siteplan'){
     const status=$('aiSurveyStatus');
     if(status)status.textContent='Switch Drawing type to Proposed Site Plan first.';
@@ -4966,7 +5029,7 @@ if($('tapExistingGarageBtn'))$('tapExistingGarageBtn').onclick=()=>{
     return;
   }
   setTapExistingGarageMode(!tapExistingGarageMode);
-};
+});
 let whiteoutBrushOn=false;
 let whiteoutPainting=false;
 let whiteoutLastPt=null;
@@ -4986,14 +5049,14 @@ function setWhiteoutBrush(on){
     :'Tap Whiteout Brush, then drag over the old garage / lines on the survey. White covers only what you paint. Tap again to turn off. Undo removes strokes.';
   if(drawLayer) drawLayer.style.cursor=whiteoutBrushOn?'crosshair':'';
 }
-if($('eraseSurveyBtn'))$('eraseSurveyBtn').onclick=()=>{
+bindTapSafe('eraseSurveyBtn',()=>{
   if(state.mode!=='siteplan'){
     // Fixed: do NOT drop a random white box on concrete/obstruction drawings
     alert('Whiteout Brush only works on Proposed Site Plan. Switch Drawing type to Proposed Site Plan, upload the survey, then use Whiteout.');
     return;
   }
   setWhiteoutBrush(!whiteoutBrushOn);
-};
+});
 function paperPointFromEvent(e){
   const rect=viewport.getBoundingClientRect();
   const sx=(e.clientX-rect.left-state.tx)/state.scale;
@@ -5075,7 +5138,7 @@ if(viewport){
     whiteoutLastPt=null;
     saveActiveSheetState();
   },true);
-  viewport.addEventListener('pointercancel',()=>{whiteoutPainting=false;whiteoutLastPt=null});
+  viewport.addEventListener('pointercancel',()=>{if(whiteoutPainting){whiteoutPainting=false;whiteoutLastPt=null;try{saveActiveSheetState()}catch(_){}}else{whiteoutLastPt=null}});
 }
 
 const SHAPE_DEFAULTS={
@@ -6158,6 +6221,7 @@ function objectPointerDown(e){
     const pd=byRole('partyDoor');if(pd)delete pd._returnStart;
     window.removeEventListener('pointermove',move);window.removeEventListener('pointerup',up);
     window.removeEventListener('pointercancel',up);
+    try{ if(typeof saveActiveSheetState==='function') saveActiveSheetState(); }catch(_){}
   };
   window.addEventListener('pointermove',move,{passive:false});
   window.addEventListener('pointerup',up);
@@ -6172,8 +6236,8 @@ document.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>addObject(b.dat
 if($('objLabel')) $('objLabel').oninput=()=>{const o=getObj(state.selected);if(o){o.label=$('objLabel').value; o.customText=$('objLabel').value; renderObjects()}};
 if($('objFontSize')) $('objFontSize').onchange=()=>{const o=getObj(state.selected);if(o){o.fontSize=Number($('objFontSize').value)||32; renderObjects()}};
 if($('objFontWeight')) $('objFontWeight').onchange=()=>{const o=getObj(state.selected);if(o){o.fontWeight=String($('objFontWeight').value||'700'); renderObjects()}};
-if($('objW')) $('objW').onchange=()=>{const o=getObj(state.selected);if(o){snapshot();o.wf=Math.max(.5,+$('objW').value||.5);renderObjects()}};
-if($('objH')) $('objH').onchange=()=>{const o=getObj(state.selected);if(o){snapshot();o.hf=Math.max(.5,+$('objH').value||.5);renderObjects()}};
+if($('objW')) $('objW').onchange=()=>{const o=getObj(state.selected);if(!o)return;const raw=String($('objW').value||'').trim();if(!raw)return;const n=+raw;if(!Number.isFinite(n))return;snapshot();o.wf=Math.max(.5,n);renderObjects();if(typeof saveActiveSheetState==='function')saveActiveSheetState()};
+if($('objH')) $('objH').onchange=()=>{const o=getObj(state.selected);if(!o)return;const raw=String($('objH').value||'').trim();if(!raw)return;const n=+raw;if(!Number.isFinite(n))return;snapshot();o.hf=Math.max(.5,n);renderObjects();if(typeof saveActiveSheetState==='function')saveActiveSheetState()};
 if($('objAngle')){
   $('objAngle').oninput=()=>{
     const o=getObj(state.selected);
@@ -6213,8 +6277,9 @@ $('bushBtn').onclick=()=>{snapshot();const d=currentTemplate().draw;state.object
 
 $('cutBtn').onclick=()=>{snapshot();const d=currentTemplate().draw;state.objects.push({id:uid++,kind:'cut',x:d.x+60,y:d.y+100,wf:18,hf:5,label:'CUT',angle:0,arrowLen:120});state.selected=state.objects.at(-1).id;renderObjects()};
 
-if($('deleteObj')) $('deleteObj').onclick=()=>{if(!state.selected)return;snapshot();state.objects=state.objects.filter(o=>o.id!==state.selected);state.selected=null;renderObjects()};
-if($('duplicateObj')) $('duplicateObj').onclick=()=>{const o=getObj(state.selected);if(!o)return;snapshot();const n={...o,id:uid++,x:o.x+20,y:o.y+20};state.objects.push(n);state.selected=n.id;renderObjects()};
+// Legacy IDs (if present) → same handlers as deleteSelectedBtn / duplicateSelectedBtn
+if($('deleteObj')) $('deleteObj').onclick=()=>{ if(typeof deleteCurrentlySelectedItem==='function') deleteCurrentlySelectedItem(); };
+if($('duplicateObj')) $('duplicateObj').onclick=()=>{ const b=$('duplicateSelectedBtn'); if(b) b.click(); };
 
 $('undoBtn').onclick=()=>{if(!state.history.length)return;state.future.push(JSON.stringify(state.objects));restore(state.history.pop())};
 
@@ -6758,6 +6823,7 @@ function wizardObj(kind,wf,hf,label,x,y,angle=0,role=''){
   state.objects.push(o);return o;
 }
 function buildWizardForMode(forcedMode){
+  try{ saveActiveSheetState(); }catch(_){}
   const mode=forcedMode||$('wMode').value;
   $('mode').value=mode; state.mode=mode;
   // Customer/job information is edited only in the side panel. The wizard never overwrites it.
@@ -7167,6 +7233,7 @@ function buildWizardForMode(forcedMode){
 function buildWizardCore(){
   const requested=$('wMode').value;
   if(requested==='all'){
+    try{ saveActiveSheetState(); }catch(_){}
     const activeBefore=state.mode;
     $('mode').value='concrete';state.mode='concrete';loadSheetState('concrete');buildWizardForMode('concrete');
     $('mode').value='obstruction';state.mode='obstruction';loadSheetState('obstruction');buildWizardForMode('obstruction');
@@ -7335,7 +7402,9 @@ function deleteCurrentlySelectedItem(){
   state.objects=state.objects.filter(o=>o.id!==id);
   state.selected=null;
   if(typeof closeObjectTextEditor==='function')closeObjectTextEditor();
-  renderSheet();
+  try{ updateInspector(); }catch(_){}
+  renderObjects();
+  try{ saveActiveSheetState(); }catch(_){}
 }
 const deleteSelectedButton=document.getElementById('deleteSelectedBtn');
 if(deleteSelectedButton)deleteSelectedButton.onclick=deleteCurrentlySelectedItem;
@@ -7356,6 +7425,7 @@ if(dupBtn) dupBtn.onclick=()=>{
   state.objects.push(copy);
   state.selected=copy.id;
   renderObjects();
+  try{ saveActiveSheetState(); }catch(_){}
 };
 
 const lockBtn=document.getElementById('lockSelectedBtn');

@@ -25,6 +25,8 @@ button{border:0;border-radius:7px;padding:8px 10px;font-weight:800;cursor:pointe
 .codes{margin-top:12px;background:#08182c;border:1px solid #2a4668;border-radius:8px;padding:8px;font-size:11px;line-height:1.35;color:#d5e4f5;white-space:pre-wrap}
 .loadbar{display:none;margin-top:8px;background:#163456;border:1px solid #c9a227;border-radius:8px;padding:8px 10px;font-size:12px;color:#ffe9a6}
 .loadbar.on{display:block}
+.statusbar{margin-top:8px;background:#08182c;border:1px solid #3d6a9a;border-radius:8px;padding:8px 10px;font-size:12px;color:#b8d4f0;min-height:1.2em}
+.statusbar.ok{border-color:#c9a227;color:#ffe9a6}
 .main{flex:1;min-width:0;overflow:auto;padding:16px}
 .toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
 .toolbar h2{margin:0;font-size:18px;color:#0b1f3a}
@@ -63,17 +65,19 @@ button{border:0;border-radius:7px;padding:8px 10px;font-weight:800;cursor:pointe
 .ov.sel{outline:2px solid #2563eb}
 .sheet [contenteditable="true"]{outline:none}
 @media print{
-  .toolbox,.loadbar,.no-print{display:none!important}
+  .toolbox,.loadbar,.statusbar,.no-print{display:none!important}
   .ov.txt{outline:none!important;background:transparent!important}
   .ov.sel{outline:none}
 }
 @media print{
   @page{size:11in 17in landscape;margin:.35in}
-  body{display:block;background:#fff}
-  .sidebar,.toolbar,.no-print{display:none!important}
-  .main{padding:0;overflow:visible}
-  .sheet-fit{overflow:visible;height:auto!important}
-  .sheet{box-shadow:none;margin:0;page-break-after:always;transform:none!important;width:17in!important}
+  html,body{height:auto!important;background:#fff!important}
+  body{display:block!important}
+  .sidebar,.toolbar,.statusbar,.loadbar,.codes,.btns,.no-print{display:none!important}
+  .main{padding:0!important;overflow:visible!important;flex:none!important;width:100%!important}
+  .sheet-wrap{gap:0}
+  .sheet-fit{overflow:visible!important;height:auto!important;width:auto!important}
+  .sheet{box-shadow:none;margin:0 auto;page-break-after:always;transform:none!important;width:17in!important}
   .sheet.letter{width:11in!important;min-height:8.5in!important}
 }
 @media(max-width:900px){
@@ -197,6 +201,7 @@ All outlets tamperproof. GARAGE DISCONNECT at first point of entrance inside gar
     <button type="button" class="btn-ghost" onclick="toolAddGfi()">GFI</button>
     <button type="button" class="btn-ghost" onclick="toolUndo()">Undo</button>
     <button type="button" class="btn-ghost" onclick="toolDelete()">Delete</button>
+    <button type="button" class="btn-ghost" onclick="toolClearAnnot()">Clear annotations</button>
   </div>
   <label>Flags</label>
   <div class="row2">
@@ -210,7 +215,7 @@ All outlets tamperproof. GARAGE DISCONNECT at first point of entrance inside gar
   <div class="btns">
     <button class="btn-gold" type="button" onclick="applyVillage()">Apply Village Codes</button>
     <button class="btn-white" type="button" onclick="loadVillagePacket(true)">Load village packet</button>
-    <button class="btn-white" type="button" onclick="buildPlans()">Generate Plans</button>
+    <button class="btn-white" type="button" onclick="buildPlans(true)">Generate Plans</button>
     <button class="btn-gold" type="button" onclick="window.print()">Print plans</button>
     <button class="btn-ghost" type="button" onclick="saveJob()">Save Job</button>
     <button class="btn-ghost" type="button" onclick="showJobs()">Previous Jobs</button>
@@ -218,10 +223,11 @@ All outlets tamperproof. GARAGE DISCONNECT at first point of entrance inside gar
     <button class="btn-ghost" type="button" onclick="location.href='index.html'">Dashboard</button>
   </div>
   <div class="loadbar" id="loadBar">Looking up this village’s garage packet…</div>
+  <div class="statusbar no-print" id="statusBar">Ready — pick a village, Apply Codes, then Generate Plans.</div>
   <div class="codes" id="codeBox">Select a village, Apply Village Codes, then Load village packet (needs wifi).</div>
   <div class="codes" id="ruleBox">Job rules update when size, door, returns, walls, or setbacks change.</div>
 </aside>
-<main class="main">
+<main class="main" tabindex="-1">
   <div class="toolbar no-print">
     <h2>Official Garage Permit Plans</h2>
     <div class="small">Each Generate uses only this job’s size, roof, doors, landing, outlets, and village. Nothing is copied from a previous plan.</div>
@@ -382,6 +388,7 @@ function applyVillage(){
   if($('flagGutters') && /GUTTER/.test(T)){ $('flagGutters').checked=true; $('gutters').value='yes'; }
   if($('flagTies') && /H\s*CLIP|HURRICANE|STRAPS/.test(T)) $('flagTies').checked=true;
   box.innerHTML=villageSummaryHTML(c);
+  setStatus('Applied '+(c.name||cityName())+' codes — setbacks, footing, slab, flags updated. Plans refreshing…', true);
   buildPlans();
   loadVillagePacket(false);
 }
@@ -408,6 +415,37 @@ function setLoad(on, msg){
   if(!el) return;
   el.classList.toggle('on', !!on);
   if(msg) el.textContent=msg;
+}
+function setStatus(msg, ok){
+  const el=$('statusBar');
+  if(!el) return;
+  el.textContent=msg||'';
+  el.classList.toggle('ok', !!ok);
+}
+function customerLabel(){ return val('customer')||'TBD'; }
+const PREFS_KEY='agb_garageplans_prefs_v1';
+function savePrefs(){
+  try{
+    localStorage.setItem(PREFS_KEY, JSON.stringify({
+      city:val('city'), cityManual:val('cityManual'),
+      width:val('width'), depth:val('depth'), wallH:val('wallH'),
+      sheetSize:val('sheetSize'), rep:val('rep'), roof:val('roof'), pitch:val('pitch')
+    }));
+  }catch(e){}
+}
+function loadPrefs(){
+  try{
+    const p=JSON.parse(localStorage.getItem(PREFS_KEY)||'null');
+    if(!p || typeof p!=='object') return;
+    if(p.city && $('city')){
+      const opt=[...$('city').options].find(o=>o.value===p.city || o.textContent===p.city);
+      if(opt) $('city').value=opt.value;
+    }
+    if(p.cityManual!=null && $('cityManual')) $('cityManual').value=p.cityManual;
+    ['width','depth','wallH','sheetSize','rep','roof','pitch'].forEach(k=>{
+      if(p[k]!=null && $(k)) $(k).value=p[k];
+    });
+  }catch(e){}
 }
 function applyFetchedPacket(p){
   if(!p||typeof p!=='object') return;
@@ -489,6 +527,7 @@ async function loadVillagePacket(force){
     box.innerHTML=lines.filter(Boolean).join('\n');
     buildPlans();
     setLoad(true, 'Packet loaded for '+city+'. Plans updated.');
+    setStatus('Village packet loaded for '+city+' — plans updated from online packet', true);
     setTimeout(()=>setLoad(false), 2500);
   }catch(err){
     setLoad(false);
@@ -514,7 +553,7 @@ function tblock(name, num, of){
   return `<div class="tblock">
     <div class="logo">The Garage Guys<small>ABSOLUTE GARAGE BUILDERS</small></div>
     <div><div class="jobtitle">DETACHED GARAGE - ${esc(roofLabel())} ROOF</div>
-      ${esc(val('address')||'JOB ADDRESS')}, ${esc(village)} - ${esc(val('customer')||'CUSTOMER')}</div>
+      ${esc(val('address')||'JOB ADDRESS')}, ${esc(village)} - ${esc(customerLabel())}</div>
     <div>CONTRACTOR<br>ABSOLUTE GARAGE BUILDERS<br>3050 W. IRVING PARK RD.<br>CHICAGO, IL 60618<br>(773) 583-8800 · (847) 759-8877</div>
     <div><b>${esc(name)}</b><br>SHEET ${num} OF ${of}<br>${esc(val('planDate')||'')}</div>
   </div>`;
@@ -563,7 +602,8 @@ function conformCodesHTML(){
   </div>`;
 }
 function doorReturns(){
-  const W=Number(val('width'))||22;
+  const wall=val('ohWall')||'front';
+  const W=(wall==='left'||wall==='right')?(Number(val('depth'))||24):(Number(val('width'))||22);
   const oh=Number(val('ohW'))||16;
   const leftover=Math.max(0, +(W-oh).toFixed(2));
   let L=parseFt(val('ohLeftReturn'));
@@ -571,7 +611,7 @@ function doorReturns(){
   L=Math.max(0, L);
   let R=+(leftover-L).toFixed(2);
   if(R<0){R=0;L=leftover}
-  return {W,oh,left:L,right:R,min:Math.min(L,R)};
+  return {W,oh,left:L,right:R,min:Math.min(L,R),wall};
 }
 function partyReturns(){
   const wall=val('partyWall');
@@ -702,7 +742,7 @@ function jobWarnings(){
   const w=[], r=doorReturns();
   const wall=Number(val('wallH'))||8, ohH=Number(val('ohH'))||7;
   if(ohH+1>wall) w.push('Wall height must be at least 1\' above the overhead door ('+ohH+"' door → "+(ohH+1)+"' min walls)");
-  if(r.left+r.right+r.oh-r.W>0.05) w.push('Door + returns exceed garage width');
+  if(r.left+r.right+r.oh-r.W>0.05) w.push('Door + returns exceed OH wall span ('+r.W+"'");
   if(r.min<1) w.push('Keep at least 1\' return each side of the overhead door');
   const c=code();
   if(c&&c.maxSize){
@@ -838,13 +878,73 @@ function withCite(label, kind){
 function floorPlanSvg(){
   const W=Number(val('width'))||22, D=Number(val('depth'))||24;
   const ohW=Number(val('ohW'))||16, ohH=Number(val('ohH'))||7;
-  const apron=Number(val('apronFt'))||0;
+  const ohWall=val('ohWall')||'front';
   const ret=doorReturns();
   const L=ret.left, R=ret.right;
   const sx=14, ox=90, oy=70;
   const gw=W*sx, gd=D*sx;
-  const doorX=ox+L*sx, doorW=ohW*sx;
   let extra='';
+  // Overhead door opening + returns on the selected wall
+  let doorGap='', doorLab='', retHatch='', dimAlong='';
+  if(ohWall==='back'){
+    const doorX=ox+L*sx, doorW=ohW*sx;
+    doorGap=`<line x1="${doorX}" y1="${oy}" x2="${doorX+doorW}" y2="${oy}" stroke="#fff" stroke-width="8"/>
+      <line x1="${doorX+6}" y1="${oy+16}" x2="${doorX+doorW-6}" y2="${oy+16}" stroke="#111"/>
+      <line x1="${doorX+6}" y1="${oy+24}" x2="${doorX+doorW-6}" y2="${oy+24}" stroke="#111"/>`;
+    doorLab=`<text x="${doorX+doorW/2}" y="${oy+36}" text-anchor="middle" font-size="11">${ftLabel(ohW)} x ${ftLabel(ohH)} O.H. GARAGE DOOR</text>
+      <text x="${doorX+doorW/2}" y="${oy+50}" text-anchor="middle" font-size="10">SIDE TO SIDE${hurricaneRequired()?' (HURRICANE RATED)':''}</text>`;
+    if(showOnPlan('returns')){
+      retHatch=`<rect x="${ox}" y="${oy}" width="${L*sx}" height="18" fill="url(#hatchRet)" stroke="#111"/>
+        <rect x="${doorX+doorW}" y="${oy}" width="${R*sx}" height="18" fill="url(#hatchRet)" stroke="#111"/>
+        <text x="${ox+L*sx/2}" y="${oy+32}" text-anchor="middle" font-size="11">${L}' RETURN</text>
+        <text x="${doorX+doorW+R*sx/2}" y="${oy+32}" text-anchor="middle" font-size="11">${R}' RETURN</text>`;
+    }
+    dimAlong=`<text x="${ox+L*sx/2}" y="${oy-6}" text-anchor="middle" font-size="12">${ftLabel(L)}</text>
+      <text x="${doorX+doorW+R*sx/2}" y="${oy-6}" text-anchor="middle" font-size="12">${ftLabel(R)}</text>`;
+  } else if(ohWall==='left'){
+    const doorY=oy+L*sx, doorH=ohW*sx;
+    doorGap=`<line x1="${ox}" y1="${doorY}" x2="${ox}" y2="${doorY+doorH}" stroke="#fff" stroke-width="8"/>
+      <line x1="${ox+16}" y1="${doorY+6}" x2="${ox+16}" y2="${doorY+doorH-6}" stroke="#111"/>
+      <line x1="${ox+24}" y1="${doorY+6}" x2="${ox+24}" y2="${doorY+doorH-6}" stroke="#111"/>`;
+    doorLab=`<text x="${ox+70}" y="${doorY+doorH/2}" text-anchor="middle" font-size="11" transform="rotate(-90 ${ox+70} ${doorY+doorH/2})">${ftLabel(ohW)} x ${ftLabel(ohH)} O.H.</text>`;
+    if(showOnPlan('returns')){
+      retHatch=`<rect x="${ox}" y="${oy}" width="18" height="${L*sx}" fill="url(#hatchRet)" stroke="#111"/>
+        <rect x="${ox}" y="${doorY+doorH}" width="18" height="${R*sx}" fill="url(#hatchRet)" stroke="#111"/>`;
+    }
+    dimAlong=`<text x="${ox-8}" y="${oy+L*sx/2}" text-anchor="end" font-size="11">${ftLabel(L)}</text>
+      <text x="${ox-8}" y="${doorY+doorH+R*sx/2}" text-anchor="end" font-size="11">${ftLabel(R)}</text>`;
+  } else if(ohWall==='right'){
+    const doorY=oy+L*sx, doorH=ohW*sx;
+    doorGap=`<line x1="${ox+gw}" y1="${doorY}" x2="${ox+gw}" y2="${doorY+doorH}" stroke="#fff" stroke-width="8"/>
+      <line x1="${ox+gw-16}" y1="${doorY+6}" x2="${ox+gw-16}" y2="${doorY+doorH-6}" stroke="#111"/>
+      <line x1="${ox+gw-24}" y1="${doorY+6}" x2="${ox+gw-24}" y2="${doorY+doorH-6}" stroke="#111"/>`;
+    doorLab=`<text x="${ox+gw-70}" y="${doorY+doorH/2}" text-anchor="middle" font-size="11" transform="rotate(90 ${ox+gw-70} ${doorY+doorH/2})">${ftLabel(ohW)} x ${ftLabel(ohH)} O.H.</text>`;
+    if(showOnPlan('returns')){
+      retHatch=`<rect x="${ox+gw-18}" y="${oy}" width="18" height="${L*sx}" fill="url(#hatchRet)" stroke="#111"/>
+        <rect x="${ox+gw-18}" y="${doorY+doorH}" width="18" height="${R*sx}" fill="url(#hatchRet)" stroke="#111"/>`;
+    }
+    dimAlong=`<text x="${ox+gw+8}" y="${oy+L*sx/2}" font-size="11">${ftLabel(L)}</text>
+      <text x="${ox+gw+8}" y="${doorY+doorH+R*sx/2}" font-size="11">${ftLabel(R)}</text>`;
+  } else {
+    // front (default) — bottom edge
+    const doorX=ox+L*sx, doorW=ohW*sx;
+    doorGap=`<line x1="${doorX}" y1="${oy+gd}" x2="${doorX+doorW}" y2="${oy+gd}" stroke="#fff" stroke-width="8"/>
+      <line x1="${doorX+6}" y1="${oy+gd-16}" x2="${doorX+doorW-6}" y2="${oy+gd-16}" stroke="#111"/>
+      <line x1="${doorX+6}" y1="${oy+gd-24}" x2="${doorX+doorW-6}" y2="${oy+gd-24}" stroke="#111"/>`;
+    doorLab=`<text x="${doorX+doorW/2}" y="${oy+gd-36}" text-anchor="middle" font-size="11">${ftLabel(ohW)} x ${ftLabel(ohH)} O.H. GARAGE DOOR</text>
+      <text x="${doorX+doorW/2}" y="${oy+gd-22}" text-anchor="middle" font-size="10">SIDE TO SIDE${hurricaneRequired()?' (HURRICANE RATED)':''}</text>
+      <text x="${doorX+12}" y="${oy+gd-48}" font-size="10">(2) 2x6 POSTS FOR HEADER, TYP.</text>
+      <text x="${doorX+doorW-8}" y="${oy+gd-48}" text-anchor="end" font-size="10">(2) 2x6 POSTS FOR HEADER, TYP.</text>`;
+    if(showOnPlan('returns')){
+      retHatch=`<rect x="${ox}" y="${oy+gd-18}" width="${L*sx}" height="18" fill="url(#hatchRet)" stroke="#111"/>
+        <rect x="${doorX+doorW}" y="${oy+gd-18}" width="${R*sx}" height="18" fill="url(#hatchRet)" stroke="#111"/>
+        <text x="${ox+L*sx/2}" y="${oy+gd-22}" text-anchor="middle" font-size="11">${L}' RETURN</text>
+        <text x="${doorX+doorW+R*sx/2}" y="${oy+gd-22}" text-anchor="middle" font-size="11">${R}' RETURN</text>`;
+    }
+    dimAlong=`<text x="${ox+L*sx/2}" y="${oy+gd+14}" text-anchor="middle" font-size="12">${ftLabel(L)}</text>
+      <text x="${doorX+doorW+R*sx/2}" y="${oy+gd+14}" text-anchor="middle" font-size="12">${ftLabel(R)}</text>`;
+  }
+  // Service door
   if(val('svcWall')!=='none'){
     const sw=val('svcWall');
     let sdx,sdy,sdw=14,sdh=32;
@@ -852,41 +952,88 @@ function floorPlanSvg(){
     else if(sw==='back'){ sdx=ox+gw*0.52; sdy=oy-14; sdw=32; sdh=14; }
     else if(sw==='front'){ sdx=ox+gw*0.52; sdy=oy+gd; sdw=32; sdh=14; }
     else { sdx=ox+gw; sdy=oy+gd*0.52; }
-    extra+=`<rect x="${sdx}" y="${sdy}" width="${sdw}" height="${sdh}" fill="#fff" stroke="#111"/>`;
+    extra+=`<rect x="${sdx}" y="${sdy}" width="${sdw}" height="${sdh}" fill="#fff" stroke="#111"/>
+      <text x="${sdx+sdw/2}" y="${sdy+(sdh>20?sdh/2+3:-4)}" text-anchor="middle" font-size="9">36x80</text>`;
     if(hasLanding()){
       let lx=sdx, ly=sdy, lw=40, lh=22;
       if(sw==='right'){ lx=sdx+sdw; ly=sdy+sdh; }
       else if(sw==='left'){ lx=sdx-40; ly=sdy+sdh; }
       else if(sw==='back'){ lx=sdx; ly=sdy-22; lw=32; lh=22; }
       else { lx=sdx; ly=sdy+sdh; lw=32; lh=22; }
-      extra+=`<rect x="${lx}" y="${ly}" width="${lw}" height="${lh}" fill="#fff" stroke="#111"/>`;
+      extra+=`<rect x="${lx}" y="${ly}" width="${lw}" height="${lh}" fill="#fff" stroke="#111"/>
+        <text x="${lx+lw/2}" y="${ly+lh/2+3}" text-anchor="middle" font-size="8">LANDING</text>`;
     }
   }
-  if(val('partyWall')==='back'){
-    extra+=`<line x1="${ox+gw*0.3}" y1="${oy}" x2="${ox+gw*0.7}" y2="${oy}" stroke="#fff" stroke-width="6"/>`;
+  // Party door on any wall (gap + label)
+  if(val('partyWall')!=='none'){
+    const pw=val('partyWall');
+    const pr=partyReturns();
+    const pd=partyDim();
+    let gap='';
+    if(pw==='back'){
+      const px=ox+pr.left*sx, pwdx=pd.w*sx;
+      gap=`<line x1="${px}" y1="${oy}" x2="${px+pwdx}" y2="${oy}" stroke="#fff" stroke-width="6"/>
+        <text x="${px+pwdx/2}" y="${oy+14}" text-anchor="middle" font-size="10">${esc(val('partySize')||'6x7')} PARTY</text>`;
+    } else if(pw==='front'){
+      const px=ox+pr.left*sx, pwdx=pd.w*sx;
+      gap=`<line x1="${px}" y1="${oy+gd}" x2="${px+pwdx}" y2="${oy+gd}" stroke="#fff" stroke-width="6"/>
+        <text x="${px+pwdx/2}" y="${oy+gd-8}" text-anchor="middle" font-size="10">${esc(val('partySize')||'6x7')} PARTY</text>`;
+    } else if(pw==='left'){
+      const py=oy+pr.left*sx, ph=pd.w*sx;
+      gap=`<line x1="${ox}" y1="${py}" x2="${ox}" y2="${py+ph}" stroke="#fff" stroke-width="6"/>
+        <text x="${ox+18}" y="${py+ph/2}" font-size="10">${esc(val('partySize')||'6x7')} PARTY</text>`;
+    } else {
+      const py=oy+pr.left*sx, ph=pd.w*sx;
+      gap=`<line x1="${ox+gw}" y1="${py}" x2="${ox+gw}" y2="${py+ph}" stroke="#fff" stroke-width="6"/>
+        <text x="${ox+gw-18}" y="${py+ph/2}" text-anchor="end" font-size="10">${esc(val('partySize')||'6x7')} PARTY</text>`;
+    }
+    extra+=gap;
   }
-  if(showOnPlan('returns')){
-    extra+=`<rect x="${ox}" y="${oy+gd-18}" width="${L*sx}" height="18" fill="url(#hatchRet)" stroke="#111"/>
-      <rect x="${doorX+doorW}" y="${oy+gd-18}" width="${R*sx}" height="18" fill="url(#hatchRet)" stroke="#111"/>
-      <text x="${ox+L*sx/2}" y="${oy+gd-22}" text-anchor="middle" font-size="11">${L}' RETURN</text>
-      <text x="${doorX+doorW+R*sx/2}" y="${oy+gd-22}" text-anchor="middle" font-size="11">${R}' RETURN</text>`;
+  // Windows as wall notches
+  if(val('winWall')!=='none' && winQty()>0){
+    const ww=val('winWall');
+    const q=winQty();
+    for(let i=0;i<q;i++){
+      const t=(i+1)/(q+1);
+      if(ww==='back'){
+        const wx=ox+gw*t-10;
+        extra+=`<rect x="${wx}" y="${oy-6}" width="20" height="6" fill="#fff" stroke="#111"/>`;
+      } else if(ww==='front'){
+        const wx=ox+gw*t-10;
+        extra+=`<rect x="${wx}" y="${oy+gd}" width="20" height="6" fill="#fff" stroke="#111"/>`;
+      } else if(ww==='left'){
+        const wy=oy+gd*t-10;
+        extra+=`<rect x="${ox-6}" y="${wy}" width="6" height="20" fill="#fff" stroke="#111"/>`;
+      } else {
+        const wy=oy+gd*t-10;
+        extra+=`<rect x="${ox+gw}" y="${wy}" width="6" height="20" fill="#fff" stroke="#111"/>`;
+      }
+    }
   }
-  if(showOnPlan('brace')) extra+='';
-  if(computeFirewallRequired()) extra+='';
-  const apr=hasApron()?`<rect x="${ox}" y="${oy+gd}" width="${gw}" height="40" fill="#fff" stroke="#111" stroke-width="1.8"/>
-    <text x="${ox+gw/2}" y="${oy+gd+22}" text-anchor="middle" font-size="12" font-weight="700">NEW CONC. APRON</text>
-    <text x="${ox+gw/2}" y="${oy+gd+36}" text-anchor="middle" font-size="10">SLOPE TO GRADE</text>`:'';
+  let apr='';
+  if(hasApron()){
+    const aft=Number(val('apronFt'))||3;
+    const ah=Math.max(28, Math.min(50, aft*10));
+    if(ohWall==='back'){
+      apr=`<rect x="${ox}" y="${oy-ah}" width="${gw}" height="${ah}" fill="#fff" stroke="#111" stroke-width="1.8"/>
+        <text x="${ox+gw/2}" y="${oy-ah/2}" text-anchor="middle" font-size="12" font-weight="700">NEW CONC. APRON</text>`;
+    } else if(ohWall==='left'){
+      apr=`<rect x="${ox-ah}" y="${oy}" width="${ah}" height="${gd}" fill="#fff" stroke="#111" stroke-width="1.8"/>
+        <text x="${ox-ah/2}" y="${oy+gd/2}" text-anchor="middle" font-size="11" font-weight="700" transform="rotate(-90 ${ox-ah/2} ${oy+gd/2})">NEW CONC. APRON</text>`;
+    } else if(ohWall==='right'){
+      apr=`<rect x="${ox+gw}" y="${oy}" width="${ah}" height="${gd}" fill="#fff" stroke="#111" stroke-width="1.8"/>
+        <text x="${ox+gw+ah/2}" y="${oy+gd/2}" text-anchor="middle" font-size="11" font-weight="700" transform="rotate(90 ${ox+gw+ah/2} ${oy+gd/2})">NEW CONC. APRON</text>`;
+    } else {
+      apr=`<rect x="${ox}" y="${oy+gd}" width="${gw}" height="40" fill="#fff" stroke="#111" stroke-width="1.8"/>
+        <text x="${ox+gw/2}" y="${oy+gd+22}" text-anchor="middle" font-size="12" font-weight="700">NEW CONC. APRON</text>
+        <text x="${ox+gw/2}" y="${oy+gd+36}" text-anchor="middle" font-size="10">SLOPE TO GRADE</text>`;
+    }
+  }
   return `<svg viewBox="0 0 520 640" width="100%" style="max-height:9.2in">
     <defs><pattern id="hatchRet" width="6" height="6" patternUnits="userSpaceOnUse"><path d="M0 6 L6 0" stroke="#444" stroke-width=".8"/></pattern></defs>
     <text x="260" y="22" text-anchor="middle" font-size="15" font-weight="800" letter-spacing="2">FLOOR PLAN</text>
     <rect x="${ox}" y="${oy}" width="${gw}" height="${gd}" fill="#fff" stroke="#111" stroke-width="2.2"/>
-    <line x1="${doorX}" y1="${oy+gd}" x2="${doorX+doorW}" y2="${oy+gd}" stroke="#fff" stroke-width="8"/>
-    <line x1="${doorX+6}" y1="${oy+gd-16}" x2="${doorX+doorW-6}" y2="${oy+gd-16}" stroke="#111"/>
-    <line x1="${doorX+6}" y1="${oy+gd-24}" x2="${doorX+doorW-6}" y2="${oy+gd-24}" stroke="#111"/>
-    <text x="${doorX+doorW/2}" y="${oy+gd-36}" text-anchor="middle" font-size="11">${ftLabel(ohW)} x ${ftLabel(ohH)} O.H. GARAGE DOOR</text>
-    <text x="${doorX+doorW/2}" y="${oy+gd-22}" text-anchor="middle" font-size="10">SIDE TO SIDE${hurricaneRequired()?' (HURRICANE RATED)':''}</text>
-    <text x="${doorX+12}" y="${oy+gd-48}" font-size="10">(2) 2x6 POSTS FOR HEADER, TYP.</text>
-    <text x="${doorX+doorW-8}" y="${oy+gd-48}" text-anchor="end" font-size="10">(2) 2x6 POSTS FOR HEADER, TYP.</text>
+    ${doorGap}${doorLab}${retHatch}${dimAlong}
     <text x="${ox+gw/2}" y="${oy+gd*0.42}" text-anchor="middle" font-size="16" font-weight="800">NEW ${carCount()}-CAR</text>
     <text x="${ox+gw/2}" y="${oy+gd*0.42+18}" text-anchor="middle" font-size="16" font-weight="800">GARAGE</text>
     <text x="${ox+gw/2}" y="${oy+gd*0.58}" text-anchor="middle" font-size="11">${esc(tieCallout())}</text>
@@ -896,8 +1043,6 @@ function floorPlanSvg(){
     <text x="${ox+gw*0.55}" y="${oy+gd*0.82+12}" font-size="10">OHD</text>
     ${computeFirewallRequired()?`<text x="${ox+8}" y="${oy+gd*0.55}" font-size="10">1HR. RATED</text><text x="${ox+8}" y="${oy+gd*0.55+12}" font-size="10">FIREWALL TYP.</text>`:''}
     ${apr}
-    <text x="${ox+L*sx/2}" y="${oy+gd+14}" text-anchor="middle" font-size="12">${ftLabel(L)}</text>
-    <text x="${doorX+doorW+R*sx/2}" y="${oy+gd+14}" text-anchor="middle" font-size="12">${ftLabel(R)}</text>
     <line x1="${ox+gw+16}" y1="${oy}" x2="${ox+gw+16}" y2="${oy+gd}" stroke="#111"/>
     <text x="${ox+gw+32}" y="${oy+gd/2}" font-size="14" font-weight="800" transform="rotate(-90 ${ox+gw+32} ${oy+gd/2})">${ftLabel(D)}</text>
     <line x1="${ox}" y1="${oy-14}" x2="${ox+gw}" y2="${oy-14}" stroke="#111"/>
@@ -905,6 +1050,7 @@ function floorPlanSvg(){
     ${extra}
   </svg>`;
 }
+
 function tag(x,y,t, anchor){
   return `<text x="${x}" y="${y}" text-anchor="${anchor||'start'}" font-size="11" font-family="Arial">${esc(t)}</text>`;
 }
@@ -1139,6 +1285,9 @@ function roofPlanSvg(){
       <line x1="${ox+gw}" y1="${oy+gd}" x2="${ox+gw/2}" y2="${oy+gd/2}" stroke="#111"/>
       <text x="${ox+gw/2}" y="${oy+gd/2-8}" text-anchor="middle" font-size="11">RIDGE BEAM</text>
       <text x="${ox+gw*0.72}" y="${oy+gd*0.28}" font-size="10">2x8 HIP RAFTER</text>`;
+  } else if(t==='revgable'){
+    hips=`<line x1="${ox+gw/2}" y1="${oy}" x2="${ox+gw/2}" y2="${oy+gd}" stroke="#111" stroke-width="2"/>
+      <text x="${ox+gw/2+8}" y="${oy+gd/2}" font-size="11">2x8 RIDGE BEAM</text>`;
   } else {
     hips=`<line x1="${ox}" y1="${oy+gd/2}" x2="${ox+gw}" y2="${oy+gd/2}" stroke="#111" stroke-width="2"/>
       <text x="${ox+gw/2}" y="${oy+gd/2-8}" text-anchor="middle" font-size="11">2x8 RIDGE BEAM</text>`;
@@ -1307,6 +1456,16 @@ function toolAddLine(){ pushHist(); planItems.push({id:itemId(),type:'line',x:30
 function toolAddGfi(){ pushHist(); planItems.push({id:itemId(),type:'gfi',x:50,y:50,text:'GFI'}); const n=planItems.filter(i=>i.type==='gfi').length; if($('gfiCount')) $('gfiCount').value=String(n); renderOverlay(); }
 function toolUndo(){ if(!planHist.length) return; planItems=JSON.parse(planHist.pop()); selectedItem=null; renderOverlay(); }
 function toolDelete(){ if(!selectedItem) return; pushHist(); planItems=planItems.filter(i=>i.id!==selectedItem); selectedItem=null; if($('gfiCount')) $('gfiCount').value=String(planItems.filter(i=>i.type==='gfi').length); renderOverlay(); }
+function toolClearAnnot(){
+  if(!planItems.length){ setStatus('No annotations to clear'); return; }
+  if(!confirm('Clear all floor-plan annotations (GFI, text, boxes, lines)?')) return;
+  pushHist();
+  planItems=[];
+  selectedItem=null;
+  if($('gfiCount')) $('gfiCount').value='0';
+  renderOverlay();
+  setStatus('Cleared all annotations', true);
+}
 function makeSheetTextEditable(){
   document.querySelectorAll('.sheet .caption,.sheet .subcap,.sheet .notes-col,.sheet .tblock,.sheet .elecbox').forEach(el=>{
     el.setAttribute('contenteditable','true');
@@ -1326,12 +1485,16 @@ function fitSheetsToPanel(){
     wrap.style.height=(s.offsetHeight*scale)+'px';
   });
 }
-function buildPlans(){
+function buildPlans(scrollTo){
   const W=Number(val('width')), D=Number(val('depth'));
   if(!Number.isFinite(W)||W<=0||!Number.isFinite(D)||D<=0){
-    alert('Enter garage width and depth (feet) before generating plans.');
+    if(scrollTo){
+      alert('Enter garage width and depth (feet) before generating plans.');
+      setStatus('Need width and depth before generating');
+    }
     return;
   }
+  if(scrollTo && !val('customer') && $('customer')) $('customer').value='TBD';
   applyJobRules();
   seedPlanItems();
   const pages=$('pages'); if(!pages) return;
@@ -1346,6 +1509,14 @@ function buildPlans(){
   makeSheetTextEditable();
   fitSheetsToPanel();
   bindDoorDrag();
+  savePrefs();
+  if(scrollTo){
+    const nSheets=document.querySelectorAll('#pages .sheet').length;
+    setStatus('Generated '+nSheets+' sheet'+(nSheets===1?'':'s')+' for '+customerLabel()+' · '+cityName()+' · '+W+'×'+D+' · OH on '+(val('ohWall')||'front'), true);
+    const target=document.querySelector('#pages .sheet-fit')||pages;
+    try{ target.scrollIntoView({behavior:'smooth', block:'start'}); }catch(e){ target.scrollIntoView(true); }
+    try{ const main=document.querySelector('.main'); if(main) main.focus({preventScroll:true}); }catch(e){}
+  }
 }
 function bindDoorDrag(){
   document.querySelectorAll('.drag-door').forEach(g=>{
@@ -1354,6 +1525,7 @@ function bindDoorDrag(){
       ev.stopPropagation();
       const kind=g.getAttribute('data-kind');
       const svg=g.closest('svg');
+      let dirty=false;
       const move=e=>{
         const rect=svg.getBoundingClientRect();
         const sx=((e.clientX-rect.left)/Math.max(rect.width,1))*520;
@@ -1363,15 +1535,21 @@ function bindDoorDrag(){
           let L=+(u*r.W - r.oh/2).toFixed(1);
           L=Math.max(0, Math.min(+(r.W-r.oh).toFixed(1), L));
           if($('ohLeftReturn')) $('ohLeftReturn').value=L;
+          if($('returnReadout')) $('returnReadout').value=L+"' L  /  "+(+(r.W-r.oh-L).toFixed(2))+"' R";
         } else {
           const pr=partyReturns();
           let L=+(u*pr.span - pr.w/2).toFixed(1);
           L=Math.max(0, Math.min(+(pr.span-pr.w).toFixed(1), L));
           if($('partyLeftReturn')) $('partyLeftReturn').value=L;
+          if($('partyReadout')) $('partyReadout').value=L+"' L  /  "+(+(pr.span-pr.w-L).toFixed(2))+"' R";
         }
-        buildPlans();
+        dirty=true;
       };
-      const up=()=>{ window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); };
+      const up=()=>{
+        window.removeEventListener('pointermove', move);
+        window.removeEventListener('pointerup', up);
+        if(dirty) buildPlans();
+      };
       window.addEventListener('pointermove', move);
       window.addEventListener('pointerup', up);
     });
@@ -1409,14 +1587,24 @@ function saveJob(){
   const write=list=>{ localStorage.setItem('agb_garageplans_jobs', JSON.stringify(list)); };
   try{
     write(jobs.slice(0,80));
+    setStatus('Saved job "'+name+'" ('+jobs.length+' on this device)', true);
     alert('Saved '+name);
   }catch(err){
     try{
       write(jobs.slice(0,20));
+      setStatus('Saved "'+name+'" (trimmed older jobs — storage was full)', true);
       alert('Saved '+name+' (trimmed older jobs — storage was full)');
     }catch(e2){
+      setStatus('Save failed — browser storage full');
       alert('Could not save — browser storage is full. Open Previous Jobs, load what you need, or clear site data for this page.');
     }
+  }
+}
+function persistJobs(jobs){
+  try{ localStorage.setItem('agb_garageplans_jobs', JSON.stringify(jobs.slice(0,80))); return true; }
+  catch(e){
+    try{ localStorage.setItem('agb_garageplans_jobs', JSON.stringify(jobs.slice(0,20))); return true; }
+    catch(e2){ alert('Could not update jobs — storage full.'); return false; }
   }
 }
 function showJobs(){
@@ -1424,14 +1612,53 @@ function showJobs(){
   try{ jobs=JSON.parse(localStorage.getItem('agb_garageplans_jobs')||'[]'); if(!Array.isArray(jobs)) jobs=[]; }
   catch(e){ jobs=[]; alert('Saved jobs data was corrupt and could not be read.'); return; }
   if(!jobs.length){alert('No saved garage plan jobs on this device.');return;}
-  const pick=prompt('Open job #\n'+jobs.map((j,i)=>(i+1)+'. '+j.name+'  ('+(j.when||'').slice(0,10)+')').join('\n'));
-  const n=Number(pick)-1;
-  if(jobs[n] && jobs[n].data) restore(jobs[n].data);
+  const list=jobs.map((j,i)=>(i+1)+'. '+j.name+'  ('+(j.when||'').slice(0,10)+')').join('\n');
+  const pick=prompt('Open: #   Rename: r#   Duplicate: d#   Delete: x#\n\n'+list);
+  if(pick==null || !String(pick).trim()) return;
+  const m=String(pick).trim().match(/^(r|d|x)?\s*(\d+)$/i);
+  if(!m){ alert('Enter a job number, or r# / d# / x#'); return; }
+  const idx=Number(m[2])-1;
+  if(!jobs[idx]){ alert('No job #'+m[2]); return; }
+  const op=(m[1]||'').toLowerCase();
+  if(op==='x'){
+    if(!confirm('Delete saved job "'+jobs[idx].name+'"?')) return;
+    const gone=jobs.splice(idx,1)[0];
+    if(persistJobs(jobs)) setStatus('Deleted "'+gone.name+'"', true);
+    return;
+  }
+  if(op==='r'){
+    const nn=prompt('Rename job', jobs[idx].name);
+    if(!nn || !nn.trim()) return;
+    jobs[idx].name=nn.trim();
+    if(persistJobs(jobs)) setStatus('Renamed to "'+jobs[idx].name+'"', true);
+    return;
+  }
+  if(op==='d'){
+    const copy=JSON.parse(JSON.stringify(jobs[idx]));
+    copy.id=Date.now();
+    copy.name=(jobs[idx].name||'Job')+' (copy)';
+    copy.when=new Date().toISOString();
+    const nn=prompt('Duplicate as', copy.name);
+    if(!nn || !nn.trim()) return;
+    copy.name=nn.trim();
+    jobs.unshift(copy);
+    if(persistJobs(jobs)){
+      setStatus('Duplicated as "'+copy.name+'"', true);
+      if(copy.data) restore(copy.data);
+    }
+    return;
+  }
+  if(jobs[idx].data){
+    restore(jobs[idx].data);
+    setStatus('Loaded "'+jobs[idx].name+'"', true);
+  }
 }
 
 document.addEventListener('DOMContentLoaded',()=>{
   fillCitySelect();
+  loadPrefs();
   if($('planDate')&&!$('planDate').value) $('planDate').value=new Date().toISOString().slice(0,10);
+  if(val('city')||val('cityManual')) setStatus('Restored last city/size — Apply Codes or Generate when ready', true);
   document.querySelectorAll('.sidebar input,.sidebar select,.sidebar textarea').forEach(el=>{
     el.addEventListener('change',()=>{
       if(el.id==='winWall' && el.value!=='none' && Number(val('winCount'))===0) $('winCount').value='1';
@@ -1447,6 +1674,7 @@ document.addEventListener('DOMContentLoaded',()=>{
       if(el.id==='svcWall' && el.value==='none') $('landing').value='';
       if(el.id==='city') applyVillage();
       else buildPlans();
+      savePrefs();
     });
   });
   ['ohSlide','partySlide'].forEach(id=>{

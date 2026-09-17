@@ -141,9 +141,26 @@ body.estimator-mode .estimator-exit{display:block}
   <button id="addBtn" class="btn primary hidden" onclick="openJobForm()">+ Add Job</button>
   <button id="carpenterHeaderBtn" class="btn primary" onclick="window.location.href='Carpenter.html?v='+Date.now()">Carpenter Ticket</button>
   <button id="garagePlansHeaderBtn" class="btn plans-blue" onclick="window.location.href='GaragePlans.html?v='+Date.now()">Garage Plans</button>
+  <button id="changePwBtn" class="btn light hidden" onclick="openChangePassword()">Change Password</button>
   <button id="logoutBtn" class="btn dark hidden" onclick="logout()">Log Out</button>
  </div>
 </header>
+
+<div id="pwBg" class="modalbg">
+ <div class="modal sm-modal">
+  <div class="modalhead"><h3>Change Password</h3><button class="btn light sm" type="button" onclick="closeChangePassword()">✕</button></div>
+  <form onsubmit="changePassword(event)">
+   <div class="body">
+    <div class="field"><label>Current password</label><input id="pwCurrent" type="password" autocomplete="current-password" required></div>
+    <div class="field" style="margin-top:10px"><label>New password</label><input id="pwNew" type="password" autocomplete="new-password" required minlength="8"></div>
+    <div class="field" style="margin-top:10px"><label>Confirm new password</label><input id="pwConfirm" type="password" autocomplete="new-password" required minlength="8"></div>
+    <div id="pwError" class="loginerr hidden"></div>
+    <div class="muted small" style="margin-top:10px">At least 8 characters. This only changes the login you are signed in as.</div>
+   </div>
+   <div class="modalfoot"><button class="btn light" type="button" onclick="closeChangePassword()">Cancel</button><button class="btn primary" type="submit">Save Password</button></div>
+  </form>
+ </div>
+</div>
 
 <main id="appMain" class="hidden">
  <div class="titlebar"><div><h2 id="pageTitle">Production Dashboard</h2><div id="subtitle" class="muted">Live shared office data</div></div><div id="syncState" class="small muted">Connected to online database</div></div>
@@ -513,7 +530,47 @@ async function login(e){
  }
  await boot();
 }
-async function logout(){await sb.auth.signOut();profile=null;jobs=[];trashJobs=[];requests=[];editRequests=[];estimateHistory=[];$('appMain').classList.add('hidden');$('loginBg').classList.add('show');$('loginPass').value=''}
+async function showLoggedInChrome(){
+ ['userBadge','logoutBtn','changePwBtn'].forEach(id=>{const el=$(id); if(el) el.classList.remove('hidden');});
+}
+function openChangePassword(){
+ ['pwCurrent','pwNew','pwConfirm'].forEach(id=>{const el=$(id); if(el) el.value='';});
+ const box=$('pwError'); if(box){box.classList.add('hidden');box.textContent='';}
+ if($('pwBg')) $('pwBg').classList.add('show');
+}
+function closeChangePassword(){
+ if($('pwBg')) $('pwBg').classList.remove('show');
+ ['pwCurrent','pwNew','pwConfirm'].forEach(id=>{const el=$(id); el && (el.value='');});
+}
+async function changePassword(e){
+ e.preventDefault();
+ const box=$('pwError');
+ const show=m=>{if(box){box.textContent=m;box.classList.remove('hidden');}};
+ if(box) box.classList.add('hidden');
+ const cur=String($('pwCurrent')?.value||'');
+ const nw=String($('pwNew')?.value||'');
+ const cf=String($('pwConfirm')?.value||'');
+ if(nw.length<8){show('New password must be at least 8 characters.');return;}
+ if(nw!==cf){show('New passwords do not match.');return;}
+ if(nw===cur){show('New password must be different from the current one.');return;}
+ const {data:{user}}=await sb.auth.getUser();
+ if(!user?.email){show('You are not signed in.');return;}
+ const {error:reerr}=await sb.auth.signInWithPassword({email:user.email,password:cur});
+ if(reerr){show('Current password is incorrect.');return;}
+ const {error}=await sb.auth.updateUser({password:nw});
+ if(error){show(error.message||'Could not change password.');return;}
+ closeChangePassword();
+ alert('Password updated. Use the new password next time you log in.');
+}
+async function logout(){
+ await sb.auth.signOut();
+ profile=null;jobs=[];trashJobs=[];requests=[];editRequests=[];estimateHistory=[];
+ $('appMain').classList.add('hidden');$('loginBg').classList.add('show');
+ if($('loginPass'))$('loginPass').value='';
+ if($('changePwBtn'))$('changePwBtn').classList.add('hidden');
+ if($('logoutBtn'))$('logoutBtn').classList.add('hidden');
+ if($('userBadge'))$('userBadge').classList.add('hidden');
+}
 function fallbackProfileFromUser(user){
  const email=String(user?.email||'');
  const uname=email.replace(/@absolute-garage\.local$/i,'').split('@')[0].toLowerCase();
@@ -533,7 +590,7 @@ async function boot(){
   if(res.error) console.warn('staff_profiles', res.error);
  }catch(err){ console.warn('staff_profiles threw', err); }
  if(!p) p=fallbackProfileFromUser(user);
- profile=p;$('loginBg').classList.remove('show');$('appMain').classList.remove('hidden');$('userBadge').classList.remove('hidden');$('logoutBtn').classList.remove('hidden');$('userBadge').textContent=`${p.display_name} • ${roleName()}`;
+ profile=p;$('loginBg').classList.remove('show');$('appMain').classList.remove('hidden');showLoggedInChrome();$('userBadge').textContent=`${p.display_name} • ${roleName()}`;
  $('addBtn').classList.toggle('hidden',!manager());$('requestBtn').classList.toggle('hidden',manager());$('salesFilterWrap').classList.toggle('hidden',!canViewAllJobs());$('trashTab').classList.toggle('hidden',!manager());
  if($('allPersonalCalendarsTab'))$('allPersonalCalendarsTab').classList.toggle('hidden',!privateAccessManager());$('estimateHistorySalesFilterWrap')?.classList.toggle('hidden',!privateAccessManager());
  showCarpenterNav();

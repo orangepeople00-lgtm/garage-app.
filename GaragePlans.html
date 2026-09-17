@@ -84,7 +84,7 @@ button{border:0;border-radius:7px;padding:8px 10px;font-weight:800;cursor:pointe
 <body>
 <aside class="sidebar">
   <h1>Garage Plans</h1>
-  <div class="sub">AGB permit drawings · Crete / Mundelein style fused</div>
+  <div class="sub">Permit drawings · Absolute Garage Builders</div>
   <label>Village / City</label>
   <select id="city"></select>
   <div class="row2">
@@ -140,9 +140,11 @@ button{border:0;border-radius:7px;padding:8px 10px;font-weight:800;cursor:pointe
     <select id="ohWall"><option value="front">Front</option><option value="back">Back</option><option value="left">Left</option><option value="right">Right</option></select>
   </div>
   <div class="row2">
-    <div><label>Left return ft (blank = centered)</label><input id="ohLeftReturn" type="number" step="0.5" placeholder="auto center"></div>
-    <div><label>Computed returns</label><input id="returnReadout" readonly placeholder="—"></div>
+    <div><label>OH left return ft</label><input id="ohLeftReturn" type="number" step="0.5" placeholder="auto center"></div>
+    <div><label>OH returns</label><input id="returnReadout" readonly placeholder="—"></div>
   </div>
+  <label>Slide overhead door (left return)</label>
+  <input id="ohSlide" type="range" min="0" max="10" step="0.5" value="3" style="width:100%">
   <div class="row2">
     <div><label>Service door</label><select id="svcWall"><option value="none" selected>None</option><option value="left">Left</option><option value="right">Right</option><option value="back">Back</option><option value="front">Front</option></select></div>
     <div><label>Landing (blank = none)</label><input id="landing" placeholder="e.g. 3x5 or leave blank"></div>
@@ -151,6 +153,12 @@ button{border:0;border-radius:7px;padding:8px 10px;font-weight:800;cursor:pointe
     <div><label>Party door wall</label><select id="partyWall"><option value="none" selected>None</option><option value="back">Back</option><option value="front">Front</option><option value="left">Left</option><option value="right">Right</option></select></div>
     <div><label>Party door size W x H</label><input id="partySize" value="6x7" placeholder="6x7"></div>
   </div>
+  <div class="row2">
+    <div><label>Party left return ft</label><input id="partyLeftReturn" type="number" step="0.5" placeholder="auto center"></div>
+    <div><label>Party returns</label><input id="partyReadout" readonly placeholder="—"></div>
+  </div>
+  <label>Slide party door (left return)</label>
+  <input id="partySlide" type="range" min="0" max="10" step="0.5" value="2" style="width:100%">
   <div class="row2">
     <div><label>Window wall</label><select id="winWall"><option value="none" selected>None</option><option value="back">Back</option><option value="left">Left</option><option value="right">Right</option><option value="front">Front</option></select></div>
     <div><label>Window type</label><select id="winType"><option>Single hung</option><option>Slider</option><option>vinyl</option></select></div>
@@ -486,12 +494,13 @@ function openVillageSite(){
 }
 function sheetClass(){return ($('sheetSize')&&$('sheetSize').value==='letter')?'sheet letter':'sheet'}
 function tblock(name, num, of){
+  const village=cityName()?( (code()&&code().kind)||'VILLAGE')+' of '+cityName().toUpperCase() : 'VILLAGE';
   return `<div class="tblock">
     <div class="logo">The Garage Guys<small>ABSOLUTE GARAGE BUILDERS</small></div>
-    <div><div class="jobtitle">DETACHED GARAGE — ${esc(roofLabel())} ROOF</div>
-      ${esc(val('address')||'JOB ADDRESS')}<br>${esc(cityName().toUpperCase())} — ${esc((val('customer')||'CUSTOMER')+' RESIDENCE')}</div>
-    <div>CONTRACTOR<br>Absolute Garage Builders<br>3659 W. Irving Park Road, Chicago IL 60618<br>(773) 583-8800 · (847) 759-8877</div>
-    <div><b>${esc(name)}</b><br>Sheet ${num} of ${of}<br>Drawn: ${esc(val('rep'))}</div>
+    <div><div class="jobtitle">DETACHED GARAGE - ${esc(roofLabel())} ROOF</div>
+      ${esc(val('address')||'JOB ADDRESS')}, ${esc(village)} - ${esc(val('customer')||'CUSTOMER')}</div>
+    <div>CONTRACTOR<br>ABSOLUTE GARAGE BUILDERS<br>3050 W. IRVING PARK RD.<br>CHICAGO, IL 60618<br>(773) 583-8800 · (847) 759-8877</div>
+    <div><b>${esc(name)}</b><br>SHEET ${num} OF ${of}<br>${esc(val('planDate')||'')}</div>
   </div>`;
 }
 function noteLines(x,y,lines, size){
@@ -501,6 +510,41 @@ function noteLines(x,y,lines, size){
 function parseFt(s){
   const m=String(s||'').match(/(\d+(?:\.\d+)?)/);
   return m?Number(m[1]):null;
+}
+function ftLabel(n){
+  n=Number(n)||0;
+  const f=Math.floor(n+1e-6);
+  let inch=Math.round((n-f)*12);
+  if(inch===12){ return (f+1)+'-0"'; }
+  if(inch===0) return f+'-0"';
+  return f+'-'+inch+'"';
+}
+function carCount(){
+  const W=Number(val('width'))||22;
+  return W>=27?3:(W>=18?2:1);
+}
+function conformCodesHTML(){
+  const city=cityName();
+  const year={
+    'Oak Park':'2021','Riverside':'2006','Des Plaines':'2015','Mundelein':'2018',
+    'Evergreen Park':'2009','Addison':'2018','Wheaton':'2024','Schaumburg':'2018'
+  }[city]||'2018';
+  return `<div class="elecbox notes-col">
+    <h3>ALL CONSTRUCTION TO CONFORM TO:</h3>
+    <ul>
+      <li>${year} INTERNATIONAL RESIDENTIAL CODE WITH ${esc((city||'VILLAGE').toUpperCase())} AMENDMENTS</li>
+      <li>${year} INTERNATIONAL BUILDING CODE WITH ${esc((city||'VILLAGE').toUpperCase())} AMENDMENTS</li>
+      <li>NATIONAL ELECTRICAL CODE (NFPA 70) WITH ${esc((city||'VILLAGE').toUpperCase())} AMENDMENTS</li>
+    </ul>
+    <h3>ELECTRICAL DETAILS</h3>
+    <ul>
+      <li>CIRCUITS: (1) 20 AMP #12 GA, (1) 15 AMP #14 GA</li>
+      <li>CONTAINED IN 3/4" RIGID STEEL CONDUIT</li>
+      <li>BURIAL DEPTH: 8 INCHES${/DES PLAINES/i.test(city)?' , 18" IF UNDER DRIVEWAY':''}</li>
+      <li>WIRING: SEPARATE CIRCUITS TO SERVICE PANEL</li>
+      <li>PROVIDE DISCONNECT SWITCH</li>
+    </ul>
+  </div>`;
 }
 function doorReturns(){
   const W=Number(val('width'))||22;
@@ -512,6 +556,16 @@ function doorReturns(){
   let R=+(leftover-L).toFixed(2);
   if(R<0){R=0;L=leftover}
   return {W,oh,left:L,right:R,min:Math.min(L,R)};
+}
+function partyReturns(){
+  const wall=val('partyWall');
+  const span=(wall==='left'||wall==='right')?(Number(val('depth'))||24):(Number(val('width'))||22);
+  const pd=partyDim();
+  const leftover=Math.max(0, +(span-pd.w).toFixed(2));
+  let L=parseFt(val('partyLeftReturn'));
+  if(L==null) L=+(leftover/2).toFixed(2);
+  L=Math.max(0, Math.min(leftover, L));
+  return {span,w:pd.w,h:pd.h,left:L,right:+(leftover-L).toFixed(2)};
 }
 function cityStruct(){
   const name=cityName();
@@ -658,6 +712,16 @@ function applyJobRules(){
   if(gut && $('gutters')) $('gutters').value='yes';
   if($('flagTies')) $('flagTies').checked=ties;
   if($('returnReadout')) $('returnReadout').value=r.left+"' L  /  "+r.right+"' R";
+  if($('ohSlide')){
+    $('ohSlide').max=Math.max(0.5, +(r.W-r.oh).toFixed(1));
+    if(document.activeElement!==$('ohSlide')) $('ohSlide').value=r.left;
+  }
+  const pr=partyReturns();
+  if($('partyReadout')) $('partyReadout').value=val('partyWall')==='none'?'—':(pr.left+"' L  /  "+pr.right+"' R");
+  if($('partySlide')){
+    $('partySlide').max=Math.max(0.5, +(pr.span-pr.w).toFixed(1));
+    if(document.activeElement!==$('partySlide')) $('partySlide').value=pr.left;
+  }
   const box=$('ruleBox');
   if(box){
     const warns=jobWarnings();
@@ -687,7 +751,7 @@ function applyJobRules(){
   return {r,brace,fire};
 }
 function needsBraceDetail(){ return computeBraceRequired(); }
-function sheetTotal(){ return needsBraceDetail()?3:2; }
+function sheetTotal(){ return 3+(needsBraceDetail()?1:0)+(computeFirewallRequired()?1:0); }
 function reqBlob(){
   const p=packet()||{};
   const c=code()||{};
@@ -778,9 +842,11 @@ function floorPlanSvg(){
       <text x="${ox+L*sx/2}" y="${oy+gd-22}" text-anchor="middle" font-size="11">${L}' RETURN</text>
       <text x="${doorX+doorW+R*sx/2}" y="${oy+gd-22}" text-anchor="middle" font-size="11">${R}' RETURN</text>`;
   }
-  if(showOnPlan('brace')) extra+=`<text x="${ox+gw/2}" y="${oy+22}" text-anchor="middle" font-size="10">${esc(withCite('PORTAL / BRACE AT O.H.', 'brace'))}</text>`;
+  if(showOnPlan('brace')) extra+='';
+  if(computeFirewallRequired()) extra+='';
   const apr=hasApron()?`<rect x="${ox}" y="${oy+gd}" width="${gw}" height="40" fill="#fff" stroke="#111" stroke-width="1.8"/>
-    <text x="${ox+gw/2}" y="${oy+gd+26}" text-anchor="middle" font-size="14" font-weight="700">${apron}' APRON</text>`:'';
+    <text x="${ox+gw/2}" y="${oy+gd+22}" text-anchor="middle" font-size="12" font-weight="700">NEW CONC. APRON</text>
+    <text x="${ox+gw/2}" y="${oy+gd+36}" text-anchor="middle" font-size="10">SLOPE TO GRADE</text>`:'';
   return `<svg viewBox="0 0 520 640" width="100%" style="max-height:9.2in">
     <defs><pattern id="hatchRet" width="6" height="6" patternUnits="userSpaceOnUse"><path d="M0 6 L6 0" stroke="#444" stroke-width=".8"/></pattern></defs>
     <text x="260" y="22" text-anchor="middle" font-size="15" font-weight="800" letter-spacing="2">FLOOR PLAN</text>
@@ -788,17 +854,25 @@ function floorPlanSvg(){
     <line x1="${doorX}" y1="${oy+gd}" x2="${doorX+doorW}" y2="${oy+gd}" stroke="#fff" stroke-width="8"/>
     <line x1="${doorX+6}" y1="${oy+gd-16}" x2="${doorX+doorW-6}" y2="${oy+gd-16}" stroke="#111"/>
     <line x1="${doorX+6}" y1="${oy+gd-24}" x2="${doorX+doorW-6}" y2="${oy+gd-24}" stroke="#111"/>
-    <text x="${doorX+doorW/2}" y="${oy+gd-32}" text-anchor="middle" font-size="12">${ohW}' x ${ohH}' O.H. DOOR</text>
+    <text x="${doorX+doorW/2}" y="${oy+gd-36}" text-anchor="middle" font-size="11">${ftLabel(ohW)} x ${ftLabel(ohH)} O.H. GARAGE DOOR</text>
+    <text x="${doorX+doorW/2}" y="${oy+gd-22}" text-anchor="middle" font-size="10">SIDE TO SIDE${hurricaneRequired()?' (HURRICANE RATED)':''}</text>
+    <text x="${doorX+12}" y="${oy+gd-48}" font-size="10">(2) 2x6 POSTS FOR HEADER, TYP.</text>
+    <text x="${doorX+doorW-8}" y="${oy+gd-48}" text-anchor="end" font-size="10">(2) 2x6 POSTS FOR HEADER, TYP.</text>
+    <text x="${ox+gw/2}" y="${oy+gd*0.42}" text-anchor="middle" font-size="16" font-weight="800">NEW ${carCount()}-CAR</text>
+    <text x="${ox+gw/2}" y="${oy+gd*0.42+18}" text-anchor="middle" font-size="16" font-weight="800">GARAGE</text>
+    <text x="${ox+gw/2}" y="${oy+gd*0.58}" text-anchor="middle" font-size="11">${esc(tieCallout())}</text>
+    <text x="${ox+gw*0.72}" y="${oy+gd*0.70}" font-size="10">PITCH SLAB 1/8" PER FOOT</text>
+    <text x="${ox+gw*0.72}" y="${oy+gd*0.70+12}" font-size="10">TOWARD O.H. DOOR</text>
+    <text x="${ox+gw*0.55}" y="${oy+gd*0.82}" font-size="10">GFI</text>
+    <text x="${ox+gw*0.55}" y="${oy+gd*0.82+12}" font-size="10">OHD</text>
+    ${computeFirewallRequired()?`<text x="${ox+8}" y="${oy+gd*0.55}" font-size="10">1HR. RATED</text><text x="${ox+8}" y="${oy+gd*0.55+12}" font-size="10">FIREWALL TYP.</text>`:''}
     ${apr}
-    <text x="${ox+L*sx/2}" y="${oy+gd-4}" text-anchor="middle" font-size="12">${L}'</text>
-    <text x="${doorX+doorW+R*sx/2}" y="${oy+gd-4}" text-anchor="middle" font-size="12">${R}'</text>
+    <text x="${ox+L*sx/2}" y="${oy+gd+14}" text-anchor="middle" font-size="12">${ftLabel(L)}</text>
+    <text x="${doorX+doorW+R*sx/2}" y="${oy+gd+14}" text-anchor="middle" font-size="12">${ftLabel(R)}</text>
     <line x1="${ox+gw+16}" y1="${oy}" x2="${ox+gw+16}" y2="${oy+gd}" stroke="#111"/>
-    <text x="${ox+gw+32}" y="${oy+gd/2}" font-size="14" font-weight="800" transform="rotate(-90 ${ox+gw+32} ${oy+gd/2})">${D}'</text>
+    <text x="${ox+gw+32}" y="${oy+gd/2}" font-size="14" font-weight="800" transform="rotate(-90 ${ox+gw+32} ${oy+gd/2})">${ftLabel(D)}</text>
     <line x1="${ox}" y1="${oy-14}" x2="${ox+gw}" y2="${oy-14}" stroke="#111"/>
-    <text x="${ox+gw/2}" y="${oy-20}" text-anchor="middle" font-size="14" font-weight="800">${W}'</text>
-    <text x="${ox+gw/2}" y="${oy+gd*0.32}" text-anchor="middle" font-size="12">${esc(rafterCallout())}</text>
-    <text x="${ox+gw/2}" y="${oy+gd*0.32+16}" text-anchor="middle" font-size="12">${esc(tieCallout())}</text>
-    <text x="${ox+gw/2}" y="${oy+gd*0.50}" text-anchor="middle" font-size="12">${esc((val('slab')||'4\" SLAB / WWM').slice(0,28))}</text>
+    <text x="${ox+gw/2}" y="${oy-20}" text-anchor="middle" font-size="14" font-weight="800">${ftLabel(W)}</text>
     ${extra}
   </svg>`;
 }
@@ -809,45 +883,50 @@ function buildingSectionSvg(){
   const wall=Number(val('wallH'))||8;
   const tot=totalH();
   const p=pitchNum();
-  const wx=300, ww=26, plate=200, wh=Math.min(210, wall*20), slab=plate+wh, foot=slab+42;
-  const eaveX=wx+ww, eaveY=plate, ridgeX=520, ridgeY=70;
-  const midRafterX=(eaveX+ridgeX)/2, midRafterY=(eaveY+ridgeY+18)/2;
-  const ridge = showOnPlan('ridge') ? `<rect x="${ridgeX-7}" y="${ridgeY}" width="20" height="16" fill="#fff" stroke="#111"/>${tag(ridgeX+16, ridgeY+12, '2x8 RIDGE')}` : '';
-  const raft = showOnPlan('rafters') ? tag(midRafterX-100, midRafterY+4, rafterCallout()) : '';
-  const sheathR = showOnPlan('roofSheath') ? tag(midRafterX+8, midRafterY+6, cityStruct().roofSheath||val('roofSheath')||'7/16" OSB ROOF') : '';
-  const collar = showOnPlan('collar') ? `<line x1="${eaveX+30}" y1="${eaveY-40}" x2="${midRafterX+20}" y2="${midRafterY-8}" stroke="#111" stroke-width="2"/>${tag(eaveX+34, eaveY-46, withCite('COLLAR TIE','collar'))}` : '';
-  const xtie = showOnPlan('crossTies') ? `<line x1="${wx-40}" y1="${plate+6}" x2="${wx+90}" y2="${plate+6}" stroke="#111" stroke-width="2"/>${tag(wx-118, plate+18, tieCallout())}` : '';
-  const lvl = showOnPlan('lvl') ? `<rect x="${wx-4}" y="${plate-22}" width="${ww+8}" height="10" fill="#e8d7a8" stroke="#111"/>${tag(wx-130, plate-16, headerCallout())}` : '';
-  const osb = showOnPlan('osb') ? Array.from({length:8},(_,i)=>`<line x1="${wx-6}" y1="${plate+12+i*24}" x2="${wx}" y2="${plate+i*24}" stroke="#666"/>`).join('') + tag(wx-120, plate+wh*0.55, (val('wallSheath')||'7/16" OSB')+' SHEATH') : '';
-  const bolts = showOnPlan('anchors') ? [0.2,0.5,0.8].map(f=>`<line x1="${wx+ww/2}" y1="${slab-8}" x2="${wx+ww/2}" y2="${slab+18+f*8}" stroke="#111"/><circle cx="${wx+ww/2}" cy="${slab-10}" r="2.2" fill="#111"/>`).join('') + tag(wx-108, slab-2, '1/2" ANCHOR BOLTS') : '';
-  const sill = showOnPlan('sill') ? `<rect x="${wx-6}" y="${slab-8}" width="${ww+12}" height="8" fill="#c9b48a" stroke="#111"/>${tag(wx-118, slab+8, 'TREATED SILL PLATE')}` : `<rect x="${wx-6}" y="${slab-8}" width="${ww+12}" height="8" fill="#eee" stroke="#111"/>`;
-  const gut = showOnPlan('gutters') ? `<ellipse cx="${eaveX-8}" cy="${plate-2}" rx="7" ry="5" fill="none" stroke="#111"/>${tag(eaveX-78, plate-8, 'GUTTER')}` : '';
-  const ht = showOnPlan('hurricane') ? tag(eaveX+8, plate+14, withCite('H-TIE','hurricane')) : '';
-  const vap = showOnPlan('vapor') ? tag(wx+ww+10, slab+26, withCite('VAPOR','vapor')) : '';
-  return `<svg viewBox="0 0 700 560" width="100%" style="max-height:9in">
-    <text x="350" y="18" text-anchor="middle" font-size="14" font-weight="800" letter-spacing="2">BUILDING SECTION</text>
-    <line x1="${eaveX}" y1="${eaveY}" x2="${ridgeX}" y2="${ridgeY+16}" stroke="#111" stroke-width="3"/>
-    <line x1="${eaveX-5}" y1="${eaveY+7}" x2="${ridgeX-6}" y2="${ridgeY+22}" stroke="#111" stroke-width="1.1"/>
-    ${ridge}${raft}${sheathR}${collar}${xtie}
-    ${tag(midRafterX+8, midRafterY-10, (val('shingles')||'235# SHINGLES')+' / 15# FELT')}
-    <polygon points="${midRafterX-70},${midRafterY-28} ${midRafterX-70},${midRafterY-12} ${midRafterX-54},${midRafterY-12}" fill="none" stroke="#111"/>
-    ${tag(midRafterX-68, midRafterY-32, p+'/12')}
-    <rect x="${wx-8}" y="${plate-12}" width="${ww+16}" height="12" fill="#fff" stroke="#111"/>
-    ${gut}${tag(wx-118, plate-2, 'BOXED EAVE 6"')}${ht}${lvl}
-    <rect x="${wx}" y="${plate}" width="${ww}" height="${wh}" fill="#fff" stroke="#111" stroke-width="1.7"/>
-    ${Array.from({length:7},(_,i)=>`<line x1="${wx}" y1="${plate+18+i*26}" x2="${wx+ww}" y2="${plate+6+i*26}" stroke="#111"/>`).join('')}
-    ${osb}
-    ${tag(wx+ww+10, plate+wh*0.42, studCallout())}
-    ${tag(wx-120, plate+wh*0.68, (val('siding')||'VINYL')+' SIDING')}
-    ${sill}${bolts}
-    <rect x="${wx-14}" y="${slab}" width="${ww+28}" height="12" fill="#ccc" stroke="#111"/>
-    ${tag(wx+ww+10, slab+10, (val('slab')||'4\" SLAB / WWM').slice(0,24))}
-    <polygon points="${wx-20},${slab+12} ${wx-26},${foot} ${wx+ww+26},${foot} ${wx+ww+20},${slab+12}" fill="#bbb" stroke="#111"/>
-    ${tag(wx+ww+10, slab+22, '4" GRAVEL')}${vap}
-    ${showOnPlan('footing')?tag(wx+ww+10, foot-2, val('footing')||'THICKENED EDGE'):''}
-    <line x1="${wx-36}" y1="${slab}" x2="${wx+ww+48}" y2="${slab}" stroke="#111" stroke-dasharray="4 3"/>
-    ${tag(wx-70, slab-16, wall+"'-0\" PLATE")}
-    ${tag(ridgeX-40, 36, "T/RIDGE "+tot+"'-0\"")}
+  const wx=340, ww=34, plate=210, wh=Math.min(200, wall*22), slab=plate+wh, foot=slab+36;
+  const eaveX=wx+ww+8, eaveY=plate, ridgeX=560, ridgeY=78;
+  const leftNotes=[
+    'ALL LUMBER SPF #2 OR BETTER',
+    (val('shingles')||'ARCH. SHINGLES')+' OVER 15# FELT',
+    'OVER '+(cityStruct().roofSheath||val('roofSheath')||'7/16" OSB'),
+    rafterCallout()+(showOnPlan('hurricane')?' w/ H-TIES':'') ,
+    showOnPlan('gutters')?'6" FASCIA w/ ALUM. GUTTERS':'6" FASCIA — BOXED EAVES SEALED',
+    (val('wallSheath')||'7/16" OSB')+' + HOUSEWRAP',
+    studCallout()+' (2) AT CORNERS',
+    (val('siding')||'VINYL')+' HORIZONTAL SIDING',
+    '2x4 TREATED SILL + 1/2" ANCHORS @ 6\' O.C.'
+  ].filter(Boolean);
+  const left=leftNotes.map((t,i)=>`<text x="22" y="${78+i*22}" font-size="11">${esc(t)}</text>`).join('')
+    + `<rect x="14" y="58" width="250" height="${leftNotes.length*22+16}" fill="none" stroke="#111"/>`;
+  const xtie = showOnPlan('crossTies') ? `<line x1="${wx+ww}" y1="${plate+10}" x2="${ridgeX-20}" y2="${plate+10}" stroke="#111" stroke-width="1.6"/>
+    <text x="${wx+ww+16}" y="${plate+6}" font-size="11">${esc(tieCallout())}</text>` : '';
+  return `<svg viewBox="0 0 720 540" width="100%" style="max-height:8.6in">
+    <text x="360" y="22" text-anchor="middle" font-size="15" font-weight="800">BUILDING SECTION</text>
+    <text x="360" y="38" text-anchor="middle" font-size="11">SCALE: 3/16" = 1'-0"</text>
+    ${left}
+    <line x1="${eaveX}" y1="${eaveY}" x2="${ridgeX}" y2="${ridgeY}" stroke="#111" stroke-width="2.4"/>
+    <line x1="${eaveX-4}" y1="${eaveY+6}" x2="${ridgeX-4}" y2="${ridgeY+8}" stroke="#111" stroke-width="1"/>
+    <rect x="${ridgeX-8}" y="${ridgeY-4}" width="18" height="14" fill="#fff" stroke="#111"/>
+    <polygon points="${ridgeX-30},${ridgeY+18} ${ridgeX-30},${ridgeY+4} ${ridgeX-16},${ridgeY+4}" fill="none" stroke="#111"/>
+    <text x="${ridgeX-28}" y="${ridgeY}" font-size="11">${p}/12</text>
+    <rect x="${wx-10}" y="${plate-14}" width="${ww+20}" height="14" fill="#fff" stroke="#111"/>
+    ${showOnPlan('gutters')?`<ellipse cx="${eaveX-10}" cy="${plate-2}" rx="7" ry="4" fill="none" stroke="#111"/>`:''}
+    <rect x="${wx}" y="${plate}" width="${ww}" height="${wh}" fill="#fff" stroke="#111" stroke-width="1.6"/>
+    ${Array.from({length:6},(_,i)=>`<line x1="${wx}" y1="${plate+20+i*28}" x2="${wx+ww}" y2="${plate+8+i*28}" stroke="#bbb"/>`).join('')}
+    ${xtie}
+    <rect x="${wx-6}" y="${slab-8}" width="${ww+12}" height="8" fill="#d7c39a" stroke="#111"/>
+    <circle cx="${wx+ww/2}" cy="${slab-10}" r="2.2" fill="#111"/>
+    <rect x="${wx-16}" y="${slab}" width="${ww+32}" height="10" fill="#ddd" stroke="#111"/>
+    <polygon points="${wx-22},${slab+10} ${wx-28},${foot} ${wx+ww+28},${foot} ${wx+ww+22},${slab+10}" fill="#ccc" stroke="#111"/>
+    <line x1="${wx-40}" y1="${slab}" x2="${ridgeX+40}" y2="${slab}" stroke="#111"/>
+    <line x1="${ridgeX+36}" y1="${ridgeY}" x2="${ridgeX+36}" y2="${slab}" stroke="#111"/>
+    <text x="${ridgeX+42}" y="${ridgeY+4}" font-size="11">T/RIDGE</text>
+    <text x="${ridgeX+42}" y="${plate+4}" font-size="11">T/PLATE</text>
+    <text x="${ridgeX+42}" y="${slab-4}" font-size="11">T/SLAB</text>
+    <text x="${ridgeX+42}" y="${(plate+slab)/2}" font-size="12" font-weight="700">${ftLabel(wall)} PL. HT.</text>
+    <text x="${ridgeX+42}" y="${ridgeY+20}" font-size="11">${ftLabel(tot)} O.A.</text>
+    <text x="${wx+ww+10}" y="${slab+24}" font-size="11">4" SLAB / 4" GRAVEL / WWF</text>
+    <text x="${wx+ww+10}" y="${foot-2}" font-size="11">${esc((val('footing')||'THICKENED EDGE').slice(0,28))}</text>
   </svg>`;
 }
 function isGableEnd(view){
@@ -882,11 +961,20 @@ function roofFor(view,x,y,w){
   return `<rect x="${x-8}" y="${y-30}" width="${w+16}" height="30" fill="#fff" stroke="#111" stroke-width="1.7"/>
     ${shingleFill(x-6,y-28,w+12,26)}`;
 }
-function raisedPanelDoor(x,y,w,h){
-  const rows=4;
-  let s=`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#f3f3f3" stroke="#111" stroke-width="1.6"/>`;
-  const rh=h/rows;
-  for(let i=0;i<rows;i++) s+=`<rect x="${x+5}" y="${y+i*rh+3}" width="${w-10}" height="${rh-6}" fill="#fafafa" stroke="#333"/>`;
+function raisedPanelDoor(x,y,w,h, kind){
+  const rows=4, cols=w>90?4:2;
+  let s=`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#d8d8d8" stroke="#111" stroke-width="1.8"/>`;
+  const rw=(w-10)/cols, rh=(h-8)/rows;
+  for(let r=0;r<rows;r++){
+    for(let c=0;c<cols;c++){
+      const px=x+4+c*rw, py=y+4+r*rh;
+      s+=`<rect x="${px+2}" y="${py+2}" width="${rw-6}" height="${rh-6}" fill="#ececec" stroke="#333"/>
+        <rect x="${px+5}" y="${py+5}" width="${rw-12}" height="${rh-12}" fill="none" stroke="#888"/>`;
+    }
+  }
+  s+=`<circle cx="${x+w-8}" cy="${y+h*0.55}" r="2.2" fill="#222"/>`;
+  const lab=kind==='party'?(val('partySize')||'6x7')+' PARTY':((val('ohW')||16)+'x'+(val('ohH')||7)+' O.H.');
+  s+=`<text x="${x+w/2}" y="${y+h/2+4}" text-anchor="middle" font-size="${Math.max(9,Math.min(13,w/8))}" font-weight="700">${esc(lab)}</text>`;
   return s;
 }
 function elevLarge(view, title){
@@ -899,13 +987,13 @@ function elevLarge(view, title){
   for(let i=0;i<9;i++) vinyl+=`<line x1="${x+1}" y1="${y+16+i*14}" x2="${x+ww-1}" y2="${y+16+i*14}" stroke="#cfcfcf"/>`;
   let ops='';
   if(val('ohWall')===view){
-    const dw=ww*((Number(val('ohW'))||16)/Math.max(span,1));
-    const dx=x+(ww-dw)/2;
-    const dh=wh*((Number(val('ohH'))||7)/Math.max(wall,1));
-    ops+=raisedPanelDoor(dx,y+wh-dh,dw,dh);
     const retE=doorReturns();
-    ops+=`<text x="${x+10}" y="${y+wh-6}" font-size="11">${retE.left}'</text>
-      <text x="${x+ww-22}" y="${y+wh-6}" font-size="11">${retE.right}'</text>`;
+    const dw=ww*(retE.oh/Math.max(span,1));
+    const dx=x+ww*(retE.left/Math.max(span,1));
+    const dh=wh*((Number(val('ohH'))||7)/Math.max(wall,1));
+    ops+=`<g class="drag-door" data-kind="oh" data-view="${view}" style="cursor:ew-resize">${raisedPanelDoor(dx,y+wh-dh,dw,dh,'oh')}</g>`;
+    ops+=`<text x="${dx-4}" y="${y+wh-4}" text-anchor="end" font-size="11">${retE.left}'</text>
+      <text x="${dx+dw+4}" y="${y+wh-4}" font-size="11">${retE.right}'</text>`;
     if(showOnPlan('returns')){
       ops+=`<rect x="${x}" y="${y}" width="${dx-x}" height="${wh}" fill="none" stroke="#111"/>
         <rect x="${dx+dw}" y="${y}" width="${Math.max(4,x+ww-dx-dw)}" height="${wh}" fill="none" stroke="#111"/>`;
@@ -917,11 +1005,12 @@ function elevLarge(view, title){
     }
   }
   if(val('partyWall')===view){
-    const pd=partyDim();
-    const dw=Math.max(56, ww*(pd.w/Math.max(span,1)));
-    const dh=Math.max(56, wh*(pd.h/Math.max(wall,1)));
-    const dx=val('ohWall')===view?x+8:x+(ww-dw)/2;
-    ops+=raisedPanelDoor(dx,y+wh-dh,dw,dh);
+    const pr=partyReturns();
+    const dw=ww*(pr.w/Math.max(span,1));
+    const dh=wh*(pr.h/Math.max(wall,1));
+    const dx=x+ww*(pr.left/Math.max(span,1));
+    ops+=`<g class="drag-door" data-kind="party" data-view="${view}" style="cursor:ew-resize">${raisedPanelDoor(dx,y+wh-dh,dw,dh,'party')}</g>`;
+    ops+=`<text x="${dx+dw/2}" y="${y+wh+12}" text-anchor="middle" font-size="10">${pr.left}' / ${pr.right}'</text>`;
   }
   if(val('svcWall')===view){
     ops+=`<rect x="${x+22}" y="${y+wh*0.30}" width="24" height="${wh*0.70}" fill="#fff" stroke="#111"/>
@@ -937,8 +1026,7 @@ function elevLarge(view, title){
     }
   }
   if(val('ohWall')===view){
-    ops+=`<text x="${x+ww/2}" y="${y+16}" text-anchor="middle" font-size="10">${esc(headerCallout())}</text>
-      <text x="${x+ww/2}" y="${y+wh-24}" text-anchor="middle" font-size="11">${val('ohW')||16}' x ${val('ohH')||7}' O.H.</text>`;
+    ops+=`<text x="${x+ww/2}" y="${y+14}" text-anchor="middle" font-size="10">${esc(headerCallout())}</text>`;
   }
   if(val('svcWall')===view) ops+=`<text x="${x+34}" y="${y+wh*0.26}" font-size="10">36x80</text>`;
   const eaveY=y;
@@ -952,46 +1040,104 @@ function elevLarge(view, title){
       ${vinyl}${ops}${gutterBit}${tieBit}
       <polygon points="${x+ww+6},${y-22} ${x+ww+6},${y-8} ${x+ww+20},${y-8}" fill="none" stroke="#111"/>
       <text x="${x+ww+8}" y="${y-26}" font-size="11">${pitchNum()}/12</text>
-      <text x="${x+8}" y="${y+wh/2}" font-size="10">${esc(val('siding')||'VINYL')}</text>
+      <text x="${x+ww/2}" y="${y+wh+46}" text-anchor="middle" font-size="11">${esc(val('siding')||'VINYL SIDING')}</text>
       <line x1="${x-8}" y1="${y+wh+6}" x2="${x+ww+8}" y2="${y+wh+6}" stroke="#111" stroke-dasharray="4 3"/>
       <line x1="${x-18}" y1="${y-44}" x2="${x-18}" y2="${y+wh}" stroke="#111"/>
       <text x="${x-30}" y="${(y+wh)/2+20}" font-size="12" font-weight="700" transform="rotate(-90 ${x-30} ${(y+wh)/2+20})">${tot}'</text>
       <line x1="${x}" y1="${y+wh+18}" x2="${x+ww}" y2="${y+wh+18}" stroke="#111"/>
       <text x="${x+ww/2}" y="${y+wh+32}" text-anchor="middle" font-size="12" font-weight="700">${span}'</text>
     </svg>
-    <div class="caption">VIEW — ${esc(title)}</div>
+    <div class="caption">${esc(title)} ELEVATION</div>
+    <div class="subcap">SCALE: 3/16" = 1'-0"</div>
   </div>`;
 }
+function braceMethod(){
+  const city=cityName();
+  if(city==='Mundelein') return {title:'PORTAL FRAME AT O.H. — METHOD PFG', code:'Mundelein packet / IRC R602.10.6.3'};
+  if(city==='Forest Park') return {title:'ALTERNATE BRACED SHORT WALL', code:'Forest Park IRC 2009 amd.'};
+  if(city==='DeKalb County') return {title:'BRACED SHORT WALL', code:'DeKalb Co. IRC 2006'};
+  if(city==='Addison') return {title:'SHEAR WALL AT RETURNS UNDER 48"', code:'Addison codebook + IRC R602.10'};
+  if(city==='Antioch') return {title:'SHEAR WALL AT RETURNS UNDER 32"', code:'Antioch codebook + IRC R602.10'};
+  if(city==='Evanston') return {title:'SHEAR WALL (RETURNS UNDER 2\')', code:'Evanston codebook + IRC R602.10'};
+  return {title:'PORTAL / SHEAR PANEL AT SHORT RETURN', code:'IRC R602.10.6.3 Method PFG'};
+}
 function braceDetailSvg(){
-  return `<svg viewBox="0 0 560 420" width="100%" style="max-height:7.4in">
-    <rect x="40" y="20" width="28" height="320" fill="#f3e0a8" stroke="#111"/>
-    <rect x="40" y="20" width="28" height="110" fill="#d7b25a" stroke="#111"/>
-    <rect x="360" y="20" width="28" height="320" fill="#f3e0a8" stroke="#111"/>
-    <rect x="360" y="20" width="28" height="110" fill="#d7b25a" stroke="#111"/>
-    <rect x="68" y="40" width="292" height="24" fill="#c9842a" stroke="#111"/>
-    <text x="214" y="36" text-anchor="middle" font-size="12">Min. 3" x 11-1/4" header</text>
-    <text x="214" y="370" text-anchor="middle" font-size="12">1/2" anchors + plate washers — R403.1.6</text>
+  const r=doorReturns();
+  const hdr=headerCallout();
+  const wall=Number(val('wallH'))||8;
+  const ohH=Number(val('ohH'))||7;
+  const city=cityName();
+  return `<svg viewBox="0 0 760 520" width="100%" style="max-height:8.2in">
+    <defs><pattern id="shr" width="8" height="8" patternUnits="userSpaceOnUse"><path d="M0 8 L8 0" stroke="#444" stroke-width=".9"/></pattern></defs>
+    <text x="380" y="22" text-anchor="middle" font-size="15" font-weight="800">FRONT WALL — SHEAR / PORTAL CONSTRUCTION</text>
+    <text x="380" y="40" text-anchor="middle" font-size="12">${esc(city||'VILLAGE')} · L return ${r.left}' · R return ${r.right}' · O.H. ${r.oh}' x ${ohH}'</text>
+    <rect x="40" y="70" width="80" height="280" fill="url(#shr)" stroke="#111" stroke-width="1.8"/>
+    <rect x="640" y="70" width="80" height="280" fill="url(#shr)" stroke="#111" stroke-width="1.8"/>
+    <rect x="120" y="70" width="520" height="28" fill="#e8d7a8" stroke="#111"/>
+    <rect x="160" y="98" width="440" height="${Math.max(160, 280*(ohH/Math.max(wall,1))-20)}" fill="#f4f4f4" stroke="#111"/>
+    <text x="380" y="230" text-anchor="middle" font-size="13">${r.oh}' x ${ohH}' O.H. DOOR</text>
+    <text x="80" y="360" text-anchor="middle" font-size="12" font-weight="700">${r.left}' SHEAR</text>
+    <text x="680" y="360" text-anchor="middle" font-size="12" font-weight="700">${r.right}' SHEAR</text>
+    <text x="380" y="88" text-anchor="middle" font-size="12">${esc(hdr)} THROUGH RETURN</text>
+    <line x1="40" y1="350" x2="720" y2="350" stroke="#111"/>
+    <text x="40" y="378" font-size="11">TREATED SILL + 1/2" ANCHORS (R403.1.6)</text>
+    <rect x="40" y="390" width="18" height="36" fill="#bbb" stroke="#111"/>
+    <rect x="70" y="390" width="18" height="36" fill="#bbb" stroke="#111"/>
+    <text x="96" y="414" font-size="11">HOLD-DOWN EACH END OF PANEL</text>
+    <text x="40" y="448" font-size="12">7/16" OSB / WSP from sill, over header, into return · edge nail 6" / field 12"</text>
+    <text x="40" y="466" font-size="12">(2) 2x4 king + jack at opening · 1000 lb strap header-to-post each side</text>
+    <text x="40" y="484" font-size="12">Panel width shown = this job's return. ${esc(cite('brace'))}</text>
   </svg>`;
 }
 function pageFloorSection(){
-  const notes=val('electricNotes').split(/\n+/).filter(Boolean).map(t=>'<li>'+esc(t)+'</li>').join('');
   return `<section class="${sheetClass()}">
     <div class="split">
       <div class="draw-host" id="floorHost">${floorPlanSvg()}<div class="overlay" id="floorOverlay"></div></div>
-      <div>${buildingSectionSvg()}
-        <div class="elecbox notes-col"><h3>ELECTRICAL</h3><ul>${notes}</ul></div>
-      </div>
+      <div>${conformCodesHTML()}${val('electricNotes')?`<div class="elecbox notes-col"><h3>JOB ELECTRICAL NOTES</h3><ul>${val('electricNotes').split(/\n+/).filter(Boolean).map(t=>'<li>'+esc(t)+'</li>').join('')}</ul></div>`:''}</div>
     </div>
-    ${tblock('FLOOR PLAN & SECTION','1',String(sheetTotal()))}
+    ${tblock('PROPOSED FLOOR PLAN','1',String(sheetTotal()))}
+  </section>`;
+}
+function roofPlanSvg(){
+  const W=Number(val('width'))||22, D=Number(val('depth'))||24;
+  const t=val('roof');
+  const sx=10, ox=40, oy=40, gw=W*sx, gd=D*sx;
+  let hips='';
+  if(t==='hip'){
+    hips=`<line x1="${ox}" y1="${oy}" x2="${ox+gw/2}" y2="${oy+gd/2}" stroke="#111"/>
+      <line x1="${ox+gw}" y1="${oy}" x2="${ox+gw/2}" y2="${oy+gd/2}" stroke="#111"/>
+      <line x1="${ox}" y1="${oy+gd}" x2="${ox+gw/2}" y2="${oy+gd/2}" stroke="#111"/>
+      <line x1="${ox+gw}" y1="${oy+gd}" x2="${ox+gw/2}" y2="${oy+gd/2}" stroke="#111"/>
+      <text x="${ox+gw/2}" y="${oy+gd/2-8}" text-anchor="middle" font-size="11">RIDGE BEAM</text>
+      <text x="${ox+gw*0.72}" y="${oy+gd*0.28}" font-size="10">2x8 HIP RAFTER</text>`;
+  } else {
+    hips=`<line x1="${ox}" y1="${oy+gd/2}" x2="${ox+gw}" y2="${oy+gd/2}" stroke="#111" stroke-width="2"/>
+      <text x="${ox+gw/2}" y="${oy+gd/2-8}" text-anchor="middle" font-size="11">2x8 RIDGE BEAM</text>`;
+  }
+  return `<svg viewBox="0 0 360 360" width="100%" style="max-height:5.2in">
+    <text x="180" y="18" text-anchor="middle" font-size="14" font-weight="800">PROPOSED ROOF PLAN</text>
+    <rect x="${ox}" y="${oy}" width="${gw}" height="${gd}" fill="#fff" stroke="#111" stroke-width="1.8"/>
+    ${hips}
+    <text x="${ox+8}" y="${oy+22}" font-size="11">${esc(rafterCallout())}</text>
+    <text x="${ox+8}" y="${oy+gd-10}" font-size="11">P: ${pitchNum()}/12</text>
+  </svg>`;
+}
+function pageSectionRoof(){
+  return `<section class="${sheetClass()}">
+    <div class="split">
+      <div>${buildingSectionSvg()}</div>
+      <div>${roofPlanSvg()}</div>
+    </div>
+    ${tblock('BUILDING SECTION & ROOF PLAN', String(3), String(sheetTotal()))}
   </section>`;
 }
 function pageElevations(){
   return `<section class="${sheetClass()}">
     <div class="elevpage">
-      ${elevLarge('left','LEFT SIDE')}
-      ${elevLarge('right','RIGHT SIDE')}
-      ${elevLarge('back','REAR')}
       ${elevLarge('front','FRONT')}
+      ${elevLarge('back','REAR')}
+      ${elevLarge('left','LEFT')}
+      ${elevLarge('right','RIGHT')}
     </div>
     ${tblock('ELEVATIONS','2',String(sheetTotal()))}
   </section>`;
@@ -1000,22 +1146,70 @@ function pageElevAB(){ return pageElevations(); }
 function pageElevCD(){ return ''; }
 function pageDetail(){
   if(!needsBraceDetail()) return '';
+  const m=braceMethod();
+  const r=doorReturns();
   return `<section class="${sheetClass()}">
-    <div style="text-align:center;font-size:18px;font-weight:800;margin-bottom:8px">BRACE WALL DETAIL — IRC R602.10.6.3</div>
+    <div style="text-align:center;font-size:17px;font-weight:800;margin-bottom:6px">${esc(m.title)}</div>
+    <div style="text-align:center;font-size:12px;margin-bottom:8px">${esc(m.code)}</div>
     <div class="detailgrid">
       <div>${braceDetailSvg()}</div>
       <div class="notes-col" contenteditable="true">
-        <h3>Shown because returns or this village require a portal / brace wall</h3>
+        <h3>This job</h3>
         <ul>
-          <li>3" x 11-1/4" header</li>
-          <li>8d nails in 3" grid</li>
-          <li>1000 lb strap each side</li>
-          <li>(2) 2x4 portal legs</li>
-          <li>7/16" min WSP sheathing</li>
+          <li>Village: ${esc(cityName()||'—')}</li>
+          <li>Returns: ${r.left}' left / ${r.right}' right (cutoff ${braceCutoffFt()}')</li>
+          <li>Header through return: ${esc(headerCallout())}</li>
+          <li>Sheathing: 7/16" OSB / WSP continuous sill to header</li>
+          <li>Hold-down + 1/2" anchors each end of panel (IRC R403.1.6)</li>
+          <li>1000 lb strap header to post each side</li>
+          <li>${esc(cite('brace'))}</li>
         </ul>
       </div>
     </div>
-    ${tblock('DETAIL','3',String(sheetTotal()))}
+    ${tblock('SHEAR / BRACE DETAIL', String(3+(needsBraceDetail()?1:0)), String(sheetTotal()))}
+  </section>`;
+}
+function fireDetailSvg(){
+  return `<svg viewBox="0 0 640 460" width="100%" style="max-height:7.6in">
+    <text x="320" y="22" text-anchor="middle" font-size="15" font-weight="800">FIRE-RATED WALL SECTION</text>
+    <text x="320" y="40" text-anchor="middle" font-size="12">${esc(cityName()||'')} · ${esc(cite('fire'))}</text>
+    <rect x="300" y="70" width="36" height="260" fill="#fff" stroke="#111" stroke-width="1.8"/>
+    ${Array.from({length:8},(_,i)=>`<line x1="300" y1="${88+i*28}" x2="336" y2="${76+i*28}" stroke="#111"/>`).join('')}
+    <rect x="336" y="70" width="10" height="260" fill="#eee" stroke="#111"/>
+    <rect x="290" y="70" width="10" height="260" fill="#ddd" stroke="#111"/>
+    <rect x="298" y="330" width="40" height="10" fill="#c9b48a" stroke="#111"/>
+    <line x1="270" y1="340" x2="370" y2="340" stroke="#111" stroke-dasharray="4 3"/>
+    <text x="352" y="160" font-size="12">5/8" TYPE X GYP. (INT.)</text>
+    <text x="180" y="160" text-anchor="end" font-size="12">OSB + SIDING</text>
+    <text x="352" y="210" font-size="12">${esc(studCallout())}</text>
+    <text x="352" y="336" font-size="12">TREATED SILL + FIRESTOP</text>
+    <text x="40" y="380" font-size="12">1-hour rating at wall facing house / close lot line</text>
+    <text x="40" y="398" font-size="12">Joints taped · fire caulk at sill, top plate, and penetrations</text>
+    <text x="40" y="416" font-size="12">House setback ${esc(val('setHouse')||'—')} · side ${esc(val('setSide')||'—')}</text>
+  </svg>`;
+}
+function pageFire(){
+  if(!computeFirewallRequired()) return '';
+  const num=3+(needsBraceDetail()?1:0)+1;
+  return `<section class="${sheetClass()}">
+    <div style="text-align:center;font-size:17px;font-weight:800;margin-bottom:6px">FIRE WALL / 5/8" TYPE X</div>
+    <div style="text-align:center;font-size:12px;margin-bottom:8px">${esc(cite('fire'))}</div>
+    <div class="detailgrid">
+      <div>${fireDetailSvg()}</div>
+      <div class="notes-col" contenteditable="true">
+        <h3>This job</h3>
+        <ul>
+          <li>Village: ${esc(cityName()||'—')}</li>
+          <li>5/8" Type X gypsum on interior face of the close wall</li>
+          <li>${esc(studCallout())}</li>
+          <li>OSB wall sheathing + siding outboard</li>
+          <li>Firestop at sill, top plate, and all penetrations</li>
+          <li>House setback ${esc(val('setHouse')||'—')} · side ${esc(val('setSide')||'—')}</li>
+          <li>${esc(cite('fire'))}</li>
+        </ul>
+      </div>
+    </div>
+    ${tblock('FIRE WALL DETAIL', String(num), String(sheetTotal()))}
   </section>`;
 }
 let planItems=[], planHist=[], selectedItem=null;
@@ -1098,7 +1292,7 @@ function fitSheetsToPanel(){
 function buildPlans(){
   applyJobRules();
   seedPlanItems();
-  $('pages').innerHTML=pageFloorSection()+pageElevations()+pageDetail();
+  $('pages').innerHTML=pageFloorSection()+pageElevations()+pageSectionRoof()+pageDetail()+pageFire();
   document.querySelectorAll('#pages > .sheet').forEach(s=>{
     const wrap=document.createElement('div');
     wrap.className='sheet-fit';
@@ -1108,6 +1302,37 @@ function buildPlans(){
   renderOverlay();
   makeSheetTextEditable();
   fitSheetsToPanel();
+  bindDoorDrag();
+}
+function bindDoorDrag(){
+  document.querySelectorAll('.drag-door').forEach(g=>{
+    g.addEventListener('pointerdown', ev=>{
+      ev.preventDefault();
+      ev.stopPropagation();
+      const kind=g.getAttribute('data-kind');
+      const svg=g.closest('svg');
+      const move=e=>{
+        const rect=svg.getBoundingClientRect();
+        const sx=((e.clientX-rect.left)/Math.max(rect.width,1))*520;
+        const u=Math.max(0, Math.min(1, (sx-50)/360));
+        if(kind==='oh'){
+          const r=doorReturns();
+          let L=+(u*r.W - r.oh/2).toFixed(1);
+          L=Math.max(0, Math.min(+(r.W-r.oh).toFixed(1), L));
+          if($('ohLeftReturn')) $('ohLeftReturn').value=L;
+        } else {
+          const pr=partyReturns();
+          let L=+(u*pr.span - pr.w/2).toFixed(1);
+          L=Math.max(0, Math.min(+(pr.span-pr.w).toFixed(1), L));
+          if($('partyLeftReturn')) $('partyLeftReturn').value=L;
+        }
+        buildPlans();
+      };
+      const up=()=>{ window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); };
+      window.addEventListener('pointermove', move);
+      window.addEventListener('pointerup', up);
+    });
+  });
 }
 window.addEventListener('resize', fitSheetsToPanel);
 function snapshot(){
@@ -1161,6 +1386,15 @@ document.addEventListener('DOMContentLoaded',()=>{
       if(el.id==='svcWall' && el.value==='none') $('landing').value='';
       if(el.id==='city') applyVillage();
       else buildPlans();
+    });
+  });
+  ['ohSlide','partySlide'].forEach(id=>{
+    const el=$(id);
+    if(!el) return;
+    el.addEventListener('input',()=>{
+      if(id==='ohSlide' && $('ohLeftReturn')) $('ohLeftReturn').value=el.value;
+      if(id==='partySlide' && $('partyLeftReturn')) $('partyLeftReturn').value=el.value;
+      buildPlans();
     });
   });
   buildPlans();

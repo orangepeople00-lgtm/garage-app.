@@ -7242,13 +7242,18 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                     : 'FRONT elevation facing overhead door'
                 ));
                 if (isReverseGable) {
-                    lines.push('CRITICAL ROOF: reverse/side-end gable — peaks ONLY on LEFT and RIGHT ends — FRONT above door is FLAT continuous eave RECTANGLE — ZERO peak over door — ridge left-to-right — slopes front and back');
+                    lines.push('CRITICAL ROOF: REVERSE GABLE (side-end). Gable triangles ONLY on LEFT and RIGHT short ends. FRONT VIEW = THE LONG RUN: straight horizontal eave over the overhead door, rectangular front wall, ZERO peak / ZERO A-frame over the door. Ridge left-to-right parallel to the front wall. Roof slopes toward front and back. Do not draw a standard front-gable');
+                    if (resolvedView==='front' || !resolvedView) {
+                        lines.push('CRITICAL VIEW DETAIL: camera on FRONT — you must see the long roof run, not a gable triangle');
+                    } else if (resolvedView==='left' || resolvedView==='right') {
+                        lines.push('CRITICAL VIEW DETAIL: camera on a SIDE — this is the only angle that shows the reverse-gable triangle');
+                    }
                 } else if (roof==='hip') {
                     lines.push('CRITICAL ROOF: hip roof — no triangular gable peaks');
                 } else {
                     lines.push('CRITICAL ROOF: standard front-gable — peak centered above front overhead door');
                 }
-                lines.push('CRITICAL SIZE: '+w+' feet wide by '+d+' feet deep'+(w>=20?', WIDE two-car scale filling frame, both corners visible':'')+'; walls '+wall+' ft; main door '+doorW+'x'+doorH+' ft on FRONT only');
+                lines.push('CRITICAL SIZE: '+w+' feet wide by '+d+' feet deep'+(w>=20?', LARGE close-up two-car garage filling 80-90% of the photo, both front corners in frame, 16-ft door looks huge not a shed, camera close':'')+'; walls '+wall+' ft; main door '+doorW+'x'+doorH+' ft on FRONT only');
                 if (hasPartyDoor) {
                     lines.push('CRITICAL PARTY DOOR: '+partyW+'x'+partyH+' ft white raised-panel overhead mini door on '+service+(service==='front'?' '+serviceFrontSide+' of main door':'')+' wall — not a swing door');
                 } else {
@@ -7631,14 +7636,12 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                         try{ if(typeof window.__estimateLoadingSetStatus==='function') window.__estimateLoadingSetStatus('Fixing reverse-gable roof (flat front eave, peaks on ends only)…'); }catch(_){}
                         // Permanent Absolute reverse-gable fix (runs every time Reverse Gable is selected)
                         const fixPrompt=[
-                            'CRITICAL ROOF GEOMETRY CORRECTION — this overrides the current roof shape.',
-                            'WRONG: any triangular peak or A-frame centered above the front overhead garage door.',
-                            'REQUIRED Absolute reverse gable / side-end gable:',
-                            'FRONT: perfectly rectangular wall under a continuous horizontal eave — the roof edge runs straight across above the door with NO peak and NO triangle.',
-                            'ENDS: triangular peaks only on the LEFT short wall and RIGHT short wall.',
-                            'RIDGE: left to right, parallel to the front door wall; roof planes slope toward the front and toward the back.',
-                            'Keep the same doors, windows, siding, driveway, and camera. Keep width.',
-                            'Final look: wide ranch-style garage, peaked ends only, flat eave over the front door.'
+                            'CRITICAL ROOF GEOMETRY CORRECTION — convert to a true reverse gable / reverse cable.',
+                            'WRONG: any triangular peak or A-frame centered above the front overhead garage door (that is a standard gable).',
+                            'FRONT VIEW MUST SHOW THE LONG RUN: rectangular wall, straight horizontal eave all the way across over the door, no peak.',
+                            'Gable triangles only on the LEFT end and the RIGHT end.',
+                            'Ridge left to right, parallel to the front door wall. Slopes toward front and back.',
+                            'Keep the same doors, windows, siding, driveway, and camera. Keep width.'
                         ].join(' ');
                         try{
                             const fixed=await generateOpenAIGaragePhotoUrl(fixPrompt, { edit:true, editFromUrl:ai.url });

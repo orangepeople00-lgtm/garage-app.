@@ -63,9 +63,10 @@ button{border:0;border-radius:7px;padding:8px 10px;font-weight:800;cursor:pointe
 .ov.box{border:1.5px solid #111;background:transparent;min-width:40px;min-height:24px}
 .ov.line{height:2px;background:#111;min-width:40px}
 .ov.sel{outline:2px solid #2563eb}
+.vis-handle{fill:#7dd3fc;stroke:#0369a1;stroke-width:1.2;cursor:nwse-resize}
 .sheet [contenteditable="true"]{outline:none}
 @media print{
-  .toolbox,.loadbar,.statusbar,.no-print{display:none!important}
+  .toolbox,.loadbar,.statusbar,.no-print,.vis-handle{display:none!important}
   .ov.txt{outline:none!important;background:transparent!important}
   .ov.sel{outline:none}
 }
@@ -123,8 +124,12 @@ button{border:0;border-radius:7px;padding:8px 10px;font-weight:800;cursor:pointe
     <div><label>Snow psf</label><input id="snowLoad" value="30"></div>
   </div>
   <div class="row2">
-    <div><label>Siding</label><select id="siding"><option>4" vinyl</option><option>Premium Vinyl</option><option>Hardieboard</option></select></div>
+    <div><label>Siding</label><select id="siding"><option selected>D4 vinyl (4" exposure)</option><option>Premium Vinyl</option><option>Hardieboard</option></select></div>
+    <div><label>Siding run</label><select id="sidingDir"><option value="horizontal" selected>Horizontal (standard)</option><option value="vertical">Vertical</option></select></div>
+  </div>
+  <div class="row2">
     <div><label>Shingles</label><select id="shingles"><option>25 year fiberglass</option><option>235# asphalt</option><option>Architectural</option><option>3-Tab</option></select></div>
+    <div><label>Corner boards</label><input id="cornerBoards" value='5/4" x 4"'></div>
   </div>
   <div class="row2">
     <div><label>Wall sheathing</label><select id="wallSheath"><option>7/16" OSB</option><option>1/2" OSB</option><option>5/8" OSB</option><option>1/2" Plywood</option></select></div>
@@ -1114,113 +1119,224 @@ function isRunFace(view){
 }
 function shingleFill(x,y,w,h){
   let s='';
-  for(let r=0;r<Math.max(3,Math.floor(h/8));r++){
-    for(let i=0;i<12;i++){
-      const cx=x+8+i*((w-10)/11), cy=y+6+r*8;
-      if(cy<y+h-2) s+=`<path d="M${cx-5} ${cy} A5 5 0 0 0 ${cx+5} ${cy}" fill="none" stroke="#555" stroke-width=".6"/>`;
+  const rows=Math.max(4, Math.floor(h/5));
+  const cols=Math.max(8, Math.floor(w/9));
+  for(let r=0;r<rows;r++){
+    const cy=y+3+r*(h/rows);
+    if(cy>y+h-2) continue;
+    const stagger=(r%2)*(w/cols)*0.5;
+    for(let i=0;i<cols;i++){
+      const cx=x+4+i*(w/cols)+stagger;
+      if(cx>x+w-4) continue;
+      s+=`<path d="M${cx-4.2} ${cy} Q${cx} ${cy+3.2} ${cx+4.2} ${cy}" fill="none" stroke="#4a4a4a" stroke-width=".55"/>`;
     }
+    s+=`<line x1="${x}" y1="${cy}" x2="${x+w}" y2="${cy}" stroke="#6a6a6a" stroke-width=".35"/>`;
   }
   return s;
 }
 function roofFor(view,x,y,w){
   const t=val('roof');
   if(t==='hip'){
-    return `<polygon points="${x-6},${y} ${x+28},${y-32} ${x+w-28},${y-32} ${x+w+6},${y}" fill="#fff" stroke="#111" stroke-width="1.7"/>
-      ${shingleFill(x+24,y-30,w-48,26)}`;
+    return `<polygon points="${x-8},${y} ${x+32},${y-36} ${x+w-32},${y-36} ${x+w+8},${y}" fill="#d4d4d4" stroke="#111" stroke-width="1.7"/>
+      ${shingleFill(x+28,y-34,w-56,30)}
+      <line x1="${x-8}" y1="${y}" x2="${x+32}" y2="${y-36}" stroke="#333" stroke-width="1.2"/>
+      <line x1="${x+w+8}" y1="${y}" x2="${x+w-32}" y2="${y-36}" stroke="#333" stroke-width="1.2"/>
+      <line x1="${x+32}" y1="${y-36}" x2="${x+w-32}" y2="${y-36}" stroke="#222" stroke-width="3"/>
+      <rect x="${x-10}" y="${y-3}" width="${w+20}" height="7" fill="#c8c8c8" stroke="#111"/>`;
   }
   if(isGableEnd(view)){
-    return `<polygon points="${x-8},${y} ${x+w/2},${y-46} ${x+w+8},${y}" fill="#fff" stroke="#111" stroke-width="1.7"/>
-      ${shingleFill(x+8,y-40,w-16,34)}
-      <polygon points="${x+w-64},${y-6} ${x+w-38},${y-6} ${x+w-38},${y+5} ${x+w-50},${y+5}" fill="#fff" stroke="#111"/>`;
+    return `<line x1="${x-10}" y1="${y}" x2="${x+w/2}" y2="${y-52}" stroke="#111" stroke-width="2"/>
+      <line x1="${x+w+10}" y1="${y}" x2="${x+w/2}" y2="${y-52}" stroke="#111" stroke-width="2"/>
+      <line x1="${x-10}" y1="${y-2}" x2="${x+w/2}" y2="${y-54}" stroke="#666" stroke-width="1"/>
+      <line x1="${x+w+10}" y1="${y-2}" x2="${x+w/2}" y2="${y-54}" stroke="#666" stroke-width="1"/>
+      <rect x="${x+w/2-8}" y="${y-20}" width="16" height="13" fill="#fff" stroke="#111"/>
+      <line x1="${x+w/2-8}" y1="${y-13.5}" x2="${x+w/2+8}" y2="${y-13.5}" stroke="#111"/>
+      <line x1="${x+w/2}" y1="${y-20}" x2="${x+w/2}" y2="${y-7}" stroke="#111"/>`;
   }
-  return `<rect x="${x-8}" y="${y-30}" width="${w+16}" height="30" fill="#fff" stroke="#111" stroke-width="1.7"/>
-    ${shingleFill(x-6,y-28,w+12,26)}`;
+  return `<rect x="${x-12}" y="${y-36}" width="${w+24}" height="36" fill="#d4d4d4" stroke="#111" stroke-width="1.7"/>
+    ${shingleFill(x-10,y-34,w+20,30)}
+    <rect x="${x-12}" y="${y-5}" width="${w+24}" height="8" fill="#c8c8c8" stroke="#111"/>`;
+}
+function vinylPattern(id,x,y,w,h, openings){
+  const vertical=(val('sidingDir')||'horizontal')==='vertical';
+  let hatch='';
+  if(vertical){
+    const step=7;
+    for(let i=0;i<Math.ceil(w/step);i++){
+      const xx=x+2+i*step;
+      hatch+=`<line x1="${xx}" y1="${y+1}" x2="${xx}" y2="${y+h-1}" stroke="#8a8a8a" stroke-width=".55"/>`;
+      if(i%3===0) hatch+=`<rect x="${xx-1.1}" y="${y+1}" width="2.2" height="${h-2}" fill="#c8c8c8" stroke="#6f6f6f" stroke-width=".35"/>`;
+    }
+  } else {
+    const step=6;
+    for(let i=0;i<Math.ceil(h/step);i++){
+      const yy=y+4+i*step;
+      hatch+=`<line x1="${x+1}" y1="${yy}" x2="${x+w-1}" y2="${yy}" stroke="#7d7d7d" stroke-width=".7"/>`;
+      hatch+=`<line x1="${x+1}" y1="${yy+1.4}" x2="${x+w-1}" y2="${yy+1.4}" stroke="#b0b0b0" stroke-width=".4"/>`;
+    }
+  }
+  const holes=(openings||[]).map((o,i)=>`<rect x="${o.x}" y="${o.y}" width="${o.w}" height="${o.h}"/>`).join('');
+  return `<defs>
+      <clipPath id="${id}"><rect x="${x}" y="${y}" width="${w}" height="${h}"/>${holes?`<rect x="${x}" y="${y}" width="${w}" height="${h}"/>`:''}</clipPath>
+      <mask id="${id}m">
+        <rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#fff"/>
+        ${(openings||[]).map(o=>`<rect x="${o.x-1}" y="${o.y-1}" width="${o.w+2}" height="${o.h+2}" fill="#000"/>`).join('')}
+      </mask>
+    </defs>
+    <rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#ececec" stroke="#111" stroke-width="1.7"/>
+    <g mask="url(#${id}m)">${hatch}</g>`;
 }
 function raisedPanelDoor(x,y,w,h, kind){
-  const rows=4, cols=w>90?4:2;
-  let s=`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#d8d8d8" stroke="#111" stroke-width="1.8"/>`;
-  const rw=(w-10)/cols, rh=(h-8)/rows;
+  const rows=4, cols=w>88?4:2;
+  let s=`<rect x="${x-2}" y="${y-3}" width="${w+4}" height="${h+5}" fill="#333" opacity=".12"/>
+    <rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#cfd3d8" stroke="#111" stroke-width="1.8"/>
+    <rect x="${x+1.5}" y="${y+1.5}" width="${w-3}" height="${h-3}" fill="none" stroke="#8a9098"/>`;
+  const rw=(w-8)/cols, rh=(h-8)/rows;
   for(let r=0;r<rows;r++){
     for(let c=0;c<cols;c++){
       const px=x+4+c*rw, py=y+4+r*rh;
-      s+=`<rect x="${px+2}" y="${py+2}" width="${rw-6}" height="${rh-6}" fill="#ececec" stroke="#333"/>
-        <rect x="${px+5}" y="${py+5}" width="${rw-12}" height="${rh-12}" fill="none" stroke="#888"/>`;
+      s+=`<rect x="${px}" y="${py}" width="${rw-3}" height="${rh-3}" fill="#dfe3e8" stroke="#2a2a2a" stroke-width=".9"/>
+        <rect x="${px+2.2}" y="${py+2.2}" width="${rw-7.4}" height="${rh-7.4}" fill="none" stroke="#9aa2ab"/>
+        <line x1="${px+3}" y1="${py+rh*0.45}" x2="${px+rw-6}" y2="${py+rh*0.45}" stroke="#b8bec6" stroke-width=".5"/>`;
     }
   }
-  s+=`<circle cx="${x+w-8}" cy="${y+h*0.55}" r="2.2" fill="#222"/>`;
-  const lab=kind==='party'?(val('partySize')||'6x7')+' PARTY':((val('ohW')||16)+'x'+(val('ohH')||7)+' O.H.');
-  s+=`<text x="${x+w/2}" y="${y+h/2+4}" text-anchor="middle" font-size="${Math.max(9,Math.min(13,w/8))}" font-weight="700">${esc(lab)}</text>`;
+  s+=`<rect x="${x}" y="${y+h-3}" width="${w}" height="3" fill="#4b4b4b"/>
+    <circle cx="${x+w-7}" cy="${y+h*0.58}" r="2.4" fill="#1f1f1f"/>
+    <circle cx="${x+w-7}" cy="${y+h*0.58}" r="1.1" fill="#888"/>`;
+  const lab=kind==='party'?(val('partySize')||'6x7')+' PARTY':((val('ohW')||16)+'x'+(val('ohH')||7)+' O.H. DOOR');
+  s+=`<text x="${x+w/2}" y="${y+h/2+3}" text-anchor="middle" font-size="${Math.max(8,Math.min(12,w/9))}" font-weight="800">${esc(lab)}</text>`;
   return s;
+}
+function serviceDoorDraw(x,y,w,h){
+  return `<rect x="${x-2}" y="${y-2}" width="${w+4}" height="${h+3}" fill="#fff" stroke="#111"/>
+    <rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#e8e8e8" stroke="#111"/>
+    <rect x="${x+3}" y="${y+4}" width="${w-6}" height="${h*0.46}" fill="none" stroke="#555"/>
+    <rect x="${x+3}" y="${y+h*0.52}" width="${w-6}" height="${h*0.42}" fill="none" stroke="#555"/>
+    <circle cx="${x+w-5}" cy="${y+h*0.56}" r="1.6" fill="#111"/>
+    <text x="${x+w/2}" y="${y-4}" text-anchor="middle" font-size="9" font-weight="700">36"x80"</text>`;
+}
+function windowDraw(x,y,w,h, slider){
+  let s=`<rect x="${x-2}" y="${y-2}" width="${w+4}" height="${h+5}" fill="#fff" stroke="#111"/>
+    <rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#eef6ff" stroke="#111"/>
+    <rect x="${x+2}" y="${y+2}" width="${w-4}" height="${h-4}" fill="none" stroke="#4b5563"/>`;
+  if(slider) s+=`<line x1="${x+w/2}" y1="${y}" x2="${x+w/2}" y2="${y+h}" stroke="#111"/>`;
+  else s+=`<line x1="${x}" y1="${y+h*0.55}" x2="${x+w}" y2="${y+h*0.55}" stroke="#111"/>`;
+  s+=`<rect x="${x-3}" y="${y+h}" width="${w+6}" height="3" fill="#ddd" stroke="#111"/>`;
+  return s;
+}
+let planVis={};
+function visGet(key, def){
+  const v=planVis[key];
+  if(!v) return def;
+  return {x:v.x??def.x, y:v.y??def.y, w:v.w??def.w, h:v.h??def.h};
+}
+function visHandle(box,key){
+  return `<rect class="vis-handle" data-key="${key}" x="${box.x+box.w-8}" y="${box.y-8}" width="12" height="12"/>`;
+}
+function visWrap(key, kind, view, inner, box){
+  return `<g class="vis-item drag-door" data-key="${key}" data-kind="${kind}" data-view="${view}" style="cursor:move">${inner}${visHandle(box,key)}</g>`;
 }
 function elevLarge(view, title){
   const W=Number(val('width'))||22, D=Number(val('depth'))||24;
   const span=(view==='front'||view==='back')?W:D;
   const wall=Number(val('wallH'))||8;
   const tot=totalH();
-  const x=50, y=86, ww=360, wh=180;
-  let vinyl='';
-  for(let i=0;i<9;i++) vinyl+=`<line x1="${x+1}" y1="${y+16+i*14}" x2="${x+ww-1}" y2="${y+16+i*14}" stroke="#cfcfcf"/>`;
+  const x=48, y=92, ww=380, wh=188;
+  const openings=[];
   let ops='';
   if(val('ohWall')===view){
     const retE=doorReturns();
     const dw=ww*(retE.oh/Math.max(span,1));
     const dx=x+ww*(retE.left/Math.max(span,1));
     const dh=wh*((Number(val('ohH'))||7)/Math.max(wall,1));
-    ops+=`<g class="drag-door" data-kind="oh" data-view="${view}" style="cursor:ew-resize">${raisedPanelDoor(dx,y+wh-dh,dw,dh,'oh')}</g>`;
-    ops+=`<text x="${dx-4}" y="${y+wh-4}" text-anchor="end" font-size="11">${retE.left}'</text>
-      <text x="${dx+dw+4}" y="${y+wh-4}" font-size="11">${retE.right}'</text>`;
-    if(showOnPlan('returns')){
-      ops+=`<rect x="${x}" y="${y}" width="${dx-x}" height="${wh}" fill="none" stroke="#111"/>
-        <rect x="${dx+dw}" y="${y}" width="${Math.max(4,x+ww-dx-dw)}" height="${wh}" fill="none" stroke="#111"/>`;
-    }
-    if(showOnPlan('returnSheath')){
-      const hatch=(x0,w0)=>Array.from({length:6},(_,i)=>`<line x1="${x0}" y1="${y+10+i*28}" x2="${x0+w0}" y2="${y+i*28}" stroke="#666"/>`).join('');
-      ops+=hatch(x,Math.max(8,dx-x))+hatch(dx+dw,Math.max(8,x+ww-dx-dw));
-      ops+=`<text x="${x+4}" y="${y+14}" font-size="10">OSB RET.</text>`;
-    }
+    const box=visGet(view+'-oh',{x:dx,y:y+wh-dh,w:dw,h:dh});
+    openings.push(box);
+    ops+=visWrap(view+'-oh','oh',view,raisedPanelDoor(box.x,box.y,box.w,box.h,'oh'),box);
+    ops+=`<text class="edit-svg" x="${box.x-3}" y="${y+wh+11}" text-anchor="end" font-size="10">${retE.left}' L</text>
+      <text class="edit-svg" x="${box.x+box.w+3}" y="${y+wh+11}" font-size="10">${retE.right}' R</text>`;
   }
   if(val('partyWall')===view){
     const pr=partyReturns();
     const dw=ww*(pr.w/Math.max(span,1));
     const dh=wh*(pr.h/Math.max(wall,1));
     const dx=x+ww*(pr.left/Math.max(span,1));
-    ops+=`<g class="drag-door" data-kind="party" data-view="${view}" style="cursor:ew-resize">${raisedPanelDoor(dx,y+wh-dh,dw,dh,'party')}</g>`;
-    ops+=`<text x="${dx+dw/2}" y="${y+wh+12}" text-anchor="middle" font-size="10">${pr.left}' / ${pr.right}'</text>`;
+    const box=visGet(view+'-party',{x:dx,y:y+wh-dh,w:dw,h:dh});
+    openings.push(box);
+    ops+=visWrap(view+'-party','party',view,raisedPanelDoor(box.x,box.y,box.w,box.h,'party'),box);
+    ops+=`<text class="edit-svg" x="${box.x+box.w/2}" y="${y+wh+11}" text-anchor="middle" font-size="10">${pr.left}' / ${pr.right}'</text>`;
   }
   if(val('svcWall')===view){
-    ops+=`<rect x="${x+22}" y="${y+wh*0.30}" width="24" height="${wh*0.70}" fill="#fff" stroke="#111"/>
-      <circle cx="${x+40}" cy="${y+wh*0.62}" r="1.5" fill="#111"/>`;
+    const sw=22, sh=wh*0.62;
+    let sx=x+18;
+    const oh=openings[0];
+    if(oh && sx+sw>oh.x-4 && sx<oh.x+oh.w+4) sx=Math.min(x+ww-sw-16, oh.x+oh.w+10);
+    const box=visGet(view+'-svc',{x:sx,y:y+wh-sh,w:sw,h:sh});
+    openings.push(box);
+    ops+=visWrap(view+'-svc','svc',view,serviceDoorDraw(box.x,box.y,box.w,box.h),box);
   }
   if(val('winWall')===view && winQty()>0){
     const q=winQty(); const slider=/slider/i.test(val('winType'));
-    const wwnd=slider?40:22, hh=slider?22:36;
+    const wwnd=slider?42:24, hh=slider?22:38;
     for(let i=0;i<q;i++){
-      const wx=x+64+i*((ww-90)/Math.max(q,1));
-      ops+=`<rect x="${wx}" y="${y+40}" width="${wwnd}" height="${hh}" fill="#fff" stroke="#111"/>
-        <line x1="${wx}" y1="${y+40+hh/2}" x2="${wx+wwnd}" y2="${y+40+hh/2}" stroke="#111"/>`;
+      let wx=x+70+i*((ww-120)/Math.max(q,1));
+      const wy=y+28;
+      const hit=openings.some(o=>wx<o.x+o.w && wx+wwnd>o.x && wy<o.y+o.h && wy+hh>o.y);
+      if(hit) wx=Math.min(x+ww-wwnd-20, wx+56);
+      const box=visGet(view+'-win-'+i,{x:wx,y:wy,w:wwnd,h:hh});
+      openings.push(box);
+      ops+=visWrap(view+'-win-'+i,'win',view,windowDraw(box.x,box.y,box.w,box.h,slider),box);
     }
   }
   if(val('ohWall')===view){
-    ops+=`<text x="${x+ww/2}" y="${y+14}" text-anchor="middle" font-size="10">${esc(headerCallout())}</text>`;
+    ops+=`<text x="${x+ww/2}" y="${y+12}" text-anchor="middle" font-size="9">${esc(headerCallout())}</text>`;
   }
-  if(val('svcWall')===view) ops+=`<text x="${x+34}" y="${y+wh*0.26}" font-size="10">36x80</text>`;
-  const eaveY=y;
-  const gutterBit=guttersRequired()&&isRunFace(view)?`<line x1="${x-6}" y1="${eaveY+2}" x2="${x+ww+6}" y2="${eaveY+2}" stroke="#111" stroke-width="2"/>
-    <text x="${x-8}" y="${eaveY-6}" font-size="10">GUTTER</text>`:'';
-  const tieBit=hurricaneRequired()?`<text x="${x+ww-4}" y="${y-6}" font-size="10">H-TIE</text>`:'';
+  const gutterBit=guttersRequired()&&isRunFace(view)?`
+    <path d="M${x-8} ${y+1} L${x+ww+8} ${y+1}" stroke="#333" stroke-width="3"/>
+    <rect x="${x-8}" y="${y-2}" width="${ww+16}" height="5" fill="none" stroke="#111"/>
+    <line x1="${x-6}" y1="${y+2}" x2="${x-6}" y2="${y+wh-2}" stroke="#333" stroke-width="2"/>
+    <text x="${x-20}" y="${y-8}" font-size="9">GUTTER</text>`:'';
+  const tieBit=hurricaneRequired()?`<text x="${x+ww-2}" y="${y-8}" text-anchor="end" font-size="9">H-TIE</text>`:'';
+  const clipId='sid'+view;
+  const vinyl=vinylPattern(clipId,x,y,ww,wh,openings);
+  const corners=`<rect x="${x}" y="${y}" width="7" height="${wh}" fill="#d9d9d9" stroke="#111"/>
+    <rect x="${x+ww-7}" y="${y}" width="7" height="${wh}" fill="#d9d9d9" stroke="#111"/>`;
+  const slab=`<rect x="${x-6}" y="${y+wh}" width="${ww+12}" height="7" fill="#c4c4c4" stroke="#111"/>
+    <line x1="${x-10}" y1="${y+wh+7}" x2="${x+ww+10}" y2="${y+wh+7}" stroke="#111"/>`;
+  const apron=(view==='front' && Number(val('apronFt')||0)>0)?`<rect x="${x}" y="${y+wh+7}" width="${ww}" height="16" fill="#d0d0d0" stroke="#111"/>
+    <text class="edit-svg" x="${x+ww/2}" y="${y+wh+18}" text-anchor="middle" font-size="8">${esc(val('apronFt'))}' APRON — FULL WIDTH</text>`:'';
+  const gableSid=isGableEnd(view)?(function(){
+    const vertical=(val('sidingDir')||'horizontal')==='vertical';
+    let lines=`<polygon points="${x},${y} ${x+ww/2},${y-52} ${x+ww},${y}" fill="#e8e8e8" stroke="#111"/>`;
+    if(vertical){
+      for(let i=1;i<Math.floor(ww/7);i++){
+        const xx=x+i*7, t=Math.abs((xx-(x+ww/2))/(ww/2)), top=y-52+t*52;
+        lines+=`<line x1="${xx}" y1="${top}" x2="${xx}" y2="${y}" stroke="#8a8a8a" stroke-width=".55"/>`;
+      }
+    } else {
+      for(let i=1;i<12;i++){
+        const yy=y-4-i*4;
+        if(yy<y-50) break;
+        const half=((y-yy)/52)*(ww/2);
+        lines+=`<line x1="${x+ww/2-half}" y1="${yy}" x2="${x+ww/2+half}" y2="${yy}" stroke="#7a7a7a" stroke-width=".7"/>`;
+      }
+    }
+    return lines;
+  })():'';
   return `<div>
-    <svg viewBox="0 0 520 400" width="100%" style="max-height:5.6in">
+    <svg viewBox="0 0 520 430" width="100%" style="max-height:5.8in">
       ${roofFor(view,x,y,ww)}
-      <rect x="${x}" y="${y}" width="${ww}" height="${wh}" fill="#fff" stroke="#111" stroke-width="1.7"/>
-      ${vinyl}${ops}${gutterBit}${tieBit}
-      <polygon points="${x+ww+6},${y-22} ${x+ww+6},${y-8} ${x+ww+20},${y-8}" fill="none" stroke="#111"/>
-      <text x="${x+ww+8}" y="${y-26}" font-size="11">${pitchNum()}/12</text>
-      <text x="${x+ww/2}" y="${y+wh+46}" text-anchor="middle" font-size="11">${esc(val('siding')||'VINYL SIDING')}</text>
-      <line x1="${x-8}" y1="${y+wh+6}" x2="${x+ww+8}" y2="${y+wh+6}" stroke="#111" stroke-dasharray="4 3"/>
-      <line x1="${x-18}" y1="${y-44}" x2="${x-18}" y2="${y+wh}" stroke="#111"/>
-      <text x="${x-30}" y="${(y+wh)/2+20}" font-size="12" font-weight="700" transform="rotate(-90 ${x-30} ${(y+wh)/2+20})">${tot}'</text>
-      <line x1="${x}" y1="${y+wh+18}" x2="${x+ww}" y2="${y+wh+18}" stroke="#111"/>
-      <text x="${x+ww/2}" y="${y+wh+32}" text-anchor="middle" font-size="12" font-weight="700">${span}'</text>
+      ${gableSid}
+      ${vinyl}
+      ${corners}
+      ${ops}${gutterBit}${tieBit}
+      ${slab}${apron}
+      <polygon points="${x+ww+10},${y-24} ${x+ww+10},${y-10} ${x+ww+24},${y-10}" fill="none" stroke="#111"/>
+      <text x="${x+ww+10}" y="${y-28}" font-size="11">${pitchNum()}/12</text>
+      <text class="edit-svg" x="${x+ww/2}" y="${y+wh+40}" text-anchor="middle" font-size="10">${esc((val('siding')||'D4 VINYL')+' · '+((val('sidingDir')||'horizontal')==='vertical'?'VERTICAL':'HORIZONTAL 4" EXP.'))}</text>
+      <line x1="${x-18}" y1="${y-48}" x2="${x-18}" y2="${y+wh}" stroke="#111"/>
+      <text x="${x-30}" y="${(y+wh)/2+16}" font-size="12" font-weight="700" transform="rotate(-90 ${x-30} ${(y+wh)/2+16})">${tot}'</text>
+      <line x1="${x}" y1="${y+wh+28}" x2="${x+ww}" y2="${y+wh+28}" stroke="#111"/>
+      <text x="${x+ww/2}" y="${y+wh+42}" text-anchor="middle" font-size="12" font-weight="700">${span}'</text>
     </svg>
     <div class="caption">${esc(title)} ELEVATION</div>
     <div class="subcap">SCALE: 3/16" = 1'-0"</div>
@@ -1507,6 +1623,7 @@ function buildPlans(scrollTo){
   });
   renderOverlay();
   makeSheetTextEditable();
+  bindSvgTextEdit();
   fitSheetsToPanel();
   bindDoorDrag();
   savePrefs();
@@ -1518,41 +1635,82 @@ function buildPlans(scrollTo){
     try{ const main=document.querySelector('.main'); if(main) main.focus({preventScroll:true}); }catch(e){}
   }
 }
+function svgPt(svg,e){
+  const r=svg.getBoundingClientRect();
+  const vb=(svg.getAttribute('viewBox')||'0 0 520 430').split(/\s+/).map(Number);
+  return {x: vb[0]+((e.clientX-r.left)/Math.max(r.width,1))*vb[2], y: vb[1]+((e.clientY-r.top)/Math.max(r.height,1))*vb[3]};
+}
 function bindDoorDrag(){
-  document.querySelectorAll('.drag-door').forEach(g=>{
+  document.querySelectorAll('.vis-item').forEach(g=>{
+    const key=g.getAttribute('data-key');
+    const kind=g.getAttribute('data-kind');
+    const svg=g.closest('svg');
+    const handle=g.querySelector('.vis-handle');
+    if(handle){
+      handle.addEventListener('pointerdown', ev=>{
+        ev.preventDefault(); ev.stopPropagation();
+        const start=svgPt(svg,ev);
+        const cur=planVis[key]||{};
+        const box=g.getBBox();
+        const sw=cur.w||box.width, sh=cur.h||box.height;
+        const move=e=>{
+          const p=svgPt(svg,e);
+          planVis[key]=Object.assign({}, planVis[key], {
+            w:Math.max(16, +(sw+(p.x-start.x)).toFixed(1)),
+            h:Math.max(18, +(sh+(start.y-p.y)).toFixed(1))
+          });
+        };
+        const up=()=>{ window.removeEventListener('pointermove',move); window.removeEventListener('pointerup',up); buildPlans(); };
+        window.addEventListener('pointermove',move);
+        window.addEventListener('pointerup',up);
+      });
+    }
     g.addEventListener('pointerdown', ev=>{
-      ev.preventDefault();
-      ev.stopPropagation();
-      const kind=g.getAttribute('data-kind');
-      const svg=g.closest('svg');
-      let dirty=false;
+      if(ev.target.classList && ev.target.classList.contains('vis-handle')) return;
+      ev.preventDefault(); ev.stopPropagation();
+      const start=svgPt(svg,ev);
+      const box=g.getBBox();
+      const cur=planVis[key]||{};
+      const sx=cur.x||box.x, sy=cur.y||box.y;
       const move=e=>{
-        const rect=svg.getBoundingClientRect();
-        const sx=((e.clientX-rect.left)/Math.max(rect.width,1))*520;
-        const u=Math.max(0, Math.min(1, (sx-50)/360));
+        const p=svgPt(svg,e);
+        const nx=+(sx+(p.x-start.x)).toFixed(1);
+        const ny=+(sy+(p.y-start.y)).toFixed(1);
+        planVis[key]=Object.assign({}, planVis[key], {x:nx, y:ny, w:cur.w||box.width, h:cur.h||box.height});
         if(kind==='oh'){
           const r=doorReturns();
-          let L=+(u*r.W - r.oh/2).toFixed(1);
+          let L=+((((nx-48)/380)*r.W)).toFixed(1);
           L=Math.max(0, Math.min(+(r.W-r.oh).toFixed(1), L));
           if($('ohLeftReturn')) $('ohLeftReturn').value=L;
           if($('returnReadout')) $('returnReadout').value=L+"' L  /  "+(+(r.W-r.oh-L).toFixed(2))+"' R";
-        } else {
+        }
+        if(kind==='party'){
           const pr=partyReturns();
-          let L=+(u*pr.span - pr.w/2).toFixed(1);
+          let L=+((((nx-48)/380)*pr.span)).toFixed(1);
           L=Math.max(0, Math.min(+(pr.span-pr.w).toFixed(1), L));
           if($('partyLeftReturn')) $('partyLeftReturn').value=L;
-          if($('partyReadout')) $('partyReadout').value=L+"' L  /  "+(+(pr.span-pr.w-L).toFixed(2))+"' R";
         }
-        dirty=true;
       };
-      const up=()=>{
-        window.removeEventListener('pointermove', move);
-        window.removeEventListener('pointerup', up);
-        if(dirty) buildPlans();
-      };
-      window.addEventListener('pointermove', move);
-      window.addEventListener('pointerup', up);
+      const up=()=>{ window.removeEventListener('pointermove',move); window.removeEventListener('pointerup',up); buildPlans(); };
+      window.addEventListener('pointermove',move);
+      window.addEventListener('pointerup',up);
     });
+  });
+}
+function bindSvgTextEdit(){
+  document.querySelectorAll('.sheet text, .sheet .edit-svg, .sheet .caption, .sheet .subcap, .sheet .notes-col, .sheet .tblock, .sheet .elecbox').forEach(el=>{
+    if(el.closest && el.closest('.vis-handle')) return;
+    if(el.tagName==='text'){
+      el.style.cursor='text';
+      el.addEventListener('click', ev=>{
+        ev.stopPropagation();
+        const next=prompt('Edit text', el.textContent||'');
+        if(next==null) return;
+        el.textContent=next;
+      });
+    } else {
+      el.setAttribute('contenteditable','true');
+    }
   });
 }
 window.addEventListener('resize', fitSheetsToPanel);
@@ -1563,15 +1721,17 @@ function snapshot(){
     o[el.id]=el.type==='checkbox'?el.checked:el.value;
   });
   o._planItems=planItems;
+  o._planVis=planVis;
   return o;
 }
 function restore(o){
   Object.keys(o||{}).forEach(k=>{
-    if(k==='_planItems') return;
+    if(k==='_planItems'||k==='_planVis') return;
     const el=$(k); if(!el) return;
     if(el.type==='checkbox') el.checked=!!o[k]; else el.value=o[k];
   });
   if(Array.isArray(o._planItems)) planItems=o._planItems;
+  if(o._planVis && typeof o._planVis==='object') planVis=o._planVis;
   buildPlans();
 }
 function saveJob(){

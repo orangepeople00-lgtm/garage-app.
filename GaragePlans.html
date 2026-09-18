@@ -153,12 +153,12 @@ button{border:0;border-radius:7px;padding:8px 10px;font-weight:800;cursor:pointe
   </div>
   <label>Garage size (ft)</label>
   <div class="row3">
-    <input id="width" type="number" step="0.5" value="22" title="Width">
-    <input id="depth" type="number" step="0.5" value="24" title="Depth">
+    <input id="width" type="number" step="0.5" value="20" title="Width">
+    <input id="depth" type="number" step="0.5" value="20" title="Depth">
     <input id="wallH" type="number" step="0.5" value="8" title="Wall height">
   </div>
   <div class="row3">
-    <div><label>Roof</label><select id="roof"><option value="revgable">Reverse gable</option><option value="gable">Gable</option><option value="hip">Hip</option></select></div>
+    <div><label>Roof</label><select id="roof"><option value="hip" selected>Hip</option><option value="gable">Gable</option><option value="revgable">Reverse gable</option></select></div>
     <div><label>Pitch</label><select id="pitch"><option selected>4/12</option><option>6/12</option><option>7/12</option><option>8/12</option><option>10/12</option><option>12/12</option></select></div>
     <div><label>Snow psf</label><input id="snowLoad" value="30"></div>
   </div>
@@ -181,6 +181,15 @@ button{border:0;border-radius:7px;padding:8px 10px;font-weight:800;cursor:pointe
   <div class="row2">
     <div><label>Gutters</label><select id="gutters"><option>yes</option><option>none</option></select></div>
     <div><label>Apron depth ft</label><input id="apronFt" value="3" title="0 = no apron"></div>
+  </div>
+  <label>Roofed patio</label>
+  <div class="row2">
+    <div><label>Patio wall</label><select id="patioWall"><option value="none" selected>None</option><option value="back">Back</option><option value="front">Front</option><option value="left">Left</option><option value="right">Right</option></select></div>
+    <div><label>Patio size (8 or 20x8)</label><input id="patioSize" placeholder="8 or 20x8" value="8"></div>
+  </div>
+  <div class="row2">
+    <div><label>Posts</label><input id="patioPosts" type="number" min="4" max="8" value="4" title="Default 4"></div>
+    <div><label>Post size</label><input id="patioPostSize" value='4x4' readonly></div>
   </div>
   <label>Overhead door — type any size (16x7, 16x8, 18x7…)</label>
   <div class="row3">
@@ -210,7 +219,7 @@ button{border:0;border-radius:7px;padding:8px 10px;font-weight:800;cursor:pointe
   <input id="svcSlide" type="range" min="0" max="20" step="0.5" value="2" style="width:100%">
   <div class="row2">
     <div><label>Party door wall</label><select id="partyWall"><option value="none" selected>None</option><option value="back">Back</option><option value="front">Front</option><option value="left">Left</option><option value="right">Right</option></select></div>
-    <div><label>Party door size (any, e.g. 6x9)</label><input id="partySize" value="6x7" placeholder="6x7"></div>
+    <div><label>Party door size</label><input id="partySize" value="6x7" placeholder="6x7"></div>
   </div>
   <div class="row2">
     <div><label>Party left return ft</label><input id="partyLeftReturn" type="number" step="0.5" placeholder="auto center"></div>
@@ -345,7 +354,35 @@ function landingDim(){
   const p=parseSize(raw,3,3);
   return {w:p.w,h:p.h,on:true,auto:false};
 }
-function partyDim(){return parseSize(val('partySize'),6,7)}
+function partyDim(){ return parseSize(val('partySize'),6,7); }
+function patioPostT(n){
+  n=Math.max(2, Number(n)||4);
+  if(n===4) return [0, 0.38, 0.62, 1];
+  return Array.from({length:n},(_,i)=>i/(n-1));
+}
+function patioOn(){ return val('patioWall') && val('patioWall')!=='none'; }
+function patioDim(){
+  if(!patioOn()) return {on:false,w:0,d:0,posts:4,post:'4x4',wall:'none'};
+  const wall=val('patioWall');
+  const along=(wall==='left'||wall==='right')?(Number(val('depth'))||20):(Number(val('width'))||20);
+  const raw=val('patioSize');
+  const one=String(raw||'').match(/^(\d+(?:\.\d+)?)\s*(?:ft|')?$/i);
+  const p=one ? {w:along,h:Number(one[1])} : parseSize(raw, along, 8);
+  const posts=Math.max(4, Number(val('patioPosts'))||4);
+  return {on:true,wall,w:p.w,d:p.h,posts,post:val('patioPostSize')||'4x4'};
+}
+function patioCodeNotes(){
+  const city=cityName();
+  const lines=[
+    'ROOFED PATIO — IRC R507 (posts/piers) + IRC Ch.8 (roof framing)',
+    'Default (4) 4x4 posts. Algonquin-type rule: 4x4 max 6\' long; over 8\' use 6x6 (IRC R507.4).',
+    'Piers to frost (~42" IL). Roofed structures on piers may need PE stamp (Wheaton / similar).',
+    'Same village setbacks and lot coverage as the garage. Do not enclose walls unless permitted.'
+  ];
+  const N=String(((code()||{}).notes)||'').toUpperCase();
+  if(/PATIO|PORCH|LANDING/.test(N)) lines.push(city+': '+String((code()||{}).notes).slice(0,180));
+  return lines;
+}
 function winDim(){
   const d=val('winType')==='Slider'?{w:4,h:2}:{w:2,h:3};
   return parseSize(val('winSize'), d.w, d.h);
@@ -525,7 +562,7 @@ function loadPrefs(){
       if(opt) $('city').value=opt.value;
     }
     if(p.cityManual!=null && $('cityManual')) $('cityManual').value=p.cityManual;
-    ['width','depth','wallH','sheetSize','rep','roof','pitch'].forEach(k=>{
+    ['wallH','sheetSize','rep','pitch'].forEach(k=>{
       if(p[k]!=null && String(p[k]).trim()!=='' && $(k)) $(k).value=p[k];
     });
   }catch(e){}
@@ -889,8 +926,19 @@ function vaporRequired(){
 }
 function waterLedgeRequired(){ return /WATER LEDGE|PITCHED 1\/8|FLOOR PITCH/i.test(cityBlob()); }
 function windowHeaderCallout(){ return (code()&&code().windowHeader)||'2-2x6 HEADER'; }
+function minWallForDoors(){
+  const ohH=Number(val('ohH'))||7;
+  const partyH=val('partyWall')!=='none' ? (partyDim().h||7) : 0;
+  return Math.max(8, ohH+1, partyH?partyH+1:0);
+}
+function enforceHeadroom(){
+  const need=minWallForDoors();
+  const wall=Number(val('wallH'))||8;
+  if($('wallH') && wall<need) $('wallH').value=String(need);
+}
 function jobWarnings(){
   const w=[], r=doorReturns();
+  enforceHeadroom();
   const wall=Number(val('wallH'))||8, ohH=Number(val('ohH'))||7;
   if(ohH+1>wall) w.push('Wall height must be at least 1\' above the overhead door ('+ohH+"' door → "+(ohH+1)+"' min walls)");
   if(r.left+r.right+r.oh-r.W>0.05) w.push('Door + returns exceed OH wall span ('+r.W+"'");
@@ -947,6 +995,10 @@ function applyJobRules(){
     if(cityStruct().landing && val('svcWall')!=='none') specials.push(withCite('3x3 SERVICE LANDING', 'landing'));
     if(cityStruct().rebar) specials.push(withCite('REBAR IN FOOTING', 'rebar'));
     if(cityStruct().housewrap) specials.push(withCite('HOUSE WRAP', 'housewrap'));
+    if(patioOn()){
+      const p=patioDim();
+      specials.push('ROOFED PATIO  '+p.w+"' x "+p.d+"'  ·  ("+p.posts+") "+p.post+" POSTS  ·  "+p.wall.toUpperCase()+"  (IRC R507 / Ch.8)");
+    }
     if(cityStruct().roofSheath) specials.push(withCite(cityStruct().roofSheath, 'roof58'));
     box.textContent=[
       'RETURNS  '+r.left+"' L  ·  "+r.right+"' R   (brace under "+braceCutoffFt()+"')",
@@ -1210,6 +1262,32 @@ function floorPlanSvg(){
       }
     }
   }
+  const pat=patioDim();
+  if(pat.on){
+    const pw=pat.w*sx, pd=pat.d*sx;
+    let px=ox, py=oy, plw=pw, plh=pd;
+    if(pat.wall==='back'){ px=ox+(gw-pw)/2; py=oy-pd; }
+    else if(pat.wall==='front'){ px=ox+(gw-pw)/2; py=oy+gd; }
+    else if(pat.wall==='left'){ px=ox-pd; py=oy+(gd-pw)/2; plw=pd; plh=pw; }
+    else { px=ox+gw; py=oy+(gd-pw)/2; plw=pd; plh=pw; }
+    extra+=`<defs><pattern id="patConc" width="8" height="8" patternUnits="userSpaceOnUse"><path d="M0 8 L8 0" stroke="#9a9a9a" stroke-width=".8"/></pattern></defs>
+      <rect x="${px}" y="${py}" width="${plw}" height="${plh}" fill="url(#patConc)" stroke="#111"/>
+      <rect x="${px}" y="${py}" width="${plw}" height="${plh}" fill="none" stroke="#111" stroke-dasharray="5 3"/>`;
+    const n=pat.posts, ps=8;
+    patioPostT(n).forEach(along=>{
+      let cx,cy;
+      if(pat.wall==='back'||pat.wall==='front'){
+        cx=px+along*(plw-ps);
+        cy=pat.wall==='back'?py:py+plh-ps;
+      } else {
+        cx=pat.wall==='left'?px:px+plw-ps;
+        cy=py+along*(plh-ps);
+      }
+      extra+=`<rect x="${cx}" y="${cy}" width="${ps}" height="${ps}" fill="#ddd" stroke="#111"/>`;
+    });
+    extra+=`<text x="${px+plw/2}" y="${py+plh/2+3}" text-anchor="middle" font-size="9" font-weight="700">ROOFED PATIO ${pat.w}x${pat.d}</text>
+      <text x="${px+plw/2}" y="${py+plh/2+14}" text-anchor="middle" font-size="8">CONC. SLAB + (${pat.posts}) ${pat.post} POSTS</text>`;
+  }
   let apr='';
   if(hasApron()){
     const aft=Number(val('apronFt'))||3;
@@ -1428,7 +1506,7 @@ function vinylPattern(id,x,y,w,h, openings){
 }
 function raisedPanelDoor(x,y,w,h, kind){
   const party=kind==='party';
-  const rows=4, cols=party?2:(w>88?4:2);
+  const rows=4, cols=party?(w>70?3:2):(w>88?4:w>50?3:2);
   let s=`<rect x="${x-2}" y="${y-3}" width="${w+4}" height="${h+5}" fill="#333" opacity=".12"/>
     <rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#cfd3d8" stroke="#111" stroke-width="2"/>
     <rect x="${x+2}" y="${y+2}" width="${w-4}" height="${h-4}" fill="none" stroke="#6a6a6a"/>`;
@@ -1524,9 +1602,12 @@ function elevLarge(view, title){
   }
   if(val('partyWall')===view){
     const pr=partyReturns();
-    const dw=ww*(pr.w/Math.max(span,1));
+    let dw=ww*(pr.w/Math.max(span,1));
+    dw=Math.min(Math.max(dw, ww*(6/Math.max(span,1))), ww-10);
     const dh=wh*(pr.h/Math.max(wall,1));
-    const dx=x+ww*(pr.left/Math.max(span,1));
+    let dx=x+ww*(pr.left/Math.max(span,1));
+    if(dx+dw>x+ww-4) dx=x+ww-dw-4;
+    if(dx<x+4) dx=x+4;
     const box=visGet(view+'-party',{x:dx,y:y+wh-dh,w:dw,h:dh});
     openings.push(box);
     ops+=visWrap(view+'-party','party',view,raisedPanelDoor(box.x,box.y,box.w,box.h,'party'),box);
@@ -1558,6 +1639,44 @@ function elevLarge(view, title){
       const box=visGet(view+'-win-'+i,{x:wx,y:wy,w:wwnd,h:hh});
       openings.push(box);
       ops+=visWrap(view+'-win-'+i,'win',view,windowDraw(box.x,box.y,box.w,box.h,slider)+`<text x="${box.x+box.w+4}" y="${box.y+10}" font-size="8">${wd.w}x${wd.h}</text>`,box);
+    }
+  }
+  const patE=patioDim();
+  let patioCaption='';
+  if(patE.on && patE.wall===view){
+    const pw=ww;
+    const px=x;
+    const ph=16;
+    ops+=`<rect x="${px}" y="${y+wh}" width="${pw}" height="${ph}" fill="#cfcfcf" stroke="#111"/>`;
+    const postTop=y-6;
+    const postW=8;
+    patioPostT(patE.posts).forEach(along=>{
+      const cx=px+along*(pw-postW);
+      ops+=`<rect x="${cx}" y="${postTop}" width="${postW}" height="${y+wh-postTop}" fill="#cfcfcf" stroke="#111"/>`;
+    });
+    ops+=`<line x1="${x-16}" y1="${y-6}" x2="${x+ww+16}" y2="${y-6}" stroke="#111" stroke-width="2"/>`;
+    patioCaption=`ROOFED PATIO ${patE.d}' OUT · (${patE.posts}) 4x4 POSTS · ROOF FLUSH`;
+  } else if(patE.on){
+    const side=(function(){
+      const w=patE.wall;
+      if(w==='right' && (view==='front'||view==='back')) return view==='front'?'right':'left';
+      if(w==='left' && (view==='front'||view==='back')) return view==='front'?'left':'right';
+      if(w==='back' && (view==='left'||view==='right')) return view==='right'?'right':'left';
+      if(w==='front' && (view==='left'||view==='right')) return view==='left'?'right':'left';
+      return null;
+    })();
+    if(side){
+      const pd=Math.max(70, Math.min(120, ww*(patE.d/Math.max(span,8))));
+      const px=side==='right'?x+ww:x-pd;
+      const ph=16;
+      ops+=`<rect x="${px}" y="${y+wh}" width="${pd}" height="${ph}" fill="#cfcfcf" stroke="#111"/>`;
+      const postTop=y-6;
+      patioPostT(patE.posts).forEach(along=>{
+        const cx=px+along*(pd-8);
+        ops+=`<rect x="${cx}" y="${postTop}" width="8" height="${y+wh-postTop}" fill="#cfcfcf" stroke="#111"/>`;
+      });
+      ops+=`<line x1="${side==='right'?x+ww-8:px}" y1="${y-6}" x2="${side==='right'?px+pd:x+8}" y2="${y-6}" stroke="#111" stroke-width="2"/>`;
+      patioCaption=`ROOFED PATIO ${patE.d}' ${side.toUpperCase()} · (${patE.posts}) 4x4 · FLUSH ROOF`;
     }
   }
   const retBits=[];
@@ -1689,7 +1808,8 @@ function elevLarge(view, title){
       <line x1="${x}" y1="${y+wh+slabH+14}" x2="${x}" y2="${y+wh+slabH+22}" stroke="#111"/>
       <line x1="${x+ww}" y1="${y+wh+slabH+14}" x2="${x+ww}" y2="${y+wh+slabH+22}" stroke="#111"/>
       <text x="${x+ww/2}" y="${y+wh+slabH+32}" text-anchor="middle" font-size="12" font-weight="700">${ftLabel(span)}</text>
-      ${retBits.length?`<text class="edit-svg" x="${x+ww/2}" y="${y+wh+slabH+58}" text-anchor="middle" font-size="8">${esc(retBits.join('   ·   '))}</text>`:''}
+      ${retBits.length?`<text class="edit-svg" x="${x+ww/2}" y="${y+wh+slabH+52}" text-anchor="middle" font-size="8">${esc(retBits.join('   ·   '))}</text>`:''}
+      ${patioCaption?`<text x="${x+ww/2}" y="${y+wh+slabH+68}" text-anchor="middle" font-size="9" font-weight="700">${esc(patioCaption)}</text>`:''}
       <rect x="16" y="584" width="240" height="46" fill="none" stroke="#111"/>
       <text x="22" y="600" font-size="10">BUILDING: DETACHED GARAGE</text>
       <text x="22" y="614" font-size="10">VIEW: ${esc(viewName)}</text>
@@ -1748,32 +1868,43 @@ function pageFloorSection(){
   </section>`;
 }
 function roofPlanSvg(){
-  const W=Number(val('width'))||22, D=Number(val('depth'))||24;
+  const W=Number(val('width'))||20, D=Number(val('depth'))||20;
   const t=val('roof');
-  const sx=10, ox=50, oy=58, gw=W*sx, gd=D*sx;
+  const sx=8, ox=70, oy=70, gw=W*sx, gd=D*sx;
   let hips='';
   if(t==='hip'){
     hips=`<line x1="${ox}" y1="${oy}" x2="${ox+gw/2}" y2="${oy+gd/2}" stroke="#111"/>
       <line x1="${ox+gw}" y1="${oy}" x2="${ox+gw/2}" y2="${oy+gd/2}" stroke="#111"/>
       <line x1="${ox}" y1="${oy+gd}" x2="${ox+gw/2}" y2="${oy+gd/2}" stroke="#111"/>
-      <line x1="${ox+gw}" y1="${oy+gd}" x2="${ox+gw/2}" y2="${oy+gd/2}" stroke="#111"/>
-      <text x="${ox+gw/2}" y="${oy+gd/2-8}" text-anchor="middle" font-size="11">RIDGE BEAM</text>
-      <text x="${ox+gw*0.72}" y="${oy+gd*0.28}" font-size="10">2x8 HIP RAFTER</text>`;
+      <line x1="${ox+gw}" y1="${oy+gd}" x2="${ox+gw/2}" y2="${oy+gd/2}" stroke="#111"/>`;
   } else if(t==='revgable'){
-    hips=`<line x1="${ox+gw/2}" y1="${oy}" x2="${ox+gw/2}" y2="${oy+gd}" stroke="#111" stroke-width="2"/>
-      <text x="${ox+gw/2+8}" y="${oy+gd/2}" font-size="11">2x8 RIDGE BEAM</text>`;
+    hips=`<line x1="${ox+gw/2}" y1="${oy}" x2="${ox+gw/2}" y2="${oy+gd}" stroke="#111" stroke-width="2"/>`;
   } else {
-    hips=`<line x1="${ox}" y1="${oy+gd/2}" x2="${ox+gw}" y2="${oy+gd/2}" stroke="#111" stroke-width="2"/>
-      <text x="${ox+gw/2}" y="${oy+gd/2-8}" text-anchor="middle" font-size="11">2x8 RIDGE BEAM</text>`;
+    hips=`<line x1="${ox}" y1="${oy+gd/2}" x2="${ox+gw}" y2="${oy+gd/2}" stroke="#111" stroke-width="2"/>`;
   }
-  return `<svg viewBox="0 0 420 420" width="100%" style="max-height:6.2in">
-    ${sheetHead('PROPOSED ROOF PLAN','A-4',420)}
+  const pat=patioDim();
+  let patio='';
+  if(pat.on){
+    const pw=pat.w*sx, pd=pat.d*sx;
+    let px=ox, py=oy, plw=pw, plh=pd;
+    if(pat.wall==='back'){ px=ox+(gw-pw)/2; py=oy-pd; }
+    else if(pat.wall==='front'){ px=ox+(gw-pw)/2; py=oy+gd; }
+    else if(pat.wall==='left'){ px=ox-pd; py=oy+(gd-pw)/2; plw=pd; plh=pw; }
+    else { px=ox+gw; py=oy+(gd-pw)/2; plw=pd; plh=pw; }
+    patio=`<rect x="${px}" y="${py}" width="${plw}" height="${plh}" fill="#f4f4f4" stroke="#111" stroke-dasharray="5 3"/>`;
+  }
+  const legendY=oy+gd+28;
+  return `<svg viewBox="0 0 520 520" width="100%" style="max-height:7.2in">
+    ${sheetHead('PROPOSED ROOF PLAN','A-4',520)}
     <rect x="${ox}" y="${oy}" width="${gw}" height="${gd}" fill="#fff" stroke="#111" stroke-width="1.8"/>
     <rect x="${ox-8}" y="${oy-8}" width="${gw+16}" height="${gd+16}" fill="none" stroke="#888" stroke-dasharray="4 3"/>
     ${hips}
-    <text x="${ox+8}" y="${oy+22}" font-size="11">${esc(rafterCallout())}</text>
-    <text x="${ox+8}" y="${oy+gd-10}" font-size="11">PITCH ${pitchNum()}/12</text>
-    <text x="${ox+gw/2}" y="${oy-14}" text-anchor="middle" font-size="9">6" OVERHANG TYP.</text>
+    ${patio}
+    <text x="${ox+gw/2}" y="${oy-18}" text-anchor="middle" font-size="10">6" OVERHANG TYP.</text>
+    <text x="16" y="${legendY}" font-size="11" font-weight="700">${esc((t==='hip'?'HIP':t==='revgable'?'REV. GABLE':'GABLE')+' ROOF')}</text>
+    <text x="16" y="${legendY+16}" font-size="11">RIDGE / HIP as shown · ${esc(rafterCallout())}</text>
+    <text x="16" y="${legendY+32}" font-size="11">PITCH ${pitchNum()}/12</text>
+    ${pat.on?`<text x="16" y="${legendY+48}" font-size="11">ROOFED PATIO ${pat.w}' x ${pat.d}' · (${pat.posts}) ${pat.post} POSTS · ${pat.wall.toUpperCase()} WALL</text>`:''}
   </svg>`;
 }
 function pageSectionRoof(){
@@ -1960,8 +2091,8 @@ function fitSheetsToPanel(){
 }
 function buildPlans(scrollTo){
   try{
-    if($('width') && !(Number(val('width'))>0)) $('width').value='22';
-    if($('depth') && !(Number(val('depth'))>0)) $('depth').value='24';
+    if($('width') && !(Number(val('width'))>0)) $('width').value='20';
+    if($('depth') && !(Number(val('depth'))>0)) $('depth').value='20';
     if($('wallH') && !(Number(val('wallH'))>0)) $('wallH').value='8';
     const W=Number(val('width'))||22, D=Number(val('depth'))||24;
     if(scrollTo && !val('customer') && $('customer')) $('customer').value='TBD';
@@ -2335,6 +2466,7 @@ document.addEventListener('DOMContentLoaded',()=>{
         $('winSize').value=/slider/i.test(val('winType'))?'4x2':'2x3';
       }
       if(el.id==='partyWall' && el.value!=='none' && !val('partySize')) $('partySize').value='6x7';
+      if(el.id==='patioWall' && el.value!=='none' && !val('patioSize')) $('patioSize').value='8';
       if(el.id==='svcWall' && el.value==='none') $('landing').value='';
       if(el.id==='city') applyVillage();
       else buildPlans();

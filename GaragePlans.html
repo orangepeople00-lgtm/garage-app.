@@ -910,6 +910,9 @@ function jobWarnings(){
 function applyJobRules(){
   const r=doorReturns();
   const brace=computeBraceRequired();
+  const fire=computeFirewallRequired();
+  const gut=guttersRequired();
+  const ties=hurricaneRequired();
   if($('flagShear')) $('flagShear').checked=brace;
   if($('returnReadout')) $('returnReadout').value=r.left+"' L  /  "+r.right+"' R";
   if($('ohSlide')){

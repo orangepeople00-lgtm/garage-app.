@@ -3273,7 +3273,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                 soffitCost, soffitFt, hasSoffit,
                 firewall, hurricane, wheeling, arlingtonSurvey, andrewPermit, hardieSidingCost, sidingType, wallHeight, overheadDoorHeight, sidingAreaNet, hardieSheets, extrasTotal,
                 permitCost, internalTotal, customerQuote, profitAmount, profitMode: profitSettings.mode, profitValue: profitSettings.value,
-                city, roofType, doorType, ev, evPrep, threeWay, extraLights, extraLightsCost, extraOutlets, extraOutletsCost, extraWindows, extraWindowsCost, overheadWidthUpgrade, overheadCustomExtra, opener8500Upgrade, openerType, openerQty,
+                city, roofType, doorType, ev, evPrep, threeWay, extraLights, extraLightsCost, extraOutlets, extraOutletsCost, extraWindows, extraWindowsCost, overheadWidthUpgrade, overheadCustomExtra, opener8500Upgrade, openerType, openerQty, extraOhDoors: extraOhList,
                 newConcrete, fiveInch, sixInch, demo, retainInches, addlOverheadDoors, addlOpeners,
                 patio1Area, patio2Area, demoSlabPreset, demoApronDepth, calculatedOldConcrete,
                 demoSlabArea, demoSlabWidth, demoApronArea, threeCarDoors,
@@ -3538,6 +3538,57 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             }, 100);
         }
 
+        function rememberOptionSheet(slot, html, quote, internal){
+            if(!slot) return;
+            if(!estimateComparison[slot]) estimateComparison[slot]=currentComparisonSnapshot();
+            estimateComparison[slot].sheet_html=html||estimateComparison[slot].sheet_html||'';
+            if(Number.isFinite(quote)) estimateComparison[slot].quote=quote;
+            if(Number.isFinite(internal)) estimateComparison[slot].internal=internal;
+            estimateComparison[slot].savedAt=new Date().toLocaleString();
+            persistMultiEstimates();
+        }
+        function collectOptionSheetsRecord(){
+            const out={};
+            ['A','B','C'].forEach(k=>{
+                const s=estimateComparison[k];
+                if(!s) return;
+                out[k]={
+                    width:s.width, depth:s.depth, wall:s.wall, roof:s.roof,
+                    internal:s.internal, quote:s.quote, savedAt:s.savedAt,
+                    sheet_html:s.sheet_html||''
+                };
+            });
+            return out;
+        }
+        function attachCurrentSheetToOptions(sheetHtml, quote, internal){
+            let slot=activeComparisonSlot;
+            try{
+                const d=getGarageDimensions();
+                if(!slot){
+                    slot=['A','B','C'].find(k=>estimateComparison[k] && Number(estimateComparison[k].width)===d.width && Number(estimateComparison[k].depth)===d.depth);
+                }
+                if(!slot){
+                    slot=['A','B','C'].find(k=>!estimateComparison[k]) || 'A';
+                }
+            }catch(e){ slot=slot||'A'; }
+            activeComparisonSlot=slot;
+            rememberOptionSheet(slot, sheetHtml, quote, internal);
+            try{ renderEstimateComparison(); }catch(e){}
+            return collectOptionSheetsRecord();
+        }
+        function mergeOptionSheets(prevSheets, nextSheets){
+            const prev=prevSheets&&typeof prevSheets==='object'?prevSheets:{};
+            const next=nextSheets&&typeof nextSheets==='object'?nextSheets:{};
+            const out={};
+            ['A','B','C'].forEach(k=>{
+                const p=prev[k], n=next[k];
+                if(!p && !n) return;
+                out[k]=Object.assign({}, p||{}, n||{});
+                if(n && n.sheet_html) out[k].sheet_html=n.sheet_html;
+                else if(p && p.sheet_html) out[k].sheet_html=p.sheet_html;
+            });
+            return out;
+        }
         function viewEstimateComparisonSheet(slot){
             const s=estimateComparison[slot];
             if(!s){ alert('Option '+slot+' is not saved yet. Tap Save Current on Option '+slot+' first.'); return; }
@@ -3582,7 +3633,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             setTimeout(async ()=>{
                 try{
                     if(typeof printEstimateSheet==='function'){
-                        await printEstimateSheet(false, estimateWindow);
+                        await printEstimateSheet(true, estimateWindow, { updateExisting:true });
                     } else if(typeof safePrintEstimateSheet==='function'){
                         try{ estimateWindow.close(); }catch(_){}
                         await safePrintEstimateSheet(false);
@@ -3829,7 +3880,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             if (data.threeCarDoors && data.threeCarDoors.length) {
                 lines.push({ label: '3-car door layout: '+data.threeCarDoors.map(d=>d.label).join(', '), amount: 0, section: 'core', note: 'priced in overhead door line', key: 'oh_layout_note' });
             }
-            if (data.addlOpeners > 0) {
+            if (data.addlOpeners > 0 && !(data.extraOhDoors && data.extraOhDoors.some(d=>d.opCost))) {
                 lines.push({ label: `Additional openers (${data.addlOpeners} × $450)`, amount: data.addlOpeners * 450, section: 'core', key: 'addl_openers' });
             }
             
@@ -4246,12 +4297,14 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
         }
         async function saveEstimateHistoryRecord(data, opts){
             try{
-                const forceNew=!(opts && opts.updateExisting);
+                const boundId=(new URLSearchParams(location.search).get('editEstimate')||window._lastEstimateHistoryId||'');
+                const forceNew=!!(opts && opts.forceNew);
+                const updateExisting= !forceNew && ((opts && opts.updateExisting) || !!boundId);
                 const {data:{user}}=await garageSb.auth.getUser();
                 if(!user)return null;
                 const {data:staff,error:pe}=await garageSb.from('staff_profiles').select('username').eq('id',user.id).single();
                 if(pe||!staff?.username)return null;
-                const editId=forceNew?null:(new URLSearchParams(location.search).get('editEstimate')||window._lastEstimateHistoryId||null);
+                const editId=updateExisting?boundId:null;
                 let previous=null;
                 if(editId){
                     const prevResult=await garageSb.from('estimate_history').select('*').eq('id',editId).single();
@@ -4309,7 +4362,10 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                         revision_history:revisionHistory,
                         sheet_ai_updates:sheetAiUpdates,
                         last_sheet_ai_request:previousSnapshot.last_sheet_ai_request||null,
-                        last_sheet_ai_at:previousSnapshot.last_sheet_ai_at||null
+                        last_sheet_ai_at:previousSnapshot.last_sheet_ai_at||null,
+                        option_sheets: (typeof mergeOptionSheets==='function')
+                            ? mergeOptionSheets(previousSnapshot.option_sheets, (record.estimate_snapshot||{}).option_sheets)
+                            : ((record.estimate_snapshot||{}).option_sheets||previousSnapshot.option_sheets||{})
                     };
                     const result=await garageSb.from('estimate_history').update(record).eq('id',editId);
                     error=result.error;
@@ -4324,7 +4380,11 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                     if(!error && result.data?.id){
                         window._lastEstimateHistoryId=result.data.id;
                         setBoundEstimateIdentity(record.customer, record.address);
-                        // Do NOT put editEstimate in the URL. Create Sheet must stay a new record next time.
+                        try{
+                            const u=new URL(location.href);
+                            u.searchParams.set('editEstimate', String(result.data.id));
+                            history.replaceState({},'',u.toString());
+                        }catch(e){}
                         return result.data.id;
                     }
                 }
@@ -4347,6 +4407,9 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                 const snap=Object.assign({}, row.estimate_snapshot||{});
                 snap.sheet_html=String(html||'');
                 snap.sheet_edits_at=new Date().toISOString();
+                if(meta&&meta.option_sheets&&typeof meta.option_sheets==='object'){
+                    snap.option_sheets=meta.option_sheets;
+                }
                 const patch={ estimate_snapshot: snap };
                 const price=Number(meta&&meta.price);
                 if(Number.isFinite(price)&&price>0){
@@ -6438,7 +6501,9 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             estimateWindow.document.close();
 
             try {
-                await printEstimateSheet(saveToHistory, estimateWindow, { updateExisting: !!(opts && opts.updateExisting) });
+                const boundId=(new URLSearchParams(location.search).get('editEstimate')||window._lastEstimateHistoryId||'');
+                const updateExisting= (opts && opts.forceNew) ? false : (opts && opts.updateExisting===false ? false : !!boundId);
+                await printEstimateSheet(saveToHistory, estimateWindow, { updateExisting });
             } catch (err) {
                 console.error('Estimate sheet error:', err);
                 try {
@@ -7688,8 +7753,14 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             try{ detachEstimateIfDifferentCustomer(); }catch(e){}
             const customerName = (document.getElementById('customerName').value || '').trim();
             const customerEmail = (document.getElementById('customerEmail')?.value || '').trim();
-            const customerPhone1 = (document.getElementById('customerPhone1')?.value || '').trim();
-            const customerPhone2 = (document.getElementById('customerPhone2')?.value || '').trim();
+            const formatUsPhone = (raw) => {
+                const d = String(raw || '').replace(/\D/g, '');
+                if (d.length === 11 && d.startsWith('1')) return `(${d.slice(1,4)}) ${d.slice(4,7)}-${d.slice(7)}`;
+                if (d.length === 10) return `(${d.slice(0,3)}) ${d.slice(3,6)}-${d.slice(6)}`;
+                return String(raw || '').trim();
+            };
+            const customerPhone1 = formatUsPhone(document.getElementById('customerPhone1')?.value || '');
+            const customerPhone2 = formatUsPhone(document.getElementById('customerPhone2')?.value || '');
             const customerAddress = (document.getElementById('customerAddress').value || '').trim();
 
             if (!customerName || !customerAddress) {
@@ -8317,13 +8388,16 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
     .doc-title { height: .7in; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 29px; letter-spacing: .2px; position: relative; white-space: nowrap; }
     .doc-title:before, .doc-title:after { content:""; height: 4px; width: 23px; background:#ffc400; margin: 0 7px; }
 
-    .customer-box { margin: 0 11px 8px; border: 2px solid #071d48; border-radius: 3px; display: grid; grid-template-columns: 1.35fr .8fr; gap: 4px 34px; padding: 9px 13px; font-size: 11px; }
+    .customer-box { margin: 0 11px 8px; border: 2px solid #071d48; border-radius: 3px; display: grid; grid-template-columns: 1.15fr 1fr; gap: 4px 18px; padding: 9px 13px; font-size: 11px; }
     .customer-contact-box { align-items:start; }
     .customer-left, .customer-right { display:flex; flex-direction:column; gap:5px; min-width:0; }
     .customer-email-field { margin-top:3px; margin-bottom:3px; }
     .field { display: flex; gap: 8px; align-items: baseline; min-width: 0; }
     .field b { flex: 0 0 auto; }
     .field span { border-bottom: 1px solid #70809d; flex: 1; min-width: 0; padding: 0 4px 2px; font-weight: 700; color: #26354f; overflow-wrap: anywhere; }
+    .field.phone-field { white-space: nowrap; }
+    .field.phone-field b { font-size: 10px; }
+    .field.phone-field span { overflow-wrap: normal; word-break: keep-all; white-space: nowrap; }
 
     .main { display: grid; grid-template-columns: minmax(0,43.5fr) minmax(0,56.5fr); gap: 8px; padding: 0 11px; flex: 1; min-height: 0; }
     .left, .right { min-width: 0; display:flex; flex-direction:column; }
@@ -8741,8 +8815,8 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             <div class="field"><b>${se('labelAddress','Address:')}</b><span>${se('customerAddress', customerAddress)}</span></div>
         </div>
         <div class="customer-right">
-            <div class="field"><b>${se('labelPhone1','Customer Phone Number:')}</b><span>${se('customerPhone1', customerPhone1)}</span></div>
-            <div class="field"><b>${se('labelPhone2','Customer Phone Number:')}</b><span>${se('customerPhone2', customerPhone2||'')}</span></div>
+            <div class="field phone-field"><b>${se('labelPhone1','Phone:')}</b><span>${se('customerPhone1', customerPhone1)}</span></div>
+            ${customerPhone2 ? `<div class="field phone-field"><b>${se('labelPhone2','2nd Phone:')}</b><span>${se('customerPhone2', customerPhone2)}</span></div>` : ''}
             <div class="field"><b>${se('labelDate', salesman.wally ? 'Est. Date:' : 'Date:')}</b><span>${se('sheetDate', today)}</span></div>
         </div>
     </div>
@@ -9329,7 +9403,7 @@ async function openPopupChatGPT(){
                     address: customerAddress,
                     city,
                     garage_size: `${width}' x ${depth}'`,
-                    roof_type: roofType === 'gable' ? 'Gable' : 'Hip',
+                    roof_type: roofType === 'gable' ? (document.getElementById('eaveDir')?.value==='sides' ? 'Reverse Gable' : 'Gable') : 'Hip',
                     wall_height: `${wallHeight}'`,
                     siding: sidingLabel,
                     estimate_price: estimateNumberFromText(quote),
@@ -9355,13 +9429,33 @@ async function openPopupChatGPT(){
                         additional_notes: typedAdditionalNotes || '',
                         exterior_photo: garagePhotoSrc,
                         sheet_html: sheetHtml,
-                        sheet_presentation: (typeof getSheetPresentation==='function' ? getSheetPresentation() : null)
+                        sheet_presentation: (typeof getSheetPresentation==='function' ? getSheetPresentation() : null),
+                        option_sheets: (typeof attachCurrentSheetToOptions==='function')
+                            ? attachCurrentSheetToOptions(
+                                sheetHtml,
+                                estimateNumberFromText(document.getElementById('customerQuote')?.textContent || quote || '0'),
+                                estimateNumberFromText(document.getElementById('internalTotal')?.textContent || '0')
+                              )
+                            : {},
+                        active_option: (typeof activeComparisonSlot!=='undefined' ? activeComparisonSlot : null)
                     }
                 }, { updateExisting: !!(histOpts && histOpts.updateExisting) });
                 try{
                     if(printWindow && savedId){
-                        printWindow.ESTIMATE_HISTORY_ID=savedId;
+                        try{ printWindow.ESTIMATE_HISTORY_ID=savedId; }catch(e){}
+                        try{
+                            printWindow.document.open;
+                            const s=printWindow.document.createElement('script');
+                            s.textContent='window.ESTIMATE_HISTORY_ID='+JSON.stringify(savedId)+';';
+                            printWindow.document.documentElement.appendChild(s);
+                        }catch(e){}
                     }
+                    window._lastEstimateHistoryId=savedId;
+                    try{
+                        const u=new URL(location.href);
+                        u.searchParams.set('editEstimate', String(savedId));
+                        history.replaceState({},'',u.toString());
+                    }catch(e){}
                 }catch(e){}
             }
         }

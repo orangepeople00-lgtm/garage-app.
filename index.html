@@ -175,6 +175,7 @@ body.estimator-mode .estimator-exit{display:block}
   <button id="carpenterTab" class="tab tab-app" type="button" onclick="window.location.href='Carpenter.html?v='+Date.now()">Carpenter Ticket</button>
   <button id="garagePlansTab" class="tab tab-app tab-plans" type="button" onclick="window.location.href='GaragePlans.html?v='+Date.now()">Garage Plans</button>
   <button class="tab" data-view="estimateHistory" onclick="setView('estimateHistory',this)">Estimate History</button>
+  <button class="tab" data-view="planHistory" onclick="setView('planHistory',this)">Plan History</button>
   <button class="tab" data-view="completed" onclick="setView('completed',this)">Completed Archive</button>
   <button id="trashTab" class="tab hidden" data-view="trash" onclick="setView('trash',this)">Trash</button>
  </div>
@@ -256,6 +257,14 @@ body.estimator-mode .estimator-exit{display:block}
    <div class="field"><label>&nbsp;</label><button class="btn light" onclick="clearEstimateHistoryFilters()">Clear</button></div>
   </div>
   <div class="table"><table style="min-width:980px"><thead><tr><th>Date</th><th>Customer</th><th>Salesman</th><th>Address</th><th>Garage</th><th>Roof</th><th>Estimate</th><th></th></tr></thead><tbody id="estimateHistoryRows"></tbody></table></div>
+ </section>
+ <section id="planHistoryView" class="hidden">
+  <div class="card toolbar estimate-history-toolbar">
+   <div class="field"><label>Search Plans</label><input id="planHistorySearch" placeholder="Customer, address, city, garage size" oninput="renderPlanHistory()"></div>
+   <div class="field"><label>Salesman</label><select id="planHistorySalesFilter" onchange="renderPlanHistory()"><option value="">All Salespeople</option></select></div>
+   <div class="field"><label>&nbsp;</label><button class="btn light" onclick="clearPlanHistoryFilters()">Clear</button></div>
+  </div>
+  <div class="table"><table style="min-width:980px"><thead><tr><th>Date</th><th>Customer</th><th>Salesman</th><th>Address</th><th>Garage</th><th>Roof</th><th>Village</th><th></th></tr></thead><tbody id="planHistoryRows"></tbody></table></div>
  </section>
  <section id="completedView" class="hidden"><div class="table"><table><thead><tr><th>Customer</th><th>Salesman</th><th>Address</th><th>Garage</th><th>Completed</th><th>Final Payment</th><th></th></tr></thead><tbody id="completedRows"></tbody></table></div></section>
  <section id="trashView" class="hidden"><div class="card" style="margin-bottom:12px"><h3>Trash</h3><div class="muted small">Deleted jobs are hidden from everyone else. Sam or Randy can restore them or permanently delete them here.</div></div><div class="table"><table><thead><tr><th>Customer</th><th>Salesman</th><th>Address</th><th>Deleted</th><th>Actions</th></tr></thead><tbody id="trashRows"></tbody></table></div></section>
@@ -619,7 +628,7 @@ async function refresh(){
  if(ehe){
   $('syncState').textContent='Estimate history blocked: '+(ehe.message||'RLS/permission error');
  }else{
-  $('syncState').textContent='Connected • '+new Date().toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})+' • '+(estimateHistory.length||0)+' estimates';
+  $('syncState').textContent='Connected • '+new Date().toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})+' • '+estimateOnlyRows().length+' estimates • '+planHistoryRows().length+' plans';
  }
  populateFilters();
  // Fill Estimate History salesman dropdown from loaded rows
@@ -634,7 +643,14 @@ async function refresh(){
  }catch(e){}
  renderAll();
 }
-function renderAll(){if($('allPersonalCalendarsTab'))$('allPersonalCalendarsTab').classList.toggle('hidden',!privateAccessManager());try{showCarpenterNav()}catch(e){}renderStats();renderRequests();renderEditRequests();renderJobs();renderWeek();renderCalendar();renderPersonalCalendar();renderAllPersonalCalendars();renderUpcomingAppointments();renderEstimateHistory();renderCompleted();renderTrash()}
+function renderAll(){if($('allPersonalCalendarsTab'))$('allPersonalCalendarsTab').classList.toggle('hidden',!privateAccessManager());try{showCarpenterNav()}catch(e){}renderStats();renderRequests();renderEditRequests();renderJobs();renderWeek();renderCalendar();renderPersonalCalendar();renderAllPersonalCalendars();renderUpcomingAppointments();renderEstimateHistory();renderPlanHistory();renderCompleted();renderTrash();openHashView()}
+function openHashView(){
+  const h=(location.hash||'').replace('#','');
+  if(h==='planHistory'){
+    const btn=document.querySelector('.tab[data-view="planHistory"]');
+    setView('planHistory', btn);
+  }
+}
 function renderStats(){const active=jobs.filter(j=>status(j)!=='Completed').length,p=jobs.filter(j=>['Applied/Submitted','Submitted','Corrections Needed'].includes(j.permit_status)).length,c=jobs.filter(j=>j.concrete_status==='Scheduled').length,carp=jobs.filter(j=>['Scheduled','In Progress'].includes(j.carpentry_status)).length,h=jobs.filter(j=>j.hold_status).length,o=jobs.filter(overdue).length,done=jobs.filter(j=>status(j)==='Completed').length;$('stats').innerHTML=[['Active Jobs',active,''],['Permits Pending',p,''],['Concrete Scheduled',c,''],['Carpentry Active',carp,''],['On Hold',h,h?'alert':''],['Overdue',o,o?'alert':''],['Completed',done,'']].map(x=>`<div class="stat ${x[2]}"><div class="n">${x[1]}</div><div class="l">${x[0]}</div></div>`).join('')}
 function renderRequests(){
  const pend=requests.filter(r=>r.status==='Pending');$('managerRequests').classList.toggle('hidden',!manager()||!pend.length);$('pendingCount').textContent=pend.length;
@@ -1245,14 +1261,15 @@ function setView(v,btn){
  document.body.classList.toggle('estimator-mode',v==='estimator');
  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
  if(btn)btn.classList.add('active');
- ['dashboard','week','calendar','personalCalendar','allPersonalCalendars','estimator','estimateHistory','completed','trash'].forEach(x=>$(x+'View')?.classList.toggle('hidden',x!==v));
+ ['dashboard','week','calendar','personalCalendar','allPersonalCalendars','estimator','estimateHistory','planHistory','completed','trash'].forEach(x=>$(x+'View')?.classList.toggle('hidden',x!==v));
  // Quick Job Command only on Dashboard + Today (week)
  const qj=$('quickJobCard');
  if(qj) qj.classList.toggle('hidden', v!=='dashboard' && v!=='week');
  if(v==='estimator')loadEstimator();
  if(v==='estimateHistory') renderEstimateHistory();
- $('pageTitle').textContent=v==='week'?'Today':v==='calendar'?'Project Calendar':v==='personalCalendar'?'Personal Calendar':v==='allPersonalCalendars'?'All Personal Calendars':v==='estimator'?'Garage Estimator':v==='estimateHistory'?'Estimate History':v==='completed'?'Completed Archive':v==='trash'?'Trash':'Production Dashboard';
- $('subtitle').textContent=v==='allPersonalCalendars'?'Management view of everyone’s appointments and tasks':v==='personalCalendar'?'Your private appointments and tasks':v==='estimator'?'Quick estimating and customer estimate sheets':v==='estimateHistory'?(privateAccessManager()||manager()?'All saved company estimates':'Your private saved estimates'):v==='week'?'Jobs scheduled for today':'Live shared office data';
+ if(v==='planHistory') renderPlanHistory();
+ $('pageTitle').textContent=v==='week'?'Today':v==='calendar'?'Project Calendar':v==='personalCalendar'?'Personal Calendar':v==='allPersonalCalendars'?'All Personal Calendars':v==='estimator'?'Garage Estimator':v==='estimateHistory'?'Estimate History':v==='planHistory'?'Plan History':v==='completed'?'Completed Archive':v==='trash'?'Trash':'Production Dashboard';
+ $('subtitle').textContent=v==='allPersonalCalendars'?'Management view of everyone’s appointments and tasks':v==='personalCalendar'?'Your private appointments and tasks':v==='estimator'?'Quick estimating and customer estimate sheets':v==='estimateHistory'?(privateAccessManager()||manager()?'All saved company estimates':'Your private saved estimates'):v==='planHistory'?(privateAccessManager()||manager()?'All saved garage permit plans':'Your saved garage permit plans'):v==='week'?'Jobs scheduled for today':'Live shared office data';
 }
 function exitEstimator(){const b=document.querySelector('.tab[data-view="dashboard"]');setView('dashboard',b)}
 function jobEvents(j){return [['Demo',j.scheduled_demo,j.demo_crew],['Concrete / Framing',j.concrete_scheduled,j.concrete_crew],['Carpentry',j.carpentry_scheduled,j.carpentry_crew],['Electric',j.electric_date,j.electric_crew],['Gutters / Extras',j.extras_scheduled,''],['Inspection',j.inspection_date,'']].filter(x=>x[1])}
@@ -1495,6 +1512,7 @@ This removes it from Estimate History.`))return;
  if(error)return alert('Could not delete estimate: '+error.message);
  estimateHistory=estimateHistory.filter(e=>e.id!==id);
  renderEstimateHistory();
+ renderPlanHistory();
 }
 async function fetchFullEstimateRecord(id){
  // List load is light (no snapshot). Pull full row only when viewing/editing one estimate.
@@ -1535,9 +1553,34 @@ async function saveEditedEstimateSheetHtml(html, meta){
   return false;
  }
 }
+function listHistoryOptionSheets(e){
+ const snap=e&&e.estimate_snapshot||{};
+ const out=[];
+ const os=snap.option_sheets||{};
+ ['A','B','C'].forEach(k=>{
+  const o=os[k];
+  if(!o) return;
+  if(!o.sheet_html && !(Number(o.quote)>0)) return;
+  out.push({
+   slot:k,
+   label:'Option '+k,
+   size:(o.width&&o.depth)?(o.width+"' × "+o.depth+"'"):'',
+   roof:o.roof||'',
+   quote:Number(o.quote||0),
+   internal:Number(o.internal||0),
+   html:o.sheet_html||''
+  });
+ });
+ if(!out.length && snap.sheet_html){
+  out.push({slot:'A',label:'Estimate',size:e.garage_size||'',roof:e.roof_type||'',quote:Number(e.estimate_price||snap.final_project_price||0),internal:Number(snap.internal_cost||0),html:snap.sheet_html});
+ }
+ return out;
+}
 async function viewEstimateHistory(id){
  const e=await fetchFullEstimateRecord(id);if(!e)return alert('Estimate not found.');
- const snap=e.estimate_snapshot||{},savedSheet=snap.sheet_html||'';
+ const snap=e.estimate_snapshot||{};
+ const optionSheets=listHistoryOptionSheets(e);
+ const savedSheet=(optionSheets[0]&&optionSheets[0].html)||snap.sheet_html||'';
  window._lastEstimateHistoryId=id;
  const w=window.open('','_blank','width=1100,height=1000');if(!w)return alert('Your browser blocked the popup. Please allow popups and try again.');
  const hasSheet=!!savedSheet;
@@ -1550,12 +1593,18 @@ async function viewEstimateHistory(id){
  w.saveHistorySheetEdits=async function(){
   try{
    const frame=w.document.getElementById('savedEstimateFrame');
-   const doc=frame&&frame.contentDocument;
-   if(!doc){ alert('Sheet is not loaded yet.'); return; }
-   const html='<!DOCTYPE html>\\n'+doc.documentElement.outerHTML;
+   const doc=frame&&(frame.contentDocument||frame.contentWindow&&frame.contentWindow.document);
+   if(!doc || !doc.documentElement){ alert('Sheet is not loaded yet. Wait a second and press Save again.'); return; }
+   const html='<!DOCTYPE html>\n'+doc.documentElement.outerHTML;
+   if(html.length<200){ alert('Sheet did not capture. Wait for it to finish loading and press Save again.'); return; }
    const priceTxt=(doc.querySelector('.total-price')?.innerText||'').replace(/[^0-9.]/g,'');
    const ok=await saveEditedEstimateSheetHtml(html,{id:id,price:parseFloat(priceTxt)||0});
-   alert(ok?'Sheet changes saved. Open this estimate again to see them.':'Save failed.');
+   if(ok){
+    try{ frame.srcdoc=html; }catch(e){}
+    alert('Saved. These wording / row changes are now on this estimate in History.');
+   }else{
+    alert('Save failed. Stay logged in on the dashboard tab and try again.');
+   }
   }catch(err){ console.error(err); alert('Save failed.'); }
  };
  w.focus();
@@ -1567,6 +1616,31 @@ async function editEstimateHistory(id){
  try{sessionStorage.setItem('garage_edit_estimate_record',JSON.stringify(e));}catch(err){console.warn('Could not cache estimate edit record',err)}
  window.location.href=`estimator.html?editEstimate=${encodeURIComponent(id)}&v=20260820edit3`;
 }
+function isGaragePlanRow(e){ return String(e&&e.siding||'')==='PLAN SET'; }
+function planHistoryRows(){ return (Array.isArray(estimateHistory)?estimateHistory:[]).filter(isGaragePlanRow); }
+function estimateOnlyRows(){ return (Array.isArray(estimateHistory)?estimateHistory:[]).filter(e=>!isGaragePlanRow(e)); }
+function clearPlanHistoryFilters(){ if($('planHistorySearch'))$('planHistorySearch').value=''; if($('planHistorySalesFilter'))$('planHistorySalesFilter').value=''; renderPlanHistory(); }
+function renderPlanHistory(){
+ const rows=$('planHistoryRows'); if(!rows) return;
+ const q=($('planHistorySearch')?.value||'').trim().toLowerCase();
+ const sf=($('planHistorySalesFilter')?.value||'').trim();
+ const myUser=String(profile?.username||'').toLowerCase().trim();
+ const sel=$('planHistorySalesFilter');
+ if(sel && sel.options.length<=1){
+  const names=[...new Set(planHistoryRows().map(e=>e.salesman_username).filter(Boolean))].sort((a,b)=>(DISPLAY[a]||a).localeCompare(DISPLAY[b]||b));
+  sel.innerHTML='<option value="">All Salespeople</option>'+names.map(n=>`<option value="${esc(n)}">${esc(DISPLAY[n]||n)}</option>`).join('');
+ }
+ let a=planHistoryRows();
+ if(sf) a=a.filter(e=>String(e.salesman_username||'').toLowerCase().trim()===String(sf).toLowerCase());
+ if(q) a=a.filter(e=>[e.customer,e.address,e.city,e.garage_size,e.roof_type,DISPLAY[e.salesman_username]||e.salesman_username].some(v=>String(v||'').toLowerCase().includes(q)));
+ const emptyMsg=!planHistoryRows().length?'No saved garage plans yet. Open Garage Plans and press Save to History.':'No plans match this search.';
+ rows.innerHTML=a.length?a.map(e=>{
+  const salesKey=String(e.salesman_username||'').toLowerCase().trim();
+  const canDel=privateAccessManager()||manager()||(myUser&&salesKey===myUser);
+  return `<tr><td>${new Date(e.created_at).toLocaleDateString()}<div class="sub">${new Date(e.created_at).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}</div></td><td><strong>${esc(e.customer)}</strong></td><td>${esc(DISPLAY[e.salesman_username]||e.salesman_username)}</td><td>${esc(e.address||'')}<div class="sub">${esc(e.city||'')}</div></td><td>${esc(e.garage_size||'—')}</td><td>${esc(e.roof_type||'—')}</td><td>${esc(e.city||'—')}</td><td><div style="display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end"><button class="btn light sm" onclick="openSavedPlan('${e.id}')">Open / Edit</button>${canDel?`<button type="button" class="estimate-delete-btn" onclick="deleteEstimateHistory('${e.id}','${esc(e.customer||'Plan')}')">Delete</button>`:''}</div></td></tr>`;
+ }).join(''):`<tr><td colspan="8" style="text-align:center;padding:35px;color:#6f7a8d">${esc(emptyMsg)}</td></tr>`;
+}
+function openSavedPlan(id){ location.href='GaragePlans.html?planId='+encodeURIComponent(id)+'&v='+Date.now(); }
 function renderEstimateHistory(){
  const rows=$('estimateHistoryRows');if(!rows)return;
  const q=($('estimateHistorySearch')?.value||'').trim().toLowerCase();
@@ -1574,10 +1648,10 @@ function renderEstimateHistory(){
  const myUser=String(profile?.username||'').toLowerCase().trim();
  // Show whatever the database/RLS already returned. Do not hide rows client-side
  // except optional search + salesman dropdown filters (case-insensitive).
- let a=Array.isArray(estimateHistory)?estimateHistory.slice():[];
+ let a=estimateOnlyRows();
  if(sf) a=a.filter(e=>String(e.salesman_username||'').toLowerCase().trim()===String(sf).toLowerCase());
  if(q) a=a.filter(e=>[e.customer,e.address,e.city,e.garage_size,e.roof_type,DISPLAY[e.salesman_username]||e.salesman_username,e.salesman_username].some(v=>String(v||'').toLowerCase().includes(q)));
- const emptyMsg=!estimateHistory.length
+ const emptyMsg=!estimateOnlyRows().length
    ? 'No saved estimates returned from the database yet.'
    : 'No estimates match this search / salesman filter. Clear filters to see all.';
  rows.innerHTML=a.length?a.map(e=>{

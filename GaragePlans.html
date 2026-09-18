@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Garage Plans — Absolute Garage Builders</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>
 :root{--ink:#111;--navy:#0b1f3a;--gold:#c9a227;--bg:#e8edf3}
 *{box-sizing:border-box}
@@ -237,8 +239,10 @@ All outlets tamperproof. GARAGE DISCONNECT at first point of entrance inside gar
     <button class="btn-white" type="button" onclick="loadVillagePacket(true)">Load village packet</button>
     <button class="btn-white" type="button" onclick="buildPlans(true)">Generate Plans</button>
     <button class="btn-gold" type="button" onclick="window.print()">Print plans</button>
-    <button class="btn-ghost" type="button" onclick="saveJob()">Save Job</button>
-    <button class="btn-ghost" type="button" onclick="showJobs()">Previous Jobs</button>
+    <button class="btn-white" type="button" onclick="downloadPlansPdf()">Download PDF</button>
+    <button class="btn-gold" type="button" onclick="saveToHistory()">Save to History</button>
+    <button class="btn-ghost" type="button" onclick="location.href='index.html#planHistory'">Plan History</button>
+    <button class="btn-ghost" type="button" onclick="showJobs()">This device only</button>
     <button class="btn-ghost" type="button" onclick="openVillageSite()">Village Building Dept</button>
     <button class="btn-ghost" type="button" onclick="location.href='index.html'">Dashboard</button>
   </div>
@@ -251,7 +255,7 @@ All outlets tamperproof. GARAGE DISCONNECT at first point of entrance inside gar
 <main class="main" tabindex="-1">
   <div class="toolbar no-print">
     <h2>Official Garage Permit Plans</h2>
-    <div class="small">Each Generate uses only this job’s size, roof, doors, landing, outlets, and village. Nothing is copied from a previous plan.</div>
+    <div class="small">Download PDF makes a file. Save to History puts it on the Plan History tab for managers. This device only is a backup on this phone/computer.</div>
   </div>
   <div class="sheet-wrap" id="pages"></div>
 </main>
@@ -424,6 +428,8 @@ function applyVillage(){
 }
 const SB_URL='https://iomcekniylxfptswcxoi.supabase.co';
 const SB_KEY='sb_publishable_G_ZAnQ_CoJjWsn8-HgduLw_IziPWEmn';
+const PLAN_MARK='PLAN SET';
+const garageSb=(window.supabase&&window.supabase.createClient)?window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true}}):null;
 const PACKET_CACHE_KEY='agb_village_packets_v1';
 let lastPacket=null;
 function packetStore(){
@@ -1329,10 +1335,23 @@ function windowDraw(x,y,w,h, slider){
   return s;
 }
 let planVis={};
+let planVisGeom='';
+function visGeom(){
+  return [val('width'),val('depth'),val('wallH'),val('ohW'),val('ohH'),val('ohWall'),val('partyWall'),val('partySize'),val('svcWall'),val('winWall'),val('winSize'),val('winCount')].join('|');
+}
+function prunePlanVis(){
+  const g=visGeom();
+  if(g!==planVisGeom){ planVis={}; planVisGeom=g; }
+}
 function visGet(key, def){
-  const v=planVis[key];
-  if(!v) return def;
-  return {x:v.x??def.x, y:v.y??def.y, w:v.w??def.w, h:v.h??def.h};
+  const v=planVis[key]||{};
+  const lockPos=/-(oh|party|svc)$/.test(key);
+  return {
+    x: lockPos ? def.x : (v.x??def.x),
+    y: lockPos ? def.y : (v.y??def.y),
+    w: v.w??def.w,
+    h: v.h??def.h
+  };
 }
 function visHandle(box,key){
   return `<rect class="vis-handle" data-key="${key}" x="${box.x+box.w-8}" y="${box.y-8}" width="12" height="12"/>`;
@@ -1729,6 +1748,7 @@ function buildPlans(scrollTo){
   }
   if(scrollTo && !val('customer') && $('customer')) $('customer').value='TBD';
   applyJobRules();
+  prunePlanVis();
   seedPlanItems();
   const pages=$('pages'); if(!pages) return;
   pages.innerHTML=pageFloorSection()+pageElevations()+pageSectionRoof()+pageDetail()+pageFire();
@@ -1859,30 +1879,154 @@ function restore(o){
   if(o._planVis && typeof o._planVis==='object') planVis=o._planVis;
   buildPlans();
 }
-function saveJob(){
-  const name=prompt('Save as customer / job name', val('customer')||'Untitled');
-  if(!name) return;
+function planFileName(){
+  const who=(val('customer')||'Garage').replace(/[\\/:*?"<>|]+/g,'-');
+  const city=(cityName()||'Village').replace(/[\\/:*?"<>|]+/g,'-');
+  return 'AGB-Plans-'+who+'-'+city+'.pdf';
+}
+async function downloadPlansPdf(){
+  if(!document.querySelector('.sheet')) buildPlans(true);
+  const sheets=[...document.querySelectorAll('#pages .sheet')];
+  if(!sheets.length){ alert('Generate plans first.'); return; }
+  setStatus('Building PDF…', true);
+  try{
+    let tries=0;
+    while(typeof window.html2pdf!=='function' && tries<40){
+      await new Promise(r=>setTimeout(r,100));
+      tries++;
+    }
+    if(typeof window.html2pdf!=='function') throw new Error('PDF library did not load');
+    const host=document.createElement('div');
+    host.style.cssText='position:absolute;left:-20000px;top:0;background:#fff;';
+    document.body.appendChild(host);
+    sheets.forEach(s=>{
+      const c=s.cloneNode(true);
+      c.style.transform='none';
+      c.style.width='17in';
+      c.style.minHeight='11in';
+      c.style.boxShadow='none';
+      c.querySelectorAll('.vis-handle,.no-print').forEach(el=>el.remove());
+      host.appendChild(c);
+    });
+    const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+    await window.html2pdf().set({
+      margin:0.2,
+      filename:planFileName(),
+      image:{type:isIOS?'jpeg':'png', quality:0.92},
+      html2canvas:{scale:isIOS?1.4:2, useCORS:true, backgroundColor:'#ffffff'},
+      jsPDF:{unit:'in', format:[17,11], orientation:'landscape', compress:true},
+      pagebreak:{mode:['css','legacy'], after:'.sheet'}
+    }).from(host).save();
+    host.remove();
+    setStatus('PDF downloaded', true);
+  }catch(err){
+    console.error(err);
+    setStatus('PDF failed — use Print instead');
+    alert('Could not build the PDF on this device. Use Print plans and choose Save as PDF.');
+  }
+}
+function roofWord(){
+  const t=val('roof');
+  return t==='hip'?'Hip':t==='revgable'?'Reverse gable':'Gable';
+}
+async function currentStaff(){
+  if(!garageSb) return null;
+  try{
+    const {data:{user}}=await garageSb.auth.getUser();
+    if(!user) return null;
+    const {data:staff}=await garageSb.from('staff_profiles').select('username').eq('id',user.id).maybeSingle();
+    return {user, username:(staff&&staff.username)||''};
+  }catch(e){ return null; }
+}
+async function saveToHistory(){
+  if(!val('customer')){
+    const n=prompt('Customer name for this plan', val('customer')||'');
+    if(!n) return;
+    $('customer').value=n.trim();
+  }
+  buildPlans();
+  saveJob(true);
+  const staff=await currentStaff();
+  if(!staff || !staff.user){
+    setStatus('Saved on this device. Log into the dashboard first to put it on Plan History for the office.', true);
+    alert('Saved on this device only.\n\nTo put it on the Plan History tab for Sam / Randy / Ramsey, open the dashboard, stay logged in, then Save to History again.');
+    return;
+  }
+  const snap=snapshot();
+  snap.kind='garage_plan';
+  const rec={
+    created_by:staff.user.id,
+    salesman_username:staff.username||'ramsey',
+    customer:val('customer')||'Untitled',
+    address:val('address')||'',
+    city:cityName(),
+    garage_size:(val('width')||'')+'x'+(val('depth')||''),
+    roof_type:roofWord(),
+    wall_height:val('wallH')||'8',
+    siding:PLAN_MARK,
+    estimate_price:0,
+    estimate_snapshot:snap
+  };
+  const editId=new URLSearchParams(location.search).get('planId')||window._lastPlanHistoryId||null;
+  try{
+    if(editId){
+      const {error}=await garageSb.from('estimate_history').update(rec).eq('id',editId);
+      if(error) throw error;
+      window._lastPlanHistoryId=editId;
+      setStatus('Updated Plan History for '+rec.customer, true);
+      alert('Updated in Plan History: '+rec.customer);
+    }else{
+      const {data,error}=await garageSb.from('estimate_history').insert(rec).select('id').single();
+      if(error) throw error;
+      if(data&&data.id){
+        window._lastPlanHistoryId=data.id;
+        const u=new URL(location.href);
+        u.searchParams.set('planId', data.id);
+        history.replaceState({},'',u.toString());
+      }
+      setStatus('Saved to Plan History: '+rec.customer, true);
+      alert('Saved to Plan History: '+rec.customer);
+    }
+  }catch(err){
+    console.error(err);
+    setStatus('Office history failed — still saved on this device');
+    alert('Could not save to office Plan History ('+(err.message||err)+'). It is still saved on this device.');
+  }
+}
+async function loadPlanFromId(id){
+  if(!id || !garageSb) return;
+  try{
+    const {data,error}=await garageSb.from('estimate_history').select('*').eq('id',id).maybeSingle();
+    if(error || !data) return;
+    window._lastPlanHistoryId=id;
+    const snap=data.estimate_snapshot||{};
+    if(snap && typeof snap==='object') restore(snap);
+    if(data.customer && $('customer')) $('customer').value=data.customer;
+    if(data.address && $('address')) $('address').value=data.address;
+    setStatus('Opened plan from History: '+(data.customer||''), true);
+  }catch(e){ console.warn(e); }
+}
+function saveJob(quiet){
+  const name=val('customer')||'Untitled';
+  if(!quiet){
+    const typed=prompt('Save as customer / job name', name);
+    if(!typed) return;
+    if($('customer')) $('customer').value=typed.trim();
+  }
+  const jobName=val('customer')||name;
   let jobs;
   try{ jobs=JSON.parse(localStorage.getItem('agb_garageplans_jobs')||'[]'); if(!Array.isArray(jobs)) jobs=[]; }
   catch(e){ jobs=[]; }
   const data=snapshot();
-  const idx=jobs.findIndex(j=>j && j.name===name);
-  const entry={id:(idx>=0&&jobs[idx].id)||Date.now(),name,when:new Date().toISOString(),data};
+  const idx=jobs.findIndex(j=>j && j.name===jobName);
+  const entry={id:(idx>=0&&jobs[idx].id)||Date.now(),name:jobName,when:new Date().toISOString(),data};
   if(idx>=0) jobs[idx]=entry; else jobs.unshift(entry);
-  const write=list=>{ localStorage.setItem('agb_garageplans_jobs', JSON.stringify(list)); };
   try{
-    write(jobs.slice(0,80));
-    setStatus('Saved job "'+name+'" ('+jobs.length+' on this device)', true);
-    alert('Saved '+name);
+    localStorage.setItem('agb_garageplans_jobs', JSON.stringify(jobs.slice(0,80)));
+    if(!quiet) setStatus('Saved on this device: "'+jobName+'"', true);
   }catch(err){
-    try{
-      write(jobs.slice(0,20));
-      setStatus('Saved "'+name+'" (trimmed older jobs — storage was full)', true);
-      alert('Saved '+name+' (trimmed older jobs — storage was full)');
-    }catch(e2){
-      setStatus('Save failed — browser storage full');
-      alert('Could not save — browser storage is full. Open Previous Jobs, load what you need, or clear site data for this page.');
-    }
+    try{ localStorage.setItem('agb_garageplans_jobs', JSON.stringify(jobs.slice(0,20))); }
+    catch(e2){ if(!quiet) alert('Could not save on this device — storage is full.'); }
   }
 }
 function persistJobs(jobs){
@@ -1943,14 +2087,20 @@ document.addEventListener('DOMContentLoaded',()=>{
   fillCitySelect();
   loadPrefs();
   if($('planDate')&&!$('planDate').value) $('planDate').value=new Date().toISOString().slice(0,10);
+  const planId=new URLSearchParams(location.search).get('planId');
+  if(planId) loadPlanFromId(planId);
   if(val('city')||val('cityManual')) setStatus('Restored last city/size — Apply Codes or Generate when ready', true);
   document.querySelectorAll('.sidebar input,.sidebar select,.sidebar textarea').forEach(el=>{
     el.addEventListener('change',()=>{
       if(el.id==='winWall' && el.value!=='none' && Number(val('winCount'))===0) $('winCount').value='1';
       if(el.id==='winWall' && el.value==='none') $('winCount').value='0';
       if(el.id==='winType'){
-        if(/slider/i.test(el.value)) $('winSize').value='4x2';
-        else if(/single/i.test(el.value)) $('winSize').value='2x3';
+        const cur=val('winSize');
+        const stock=!cur || /^(2x3|4x2|24"x36"|24x36)$/i.test(cur);
+        if(stock){
+          if(/slider/i.test(el.value)) $('winSize').value='4x2';
+          else if(/single/i.test(el.value)) $('winSize').value='2x3';
+        }
       }
       if(el.id==='winWall' && el.value!=='none' && !val('winSize')){
         $('winSize').value=/slider/i.test(val('winType'))?'4x2':'2x3';

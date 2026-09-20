@@ -53,6 +53,8 @@ button{border:0;border-radius:7px;padding:8px 10px;font-weight:800;cursor:pointe
 .notes-col li{margin:0 0 4px}
 .split{display:grid;grid-template-columns:1.05fr .95fr;gap:10px;align-items:start}
 .elevpage{display:block;min-height:8.8in}
+.ai-elev{display:flex;align-items:center;justify-content:center;background:#fff;min-height:8.4in;padding:8px}
+.ai-elev img{max-width:100%;max-height:8.3in;object-fit:contain;background:#fff}
 .sched{border:1.5px solid #111;width:100%;border-collapse:collapse;font-size:12px;margin-top:8px}
 .sched th,.sched td{border:1px solid #111;padding:5px 7px;text-align:left}
 .sched th{background:#eee;font-size:11px;letter-spacing:.04em}
@@ -283,6 +285,7 @@ All outlets tamperproof. GARAGE DISCONNECT at first point of entrance inside gar
     <button class="btn-gold" type="button" onclick="applyVillage()">Apply Village Codes</button>
     <button class="btn-white" type="button" onclick="loadVillagePacket(true)">Load village packet</button>
     <button class="btn-white" type="button" onclick="buildPlans(true)">Generate Plans</button>
+    <button class="btn-gold" type="button" onclick="generateAiPlanPictures()">AI plan pictures (OpenAI)</button>
     <button class="btn-gold" type="button" onclick="window.print()">Print plans</button>
     <button class="btn-white" type="button" onclick="downloadPlansPdf()">Download PDF</button>
     <button class="btn-gold" type="button" onclick="saveToHistory()">Save to History</button>
@@ -1425,55 +1428,62 @@ function hipTrapFill(x,y,w,rise,inset){
   const id='hipclip'+Math.round(x)+Math.round(y);
   const topL=x+inset, topR=x+w-inset, topY=y-rise;
   let rows='';
-  const h=rise-2;
-  const n=Math.max(8, Math.floor(h/4));
-  for(let i=0;i<n;i++){
+  const n=Math.max(14, Math.floor(rise/5));
+  for(let i=1;i<n;i++){
     const t=i/n;
-    const yy=topY+4+t*h;
-    const half=((yy-topY)/rise)*((w+28)/2);
+    const yy=topY+t*rise;
+    const half=((yy-topY)/rise)*((w+20)/2);
     const cx=x+w/2;
-    rows+=`<line x1="${cx-half}" y1="${yy}" x2="${cx+half}" y2="${yy}" stroke="#4a4a4a" stroke-width=".55"/>`;
-    const tabs=Math.max(8, Math.floor((half*2)/8));
-    for(let k=0;k<tabs;k++){
-      const xx=cx-half+4+k*((half*2)/tabs)+(i%2)*3;
-      if(xx<cx-half+2||xx>cx+half-2) continue;
-      rows+=`<path d="M${xx-3.2} ${yy} Q${xx} ${yy+2.4} ${xx+3.2} ${yy}" fill="none" stroke="#3a3a3a" stroke-width=".5"/>`;
-    }
+    rows+=`<line x1="${cx-half}" y1="${yy}" x2="${cx+half}" y2="${yy}" stroke="#555" stroke-width=".7"/>`;
   }
-  return `<defs><clipPath id="${id}"><polygon points="${x-14},${y} ${topL},${topY} ${topR},${topY} ${x+w+14},${y}"/></clipPath></defs>
-    <polygon points="${x-14},${y} ${topL},${topY} ${topR},${topY} ${x+w+14},${y}" fill="#cfcfcf" stroke="#111" stroke-width="1.8"/>
+  return `<defs><clipPath id="${id}"><polygon points="${x-12},${y} ${topL},${topY} ${topR},${topY} ${x+w+12},${y}"/></clipPath></defs>
+    <polygon points="${x-12},${y} ${topL},${topY} ${topR},${topY} ${x+w+12},${y}" fill="#d8d8d8" stroke="#111" stroke-width="1.8"/>
     <g clip-path="url(#${id})">${rows}</g>
-    <line x1="${x-14}" y1="${y}" x2="${topL}" y2="${topY}" stroke="#222" stroke-width="1.6"/>
-    <line x1="${x+w+14}" y1="${y}" x2="${topR}" y2="${topY}" stroke="#222" stroke-width="1.6"/>
-    <line x1="${topL}" y1="${topY}" x2="${topR}" y2="${topY}" stroke="#111" stroke-width="3.2"/>
-    <rect x="${x-16}" y="${y-5}" width="${w+32}" height="8" fill="#bfbfbf" stroke="#111"/>`;
+    <line x1="${x-12}" y1="${y}" x2="${topL}" y2="${topY}" stroke="#111" stroke-width="1.7"/>
+    <line x1="${x+w+12}" y1="${y}" x2="${topR}" y2="${topY}" stroke="#111" stroke-width="1.7"/>
+    <line x1="${topL}" y1="${topY}" x2="${topR}" y2="${topY}" stroke="#111" stroke-width="2.6"/>
+    <rect x="${x-16}" y="${y-6}" width="${w+32}" height="8" fill="#c4c4c4" stroke="#111"/>`;
 }
 function roofFor(view,x,y,w){
   const t=val('roof');
   if(t==='hip'){
-    const rise=82, inset=Math.max(54, w*0.16);
+    const rise=118, inset=Math.max(90, w*0.36);
     return hipTrapFill(x,y,w,rise,inset);
   }
   if(isGableEnd(view)){
     const showVent=!!($('flagGableVent')&&$('flagGableVent').checked);
-    const peak=y-78;
+    const peak=y-92;
     let vent='';
     if(showVent){
       const vx=x+w/2-12, vy=y-40;
       vent=`<rect x="${vx}" y="${vy}" width="24" height="16" fill="#fff" stroke="#111"/>`;
       for(let i=1;i<5;i++) vent+=`<line x1="${vx+2}" y1="${vy+3*i}" x2="${vx+22}" y2="${vy+3*i}" stroke="#333" stroke-width=".8"/>`;
     }
-    return `<polygon points="${x-18},${y} ${x+w/2},${peak} ${x+w+18},${y}" fill="#d0d0d0" stroke="#111" stroke-width="1.9"/>
-      <line x1="${x-18}" y1="${y}" x2="${x+w/2}" y2="${peak}" stroke="#333" stroke-width="1.3"/>
-      <line x1="${x+w+18}" y1="${y}" x2="${x+w/2}" y2="${peak}" stroke="#333" stroke-width="1.3"/>
-      <line x1="${x-20}" y1="${y-4}" x2="${x+w/2}" y2="${peak-5}" stroke="#666" stroke-width="1"/>
-      <line x1="${x+w+20}" y1="${y-4}" x2="${x+w/2}" y2="${peak-5}" stroke="#666" stroke-width="1"/>
-      <rect x="${x-20}" y="${y-6}" width="${w+40}" height="8" fill="#bfbfbf" stroke="#111"/>
+    const gid='gablefill'+Math.round(x)+view;
+    let glines='';
+    for(let i=1;i<16;i++){
+      const yy=peak+8+i*6;
+      if(yy>=y-1) break;
+      const half=((yy-peak)/(y-peak))*(w/2+16);
+      glines+=`<line x1="${x+w/2-half}" y1="${yy}" x2="${x+w/2+half}" y2="${yy}" stroke="#111" stroke-width=".7"/>`;
+    }
+    return `<defs><clipPath id="${gid}"><polygon points="${x-16},${y} ${x+w/2},${peak} ${x+w+16},${y}"/></clipPath></defs>
+      <polygon points="${x-16},${y} ${x+w/2},${peak} ${x+w+16},${y}" fill="#fff" stroke="#111" stroke-width="1.8"/>
+      <g clip-path="url(#${gid})">${glines}</g>
+      <line x1="${x-18}" y1="${y}" x2="${x+w/2}" y2="${peak}" stroke="#111" stroke-width="5"/>
+      <line x1="${x+w+18}" y1="${y}" x2="${x+w/2}" y2="${peak}" stroke="#111" stroke-width="5"/>
+      <line x1="${x-18}" y1="${y}" x2="${x+w/2}" y2="${peak}" stroke="#fff" stroke-width="2.4"/>
+      <line x1="${x+w+18}" y1="${y}" x2="${x+w/2}" y2="${peak}" stroke="#fff" stroke-width="2.4"/>
+      <line x1="${x-18}" y1="${y}" x2="${x+w/2}" y2="${peak}" stroke="#111" stroke-width="1.3"/>
+      <line x1="${x+w+18}" y1="${y}" x2="${x+w/2}" y2="${peak}" stroke="#111" stroke-width="1.3"/>
+      <rect x="${x-22}" y="${y-6}" width="${w+44}" height="7" fill="#fff" stroke="#111"/>
       ${vent}`;
   }
-  return `<rect x="${x-16}" y="${y-52}" width="${w+32}" height="52" fill="#cfcfcf" stroke="#111" stroke-width="1.7"/>
-    ${shingleFill(x-14,y-50,w+28,46)}
-    <rect x="${x-16}" y="${y-6}" width="${w+32}" height="8" fill="#bfbfbf" stroke="#111"/>`;
+  const peakR=y-48;
+  return `<polygon points="${x-18},${y} ${x+w/2},${peakR} ${x+w+18},${y}" fill="#fff" stroke="#111" stroke-width="1.7"/>
+    <line x1="${x-18}" y1="${y}" x2="${x+w/2}" y2="${peakR}" stroke="#111" stroke-width="1.5"/>
+    <line x1="${x+w+18}" y1="${y}" x2="${x+w/2}" y2="${peakR}" stroke="#111" stroke-width="1.5"/>
+    <rect x="${x-18}" y="${y-5}" width="${w+36}" height="6" fill="#fff" stroke="#111"/>`;
 }
 function vinylPattern(id,x,y,w,h, openings){
   const vertical=(val('sidingDir')||'horizontal')==='vertical';
@@ -1486,11 +1496,10 @@ function vinylPattern(id,x,y,w,h, openings){
       if(i%3===0) hatch+=`<rect x="${xx-1.1}" y="${y+1}" width="2.2" height="${h-2}" fill="#c8c8c8" stroke="#6f6f6f" stroke-width=".35"/>`;
     }
   } else {
-    const step=5;
-    for(let i=0;i<Math.ceil(h/step);i++){
-      const yy=y+3+i*step;
-      hatch+=`<line x1="${x+1}" y1="${yy}" x2="${x+w-1}" y2="${yy}" stroke="#6a6a6a" stroke-width=".85"/>`;
-      hatch+=`<line x1="${x+1}" y1="${yy+1.6}" x2="${x+w-1}" y2="${yy+1.6}" stroke="#b8b8b8" stroke-width=".35"/>`;
+    const step=9;
+    for(let i=1;i<Math.ceil(h/step);i++){
+      const yy=y+i*step;
+      hatch+=`<line x1="${x+1}" y1="${yy}" x2="${x+w-1}" y2="${yy}" stroke="#111" stroke-width=".75"/>`;
     }
   }
   const holes=(openings||[]).map((o,i)=>`<rect x="${o.x}" y="${o.y}" width="${o.w}" height="${o.h}"/>`).join('');
@@ -1501,27 +1510,22 @@ function vinylPattern(id,x,y,w,h, openings){
         ${(openings||[]).map(o=>`<rect x="${o.x-1}" y="${o.y-1}" width="${o.w+2}" height="${o.h+2}" fill="#000"/>`).join('')}
       </mask>
     </defs>
-    <rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#ececec" stroke="#111" stroke-width="1.7"/>
+    <rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#fff" stroke="#111" stroke-width="1.8"/>
     <g mask="url(#${id}m)">${hatch}</g>`;
 }
 function raisedPanelDoor(x,y,w,h, kind){
   const party=kind==='party';
   const rows=4, cols=party?(w>70?3:2):(w>88?4:w>50?3:2);
-  let s=`<rect x="${x-2}" y="${y-3}" width="${w+4}" height="${h+5}" fill="#333" opacity=".12"/>
-    <rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#cfd3d8" stroke="#111" stroke-width="2"/>
-    <rect x="${x+2}" y="${y+2}" width="${w-4}" height="${h-4}" fill="none" stroke="#6a6a6a"/>`;
-  const rw=(w-8)/cols, rh=(h-10)/rows;
+  let s=`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#fff" stroke="#111" stroke-width="1.8"/>`;
+  const rw=(w-10)/cols, rh=(h-10)/rows;
   for(let r=0;r<rows;r++){
     for(let c=0;c<cols;c++){
-      const px=x+4+c*rw, py=y+4+r*rh;
-      s+=`<rect x="${px}" y="${py}" width="${rw-3}" height="${rh-2.5}" fill="#dfe3e8" stroke="#222" stroke-width="1"/>
-        <rect x="${px+2}" y="${py+2}" width="${rw-7}" height="${rh-6.5}" fill="none" stroke="#8a9098"/>`;
+      const px=x+5+c*rw, py=y+5+r*rh;
+      s+=`<rect x="${px}" y="${py}" width="${rw-4}" height="${rh-3.5}" fill="#fff" stroke="#111" stroke-width="1.15"/>
+        <rect x="${px+2.2}" y="${py+2}" width="${rw-8.4}" height="${rh-7.5}" fill="none" stroke="#444" stroke-width=".7"/>`;
     }
-    s+=`<line x1="${x+2}" y1="${y+4+(r+1)*rh}" x2="${x+w-2}" y2="${y+4+(r+1)*rh}" stroke="#333" stroke-width="1.2"/>`;
   }
-  s+=`<rect x="${x}" y="${y+h-4}" width="${w}" height="4" fill="#3a3a3a"/>
-    <circle cx="${x+w-8}" cy="${y+h*0.62}" r="2.6" fill="#1f1f1f"/>
-    <circle cx="${x+w-8}" cy="${y+h*0.62}" r="1.1" fill="#888"/>`;
+  s+=`<circle cx="${x+w-7}" cy="${y+h*0.58}" r="2.2" fill="#111"/>`;
   return s;
 }
 function serviceDoorDraw(x,y,w,h){
@@ -1542,20 +1546,20 @@ function serviceDoorDraw(x,y,w,h){
     ${swing}`;
 }
 function windowDraw(x,y,w,h, slider){
-  let s=`<rect x="${x-2.5}" y="${y-2.5}" width="${w+5}" height="${h+6}" fill="#fff" stroke="#111" stroke-width="1.4"/>
-    <rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#eef6ff" stroke="#111"/>
-    <rect x="${x+2}" y="${y+2}" width="${w-4}" height="${h-4}" fill="none" stroke="#333"/>`;
+  let s=`<rect x="${x-4}" y="${y-3}" width="${w+8}" height="${h+8}" fill="#fff" stroke="#111" stroke-width="1.7"/>
+    <rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#fff" stroke="#111" stroke-width="1.5"/>
+    <rect x="${x+3}" y="${y+3}" width="${w-6}" height="${h-6}" fill="none" stroke="#111"/>`;
   if(slider){
-    s+=`<line x1="${x+w/2}" y1="${y+2}" x2="${x+w/2}" y2="${y+h-2}" stroke="#111" stroke-width="1.3"/>
-      <rect x="${x+3}" y="${y+3}" width="${w/2-6}" height="${h-6}" fill="none" stroke="#4b5563"/>
-      <rect x="${x+w/2+3}" y="${y+3}" width="${w/2-6}" height="${h-6}" fill="none" stroke="#4b5563"/>`;
+    s+=`<line x1="${x+w/2}" y1="${y+3}" x2="${x+w/2}" y2="${y+h-3}" stroke="#111" stroke-width="1.6"/>
+      <rect x="${x+5}" y="${y+5}" width="${w/2-9}" height="${h-10}" fill="none" stroke="#333"/>
+      <rect x="${x+w/2+4}" y="${y+5}" width="${w/2-9}" height="${h-10}" fill="none" stroke="#333"/>`;
   } else {
-    const mid=y+h*0.52;
-    s+=`<line x1="${x+1}" y1="${mid}" x2="${x+w-1}" y2="${mid}" stroke="#111" stroke-width="1.6"/>
-      <rect x="${x+3}" y="${y+3}" width="${w-6}" height="${mid-y-6}" fill="none" stroke="#4b5563"/>
-      <rect x="${x+3}" y="${mid+2}" width="${w-6}" height="${y+h-mid-5}" fill="none" stroke="#4b5563"/>`;
+    const mid=y+h*0.48;
+    s+=`<line x1="${x+1}" y1="${mid}" x2="${x+w-1}" y2="${mid}" stroke="#111" stroke-width="1.8"/>
+      <rect x="${x+5}" y="${y+5}" width="${w-10}" height="${mid-y-8}" fill="none" stroke="#333"/>
+      <rect x="${x+5}" y="${mid+3}" width="${w-10}" height="${y+h-mid-8}" fill="none" stroke="#333"/>`;
   }
-  s+=`<rect x="${x-4}" y="${y+h}" width="${w+8}" height="3.2" fill="#d4d4d4" stroke="#111"/>`;
+  s+=`<rect x="${x-5}" y="${y+h}" width="${w+10}" height="3.4" fill="#fff" stroke="#111"/>`;
   return s;
 }
 let planVis={};
@@ -1588,7 +1592,7 @@ function elevLarge(view, title){
   const span=(view==='front'||view==='back')?W:D;
   const wall=Number(val('wallH'))||8;
   const tot=totalH();
-  const x=210, y=150, ww=500, wh=248;
+  const x=170, y=188, ww=540, wh=240;
   const openings=[];
   let ops='';
   if(val('ohWall')===view){
@@ -1643,19 +1647,20 @@ function elevLarge(view, title){
   }
   const patE=patioDim();
   let patioCaption='';
-  if(patE.on && patE.wall===view){
-    const pw=ww;
-    const px=x;
-    const ph=16;
-    ops+=`<rect x="${px}" y="${y+wh}" width="${pw}" height="${ph}" fill="#cfcfcf" stroke="#111"/>`;
-    const postTop=y-6;
-    const postW=8;
+  let patioLayer='';
+  const patioOnFace=patE.on && patE.wall===view;
+  if(patioOnFace){
+    const postW=11, postTop=y-6, slabY=y+wh;
     patioPostT(patE.posts).forEach(along=>{
-      const cx=px+along*(pw-postW);
-      ops+=`<rect x="${cx}" y="${postTop}" width="${postW}" height="${y+wh-postTop}" fill="#cfcfcf" stroke="#111"/>`;
+      const cx=x+along*(ww-postW);
+      patioLayer+=`<rect x="${cx-2}" y="${postTop}" width="${postW+4}" height="6" fill="#fff" stroke="#111"/>
+        <rect x="${cx}" y="${postTop+6}" width="${postW}" height="${slabY-postTop-10}" fill="#fff" stroke="#111" stroke-width="1.5"/>
+        <rect x="${cx-3}" y="${slabY-6}" width="${postW+6}" height="6" fill="#fff" stroke="#111"/>`;
     });
-    ops+=`<line x1="${x-16}" y1="${y-6}" x2="${x+ww+16}" y2="${y-6}" stroke="#111" stroke-width="2"/>`;
-    patioCaption=`ROOFED PATIO ${patE.d}' OUT · (${patE.posts}) 4x4 POSTS · ROOF FLUSH`;
+    patioLayer+=`<rect x="${x-8}" y="${slabY}" width="${ww+16}" height="14" fill="#cfcfcf" stroke="#111"/>
+      <rect x="${x-10}" y="${slabY+14}" width="${ww+20}" height="22" fill="none" stroke="#111" stroke-dasharray="6 4"/>
+      <text x="${x+ww/2}" y="${slabY+48}" text-anchor="middle" font-size="11" font-weight="700">ROOFED PATIO ${ftLabel(patE.d)}  ·  (${patE.posts}) 4x4 POSTS  ·  CONC. SLAB</text>`;
+    patioCaption='';
   } else if(patE.on){
     const side=(function(){
       const w=patE.wall;
@@ -1666,17 +1671,15 @@ function elevLarge(view, title){
       return null;
     })();
     if(side){
-      const pd=Math.max(70, Math.min(120, ww*(patE.d/Math.max(span,8))));
+      const pd=Math.max(88, Math.min(140, ww*(patE.d/Math.max(span,8))));
       const px=side==='right'?x+ww:x-pd;
-      const ph=16;
-      ops+=`<rect x="${px}" y="${y+wh}" width="${pd}" height="${ph}" fill="#cfcfcf" stroke="#111"/>`;
-      const postTop=y-6;
       patioPostT(patE.posts).forEach(along=>{
-        const cx=px+along*(pd-8);
-        ops+=`<rect x="${cx}" y="${postTop}" width="8" height="${y+wh-postTop}" fill="#cfcfcf" stroke="#111"/>`;
+        const cx=px+along*(pd-11);
+        patioLayer+=`<rect x="${cx}" y="${y-6}" width="11" height="${wh+6}" fill="#d0d0d0" stroke="#111" stroke-width="1.5"/>`;
       });
-      ops+=`<line x1="${side==='right'?x+ww-8:px}" y1="${y-6}" x2="${side==='right'?px+pd:x+8}" y2="${y-6}" stroke="#111" stroke-width="2"/>`;
-      patioCaption=`ROOFED PATIO ${patE.d}' ${side.toUpperCase()} · (${patE.posts}) 4x4 · FLUSH ROOF`;
+      patioLayer+=`<rect x="${px}" y="${y+wh}" width="${pd}" height="14" fill="#cfcfcf" stroke="#111"/>
+        <line x1="${px}" y1="${y-6}" x2="${px+pd}" y2="${y-6}" stroke="#111" stroke-width="2"/>
+        <text x="${px+pd/2}" y="${y+wh+36}" text-anchor="middle" font-size="10" font-weight="700">${patE.d}' PATIO</text>`;
     }
   }
   const retBits=[];
@@ -1692,28 +1695,11 @@ function elevLarge(view, title){
   const vinyl=vinylPattern(clipId,x,y,ww,wh,openings);
   const corners=`<rect x="${x}" y="${y}" width="7" height="${wh}" fill="#d9d9d9" stroke="#111"/>
     <rect x="${x+ww-7}" y="${y}" width="7" height="${wh}" fill="#d9d9d9" stroke="#111"/>`;
-  const apronOn=view==='front' && Number(val('apronFt')||0)>0;
-  const slabH=apronOn?16:7;
-  const slab=`<rect x="${x-(apronOn?10:6)}" y="${y+wh}" width="${ww+(apronOn?20:12)}" height="${slabH}" fill="#cfcfcf" stroke="#111"/>
+  const apronOn=view==='front' && Number(val('apronFt')||0)>0 && !patioOnFace;
+  const slabH=patioOnFace?14:(apronOn?16:7);
+  const slab=patioOnFace?'':`<rect x="${x-(apronOn?10:6)}" y="${y+wh}" width="${ww+(apronOn?20:12)}" height="${slabH}" fill="#cfcfcf" stroke="#111"/>
     <line x1="${x-12}" y1="${y+wh+slabH}" x2="${x+ww+12}" y2="${y+wh+slabH}" stroke="#111"/>`;
-  const gableSid=gable?(function(){
-    const vertical=(val('sidingDir')||'horizontal')==='vertical';
-    let lines=`<polygon points="${x},${y} ${x+ww/2},${y-56} ${x+ww},${y}" fill="#e8e8e8" stroke="#111"/>`;
-    if(vertical){
-      for(let i=1;i<Math.floor(ww/7);i++){
-        const xx=x+i*7, t=Math.abs((xx-(x+ww/2))/(ww/2)), top=y-56+t*56;
-        lines+=`<line x1="${xx}" y1="${top}" x2="${xx}" y2="${y}" stroke="#8a8a8a" stroke-width=".55"/>`;
-      }
-    } else {
-      for(let i=1;i<13;i++){
-        const yy=y-4-i*4;
-        if(yy<y-54) break;
-        const half=((y-yy)/56)*(ww/2);
-        lines+=`<line x1="${x+ww/2-half}" y1="${yy}" x2="${x+ww/2+half}" y2="${yy}" stroke="#7a7a7a" stroke-width=".7"/>`;
-      }
-    }
-    return lines;
-  })():'';
+  const gableSid='';
   const ftLabel=n=>{
     const v=Number(n)||0;
     const f=Math.floor(v);
@@ -1722,47 +1708,72 @@ function elevLarge(view, title){
   };
   const cars=W>=27?'THREE-CAR':(W>=20?'TWO-CAR':'ONE-CAR');
   const jobTitle=ftLabel(W)+' x '+ftLabel(D)+' DETACHED '+cars+' GARAGE';
-  const viewName=(title||view).toUpperCase()+' ELEVATION';
+  const rtName=val('roof')==='hip'?'HIP':val('roof')==='revgable'?'REVERSE GABLE':'GABLE';
+  const patioBit=patE.on?(' + PATIO '+String(patE.wall||'').toUpperCase()):'';
+  const viewName=(title||view).toUpperCase()+' ELEVATION — '+rtName+patioBit;
   const vinylNote=((val('sidingDir')||'horizontal')==='vertical')?'VERTICAL VINYL SIDING':'HORIZONTAL VINYL SIDING';
   const vinylExp=((val('sidingDir')||'horizontal')==='vertical')?'':'4" EXPOSURE';
-  const downspout=showGut?`
-    <rect x="${x-11}" y="${y-2}" width="4" height="${wh+2}" fill="#d5d5d5" stroke="#111"/>
-    <rect x="${x+ww+7}" y="${y-2}" width="4" height="${wh+2}" fill="#d5d5d5" stroke="#111"/>
-    <rect x="${x-13}" y="${y+wh-6}" width="8" height="5" fill="#c8c8c8" stroke="#111"/>
-    <rect x="${x+ww+5}" y="${y+wh-6}" width="8" height="5" fill="#c8c8c8" stroke="#111"/>`:'';
-  const gutterBar=showGut?`<rect x="${x-14}" y="${y-7}" width="${ww+28}" height="7" fill="#c4c4c4" stroke="#111"/>`:'';
+  const gutterDraw=(function(){
+    if(!showGut) return '';
+    function stack(side){
+      const left=side==='left';
+      const wall=left?x:x+ww;
+      const out=left?-1:1;
+      const gOut=wall+out*22, gIn=wall+out*5;
+      const gy=y-5;
+      const face=6;
+      const pipeL=left?wall-7:wall+1;
+      const top=y+5, bot=y+wh-1;
+      const gutter=`<path d="M${gOut} ${gy-9} L${gIn} ${gy-9} L${gIn} ${gy+3} L${gOut+out*4} ${gy+3} L${gOut} ${gy-2} Z" fill="#fff" stroke="#111" stroke-width="1.45"/>`;
+      const offset=`<path d="M${gIn} ${gy+3} C${gIn} ${gy+10} ${pipeL+face/2} ${top-2} ${pipeL+face/2} ${top}" fill="none" stroke="#111" stroke-width="2.2"/>
+        <path d="M${gIn-out*2} ${gy+3} C${gIn-out*2} ${gy+12} ${pipeL+(left?0:face)} ${top} ${pipeL+(left?0:face)} ${top}" fill="none" stroke="#111" stroke-width="1.2"/>`;
+      const pipe=`<rect x="${pipeL}" y="${top}" width="${face}" height="${bot-top}" fill="#fff" stroke="#111" stroke-width="1.35"/>
+        <line x1="${pipeL+(left?2:face-2)}" y1="${top}" x2="${pipeL+(left?2:face-2)}" y2="${bot}" stroke="#111"/>`;
+      const shoe=left
+        ? `<path d="M${pipeL} ${bot} L${pipeL+face} ${bot} L${pipeL+face-4} ${bot+7} L${pipeL-9} ${bot+7} L${pipeL-9} ${bot+2} Z" fill="#fff" stroke="#111" stroke-width="1.3"/>`
+        : `<path d="M${pipeL} ${bot} L${pipeL+face} ${bot} L${pipeL+face+9} ${bot+2} L${pipeL+face+9} ${bot+7} L${pipeL+4} ${bot+7} Z" fill="#fff" stroke="#111" stroke-width="1.3"/>`;
+      return gutter+offset+pipe+shoe;
+    }
+    return stack('left')+stack('right');
+  })();
+  const downspout='';
+  const gutterBar=gutterDraw;
   const L=28;
   const notes=[];
-  notes.push(`<text x="${L}" y="${y+36}" font-size="10" font-weight="700">${vinylNote}</text>
-    ${vinylExp?`<text x="${L}" y="${y+50}" font-size="10">${vinylExp}</text>`:''}
-    <line x1="${L+118}" y1="${y+40}" x2="${x-2}" y2="${y+40}" stroke="#111"/>`);
+  if(!patioOnFace){
+  notes.push(`<text x="${x+ww/2}" y="${y-28}" text-anchor="middle" font-size="9" font-weight="700">${vinylNote}</text>
+    ${vinylExp?`<text x="${x+ww/2}" y="${y-16}" text-anchor="middle" font-size="9">${vinylExp}</text>`:''}`);
   if(showTies){
-    notes.push(`<text x="${L}" y="${y-62}" font-size="10" font-weight="700">HURRICANE TIES</text>
-      <text x="${L}" y="${y-48}" font-size="10">AT RAFTER-TO-WALL</text>
-      <line x1="${L+128}" y1="${y-54}" x2="${x-8}" y2="${y-4}" stroke="#111"/>
-      <line x1="${x+ww+10}" y1="${y-4}" x2="${x+ww+86}" y2="${y-54}" stroke="#111"/>
-      <text x="${x+ww+90}" y="${y-58}" font-size="10" font-weight="700">HURRICANE TIES</text>
-      <text x="${x+ww+90}" y="${y-44}" font-size="10">AT RAFTER-TO-WALL</text>`);
+    notes.push(`<text x="${L}" y="${y+wh+22}" font-size="9" font-weight="700">HURRICANE TIES</text>
+      <text x="${L}" y="${y+wh+34}" font-size="9">AT RAFTER-TO-WALL</text>
+      <line x1="${L+90}" y1="${y+wh+20}" x2="${x-2}" y2="${y+8}" stroke="#111"/>
+      <polygon points="${x-2},${y+2} ${x+10},${y-7} ${x+12},${y-3} ${x},${y+6}" fill="#fff" stroke="#111"/>
+      <polygon points="${x+ww+2},${y+2} ${x+ww-10},${y-7} ${x+ww-12},${y-3} ${x+ww},${y+6}" fill="#fff" stroke="#111"/>`);
   }
   if(showAlum){
-    notes.push(`<text x="${L}" y="${y-22}" font-size="10" font-weight="700">ALUMINUM SOFFIT</text>
-      <text x="${L}" y="${y-8}" font-size="10">&amp; FASCIA</text>
-      <line x1="${L+128}" y1="${y-14}" x2="${x-6}" y2="${y-2}" stroke="#111"/>`);
+    notes.push(`<text x="${x+ww+78}" y="${y-52}" font-size="9" font-weight="700">ALUMINUM SOFFIT</text>
+      <text x="${x+ww+78}" y="${y-38}" font-size="9">&amp; FASCIA</text>
+      <line x1="${x+ww+76}" y1="${y-44}" x2="${x+ww+16}" y2="${y-8}" stroke="#111"/>`);
   }
   if(showGut){
-    notes.push(`<text x="${L}" y="${y+72}" font-size="10" font-weight="700">GUTTER</text>
-      <line x1="${L+58}" y1="${y+68}" x2="${x-10}" y2="${y-2}" stroke="#111"/>`);
+    notes.push(`<text x="${L}" y="${y-48}" font-size="9" font-weight="700">GUTTERS &amp; DOWNSPOUTS</text>
+      <text x="${L}" y="${y-34}" font-size="9">AT EAVES</text>
+      <line x1="${L+118}" y1="${y-40}" x2="${x-16}" y2="${y-10}" stroke="#111"/>
+      <text x="${x+ww+78}" y="${y+24}" font-size="9" font-weight="700">GUTTERS &amp; DOWNSPOUTS</text>
+      <text x="${x+ww+78}" y="${y+38}" font-size="9">AT EAVES</text>
+      <line x1="${x+ww+76}" y1="${y+26}" x2="${x+ww+24}" y2="${y-8}" stroke="#111"/>`);
   }
   if(gable && $('flagGableVent')&&$('flagGableVent').checked){
-    notes.push(`<line x1="${x+ww/2+14}" y1="${y-28}" x2="${x+ww/2+90}" y2="${y-70}" stroke="#111"/>
-      <text x="${x+ww/2+94}" y="${y-74}" font-size="10" font-weight="700">GABLE VENT</text>
-      <text x="${x+ww/2+94}" y="${y-60}" font-size="10">(TYP.)</text>`);
+    notes.push(`<line x1="${x+ww/2+16}" y1="${y-50}" x2="${x+ww/2+86}" y2="${y-78}" stroke="#111"/>
+      <text x="${x+ww/2+90}" y="${y-82}" font-size="9" font-weight="700">GABLE VENT (TYP.)</text>`);
   }
   if(gable){
-    notes.push(`<text x="${x+ww/2+10}" y="${y-88}" font-size="10" font-weight="700">PITCH ${pitchNum()}/12</text>`);
+    notes.push(`<text x="${x+ww/2+56}" y="${y-70}" font-size="10" font-weight="700">PITCH ${pitchNum()}/12</text>
+      <line x1="${x+ww/2+20}" y1="${y-66}" x2="${x+ww/2+4}" y2="${y-50}" stroke="#111"/>`);
   }
-  if(val('ohWall')===view){
-    notes.push(`<text x="${x+ww/2}" y="${y+wh+slabH+44}" text-anchor="middle" font-size="11" font-weight="700">${esc((val('ohW')||16)+'-0" x '+(val('ohH')||7)+'-0" RAISED-PANEL STEEL OVERHEAD DOOR')}</text>`);
+  }
+  if(val('ohWall')===view && !patioOnFace){
+    notes.push(`<text x="${x+ww/2}" y="${y+wh+slabH+64}" text-anchor="middle" font-size="10" font-weight="700">${esc((val('ohW')||16)+'-0" x '+(val('ohH')||7)+'-0" RAISED-PANEL STEEL OVERHEAD DOOR')}</text>`);
   }
   if(val('partyWall')===view){
     const ps=val('partySize')||'6x7';
@@ -1779,14 +1790,20 @@ function elevLarge(view, title){
   const plateH=ftLabel(wall);
   const overall=ftLabel(tot);
   const heightDims=`
-    <line x1="${x+ww+18}" y1="${y-82}" x2="${x+ww+18}" y2="${y+wh}" stroke="#111"/>
-    <line x1="${x+ww+14}" y1="${y-82}" x2="${x+ww+22}" y2="${y-82}" stroke="#111"/>
-    <line x1="${x+ww+14}" y1="${y}" x2="${x+ww+22}" y2="${y}" stroke="#111"/>
-    <line x1="${x+ww+14}" y1="${y+wh}" x2="${x+ww+22}" y2="${y+wh}" stroke="#111"/>
-    <text x="${x+ww+24}" y="${y-20}" font-size="8">OVERALL HEIGHT</text>
-    <text x="${x+ww+24}" y="${y-8}" font-size="8" font-weight="700">${overall}</text>
-    <text x="${x+ww+24}" y="${y+wh/2-6}" font-size="8">PLATE HEIGHT</text>
-    <text x="${x+ww+24}" y="${y+wh/2+6}" font-size="8" font-weight="700">${plateH}</text>`;
+    <line x1="${x-36}" y1="${y}" x2="${x-36}" y2="${y+wh}" stroke="#111"/>
+    <line x1="${x-40}" y1="${y}" x2="${x-32}" y2="${y}" stroke="#111"/>
+    <line x1="${x-40}" y1="${y+wh}" x2="${x-32}" y2="${y+wh}" stroke="#111"/>
+    <text x="${x-44}" y="${y+wh/2-8}" text-anchor="end" font-size="11" font-weight="700">${plateH}</text>
+    <text x="${x-44}" y="${y+wh/2+8}" text-anchor="end" font-size="10">PLATE</text>
+    <line x1="${x}" y1="${y-128}" x2="${x+ww}" y2="${y-128}" stroke="#111"/>
+    <line x1="${x}" y1="${y-132}" x2="${x}" y2="${y-124}" stroke="#111"/>
+    <line x1="${x+ww}" y1="${y-132}" x2="${x+ww}" y2="${y-124}" stroke="#111"/>
+    <text x="${x+ww/2}" y="${y-136}" text-anchor="middle" font-size="12" font-weight="700">${ftLabel(span)}</text>
+    <line x1="${x+ww+48}" y1="${y-80}" x2="${x+ww+48}" y2="${y+wh}" stroke="#111"/>
+    <line x1="${x+ww+44}" y1="${y-80}" x2="${x+ww+52}" y2="${y-80}" stroke="#111"/>
+    <line x1="${x+ww+44}" y1="${y+wh}" x2="${x+ww+52}" y2="${y+wh}" stroke="#111"/>
+    <text x="${x+ww+54}" y="${y+wh/2-70}" font-size="9">OVERALL HEIGHT</text>
+    <text x="${x+ww+54}" y="${y+wh/2-56}" font-size="11" font-weight="700">${overall}</text>`;
   return `<div>
     <svg viewBox="0 0 900 640" width="100%" style="max-height:9.4in">
       <text x="16" y="24" font-size="18" font-weight="800" text-decoration="underline">${esc(viewName)}</text>
@@ -1802,6 +1819,7 @@ function elevLarge(view, title){
       ${ops}
       ${downspout}
       ${slab}
+      ${patioLayer}
       ${notes.join('')}
       ${heightDims}
       <line x1="${x}" y1="${y+wh+slabH+18}" x2="${x+ww}" y2="${y+wh+slabH+18}" stroke="#111"/>
@@ -1918,10 +1936,17 @@ function pageSectionRoof(){
 }
 function pageElevations(){
   const views=[['front','FRONT','2'],['back','REAR','3'],['left','LEFT','4'],['right','RIGHT','5']];
-  return views.map(([view,title,num])=>`<section class="${sheetClass()}">
-    <div class="elevpage">${elevLarge(view,title)}</div>
+  const photos=window._planAiPhotos||{};
+  return views.map(([view,title,num])=>{
+    const url=photos[view];
+    const body=url
+      ? `<div class="elevpage ai-elev"><img alt="${title} elevation" src="${String(url).replace(/"/g,'')}"></div>`
+      : `<div class="elevpage">${elevLarge(view,title)}</div>`;
+    return `<section class="${sheetClass()}">
+    ${body}
     ${tblock(title+' ELEVATION', num, String(sheetTotal()))}
-  </section>`).join('');
+  </section>`;
+  }).join('');
 }
 function pageDetail(){
   if(!needsBraceDetail()) return '';
@@ -2091,6 +2116,7 @@ function fitSheetsToPanel(){
 }
 function buildPlans(scrollTo){
   try{
+    if(scrollTo) window._planAiPhotos={};
     if($('width') && !(Number(val('width'))>0)) $('width').value='20';
     if($('depth') && !(Number(val('depth'))>0)) $('depth').value='20';
     if($('wallH') && !(Number(val('wallH'))>0)) $('wallH').value='8';
@@ -2485,6 +2511,120 @@ document.addEventListener('DOMContentLoaded',()=>{
   });
   buildPlans();
 });
+
+window._planAiPhotos=window._planAiPhotos||{};
+
+function planAiJobPrompt(view){
+  const W=Number(val('width'))||20, D=Number(val('depth'))||20, H=Number(val('wallH'))||8;
+  const roof=val('roof')||'hip';
+  const pitch=val('pitch')||'4/12';
+  const city=cityName()||'Village';
+  const gutters=(val('gutters')==='yes') || ($('flagGutters')&&$('flagGutters').checked);
+  const soffit=$('flagSoffit')?$('flagSoffit').checked:true;
+  const ties=$('flagTies')?$('flagTies').checked:true;
+  const patio=val('patioWall')||'none';
+  const patioSize=val('patioSize')||'8';
+  const posts=val('patioPosts')||'4';
+  const ohW=val('ohW')||'16', ohH=val('ohH')||'7', ohWall=val('ohWall')||'front';
+  const ohRet=val('ohLeftReturn');
+  const partyWall=val('partyWall')||'none';
+  const partySize=val('partySize')||'6x7';
+  const partyRet=val('partyLeftReturn');
+  const svcWall=val('svcWall')||'none';
+  const svcSwing=val('svcSwing')||'in';
+  const winWall=val('winWall')||'none';
+  const winType=val('winType')||'Slider';
+  const winSize=val('winSize')||'4x2';
+  const winCount=Number(val('winCount')||0);
+  const siding=val('siding')||'D4 vinyl';
+  const sidingDir=val('sidingDir')||'horizontal';
+  const shingles=val('shingles')||'Architectural';
+  const apron=val('apronFt')||'3';
+  const viewName=view==='back'?'rear':view;
+
+  const lines=[
+    'CRITICAL VIEW: '+viewName.toUpperCase()+' ELEVATION ONLY of a detached garage. Official black-and-white CAD permit drawing on white paper. Thin linework, title block, no people, no cars blocking the building, no logo watermark.',
+    'JOB: '+W+' ft wide x '+D+' ft deep x '+H+' ft plate. Village of '+city+'. Pitch '+pitch+'. Siding '+siding+' '+sidingDir+'. Shingles '+shingles+'.',
+    roof==='revgable'
+      ? 'CRITICAL REVERSE GABLE: gable triangles ONLY on LEFT and RIGHT walls. FRONT and REAR are long eave RUNS with NO triangle over the wall. Ridge runs front-to-back. A FRONT or REAR view is a rectangle + sloped eave. A LEFT or RIGHT view is the full gable triangle.'
+      : (roof==='gable'
+        ? 'CRITICAL STANDARD GABLE: triangles on FRONT and REAR. LEFT and RIGHT are eave runs. FRONT view shows the gable triangle.'
+        : 'CRITICAL HIP ROOF: no gable triangles on any wall. All four sides are hip slopes.'),
+    'CRITICAL OVERHEAD DOOR: '+ohW+'x'+ohH+' raised-panel steel overhead on the '+ohWall+' wall only'+(ohRet!==''?' with '+ohRet+' ft left return':' centered')+'. Show it only if this view can see that wall. Door to grade.',
+    partyWall!=='none'
+      ? 'CRITICAL PARTY DOOR: one '+partySize+' raised-panel steel MINI OVERHEAD door on the '+partyWall+' wall'+(partyRet!==''?' , '+partyRet+' ft from the left end of that wall':'')+'. It is ONE door, not two swing doors, no knob. Show only if this view sees that wall.'
+      : 'NO PARTY DOOR. Do not invent one.',
+    svcWall!=='none'
+      ? 'CRITICAL SERVICE DOOR: 36x80 steel swing door on the '+svcWall+' wall, swing '+svcSwing+' toward the closest interior wall. Show only if this view sees that wall.'
+      : 'NO SERVICE DOOR.',
+    (winWall!=='none' && winCount>0)
+      ? 'CRITICAL WINDOW: '+winCount+' '+winType+' '+winSize+' on the '+winWall+' wall. Show only if this view sees that wall.'
+      : 'NO WINDOW unless listed.',
+    patio!=='none'
+      ? 'CRITICAL ROOFED PATIO: '+patioSize+' ft deep on the '+patio+' wall, full length of that wall, EXACTLY '+(posts||'4')+' 4x4 posts. Concrete slab under. Reverse gable: extend the SAME roof plane flush over the patio, do not draw a dropped shed.'
+      : 'NO ROOFED PATIO. Do not invent one.',
+    gutters
+      ? 'CRITICAL GUTTERS: K-style box at the eave, S-offset, rectangular downspout, shoe at grade. TWO downspouts total on the whole building at the FRONT eave corners only. Do not add a third downspout on a gable or rear corner.'
+      : 'NO GUTTERS.',
+    soffit?'Aluminum soffit and fascia.':'',
+    ties?'Hurricane ties at rafter-to-wall (IRC R802.11) labeled if it fits without overlapping.':'',
+    apron && Number(apron)>0 && (view==='front' || ohWall===view) ? 'Concrete apron '+apron+' ft at the overhead door wall.' : '',
+    'NO gable vent unless the panel asked for one. Title: '+viewName.toUpperCase()+' ELEVATION — '+W+'x'+D+' '+roof+' — '+city+'. Contractor ABSOLUTE GARAGE BUILDERS 3050 W IRVING PARK RD. PERMIT DRAWING NOT FOR CONSTRUCTION.',
+    'Do not change roof type. Do not invent openings. Do not overlap labels.'
+  ];
+  return lines.filter(Boolean).join(' ');
+}
+
+async function callPlanPhoto(prompt){
+  const body={ prompt:String(prompt||'').slice(0,4500) };
+  const timeout=new Promise((_,rej)=>setTimeout(()=>rej(new Error('generate-garage-photo timed out after 180s')),180000));
+  if(garageSb && garageSb.functions && garageSb.functions.invoke){
+    const timed=await Promise.race([garageSb.functions.invoke('generate-garage-photo',{body}), timeout]);
+    const {data,error}=timed||{};
+    if(error) throw new Error(error.message||String(error));
+    const url=data && (data.url || (data.b64?('data:image/png;base64,'+data.b64):null));
+    if(url) return url;
+    throw new Error((data&&data.error)||'No image URL from generate-garage-photo');
+  }
+  const headers={'Content-Type':'application/json','apikey':SB_KEY};
+  try{
+    const sess=await garageSb.auth.getSession();
+    const tok=sess&&sess.data&&sess.data.session&&sess.data.session.access_token;
+    if(tok) headers.Authorization='Bearer '+tok;
+  }catch(_){}
+  const raw=await Promise.race([
+    fetch(SB_URL+'/functions/v1/generate-garage-photo',{method:'POST',headers,body:JSON.stringify(body)}),
+    timeout
+  ]);
+  const json=await raw.json().catch(()=>({}));
+  if(!raw.ok) throw new Error(json.error||('Edge HTTP '+raw.status));
+  const url=json.url || (json.b64?('data:image/png;base64,'+json.b64):null);
+  if(!url) throw new Error(json.error||'No image URL');
+  return url;
+}
+
+async function generateAiPlanPictures(){
+  const views=['front','back','left','right'];
+  const titles={front:'FRONT',back:'REAR',left:'LEFT',right:'RIGHT'};
+  window._planAiPhotos=window._planAiPhotos||{};
+  setLoad(true,'AI elevations — this uses the same OpenAI function as the estimator. About 20–40s per view.');
+  setStatus('Starting AI plan pictures for '+cityName()+'…');
+  try{
+    for(let i=0;i<views.length;i++){
+      const view=views[i];
+      setLoad(true,'OpenAI '+titles[view]+' elevation ('+(i+1)+'/4) — keep this tab open…');
+      setStatus('Drawing '+titles[view]+' elevation with OpenAI from the panel…');
+      const url=await callPlanPhoto(planAiJobPrompt(view));
+      window._planAiPhotos[view]=url;
+      buildPlans(false);
+    }
+    setStatus('AI elevations ready for '+customerLabel()+' · '+cityName()+' · Generate Plans still draws SVG if you want the vector sheets back.', true);
+  }catch(err){
+    setStatus('AI plan pictures failed: '+(err&&err.message||err)+'. SVG sheets are still available via Generate Plans.');
+  }finally{
+    setLoad(false);
+  }
+}
 </script>
 </body>
 </html>

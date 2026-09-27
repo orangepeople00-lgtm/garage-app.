@@ -1463,6 +1463,16 @@ function estimatePricingDetails(e){
  }else{
    html+='<div style="font-size:14px;color:#6b7280">Internal cost was not saved on this older estimate.</div>';
  }
+ const optSheets=s.option_sheets||{};
+ const optKeys=['A','B','C'].filter(k=>optSheets[k] && (optSheets[k].sheet_html || Number(optSheets[k].quote)>0));
+ if(optKeys.length>1){
+  html+='<div style="margin-top:10px;font-size:13px;font-weight:800">Multiple options</div>';
+  optKeys.forEach(k=>{
+   const o=optSheets[k];
+   const size=(o.width&&o.depth)?(o.width+'x'+o.depth+' '):'';
+   html+=`<div style="font-size:13px">Option ${k}: ${esc(size)}${money(o.quote||0)}${o.internal?` <span style="color:#64748b">(internal ${money(o.internal)})</span>`:''}</div>`;
+  });
+ }
  const rawRevisions=Array.isArray(s.revision_history)?s.revision_history:[];
  const isBootstrapRevision=r=>{
    const changes=Array.isArray(r?.changes)?r.changes:[];
@@ -1536,6 +1546,9 @@ async function saveEditedEstimateSheetHtml(html, meta){
   const snap=Object.assign({}, row.estimate_snapshot||{});
   snap.sheet_html=String(html||'');
   snap.sheet_edits_at=new Date().toISOString();
+  if(meta&&meta.option_sheets&&typeof meta.option_sheets==='object'){
+   snap.option_sheets=meta.option_sheets;
+  }
   const patch={ estimate_snapshot: snap };
   const price=Number(meta&&meta.price);
   if(Number.isFinite(price)&&price>0){
@@ -1586,25 +1599,66 @@ async function viewEstimateHistory(id){
  const hasSheet=!!savedSheet;
  w.document.write(`<!doctype html><html><head><title>${esc(e.customer)} - Estimate History</title><style>body{font-family:Arial,sans-serif;margin:0;background:#e9eef5;color:#172033}.top{position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid #cbd5e1;padding:14px 18px}.head{max-width:1050px;margin:auto;display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap}h1{font-size:20px;margin:0;color:#14233c}.muted{color:#64748b}.small{font-size:11px}.summary{max-width:1050px;margin:14px auto;background:#fff;border:1px solid #dbe2ea;border-radius:12px;padding:16px}.summary h3{margin:0 0 10px}.summary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px 18px;font-size:12px}.frame-wrap{max-width:1050px;margin:14px auto 30px;background:#d7dde6;padding:12px;border-radius:12px}iframe{width:100%;height:1250px;border:0;background:#fff;border-radius:6px}button{padding:9px 13px;border:0;border-radius:8px;font-weight:800;cursor:pointer;background:#14233c;color:#fff}.save{background:#0f766e}@media(max-width:700px){.summary-grid{grid-template-columns:1fr 1fr}.frame-wrap{padding:4px;margin:8px}.summary{margin:8px}iframe{height:1050px}}</style></head><body><div class="top"><div class="head"><div><h1>${esc(e.customer)}</h1><div class="muted small">Saved ${new Date(e.created_at).toLocaleString()} • Created by ${esc(DISPLAY[e.salesman_username]||e.salesman_username)}</div></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="save" onclick="saveHistorySheetEdits()">Save Changes</button><button onclick="window.close()">Close</button></div></div></div><div class="summary"><h3>Estimate Summary</h3><div class="summary-grid"><div><b>Price</b><br>${money(e.estimate_price)}</div><div><b>Garage</b><br>${esc(e.garage_size||'—')}</div><div><b>Roof</b><br>${esc(e.roof_type||'—')}</div><div><b>Wall Height</b><br>${esc(e.wall_height||'—')}</div><div><b>Address</b><br>${esc(e.address||'—')}</div><div><b>City</b><br>${esc(e.city||'—')}</div><div><b>Siding</b><br>${esc(e.siding||'—')}</div><div><b>Salesperson</b><br>${esc(DISPLAY[e.salesman_username]||e.salesman_username)}</div></div><div style="margin-top:12px">${estimatePricingDetails(e)}</div></div>${hasSheet?`<div class="frame-wrap"><iframe id="savedEstimateFrame" title="Saved Estimate Sheet"></iframe></div>`:`<div class="summary"><b>Older estimate record:</b> this was saved before full estimate-sheet snapshots were enabled.<div style="margin-top:12px">${estimateHistorySummary(e)}</div></div>`}</body></html>`);
  w.document.close();
- if(hasSheet){const frame=w.document.getElementById('savedEstimateFrame');if(frame)frame.srcdoc=savedSheet}
+ try{
+  if(optionSheets.length){
+   const sum=w.document.querySelector('.summary');
+   if(sum && optionSheets.length>1){
+    const box=w.document.createElement('div');
+    box.style.cssText='max-width:1050px;margin:0 auto 14px;background:#fff;border:1px solid #dbe2ea;border-radius:12px;padding:14px';
+    box.innerHTML='<h3 style="margin:0 0 10px">Saved options</h3>'+optionSheets.map(o=>`<div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:8px 0;border-bottom:1px solid #edf1f6"><div><b>${o.label}</b> ${o.size||''} ${o.roof||''}</div><div><b>${money(o.quote)}</b>${o.internal?` <span style="color:#64748b">internal ${money(o.internal)}</span>`:''}</div></div>`).join('');
+    sum.after(box);
+   }
+   const first=w.document.getElementById('savedEstimateFrame');
+   const host=first&&first.parentNode;
+   const sheetFrames=optionSheets.filter(o=>o.html);
+   (sheetFrames.length?sheetFrames:optionSheets).forEach((o,i)=>{
+    let frame=i===0?first:null;
+    if(!frame && host){
+     const wrap=w.document.createElement('div');
+     wrap.className='frame-wrap';
+     wrap.innerHTML=`<div style="font-weight:800;margin:0 0 8px">${o.label}${o.size?' — '+o.size:''}${o.quote?` — ${money(o.quote)}`:''}</div><iframe title="${o.label}" style="width:100%;height:1250px;border:0;background:#fff;border-radius:6px"></iframe>`;
+     host.parentNode.appendChild(wrap);
+     frame=wrap.querySelector('iframe');
+    }else if(frame){
+     const lab=w.document.createElement('div');
+     lab.style.cssText='font-weight:800;margin:0 0 8px';
+     lab.textContent=(o.label||'Estimate')+(o.size?' — '+o.size:'')+(o.quote?` — ${money(o.quote)}`:'');
+     frame.parentNode.insertBefore(lab, frame);
+    }
+    if(frame){
+     frame.dataset.optionSlot=o.slot;
+     if(o.html) frame.srcdoc=o.html;
+    }
+   });
+  }else if(savedSheet){
+   const frame=w.document.getElementById('savedEstimateFrame');
+   if(frame) frame.srcdoc=savedSheet;
+  }
+ }catch(err){ console.warn(err); const frame=w.document.getElementById('savedEstimateFrame'); if(frame&&savedSheet) frame.srcdoc=savedSheet; }
  w.saveEditedEstimateSheetHtml=async function(html,meta){
   return await saveEditedEstimateSheetHtml(html,Object.assign({},meta||{},{id:id}));
  };
  w.saveHistorySheetEdits=async function(){
   try{
-   const frame=w.document.getElementById('savedEstimateFrame');
-   const doc=frame&&(frame.contentDocument||frame.contentWindow&&frame.contentWindow.document);
-   if(!doc || !doc.documentElement){ alert('Sheet is not loaded yet. Wait a second and press Save again.'); return; }
-   const html='<!DOCTYPE html>\n'+doc.documentElement.outerHTML;
-   if(html.length<200){ alert('Sheet did not capture. Wait for it to finish loading and press Save again.'); return; }
-   const priceTxt=(doc.querySelector('.total-price')?.innerText||'').replace(/[^0-9.]/g,'');
-   const ok=await saveEditedEstimateSheetHtml(html,{id:id,price:parseFloat(priceTxt)||0});
-   if(ok){
-    try{ frame.srcdoc=html; }catch(e){}
-    alert('Saved. These wording / row changes are now on this estimate in History.');
-   }else{
-    alert('Save failed. Stay logged in on the dashboard tab and try again.');
-   }
+   const frames=[...w.document.querySelectorAll('iframe')];
+   if(!frames.length){ alert('Sheet is not loaded yet.'); return; }
+   const option_sheets=Object.assign({}, (e.estimate_snapshot||{}).option_sheets||{});
+   let primaryHtml='', primaryPrice=0;
+   frames.forEach((frame,i)=>{
+    const doc=frame.contentDocument||(frame.contentWindow&&frame.contentWindow.document);
+    if(!doc||!doc.documentElement) return;
+    const html='<!DOCTYPE html>\n'+doc.documentElement.outerHTML;
+    if(html.length<200) return;
+    const priceTxt=(doc.querySelector('.total-price')?.innerText||'').replace(/[^0-9.]/g,'');
+    const price=parseFloat(priceTxt)||0;
+    if(i===0){ primaryHtml=html; primaryPrice=price; }
+    const slot=frame.dataset.optionSlot||['A','B','C'][i]||'A';
+    option_sheets[slot]=Object.assign({}, option_sheets[slot]||{}, {sheet_html:html, quote:price||((option_sheets[slot]||{}).quote)||0});
+   });
+   if(!primaryHtml){ alert('Sheet did not capture. Wait for it to finish loading and press Save again.'); return; }
+   const ok=await saveEditedEstimateSheetHtml(primaryHtml,{id:id,price:primaryPrice,option_sheets});
+   if(ok) alert('Saved. Both option sheets and prices are stored on this estimate.');
+   else alert('Save failed. Stay logged in on the dashboard tab and try again.');
   }catch(err){ console.error(err); alert('Save failed.'); }
  };
  w.focus();

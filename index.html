@@ -7,10 +7,13 @@
 <title>Absolute Garage Builders — Production</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-:root{--navy:#14233c;--blue:#2563eb;--bg:#f3f5f8;--panel:#fff;--ink:#172033;--muted:#6f7a8d;--line:#dfe4eb;--green:#15803d;--yellow:#b45309;--red:#b91c1c;--shadow:0 10px 28px rgba(15,23,42,.08)}
+:root{--navy:#0b1f3a;--navy2:#14233c;--gold:#c9a227;--gold2:#e8c547;--blue:#1e4a8c;--bg:#eef1f6;--panel:#fff;--ink:#172033;--muted:#6f7a8d;--line:#dfe4eb;--green:#15803d;--yellow:#b45309;--red:#b91c1c;--shadow:0 10px 28px rgba(15,23,42,.08)}
 *{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--ink)}button,input,select,textarea{font:inherit}button{cursor:pointer}
 header{background:var(--navy);color:#fff;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:14px;position:sticky;top:0;z-index:25;box-shadow:0 2px 12px #0003}
-.brand{display:flex;gap:11px;align-items:center}.logo{width:42px;height:42px;border-radius:10px;background:#fff;color:var(--navy);display:grid;place-items:center;font-weight:900;font-size:21px}.brand h1{margin:0;font-size:18px}.brand p{margin:2px 0 0;color:#cbd5e1;font-size:12px}
+.brand{display:flex;gap:11px;align-items:center}.logo{width:46px;height:46px;border-radius:10px;background:linear-gradient(160deg,#0b1f3a,#1a3a66);color:var(--gold);border:2px solid var(--gold);display:grid;place-items:center;font-weight:900;font-size:13px;letter-spacing:.04em;line-height:1;text-align:center}.brand h1{margin:0;font-size:18px}.brand p{margin:2px 0 0;color:#d6c27a;font-size:12px}
+.tab-app{}.tab-plans{background:#fff;color:var(--navy);border-color:var(--line)}
+.tab-plans:hover{background:#f8fafc}
+.plans-blue{background:var(--navy);color:#fff}
 .actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.user{font-size:12px;background:#223451;border:1px solid #46566f;padding:8px 10px;border-radius:9px}
 .btn{border:0;border-radius:9px;padding:10px 13px;font-weight:800}.primary{background:var(--blue);color:#fff}.light{background:#fff;border:1px solid var(--line);color:var(--navy)}.dark{background:#223451;color:#fff}.danger{background:var(--red);color:#fff}.sm{padding:7px 9px;font-size:12px}
 main{max-width:1500px;margin:auto;padding:22px}.titlebar{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}.titlebar h2{margin:0 0 4px;font-size:27px}.muted{color:var(--muted)}.small{font-size:11px}
@@ -45,7 +48,11 @@ main{max-width:1500px;margin:auto;padding:22px}.titlebar{display:flex;justify-co
 .drawerbg{position:fixed;inset:0;background:#0f172a70;z-index:50;display:none}.drawerbg.show{display:block}.drawer{position:absolute;right:0;top:0;height:100%;width:min(780px,95vw);background:#f8fafc;overflow:auto;box-shadow:-18px 0 45px #0f172a44}.drawerhead{background:#fff;border-bottom:1px solid var(--line);padding:18px;position:sticky;top:0;z-index:4}.drawergrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:13px}.full{grid-column:1/-1}
 .timeline{display:flex;overflow:auto;padding:3px 0 8px}.step{min-width:100px;text-align:center;position:relative}.step:before{content:"";position:absolute;top:13px;left:-50%;right:50%;height:3px;background:#dce3eb}.step:first-child:before{display:none}.circle{width:27px;height:27px;margin:auto;border-radius:50%;display:grid;place-items:center;background:#e2e8f0;font-size:11px;font-weight:900;position:relative;z-index:2}.done .circle{background:#16a34a;color:#fff}.done:before{background:#16a34a}.current .circle{background:#2563eb;color:#fff}.stepname{font-size:9px;font-weight:900;margin-top:6px}.stepdate{font-size:9px;color:var(--muted);margin-top:2px}
 .list{display:grid;gap:7px}.rowbox{border:1px solid #edf1f6;background:#f8fafc;border-radius:9px;padding:9px}.split{display:flex;justify-content:space-between;gap:10px;align-items:center}
-.loginbrand{text-align:center;margin-bottom:15px}.loginbrand .logo{margin:auto;background:var(--navy);color:#fff}.loginerr{color:var(--red);font-size:11px;margin-top:8px}
+.loginbrand{text-align:center;margin-bottom:18px}.loginbrand .logo{margin:auto;width:64px;height:64px;font-size:16px;background:linear-gradient(160deg,#0b1f3a,#1a3a66);color:var(--gold);border:2px solid var(--gold)}.loginbrand strong{display:block;margin-top:10px;color:var(--navy);letter-spacing:.04em}.loginerr{color:var(--red);font-size:11px;margin-top:8px}
+#loginBg{background:linear-gradient(165deg,#07152a 0%,#0b1f3a 55%,#16325c 100%)}
+#loginBg .modal{border:1px solid var(--gold);box-shadow:0 20px 50px #0008}
+#loginBg .modalhead{background:var(--navy);color:#fff;border-bottom:2px solid var(--gold)}
+#loginBg .btn.primary{background:var(--navy);border:1px solid var(--gold)}
 .weekgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}.day{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px;min-height:135px}.day h4{margin:0 0 8px;font-size:12px}.event{border-left:3px solid #94a3b8;padding:5px 6px;margin:5px 0;background:#f8fafc;border-radius:5px;font-size:10px}.event strong{display:block}
 
 .jobs-simple{overflow:visible}.jobs-simple table{min-width:0;table-layout:fixed}.jobs-simple th,.jobs-simple td{padding:18px 20px;vertical-align:middle}.jobs-simple th:nth-child(1){width:26%}.jobs-simple th:nth-child(2){width:34%}.jobs-simple th:nth-child(3){width:26%}.jobs-simple th:nth-child(4){width:14%}.jobs-simple .cust{font-size:17px}.job-address{font-size:14px;font-weight:800;line-height:1.35}.progress-last{margin-top:8px;font-weight:700;color:#475569}.progress-next{margin-top:4px;font-weight:800}.summary-btn{white-space:nowrap;padding:10px 14px}
@@ -134,13 +141,12 @@ body.estimator-mode .estimator-exit{display:block}
 </head>
 <body>
 <header>
- <div class="brand"><div class="logo">A</div><div><h1>Absolute Garage Builders</h1><p>Production & Job Status</p></div></div>
+ <div class="brand"><div class="logo">AGB</div><div><h1>Absolute Garage Builders</h1><p>3050 W Irving Park Rd · Production</p></div></div>
  <div class="actions">
   <div id="userBadge" class="user hidden"></div>
   <button id="requestBtn" class="btn primary hidden" onclick="openRequest()">+ Request Sold Job</button>
   <button id="addBtn" class="btn primary hidden" onclick="openJobForm()">+ Add Job</button>
-  <button id="carpenterHeaderBtn" class="btn primary" onclick="window.location.href='Carpenter.html?v='+Date.now()">Carpenter Ticket</button>
-  <button id="garagePlansHeaderBtn" class="btn plans-blue" onclick="window.location.href='GaragePlans.html?v='+Date.now()">Garage Plans</button>
+  <button id="notifySalesBtn" class="btn light hidden" onclick="openNotifySalesman()">Text salesman</button>
   <button id="changePwBtn" class="btn light hidden" onclick="openChangePassword()">Change Password</button>
   <button id="logoutBtn" class="btn dark hidden" onclick="logout()">Log Out</button>
  </div>
@@ -170,10 +176,10 @@ body.estimator-mode .estimator-exit{display:block}
   <button class="tab" data-view="calendar" onclick="setView('calendar',this)">Project Calendar</button>
   <button class="tab" data-view="personalCalendar" onclick="setView('personalCalendar',this)">Personal Calendar</button>
   <button id="allPersonalCalendarsTab" class="tab hidden" data-view="allPersonalCalendars" onclick="setView('allPersonalCalendars',this)">All Personal Calendars</button>
-  <button class="tab tab-app" data-view="estimator" onclick="window.location.href='estimator.html?v='+Date.now()">Estimator</button>
-  <button class="tab tab-app" data-view="drawing" onclick="window.location.href='drawing.html?v='+Date.now()">Drawing</button>
-  <button id="carpenterTab" class="tab tab-app" type="button" onclick="window.location.href='Carpenter.html?v='+Date.now()">Carpenter Ticket</button>
-  <button id="garagePlansTab" class="tab tab-app tab-plans" type="button" onclick="window.location.href='GaragePlans.html?v='+Date.now()">Garage Plans</button>
+  <button class="tab" data-view="estimator" onclick="window.location.href='estimator.html?v='+Date.now()">Estimator</button>
+  <button class="tab" data-view="drawing" onclick="window.location.href='Drawing.html?v='+Date.now()">Drawing</button>
+  <button id="carpenterTab" class="tab" type="button" onclick="window.location.href='Carpenter.html?v='+Date.now()">Carpenter</button>
+  <button id="garagePlansTab" class="tab" type="button" onclick="window.location.href='GaragePlans.html?v='+Date.now()">Garage Plans</button>
   <button class="tab" data-view="estimateHistory" onclick="setView('estimateHistory',this)">Estimate History</button>
   <button class="tab" data-view="planHistory" onclick="setView('planHistory',this)">Plan History</button>
   <button class="tab" data-view="completed" onclick="setView('completed',this)">Completed Archive</button>
@@ -182,34 +188,11 @@ body.estimator-mode .estimator-exit{display:block}
 
  <div class="stats" id="stats"></div>
 
- <div class="card" id="quickJobCard" style="margin-bottom:12px">
-  <h3 style="margin:0 0 6px">Quick Command</h3>
-  <div class="muted small" id="quickJobHint" style="margin-bottom:10px">Jobs, personal calendar, or messages to Randy/Sam. Salesmen: requests go for approval. Managers: job updates apply live.</div>
-  <textarea id="quickJobText" rows="3" placeholder="Examples:&#10;New job — John Smith, 123 Main St Chicago, 20x22, deposit received&#10;Smith — concrete poured by Romero, carpentry tomorrow&#10;Move Smith appointment from tomorrow to today&#10;Calendar — meet Jones tomorrow 3pm&#10;Tell Randy — need help on the permit&#10;Remind Sam about Smith deposit" style="width:100%;resize:vertical;min-height:72px"></textarea>
-  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px">
-   <button type="button" class="btn primary" onclick="submitQuickJobCommand()">Submit</button>
-   <button type="button" class="btn light" onclick="$('quickJobText').value='';$('quickJobStatus').textContent=''">Clear</button>
-   <span id="quickJobStatus" class="small muted"></span>
-  </div>
- </div>
-
  <div id="managerRequests" class="card hidden" style="margin-bottom:12px"><h3 class="split"><span>Pending Sold-Job Requests</span><span id="pendingCount" class="pill yellow">0</span></h3><div id="requestList" class="list"></div></div>
  <div id="salesRequests" class="card hidden" style="margin-bottom:12px"><h3>My Sold-Job Requests</h3><div id="myRequestList" class="list"></div></div>
  <div id="editRequestsCard" class="card hidden" style="margin-bottom:12px"><h3 class="split"><span>Salesman Edit / Note Requests</span><span id="editRequestCount" class="pill yellow">0</span></h3><div id="editRequestList" class="list"></div></div>
 
  <section id="dashboardView">
-  <div class="app-launch">
-  <div id="carpenterDashCard" class="card">
-        <h3>Carpenter Ticket</h3>
-        <div class="muted small">Collect lumber sheet and carpenter elevations.</div>
-        <button class="btn primary" type="button" onclick="window.location.href='Carpenter.html?v='+Date.now()">Open Carpenter Ticket</button>
-  </div>
-  <div id="garagePlansDashCard" class="card">
-        <h3>Garage Plans</h3>
-        <div class="muted small">Village permit drawings for every salesman.</div>
-        <button class="btn plans-blue" type="button" onclick="window.location.href='GaragePlans.html?v='+Date.now()">Open Garage Plans</button>
-  </div>
-  </div>
   <div id="upcomingAppointmentsCard" class="card upcoming-appointments hidden" style="margin-bottom:12px"><div class="split"><div><h3 style="margin-bottom:3px">Upcoming Appointments</h3><div class="muted small">Your personal appointments coming up soon</div></div><button class="btn primary sm" onclick="setView('personalCalendar',document.querySelector('[data-view=&quot;personalCalendar&quot;]'))">Open Personal Calendar</button></div><div id="upcomingAppointmentsList"></div></div>
   <div class="card toolbar">
    <div class="field"><label>Search</label><input id="search" placeholder="Customer, address, city, job #" oninput="renderJobs()"></div>
@@ -274,11 +257,35 @@ body.estimator-mode .estimator-exit{display:block}
  <div class="modal sm-modal">
   <div class="modalhead"><h3>Staff Login</h3></div>
   <form onsubmit="login(event)"><div class="body">
-   <div class="loginbrand"><div class="logo">A</div><strong>Absolute Garage Builders</strong><div class="sub">Online Production Dashboard</div></div>
+   <div class="loginbrand"><div class="logo">AGB</div><strong>ABSOLUTE GARAGE BUILDERS</strong><div class="sub">3050 W Irving Park Rd · Chicago</div></div>
    <div class="field"><label>Username</label><input id="loginUser" autocomplete="username" required></div><br>
    <div class="field"><label>Password</label><input id="loginPass" type="password" autocomplete="current-password" required></div>
    <div id="loginError" class="loginerr hidden">Incorrect username or password.</div>
   </div><div class="modalfoot"><button class="btn primary" style="width:100%" type="submit">Log In</button></div></form>
+ </div>
+</div>
+
+<div id="notifyBg" class="modalbg">
+ <div class="modal sm-modal">
+  <div class="modalhead"><h3>Text salesman</h3><button class="btn light sm" type="button" onclick="closeNotifySalesman()">✕</button></div>
+  <div class="body">
+   <div class="muted small" style="margin-bottom:10px">Randy or Sam can text a salesman about a job status or a work note. Put their cell numbers in once. Uses the phone SMS app, or Twilio if you deploy the send-staff-sms function.</div>
+   <div class="field"><label>Salesman</label>
+    <select id="notifyWho" onchange="if($('notifyPhone'))$('notifyPhone').value=staffPhone(this.value)">
+     <option value="ramsey">Ramsey</option>
+     <option value="wally">Wally</option>
+     <option value="tom">Tom</option>
+     <option value="tomb">Tom Bartyzel</option>
+    </select>
+   </div>
+   <div class="field" style="margin-top:10px"><label>Their cell (10 digits)</label><input id="notifyPhone" placeholder="7735551212"></div>
+   <div class="field" style="margin-top:10px"><label>Message</label><textarea id="notifyMsg" rows="4" placeholder="Smith job — concrete poured. Carpentry scheduled Tuesday."></textarea></div>
+   <div id="notifyStatus" class="small muted" style="margin-top:8px"></div>
+  </div>
+  <div class="modalfoot">
+   <button class="btn light" type="button" onclick="closeNotifySalesman()">Cancel</button>
+   <button class="btn primary" type="button" onclick="sendSalesmanSms()">Send text</button>
+  </div>
  </div>
 </div>
 
@@ -399,6 +406,54 @@ const SB_KEY='sb_publishable_G_ZAnQ_CoJjWsn8-HgduLw_IziPWEmn';
 const sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true}});
 const USER_EMAIL=u=>({tomb:'agbtombartyzel@gmail.com'}[u.toLowerCase()]||`${u.toLowerCase()}@absolute-garage.local`);
 const DISPLAY={randy:'Randy',sam:'Sam',ramsey:'Ramsey',wally:'Wally',tom:'Tom',tomb:'Tom Bartyzel'};
+const STAFF_PHONE_KEY='agb_staff_phones_v1';
+function staffPhones(){ try{return JSON.parse(localStorage.getItem(STAFF_PHONE_KEY)||'{}');}catch(e){return{};} }
+function setStaffPhone(user,phone){
+  const all=staffPhones();
+  all[String(user||'').toLowerCase()]=String(phone||'').replace(/\D/g,'');
+  localStorage.setItem(STAFF_PHONE_KEY, JSON.stringify(all));
+}
+function staffPhone(user){ return staffPhones()[String(user||'').toLowerCase()]||''; }
+function canTextSalesman(){
+  const u=String(profile&&profile.username||'').toLowerCase();
+  return u==='randy'||u==='sam';
+}
+function openNotifySalesman(pre){
+  if(!canTextSalesman()) return alert('Randy or Sam can send these texts.');
+  const who=(pre&&pre.who)||'ramsey';
+  if($('notifyWho')) $('notifyWho').value=who;
+  if($('notifyPhone')) $('notifyPhone').value=staffPhone(who);
+  if($('notifyMsg')) $('notifyMsg').value=(pre&&pre.msg)||'';
+  if($('notifyStatus')) $('notifyStatus').textContent='';
+  $('notifyBg')?.classList.add('show');
+}
+function closeNotifySalesman(){ $('notifyBg')?.classList.remove('show'); }
+async function sendSalesmanSms(){
+  const who=($('notifyWho')?.value||'').toLowerCase();
+  const phone=String($('notifyPhone')?.value||'').replace(/\D/g,'');
+  const msg=String($('notifyMsg')?.value||'').trim();
+  const st=$('notifyStatus');
+  if(phone.length<10){ if(st) st.textContent='Enter a 10-digit cell number.'; return; }
+  if(!msg){ if(st) st.textContent='Type a message.'; return; }
+  setStaffPhone(who, phone);
+  const fromName=DISPLAY[profile&&profile.username]||profile.username||'Office';
+  const body='AGB '+fromName+': '+msg;
+  // Try Twilio edge function if deployed; always offer the phone SMS app
+  let sent=false;
+  try{
+    if(typeof sb!=='undefined' && sb.functions){
+      const {data,error}=await sb.functions.invoke('send-staff-sms',{body:{to:phone,message:body,salesman:who}});
+      if(!error && data && data.ok) sent=true;
+      if(error) console.warn(error);
+    }
+  }catch(e){ console.warn(e); }
+  if(sent){
+    if(st) st.textContent='Text sent.';
+    setTimeout(closeNotifySalesman, 700);
+    return;
+  }
+  window.location.href='sms:+1'+phone.slice(-10)+'?&body='+encodeURIComponent(body);
+}
 let profile=null,jobs=[],trashJobs=[],requests=[],documents=[],editRequests=[],estimateHistory=[],calendarEntries=[],currentView='dashboard',openJobId=null,calendarMonth=new Date();
 const ESTIMATOR_URL='estimator.html';
 let estimatorLoaded=false;
@@ -422,7 +477,8 @@ const manager=()=>profile&&['owner','business_manager'].includes(profile.role);
 const privateAccessManager=()=>profile&&['sam','ramsey','randy'].includes(String(profile.username||'').toLowerCase());
 function carpenterAccount(){ return !!profile; }
 function showCarpenterNav(){
-  ['carpenterTab','carpenterHeaderBtn','carpenterDashCard','garagePlansTab','garagePlansHeaderBtn','garagePlansDashCard'].forEach(id=>$(id)?.classList.remove('hidden'));
+  ['carpenterTab','garagePlansTab'].forEach(id=>$(id)?.classList.remove('hidden'));
+  if($('notifySalesBtn')) $('notifySalesBtn').classList.toggle('hidden', !canTextSalesman());
 }
 // Ramsey + Sam can see everyone's jobs on the dashboard (same visibility as management for job list)
 const canViewAllJobs=()=>manager()||privateAccessManager();
@@ -1262,9 +1318,6 @@ function setView(v,btn){
  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
  if(btn)btn.classList.add('active');
  ['dashboard','week','calendar','personalCalendar','allPersonalCalendars','estimator','estimateHistory','planHistory','completed','trash'].forEach(x=>$(x+'View')?.classList.toggle('hidden',x!==v));
- // Quick Job Command only on Dashboard + Today (week)
- const qj=$('quickJobCard');
- if(qj) qj.classList.toggle('hidden', v!=='dashboard' && v!=='week');
  if(v==='estimator')loadEstimator();
  if(v==='estimateHistory') renderEstimateHistory();
  if(v==='planHistory') renderPlanHistory();
@@ -1755,7 +1808,13 @@ function closeJobForm(){$('jobBg').classList.remove('show');openJobId=null}
 async function saveJob(e){e.preventDefault();if(!manager())return;const {data:{user}}=await sb.auth.getUser();const rec={};fields.forEach(k=>{let v=$('f_'+k).value;if(['sold_date','deposit_date','permit_date','scheduled_demo','demo_date','concrete_scheduled','concrete_poured','concrete_ready','carpentry_scheduled','built_date','electric_date','extras_scheduled','extras_complete_date','inspection_date','completed_date'].includes(k))v=v||null;if(['price','deposit'].includes(k))v=Number(v)||0;if(['hold_status','demolition_required','extras_required'].includes(k))v=v==='true';rec[k]=v});if(rec.demolition_required===false)rec.demo_status='N/A';else if(rec.demo_status==='N/A')rec.demo_status='Pending';if(rec.extras_required===false)rec.extras_status='N/A';else if(rec.extras_status==='N/A')rec.extras_status='Pending';let id=$('f_id').value,err;if(id){({error:err}=await sb.from('jobs').update(rec).eq('id',id));if(!err)await sb.from('job_activity').insert({job_id:id,actor_id:user.id,action:'Job updated',details:{status:status({...jobs.find(x=>x.id===id),...rec})}})}else{rec.created_by=user.id;const res=await sb.from('jobs').insert(rec).select().single();err=res.error;id=res.data?.id;if(id)await sb.from('job_activity').insert({job_id:id,actor_id:user.id,action:'Job created',details:{}})}if(err)return alert(err.message);
  const uploadErr=await uploadManagerJobPaperwork(id,user);
  if(uploadErr)return alert('Job was saved, but paperwork upload failed: '+uploadErr.message);
- closeJobForm();await refresh()}
+ closeJobForm();
+ if(canTextSalesman() && rec.salesman_username){
+  const who=String(rec.salesman_username||'').toLowerCase();
+  const st=status(Object.assign({}, jobs.find(x=>x.id===id)||{}, rec));
+  openNotifySalesman({who, msg:(rec.customer||'Job')+' — status now '+st+'.'});
+ }
+ await refresh()}
 async function deleteJob(){if(!manager()||!openJobId||!confirm('Move this job to Trash? It will disappear for everyone, but Sam or Randy can restore it later.'))return;const {data:{user}}=await sb.auth.getUser();const id=openJobId;const {error}=await sb.from('jobs').update({deleted_at:new Date().toISOString(),deleted_by:user.id}).eq('id',id);if(error)return alert(error.message);await sb.from('job_activity').insert({job_id:id,actor_id:user.id,action:'Job moved to Trash',details:{}});closeJobForm();closeDrawer();await refresh()}
 async function restoreJob(id){if(!manager()||!confirm('Restore this job for everyone?'))return;const {data:{user}}=await sb.auth.getUser();const {error}=await sb.from('jobs').update({deleted_at:null,deleted_by:null}).eq('id',id);if(error)return alert(error.message);await sb.from('job_activity').insert({job_id:id,actor_id:user.id,action:'Job restored from Trash',details:{}});await refresh()}
 async function permanentlyDeleteJob(id){if(!manager()||!confirm('PERMANENTLY delete this job? This cannot be undone.'))return;const {error}=await sb.from('jobs').delete().eq('id',id);if(error)return alert(error.message);await refresh()}

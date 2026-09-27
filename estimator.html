@@ -3502,15 +3502,23 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
         }
 
         function saveEstimateComparison(slot){
-            estimateComparison[slot]=currentComparisonSnapshot();
+            const prev=estimateComparison[slot]||{};
+            estimateComparison[slot]=Object.assign({}, currentComparisonSnapshot(), {
+                sheet_html: '',
+                sheet_stale: true,
+                sheet_presentation: null
+            });
+            // Keep an old print only as a fallback until View Sheet rebuilds this option
+            if(prev.sheet_html) estimateComparison[slot]._old_sheet_html=prev.sheet_html;
             activeComparisonSlot=slot;
             persistMultiEstimates();
             renderEstimateComparison();
             const badge=document.getElementById('activeOptionBadge');
             if(badge){
                 badge.classList.remove('hidden');
-                badge.textContent='✓ Option '+slot+' saved. Use Load / Edit to come back and change it, or View Sheet for the customer printout.';
+                badge.textContent='✓ Option '+slot+' saved. Use View Sheet '+slot+' to build the updated customer sheet.';
             }
+            try{ syncOptionSlotToHistory(slot); }catch(e){}
         }
 
         function loadEstimateComparison(slot){
@@ -3613,6 +3621,18 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
 
             // Load option into calculator
             try{ loadEstimateComparison(slot); }catch(e){ console.error(e); }
+            activeComparisonSlot=slot;
+            // Do not reuse the other option's photo or original sheet labels
+            try{
+                const d=getGarageDimensions();
+                const key=[d.width,d.depth,document.getElementById('roofType')?.value||'',document.getElementById('eaveDir')?.value||''].join('x');
+                if(window._lastPrintedOptionKey && window._lastPrintedOptionKey!==slot+':'+key){
+                    window._lastAiGaragePhotoUrl=null;
+                    try{ sessionStorage.removeItem('agb_last_ai_garage_photo'); }catch(_){}
+                    window._sheetPresentation={};
+                }
+                window._pendingOptionSlot=slot;
+            }catch(_){}
 
             if(!estimateWindow || estimateWindow.closed){
                 // Popup blocked (very common on iPhone / local HTML files)
@@ -4405,11 +4425,23 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                 const {data:row,error:loadErr}=await garageSb.from('estimate_history').select('*').eq('id',editId).maybeSingle();
                 if(loadErr||!row){ alert('Could not load the saved estimate to update.'); return false; }
                 const snap=Object.assign({}, row.estimate_snapshot||{});
+                const slot=(meta&&meta.option)||window._pendingOptionSlot||activeComparisonSlot||snap.active_option||null;
                 snap.sheet_html=String(html||'');
                 snap.sheet_edits_at=new Date().toISOString();
-                if(meta&&meta.option_sheets&&typeof meta.option_sheets==='object'){
-                    snap.option_sheets=meta.option_sheets;
+                snap.active_option=slot||snap.active_option||null;
+                let sheets=(meta&&meta.option_sheets&&typeof meta.option_sheets==='object')
+                    ? meta.option_sheets
+                    : (snap.option_sheets&&typeof snap.option_sheets==='object'?snap.option_sheets:{});
+                sheets=Object.assign({}, sheets);
+                if(slot){
+                    sheets[slot]=Object.assign({}, sheets[slot]||estimateComparison[slot]||{}, {
+                        sheet_html:String(html||''),
+                        sheet_stale:false,
+                        quote: Number.isFinite(Number(meta&&meta.price))?Number(meta.price):(sheets[slot]&&sheets[slot].quote)||0
+                    });
+                    rememberOptionSheet(slot, html, Number(meta&&meta.price), undefined);
                 }
+                snap.option_sheets=sheets;
                 const patch={ estimate_snapshot: snap };
                 const price=Number(meta&&meta.price);
                 if(Number.isFinite(price)&&price>0){
@@ -4425,6 +4457,30 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                 alert('Save failed.');
                 return false;
             }
+        }
+
+        async function syncOptionSlotToHistory(slot){
+            try{
+                const editId=window._lastEstimateHistoryId || new URLSearchParams(location.search).get('editEstimate') || '';
+                if(!editId || !slot || !estimateComparison[slot]) return;
+                const {data:row}=await garageSb.from('estimate_history').select('estimate_snapshot').eq('id',editId).maybeSingle();
+                if(!row) return;
+                const snap=Object.assign({}, row.estimate_snapshot||{});
+                const sheets=Object.assign({}, snap.option_sheets||{});
+                const s=estimateComparison[slot];
+                sheets[slot]=Object.assign({}, sheets[slot]||{}, {
+                    width:s.width, depth:s.depth, wall:s.wall, roof:s.roof,
+                    internal:s.internal, quote:s.quote, savedAt:s.savedAt,
+                    formState:s.formState||null,
+                    sheet_stale:true
+                });
+                snap.option_sheets=sheets;
+                snap.active_option=slot;
+                if(typeof captureEstimatorState==='function'){
+                    snap.calculator_state=captureEstimatorState();
+                }
+                await garageSb.from('estimate_history').update({ estimate_snapshot: snap }).eq('id',editId);
+            }catch(e){ console.warn('syncOptionSlotToHistory', e); }
         }
 
         async function syncSignedInSalesman(){
@@ -4657,6 +4713,15 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                             if(arrow) arrow.style.transform='rotate(90deg)';
                             if(btn) btn.setAttribute('aria-expanded','true');
                         }
+                    }
+                    if(s.option_sheets && typeof s.option_sheets==='object'){
+                        ['A','B','C'].forEach(k=>{
+                            const o=s.option_sheets[k];
+                            if(!o) return;
+                            estimateComparison[k]=Object.assign({}, estimateComparison[k]||{}, o);
+                        });
+                        try{ persistMultiEstimates(); }catch(e){}
+                        try{ renderEstimateComparison(); }catch(e){}
                     }
                 }else{
                     // Older saved estimates did not contain every calculator control.
@@ -8868,6 +8933,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
 <script>
 const ESTIMATE_EMAIL_TO=${JSON.stringify(customerEmail||'')};
 var ESTIMATE_HISTORY_ID=window.ESTIMATE_HISTORY_ID||null;
+var ESTIMATE_OPTION_SLOT=${JSON.stringify('')};
 const ESTIMATE_CUSTOMER=${JSON.stringify(customerName||'')};
 const ESTIMATE_QUOTE=${JSON.stringify(quote||'')};
 const ESTIMATE_ADDRESS=${JSON.stringify(customerAddress||'')};
@@ -9168,7 +9234,8 @@ async function saveSheetEditsNow(){
       return;
     }
     const saveId=window.ESTIMATE_HISTORY_ID||ESTIMATE_HISTORY_ID||null;
-    const ok=await window.opener.saveEditedEstimateSheetHtml(html,{price:price,id:saveId});
+    const optSlot=window.ESTIMATE_OPTION_SLOT||null;
+    const ok=await window.opener.saveEditedEstimateSheetHtml(html,{price:price,id:saveId,option:optSlot});
     if(st) st.textContent=ok?'Sheet changes saved. They will be there when you view this estimate again.':'Save failed.';
     if(ok && btn) btn.textContent='Saved';
   }catch(err){
@@ -9394,6 +9461,13 @@ async function openPopupChatGPT(){
             printWindow.document.write(sheetHtml);
             printWindow.document.close();
             printWindow.focus();
+            try{
+                const optSlot=window._pendingOptionSlot||activeComparisonSlot||null;
+                printWindow.ESTIMATE_OPTION_SLOT=optSlot;
+                printWindow.ESTIMATE_HISTORY_ID=window._lastEstimateHistoryId||new URLSearchParams(location.search).get('editEstimate')||null;
+                const d=getGarageDimensions();
+                window._lastPrintedOptionKey=(optSlot||'X')+':'+[d.width,d.depth,document.getElementById('roofType')?.value||''].join('x');
+            }catch(e){}
 
             if (saveToHistory) {
                 // History list: material only — no color wording on customer-facing sheets either
@@ -9443,10 +9517,11 @@ async function openPopupChatGPT(){
                 try{
                     if(printWindow && savedId){
                         try{ printWindow.ESTIMATE_HISTORY_ID=savedId; }catch(e){}
+                        try{ printWindow.ESTIMATE_OPTION_SLOT=window._pendingOptionSlot||activeComparisonSlot||null; }catch(e){}
                         try{
                             printWindow.document.open;
                             const s=printWindow.document.createElement('script');
-                            s.textContent='window.ESTIMATE_HISTORY_ID='+JSON.stringify(savedId)+';';
+                            s.textContent='window.ESTIMATE_HISTORY_ID='+JSON.stringify(savedId)+';window.ESTIMATE_OPTION_SLOT='+JSON.stringify(window._pendingOptionSlot||activeComparisonSlot||null)+';';
                             printWindow.document.documentElement.appendChild(s);
                         }catch(e){}
                     }

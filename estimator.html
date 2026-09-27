@@ -24,12 +24,18 @@
             font-weight: 600;
         }
 
-        .section-header {
-            font-size: 0.875rem;
-            font-weight: 600;
-            color: #166534;
-            letter-spacing: -.025em;
-        }
+        .section-header { font-size: 0.75rem; letter-spacing: .06em; text-transform: uppercase; color: #166534; }
+        .calc-input { width: 100%; }
+        label.text-xs { font-size: 11px !important; }
+        .text-\[10px\].text-zinc-500 { display: none; }
+        #demoApronManualHelp, #apronManualHelp { display: block !important; }
+        button { min-height: 38px; }
+        select, input[type="text"], input[type="number"] { min-height: 38px; }
+        .rounded-3xl { border-radius: 14px !important; }
+        .rounded-2xl { border-radius: 10px !important; }
+        .p-7 { padding: 1rem !important; }
+        .mb-6 { margin-bottom: 0.9rem !important; }
+        .gap-3 { gap: 0.55rem !important; }
 
         .calc-input {
             transition: all 0.1s ease;
@@ -1313,12 +1319,12 @@ input, select, textarea, button { box-sizing:border-box; }
                             <div>
                                 <label class="text-xs text-zinc-400 block mb-1">Service / side door location</label>
                                 <select id="serviceDoorLocation" onchange="toggleServiceDoorLocationFields(); calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm">
-                                    <option value="right" selected>Right side wall</option>
-                                    <option value="front">Front (beside overhead)</option>
+                                    <option value="left" selected>Left wall</option>
+                                    <option value="right">Right wall</option>
+                                    <option value="front">Front wall</option>
                                     <option value="back">Back wall</option>
-                                    <option value="left">Left side wall</option>
                                 </select>
-                                <div class="text-[10px] text-zinc-500 mt-0.5">Right/Left = SIDE WALLS (not front). Front = next to overhead door only.</div>
+                                <div class="text-[10px] text-zinc-500 mt-0.5">Front = beside the overhead door. Left/Right/Back = that wall only. Default left.</div>
                                 <label class="flex items-center gap-2 mt-2 text-xs text-zinc-300">
                                     <input type="checkbox" id="svcInsulated" onchange="toggleInsul('svc'); calculateEstimate()" class="rounded border-zinc-600">
                                     Insulated?
@@ -5124,7 +5130,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             if(hEl) hEl.value=String(h);
         }
         function toggleServiceDoorLocationFields() {
-            const loc = (document.getElementById('serviceDoorLocation') || {}).value || 'right';
+            const loc = (document.getElementById('serviceDoorLocation') || {}).value || 'left';
             const wrap = document.getElementById('serviceDoorFrontSideWrap');
             if (wrap) wrap.classList.toggle('hidden', loc !== 'front');
             try{ updatePlacementConflictUI(); }catch(e){}
@@ -5498,6 +5504,10 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             // Service-door placement is the next hard visual rule, within the correct roof pool.
             const servicePool=pool.filter(p=>p.serviceLoc===target.serviceLoc);
             if(servicePool.length) pool=servicePool;
+            if(target.serviceLoc!=='front'){
+                const notFront=pool.filter(p=>p.serviceLoc!=='front');
+                if(notFront.length) pool=notFront;
+            }
             if(target.serviceLoc==='front') {
                 const exactFront=pool.filter(p=>(p.frontSide||'right')===target.frontSide);
                 if(exactFront.length) pool=exactFront;
@@ -5527,6 +5537,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                 s+=(p.doorStyle||'raised')===target.doorStyle?55:-10;
                 s+=(!!p.doorWindows)===target.doorWindows?75:-75;
                 s+=p.serviceLoc===target.serviceLoc?90:-15;
+                if(target.serviceLoc!=='front' && p.serviceLoc==='front') s-=200;
                 if(target.serviceLoc==='front') s+=(p.frontSide||'right')===target.frontSide?35:-10;
                 s+=(!!p.wallWindows)===target.wallWindows?30:0;
                 s+=(!!p.gutters)===target.gutters?20:0;
@@ -7390,7 +7401,13 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                     lines.push('NO PARTY DOOR — zero extra overhead doors on back or side');
                 }
                 if (sideDoorKind!=='no' && sideDoorKind!=='none') {
-                    lines.push('SERVICE DOOR: 36x80 steel swing door on '+service+' wall, flush in siding (not overhead)');
+                    if(service==='front'){
+                        lines.push('SERVICE DOOR on FRONT wall only, '+serviceFrontSide+' of the overhead door. 36x80 swing door.');
+                    } else {
+                        lines.push('SERVICE DOOR on the '+service.toUpperCase()+' WALL only — 36x80 steel swing door. CRITICAL: ZERO service doors on the FRONT wall. Do not put a man door next to the overhead door.');
+                    }
+                } else {
+                    lines.push('NO SERVICE DOOR anywhere');
                 }
                 if (roofPatioOn) {
                     lines.push('CRITICAL PATIO: '+(roofPatioSide?'SIDE':'REAR')+' roofed patio on '+(roofPatioSide?'SIDE':'BACK')+' wall only — full wall width — EXACTLY 4 posts — depth ~'+patioDepth+' ft — same roof run flush extension'+(isReverseGable?', keep reverse-gable peaks on ends only':''));
@@ -7996,14 +8013,12 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                 if(fw && fd) addSpec('Footing', `Footing Included (${fw}x${fd})`);
                 if (existingSlabBuild) {
                     addSpec('Floor', 'Build On Existing Slab');
-                    addSpec('Apron', apronSpecText === 'Existing' ? 'Existing' : (apronNumeric ? `${apronDepth}'` : (apronSpecText || 'None')));
                 } else {
                     addSpec('Floor', `New ${width}' x ${depth}' - ${concreteThickness}" Reinforced Concrete Slab, 4,000 PSI`);
                     addSpec('Apron', apronSpecText === 'None' ? 'None' : (apronNumeric ? `${apronDepth}'` : (checked('newConcrete') && apronDepth > 0 ? `${apronDepth}'` : 'None')));
+                    addSpec('Perimeter Curb', 'Water Ledge, Included');
+                    addSpec('Retaining Wall', 'Included As Needed');
                 }
-                addSpec('Perimeter Curb', 'Water Ledge, Included');
-                // Wally: always "Included As Needed" regardless of calculator retaining-wall input
-                addSpec('Retaining Wall', 'Included As Needed');
                 addSpec('Building Permits', isSuburb ? 'Absolute Will File For And Secure All Permits. Customer Pays All Fees.' : 'Included ($550 Value)');
             } else {
                 // Standard ABG estimate-sheet format for Ramsey, Samer and Tom.
@@ -8051,14 +8066,12 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                 if(fw2 && fd2) addSpec('Footing', `Footing Included (${fw2}x${fd2})`);
                 if (existingSlabBuild) {
                     addSpec('Floor', 'Build On Existing Slab');
-                    addSpec('Apron', apronSpecText === 'Existing' ? 'Existing' : (apronNumeric ? `${width}' x ${apronDepth}'` : (apronSpecText || 'None')));
                 } else {
                     addSpec('Floor', `${concreteThickness}" Thick Reinforced with Steel Wire Mesh Rated 4,000 PSI`);
                     addSpec('Apron', apronSpecText === 'None' ? 'None' : (checked('newConcrete') && apronDepth > 0 ? `${width}' x ${apronDepth}' New Concrete Apron` : 'None'));
+                    addSpec('Perimeter Curb', 'Water Ledge');
+                    addSpec('Retaining Wall', 'Build Up Included');
                 }
-                addSpec('Perimeter Curb', 'Water Ledge');
-                // Non-Wally: always "Build Up Included" regardless of calculator retaining-wall input
-                addSpec('Retaining Wall', 'Build Up Included');
                 addSpec('Building Codes', 'YES');
                 addSpec('Building Permits', isSuburb ? 'Absolute will file for and secure all permits. Customer pays all fees.' : 'YES - Included');
                 addSpec('Bottom Plates', 'Treated');
@@ -8081,9 +8094,9 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             const noteRoof = roofType === 'gable'
                 ? (val('eaveDir') === 'sides' ? 'reverse gable' : 'gable')
                 : 'hip';
-            const concreteOpening = checked('newConcrete')
+            const concreteOpening = (checked('newConcrete') && slabMode !== 'existing')
                 ? ` with new reinforced concrete${apronDepth > 0 ? ` and ${apronDepth}' full-width apron` : ''}`
-                : '';
+                : (slabMode === 'existing' ? ' built on the existing slab' : '');
             notes.push(`Build new ${width}' x ${depth}' ${noteRoof} roof garage${concreteOpening}.`);
             if(checked('roofPatioEnabled')){const d=getRoofPatioDepth(),side=checked('roofPatioSide'),span=side?depth:width;notes.push(`${span}' x ${d}' ${side?'side':'rear'} roof patio with new reinforced concrete and four support posts included.`);}
 
@@ -9709,7 +9722,7 @@ async function openPopupChatGPT(){
             document.getElementById('epaFee').disabled = false;
             
             document.getElementById('doorType').value = 'standard';
-            const sdl = document.getElementById('serviceDoorLocation'); if (sdl) sdl.value = 'right';
+            const sdl = document.getElementById('serviceDoorLocation'); if (sdl) sdl.value = 'left';
             const sdf = document.getElementById('serviceDoorFrontSide'); if (sdf) sdf.value = 'right';
             toggleServiceDoorLocationFields();
             const gat = document.getElementById('garageAccessType');

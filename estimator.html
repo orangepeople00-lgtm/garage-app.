@@ -720,7 +720,12 @@ body.bg-zinc-950{
                     <div class="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
                     <span class="text-yellow-400 font-medium">LIVE CALCULATOR</span>
                 </div>
-                <button onclick="resetForm()" 
+                <button type="button" onclick="startNewEstimate()"
+                        class="flex items-center gap-x-2 px-4 py-2 text-xs font-semibold bg-zinc-900 hover:bg-zinc-800 transition-colors rounded-2xl border border-zinc-800">
+                    <i class="fa-solid fa-file-circle-plus text-xs"></i>
+                    <span>NEW ESTIMATE</span>
+                </button>
+                <button type="button" onclick="resetForm()"
                         class="flex items-center gap-x-2 px-4 py-2 text-xs font-semibold bg-zinc-900 hover:bg-zinc-800 transition-colors rounded-2xl border border-zinc-800">
                     <i class="fa-solid fa-undo text-xs"></i>
                     <span>RESET</span>
@@ -2064,11 +2069,8 @@ body.bg-zinc-950{
                                 </select>
                             </div>
                         </div>
-                        <label class="text-[9px] font-bold text-violet-300/80 block mb-0.5" for="aiPhotoExtraInstructions">PHOTO NOTES</label>
-                        <textarea id="aiPhotoExtraInstructions" rows="2" placeholder="Optional: front / left / back / right view, or other photo details only if needed"
-                            oninput="saveAIPhotoExtraInstructions(); applyPhotoChatToEstimate(); syncGaragePhotoViewFromChat()"
-                            class="w-full bg-zinc-900 border border-violet-700/50 text-white rounded-lg px-2 py-1.5 text-xs resize-y min-h-[44px]"></textarea>
-                        <div id="aiPhotoStatus" class="text-[9px] text-emerald-400 mt-1 hidden"></div>
+                        <textarea id="aiPhotoExtraInstructions" class="hidden" aria-hidden="true" tabindex="-1"></textarea>
+                        <div id="aiPhotoStatus" class="hidden" aria-hidden="true"></div>
                     </div>
                     <!-- Hidden bridges for sheet-page AI updates (UI only on estimate sheet) -->
                     <textarea id="estimateChangeRequest" class="hidden" aria-hidden="true" tabindex="-1"></textarea>
@@ -3611,6 +3613,13 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
         }
 
         function saveEstimateComparison(slot){
+            const customer=(document.getElementById('customerName')?.value||'').trim();
+            if(!customer){
+                alert('Type the customer name first so Option '+slot+' can save to Estimate History.');
+                document.getElementById('customerName')?.scrollIntoView({behavior:'smooth',block:'center'});
+                document.getElementById('customerName')?.focus();
+                return;
+            }
             const prev=estimateComparison[slot]||{};
             estimateComparison[slot]=Object.assign({}, currentComparisonSnapshot(), {
                 sheet_html: '',
@@ -4558,6 +4567,24 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                     result=await write(light, !!editId);
                     error=result.error;
                     if(!editId) newId=result.data?.id||newId;
+                }
+                const saved=editId||newId;
+                if(!error && saved && record.estimate_snapshot && record.estimate_snapshot.sheet_html){
+                    try{
+                        const slot=record.estimate_snapshot.active_option||activeComparisonSlot||'A';
+                        const {data:row}=await garageSb.from('estimate_history').select('estimate_snapshot').eq('id',saved).maybeSingle();
+                        const snap=Object.assign({}, (row&&row.estimate_snapshot)||record.estimate_snapshot||{});
+                        snap.sheet_html=record.estimate_snapshot.sheet_html;
+                        snap.option_sheets=Object.assign({}, snap.option_sheets||{});
+                        snap.option_sheets[slot]=Object.assign({}, snap.option_sheets[slot]||{}, {
+                            sheet_html: record.estimate_snapshot.sheet_html,
+                            quote: Number(record.estimate_price)||0
+                        });
+                        const patch=await garageSb.from('estimate_history').update({ estimate_snapshot: snap }).eq('id',saved);
+                        if(patch.error){
+                            console.warn('Sheet HTML attach skipped', patch.error);
+                        }
+                    }catch(e){ console.warn('Sheet HTML attach', e); }
                 }
                 if(error){
                     console.error('Estimate history save failed:', error);
@@ -6750,6 +6777,16 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
         async function safePrintEstimateSheet(saveToHistory = true, opts = {}) {
             // opts: { skipHealth, targetWindow } — targetWindow rebuilds an existing sheet popup in place
             const skipHealth = !!(opts && opts.skipHealth);
+            try{
+                const {data:{user}}=await garageSb.auth.getUser();
+                if(!user){
+                    alert('Sign in on the Dashboard first. Estimates will not save to History until you are signed in.');
+                    return;
+                }
+            }catch(e){
+                alert('Sign in on the Dashboard first so this estimate can save to History.');
+                return;
+            }
             try{ decideSheetPhotoModeBeforeCreate(); }catch(e){ console.warn('photo mode decide', e); }
             const targetWindow = opts && opts.targetWindow ? opts.targetWindow : null;
             try{
@@ -6921,33 +6958,17 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
         function saveAIPhotoExtraInstructions(){
             try{
                 const el=document.getElementById('aiPhotoExtraInstructions');
-                // Session only — empty again next time you open estimator
-                sessionStorage.setItem('agb_ai_photo_extra', (el?.value||'').trim());
+                if(el) el.value='';
+                try{ sessionStorage.removeItem('agb_ai_photo_extra'); }catch(e){}
                 try{ localStorage.removeItem('agb_ai_photo_extra'); }catch(e){}
-                // Clear old AI image caches so the next sheet uses the new words
-                const keys=[];
-                for(let i=0;i<localStorage.length;i++){
-                    const k=localStorage.key(i);
-                    if(k && k.indexOf('agb_ai_garage_')===0) keys.push(k);
-                }
-                keys.forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} });
             }catch(e){}
         }
         function loadAIPhotoExtraInstructions(){
             try{
                 const el=document.getElementById('aiPhotoExtraInstructions');
-                if(!el) return;
-                // Always start empty on a fresh open; only keep text while this tab session is open
+                if(el) el.value='';
+                try{ sessionStorage.removeItem('agb_ai_photo_extra'); }catch(e){}
                 try{ localStorage.removeItem('agb_ai_photo_extra'); }catch(e){}
-                const isEdit=!!new URLSearchParams(location.search).get('editEstimate');
-                if(isEdit){
-                    // Editing a saved estimate: leave empty unless chat was part of that session
-                    el.value=sessionStorage.getItem('agb_ai_photo_extra')||'';
-                } else {
-                    // New estimate visit: default empty (do not restore old "roofed patio back")
-                    el.value='';
-                    try{ sessionStorage.removeItem('agb_ai_photo_extra'); }catch(e){}
-                }
             }catch(e){}
         }
         function saveGarageAccessType(){
@@ -6990,7 +7011,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             }catch(err){
                 console.error('buildGarageAIPrompt failed', err);
                 const dim = (typeof getGarageDimensions==='function') ? getGarageDimensions() : {width:20, depth:20};
-                const extra = (document.getElementById('aiPhotoExtraInstructions')?.value || '').trim();
+                const extra = '';
                 const roof = document.getElementById('roofType')?.value||'gable';
                 return [
                     'Hyper-realistic professional photograph of a brand-new detached residential garage',
@@ -7045,7 +7066,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             const winQty = Number(document.getElementById('windowQty')?.value||0);
             let access = document.getElementById('garageAccessType')?.value || localStorage.getItem('agb_garage_access_type') || 'driveway';
 
-            const extra = (document.getElementById('aiPhotoExtraInstructions')?.value || sessionStorage.getItem('agb_ai_photo_extra') || '').trim();
+            const extra = '';
             const q = extra.toLowerCase();
             if (/vinyl/.test(q)) sidingType = 'vinyl';
             if (/hardie|cement\s*board/.test(q)) sidingType = 'hardie';
@@ -9916,6 +9937,27 @@ async function openPopupChatGPT(){
             }, 120);
         }
 
+        function startNewEstimate(){
+            try{
+                window._lastEstimateHistoryId=null;
+                window._boundEstimateCustomer='';
+                window._boundEstimateAddress='';
+                window._pendingOptionSlot=null;
+                activeComparisonSlot=null;
+                estimateComparison={A:null,B:null,C:null};
+                sessionStorage.removeItem(MULTI_ESTIMATE_KEY);
+                sessionStorage.removeItem('garage_edit_estimate_record');
+                sessionStorage.removeItem('agb_last_ai_garage_photo');
+                window._lastAiGaragePhotoUrl=null;
+                const u=new URL(location.href);
+                u.searchParams.delete('editEstimate');
+                u.searchParams.delete('jobId');
+                history.replaceState({},'',u.toString());
+            }catch(e){}
+            resetForm(true);
+            noticeEstimateHistory('New estimate — this will save as a new History row.', true);
+        }
+
         function resetForm(runCalc = true) {
             try{
                 clearEstimateEditBinding();
@@ -10215,7 +10257,10 @@ async function openPopupChatGPT(){
             if(name && !document.getElementById('customerName')?.value) setEstimatorField('customerName', name);
             if(addr && !document.getElementById('customerAddress')?.value) setEstimatorField('customerAddress', addr);
             if(city) setEstimatorField('city', city);
-            if(phone && document.getElementById('customerPhone') && !document.getElementById('customerPhone').value) setEstimatorField('customerPhone', phone);
+            if(phone){
+                const p1=document.getElementById('customerPhone1')||document.getElementById('customerPhone');
+                if(p1 && !p1.value) setEstimatorField(p1.id, phone);
+            }
             if(size && !q.get('editEstimate')){
                 const m=String(size).match(/([0-9.]+)\D+[x×]\D*([0-9.]+)/i);
                 if(m){

@@ -1016,7 +1016,7 @@ function applyJobRules(){
   return {r,brace,fire};
 }
 function needsBraceDetail(){ return computeBraceRequired(); }
-function sheetTotal(){ return 6+(needsBraceDetail()?1:0)+(computeFirewallRequired()?1:0); }
+function sheetTotal(){ return 7+(needsBraceDetail()?1:0)+(computeFirewallRequired()?1:0); }
 function doorScheduleHTML(){
   const rows=[];
   rows.push(['Overhead door', (val('ohW')||'16')+' x '+(val('ohH')||'7'), 'Raised panel steel', (val('ohWall')||'front')+' wall']);
@@ -1046,6 +1046,7 @@ function packetChecklistHTML(){
     ['Front / rear elevations','yes'],
     ['Left / right elevations','yes'],
     ['Building section','yes'],
+    ['Foundation / footing / slab','yes — village concrete'],
     ['Brace / PFG sheet', needsBraceDetail()?'yes — this village + these returns':'no — not required on this job'],
     ['Fire wall sheet', computeFirewallRequired()?'yes — setback / village':'no — not required on this job']
   ];
@@ -1773,15 +1774,15 @@ function elevLarge(view, title){
   }
   }
   if(val('ohWall')===view && !patioOnFace){
-    notes.push(`<text x="${x+ww/2}" y="${y+wh+slabH+64}" text-anchor="middle" font-size="10" font-weight="700">${esc((val('ohW')||16)+'-0" x '+(val('ohH')||7)+'-0" RAISED-PANEL STEEL OVERHEAD DOOR')}</text>`);
+    notes.push(`<text x="${x+ww/2}" y="${y+wh+slabH+52}" text-anchor="middle" font-size="10" font-weight="700">${esc((val('ohW')||16)+'-0" x '+(val('ohH')||7)+'-0" OVERHEAD DOOR')}</text>`);
   }
   if(val('partyWall')===view){
     const ps=val('partySize')||'6x7';
-    notes.push(`<text x="${x+ww*0.22}" y="${y+wh+slabH+58}" font-size="10" font-weight="700">${esc(ps)} RAISED-PANEL STEEL PARTY DOOR</text>`);
+    notes.push(`<text x="${x+8}" y="${y+wh+slabH+68}" font-size="10" font-weight="700">${esc(ps)} PARTY DOOR</text>`);
   }
   if(val('svcWall')===view){
     const swi=svcSwingInfo();
-    notes.push(`<text x="${x+ww-4}" y="${y+wh+slabH+58}" text-anchor="end" font-size="10" font-weight="700">36" x 80" STEEL SERVICE DOOR (${esc((swi.dir||'IN').toUpperCase()==='OUT'?'SWING OUT':'SWING IN')})</text>`);
+    notes.push(`<text x="${x+ww-4}" y="${y+wh+slabH+84}" text-anchor="end" font-size="10" font-weight="700">36" x 80" SERVICE DOOR (${esc((swi.dir||'IN').toUpperCase()==='OUT'?'OUT':'IN')})</text>`);
   }
   if(apronOn){
     notes.push(`<text x="${L}" y="${y+wh+slabH+8}" font-size="10" font-weight="700">FULL-WIDTH CONCRETE APRON</text>
@@ -1883,6 +1884,52 @@ function pageFloorSection(){
       <div>${conformCodesHTML()}${doorScheduleHTML()}${val('electricNotes')?`<div class="elecbox notes-col"><h3>JOB ELECTRICAL NOTES</h3><ul>${val('electricNotes').split(/\n+/).filter(Boolean).map(t=>'<li>'+esc(t)+'</li>').join('')}</ul></div>`:''}</div>
     </div>
     ${tblock('PROPOSED FLOOR PLAN','1',String(sheetTotal()))}
+  </section>`;
+}
+function foundationSvg(){
+  const c=code()||{};
+  const foot=val('footing')||c.footings||'12" W x 12" D THICKENED EDGE';
+  const slab=val('slab')||((c.thickness||'4"')+' CONCRETE — '+(c.slab||'6 BAG MIX')+' ON 4" GRANULAR + WWF');
+  const thick=c.thickness||'4"';
+  const mix=c.slab||'6 BAG MIX';
+  const drive=c.driveway||'—';
+  const city=cityName();
+  const W=Number(val('width'))||20, D=Number(val('depth'))||20;
+  return `<svg viewBox="0 0 900 620" width="100%" style="max-height:8.6in">
+    ${sheetHead('FOUNDATION / SLAB / FOOTING','A-1A',900)}
+    <text x="450" y="52" text-anchor="middle" font-size="13" font-weight="800">${esc(city.toUpperCase())} CONCRETE REQUIREMENTS</text>
+    <rect x="70" y="90" width="420" height="280" fill="#f3f3f3" stroke="#111" stroke-width="1.8"/>
+    <rect x="90" y="110" width="380" height="240" fill="#fff" stroke="#111"/>
+    <text x="280" y="240" text-anchor="middle" font-size="14" font-weight="800">${W}'-0" x ${D}'-0" SLAB</text>
+    <text x="280" y="262" text-anchor="middle" font-size="12">${esc(thick)} CONCRETE  ·  ${esc(mix)}</text>
+    <polygon points="90,350 70,400 490,400 470,350" fill="#d0d0d0" stroke="#111"/>
+    <text x="280" y="382" text-anchor="middle" font-size="12" font-weight="700">THICKENED EDGE / FOOTING</text>
+    <text x="82" y="434" font-size="11" font-weight="700">${esc(String(foot).slice(0,48))}</text>
+    <rect x="540" y="90" width="330" height="400" fill="none" stroke="#111"/>
+    <text x="556" y="118" font-size="13" font-weight="800">VILLAGE NOTES</text>
+    <text x="556" y="146" font-size="12">Slab: ${esc(String(slab).slice(0,46))}</text>
+    <text x="556" y="168" font-size="12">Footing: ${esc(String(foot).slice(0,46))}</text>
+    <text x="556" y="190" font-size="12">Driveway (if used): ${esc(String(drive))}</text>
+    <text x="556" y="212" font-size="12">Parkway: ${esc(c.parkway||'—')}</text>
+    <text x="556" y="234" font-size="12">Anchors 1/2" @ 6'-0" O.C.  IRC R403.1.6</text>
+    <text x="556" y="256" font-size="12">Treated sill  IRC R317</text>
+    <text x="556" y="278" font-size="12">6-mil vapor  IRC R506.2.3</text>
+    <text x="556" y="300" font-size="12">4" granular fill typical</text>
+    <text x="556" y="322" font-size="12">6x6-W2.1xW2.1 WWF or fiber</text>
+    <text x="556" y="354" font-size="12">Pitch slab 1/8" per ft to OH door</text>
+    <text x="556" y="386" font-size="12">Only items from the city panel.</text>
+    <text x="70" y="520" font-size="12">ABSOLUTE GARAGE BUILDERS  ·  3050 W IRVING PARK RD</text>
+    <text x="70" y="540" font-size="11">${esc((c.notes||'').slice(0,140))}</text>
+  </svg>`;
+}
+function pageFoundation(){
+  const url=window._planAiPhotos && window._planAiPhotos.foundation;
+  const body=url
+    ? `<div class="elevpage ai-elev"><img alt="Foundation" src="${String(url).replace(/"/g,'')}"></div>`
+    : `<div class="elevpage">${foundationSvg()}</div>`;
+  return `<section class="${sheetClass()}">
+    ${body}
+    ${tblock('FOUNDATION / SLAB / FOOTING','1A',String(sheetTotal()))}
   </section>`;
 }
 function roofPlanSvg(){
@@ -2127,7 +2174,7 @@ function buildPlans(scrollTo){
     seedPlanItems();
     const pages=$('pages'); if(!pages) return;
     const chunks=[];
-    [['floor',pageFloorSection],['elev',pageElevations],['sect',pageSectionRoof],['detail',pageDetail],['fire',pageFire]].forEach(([name,fn])=>{
+    [['floor',pageFloorSection],['found',pageFoundation],['elev',pageElevations],['sect',pageSectionRoof],['detail',pageDetail],['fire',pageFire]].forEach(([name,fn])=>{
       try{ chunks.push(fn()); }
       catch(err){ chunks.push('<div class="sheet"><div class="caption">Sheet error ('+name+')</div><pre class="notes-col">'+esc(String(err&&err.message||err))+'</pre></div>'); }
     });
@@ -2541,39 +2588,103 @@ function planAiJobPrompt(view){
   const shingles=val('shingles')||'Architectural';
   const apron=val('apronFt')||'3';
   const viewName=view==='back'?'rear':view;
+  const span=(view==='front'||view==='back')?W:D;
+  const eaveWalls=roof==='gable'?['left','right']:roof==='revgable'?['front','back']:['front','back','left','right'];
+  const isEave=eaveWalls.includes(view);
+
+  const openings=[];
+  if(ohWall===view){
+    openings.push('THIS WALL HAS the '+ohW+'x'+ohH+' raised-panel steel OVERHEAD door'+(ohRet!==''?' with '+ohRet+' ft left return':' centered')+'. Door to grade. Label the door size on the door.');
+  }
+  if(partyWall===view){
+    openings.push('THIS WALL HAS one '+partySize+' raised-panel steel PARTY door (mini overhead, ONE door, no knob, no center split)'+(partyRet!==''?' , '+partyRet+' ft from the left end':'')+'. Label the size on the door.');
+  }
+  if(svcWall===view){
+    openings.push('THIS WALL HAS a 36"x80" steel SERVICE door, swing '+svcSwing+' toward the closest interior wall. Sill on the slab. Label 36"x80".');
+  }
+  if(winWall===view && winCount>0){
+    openings.push('THIS WALL HAS '+winCount+' '+winType+' window '+winSize+'. Label the window size.');
+  }
+  const openingBlock=openings.length
+    ? openings.join(' ')
+    : 'THIS '+viewName.toUpperCase()+' ELEVATION IS A BLANK WALL. ZERO doors. ZERO windows. ZERO party doors. Do not draw any door or window on this view.';
+
+  let patioLine='NO ROOFED PATIO on this view.';
+  if(patio!=='none'){
+    if(patio===view){
+      patioLine='CRITICAL ROOFED PATIO on THIS wall only: '+patioSize+' ft deep, full length of the '+span+' ft wall, EXACTLY '+(posts||'4')+' 4x4 posts on a concrete slab. Same roof plane, not a dropped shed.';
+    }else{
+      patioLine='Patio exists on the '+patio+' wall — it is NOT on this '+viewName+' elevation. Do not add posts or a patio roof on this view.';
+    }
+  }
+
+  let gutterLine='NO GUTTERS. Do not draw a gutter or downspout.';
+  if(gutters){
+    if(view==='front' && isEave){
+      gutterLine='CRITICAL GUTTERS on this FRONT eave: K-style box tight under the fascia for the full width. TWO rectangular downspouts only, one at each FRONT corner, S-offset, shoe at grade. Draw a leader that says GUTTER / K-STYLE and another that says DOWNSPOUT. No third downspout.';
+    }else if(isEave){
+      gutterLine='CRITICAL GUTTERS: K-style box under the eave fascia on this '+viewName+' run. Draw the gutter profile and a leader labeled GUTTER. Do NOT add a downspout on this view (the only two downspouts are on the front corners).';
+    }else{
+      gutterLine='This is a GABLE END. You may show the cut end of the eave gutter at the two top corners only. Leader: GUTTER (EAVE). No downspout on this gable. Do not run a gutter up the rake.';
+    }
+  }
+
+  const dimLine=[
+    'REQUIRED LABELS — outside the building, 8pt+, never overlapping, never on the siding:',
+    'bottom overall dimension '+span+"'-0\"",
+    'left plate height '+H+"'-0\"",
+    'roof pitch '+pitch,
+    openings.length? 'Every door and window on THIS wall must show its size on or under that opening.':'',
+    soffit?'Leader far right of the eave: ALUM SOFFIT / FASCIA pointing at the soffit. Draw the boxed eave.':'Do not draw aluminum soffit labels.',
+    ties?'Leader far left: HURRICANE TIES IRC R802.11':'Do not add hurricane ties.',
+    Number(apron)>0 && view==='front'?'apron '+apron+"'-0\" labeled under the slab":''
+  ].filter(Boolean).join(' ');
+
+  const c=code()||{};
+  const villageLine=[
+    'VILLAGE OF '+city+' CODES TO OBEY (do not invent extras):',
+    c.footings?('Footing '+c.footings):'',
+    c.thickness?('Slab '+c.thickness+' '+(c.slab||'')):'',
+    c.rafters?('Rafters '+c.rafters):'',
+    showOnPlan('fire')?'Firewall on the close wall only.':'No firewall.',
+    showOnPlan('brace')?'Brace/shear only if returns are short — do not draw a brace panel on this elevation.':'No brace wall on elevations.',
+    'Snow '+(val('snowLoad')||c.snow||'30')+' psf. Only label items that are ON the left panel.'
+  ].filter(Boolean).join(' ');
 
   const lines=[
-    'CRITICAL VIEW: '+viewName.toUpperCase()+' ELEVATION ONLY of a detached garage. Official black-and-white CAD permit drawing on white paper. Thin linework, title block, no people, no cars blocking the building, no logo watermark.',
-    'JOB: '+W+' ft wide x '+D+' ft deep x '+H+' ft plate. Village of '+city+'. Pitch '+pitch+'. Siding '+siding+' '+sidingDir+'. Shingles '+shingles+'.',
+    'CRITICAL VIEW: '+viewName.toUpperCase()+' ELEVATION ONLY. Official black-and-white CAD permit drawing on white paper. Thin linework. Title block. No people, no cars, no logo watermark, no 3D photo look.',
+    'JOB: '+W+'x'+D+' x '+H+' ft plate. Village of '+city+'. Siding '+siding+' '+sidingDir+'. Shingles '+shingles+'.',
     roof==='revgable'
-      ? 'CRITICAL REVERSE GABLE: gable triangles ONLY on LEFT and RIGHT walls. FRONT and REAR are long eave RUNS with NO triangle over the wall. Ridge runs front-to-back. A FRONT or REAR view is a rectangle + sloped eave. A LEFT or RIGHT view is the full gable triangle.'
+      ? 'CRITICAL REVERSE GABLE: triangles ONLY on LEFT and RIGHT. FRONT and REAR are eave RUNS with NO peak over the wall. Ridge front-to-back.'
       : (roof==='gable'
-        ? 'CRITICAL STANDARD GABLE: triangles on FRONT and REAR. LEFT and RIGHT are eave runs. FRONT view shows the gable triangle.'
-        : 'CRITICAL HIP ROOF: no gable triangles on any wall. All four sides are hip slopes.'),
-    'CRITICAL OVERHEAD DOOR: '+ohW+'x'+ohH+' raised-panel steel overhead on the '+ohWall+' wall only'+(ohRet!==''?' with '+ohRet+' ft left return':' centered')+'. Show it only if this view can see that wall. Door to grade.',
-    partyWall!=='none'
-      ? 'CRITICAL PARTY DOOR: one '+partySize+' raised-panel steel MINI OVERHEAD door on the '+partyWall+' wall'+(partyRet!==''?' , '+partyRet+' ft from the left end of that wall':'')+'. It is ONE door, not two swing doors, no knob. Show only if this view sees that wall.'
-      : 'NO PARTY DOOR. Do not invent one.',
-    svcWall!=='none'
-      ? 'CRITICAL SERVICE DOOR: 36x80 steel swing door on the '+svcWall+' wall, swing '+svcSwing+' toward the closest interior wall. Show only if this view sees that wall.'
-      : 'NO SERVICE DOOR.',
-    (winWall!=='none' && winCount>0)
-      ? 'CRITICAL WINDOW: '+winCount+' '+winType+' '+winSize+' on the '+winWall+' wall. Show only if this view sees that wall.'
-      : 'NO WINDOW unless listed.',
-    patio!=='none'
-      ? 'CRITICAL ROOFED PATIO: '+patioSize+' ft deep on the '+patio+' wall, full length of that wall, EXACTLY '+(posts||'4')+' 4x4 posts. Concrete slab under. Reverse gable: extend the SAME roof plane flush over the patio, do not draw a dropped shed.'
-      : 'NO ROOFED PATIO. Do not invent one.',
-    gutters
-      ? 'CRITICAL GUTTERS: K-style box at the eave, S-offset, rectangular downspout, shoe at grade. TWO downspouts total on the whole building at the FRONT eave corners only. Do not add a third downspout on a gable or rear corner.'
-      : 'NO GUTTERS.',
-    soffit?'Aluminum soffit and fascia.':'',
-    ties?'Hurricane ties at rafter-to-wall (IRC R802.11) labeled if it fits without overlapping.':'',
-    apron && Number(apron)>0 && (view==='front' || ohWall===view) ? 'Concrete apron '+apron+' ft at the overhead door wall.' : '',
-    'NO gable vent unless the panel asked for one. Title: '+viewName.toUpperCase()+' ELEVATION — '+W+'x'+D+' '+roof+' — '+city+'. Contractor ABSOLUTE GARAGE BUILDERS 3050 W IRVING PARK RD. PERMIT DRAWING NOT FOR CONSTRUCTION.',
-    'Do not change roof type. Do not invent openings. Do not overlap labels.'
+        ? 'CRITICAL STANDARD GABLE: triangles on FRONT and REAR. LEFT and RIGHT are eave runs.'
+        : 'CRITICAL HIP ROOF: no gable triangles on any wall.'),
+    openingBlock,
+    patioLine,
+    gutterLine,
+    dimLine,
+    villageLine,
+    'NO gable vent. Title: '+viewName.toUpperCase()+' ELEVATION — '+W+'x'+D+' '+roofLabel()+' — '+city+'. ABSOLUTE GARAGE BUILDERS 3050 W IRVING PARK RD. PERMIT DRAWING NOT FOR CONSTRUCTION.',
+    'Do not invent openings, patios, vents, extra downspouts, or walls that are not listed for THIS view. Leave 1/2 inch of white space between every label.'
   ];
   return lines.filter(Boolean).join(' ');
 }
+
+function planAiFoundationPrompt(){
+  const c=code()||{};
+  const W=Number(val('width'))||20, D=Number(val('depth'))||20;
+  const foot=val('footing')||c.footings||'12" x 12" thickened edge';
+  const slab=val('slab')||((c.thickness||'4"')+' '+(c.slab||'6 BAG MIX'));
+  return [
+    'Official black-and-white CAD FOUNDATION / SLAB / FOOTING detail sheet on white paper. Permit style. No people.',
+    'Village of '+(cityName()||'Village')+'. Garage slab '+W+"'-0\" x "+D+"'-0\".",
+    'Draw a cross section:  '+slab+' slab on 4" granular fill, vapor barrier, WWF, treated sill, 1/2" anchors at 6\' o.c. IRC R403.1.6.',
+    'Thickened edge / footing exactly: '+foot+'. Dimension width and depth on the footing.',
+    'Notes column with those sizes. Pitch slab 1/8" per foot to overhead door.',
+    'Do not add basements, stem walls, or extra rooms. Title FOUNDATION PLAN — ABSOLUTE GARAGE BUILDERS 3050 W IRVING PARK RD.'
+  ].join(' ');
+}
+
 
 async function callPlanPhoto(prompt){
   const body={ prompt:String(prompt||'').slice(0,4500) };
@@ -2607,18 +2718,22 @@ async function generateAiPlanPictures(){
   const views=['front','back','left','right'];
   const titles={front:'FRONT',back:'REAR',left:'LEFT',right:'RIGHT'};
   window._planAiPhotos=window._planAiPhotos||{};
-  setLoad(true,'AI elevations — this uses the same OpenAI function as the estimator. About 20–40s per view.');
+  setLoad(true,'AI elevations use village codes from the panel. About 20–40s per sheet.');
   setStatus('Starting AI plan pictures for '+cityName()+'…');
   try{
     for(let i=0;i<views.length;i++){
       const view=views[i];
-      setLoad(true,'OpenAI '+titles[view]+' elevation ('+(i+1)+'/4) — keep this tab open…');
-      setStatus('Drawing '+titles[view]+' elevation with OpenAI from the panel…');
+      setLoad(true,'OpenAI '+titles[view]+' elevation ('+(i+1)+'/5) — keep this tab open…');
+      setStatus('Drawing '+titles[view]+' elevation with OpenAI from the panel + '+cityName()+' codes…');
       const url=await callPlanPhoto(planAiJobPrompt(view));
       window._planAiPhotos[view]=url;
       buildPlans(false);
     }
-    setStatus('AI elevations ready for '+customerLabel()+' · '+cityName()+' · Generate Plans still draws SVG if you want the vector sheets back.', true);
+    setLoad(true,'OpenAI foundation / footing sheet (5/5)…');
+    setStatus('Drawing foundation / slab / footing from '+cityName()+' codes…');
+    window._planAiPhotos.foundation=await callPlanPhoto(planAiFoundationPrompt());
+    buildPlans(false);
+    setStatus('AI elevations + foundation ready for '+customerLabel()+' · '+cityName()+'. Generate Plans restores SVG.', true);
   }catch(err){
     setStatus('AI plan pictures failed: '+(err&&err.message||err)+'. SVG sheets are still available via Generate Plans.');
   }finally{

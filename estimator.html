@@ -1526,7 +1526,7 @@ input, select, textarea, button { box-sizing:border-box; }
                             <span>STRUCTURAL &amp; EXTERIOR ADD-ONS</span>
                         </div><div class="mt-4 pt-4 border-t border-zinc-700"><div class="text-xs font-semibold text-zinc-400 mb-2">WINDOWS</div>
 <input type="hidden" id="windowQty" value="1"><div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-<div><label class="text-xs text-zinc-400 block mb-1">Extra windows</label><input type="number" id="extraWindows" value="0" min="0" step="1" oninput="syncWindowQtyFromExtras(); calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2 text-sm"><div class="text-[10px] text-zinc-500">@ $150 ea · sheet shows extra + 1 standard</div></div>
+<div><label class="text-xs text-zinc-400 block mb-1">Extra windows</label><input type="number" id="extraWindows" value="0" min="0" step="1" oninput="syncWindowQtyFromExtras(); calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2 text-sm"><div id="extraWindowsHelp" class="text-[10px] text-zinc-500">@ $250 ea · sheet shows extra + 1 standard</div></div>
 <div><label class="text-xs text-zinc-400 block mb-1">Window type</label><select id="windowType" onchange="syncWindowQtyFromExtras(); calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm"><option value="choice" selected>Customer Choice</option><option value="single">Single Hung</option><option value="sliding">Slider</option><option value="none">No Window</option></select></div>
 <div><label class="text-xs text-zinc-400 block mb-1">Window placement</label><select id="windowPlacement" onchange="calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm"><option value="front">Front wall</option><option value="left" selected>Left wall</option><option value="right">Right wall</option><option value="back">Back wall</option></select><div class="text-[10px] text-zinc-500 mt-0.5">OK on same wall as service door — photo keeps them separated, not overlapping</div></div>
 </div></div><!-- Roof Patio Section -->
@@ -2519,9 +2519,18 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
         }
         function syncWindowQtyFromExtras(){
             const wt=document.getElementById('windowType')?.value||'choice';
-            const extra=Math.max(0,parseInt(document.getElementById('extraWindows')?.value||0)||0);
-            // Standard garage includes 1 window; sheet total = extra + 1 (unless No Window)
-            const total=(wt==='none')?0:(extra+1);
+            const extraEl=document.getElementById('extraWindows');
+            const help=document.getElementById('extraWindowsHelp');
+            const off=wt==='none';
+            if(off){
+                if(extraEl){ extraEl.value='0'; extraEl.disabled=true; extraEl.classList.add('opacity-40'); }
+                if(help) help.textContent='Windows are turned off. Extra windows cannot be added until a window type is selected.';
+            } else {
+                if(extraEl){ extraEl.disabled=false; extraEl.classList.remove('opacity-40'); }
+                if(help) help.textContent='@ $250 ea · sheet shows extra + 1 standard';
+            }
+            const extra=off?0:Math.max(0,parseInt(extraEl?.value||0)||0);
+            const total=off?0:(extra+1);
             if(document.getElementById('windowQty'))document.getElementById('windowQty').value=String(total);
         }
         function toggleElectricIncluded(){
@@ -2620,7 +2629,10 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
 
         // Package pricing with lookup + fallback formula
         function getPackagePrice(width, depth) {
-            const key = `${width}x${depth}`;
+            const even = (n)=>Math.ceil(Math.max(0, Number(n)||0) / 2) * 2;
+            const w = even(width);
+            const d = even(depth);
+            const key = `${w}x${d}`;
             const prices = {
                 "20x20": 7040,
                 "20x22": 7540,
@@ -2638,7 +2650,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             }
             
             // Fallback: base + $500 per 2ft total dimension increase (fits most examples)
-            const delta = width + depth - 40;
+            const delta = w + d - 40;
             const increments = Math.max(0, Math.floor(delta / 2));
             return 7040 + (increments * 500);
         }
@@ -2930,7 +2942,9 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                     + (parseInt(document.getElementById('extraOutletsExterior')?.value)||0)
                     || (parseInt(document.getElementById('extraOutlets')?.value)||0))
                 : 0;
-            const extraWindows = parseInt(document.getElementById('extraWindows').value) || 0;
+            const extraWindows = (document.getElementById('windowType')?.value==='none')
+                ? 0
+                : (parseInt(document.getElementById('extraWindows').value) || 0);
             // Openers: if No electric, still allow cost in calc unless we also zero openers — sheet hides opener row only
             const noElectricSelected = !electricOn && (typeof getElectricAltOption==='function' && getElectricAltOption()==='none');
             
@@ -3029,7 +3043,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             // Electrical
             const extraLightsCost = extraLights * 150;
             const extraOutletsCost = extraOutlets * 150;
-            const extraWindowsCost = extraWindows * 150;
+            const extraWindowsCost = extraWindows * 250;
             const electricalCost = elecBase + ev + evPrep + threeWay + extraLightsCost + extraOutletsCost + electricSubpanel;
             
             // Overhead doors (base 16x7 @1200 + upgrade for taller + additional)
@@ -3057,18 +3071,18 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                     if(whEl) whEl.value=wallHeight;
                 }
                 if(isThreeCarLayout() && threeCarDoors.length){
-                    threeCarDoors.forEach((d,idx)=>{
-                        threeCarDoorCost += (idx===0 ? 1200 : 800) + (d.extra||0);
-                    });
+                    const priced=(typeof priceThreeCarDoors==='function')?priceThreeCarDoors(threeCarDoors):{cost:0,doors:threeCarDoors};
+                    threeCarDoorCost = priced.cost||0;
+                    threeCarDoors = priced.doors||threeCarDoors;
                     const first=threeCarDoors[0];
                     const wEl=document.getElementById('overheadDoorWidth');
                     const hEl=document.getElementById('overheadDoorHeight');
-                    if(wEl) wEl.value=String(first.w);
-                    if(hEl) hEl.value=String(first.h);
+                    if(first && wEl) wEl.value=String(first.w);
+                    if(first && hEl) hEl.value=String(first.h);
                 }
             }catch(e){ console.warn('3-car doors', e); }
             const overheadCost = isThreeCarLayout() && threeCarDoors.length
-                ? (threeCarDoorCost + extraOhDoorCost + opener8500Upgrade + doorInsulCost)
+                ? (threeCarDoorCost + extraOhDoorCost + doorInsulCost)
                 : (ohDoorOpenerPrice + overheadUpgrade + overheadWidthUpgrade + overheadCustomExtra + extraOhDoorCost + opener8500Upgrade + doorInsulCost);
             
             // Side door — party: base 6x7 @ $800, +$100 per extra foot of W or H
@@ -3891,7 +3905,14 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             // Electrical line amount = full electrical cost bucket (edits override and stick)
             lines.push({ label: `Electrical`, amount: data.electricalCost, section: 'core', key: 'electrical' });
             const ohBaseAmt = Math.max(0, Number(data.ohDoorOpenerPrice||data.overheadCost||0));
-            lines.push({ label: `Overhead door + opener`, amount: ohBaseAmt, section: 'core', key: 'oh_door_opener' });
+            if (data.threeCarDoors && data.threeCarDoors.length) {
+                data.threeCarDoors.forEach((d,i)=>{
+                    lines.push({ label: `3-car door ${i+1}: ${d.label}`+(d.note?` (${d.note})`:''), amount: Number(d.doorAmt||0), section: 'core', key: 'oh3_'+i });
+                    if(Number(d.opAmt||0)>0) lines.push({ label: `Opener for 3-car door ${i+1}`, amount: d.opAmt, section: 'core', key: 'oh3_op_'+i });
+                });
+            } else {
+                lines.push({ label: `Overhead door + opener`, amount: ohBaseAmt, section: 'core', key: 'oh_door_opener' });
+            }
             if (Array.isArray(data.extraOhList) && data.extraOhList.length) {
                 data.extraOhList.forEach((d,i)=>{
                     lines.push({ label: `Additional overhead door ${i+1} ${d.label}`+(d.ins? ' insulated':''), amount: 800+(d.extra||0)+(d.ins||0), section: 'core', key: 'addl_oh_'+i });
@@ -3902,9 +3923,6 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             }
             if (data.doorInsulCost > 0) {
                 lines.push({ label: 'Door insulation', amount: data.doorInsulCost, section: 'core', key: 'door_insul' });
-            }
-            if (data.threeCarDoors && data.threeCarDoors.length) {
-                lines.push({ label: '3-car door layout: '+data.threeCarDoors.map(d=>d.label).join(', '), amount: 0, section: 'core', note: 'priced in overhead door line', key: 'oh_layout_note' });
             }
             if (data.addlOpeners > 0 && !(data.extraOhDoors && data.extraOhDoors.some(d=>d.opCost))) {
                 lines.push({ label: `Additional openers (${data.addlOpeners} × $450)`, amount: data.addlOpeners * 450, section: 'core', key: 'addl_openers' });
@@ -4012,7 +4030,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             if (data.ev > 0) lines.push({ label: 'EV charger', amount: data.ev, section: 'addons' });
             if (data.threeWay > 0) lines.push({ label: '3-way switch', amount: data.threeWay, section: 'addons' });
             if (data.extraLightsCost > 0) lines.push({ label: `Extra lights (${data.extraLights} × $150)`, amount: data.extraLightsCost, section: 'addons' });
-            if (data.extraWindowsCost > 0) lines.push({ label: `Extra windows (${data.extraWindows} × $150)`, amount: data.extraWindowsCost, section: 'structural', key: 'extra_windows' });
+            if (data.extraWindowsCost > 0) lines.push({ label: `Extra windows (${data.extraWindows} × $250)`, amount: data.extraWindowsCost, section: 'structural', key: 'extra_windows' });
             if (data.evPrep > 0) lines.push({ label: 'EV Prep', amount: data.evPrep, section: 'addons' });
             if (data.extraOutletsCost > 0) lines.push({ label: `Extra outlets (${data.extraOutlets})`, amount: data.extraOutletsCost, section: 'addons' });
             if (data.overheadWidthUpgrade > 0) lines.push({ label: "18' × 7' overhead door upgrade", amount: data.overheadWidthUpgrade, section: 'addons' });
@@ -5019,7 +5037,8 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
         function ensureThreeCarDoorGrid(){
             const grid=document.getElementById('threeCarDoorGrid');
             if(!grid) return;
-            if(grid.childElementCount) return;
+            if(grid.querySelector('#ohLayoutOpener1')) return;
+            grid.innerHTML='';
             for(let i=1;i<=3;i++){
                 const box=document.createElement('div');
                 box.innerHTML=`
@@ -5028,13 +5047,17 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                         <option value="">— Blank —</option>
                         <option value="16x7"${i===1?' selected':''}>16' × 7' Door</option>
                         <option value="18x7">18' × 7' (+$350)</option>
-                        <option value="8x7">8' × 7'</option>
+                        <option value="8x7">8' × 7' (+$650)</option>
                         <option value="custom">Custom dimensions</option>
                     </select>
                     <div id="ohLayoutCustom${i}" class="hidden grid grid-cols-2 gap-1 mt-1">
                         <input type="number" id="ohLayoutW${i}" placeholder="W ft" min="1" step="0.5" oninput="calculateEstimate()" class="calc-input bg-zinc-900 border border-zinc-700 rounded-lg px-2 py-1 text-sm">
                         <input type="number" id="ohLayoutH${i}" placeholder="H ft" min="1" step="0.5" oninput="calculateEstimate()" class="calc-input bg-zinc-900 border border-zinc-700 rounded-lg px-2 py-1 text-sm">
-                    </div>`;
+                    </div>
+                    <label class="flex items-center gap-2 mt-2 text-[11px] text-zinc-300">
+                        <input type="checkbox" id="ohLayoutOpener${i}" onchange="calculateEstimate()" class="rounded border-zinc-600">
+                        <span id="ohLayoutOpenerLabel${i}">Opener for this door (+$400)</span>
+                    </label>`;
                 grid.appendChild(box);
             }
         }
@@ -5047,13 +5070,47 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             const sel=document.getElementById('ohLayout'+i);
             const v=sel?String(sel.value||''):'';
             if(!v) return null;
-            if(v==='16x7') return {w:16,h:7,extra:0,label:"16'×7'"};
-            if(v==='18x7') return {w:18,h:7,extra:350,label:"18'×7'"};
-            if(v==='8x7') return {w:8,h:7,extra:0,label:"8'×7'"};
-            const w=Math.max(1, Number(document.getElementById('ohLayoutW'+i)?.value)||0);
-            const h=Math.max(1, Number(document.getElementById('ohLayoutH'+i)?.value)||0);
-            if(!w||!h) return null;
-            return {w,h,extra:0,label:w+"'×"+h+"'"};
+            let door=null;
+            if(v==='16x7') door={w:16,h:7,extra:0,label:"16'×7'"};
+            else if(v==='18x7') door={w:18,h:7,extra:350,label:"18'×7'"};
+            else if(v==='8x7') door={w:8,h:7,extra:0,label:"8'×7'"};
+            else {
+                const w=Math.max(1, Number(document.getElementById('ohLayoutW'+i)?.value)||0);
+                const h=Math.max(1, Number(document.getElementById('ohLayoutH'+i)?.value)||0);
+                if(!w||!h) return null;
+                door={w,h,extra:0,label:w+"'×"+h+"'"};
+            }
+            door.hasOp=!!document.getElementById('ohLayoutOpener'+i)?.checked;
+            door.slot=i;
+            return door;
+        }
+        function priceThreeCarDoors(doors){
+            const list=Array.isArray(doors)?doors:[];
+            const hasWide=list.some(d=>Number(d.w)>=16);
+            let cost=0;
+            let usedWideBase=false;
+            const priced=list.map(d=>{
+                const wide=Number(d.w)>=16;
+                let doorAmt=0, opAmt=0, note='';
+                if(hasWide && wide && !usedWideBase){
+                    doorAmt=1200+(d.extra||0);
+                    opAmt=0;
+                    note='16×7 door + opener included';
+                    usedWideBase=true;
+                    d.opIncluded=true;
+                } else if(hasWide && wide){
+                    doorAmt=1200+(d.extra||0);
+                    opAmt=d.hasOp?400:0;
+                    note='additional wide door';
+                } else {
+                    doorAmt=650+(d.extra||0);
+                    opAmt=d.hasOp?400:0;
+                    note=hasWide?'extra stall 8×7':'$650 per 8×7 (no 16×7 on this layout)';
+                }
+                cost += doorAmt + opAmt;
+                return Object.assign({}, d, {doorAmt, opAmt, note});
+            });
+            return {cost, doors:priced, hasWide};
         }
         function getThreeCarDoors(){
             ensureThreeCarDoorGrid();
@@ -5094,7 +5151,22 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             if(main && main.closest){
                 const box=main.closest('.md\\:col-span-2') || main.parentElement;
             }
-            for(let i=1;i<=3;i++) syncThreeCarDoorRow(i);
+            for(let i=1;i<=3;i++){
+                syncThreeCarDoorRow(i);
+                const sel=document.getElementById('ohLayout'+i);
+                const lab=document.getElementById('ohLayoutOpenerLabel'+i);
+                const cb=document.getElementById('ohLayoutOpener'+i);
+                const v=sel?String(sel.value||''):'';
+                const doors=typeof getThreeCarDoors==='function'?getThreeCarDoors():[];
+                const hasWide=doors.some(d=>Number(d.w)>=16);
+                const thisWide=v==='16x7'||v==='18x7'||(v==='custom' && Number(document.getElementById('ohLayoutW'+i)?.value)>=16);
+                const firstWide=hasWide && thisWide && doors.find(d=>Number(d.w)>=16)?.slot===i;
+                if(lab){
+                    if(!v){ lab.textContent='Opener (pick a door first)'; if(cb) cb.disabled=true; }
+                    else if(firstWide){ lab.textContent='Opener included in $1,200'; if(cb){ cb.checked=true; cb.disabled=true; } }
+                    else { lab.textContent='Opener for this door (+$400)'; if(cb) cb.disabled=false; }
+                }
+            }
         }
         function syncExtraElecTotals(){
             const n=(id)=>Math.max(0,parseInt(document.getElementById(id)?.value)||0);

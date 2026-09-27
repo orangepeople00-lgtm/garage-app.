@@ -394,11 +394,12 @@ button.danger{color:#b42318}
     box-shadow:none !important;
     outline:none !important;
   }
-  .obj.selected, #paper .obj.selected{
+  .obj.selected, #paper .obj.selected, .obj.selected .label{
     outline:none !important;
     box-shadow:none !important;
+    border-style:solid !important;
   }
-  .side-handle,.corner-handle,.handle,.resize-handle,.rotate-handle,.cut-end-handle{
+  .side-handle,.corner-handle,.handle,.resize-handle,.rotate-handle,.cut-end-handle,.dv-handle{
     display:none !important;
   }
 }
@@ -2313,6 +2314,9 @@ button.danger{color:#b42318}
 <div class="scroll">
 <div class="section sidebar-pin">
 <button class="primary" id="wizardBtn" style="width:100%;min-height:48px;font-weight:900;font-size:15px">Drawing Wizard</button>
+<button type="button" id="saveDrawingBtn" class="primary" style="width:100%;min-height:44px;font-weight:900;margin-top:8px;background:#0f274b">Save Drawing</button>
+<button type="button" id="flushApronBtn" style="width:100%;min-height:40px;font-weight:800;margin-top:6px">Flush apron to garage</button>
+<button type="button" id="newDrawingBtn" style="width:100%;min-height:40px;margin-top:6px">New blank drawing</button>
 <div class="field" style="margin-top:8px">
 <label>Sheet</label>
 <select id="mode">
@@ -2885,6 +2889,56 @@ function saveActiveSheetState(){
  state.sheetStates[m].history=[...(state.history||[])];
  state.sheetStates[m].future=[...(state.future||[])];
  try{localStorage.setItem('agbSheetStates',JSON.stringify(state.sheetStates))}catch(e){}
+ try{ persistDrawingDraft(); }catch(e){}
+}
+function drawingStorageKey(){
+  const q=new URLSearchParams(location.search);
+  const job=q.get('jobId')||'';
+  const name=($('customerName')?.value||q.get('customer')||'').trim().toLowerCase();
+  if(job) return 'agb_drawing_job_'+job;
+  if(name) return 'agb_drawing_cust_'+name.replace(/[^a-z0-9]+/g,'_').slice(0,40);
+  return 'agb_drawing_draft_v2';
+}
+function persistDrawingDraft(){
+  const payload={
+    savedAt:new Date().toISOString(),
+    mode:state.mode,
+    sheets:state.sheetStates,
+    customer:$('customerName')?.value||'',
+    address:$('jobAddress')?.value||'',
+    city:$('city')?.value||'',
+    phone:$('homePhone')?.value||''
+  };
+  const raw=JSON.stringify(payload);
+  localStorage.setItem('agb_drawing_draft_v2', raw);
+  localStorage.setItem(drawingStorageKey(), raw);
+}
+function loadDrawingDraft(preferJob){
+  let raw=null;
+  if(preferJob) raw=localStorage.getItem(drawingStorageKey());
+  if(!raw) raw=localStorage.getItem('agb_drawing_draft_v2');
+  if(!raw) return false;
+  const data=JSON.parse(raw);
+  if(data && data.sheets){
+    ['concrete','obstruction','siteplan'].forEach(m=>{ if(data.sheets[m]) state.sheetStates[m]=data.sheets[m]; });
+  }
+  if(data && data.customer && $('customerName') && !$('customerName').value) $('customerName').value=data.customer;
+  if(data && data.address && $('jobAddress') && !$('jobAddress').value) $('jobAddress').value=data.address;
+  if(data && data.city && $('city') && !$('city').value) $('city').value=data.city;
+  if(data && data.phone && $('homePhone') && !$('homePhone').value) $('homePhone').value=data.phone;
+  return true;
+}
+function flushGarageApron(){
+  const g=byRole('garage'), a=byRole('apron');
+  if(!g||!a){ alert('Need a garage slab and an apron first.'); return; }
+  snapshot();
+  a.wf=g.wf;
+  a.pxf=g.pxf||a.pxf||DRAW_PXF;
+  a.x=g.x;
+  a.y=g.y+(g.hf*(g.pxf||DRAW_PXF));
+  if($('cApronCombo')) updateCombo('cApronCombo',a.wf,a.hf);
+  if($('cApronW')) $('cApronW').value=a.wf;
+  renderObjects();
 }
 function loadSheetState(mode){
  const st=state.sheetStates[mode]||{objects:[],history:[],future:[]};
@@ -5034,8 +5088,6 @@ let whiteoutBrushOn=false;
 let whiteoutPainting=false;
 let whiteoutLastPt=null;
 function setWhiteoutBrush(on){
-  // Brush only works on Proposed Site Plan
-  if(on && state.mode!=='siteplan') on=false;
   whiteoutBrushOn=!!on;
   if(!whiteoutBrushOn){ whiteoutPainting=false; whiteoutLastPt=null; }
   const btn=$('eraseSurveyBtn');
@@ -5045,16 +5097,11 @@ function setWhiteoutBrush(on){
   }
   const note=$('eraseSurveyNote');
   if(note) note.textContent=whiteoutBrushOn
-    ?'Whiteout is ON. Drag over old garage / lines on the survey. White covers only what you paint. Tap again to stop. Undo removes the last stroke.'
-    :'Tap Whiteout Brush, then drag over the old garage / lines on the survey. White covers only what you paint. Tap again to turn off. Undo removes strokes.';
+    ?'Whiteout is ON. Drag over lines to erase. Undo removes the last stroke.'
+    :'Tap Whiteout Brush, then drag over lines. Tap again to turn off.';
   if(drawLayer) drawLayer.style.cursor=whiteoutBrushOn?'crosshair':'';
 }
 bindTapSafe('eraseSurveyBtn',()=>{
-  if(state.mode!=='siteplan'){
-    // Fixed: do NOT drop a random white box on concrete/obstruction drawings
-    alert('Whiteout Brush only works on Proposed Site Plan. Switch Drawing type to Proposed Site Plan, upload the survey, then use Whiteout.');
-    return;
-  }
   setWhiteoutBrush(!whiteoutBrushOn);
 });
 function paperPointFromEvent(e){
@@ -5107,7 +5154,7 @@ if(viewport){
     placeProposedGarageFromUserTap(pt);
   },true);
   viewport.addEventListener('pointerdown',e=>{
-    if(!whiteoutBrushOn||state.mode!=='siteplan') return;
+    if(!whiteoutBrushOn) return;
     if(e.button!=null&&e.button!==0) return;
     e.preventDefault();
     e.stopPropagation();
@@ -5119,7 +5166,7 @@ if(viewport){
     try{viewport.setPointerCapture(e.pointerId)}catch(_){}
   },true);
   viewport.addEventListener('pointermove',e=>{
-    if(!whiteoutPainting||!whiteoutBrushOn||state.mode!=='siteplan') return;
+    if(!whiteoutPainting||!whiteoutBrushOn) return;
     e.preventDefault();
     const pt=paperPointFromEvent(e);
     // Space dots slightly so a long drag does not create thousands of objects
@@ -5193,6 +5240,16 @@ function addObject(kind){
       obj.pathPts=[{x:0,y:0},{x:w,y:0},{x:w,y:h},{x:0,y:h}];
     }
     state.objects.push(obj);
+    if(kind==='garage'){
+      const apron={
+        id:uid++, kind:'apron', role:'apron', x:obj.x, y:obj.y+(hf*(obj.pxf||DRAW_PXF||22)),
+        wf, hf:3, label:'', angle:0, locked:false, hidden:false, fontSize:32, fontWeight:'700',
+        pairId:obj.id
+      };
+      obj.role='garage';
+      obj.pairId=apron.id;
+      state.objects.push(apron);
+    }
     state.selected = obj.id;
     renderObjects();
     saveActiveSheetState();
@@ -5657,7 +5714,7 @@ function renderObjects(){
     if(editableLabel){
       editableLabel.style.cursor='text';
       editableLabel.title='Click to edit text';
-      editableLabel.addEventListener('click',ev=>{
+      editableLabel.addEventListener('dblclick',ev=>{
         ev.stopPropagation();
         openObjectTextEditor(o,el);
       });
@@ -6315,6 +6372,9 @@ $('printBtn').onclick=()=>{
   setPrintZoom();
   window.print();
 };
+window.addEventListener('beforeprint',()=>{
+  try{ state.selected=null; renderObjects(); }catch(_){}
+});
 
 function dataUrlBytes(dataUrl){
  const b64=dataUrl.split(',')[1],bin=atob(b64),a=new Uint8Array(bin.length);
@@ -7351,8 +7411,8 @@ function organizeLeftPanel(){
 function initializeApp(){
   organizeLeftPanel();
   const q=new URLSearchParams(location.search);
-  const fresh=true;
-  if(fresh){
+  const wantBlank=q.get('fresh')==='1';
+  if(wantBlank){
     state.sheetStates={
       concrete:{objects:[],history:[],future:[]},
       obstruction:{objects:[],history:[],future:[]},
@@ -7365,7 +7425,8 @@ function initializeApp(){
     }catch(e){}
   } else {
     hydrateSheetStates();
-    loadSharedInfo();
+    try{ loadDrawingDraft(!!q.get('jobId')||!!q.get('customer')); }catch(e){}
+    try{ loadSharedInfo(); }catch(e){}
   }
   if(q.get('customer') && $('customerName')) $('customerName').value=q.get('customer');
   if(q.get('address') && $('jobAddress')) $('jobAddress').value=q.get('address');
@@ -7374,22 +7435,19 @@ function initializeApp(){
   defaultDrawingSalesmanFromSignedInUser();
   loadMyEstimatesForDrawing();
   $('estimateImportRefresh')?.addEventListener('click',()=>loadMyEstimatesForDrawing());
-  if(fresh){
-    state.sheetStates={
-      concrete:{objects:[],history:[],future:[]},
-      obstruction:{objects:[],history:[],future:[]},
-      siteplan:{objects:[],history:[],future:[]}
-    };
-  } else {
-    const emptySheets=!['concrete','obstruction','siteplan'].some(m=>(state.sheetStates[m]?.objects||[]).length);
-    if(emptySheets){
-      state.sheetStates={
-        concrete:{objects:[],history:[],future:[]},
-        obstruction:{objects:[],history:[],future:[]},
-        siteplan:{objects:[],history:[],future:[]}
-      };
-    }
-  }
+  $('saveDrawingBtn')?.addEventListener('click',()=>{
+    try{
+      saveActiveSheetState();
+      persistDrawingDraft();
+      saveSharedInfo();
+      alert('Drawing saved on this device'+(q.get('jobId')?' for this job.':'')+'. Refresh will keep it. New blank drawing starts clean.');
+    }catch(err){ alert('Could not save drawing: '+(err.message||err)); }
+  });
+  $('flushApronBtn')?.addEventListener('click',()=>{ try{ flushGarageApron(); }catch(e){ alert(e.message||e); } });
+  $('newDrawingBtn')?.addEventListener('click',()=>{
+    if(!confirm('Clear this drawing and start blank? Saved copies stay on this device.')) return;
+    window.location.href='Drawing.html?fresh=1&v='+Date.now();
+  });
   state.mode='concrete';
   $('mode').value='concrete';
   loadSheetState('concrete');

@@ -4345,6 +4345,12 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                     garage_size:data.garage_size||'',roof_type:data.roof_type||'',wall_height:data.wall_height||'',siding:data.siding||'',
                     estimate_price:Number(data.estimate_price)||0,estimate_snapshot:data.snapshot||{}
                 };
+                try{
+                    const jobId=new URLSearchParams(location.search).get('jobId');
+                    if(jobId){
+                        record.estimate_snapshot=Object.assign({}, record.estimate_snapshot||{}, {job_id:jobId});
+                    }
+                }catch(e){}
                 let error=null;
                 if(editId){
                     const previousSnapshot=(previous&&previous.estimate_snapshot)||{};
@@ -9524,7 +9530,8 @@ async function openPopupChatGPT(){
                                 estimateNumberFromText(document.getElementById('internalTotal')?.textContent || '0')
                               )
                             : {},
-                        active_option: (typeof activeComparisonSlot!=='undefined' ? activeComparisonSlot : null)
+                        active_option: (typeof activeComparisonSlot!=='undefined' ? activeComparisonSlot : null),
+                        job_id: (new URLSearchParams(location.search).get('jobId')||null)
                     }
                 }, { updateExisting: !!(histOpts && histOpts.updateExisting) });
                 try{
@@ -9911,7 +9918,32 @@ async function openPopupChatGPT(){
             initApp();
         }
 
-    window.addEventListener('load',()=>setTimeout(loadEstimateForEditing,250));
+    window.addEventListener('load',()=>setTimeout(async ()=>{
+        await loadEstimateForEditing();
+        try{ applyJobLinkFromUrl(); }catch(e){}
+    },250));
+        function applyJobLinkFromUrl(){
+            const q=new URLSearchParams(location.search);
+            const jobId=q.get('jobId');
+            if(!jobId && !q.get('customer')) return;
+            const name=q.get('customer');
+            const addr=q.get('address');
+            const city=q.get('city');
+            const phone=q.get('phone');
+            const size=q.get('size');
+            if(name && !document.getElementById('customerName')?.value) setEstimatorField('customerName', name);
+            if(addr && !document.getElementById('customerAddress')?.value) setEstimatorField('customerAddress', addr);
+            if(city) setEstimatorField('city', city);
+            if(phone && document.getElementById('customerPhone') && !document.getElementById('customerPhone').value) setEstimatorField('customerPhone', phone);
+            if(size && !q.get('editEstimate')){
+                const m=String(size).match(/([0-9.]+)\D+[x×]\D*([0-9.]+)/i);
+                if(m){
+                    setEstimatorField('width', m[1]);
+                    setEstimatorField('depth', m[2]);
+                }
+            }
+            window._linkedJobId=jobId||null;
+        }
         document.addEventListener('DOMContentLoaded',()=>setTimeout(toggleOverhang,0));
 document.addEventListener('DOMContentLoaded',()=>{syncDemoPreset();syncWindowQtyFromExtras();try{togglePartyDoorSize()}catch(e){};try{applyOverheadDoorSizePreset()}catch(e){};try{ensureThreeCarDoorGrid();syncThreeCarDoorUI()}catch(e){};try{toggleExtraElecLocationFields()}catch(e){};calculateEstimate();});
 </script>

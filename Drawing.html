@@ -7350,17 +7350,45 @@ function organizeLeftPanel(){
 
 function initializeApp(){
   organizeLeftPanel();
-  hydrateSheetStates();loadSharedInfo();defaultDrawingSalesmanFromSignedInUser();
-  loadMyEstimatesForDrawing();
-  $('estimateImportRefresh')?.addEventListener('click',()=>loadMyEstimatesForDrawing());
-  // Restore hydrated sheets. Only initialize empty sheets if nothing was stored.
-  const emptySheets=!['concrete','obstruction','siteplan'].some(m=>(state.sheetStates[m]?.objects||[]).length);
-  if(emptySheets){
+  const q=new URLSearchParams(location.search);
+  const fresh=true;
+  if(fresh){
     state.sheetStates={
       concrete:{objects:[],history:[],future:[]},
       obstruction:{objects:[],history:[],future:[]},
       siteplan:{objects:[],history:[],future:[]}
     };
+    try{
+      ['customerName','jobAddress','city','homePhone','workPhone','customerEmail'].forEach(id=>{
+        const el=$(id); if(el) el.value='';
+      });
+    }catch(e){}
+  } else {
+    hydrateSheetStates();
+    loadSharedInfo();
+  }
+  if(q.get('customer') && $('customerName')) $('customerName').value=q.get('customer');
+  if(q.get('address') && $('jobAddress')) $('jobAddress').value=q.get('address');
+  if(q.get('city') && $('city')) $('city').value=q.get('city');
+  if(q.get('phone') && $('homePhone')) $('homePhone').value=q.get('phone');
+  defaultDrawingSalesmanFromSignedInUser();
+  loadMyEstimatesForDrawing();
+  $('estimateImportRefresh')?.addEventListener('click',()=>loadMyEstimatesForDrawing());
+  if(fresh){
+    state.sheetStates={
+      concrete:{objects:[],history:[],future:[]},
+      obstruction:{objects:[],history:[],future:[]},
+      siteplan:{objects:[],history:[],future:[]}
+    };
+  } else {
+    const emptySheets=!['concrete','obstruction','siteplan'].some(m=>(state.sheetStates[m]?.objects||[]).length);
+    if(emptySheets){
+      state.sheetStates={
+        concrete:{objects:[],history:[],future:[]},
+        obstruction:{objects:[],history:[],future:[]},
+        siteplan:{objects:[],history:[],future:[]}
+      };
+    }
   }
   state.mode='concrete';
   $('mode').value='concrete';

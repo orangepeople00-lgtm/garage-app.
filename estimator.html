@@ -610,6 +610,95 @@ input, select, textarea, button { box-sizing:border-box; }
   display: none !important;
 }
 
+/* ===== Neat + iPad layout (formulas unchanged) ===== */
+body.bg-zinc-950{
+  background:
+    radial-gradient(900px 420px at 10% -10%, rgba(201,162,39,.10), transparent 50%),
+    radial-gradient(700px 380px at 110% 0%, rgba(15,39,75,.35), transparent 46%),
+    #0b1220 !important;
+}
+.back-production-btn{
+  position:sticky;top:0;z-index:70;display:inline-flex;align-items:center;gap:8px;
+  margin:10px 16px 0;padding:10px 14px;border-radius:999px;
+  background:#0f274b;color:#fff;text-decoration:none;font-weight:800;font-size:13px;
+}
+.max-w-\[1280px\] > .flex.items-center.justify-between.px-8{
+  padding:14px 16px 8px !important;
+  align-items:flex-start;
+}
+.xl\:col-span-7, .xl\:col-span-5{
+  border-color:#1f334f !important;
+  background:#101a2c !important;
+}
+.section-header{ color:#c9a227 !important; letter-spacing:.08em; }
+.calc-input, select.calc-input, input.calc-input, textarea{
+  background:#0b1220 !important;
+  border-color:#2a3f5e !important;
+  color:#eef3fb !important;
+  border-radius:12px !important;
+}
+#stickyEstimateTotal{
+  left:12px !important; right:12px !important; transform:none !important;
+  width:auto !important; max-width:none !important;
+  justify-content:space-between;
+  padding:10px 14px !important;
+  border-color:#c9a22755 !important;
+  background:#0b1220f2 !important;
+}
+@media (min-width: 1100px){
+  #stickyEstimateTotal{
+    left:50% !important; right:auto !important; transform:translateX(-50%) !important;
+    width:min(720px,94vw) !important;
+  }
+}
+/* iPad / small laptop: one working column, two field columns max */
+@media (max-width: 1180px){
+  .xl\:grid-cols-12{ grid-template-columns: minmax(0,1fr) !important; }
+  .xl\:col-span-7, .xl\:col-span-5, .lg\:col-span-2{ grid-column: 1 / -1 !important; }
+  .px-8.pb-8{ padding-left:12px !important; padding-right:12px !important; padding-bottom:96px !important; }
+  .md\:grid-cols-4, .md\:grid-cols-3{ grid-template-columns: repeat(2, minmax(0,1fr)) !important; }
+  .md\:col-span-4, .md\:col-span-3, .md\:col-span-2, .col-span-2{ grid-column: 1 / -1 !important; }
+  button, select, input[type="text"], input[type="number"], input[type="search"], textarea{
+    min-height:46px !important;
+    font-size:16px !important; /* stops iOS zoom */
+  }
+  .xl\:col-span-7.p-7, .rounded-3xl.p-7{ padding:14px !important; }
+}
+@media (max-width: 700px){
+  .md\:grid-cols-4, .md\:grid-cols-3, .md\:grid-cols-2, .grid-cols-2{
+    grid-template-columns: minmax(0,1fr) !important;
+  }
+  .max-w-\[1280px\] > .flex.items-center.justify-between.px-8{
+    flex-direction:column;
+    gap:10px;
+  }
+}
+.est-fold{
+  border:1px solid #24364f;
+  background:#0d1728;
+  border-radius:14px;
+  margin:0 0 10px;
+  overflow:hidden;
+}
+.est-fold > summary{
+  list-style:none;
+  cursor:pointer;
+  padding:12px 14px;
+  font-size:12px;
+  font-weight:800;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  color:#f3e3b0;
+  background:#132038;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:8px;
+}
+.est-fold > summary::-webkit-details-marker{ display:none; }
+.est-fold > summary:after{ content:'▾'; color:#c9a227; }
+.est-fold:not([open]) > summary:after{ content:'▸'; }
+.est-fold .est-fold-body{ padding:12px; }
 </style>
 </head>
 <body class="bg-zinc-950 text-zinc-200"><a id="backToProductionBtn" class="back-production-btn" href="index.html?v=20260818v2">← Back To Dashboard</a>
@@ -3538,7 +3627,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                 badge.classList.remove('hidden');
                 badge.textContent='✓ Option '+slot+' saved. Use View Sheet '+slot+' to build the updated customer sheet.';
             }
-            try{ syncOptionSlotToHistory(slot); }catch(e){}
+            Promise.resolve(syncOptionSlotToHistory(slot)).catch(()=>{});
         }
 
         function loadEstimateComparison(slot){
@@ -4339,108 +4428,159 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             const n=Number(String(text||'').replace(/[^0-9.-]/g,''));
             return Number.isFinite(n)?n:0;
         }
+        function estimatorStaffName(user, staffUsername){
+            const fromStaff=String(staffUsername||'').toLowerCase().trim();
+            if(fromStaff) return fromStaff;
+            const email=String(user&&user.email||'');
+            return email.replace(/@absolute-garage\.local$/i,'').split('@')[0].toLowerCase().trim();
+        }
+        function noticeEstimateHistory(msg, ok){
+            try{
+                let el=document.getElementById('estimateHistorySaveNotice');
+                if(!el){
+                    el=document.createElement('div');
+                    el.id='estimateHistorySaveNotice';
+                    el.style.cssText='position:fixed;right:14px;bottom:78px;z-index:90;max-width:280px;padding:10px 12px;border-radius:12px;font-size:12px;font-weight:700;box-shadow:0 8px 24px #0006';
+                    document.body.appendChild(el);
+                }
+                el.style.background=ok?'#14532d':'#7f1d1d';
+                el.style.color='#fff';
+                el.textContent=msg;
+                clearTimeout(el._t);
+                el._t=setTimeout(()=>{ if(el) el.remove(); }, 5000);
+            }catch(e){}
+        }
+        function slimEstimateSnapshot(snap, dropHtml){
+            const s=Object.assign({}, snap||{});
+            if(dropHtml){
+                s.sheet_html='';
+                if(s.option_sheets && typeof s.option_sheets==='object'){
+                    const next={};
+                    Object.keys(s.option_sheets).forEach(k=>{
+                        const o=Object.assign({}, s.option_sheets[k]||{});
+                        o.sheet_html='';
+                        next[k]=o;
+                    });
+                    s.option_sheets=next;
+                }
+            }
+            return s;
+        }
         async function saveEstimateHistoryRecord(data, opts){
             try{
                 const boundId=(new URLSearchParams(location.search).get('editEstimate')||window._lastEstimateHistoryId||'');
                 const forceNew=!!(opts && opts.forceNew);
-                const updateExisting= !forceNew && ((opts && opts.updateExisting) || !!boundId);
                 const {data:{user}}=await garageSb.auth.getUser();
-                if(!user)return null;
-                const {data:staff,error:pe}=await garageSb.from('staff_profiles').select('username').eq('id',user.id).single();
-                if(pe||!staff?.username)return null;
-                const editId=updateExisting?boundId:null;
-                let previous=null;
-                if(editId){
-                    const prevResult=await garageSb.from('estimate_history').select('*').eq('id',editId).single();
-                    previous=prevResult.data||null;
+                if(!user){
+                    noticeEstimateHistory('Not signed in — estimate not saved to History.', false);
+                    return null;
                 }
-                const record={
-                    // New estimates belong to the signed-in creator. Edits keep the ORIGINAL estimate owner,
-                    // even when Sam or Ramsey is the editor.
-                    created_by:(editId&&previous?.created_by)?previous.created_by:user.id,
-                    salesman_username:(editId&&previous?.salesman_username)?previous.salesman_username:staff.username,
-                    customer:data.customer,address:data.address||'',city:data.city||'',
-                    garage_size:data.garage_size||'',roof_type:data.roof_type||'',wall_height:data.wall_height||'',siding:data.siding||'',
-                    estimate_price:Number(data.estimate_price)||0,estimate_snapshot:data.snapshot||{}
-                };
+                let staffUsername='';
+                try{
+                    const staffRes=await garageSb.from('staff_profiles').select('username').eq('id',user.id).maybeSingle();
+                    staffUsername=staffRes.data?.username||'';
+                }catch(e){}
+                const salesman=estimatorStaffName(user, staffUsername);
+                if(!salesman){
+                    noticeEstimateHistory('Could not tell who is signed in. Open Dashboard, sign in, try again.', false);
+                    return null;
+                }
+                let previous=null;
+                let editId=(!forceNew && boundId)?boundId:null;
+                if(editId){
+                    const prevResult=await garageSb.from('estimate_history').select('*').eq('id',editId).maybeSingle();
+                    previous=prevResult.data||null;
+                    if(!previous) editId=null;
+                }
+                const snapshot=Object.assign({}, data.snapshot||{});
+                if(!snapshot.option_sheets && typeof collectOptionSheetsRecord==='function'){
+                    snapshot.option_sheets=collectOptionSheetsRecord();
+                }
                 try{
                     const jobId=new URLSearchParams(location.search).get('jobId');
-                    if(jobId){
-                        record.estimate_snapshot=Object.assign({}, record.estimate_snapshot||{}, {job_id:jobId});
-                    }
+                    if(jobId) snapshot.job_id=jobId;
                 }catch(e){}
-                let error=null;
+                const record={
+                    created_by:(editId&&previous?.created_by)?previous.created_by:user.id,
+                    salesman_username:(editId&&previous?.salesman_username)?previous.salesman_username:salesman,
+                    customer:data.customer||'Customer',
+                    address:data.address||'',
+                    city:data.city||'',
+                    garage_size:data.garage_size||'',
+                    roof_type:data.roof_type||'',
+                    wall_height:data.wall_height||'',
+                    siding:data.siding||'',
+                    estimate_price:Number(data.estimate_price)||0,
+                    estimate_snapshot:snapshot
+                };
+                const write=async (payload, asUpdate)=>{
+                    if(asUpdate){
+                        return garageSb.from('estimate_history').update(payload).eq('id',editId);
+                    }
+                    return garageSb.from('estimate_history').insert(payload).select('id').maybeSingle();
+                };
+                let result=null, error=null, newId=editId;
                 if(editId){
                     const previousSnapshot=(previous&&previous.estimate_snapshot)||{};
                     const previousState=previousSnapshot.calculator_state||{};
                     const nextState=(record.estimate_snapshot&&record.estimate_snapshot.calculator_state)||{};
-                    const revisionHistory=(Array.isArray(previousSnapshot.revision_history)?previousSnapshot.revision_history.slice():[]).filter(r=>{
-                        const cs=Array.isArray(r?.changes)?r.changes:[];
-                        if(!cs.length)return false;
-                        const bootstrap=cs.filter(c=>/:\s*(?:None|NaN(?:'\s*x\s*NaN')?)\s*→/i.test(String(c||''))).length;
-                        return !(bootstrap>0 && bootstrap>=Math.max(1,Math.ceil(cs.length*0.5)));
-                    });
-                    const sheetAiUpdates=Array.isArray(previousSnapshot.sheet_ai_updates)?previousSnapshot.sheet_ai_updates.slice():[];
-
-                    // The first time an estimate is edited, establish its ORIGINAL baseline.
-                    // For modern records this is the exact calculator state saved when first created.
-                    // For legacy records, only fields that were genuinely stored on the original record
-                    // are eligible for change tracking; reconstructed/default UI values are not.
-                    const originalState=previousSnapshot.original_calculator_state
-                        || (Object.keys(previousState).length ? previousState : null);
-                    const originalRecord=previousSnapshot.original_record_baseline || {
-                        garage_size: previous?.garage_size ?? null,
-                        roof_type: previous?.roof_type ?? null,
-                        wall_height: previous?.wall_height ?? null,
-                        siding: previous?.siding ?? null,
-                        estimate_price: previous?.estimate_price ?? null
-                    };
-
-                    // Each revision is compared to the immediately prior saved version.
-                    // Missing/default fields are ignored by describeEstimateChanges.
-                    const changes=describeEstimateChanges(previousState,nextState,previous,record);
+                    const revisionHistory=(Array.isArray(previousSnapshot.revision_history)?previousSnapshot.revision_history.slice():[]);
+                    const changes=(typeof describeEstimateChanges==='function')?describeEstimateChanges(previousState,nextState,previous,record):[];
                     if(changes.length){
-                        revisionHistory.push({
-                            timestamp:new Date().toISOString(),
-                            changes
-                        });
+                        revisionHistory.push({ timestamp:new Date().toISOString(), changes });
                     }
                     record.estimate_snapshot={
                         ...(record.estimate_snapshot||{}),
-                        original_calculator_state: originalState,
-                        original_record_baseline: originalRecord,
+                        original_calculator_state: previousSnapshot.original_calculator_state || previousState || null,
+                        original_record_baseline: previousSnapshot.original_record_baseline || {
+                            garage_size: previous?.garage_size ?? null,
+                            roof_type: previous?.roof_type ?? null,
+                            wall_height: previous?.wall_height ?? null,
+                            siding: previous?.siding ?? null,
+                            estimate_price: previous?.estimate_price ?? null
+                        },
                         revision_history:revisionHistory,
-                        sheet_ai_updates:sheetAiUpdates,
-                        last_sheet_ai_request:previousSnapshot.last_sheet_ai_request||null,
-                        last_sheet_ai_at:previousSnapshot.last_sheet_ai_at||null,
+                        sheet_ai_updates:Array.isArray(previousSnapshot.sheet_ai_updates)?previousSnapshot.sheet_ai_updates:[],
                         option_sheets: (typeof mergeOptionSheets==='function')
-                            ? mergeOptionSheets(previousSnapshot.option_sheets, (record.estimate_snapshot||{}).option_sheets)
-                            : ((record.estimate_snapshot||{}).option_sheets||previousSnapshot.option_sheets||{})
+                            ? mergeOptionSheets(previousSnapshot.option_sheets, record.estimate_snapshot.option_sheets)
+                            : (record.estimate_snapshot.option_sheets||previousSnapshot.option_sheets||{})
                     };
-                    const result=await garageSb.from('estimate_history').update(record).eq('id',editId);
+                    result=await write(record, true);
                     error=result.error;
-                    if(!error){
-                        window._lastEstimateHistoryId=editId;
-                        setBoundEstimateIdentity(record.customer, record.address);
-                        return editId;
-                    }
                 }else{
-                    const result=await garageSb.from('estimate_history').insert(record).select('id').single();
+                    result=await write(record, false);
                     error=result.error;
-                    if(!error && result.data?.id){
-                        window._lastEstimateHistoryId=result.data.id;
-                        setBoundEstimateIdentity(record.customer, record.address);
-                        try{
-                            const u=new URL(location.href);
-                            u.searchParams.set('editEstimate', String(result.data.id));
-                            history.replaceState({},'',u.toString());
-                        }catch(e){}
-                        return result.data.id;
-                    }
+                    newId=result.data?.id||null;
                 }
-                if(error)console.error('Estimate history save failed:',error);
-                return window._lastEstimateHistoryId||null;
-            }catch(err){console.error('Estimate history save failed:',err); return null;}
+                if(error){
+                    console.warn('History save retry without sheet HTML', error);
+                    const light=Object.assign({}, record, { estimate_snapshot: slimEstimateSnapshot(record.estimate_snapshot, true) });
+                    result=await write(light, !!editId);
+                    error=result.error;
+                    if(!editId) newId=result.data?.id||newId;
+                }
+                if(error){
+                    console.error('Estimate history save failed:', error);
+                    noticeEstimateHistory('History save failed: '+(error.message||'database error'), false);
+                    return window._lastEstimateHistoryId||null;
+                }
+                const saved=editId||newId;
+                if(saved){
+                    window._lastEstimateHistoryId=saved;
+                    try{ setBoundEstimateIdentity(record.customer, record.address); }catch(e){}
+                    try{
+                        const u=new URL(location.href);
+                        u.searchParams.set('editEstimate', String(saved));
+                        history.replaceState({},'',u.toString());
+                    }catch(e){}
+                    noticeEstimateHistory('Saved to Estimate History'+(activeComparisonSlot?' ('+activeComparisonSlot+')':''), true);
+                }
+                return saved||null;
+            }catch(err){
+                console.error('Estimate history save failed:',err);
+                noticeEstimateHistory('History save failed. Sign in on Dashboard and try again.', false);
+                return null;
+            }
         }
 
         async function saveEditedEstimateSheetHtml(html, meta){
@@ -4491,13 +4631,37 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
 
         async function syncOptionSlotToHistory(slot){
             try{
-                const editId=window._lastEstimateHistoryId || new URLSearchParams(location.search).get('editEstimate') || '';
-                if(!editId || !slot || !estimateComparison[slot]) return;
-                const {data:row}=await garageSb.from('estimate_history').select('estimate_snapshot').eq('id',editId).maybeSingle();
-                if(!row) return;
-                const snap=Object.assign({}, row.estimate_snapshot||{});
-                const sheets=Object.assign({}, snap.option_sheets||{});
                 const s=estimateComparison[slot];
+                if(!slot || !s) return;
+                const customer=(document.getElementById('customerName')?.value||'').trim();
+                const address=(document.getElementById('customerAddress')?.value||'').trim();
+                let editId=window._lastEstimateHistoryId || new URLSearchParams(location.search).get('editEstimate') || '';
+                if(!editId){
+                    if(!customer) return;
+                    editId=await saveEstimateHistoryRecord({
+                        customer: customer||('Option '+slot),
+                        address,
+                        city: document.getElementById('city')?.value||'',
+                        garage_size: (s.width||'')+' x '+(s.depth||''),
+                        roof_type: s.roof||'',
+                        wall_height: String(s.wall||''),
+                        siding: 'Premium Vinyl Siding',
+                        estimate_price: Number(s.quote)||0,
+                        snapshot: {
+                            calculator_state: (typeof captureEstimatorState==='function'?captureEstimatorState():null),
+                            option_sheets: collectOptionSheetsRecord(),
+                            active_option: slot
+                        }
+                    });
+                    return;
+                }
+                const {data:row}=await garageSb.from('estimate_history').select('estimate_snapshot').eq('id',editId).maybeSingle();
+                if(!row){
+                    window._lastEstimateHistoryId=null;
+                    return syncOptionSlotToHistory(slot);
+                }
+                const snap=Object.assign({}, row.estimate_snapshot||{});
+                const sheets=Object.assign({}, snap.option_sheets||{}, collectOptionSheetsRecord());
                 sheets[slot]=Object.assign({}, sheets[slot]||{}, {
                     width:s.width, depth:s.depth, wall:s.wall, roof:s.roof,
                     internal:s.internal, quote:s.quote, savedAt:s.savedAt,
@@ -4509,7 +4673,13 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                 if(typeof captureEstimatorState==='function'){
                     snap.calculator_state=captureEstimatorState();
                 }
-                await garageSb.from('estimate_history').update({ estimate_snapshot: snap }).eq('id',editId);
+                const {error}=await garageSb.from('estimate_history').update({
+                    estimate_snapshot: snap,
+                    garage_size: (s.width||'')+' x '+(s.depth||''),
+                    estimate_price: Number(s.quote)||0
+                }).eq('id',editId);
+                if(error) noticeEstimateHistory('Option '+slot+' saved on this device. History: '+(error.message||'retry Create Sheet'), false);
+                else noticeEstimateHistory('Option '+slot+' saved to History', true);
             }catch(e){ console.warn('syncOptionSlotToHistory', e); }
         }
 
@@ -9929,8 +10099,47 @@ async function openPopupChatGPT(){
             console.log('%c[Estimator] Press "/" to focus dimensions. Cmd/Ctrl+Enter to copy estimate.', 'color:#666');
         }
 
+        function neatEstimatorLayout(){
+            const col=document.querySelector('.xl\\:col-span-7');
+            if(!col || col.dataset.neat==='1') return;
+            col.dataset.neat='1';
+            const kids=[...col.children];
+            if(!kids.length) return;
+            const header=kids[0];
+            const rest=kids.slice(1);
+            const folds=[];
+            let bucket=null;
+            const titleOf=el=>{
+                const h=el.querySelector && el.querySelector('.section-header span, .section-header');
+                const t=(h && h.textContent || '').replace(/\s+/g,' ').trim();
+                return t.slice(0,42) || 'More options';
+            };
+            rest.forEach(el=>{
+                const hasHead=!!(el.querySelector && el.querySelector('.section-header'));
+                if(hasHead || !bucket){
+                    bucket={title:titleOf(el), nodes:[el]};
+                    folds.push(bucket);
+                } else {
+                    bucket.nodes.push(el);
+                }
+            });
+            folds.forEach((g,i)=>{
+                const d=document.createElement('details');
+                d.className='est-fold';
+                d.open = i < 3; // city/size, roof, concrete stay open
+                const s=document.createElement('summary');
+                s.textContent=g.title;
+                const body=document.createElement('div');
+                body.className='est-fold-body';
+                g.nodes.forEach(n=>body.appendChild(n));
+                d.appendChild(s); d.appendChild(body);
+                col.appendChild(d);
+            });
+        }
+
         // Initialize everything
         function initApp() {
+            try{ neatEstimatorLayout(); }catch(e){}
             initializeTailwind();
             populateDimensions();
             attachListeners();
@@ -10031,9 +10240,8 @@ document.addEventListener('DOMContentLoaded',()=>{syncDemoPreset();syncWindowQty
     <div class="text-[9px] text-yellow-500 font-bold tracking-wider">PROJECT PRICE</div>
     <div id="stickyCustomerQuote" class="font-mono text-lg font-extrabold text-yellow-400">\$0.00</div>
   </div>
-  <button type="button" onclick="document.getElementById('customerQuote')?.scrollIntoView({behavior:'smooth',block:'center'})" class="ml-1 text-zinc-400 hover:text-white transition-colors" title="Jump to totals">
-    <i class="fa-solid fa-arrow-up"></i>
-  </button>
+  <button type="button" onclick="document.getElementById('breakdown')?.scrollIntoView({behavior:'smooth',block:'start'})" class="ml-auto px-3 py-2 rounded-xl bg-[#0f274b] text-white text-xs font-extrabold">Summary</button>
+  <button type="button" onclick="typeof safePrintEstimateSheet==='function'&&safePrintEstimateSheet()" class="px-3 py-2 rounded-xl bg-[#c9a227] text-[#0b1220] text-xs font-extrabold">Create sheet</button>
 </div>
 
 </body>

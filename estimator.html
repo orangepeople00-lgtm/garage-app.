@@ -699,6 +699,9 @@ body.bg-zinc-950{
 .est-fold > summary:after{ content:'▾'; color:#c9a227; }
 .est-fold:not([open]) > summary:after{ content:'▸'; }
 .est-fold .est-fold-body{ padding:12px; }
+#multiEstimateFold > summary{ list-style:none; }
+#multiEstimateFold > summary::-webkit-details-marker{ display:none; }
+#multiEstimateFold[open] #multiEstimateArrow{ transform:rotate(90deg); }
 </style>
 </head>
 <body class="bg-zinc-950 text-zinc-200"><a id="backToProductionBtn" class="back-production-btn" href="index.html?v=20260818v2">← Back To Dashboard</a>
@@ -1810,7 +1813,7 @@ body.bg-zinc-950{
                                 <div id="extrasContainer" class="space-y-2 mb-2">
                                     <!-- Dynamic extra rows added via JS -->
                                 </div>
-                                <button type="button" onclick="addExtraRow()" 
+                                <button type="button" id="addExtraRowBtn" onclick="addExtraRow()" 
                                         class="px-4 py-2 text-xs bg-blue-600 hover:bg-blue-500 active:bg-blue-700 transition-all rounded-2xl flex items-center gap-x-2">
                                     <i class="fa-solid fa-plus"></i>
                                     <span>Add Custom Extra / Option</span>
@@ -1859,16 +1862,16 @@ body.bg-zinc-950{
                 <!-- RESULTS PANEL -->
                 <div class="xl:col-span-5 bg-zinc-900 border border-zinc-800 rounded-3xl p-5 sm:p-7 garage-shadow flex flex-col min-w-0">
                     <!-- Multi-estimate: collapsed by default, green accordion above Estimate Summary -->
-                    <div class="mb-3 rounded-2xl border border-emerald-700/50 bg-emerald-950/30 overflow-hidden">
-                        <button type="button" onclick="toggleMultiEstimatePanel()" class="w-full flex items-center justify-between gap-2 px-3 py-2.5 text-left" aria-expanded="false" id="multiEstimateToggle">
+                    <details id="multiEstimateFold" class="mb-3 rounded-2xl border border-emerald-700/50 bg-emerald-950/30 overflow-hidden">
+                        <summary id="multiEstimateToggle" class="w-full flex items-center justify-between gap-2 px-3 py-2.5 text-left cursor-pointer list-none">
                             <div class="flex items-center gap-x-2 text-emerald-400 font-semibold text-xs tracking-wider">
-                                <i id="multiEstimateArrow" class="fa-solid fa-chevron-right transition-transform text-emerald-400" style="transform:rotate(0deg)"></i>
+                                <i id="multiEstimateArrow" class="fa-solid fa-chevron-right transition-transform text-emerald-400"></i>
                                 <i class="fa-solid fa-layer-group"></i>
                                 <span>CREATE MULTIPLE ESTIMATES</span>
                             </div>
                             <span class="text-[9px] text-emerald-500/80 font-bold hidden sm:inline">A · B · C</span>
-                        </button>
-                        <div id="multiEstimateBody" class="hidden px-3 pb-3 border-t border-emerald-800/40">
+                        </summary>
+                        <div id="multiEstimateBody" class="px-3 pb-3 border-t border-emerald-800/40">
                             <div class="text-[10px] text-zinc-400 my-2 leading-relaxed">
                                 Build → <b class="text-zinc-200">Save Current</b> as A/B/C → change garage → save another.
                                 <b class="text-emerald-400">Load / Edit</b> restores the calculator. <b class="text-blue-300">View Sheet</b> opens that option’s sheet.
@@ -1914,7 +1917,7 @@ body.bg-zinc-950{
                             <div id="compareDifference" class="hidden mt-2 rounded-xl bg-blue-950/60 border border-blue-800 p-2 text-xs text-yellow-400 font-bold space-y-1"></div>
                             <div id="activeOptionBadge" class="hidden mt-2 text-[11px] text-emerald-400 font-bold"></div>
                         </div>
-                    </div>
+                    </details>
 
                     <div class="flex items-center justify-between gap-3 mb-4 flex-wrap">
                         <button type="button" onclick="toggleEstimateSummary()" class="section-header flex items-center gap-x-2 cursor-pointer select-none text-emerald-400" aria-expanded="false" aria-controls="breakdown" title="Open estimate summary">
@@ -3492,9 +3495,16 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
         const MULTI_ESTIMATE_KEY='agb_multi_estimates_v1';
 
         function toggleMultiEstimatePanel(){
+            const fold=document.getElementById('multiEstimateFold');
             const body=document.getElementById('multiEstimateBody');
             const arrow=document.getElementById('multiEstimateArrow');
             const btn=document.getElementById('multiEstimateToggle');
+            if(fold){
+                fold.open=!fold.open;
+                if(arrow) arrow.style.transform=fold.open?'rotate(90deg)':'rotate(0deg)';
+                if(btn) btn.setAttribute('aria-expanded', fold.open?'true':'false');
+                return;
+            }
             if(!body)return;
             const opening=body.classList.contains('hidden');
             body.classList.toggle('hidden',!opening);
@@ -4591,7 +4601,6 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                     noticeEstimateHistory('History save failed: '+(error.message||'database error'), false);
                     return window._lastEstimateHistoryId||null;
                 }
-                const saved=editId||newId;
                 if(saved){
                     window._lastEstimateHistoryId=saved;
                     try{ setBoundEstimateIdentity(record.customer, record.address); }catch(e){}
@@ -4933,6 +4942,8 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                         try{ renderEstimateComparison(); }catch(e){}
                         // Open the multi panel when saved options exist
                         if(estimateComparison.A||estimateComparison.B||estimateComparison.C){
+                            const fold=document.getElementById('multiEstimateFold');
+                            if(fold) fold.open=true;
                             const body=document.getElementById('multiEstimateBody');
                             const arrow=document.getElementById('multiEstimateArrow');
                             const btn=document.getElementById('multiEstimateToggle');
@@ -10168,7 +10179,7 @@ async function openPopupChatGPT(){
             folds.forEach((g,i)=>{
                 const d=document.createElement('details');
                 d.className='est-fold';
-                d.open = i < 3; // city/size, roof, concrete stay open
+                d.open = i < 3 || /extra|option|siding|door/i.test(g.title);
                 const s=document.createElement('summary');
                 s.textContent=g.title;
                 const body=document.createElement('div');
@@ -10186,6 +10197,22 @@ async function openPopupChatGPT(){
             populateDimensions();
             attachListeners();
             setupKeyboard();
+            try{
+                window.addExtraRow=addExtraRow;
+                window.removeExtraRow=removeExtraRow;
+                window.toggleMultiEstimatePanel=toggleMultiEstimatePanel;
+                window.toggleEstimateSummary=toggleEstimateSummary;
+                window.startNewEstimate=startNewEstimate;
+                window.resetForm=resetForm;
+                document.getElementById('addExtraRowBtn')?.addEventListener('click', function(ev){
+                    ev.preventDefault(); ev.stopPropagation(); addExtraRow();
+                });
+                document.getElementById('multiEstimateToggle')?.addEventListener('click', function(){
+                    const fold=document.getElementById('multiEstimateFold');
+                    const arrow=document.getElementById('multiEstimateArrow');
+                    if(arrow && fold) arrow.style.transform=fold.open?'rotate(90deg)':'rotate(0deg)';
+                });
+            }catch(e){}
             updateExteriorLibraryPreview();
             toggleServiceDoorLocationFields();
             syncSignedInSalesman();

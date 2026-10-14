@@ -162,7 +162,7 @@ tr.optrow td{background:#fff7e6}
   <div class="grid">
    <div>
     <div class="card">
-      <div class="sh">👤 Customer &amp; job</div>
+      <div class="sh">👤 Customer & job</div>
       <div class="f2">
         <div><label class="l">Salesman</label><select id="salesman" class="c" onchange="calc()">
           <option value="ramsey" selected>Ramsey Barakat</option><option value="sam">Sam Barakat</option><option value="samer">Samer Barakat</option><option value="wally">Wally</option><option value="tom">Tom</option><option value="tomb">Tom Bartyzel</option></select></div>
@@ -189,9 +189,10 @@ tr.optrow td{background:#fff7e6}
       <div class="sh">📷 Sheet photos</div>
       <div class="photos" id="sheetPhotos"></div>
       <label style="display:flex;gap:8px;align-items:center;margin-top:8px;font-size:14px;min-height:44px"><input type="checkbox" id="exampleTag" onchange="calc()" style="width:22px;height:22px"> Add "EXAMPLE PHOTO - STYLE MAY VARY" tag</label>
+      <label style="display:flex;gap:8px;align-items:center;margin-top:4px;font-size:14px;min-height:44px"><input type="checkbox" id="insuranceJob" onchange="calc();saveDraft()" style="width:22px;height:22px"> Insurance job <span class="muted" style="font-size:12px">(sheet states it is for insurance)</span></label>
     </div>
     <div class="card" style="margin-top:16px">
-      <div class="sh">📝 Damage photos &amp; notes <span class="muted" style="text-transform:none;letter-spacing:0;font-weight:400">internal — not printed</span></div>
+      <div class="sh">📝 Damage photos & notes <span class="muted" style="text-transform:none;letter-spacing:0;font-weight:400">internal — not printed</span></div>
       <textarea id="damageNotes" class="c" placeholder="What you saw on site: rot at bottom plate south wall, roof sag, cracked apron..." oninput="saveDraft()"></textarea>
       <input type="file" id="damageFile" accept="image/*" capture="environment" multiple style="display:none" onchange="addDamagePhotos(this)">
       <button class="btn" type="button" style="margin-top:8px" onclick="document.getElementById('damageFile').click()">📷 Add damage photos</button>
@@ -462,10 +463,10 @@ let S={};
 function defState(){const s={items:{},extras:[],photos:[{src:'',cap:'FRONT VIEW'},{src:'',cap:'REAR VIEW'}],damagePhotos:[],cond:{}};
   ITEMS.forEach(it=>{const f={};it.f.forEach(x=>f[x.k]=x.v);s.items[it.id]={on:false,mode:'inc',f,ov:'',add:''};});return s;}
 const $=id=>document.getElementById(id);
-const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&','<':'<','>':'>','"':'"',"'":'&#39;'}[c]));
 const money=v=>'$'+Math.round(Number(v)||0).toLocaleString('en-US');
 const money2=v=>'$'+(Number(v)||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
-const FIELDS=['salesman','customerName','customerPhone','customerEmail','customerAddress','customerCity','gW','gD','roofStyle','pitch','showPill','profitMode','profitValue','exampleTag','damageNotes'];
+const FIELDS=['salesman','customerName','customerPhone','customerEmail','customerAddress','customerCity','gW','gD','roofStyle','pitch','showPill','profitMode','profitValue','exampleTag','insuranceJob','damageNotes'];
 function renderItems(){
   let h='',lastG=-1;
   ITEMS.forEach(it=>{ if(it.g!==lastG){h+='<div class="grp">'+GROUPS[it.g]+'</div>';lastG=it.g;}
@@ -616,7 +617,7 @@ function buildSheet(R){
   +'<div class="rs-band"><div class="rs-bc"><div class="rs-circ">'+icon('house',2.2)+'</div><div><div class="rs-bl">PROJECT ADDRESS:</div><div class="rs-bv">'+ce(v('customerAddress')||'&nbsp;')+'<br>'+ce(v('customerCity')||'&nbsp;')+'</div></div></div>'
   +'<div class="rs-bc"><div class="rs-circ">'+icon('person',2.2)+'</div><div style="min-width:0"><div class="rs-bl">CUSTOMER NAME:</div><div class="rs-bv">'+ce(v('customerName')||'&nbsp;')+'</div>'+(v('customerPhone')?'<div class="rs-bs">'+icon('phone',2)+ce(v('customerPhone'))+'</div>':'')+(v('customerEmail')?'<div class="rs-bs">'+icon('mail',2)+ce(v('customerEmail'))+'</div>':'')+'</div></div>'
   +'<div class="rs-bc"><div class="rs-sales"><div class="rs-bl">SALESMAN:</div><div class="rs-bv" style="font-size:16px">'+ce(esc(sm.name))+'</div>'+(sm.phone?'<div class="rs-bs">'+icon('phone',2)+ce(esc(sm.phone))+'</div>':'')+(sm.email?'<div class="rs-bs">'+icon('mail',2)+ce(esc(sm.email))+'</div>':'')+'</div></div></div>'
-  +'<div class="rs-title"><h1>'+ce('REPAIR ESTIMATE')+'</h1><div class="rs-sub">'+ce('REPAIR OF EXISTING GARAGE')+'</div></div>'
+  +'<div class="rs-title"><h1>'+ce('REPAIR ESTIMATE')+'</h1><div class="rs-sub">'+ce('REPAIR OF EXISTING GARAGE')+'</div>'+($('insuranceJob')&&$('insuranceJob').checked?'<div class="rs-insurance" style="margin:6px auto 0;display:inline-block;border:2px solid #b91c1c;color:#b91c1c;background:#fef2f2;font-weight:800;font-size:15px;padding:4px 14px;border-radius:6px;-webkit-print-color-adjust:exact;print-color-adjust:exact">This estimate is prepared for insurance purposes.</div>':'')+'</div>'
   +(showPill?'<div class="rs-pillw"><span class="rs-pill" contenteditable="true">'+R.c.W+'’ x '+R.c.D+'’ EXISTING GARAGE<br>'+esc(R.c.roof)+'</span></div>':'')
   +'<div class="rs-photos">'+photos+'</div>'
   +'<div class="rs-std"><span class="ck">'+icon('check',3.2)+'</span>'+ce('All work will be completed in accordance with industry standards and local building codes.')+'</div>'
@@ -668,7 +669,7 @@ async function repairSheetSaveNow(){
     let ok=true;
     if(window._repairHistoryId && !window._agbOffline){
       try{const {data:row,error:le}=await garageSb.from('estimate_history').select('estimate_snapshot').eq('id',window._repairHistoryId).maybeSingle();if(le)throw le;
-        const snap=Object.assign({},(row&&row.estimate_snapshot)||{});snap.sheet_html=html;snap.sheet_edits_at=new Date().toISOString();snap.repair_state=stripPhotos(snapshot());
+        const snap=Object.assign({},(row&&row.estimate_snapshot)||{});snap.sheet_html=html;snap.sheet_edits_at=new Date().toISOString();snap.insurance_job=!!($("insuranceJob")&&$("insuranceJob").checked);snap.repair_state=stripPhotos(snapshot());
         const {error}=await garageSb.from('estimate_history').update({estimate_snapshot:snap}).eq('id',window._repairHistoryId);if(error)throw error;}
       catch(e){ok=false;console.warn('repair sheet autosave',e);}
     }
@@ -699,6 +700,7 @@ function stripPhotos(s){const c=JSON.parse(JSON.stringify(s));c.state.damagePhot
 function applySnap(o){if(!o)return;window._repairHistoryId=o.history_id||null;window._repairLocalId=o.local_id||null;const d=defState();S=Object.assign(d,JSON.parse(JSON.stringify(o.state||{})));
   ITEMS.forEach(it=>{if(!S.items[it.id])S.items[it.id]=d.items[it.id];else S.items[it.id].f=Object.assign({},d.items[it.id].f,S.items[it.id].f);});
   S.damagePhotos=(S.damagePhotos||[]).filter(p=>p.src);
+  if($('insuranceJob'))$('insuranceJob').checked=false; // older estimates without the field = not insurance
   Object.keys(o.fields||{}).forEach(id=>{const el=$(id);if(!el)return;if(el.type==='checkbox')el.checked=!!o.fields[id];else el.value=o.fields[id];});
   renderItems();renderExtras();renderCond();renderPhotos();onProfitMode();}
 let _dt;function saveDraft(){clearTimeout(_dt);_dt=setTimeout(()=>{try{localStorage.setItem('agb_repair_draft',JSON.stringify(snapshot()));}catch(e){try{localStorage.setItem('agb_repair_draft',JSON.stringify(stripPhotos(snapshot())));}catch(e2){}}},300);}
@@ -727,7 +729,7 @@ async function saveToHistory(){
   const light=stripPhotos(snapshot());
   const record={created_by:user.id,salesman_username:estimatorStaffName(user,un)||$('salesman').value,customer:$('customerName').value||'Customer',address:$('customerAddress').value||'',city:$('customerCity').value||'',
     garage_size:'REPAIR '+R.c.W+'x'+R.c.D,roof_type:R.c.roof,wall_height:'',siding:'Repair estimate',estimate_price:R.total,
-    estimate_snapshot:{estimate_type:'repair',app:'repair.html',repair_state:light,repair_rows:R.rows.map(r=>({cat:r.cat,scope:r.scope,internal_cost:r.cost})),repair_options:R.opts.map(o=>({cat:o.cat,scope:o.scope,price:o.price})),internal_total:R.internal,permit_fee:R.permit,customer_quote:R.total,prices_are_examples:!window._pricesCustomized}};
+    estimate_snapshot:{estimate_type:'repair',app:'repair.html',insurance_job:!!($('insuranceJob')&&$('insuranceJob').checked),repair_state:light,repair_rows:R.rows.map(r=>({cat:r.cat,scope:r.scope,internal_cost:r.cost})),repair_options:R.opts.map(o=>({cat:o.cat,scope:o.scope,price:o.price})),internal_total:R.internal,permit_fee:R.permit,customer_quote:R.total,prices_are_examples:!window._pricesCustomized}};
   if(S.sheet_html) record.estimate_snapshot.sheet_html=S.sheet_html;
   try{let res;
     if(window._repairHistoryId){
@@ -739,7 +741,7 @@ async function saveToHistory(){
     if(res.error) throw res.error; saveDraft(); if(window._repairLocalId) saveLocal(true); const m='Saved to History'+(res.data&&res.data.id?' (#'+res.data.id+')':'')+'.';toast(m);$('saveNote').textContent=m;return res.data;}
   catch(e){const m='Not saved to History: '+agbFriendlySaveError(e)+' (Saved on this device.)';toast(m,true);$('saveNote').textContent=m;return null;}
 }
-function newEstimate(){if(!confirm('Start a new repair estimate? Unsaved work is cleared.'))return;try{localStorage.removeItem('agb_repair_draft');}catch(e){}window._repairHistoryId=null;window._repairLocalId=null;S=defState();['customerName','customerPhone','customerEmail','customerAddress','customerCity','damageNotes'].forEach(id=>$(id).value='');renderItems();renderExtras();renderCond();renderPhotos();calc();}
+function newEstimate(){if(!confirm('Start a new repair estimate? Unsaved work is cleared.'))return;try{localStorage.removeItem('agb_repair_draft');}catch(e){}window._repairHistoryId=null;window._repairLocalId=null;S=defState();['customerName','customerPhone','customerEmail','customerAddress','customerCity','damageNotes'].forEach(id=>$(id).value='');if($('insuranceJob'))$('insuranceJob').checked=false;renderItems();renderExtras();renderCond();renderPhotos();calc();}
 // ================= INIT =================
 loadPrices();S=defState();
 (function(){let d=null;try{d=JSON.parse(localStorage.getItem('agb_repair_draft')||'null');}catch(e){}window._hadDraft=!!d;if(d)applySnap(d);else{renderItems();renderExtras();renderCond();renderPhotos();calc();}})();

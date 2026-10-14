@@ -1125,8 +1125,28 @@ function floorPlanSvg(){
   const ohWall=val('ohWall')||'front';
   const ret=doorReturns();
   const L=ret.left, R=ret.right;
-  const sx=14, ox=90, oy=70;
+  // Fit building + outside items (patio, apron, service pad) between the sheet header and the title boxes.
+  const _pat0=patioDim(), _ld0=landingDim(), _svw=val('svcWall');
+  const _apPx=hasApron()?Math.max(28, Math.min(50,(Number(val('apronFt'))||3)*10)):0;
+  const _ext=(side,s)=>{ // outside extent in px at scale s
+    let e=0;
+    if(_pat0.on && _pat0.wall===side) e=Math.max(e,_pat0.d*s);
+    if(_ld0.on && _svw===side) e=Math.max(e,_ld0.h*s);
+    if(_apPx && ohWall===side) e=Math.max(e, side==='front'?40:_apPx);
+    return e;
+  };
+  let sx=14, ox=90, oy=70;
+  for(;sx>5;sx-=0.5){
+    const eL=_ext('left',sx), eR=_ext('right',sx), eB=_ext('back',sx), eF=_ext('front',sx);
+    const needW=Math.max(70,eL+24)+W*sx+Math.max(96,eR+56);
+    const needH=Math.max(74,eB+74)+D*sx+Math.max(62,eF+40);
+    if(needW<=700 && needH<=700) break;
+  }
+  ox=Math.max(90, _ext('left',sx)+40);
+  oy=Math.max(70, _ext('back',sx)+74);
   const gw=W*sx, gd=D*sx;
+  const eL=_ext('left',sx), eR=_ext('right',sx), eB=_ext('back',sx), eF=_ext('front',sx);
+  const fpReduced=sx<14;
   let extra='';
   // Overhead door opening + returns on the selected wall
   let doorGap='', doorLab='', retHatch='', dimAlong='';
@@ -1135,50 +1155,50 @@ function floorPlanSvg(){
     doorGap=`<line x1="${doorX}" y1="${oy}" x2="${doorX+doorW}" y2="${oy}" stroke="#fff" stroke-width="8"/>
       <line x1="${doorX+6}" y1="${oy+16}" x2="${doorX+doorW-6}" y2="${oy+16}" stroke="#111"/>
       <line x1="${doorX+6}" y1="${oy+24}" x2="${doorX+doorW-6}" y2="${oy+24}" stroke="#111"/>`;
-    doorLab=`<text x="${doorX+doorW/2}" y="${oy+28}" text-anchor="middle" font-size="11">${ohW}x${ohH} OH</text>`;
+    doorLab=`<text class="fp-mv" x="${doorX+doorW/2}" y="${oy+38}" text-anchor="middle" font-size="11">${ohW}x${ohH} OH</text>`;
     if(showOnPlan('returns')){
       retHatch=`<rect x="${ox}" y="${oy}" width="${L*sx}" height="12" fill="url(#hatchRet)" stroke="#111"/>
         <rect x="${doorX+doorW}" y="${oy}" width="${R*sx}" height="12" fill="url(#hatchRet)" stroke="#111"/>`;
     }
-    dimAlong=`<text x="${ox+L*sx/2}" y="${oy-28}" text-anchor="middle" font-size="11">${L}' L</text>
-      <text x="${doorX+doorW+R*sx/2}" y="${oy-28}" text-anchor="middle" font-size="11">${R}' R</text>`;
+    dimAlong=`<text x="${ox+L*sx/2}" y="${oy-28-eB}" text-anchor="middle" font-size="11">${L}' L</text>
+      <text x="${doorX+doorW+R*sx/2}" y="${oy-28-eB}" text-anchor="middle" font-size="11">${R}' R</text>`;
   } else if(ohWall==='left'){
     const doorY=oy+L*sx, doorH=ohW*sx;
     doorGap=`<line x1="${ox}" y1="${doorY}" x2="${ox}" y2="${doorY+doorH}" stroke="#fff" stroke-width="8"/>
       <line x1="${ox+16}" y1="${doorY+6}" x2="${ox+16}" y2="${doorY+doorH-6}" stroke="#111"/>
       <line x1="${ox+24}" y1="${doorY+6}" x2="${ox+24}" y2="${doorY+doorH-6}" stroke="#111"/>`;
-    doorLab=`<text x="${ox+70}" y="${doorY+doorH/2}" text-anchor="middle" font-size="11" transform="rotate(-90 ${ox+70} ${doorY+doorH/2})">${ftLabel(ohW)} x ${ftLabel(ohH)} O.H.</text>`;
+    doorLab=`<text class="fp-mv" x="${ox+40}" y="${doorY+doorH/2}" text-anchor="middle" font-size="11" transform="rotate(-90 ${ox+40} ${doorY+doorH/2})">${ftLabel(ohW)} x ${ftLabel(ohH)} O.H.</text>`;
     if(showOnPlan('returns')){
       retHatch=`<rect x="${ox}" y="${oy}" width="18" height="${L*sx}" fill="url(#hatchRet)" stroke="#111"/>
         <rect x="${ox}" y="${doorY+doorH}" width="18" height="${R*sx}" fill="url(#hatchRet)" stroke="#111"/>`;
     }
-    dimAlong=`<text x="${ox-8}" y="${oy+L*sx/2}" text-anchor="end" font-size="11">${ftLabel(L)}</text>
-      <text x="${ox-8}" y="${doorY+doorH+R*sx/2}" text-anchor="end" font-size="11">${ftLabel(R)}</text>`;
+    dimAlong=`<text x="${ox-8-eL}" y="${oy+L*sx/2}" text-anchor="end" font-size="11">${ftLabel(L)}</text>
+      <text x="${ox-8-eL}" y="${doorY+doorH+R*sx/2}" text-anchor="end" font-size="11">${ftLabel(R)}</text>`;
   } else if(ohWall==='right'){
     const doorY=oy+L*sx, doorH=ohW*sx;
     doorGap=`<line x1="${ox+gw}" y1="${doorY}" x2="${ox+gw}" y2="${doorY+doorH}" stroke="#fff" stroke-width="8"/>
       <line x1="${ox+gw-16}" y1="${doorY+6}" x2="${ox+gw-16}" y2="${doorY+doorH-6}" stroke="#111"/>
       <line x1="${ox+gw-24}" y1="${doorY+6}" x2="${ox+gw-24}" y2="${doorY+doorH-6}" stroke="#111"/>`;
-    doorLab=`<text x="${ox+gw-70}" y="${doorY+doorH/2}" text-anchor="middle" font-size="11" transform="rotate(90 ${ox+gw-70} ${doorY+doorH/2})">${ftLabel(ohW)} x ${ftLabel(ohH)} O.H.</text>`;
+    doorLab=`<text class="fp-mv" x="${ox+gw-40}" y="${doorY+doorH/2}" text-anchor="middle" font-size="11" transform="rotate(90 ${ox+gw-40} ${doorY+doorH/2})">${ftLabel(ohW)} x ${ftLabel(ohH)} O.H.</text>`;
     if(showOnPlan('returns')){
       retHatch=`<rect x="${ox+gw-18}" y="${oy}" width="18" height="${L*sx}" fill="url(#hatchRet)" stroke="#111"/>
         <rect x="${ox+gw-18}" y="${doorY+doorH}" width="18" height="${R*sx}" fill="url(#hatchRet)" stroke="#111"/>`;
     }
-    dimAlong=`<text x="${ox+gw+8}" y="${oy+L*sx/2}" font-size="11">${ftLabel(L)}</text>
-      <text x="${ox+gw+8}" y="${doorY+doorH+R*sx/2}" font-size="11">${ftLabel(R)}</text>`;
+    dimAlong=`<text x="${ox+gw+8+eR}" y="${oy+L*sx/2}" font-size="11">${ftLabel(L)}</text>
+      <text x="${ox+gw+8+eR}" y="${doorY+doorH+R*sx/2}" font-size="11">${ftLabel(R)}</text>`;
   } else {
     // front (default) — bottom edge
     const doorX=ox+L*sx, doorW=ohW*sx;
     doorGap=`<line x1="${doorX}" y1="${oy+gd}" x2="${doorX+doorW}" y2="${oy+gd}" stroke="#fff" stroke-width="8"/>
       <line x1="${doorX+6}" y1="${oy+gd-16}" x2="${doorX+doorW-6}" y2="${oy+gd-16}" stroke="#111"/>
       <line x1="${doorX+6}" y1="${oy+gd-24}" x2="${doorX+doorW-6}" y2="${oy+gd-24}" stroke="#111"/>`;
-    doorLab=`<text x="${doorX+doorW/2}" y="${oy+gd-28}" text-anchor="middle" font-size="11">${ohW}x${ohH} OH</text>`;
+    doorLab=`<text class="fp-mv" x="${doorX+doorW/2}" y="${oy+gd-32}" text-anchor="middle" font-size="11">${ohW}x${ohH} OH</text>`;
     if(showOnPlan('returns')){
       retHatch=`<rect x="${ox}" y="${oy+gd-12}" width="${L*sx}" height="12" fill="url(#hatchRet)" stroke="#111"/>
         <rect x="${doorX+doorW}" y="${oy+gd-12}" width="${R*sx}" height="12" fill="url(#hatchRet)" stroke="#111"/>`;
     }
-    dimAlong=`<text x="${ox+L*sx/2}" y="${oy+gd+54}" text-anchor="middle" font-size="11">${L}' L</text>
-      <text x="${doorX+doorW+R*sx/2}" y="${oy+gd+54}" text-anchor="middle" font-size="11">${R}' R</text>`;
+    dimAlong=`<text x="${ox+L*sx/2}" y="${oy+gd+Math.max(54,eF+14)}" text-anchor="middle" font-size="11">${L}' L</text>
+      <text x="${doorX+doorW+R*sx/2}" y="${oy+gd+Math.max(54,eF+14)}" text-anchor="middle" font-size="11">${R}' R</text>`;
   }
   // Service door
   if(val('svcWall')!=='none'){
@@ -1205,9 +1225,13 @@ function floorPlanSvg(){
       const hx=ox+gw, hy=swi.hinge==='left'?sdy:sdy+sdh;
       arc=`<path d="M${hx} ${hy} A${leaf} ${leaf} 0 0 1 ${hx+(swi.swing==='in'?-leaf:leaf)} ${hy}" fill="none" stroke="#111" stroke-dasharray="3 2"/>`;
     }
-    extra+=`<rect x="${sdx}" y="${sdy}" width="${sdw}" height="${sdh}" fill="#fff" stroke="#111"/>
+    extra+=`<rect class="fp-obst" x="${sdx}" y="${sdy}" width="${sdw}" height="${sdh}" fill="#fff" stroke="#111"/>
       ${arc}
-      <text x="${sdx+sdw/2}" y="${sdy+(sdh>18?sdh/2+3:-8)}" text-anchor="middle" font-size="8">36x80 ${esc(swi.short)}</text>`;
+      ${(()=>{const t='36x80 '+esc(swi.short);
+        if(sw==='left') return `<text class="fp-mv" x="${ox+10}" y="${sdy-5}" font-size="8">${t}</text>`;
+        if(sw==='right') return `<text class="fp-mv" x="${ox+gw-10}" y="${sdy-5}" text-anchor="end" font-size="8">${t}</text>`;
+        if(sw==='back') return `<text class="fp-mv" x="${sdx+sdw+6}" y="${oy+22}" font-size="8">${t}</text>`;
+        return `<text class="fp-mv" x="${sdx+sdw+6}" y="${oy+gd-16}" font-size="8">${t}</text>`;})()}`;
     const ld=landingDim();
     if(ld.on){
       const along=Math.max(ld.w, sr.w)*sx, out=ld.h*sx;
@@ -1216,8 +1240,8 @@ function floorPlanSvg(){
       else if(sw==='left'){ lx=ox-out; ly=sdy+(leaf-along)/2; lw=out; lh=along; }
       else if(sw==='back'){ lx=sdx+(leaf-along)/2; ly=oy-out; lw=along; lh=out; }
       else { lx=sdx+(leaf-along)/2; ly=oy+gd; lw=along; lh=out; }
-      extra+=`<rect x="${lx}" y="${ly}" width="${lw}" height="${lh}" fill="#f3f3f3" stroke="#111"/>
-        <text x="${lx+lw/2}" y="${ly+lh/2+3}" text-anchor="middle" font-size="8">${esc(lab)}</text>`;
+      extra+=`<rect class="fp-obst" x="${lx}" y="${ly}" width="${lw}" height="${lh}" fill="#f3f3f3" stroke="#111"/>
+        <text class="fp-mv" data-fp-inpad="1" x="${lx+lw/2}" y="${ly+lh/2+3}" text-anchor="middle" font-size="${Math.max(5.5,Math.min(8,(Math.max(lw,lh)-4)/(lab.length*0.62)))}"${lh>lw?` transform="rotate(-90 ${lx+lw/2} ${ly+lh/2})"`:''}>${esc(lab)}</text>`;
     }
   }
   // Party door on any wall (gap + label)
@@ -1229,19 +1253,19 @@ function floorPlanSvg(){
     if(pw==='back'){
       const px=ox+pr.left*sx, pwdx=pd.w*sx;
       gap=`<line x1="${px}" y1="${oy}" x2="${px+pwdx}" y2="${oy}" stroke="#fff" stroke-width="6"/>
-        <text x="${px+pwdx/2}" y="${oy+14}" text-anchor="middle" font-size="10">${esc(val('partySize')||'6x7')} PARTY</text>`;
+        <text class="fp-mv" x="${px+pwdx/2}" y="${oy+14}" text-anchor="middle" font-size="10">${esc(val('partySize')||'6x7')} PARTY</text>`;
     } else if(pw==='front'){
       const px=ox+pr.left*sx, pwdx=pd.w*sx;
       gap=`<line x1="${px}" y1="${oy+gd}" x2="${px+pwdx}" y2="${oy+gd}" stroke="#fff" stroke-width="6"/>
-        <text x="${px+pwdx/2}" y="${oy+gd-8}" text-anchor="middle" font-size="10">${esc(val('partySize')||'6x7')} PARTY</text>`;
+        <text class="fp-mv" x="${px+pwdx/2}" y="${oy+gd-8}" text-anchor="middle" font-size="10">${esc(val('partySize')||'6x7')} PARTY</text>`;
     } else if(pw==='left'){
       const py=oy+pr.left*sx, ph=pd.w*sx;
       gap=`<line x1="${ox}" y1="${py}" x2="${ox}" y2="${py+ph}" stroke="#fff" stroke-width="6"/>
-        <text x="${ox+18}" y="${py+ph/2}" font-size="10">${esc(val('partySize')||'6x7')} PARTY</text>`;
+        <text class="fp-mv" x="${ox+18}" y="${py+ph/2}" font-size="10">${esc(val('partySize')||'6x7')} PARTY</text>`;
     } else {
       const py=oy+pr.left*sx, ph=pd.w*sx;
       gap=`<line x1="${ox+gw}" y1="${py}" x2="${ox+gw}" y2="${py+ph}" stroke="#fff" stroke-width="6"/>
-        <text x="${ox+gw-18}" y="${py+ph/2}" text-anchor="end" font-size="10">${esc(val('partySize')||'6x7')} PARTY</text>`;
+        <text class="fp-mv" x="${ox+gw-18}" y="${py+ph/2}" text-anchor="end" font-size="10">${esc(val('partySize')||'6x7')} PARTY</text>`;
     }
     extra+=gap;
   }
@@ -1289,8 +1313,11 @@ function floorPlanSvg(){
       }
       extra+=`<rect x="${cx}" y="${cy}" width="${ps}" height="${ps}" fill="#ddd" stroke="#111"/>`;
     });
-    extra+=`<text x="${px+plw/2}" y="${py+plh/2+3}" text-anchor="middle" font-size="9" font-weight="700">ROOFED PATIO ${pat.w}x${pat.d}</text>
-      <text x="${px+plw/2}" y="${py+plh/2+14}" text-anchor="middle" font-size="8">CONC. SLAB + (${pat.posts}) ${pat.post} POSTS</text>`;
+    { const vert=plh>plw*1.3, span=(vert?plh:plw)-2*ps-6, l1='ROOFED PATIO '+pat.w+'x'+pat.d, l2='CONC. SLAB + ('+pat.posts+') '+pat.post+' POSTS';
+      const k=Math.max(0.6, Math.min(1, span/(l2.length*8*0.6), span/(l1.length*9*0.66)));
+      const cx=px+plw/2, cy=py+plh/2, rot=vert?` transform="rotate(-90 ${cx} ${cy})"`:'';
+      extra+=`<g class="fp-mv"><g${rot}><text x="${cx}" y="${cy-2*k}" text-anchor="middle" font-size="${(9*k).toFixed(2)}" font-weight="700">${esc(l1)}</text>
+      <text x="${cx}" y="${cy+9*k}" text-anchor="middle" font-size="${(8*k).toFixed(2)}">${esc(l2)}</text></g></g>`; }
   }
   let apr='';
   if(hasApron()){
@@ -1298,58 +1325,117 @@ function floorPlanSvg(){
     const ah=Math.max(28, Math.min(50, aft*10));
     if(ohWall==='back'){
       apr=`<rect x="${ox}" y="${oy-ah}" width="${gw}" height="${ah}" fill="#fff" stroke="#111" stroke-width="1.8"/>
-        <text x="${ox+gw/2}" y="${oy-ah/2}" text-anchor="middle" font-size="11" font-weight="700">APRON</text>`;
+        <text class="fp-mv" data-fp-axis="x" x="${ox+gw/2}" y="${oy-ah/2+4}" text-anchor="middle" font-size="11" font-weight="700">APRON</text>`;
     } else if(ohWall==='left'){
       apr=`<rect x="${ox-ah}" y="${oy}" width="${ah}" height="${gd}" fill="#fff" stroke="#111" stroke-width="1.8"/>
-        <text x="${ox-ah/2}" y="${oy+gd/2}" text-anchor="middle" font-size="11" font-weight="700" transform="rotate(-90 ${ox-ah/2} ${oy+gd/2})">NEW CONC. APRON</text>`;
+        <text class="fp-mv" data-fp-axis="y" x="${ox-ah/2+4}" y="${oy+gd/2}" text-anchor="middle" font-size="11" font-weight="700" transform="rotate(-90 ${ox-ah/2+4} ${oy+gd/2})">NEW CONC. APRON</text>`;
     } else if(ohWall==='right'){
       apr=`<rect x="${ox+gw}" y="${oy}" width="${ah}" height="${gd}" fill="#fff" stroke="#111" stroke-width="1.8"/>
-        <text x="${ox+gw+ah/2}" y="${oy+gd/2}" text-anchor="middle" font-size="11" font-weight="700" transform="rotate(90 ${ox+gw+ah/2} ${oy+gd/2})">NEW CONC. APRON</text>`;
+        <text class="fp-mv" data-fp-axis="y" x="${ox+gw+ah/2-4}" y="${oy+gd/2}" text-anchor="middle" font-size="11" font-weight="700" transform="rotate(90 ${ox+gw+ah/2-4} ${oy+gd/2})">NEW CONC. APRON</text>`;
     } else {
       apr=`<rect x="${ox}" y="${oy+gd}" width="${gw}" height="40" fill="#fff" stroke="#111" stroke-width="1.8"/>
-        <text x="${ox+gw/2}" y="${oy+gd+26}" text-anchor="middle" font-size="11" font-weight="700">APRON</text>`;
+         <text class="fp-mv" data-fp-axis="x" x="${ox+gw/2}" y="${oy+gd+26}" text-anchor="middle" font-size="11" font-weight="700">APRON</text>`;
     }
   }
-  const gfi=`<circle cx="${ox+22}" cy="${oy+gd/2}" r="7" fill="#fff" stroke="#111"/><text x="${ox+22}" y="${oy+gd/2+3}" text-anchor="middle" font-size="6" font-weight="700">GFI</text>
-    <circle cx="${ox+gw-22}" cy="${oy+gd/2}" r="7" fill="#fff" stroke="#111"/><text x="${ox+gw-22}" y="${oy+gd/2+3}" text-anchor="middle" font-size="6" font-weight="700">GFI</text>`;
-  const north=`<g transform="translate(${ox+gw+70} ${oy+18})">
+  const gfi=[ox+22, ox+gw-22].map(gx=>`<g class="fp-mv" data-fp-axis="y"><circle cx="${gx}" cy="${oy+gd/2}" r="7" fill="#fff" stroke="#111"/><text x="${gx}" y="${oy+gd/2+3}" text-anchor="middle" font-size="6" font-weight="700">GFI</text></g>`).join('');
+  const north=`<g class="fp-mv"><g transform="translate(${Math.min(694,ox+gw+70+eR)} ${oy+18})">
     <polygon points="0,-22 6,8 -6,8" fill="#111"/>
     <line x1="0" y1="8" x2="0" y2="20" stroke="#111"/>
     <text x="0" y="-26" text-anchor="middle" font-size="9" font-weight="800">N</text>
-  </g>`;
+  </g></g>`;
   return `<svg viewBox="0 0 720 760" width="100%" style="max-height:9.4in">
     <defs><pattern id="hatchRet" width="6" height="6" patternUnits="userSpaceOnUse"><path d="M0 6 L6 0" stroke="#444" stroke-width=".8"/></pattern></defs>
-    ${sheetHead('PROPOSED FLOOR PLAN','A-1',720)}
+    ${fpReduced?sheetHead('PROPOSED FLOOR PLAN','A-1',720).replace(`SCALE: 1/4" = 1'-0"`,'SCALE: NTS (REDUCED)'):sheetHead('PROPOSED FLOOR PLAN','A-1',720)}
     <rect x="${ox}" y="${oy}" width="${gw}" height="${gd}" fill="#fff" stroke="#111" stroke-width="2.4"/>
     <rect x="${ox+7}" y="${oy+7}" width="${gw-14}" height="${gd-14}" fill="none" stroke="#111" stroke-width="1.1"/>
     ${doorGap}${doorLab}${retHatch}
-    <text x="${ox+gw/2}" y="${oy+gd/2-10}" text-anchor="middle" font-size="15" font-weight="800">NEW DETACHED GARAGE</text>
-    <text x="${ox+gw/2}" y="${oy+gd/2+8}" text-anchor="middle" font-size="11">${esc(carsWord())} · ${ftLabel(W)} x ${ftLabel(D)}</text>
-    <text x="${ox+gw/2}" y="${oy+gd/2+24}" text-anchor="middle" font-size="9">SLAB PITCH 1/8" / FT TOWARD O.H. DOOR</text>
-    ${computeFirewallRequired()?`<text x="${ox+14}" y="${oy+24}" font-size="10" font-weight="700">1-HR FIRE WALL THIS SIDE</text>`:''}
+    ${(()=>{ // centre title block — clear of a side O.H. door label and the GFI symbols, shrunk to fit narrow plans
+      const padL=ohWall==='left'?56:34, padR=ohWall==='right'?56:34;
+      const avail=Math.max(60, gw-padL-padR), cx=ox+padL+avail/2;
+      const l2=carsWord()+' · '+ftLabel(W)+' x '+ftLabel(D), l3='SLAB PITCH 1/8" / FT TOWARD O.H. DOOR';
+      const k=Math.max(0.5, Math.min(1, avail/(19*15*0.68), avail/(l2.length*11*0.6), avail/(l3.length*9*0.6)));
+      return `<g class="fp-mv" data-fp-prio="1"><text x="${cx}" y="${oy+gd/2-10*k}" text-anchor="middle" font-size="${(15*k).toFixed(2)}" font-weight="800">NEW DETACHED GARAGE</text>
+    <text x="${cx}" y="${oy+gd/2+8*k}" text-anchor="middle" font-size="${(11*k).toFixed(2)}">${esc(l2)}</text>
+    <text x="${cx}" y="${oy+gd/2+24*k}" text-anchor="middle" font-size="${(9*k).toFixed(2)}">${esc(l3)}</text></g>`; })()}
+    ${computeFirewallRequired()?`<text class="fp-mv" x="${ox+14}" y="${oy+24}" font-size="${Math.max(6,Math.min(10,(gw-28)/(24*10*0.62))).toFixed(2)}" font-weight="700">1-HR FIRE WALL THIS SIDE</text>`:''}
     ${gfi}
     ${north}
     ${apr}
-    <line x1="${ox+gw+28}" y1="${oy}" x2="${ox+gw+28}" y2="${oy+gd}" stroke="#111"/>
-    <line x1="${ox+gw+24}" y1="${oy}" x2="${ox+gw+32}" y2="${oy}" stroke="#111"/>
-    <line x1="${ox+gw+24}" y1="${oy+gd}" x2="${ox+gw+32}" y2="${oy+gd}" stroke="#111"/>
-    <text x="${ox+gw+44}" y="${oy+gd/2}" font-size="13" font-weight="800" transform="rotate(-90 ${ox+gw+44} ${oy+gd/2})">${ftLabel(D)}</text>
-    <line x1="${ox}" y1="${oy-22}" x2="${ox+gw}" y2="${oy-22}" stroke="#111"/>
-    <line x1="${ox}" y1="${oy-26}" x2="${ox}" y2="${oy-18}" stroke="#111"/>
-    <line x1="${ox+gw}" y1="${oy-26}" x2="${ox+gw}" y2="${oy-18}" stroke="#111"/>
-    <text x="${ox+gw/2}" y="${oy-30}" text-anchor="middle" font-size="13" font-weight="800">${ftLabel(W)}</text>
+    <line x1="${ox+gw+28+eR}" y1="${oy}" x2="${ox+gw+28+eR}" y2="${oy+gd}" stroke="#111"/>
+    <line x1="${ox+gw+24+eR}" y1="${oy}" x2="${ox+gw+32+eR}" y2="${oy}" stroke="#111"/>
+    <line x1="${ox+gw+24+eR}" y1="${oy+gd}" x2="${ox+gw+32+eR}" y2="${oy+gd}" stroke="#111"/>
+    <text class="fp-mv" data-fp-axis="y" x="${ox+gw+44+eR}" y="${oy+gd/2}" text-anchor="middle" font-size="13" font-weight="800" transform="rotate(-90 ${ox+gw+44+eR} ${oy+gd/2})">${ftLabel(D)}</text>
+    <line x1="${ox}" y1="${oy-22-eB}" x2="${ox+gw}" y2="${oy-22-eB}" stroke="#111"/>
+    <line x1="${ox}" y1="${oy-26-eB}" x2="${ox}" y2="${oy-18-eB}" stroke="#111"/>
+    <line x1="${ox+gw}" y1="${oy-26-eB}" x2="${ox+gw}" y2="${oy-18-eB}" stroke="#111"/>
+     <text class="fp-mv" data-fp-axis="x" x="${ox+gw/2}" y="${oy-30-eB}" text-anchor="middle" font-size="13" font-weight="800">${ftLabel(W)}</text>
     ${dimAlong}
     ${extra}
     <rect x="16" y="708" width="230" height="40" fill="none" stroke="#111"/>
     <text x="22" y="722" font-size="8">BUILDING: DETACHED GARAGE</text>
     <text x="22" y="734" font-size="8">VIEW: PROPOSED FLOOR PLAN</text>
-    <text x="22" y="746" font-size="8">SCALE: 1/4" = 1'-0"</text>
+    <text x="22" y="746" font-size="8">SCALE: ${fpReduced?'NTS (REDUCED TO FIT SHEET)':'1/4" = 1\'-0"'}</text>
     <rect x="504" y="708" width="200" height="40" fill="none" stroke="#111"/>
     <text x="604" y="724" text-anchor="middle" font-size="9" font-weight="800">PERMIT DRAWING</text>
     <text x="604" y="738" text-anchor="middle" font-size="9" font-weight="800">NOT FOR CONSTRUCTION</text>
   </svg>`;
 }
 
+// Floor-plan label collision pass: nudges/shrinks movable labels (.fp-mv) so no text overlaps
+// other text (fixed dims, headers, title boxes, overlay GFI/notes). Runs on the live SVG so print/PDF inherit it.
+function declutterFloorPlan(){
+  const host=$('floorHost'); if(!host) return;
+  const svg=host.querySelector('svg'); if(!svg||!svg.getScreenCTM) return;
+  const ctm=svg.getScreenCTM(); if(!ctm||!ctm.a) return;
+  const inv=ctm.inverse();
+  const toSvg=r=>{
+    const p1=new DOMPoint(r.left,r.top).matrixTransform(inv), p2=new DOMPoint(r.right,r.bottom).matrixTransform(inv);
+    return {x0:Math.min(p1.x,p2.x),y0:Math.min(p1.y,p2.y),x1:Math.max(p1.x,p2.x),y1:Math.max(p1.y,p2.y)};
+  };
+  const textBoxes=el=>{
+    const ts=el.tagName.toLowerCase()==='text'?[el]:[...el.querySelectorAll('text')];
+    return ts.filter(t=>t.textContent.trim()).map(t=>toSvg(t.getBoundingClientRect())).filter(b=>b.x1>b.x0);
+  };
+  const hit=(a,b,m)=>a.x0<b.x1+m && b.x0<a.x1+m && a.y0<b.y1+m && b.y0<a.y1+m;
+  const movers=[...svg.querySelectorAll('.fp-mv')].filter(el=>!el.parentNode.closest('.fp-mv'));
+  movers.sort((a,b)=>(Number(b.dataset.fpPrio)||0)-(Number(a.dataset.fpPrio)||0));
+  const fixed=[];
+  svg.querySelectorAll('text').forEach(t=>{ if(!t.closest('.fp-mv')) fixed.push(...textBoxes(t)); });
+  svg.querySelectorAll('.fp-obst').forEach(r=>fixed.push(Object.assign(toSvg(r.getBoundingClientRect()),{obst:true})));
+  host.querySelectorAll('.ov.gfi,.ov.txt').forEach(o=>{ const r=o.getBoundingClientRect(); if(r.width) fixed.push(toSvg(r)); });
+  const vb=svg.viewBox.baseVal, lim={x0:vb.x+2,y0:vb.y+28,x1:vb.x+vb.width-2,y1:vb.y+vb.height-2};
+  const placed=fixed.slice();
+  let ignObst=false;
+  const ok=(bs,dx,dy)=>bs.every(b=>{
+    const s={x0:b.x0+dx,y0:b.y0+dy,x1:b.x1+dx,y1:b.y1+dy};
+    if(s.x0<lim.x0||s.x1>lim.x1||s.y0<lim.y0||s.y1>lim.y1) return false;
+    return !placed.some(p=>!(ignObst&&p.obst) && hit(s,p,1));
+  });
+  movers.forEach(el=>{
+    const yOnly=el.dataset.fpAxis==='y', xOnly=el.dataset.fpAxis==='x';
+    const base=el.getAttribute('transform')||'';
+    ignObst=el.hasAttribute('data-fp-inpad');
+    for(let shrink=0; shrink<4; shrink++){
+      const bs=textBoxes(el); if(!bs.length) return;
+      let best=null;
+      if(ok(bs,0,0)) best=[0,0];
+      for(let r=3; !best && r<=((yOnly||xOnly)?260:90); r+=3){
+        const c=yOnly?[[0,r],[0,-r]]:xOnly?[[r,0],[-r,0]]:[[0,r],[0,-r],[r,0],[-r,0],[r,r],[-r,r],[r,-r],[-r,-r],[r*2,r/2],[-r*2,r/2],[r*2,-r/2],[-r*2,-r/2]];
+        best=c.find(([dx,dy])=>ok(bs,dx,dy))||null;
+      }
+      if(best){
+        if(best[0]||best[1]) el.setAttribute('transform',`translate(${best[0]} ${best[1]}) ${base}`.trim());
+        textBoxes(el).forEach(b=>placed.push(b));
+        return;
+      }
+      // shrink-to-fit and retry
+      (el.tagName.toLowerCase()==='text'?[el]:[...el.querySelectorAll('text')]).forEach(t=>{
+        t.setAttribute('font-size',(Number(t.getAttribute('font-size'))||10)*0.85);
+      });
+    }
+    textBoxes(el).forEach(b=>placed.push(b));
+  });
+}
 function tag(x,y,t, anchor){
   return `<text x="${x}" y="${y}" text-anchor="${anchor||'start'}" font-size="11" font-family="Arial">${esc(t)}</text>`;
 }
@@ -1590,6 +1676,13 @@ function visWrap(key, kind, view, inner, box){
 }
 function elevLarge(view, title){
   const W=Number(val('width'))||22, D=Number(val('depth'))||24;
+  // Elevation-local feet/inch label (declared first: the roofed-patio caption below uses it)
+  const ftLabel=n=>{
+    const v=Number(n)||0;
+    const f=Math.floor(v);
+    const inch=Math.round((v-f)*12);
+    return f+"'-"+String(inch).padStart(2,'0')+'"';
+  };
   const span=(view==='front'||view==='back')?W:D;
   const wall=Number(val('wallH'))||8;
   const tot=totalH();
@@ -1701,12 +1794,6 @@ function elevLarge(view, title){
   const slab=patioOnFace?'':`<rect x="${x-(apronOn?10:6)}" y="${y+wh}" width="${ww+(apronOn?20:12)}" height="${slabH}" fill="#cfcfcf" stroke="#111"/>
     <line x1="${x-12}" y1="${y+wh+slabH}" x2="${x+ww+12}" y2="${y+wh+slabH}" stroke="#111"/>`;
   const gableSid='';
-  const ftLabel=n=>{
-    const v=Number(n)||0;
-    const f=Math.floor(v);
-    const inch=Math.round((v-f)*12);
-    return f+"'-"+String(inch).padStart(2,'0')+'"';
-  };
   const cars=W>=27?'THREE-CAR':(W>=20?'TWO-CAR':'ONE-CAR');
   const jobTitle=ftLabel(W)+' x '+ftLabel(D)+' DETACHED '+cars+' GARAGE';
   const rtName=val('roof')==='hip'?'HIP':val('roof')==='revgable'?'REVERSE GABLE':'GABLE';
@@ -2189,6 +2276,7 @@ function buildPlans(scrollTo){
     makeSheetTextEditable();
     bindSvgTextEdit();
     fitSheetsToPanel();
+    try{ declutterFloorPlan(); }catch(e){ console.warn('floor plan declutter',e); }
     bindDoorDrag();
     savePrefs();
     if($('packetCheck')) $('packetCheck').innerHTML=packetChecklistHTML();
@@ -2403,7 +2491,9 @@ async function saveToHistory(){
   const editId=new URLSearchParams(location.search).get('planId')||window._lastPlanHistoryId||null;
   try{
     if(editId){
-      const {error}=await garageSb.from('estimate_history').update(rec).eq('id',editId);
+      // Editing keeps the plan's original owner (same rule as the Estimator); only the content changes
+      const upd=Object.assign({}, rec); delete upd.created_by; delete upd.salesman_username;
+      const {error}=await garageSb.from('estimate_history').update(upd).eq('id',editId);
       if(error) throw error;
       window._lastPlanHistoryId=editId;
       setStatus('Updated Plan History for '+rec.customer, true);

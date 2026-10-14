@@ -2643,6 +2643,7 @@ button.danger{color:#b42318}
 </div>
 <div class="field"><label>Customer email</label><input id="customerEmail" type="email" placeholder="customer@email.com" autocomplete="email"/></div>
 <div class="field"><label>Salesman phone</label><input id="salesPhone"/></div>
+<div class="field"><label>Contractor name (this drawing)</label><input id="contractor" value="Absolute Garage Builders"/></div>
 </details></div>
 </aside>
 <main class="main">
@@ -2876,13 +2877,13 @@ const concreteFields = {
  cSurvey:[148,914,72,28], cWheeling:[170,970,70,28],
  cServicePadW:[268,1018,54,27], cServicePadL:[363,1018,58,27],
  cCollect:[159,1069,137,30], cNotes:[42,1140,420,222],
- salesman:[195,1382,207,30], salesPhone:[120,1422,202,30]
+ salesman:[194,1413,208,30], salesPhone:[124,1449,202,30]
 };
 
 const obstructionFields = {
  customerName:[184,167,314,29], jobAddress:[145,201,352,29], city:[77,238,420,29],
  homePhone:[146,272,352,29], workPhone:[145,309,352,29],
- contractor:[627,166,364,29], salesman:[625,198,365,29],
+ contractor:[626,178,362,29], salesman:[636,216,350,29],
  oSizeW:[88,389,67,28], oSizeL:[184,389,67,28], oShed:[203,534,42,28], oWallHeight:[223,610,51,28],
  oNotes:[532,247,452,82]
 };
@@ -2933,7 +2934,11 @@ function persistDrawingDraft(){
     customer:$('customerName')?.value||'',
     address:$('jobAddress')?.value||'',
     city:$('city')?.value||'',
-    phone:$('homePhone')?.value||''
+    phone:$('homePhone')?.value||'',
+    salesman:$('salesman')?.value||'',
+    salesmanName:($('salesman')?.selectedOptions?.[0]?.text)||'',
+    salesPhone:$('salesPhone')?.value||'',
+    contractor:$('contractor')?.value||''
   };
   const raw=JSON.stringify(payload);
   localStorage.setItem('agb_drawing_draft_v2', raw);
@@ -2952,6 +2957,15 @@ function loadDrawingDraft(preferJob){
   if(data && data.address && $('jobAddress') && !$('jobAddress').value) $('jobAddress').value=data.address;
   if(data && data.city && $('city') && !$('city').value) $('city').value=data.city;
   if(data && data.phone && $('homePhone') && !$('homePhone').value) $('homePhone').value=data.phone;
+  // 2026-10-13: salesperson/phone/contractor saved with THIS drawing win over login defaults
+  if(data && data.salesman && $('salesman')){
+    const sel=$('salesman');
+    if(![...sel.options].some(o=>o.value===data.salesman)) sel.add(new Option(data.salesmanName||data.salesman,data.salesman));
+    sel.value=data.salesman; if($('wSalesman')){ const w=$('wSalesman'); if(![...w.options].some(o=>o.value===data.salesman)) w.add(new Option(data.salesmanName||data.salesman,data.salesman)); w.value=data.salesman; }
+    window._salesFromDrawing=true;
+  }
+  if(data && data.salesPhone!=null && data.salesman && $('salesPhone')){ $('salesPhone').value=data.salesPhone; if($('wSalesPhone'))$('wSalesPhone').value=data.salesPhone; }
+  if(data && data.contractor && $('contractor')) $('contractor').value=data.contractor;
   return true;
 }
 function flushGarageApron(){
@@ -3092,7 +3106,21 @@ function fieldInput(id,box,value=''){
     });
   }
   fieldLayer.appendChild(inp);
+  if(!isNotes && FIT_FIELD_IDS.includes(id)){
+    inp._baseFs=fontSize;
+    inp.addEventListener('input',()=>fitSheetField(inp));
+    fitSheetField(inp);
+  }
   return inp;
+}
+// 2026-10-13: salesperson / phone / contractor shrink to fit their printed line instead of overflowing
+const FIT_FIELD_IDS=['salesman','salesPhone','contractor','customerName','jobAddress','city','homePhone','workPhone'];
+function fitSheetField(inp){
+  if(!inp||!inp.isConnected) return;
+  const base=inp._baseFs||19; let fs=base;
+  const set=v=>{ inp.style.setProperty('font-size',v+'px','important'); inp.style.setProperty('padding-top',Math.max(0,(base-v)*0.9)+'px','important'); };
+  set(fs);
+  while(fs>8 && inp.scrollWidth>inp.clientWidth+1){ fs-=1; set(fs); }
 }
 function checkbox(key,xy){
   const [x,y]=xy,b=document.createElement('button');
@@ -3137,14 +3165,14 @@ function renderSheet(){
   paper.querySelectorAll('.clean-rectangle-interior-mask').forEach(n=>n.remove());
   const map=state.mode==='concrete'?concreteFields:(state.mode==='obstruction'?obstructionFields:{});
   Object.entries(map).forEach(([id,box])=>{
-    let value=id==='contractor'?'Absolute Garage Builders':($(id)?.value||'');
+    let value=id==='contractor'?(String($('contractor')?.value||'').trim()||'Absolute Garage Builders'):($(id)?.value||'');
     const srcEl=$(id);
     if(srcEl && srcEl.tagName==='SELECT'){
       const opt=srcEl.selectedOptions&&srcEl.selectedOptions[0];
       if(srcEl.value && opt) value=opt.text||value;
     }
     const input=fieldInput(id,box,value);
-    if(id==='contractor'){input.readOnly=true;input.style.fontWeight='700'}
+    if(id==='contractor'){input.style.fontWeight='700'; input.title='Contractor name (editable)';}
     if(id==='cCollect'){
       input.classList.add('collect-field-print');
       const raw=String(value||'').trim().replace(/^COLLECT\s*/i,'').trim();
@@ -4071,16 +4099,37 @@ function getDrawingSupabase(){
   return drawingSbClient;
 }
 async function defaultDrawingSalesmanFromSignedInUser(){
+ // 2026-10-13: mirror estimator.html (staff_profiles.username, else email local part) but only
+ // fill an untouched salesperson: never overwrite one saved with this drawing or typed by the user.
  try{
+   if(window._salesFromDrawing || window._salesTouched) return;
    const client=getDrawingSupabase();
    if(!client)return;
    const {data:{user}}=await client.auth.getUser();
    if(!user)return;
-   const {data:p}=await client.from('staff_profiles').select('username').eq('id',user.id).single();
-   const key=String(p?.username||'').toLowerCase();
-   if(DRAWING_SALESMEN[key])applyDrawingSalesman(key,true);
+   if(window._salesFromDrawing || window._salesTouched) return;
+   let p=null;
+   try{ const r=await client.from('staff_profiles').select('*').eq('id',user.id).maybeSingle(); p=r&&r.data||null; }catch(_){}
+   const fromStaff=String(p?.username||'').toLowerCase().trim();
+   const key=fromStaff || String(user.email||'').replace(/@absolute-garage\.local$/i,'').split('@')[0].toLowerCase().trim();
+   if(!key || window._salesFromDrawing || window._salesTouched) return;
+   const known=DRAWING_SALESMEN[key];
+   const name=known?.name || p?.full_name || p?.display_name || p?.name || (key.charAt(0).toUpperCase()+key.slice(1));
+   const prevKey=$('salesman')?.value||'';
+   const prevMapped=DRAWING_SALESMEN[prevKey]?.phone||'';
+   ['salesman','wSalesman'].forEach(id=>{ const sel=$(id); if(!sel) return; if(![...sel.options].some(o=>o.value===key)) sel.add(new Option(name,key)); sel.value=key; });
+   const phone=String(p?.phone||p?.phone_number||p?.cell||p?.mobile||known?.phone||'').trim();
+   const curPhone=String($('salesPhone')?.value||'').trim();
+   if(phone && !window._phoneTouched && (!curPhone || curPhone===prevMapped)){
+     if($('salesPhone'))$('salesPhone').value=phone; if($('wSalesPhone'))$('wSalesPhone').value=phone;
+   }
+   saveSharedInfo();
+   try{ renderSheet(); }catch(_){}
  }catch(e){console.warn('Could not load signed-in salesman default',e)}
 }
+// Track real user edits so the login default never overwrites them
+document.addEventListener('input',e=>{ if(!e.isTrusted) return; const id=e.target&&e.target.id; if(id==='salesPhone'||id==='wSalesPhone'||id==='sheet_salesPhone') window._phoneTouched=true; if(id==='sheet_salesman') window._salesTouched=true; },true);
+document.addEventListener('change',e=>{ if(!e.isTrusted) return; const id=e.target&&e.target.id; if(id==='salesman'||id==='wSalesman') window._salesTouched=true; },true);
 function parseGarageSizeText(str){
   const m=String(str||'').match(/([0-9.]+)\s*[x×]\s*([0-9.]+)/i);
   if(!m) return null;
@@ -4427,6 +4476,7 @@ function loadSharedInfo(){
 }
 SHARED_IDS.forEach(id=>$(id)?.addEventListener('input',saveSharedInfo));
 $('salesman')?.addEventListener('change',()=>syncDrawingSalesmanFromSelect('salesman'));
+$('contractor')?.addEventListener('input',()=>{ const sh=$('sheet_contractor'); if(sh && sh.value!==$('contractor').value){ sh.value=$('contractor').value; fitSheetField(sh); } try{scheduleDrawingPersist()}catch(_){} });
 $('wSalesman')?.addEventListener('change',()=>syncDrawingSalesmanFromSelect('wSalesman'));
 
 
@@ -4544,9 +4594,12 @@ function renderConcreteMarks(){
  else if(stub==='1/2') addOval(238,808,196,47);
 }
 function renderObstructionExtras(){
- const old=$('sheet_contractor');if(old)old.style.display='none';
- // Clean white background, centered neatly over the contractor line.
- addStaticText('Absolute Garage Builders',624,161,362,33);
+ // 2026-10-13: the contractor name is now an editable, transparent field sitting on its own line
+ // (was a locked grey/white box that overlapped the Salesman line). A white patch the same colour
+ // as the sheet hides only the faint pre-printed name above the line on the scanned template.
+ { const m=document.createElement('div'); m.className='sheet-template-mask';
+   Object.assign(m.style,{position:'absolute',left:'686px',top:'147px',width:'250px',height:'21px',background:'#fff',zIndex:'5',pointerEvents:'none'});
+   fieldLayer.appendChild(m); }
 
  // Default giant X across the full ATTACHED SHED section.
  const shedNo=($('oShed')?.value||'no')==='no';
@@ -7594,6 +7647,8 @@ function initializeApp(){
     hydrateSheetStates();
     try{ loadDrawingDraft(!!q.get('jobId')||!!q.get('customer')); }catch(e){}
     try{ loadSharedInfo(); }catch(e){}
+    // drawing-saved salesperson/phone/contractor must beat global shared info
+    try{ if(window._salesFromDrawing) loadDrawingDraft(!!q.get('jobId')||!!q.get('customer')); }catch(e){}
   }
   if(q.get('customer') && $('customerName')) $('customerName').value=q.get('customer');
   if(q.get('address') && $('jobAddress')) $('jobAddress').value=q.get('address');
@@ -8014,7 +8069,7 @@ function toggleMobilePanel(){
 #agbTitleBlock .tb-head{background:#111;color:#fff;font-weight:800;padding:3px 8px;font-size:12px;letter-spacing:.3px}
 #agbTitleBlock .tb-row{display:flex;border-top:1px solid #111}
 #agbTitleBlock .tb-k{width:72px;flex:0 0 72px;padding:3px 6px;font-weight:800;border-right:1px solid #111;font-size:10px;text-transform:uppercase}
-#agbTitleBlock .tb-v{flex:1;padding:3px 6px;min-height:14px;outline:0}
+#agbTitleBlock .tb-v{flex:1;padding:3px 6px;min-height:14px;outline:0;white-space:nowrap;overflow:hidden;min-width:0}
 #agbTitleBlock .tb-v:focus{background:#fef9c3}
 .sw-garage,#paper.siteplan .obj[data-cat="garage"]{border:3px solid #1e3a8a!important;background:rgba(219,234,254,.6)!important}
 .sw-new,#paper.siteplan .obj[data-cat="new"]{border:2px solid #111!important;background:repeating-linear-gradient(45deg,rgba(0,0,0,.28) 0 1px,transparent 1px 7px),rgba(255,255,255,.75)!important}
@@ -8150,7 +8205,7 @@ function tbValue(k){
   if(k==='Address')return [v('jobAddress'),v('city')].filter(Boolean).join(', ');
   if(k==='Date'){try{return localStorage.getItem('agbTitleDate')||new Date().toLocaleDateString()}catch(_){return new Date().toLocaleDateString()}}
   if(k==='Salesman'){const s=document.getElementById('salesman');const t=s&&s.value&&s.selectedOptions[0]?s.selectedOptions[0].text:'';try{return t||localStorage.getItem('agbTitleSalesman')||''}catch(_){return t}}
-  if(k==='Contractor')return 'Absolute Garage Builders';
+  if(k==='Contractor')return v('contractor')||'Absolute Garage Builders';
   return '';
 }
 function renderTitleBlock(){
@@ -8159,7 +8214,7 @@ function renderTitleBlock(){
   if(!show){if(tb)tb.remove();return}
   if(!tb||tb.parentNode!==paper){
     if(tb)tb.remove();tb=document.createElement('div');tb.id='agbTitleBlock';
-    tb.innerHTML='<div class="tb-head">PROPOSED SITE PLAN</div>'+TB_FIELDS.map(([k])=>`<div class="tb-row"><div class="tb-k">${k}</div><div class="tb-v" data-k="${k}" ${k==='Contractor'?'':'contenteditable="true"'}></div></div>`).join('');
+    tb.innerHTML='<div class="tb-head">PROPOSED SITE PLAN</div>'+TB_FIELDS.map(([k])=>`<div class="tb-row"><div class="tb-k">${k}</div><div class="tb-v" data-k="${k}" contenteditable="true"></div></div>`).join('');
     ['pointerdown','touchstart','wheel'].forEach(t=>tb.addEventListener(t,e=>e.stopPropagation(),{passive:true}));
     tb.addEventListener('input',e=>{
       const el=e.target.closest('.tb-v');if(!el)return;const k=el.dataset.k,t=el.textContent.trim();
@@ -8168,11 +8223,14 @@ function renderTitleBlock(){
         else if(k==='Address'&&$('jobAddress')){$('jobAddress').value=t;if($('city'))$('city').value='';$('jobAddress').dispatchEvent(new Event('input',{bubbles:true}))}
         else if(k==='Date')localStorage.setItem('agbTitleDate',t);
         else if(k==='Salesman')localStorage.setItem('agbTitleSalesman',t);
+        else if(k==='Contractor'&&$('contractor')){$('contractor').value=t;$('contractor').dispatchEvent(new Event('input',{bubbles:true}))}
+        el._fitDone=false;
       }catch(_){}
     });
     paper.appendChild(tb);
   }
-  tb.querySelectorAll('.tb-v').forEach(el=>{if(document.activeElement!==el){const v=tbValue(el.dataset.k);if(el.textContent!==v)el.textContent=v}});
+  tb.querySelectorAll('.tb-v').forEach(el=>{if(document.activeElement!==el){const v=tbValue(el.dataset.k);if(el.textContent!==v){el.textContent=v;el._fitDone=false}}
+    if(!el._fitDone && el.isConnected){let fs=12;el.style.fontSize=fs+'px';while(fs>7&&el.scrollWidth>el.clientWidth+1){fs-=.5;el.style.fontSize=fs+'px'}el._fitDone=true}});
 }
 function tagCategories(){
   if(state.mode!=='siteplan')return;

@@ -168,6 +168,10 @@ button.danger{color:#b42318}
 #paper .obj .handle,#paper .obj .resize-handle{display:none !important;}
 .obj{overflow:visible !important;}
 .obj, .side-handle{touch-action:none !important;}
+/* 2026-10-13: handles counter-scale with zoom so they stay finger-sized (see applyTransformNow) */
+#paper .side-handle,#paper .rotate-handle,#paper .dv-handle,#paper .cut-end-handle{scale:var(--hs,1)}
+#paper .obj{will-change:auto}
+#paper{will-change:transform}
 
 
 #paper .obj.lot-length-special{
@@ -394,11 +398,12 @@ button.danger{color:#b42318}
     box-shadow:none !important;
     outline:none !important;
   }
-  .obj.selected, #paper .obj.selected{
+  .obj.selected, #paper .obj.selected, .obj.selected .label{
     outline:none !important;
     box-shadow:none !important;
+    border-style:solid !important;
   }
-  .side-handle,.corner-handle,.handle,.resize-handle,.rotate-handle,.cut-end-handle{
+  .side-handle,.corner-handle,.handle,.resize-handle,.rotate-handle,.cut-end-handle,.dv-handle{
     display:none !important;
   }
 }
@@ -2313,6 +2318,9 @@ button.danger{color:#b42318}
 <div class="scroll">
 <div class="section sidebar-pin">
 <button class="primary" id="wizardBtn" style="width:100%;min-height:48px;font-weight:900;font-size:15px">Drawing Wizard</button>
+<button type="button" id="saveDrawingBtn" class="primary" style="width:100%;min-height:44px;font-weight:900;margin-top:8px;background:#0f274b">Save Drawing</button>
+<button type="button" id="flushApronBtn" style="width:100%;min-height:40px;font-weight:800;margin-top:6px">Flush apron to garage</button>
+<button type="button" id="newDrawingBtn" style="width:100%;min-height:40px;margin-top:6px">New blank drawing</button>
 <div class="field" style="margin-top:8px">
 <label>Sheet</label>
 <select id="mode">
@@ -2643,7 +2651,8 @@ button.danger{color:#b42318}
 <button id="zoomIn">+</button>
 <div class="spacer"></div>
 <button class="mini hide-on-mobile" type="button" onclick="window.location.href='index.html?v='+Date.now()">← Dashboard</button>
-    <button id="undoBtn">Undo</button>
+    <button id="undoBtn" title="Undo (Ctrl+Z)">↶ Undo</button>
+    <button id="redoBtn" title="Redo (Ctrl+Y / Ctrl+Shift+Z)">↷ Redo</button>
     <button class="mini hide-on-mobile" id="duplicateSelectedBtn" title="Duplicate selected object">⧉ Duplicate</button>
     <button class="mini hide-on-mobile" id="lockSelectedBtn" title="Lock / Unlock selected">🔒 Lock</button>
     <button class="mini hide-on-mobile" id="hideSelectedBtn" title="Hide selected object">👁 Hide</button>
@@ -2662,7 +2671,8 @@ button.danger{color:#b42318}
   <button type="button" id="mobileRotateLeftBtn" title="Rotate -15°">↺</button>
   <button type="button" id="mobileRotateRightBtn" title="Rotate +15°">↻</button>
   <button type="button" id="mobileRotate90Btn" title="Rotate 90°">90°</button>
-  <button type="button" id="mobileUndoBtn">Undo</button>
+  <button type="button" id="mobileUndoBtn">↶ Undo</button>
+  <button type="button" id="mobileRedoBtn">↷ Redo</button>
   <button type="button" id="mobileDupBtn">Duplicate</button>
   <button type="button" id="mobileLockBtn">Lock</button>
   <button type="button" id="mobileHideBtn">Hide</button>
@@ -2884,7 +2894,67 @@ function saveActiveSheetState(){
  state.sheetStates[m].objects=JSON.parse(JSON.stringify(state.objects||[]));
  state.sheetStates[m].history=[...(state.history||[])];
  state.sheetStates[m].future=[...(state.future||[])];
+ scheduleDrawingPersist();
+}
+// PERF 2026-10-13: localStorage writes (all sheets + undo history, ~1MB) used to run
+// synchronously on every snapshot/pointerup. Coalesce them and flush on page hide.
+let _persistTimer=0;
+function scheduleDrawingPersist(){ clearTimeout(_persistTimer); _persistTimer=setTimeout(flushDrawingPersist,400); }
+function flushDrawingPersist(){
+ clearTimeout(_persistTimer); _persistTimer=0;
  try{localStorage.setItem('agbSheetStates',JSON.stringify(state.sheetStates))}catch(e){}
+ try{ persistDrawingDraft(); }catch(e){}
+}
+window.addEventListener('pagehide',()=>{ if(_persistTimer) flushDrawingPersist(); });
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden' && _persistTimer) flushDrawingPersist(); });
+function drawingStorageKey(){
+  const q=new URLSearchParams(location.search);
+  const job=q.get('jobId')||'';
+  const name=($('customerName')?.value||q.get('customer')||'').trim().toLowerCase();
+  if(job) return 'agb_drawing_job_'+job;
+  if(name) return 'agb_drawing_cust_'+name.replace(/[^a-z0-9]+/g,'_').slice(0,40);
+  return 'agb_drawing_draft_v2';
+}
+function persistDrawingDraft(){
+  const payload={
+    savedAt:new Date().toISOString(),
+    mode:state.mode,
+    sheets:state.sheetStates,
+    customer:$('customerName')?.value||'',
+    address:$('jobAddress')?.value||'',
+    city:$('city')?.value||'',
+    phone:$('homePhone')?.value||''
+  };
+  const raw=JSON.stringify(payload);
+  localStorage.setItem('agb_drawing_draft_v2', raw);
+  localStorage.setItem(drawingStorageKey(), raw);
+}
+function loadDrawingDraft(preferJob){
+  let raw=null;
+  if(preferJob) raw=localStorage.getItem(drawingStorageKey());
+  if(!raw) raw=localStorage.getItem('agb_drawing_draft_v2');
+  if(!raw) return false;
+  const data=JSON.parse(raw);
+  if(data && data.sheets){
+    ['concrete','obstruction','siteplan'].forEach(m=>{ if(data.sheets[m]) state.sheetStates[m]=data.sheets[m]; });
+  }
+  if(data && data.customer && $('customerName') && !$('customerName').value) $('customerName').value=data.customer;
+  if(data && data.address && $('jobAddress') && !$('jobAddress').value) $('jobAddress').value=data.address;
+  if(data && data.city && $('city') && !$('city').value) $('city').value=data.city;
+  if(data && data.phone && $('homePhone') && !$('homePhone').value) $('homePhone').value=data.phone;
+  return true;
+}
+function flushGarageApron(){
+  const g=byRole('garage'), a=byRole('apron');
+  if(!g||!a){ alert('Need a garage slab and an apron first.'); return; }
+  snapshot();
+  a.wf=g.wf;
+  a.pxf=g.pxf||a.pxf||DRAW_PXF;
+  a.x=g.x;
+  a.y=g.y+(g.hf*(g.pxf||DRAW_PXF));
+  if($('cApronCombo')) updateCombo('cApronCombo',a.wf,a.hf);
+  if($('cApronW')) $('cApronW').value=a.wf;
+  renderObjects();
 }
 function loadSheetState(mode){
  const st=state.sheetStates[mode]||{objects:[],history:[],future:[]};
@@ -2932,13 +3002,33 @@ function snapshot(){
   if(state.history.length>50) state.history.shift();
   state.future=[];saveActiveSheetState();
 }
+function redoDrawing(){
+  if(!state.future.length) return;
+  state.history.push(JSON.stringify(state.objects));
+  restore(state.future.pop());
+}
+function undoDrawing(){
+  if(!state.history.length) return;
+  state.future.push(JSON.stringify(state.objects));
+  restore(state.history.pop());
+}
 function restore(arr){
   state.objects=JSON.parse(arr); state.selected=null; saveActiveSheetState();clampGarageToLot();renderObjects();
 }
 function setTransform(scale,tx,ty){
   state.scale=scale;state.tx=tx;state.ty=ty;
-  paper.style.transform=`translate(${tx}px,${ty}px) scale(${scale})`;
-  $('zoomLabel').textContent=Math.round(scale*100)+'%';
+  // PERF: apply at most once per frame (pan/pinch/wheel fire many events per frame)
+  if(!setTransform._raf) setTransform._raf=requestAnimationFrame(applyTransformNow);
+}
+const COARSE_POINTER=!!(window.matchMedia&&matchMedia('(pointer:coarse)').matches);
+function applyTransformNow(){
+  setTransform._raf=0;
+  const scale=state.scale;
+  paper.style.transform=`translate(${state.tx}px,${state.ty}px) scale(${scale})`;
+  // Keep resize/rotate handles a usable size on screen at any zoom (bigger on touch).
+  const target=COARSE_POINTER?34:24;
+  paper.style.setProperty('--hs',String(Math.max(1,Math.min(2.5,target/22/Math.max(.05,scale)))));
+  const zl=$('zoomLabel'); const txt=Math.round(scale*100)+'%'; if(zl && zl.textContent!==txt) zl.textContent=txt;
 }
 function fitWhole(){
   const t=currentTemplate(), vw=viewport.clientWidth, vh=viewport.clientHeight;
@@ -5034,8 +5124,6 @@ let whiteoutBrushOn=false;
 let whiteoutPainting=false;
 let whiteoutLastPt=null;
 function setWhiteoutBrush(on){
-  // Brush only works on Proposed Site Plan
-  if(on && state.mode!=='siteplan') on=false;
   whiteoutBrushOn=!!on;
   if(!whiteoutBrushOn){ whiteoutPainting=false; whiteoutLastPt=null; }
   const btn=$('eraseSurveyBtn');
@@ -5045,16 +5133,11 @@ function setWhiteoutBrush(on){
   }
   const note=$('eraseSurveyNote');
   if(note) note.textContent=whiteoutBrushOn
-    ?'Whiteout is ON. Drag over old garage / lines on the survey. White covers only what you paint. Tap again to stop. Undo removes the last stroke.'
-    :'Tap Whiteout Brush, then drag over the old garage / lines on the survey. White covers only what you paint. Tap again to turn off. Undo removes strokes.';
+    ?'Whiteout is ON. Drag over lines to erase. Undo removes the last stroke.'
+    :'Tap Whiteout Brush, then drag over lines. Tap again to turn off.';
   if(drawLayer) drawLayer.style.cursor=whiteoutBrushOn?'crosshair':'';
 }
 bindTapSafe('eraseSurveyBtn',()=>{
-  if(state.mode!=='siteplan'){
-    // Fixed: do NOT drop a random white box on concrete/obstruction drawings
-    alert('Whiteout Brush only works on Proposed Site Plan. Switch Drawing type to Proposed Site Plan, upload the survey, then use Whiteout.');
-    return;
-  }
   setWhiteoutBrush(!whiteoutBrushOn);
 });
 function paperPointFromEvent(e){
@@ -5107,7 +5190,7 @@ if(viewport){
     placeProposedGarageFromUserTap(pt);
   },true);
   viewport.addEventListener('pointerdown',e=>{
-    if(!whiteoutBrushOn||state.mode!=='siteplan') return;
+    if(!whiteoutBrushOn) return;
     if(e.button!=null&&e.button!==0) return;
     e.preventDefault();
     e.stopPropagation();
@@ -5119,7 +5202,7 @@ if(viewport){
     try{viewport.setPointerCapture(e.pointerId)}catch(_){}
   },true);
   viewport.addEventListener('pointermove',e=>{
-    if(!whiteoutPainting||!whiteoutBrushOn||state.mode!=='siteplan') return;
+    if(!whiteoutPainting||!whiteoutBrushOn) return;
     e.preventDefault();
     const pt=paperPointFromEvent(e);
     // Space dots slightly so a long drag does not create thousands of objects
@@ -5136,6 +5219,7 @@ if(viewport){
     if(!whiteoutPainting) return;
     whiteoutPainting=false;
     whiteoutLastPt=null;
+    flushRenderObjects();
     saveActiveSheetState();
   },true);
   viewport.addEventListener('pointercancel',()=>{if(whiteoutPainting){whiteoutPainting=false;whiteoutLastPt=null;try{saveActiveSheetState()}catch(_){}}else{whiteoutLastPt=null}});
@@ -5193,6 +5277,16 @@ function addObject(kind){
       obj.pathPts=[{x:0,y:0},{x:w,y:0},{x:w,y:h},{x:0,y:h}];
     }
     state.objects.push(obj);
+    if(kind==='garage'){
+      const apron={
+        id:uid++, kind:'apron', role:'apron', x:obj.x, y:obj.y+(hf*(obj.pxf||DRAW_PXF||22)),
+        wf, hf:3, label:'', angle:0, locked:false, hidden:false, fontSize:32, fontWeight:'700',
+        pairId:obj.id
+      };
+      obj.role='garage';
+      obj.pairId=apron.id;
+      state.objects.push(apron);
+    }
     state.selected = obj.id;
     renderObjects();
     saveActiveSheetState();
@@ -5392,15 +5486,50 @@ function shouldConcreteHatch(o){
   return false;
 }
 
+// PERF 2026-10-13: renderObjects rebuilds every object's DOM. During a drag/paint
+// gesture it was called on every pointermove; now it is coalesced to one per frame.
+let _renderRaf=0;
 function renderObjects(){
+  if(window._shapeInteract || (typeof whiteoutPainting!=='undefined' && whiteoutPainting)){
+    if(!_renderRaf) _renderRaf=requestAnimationFrame(()=>{_renderRaf=0;renderObjectsNow();});
+    return;
+  }
+  if(_renderRaf){cancelAnimationFrame(_renderRaf);_renderRaf=0;}
+  renderObjectsNow();
+}
+function flushRenderObjects(){ if(_renderRaf){cancelAnimationFrame(_renderRaf);_renderRaf=0;renderObjectsNow();} }
+// PERF: whiteout brush dots (often hundreds) are static white circles; keep their DOM
+// nodes alive in one sub-layer and only add/remove changed dots instead of rebuilding.
+const _dotEls=new Map();
+function isWhiteoutDot(o){ return o && o.kind==='eraser' && o.brush && !o.hidden; }
+function syncWhiteoutDots(layer){
+  const seen=new Set();
+  state.objects.forEach(o=>{
+    if(!isWhiteoutDot(o)) return;
+    const key=String(o.id); seen.add(key);
+    const [w,h]=objPixels(o), sig=o.x+'|'+o.y+'|'+w+'|'+h;
+    let el=_dotEls.get(key);
+    if(!el){ el=document.createElement('div'); el.className='obj erase-patch brush-dot'; el.dataset.id=key; el.dataset.role=o.role||'whiteoutBrush';
+      el.style.background='#ffffff'; el.style.border='0'; el.style.zIndex='6'; _dotEls.set(key,el); }
+    if(el._sig!==sig){ el._sig=sig; el.style.left=o.x+'px'; el.style.top=o.y+'px'; el.style.width=w+'px'; el.style.height=h+'px'; }
+    if(el.parentNode!==layer) layer.appendChild(el);
+  });
+  _dotEls.forEach((el,key)=>{ if(!seen.has(key)){ el.remove(); _dotEls.delete(key); } });
+}
+function renderObjectsNow(){
   tidyGeneratedLayout();
-  drawLayer.innerHTML='';
+  let _wl=document.getElementById('whiteoutDotLayer');
+  if(!_wl || _wl.parentNode!==drawLayer){ drawLayer.innerHTML=''; _wl=document.createElement('div'); _wl.id='whiteoutDotLayer'; _dotEls.clear(); }
+  else { Array.from(drawLayer.childNodes).forEach(c=>{ if(c!==_wl) c.remove(); }); }
+  if(_wl.parentNode!==drawLayer) drawLayer.appendChild(_wl);
+  syncWhiteoutDots(_wl);
   // V56: side setbacks get a transparent top-overlay copy so form textboxes
   // can never cover the setback line, dashes, or distance.
   paper.querySelectorAll('.side-setback-top-overlay').forEach(e=>e.remove());
   state.objects.forEach(o=>{
     // Skip fully hidden objects (user can unhide later)
     if(o.hidden) return;
+    if(isWhiteoutDot(o)) return; // rendered by syncWhiteoutDots
     // V38: on concrete/obstruction, hide legacy rear gap / alley distance lines.
     // On Proposed Site Plan we DO show rear setback markers.
     if(['rearGap','alleyDistance'].includes(o.role)) return;
@@ -5657,7 +5786,7 @@ function renderObjects(){
     if(editableLabel){
       editableLabel.style.cursor='text';
       editableLabel.title='Click to edit text';
-      editableLabel.addEventListener('click',ev=>{
+      editableLabel.addEventListener('dblclick',ev=>{
         ev.stopPropagation();
         openObjectTextEditor(o,el);
       });
@@ -5709,7 +5838,12 @@ function getObj(id){return state.objects.find(o=>o.id===+id)}
 document.addEventListener('keydown',e=>{
   const tag=(e.target&&e.target.tagName||'').toLowerCase();
   if(tag==='input'||tag==='textarea'||tag==='select'||e.target?.isContentEditable) return;
+  const mod=e.ctrlKey||e.metaKey, k=String(e.key||'').toLowerCase();
+  if(mod && k==='z' && !e.shiftKey){e.preventDefault();undoDrawing();return;}
+  if(mod && (k==='y' || (k==='z'&&e.shiftKey))){e.preventDefault();redoDrawing();return;}
   const o=typeof getObj==='function'?getObj(state.selected):null;
+  if(o && (e.key==='Delete'||e.key==='Backspace') && $('deleteSelectedBtn')){e.preventDefault();$('deleteSelectedBtn').click();return;}
+  if(o && mod && k==='d' && $('duplicateSelectedBtn')){e.preventDefault();$('duplicateSelectedBtn').click();return;}
   if(!o || o.locked) return;
   const step=e.shiftKey?12:3;
   let dx=0,dy=0;
@@ -5797,6 +5931,10 @@ function findSnap(moving, excludeId, dx, dy){
   ];
   for(const other of state.objects){
     if(other.id===excludeId || other.hidden) continue;
+    // 2026-10-13: never snap to whiteout patches/dots (they made the garage "stick"
+    // on a whited-out plat) or to pieces that ride along with the moving garage.
+    if(other.kind==='eraser') continue;
+    if(moving.role==='garage' && ['apron','servicePad','frontLeft','frontMiddle','frontRight','rearLeft','rearMiddle','rearRight','patio','serviceDoor','partyDoor','partyReturnA','partyReturnB'].includes(other.role)) continue;
     const pts = getSnapPoints(other);
     const all = [
       ...pts.corners.map(p=>({...p,type:'corner'})),
@@ -5905,7 +6043,7 @@ function attachBoxHandles(el, o){
   });
 }
 function lockCanvasPan(){ window._shapeInteract=true; try{ panStart=null; }catch(_){ } }
-function unlockCanvasPan(){ window._shapeInteract=false; }
+function unlockCanvasPan(){ window._shapeInteract=false; try{flushRenderObjects()}catch(_){} }
 
 function objectPointerDown(e){
   e.preventDefault();
@@ -6003,20 +6141,29 @@ function objectPointerDown(e){
   const resizing=e.target.dataset.handle==='1', rotating=e.target.dataset.rotate==='1', cutSizing=e.target.dataset.cutend==='1';
   const sideHandle=e.target.dataset.side||null; // n,s,e,w
   activeSnap = null; // fresh drag — no sticky snap yet
-  snapshot();
+  // UX: a tap/select no longer creates an undo step or nudges the shape; the drag
+  // only starts after the pointer travels a few px (more on touch).
+  let dragStarted=false;
+  const dragSlop=(e.pointerType==='touch'||e.pointerType==='pen')?8:3;
   const startX=e.clientX,startY=e.clientY, ox=o.x,oy=o.y, ow=o.wf,oh=o.hf, oa=o.angle||0, op=o.pxf||DRAW_PXF;
   const [pw0,ph0]=objPixels(o), cx=o.x+pw0/2, cy=o.y+ph0/2;
   const attachRoles=['apron','servicePad','frontLeft','frontMiddle','frontRight','rearLeft','rearMiddle','rearRight','patio','serviceDoor','partyDoor','partyReturnA','partyReturnB'];
   const attachedStart={};
   if(o.role==='garage')attachRoles.forEach(r=>{const a=byRole(r);if(a)attachedStart[r]={x:a.x,y:a.y}});
   const startAngle=Math.atan2((startY-state.ty)/state.scale-cy,(startX-state.tx)/state.scale-cx)*180/Math.PI;
-  const move=ev=>{
+  const moveInner=ev=>{
     const dx=(ev.clientX-startX)/state.scale,dy=(ev.clientY-startY)/state.scale;
     if(cutSizing){
       o.arrowLen=Math.max(35,Math.min(420,(o.arrowLen||110)+dx));
     } else if(rotating){
       const a=Math.atan2((ev.clientY-state.ty)/state.scale-cy,(ev.clientX-state.tx)/state.scale-cx)*180/Math.PI;
-      o.angle=((oa+(a-startAngle))%360+360)%360;
+      let na=((oa+(a-startAngle))%360+360)%360;
+      if(window.snapEnabled!==false && !ev.shiftKey){
+        const n90=Math.round(na/90)*90;
+        na=Math.abs(na-n90)<=4?n90:Math.round(na/5)*5;   // 90° detents, else 5° steps
+        na=((na%360)+360)%360;
+      }
+      o.angle=na;
     } else if(resizing){
       const p=o.pxf||DRAW_PXF;
       // Side-middle handles only: grow/shrink that one side
@@ -6213,7 +6360,18 @@ function objectPointerDown(e){
     }
     renderObjects();
   };
+  let _mvRaf=0,_mvEv=null;
+  const move=ev=>{
+    if(!dragStarted){
+      if(Math.hypot(ev.clientX-startX,ev.clientY-startY)<dragSlop) return;
+      dragStarted=true; snapshot();
+    }
+    if(ev.cancelable) ev.preventDefault();
+    _mvEv=ev;
+    if(!_mvRaf) _mvRaf=requestAnimationFrame(()=>{_mvRaf=0; if(_mvEv) moveInner(_mvEv);});
+  };
   const up=()=>{
+    if(_mvRaf){cancelAnimationFrame(_mvRaf);_mvRaf=0; if(_mvEv) moveInner(_mvEv);}
     activeSnap = null;
     hideSnapPreview();
     unlockCanvasPan();
@@ -6236,8 +6394,20 @@ document.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>addObject(b.dat
 if($('objLabel')) $('objLabel').oninput=()=>{const o=getObj(state.selected);if(o){o.label=$('objLabel').value; o.customText=$('objLabel').value; renderObjects()}};
 if($('objFontSize')) $('objFontSize').onchange=()=>{const o=getObj(state.selected);if(o){o.fontSize=Number($('objFontSize').value)||32; renderObjects()}};
 if($('objFontWeight')) $('objFontWeight').onchange=()=>{const o=getObj(state.selected);if(o){o.fontWeight=String($('objFontWeight').value||'700'); renderObjects()}};
-if($('objW')) $('objW').onchange=()=>{const o=getObj(state.selected);if(!o)return;const raw=String($('objW').value||'').trim();if(!raw)return;const n=+raw;if(!Number.isFinite(n))return;snapshot();o.wf=Math.max(.5,n);renderObjects();if(typeof saveActiveSheetState==='function')saveActiveSheetState()};
-if($('objH')) $('objH').onchange=()=>{const o=getObj(state.selected);if(!o)return;const raw=String($('objH').value||'').trim();if(!raw)return;const n=+raw;if(!Number.isFinite(n))return;snapshot();o.hf=Math.max(.5,n);renderObjects();if(typeof saveActiveSheetState==='function')saveActiveSheetState()};
+// 2026-10-13: typed W/D on a garage used to leave the apron at the old depth (overlapping
+// the slab) and at the old width. Keep the attached apron flush like the drag-resize does.
+function reattachApronAfterGarageEdit(o,oldW){
+  if(!o || o.role!=='garage') return;
+  const a=byRole('apron'); if(!a) return;
+  const gp=o.pxf||DRAW_PXF;
+  if(oldW!=null && Math.abs((a.wf||0)-oldW)<.05){ a.wf=o.wf; if(a.pxf) a.pxf=gp; }
+  const ap=a.pxf||gp;
+  a.x=o.x+(o.wf*gp-a.wf*ap)/2; a.y=o.y+o.hf*gp;
+  try{ const sd=byRole('serviceDoor'),pd=byRole('partyDoor'); if(sd){placeWallObject(sd,o);placeServicePadAtDoor();} if(pd){placeWallObject(pd,o);syncPartyReturns();} }catch(_){}
+  try{ syncVisualSetbacksToGarage(); }catch(_){}
+}
+if($('objW')) $('objW').onchange=()=>{const o=getObj(state.selected);if(!o)return;const raw=String($('objW').value||'').trim();if(!raw)return;const n=+raw;if(!Number.isFinite(n))return;snapshot();const _ow=o.wf;o.wf=Math.max(.5,n);delete o.visualWpx;reattachApronAfterGarageEdit(o,_ow);renderObjects();if(typeof saveActiveSheetState==='function')saveActiveSheetState()};
+if($('objH')) $('objH').onchange=()=>{const o=getObj(state.selected);if(!o)return;const raw=String($('objH').value||'').trim();if(!raw)return;const n=+raw;if(!Number.isFinite(n))return;snapshot();o.hf=Math.max(.5,n);delete o.visualHpx;reattachApronAfterGarageEdit(o,null);renderObjects();if(typeof saveActiveSheetState==='function')saveActiveSheetState()};
 if($('objAngle')){
   $('objAngle').oninput=()=>{
     const o=getObj(state.selected);
@@ -6281,7 +6451,8 @@ $('cutBtn').onclick=()=>{snapshot();const d=currentTemplate().draw;state.objects
 if($('deleteObj')) $('deleteObj').onclick=()=>{ if(typeof deleteCurrentlySelectedItem==='function') deleteCurrentlySelectedItem(); };
 if($('duplicateObj')) $('duplicateObj').onclick=()=>{ const b=$('duplicateSelectedBtn'); if(b) b.click(); };
 
-$('undoBtn').onclick=()=>{if(!state.history.length)return;state.future.push(JSON.stringify(state.objects));restore(state.history.pop())};
+$('undoBtn').onclick=undoDrawing;
+if($('redoBtn')) $('redoBtn').onclick=redoDrawing;
 
 $('fitBtn').onclick=fitWhole;$('drawViewBtn').onclick=focusDrawing;
 function rotateSelectedBy(delta){
@@ -6315,6 +6486,9 @@ $('printBtn').onclick=()=>{
   setPrintZoom();
   window.print();
 };
+window.addEventListener('beforeprint',()=>{
+  try{ state.selected=null; renderObjects(); }catch(_){}
+});
 
 function dataUrlBytes(dataUrl){
  const b64=dataUrl.split(',')[1],bin=atob(b64),a=new Uint8Array(bin.length);
@@ -7350,18 +7524,44 @@ function organizeLeftPanel(){
 
 function initializeApp(){
   organizeLeftPanel();
-  hydrateSheetStates();loadSharedInfo();defaultDrawingSalesmanFromSignedInUser();
-  loadMyEstimatesForDrawing();
-  $('estimateImportRefresh')?.addEventListener('click',()=>loadMyEstimatesForDrawing());
-  // Restore hydrated sheets. Only initialize empty sheets if nothing was stored.
-  const emptySheets=!['concrete','obstruction','siteplan'].some(m=>(state.sheetStates[m]?.objects||[]).length);
-  if(emptySheets){
+  const q=new URLSearchParams(location.search);
+  const wantBlank=q.get('fresh')==='1';
+  if(wantBlank){
     state.sheetStates={
       concrete:{objects:[],history:[],future:[]},
       obstruction:{objects:[],history:[],future:[]},
       siteplan:{objects:[],history:[],future:[]}
     };
+    try{
+      ['customerName','jobAddress','city','homePhone','workPhone','customerEmail'].forEach(id=>{
+        const el=$(id); if(el) el.value='';
+      });
+    }catch(e){}
+  } else {
+    hydrateSheetStates();
+    try{ loadDrawingDraft(!!q.get('jobId')||!!q.get('customer')); }catch(e){}
+    try{ loadSharedInfo(); }catch(e){}
   }
+  if(q.get('customer') && $('customerName')) $('customerName').value=q.get('customer');
+  if(q.get('address') && $('jobAddress')) $('jobAddress').value=q.get('address');
+  if(q.get('city') && $('city')) $('city').value=q.get('city');
+  if(q.get('phone') && $('homePhone')) $('homePhone').value=q.get('phone');
+  defaultDrawingSalesmanFromSignedInUser();
+  loadMyEstimatesForDrawing();
+  $('estimateImportRefresh')?.addEventListener('click',()=>loadMyEstimatesForDrawing());
+  $('saveDrawingBtn')?.addEventListener('click',()=>{
+    try{
+      saveActiveSheetState();
+      persistDrawingDraft();
+      saveSharedInfo();
+      alert('Drawing saved on this device'+(q.get('jobId')?' for this job.':'')+'. Refresh will keep it. New blank drawing starts clean.');
+    }catch(err){ alert('Could not save drawing: '+(err.message||err)); }
+  });
+  $('flushApronBtn')?.addEventListener('click',()=>{ try{ flushGarageApron(); }catch(e){ alert(e.message||e); } });
+  $('newDrawingBtn')?.addEventListener('click',()=>{
+    if(!confirm('Clear this drawing and start blank? Saved copies stay on this device.')) return;
+    window.location.href='Drawing.html?fresh=1&v='+Date.now();
+  });
   state.mode='concrete';
   $('mode').value='concrete';
   loadSheetState('concrete');
@@ -7566,6 +7766,7 @@ function toggleMobilePanel(){
   // Bottom bar mirrors
   const map=[
     ['mobileUndoBtn','undoBtn'],
+    ['mobileRedoBtn','redoBtn'],
     ['mobileDupBtn','duplicateSelectedBtn'],
     ['mobileLockBtn','lockSelectedBtn'],
     ['mobileHideBtn','hideSelectedBtn'],
@@ -7667,6 +7868,84 @@ function toggleMobilePanel(){
   });
 })();
 
+</script>
+
+<style>
+/* 2026-10-13 selected-object quick bar */
+#selQuickBar{position:absolute;left:50%;top:8px;transform:translateX(-50%);z-index:60;display:none;gap:6px;align-items:center;
+ background:rgba(255,255,255,.97);border:1px solid #94a3b8;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.18);padding:5px 6px;max-width:calc(100% - 12px);flex-wrap:nowrap;overflow-x:auto;justify-content:flex-start;-webkit-overflow-scrolling:touch}
+#selQuickBar.show{display:flex}
+#selQuickBar .sq-kind{flex:0 0 auto;font-size:12px;font-weight:800;color:#334155;white-space:nowrap}
+#selQuickBar input{width:92px;flex:0 0 auto;font-size:16px;padding:6px 8px;border:1px solid #64748b;border-radius:8px;text-align:center}
+#selQuickBar button{flex:0 0 auto;min-width:38px!important;width:auto!important;min-height:38px!important;height:38px!important;padding:0 8px!important;margin:0!important;font-size:15px!important;border-radius:8px;border:1px solid #cbd5e1;background:#f8fafc;cursor:pointer}
+#selQuickBar button.danger{background:#fee2e2;border-color:#fca5a5;color:#991b1b}
+@media print{#selQuickBar{display:none!important}}
+</style>
+<script>
+(function(){
+  const vp=document.getElementById('viewport'); if(!vp) return;
+  const bar=document.createElement('div'); bar.id='selQuickBar';
+  bar.innerHTML='<span class="sq-kind" id="sqKind"></span>'+
+    '<input id="sqSize" inputmode="decimal" autocomplete="off" placeholder="W x D" title="Type size in feet, e.g. 24 x 22, then Enter"/>'+
+    '<span class="sq-kind">ft</span>'+
+    '<button type="button" id="sqRotL" title="Rotate -15°">↺</button>'+
+    '<button type="button" id="sqRotR" title="Rotate +15°">↻</button>'+
+    '<button type="button" id="sqDup" title="Duplicate">Dup</button>'+
+    '<button type="button" id="sqUndo" title="Undo">↶</button>'+
+    '<button type="button" id="sqRedo" title="Redo">↷</button>'+
+    '<button type="button" class="danger" id="sqDel" title="Delete">🗑</button>'+
+    '<button type="button" id="sqClose" title="Deselect">✕</button>';
+  vp.appendChild(bar);
+  ['pointerdown','touchstart','wheel'].forEach(t=>bar.addEventListener(t,e=>e.stopPropagation(),{passive:true}));
+  const click=id=>{const b=document.getElementById(id); if(b) b.click();};
+  bar.querySelector('#sqRotL').onclick=()=>click('rotateLeftBtn');
+  bar.querySelector('#sqRotR').onclick=()=>click('rotateRightBtn');
+  bar.querySelector('#sqDup').onclick=()=>click('duplicateSelectedBtn');
+  bar.querySelector('#sqDel').onclick=()=>click('deleteSelectedBtn');
+  bar.querySelector('#sqUndo').onclick=()=>undoDrawing();
+  bar.querySelector('#sqRedo').onclick=()=>redoDrawing();
+  bar.querySelector('#sqClose').onclick=()=>{ state.selected=null; try{updateInspector()}catch(_){} renderObjects(); };
+  const size=bar.querySelector('#sqSize');
+  const apply=()=>{
+    const o=getObj(state.selected); if(!o) return;
+    const t=String(size.value||'').trim(); if(!t) return;
+    let [w,h]=parseDims(t);
+    if(!(w>0&&h>0)){ const n=parseFloat(t); if(n>0){w=n;h=o.kind==='dimension'?o.hf:o.hf;} else return; }
+    // Route through the existing panel fields so garage/apron/doors stay in sync
+    const W=document.getElementById('objW'), H=document.getElementById('objH');
+    if(o.wf===w && (o.kind==='dimension'||o.hf===h)) return;
+    snapshot(); // one undo step for the whole W x D edit
+    const realSnap=window.snapshot; window.snapshot=function(){};
+    try{
+      if(W && o.wf!==w){ W.value=w; W.onchange&&W.onchange(); }
+      const o2=getObj(state.selected);
+      if(H && o2 && o2.kind!=='dimension' && o2.hf!==h){ H.value=h; H.onchange&&H.onchange(); }
+    } finally { window.snapshot=realSnap; }
+    { const g=getObj(state.selected); if(g && g.role==='garage' && $('cSizeCombo')) updateCombo('cSizeCombo',g.wf,g.hf); }
+    size.blur();
+  };
+  size.addEventListener('keydown',e=>{ if(e.key==='Enter'){e.preventDefault();apply();} });
+  size.addEventListener('change',apply);
+  function sync(){
+    const o=(typeof getObj==='function')?getObj(state.selected):null;
+    bar.classList.toggle('show',!!o);
+    if(!o) return;
+    document.getElementById('sqKind').textContent=(typeof shapeKindName==='function'?shapeKindName(o):'Selected');
+    if(document.activeElement!==size){
+      const fmt=v=>Number.isFinite(+v)?String(+(+v).toFixed(2)):'';
+      size.value=o.kind==='dimension'?fmt(o.wf):(fmt(o.wf)+' x '+fmt(o.hf));
+    }
+    const locked=!!o.locked;
+    ['sqRotL','sqRotR','sqDel'].forEach(id=>bar.querySelector('#'+id).disabled=locked);
+    size.disabled=locked;
+  }
+  const orig=window.updateInspector;
+  if(typeof orig==='function'){
+    window.updateInspector=function(){ const r=orig.apply(this,arguments); try{sync()}catch(_){} return r; };
+    try{ updateInspector=window.updateInspector; }catch(_){}
+  }
+  sync();
+})();
 </script>
 </body>
 </html>

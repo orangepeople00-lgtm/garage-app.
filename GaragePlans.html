@@ -35,11 +35,20 @@ button{border:0;border-radius:7px;padding:8px 10px;font-weight:800;cursor:pointe
 .toolbar h2{margin:0;font-size:18px;color:#0b1f3a}
 .sheet-wrap{display:flex;flex-direction:column;gap:18px;align-items:stretch;width:100%}
 .sheet-fit{width:100%;overflow:hidden;min-height:240px;background:#fff}
-.sheet{width:17in;min-height:11in;background:#fff;color:#111;border:1.6px solid #111;box-shadow:0 8px 24px #0002;position:relative;padding:14px 16px 88px;page-break-after:always;transform-origin:top left}
-.sheet.letter{width:11in;min-height:8.5in}
+.sheet{width:17in;min-height:11in;background:#fff;color:#111;border:1.6px solid #111;box-shadow:0 8px 24px #0002;position:relative;padding:14px 16px 100px;page-break-after:always;transform-origin:top left}
+.sheet.letter{width:17in;min-height:11in}
+.cover-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:12px;align-items:start}
+.codedata{border:1.5px solid #111;padding:8px 10px;font-size:12px}
+.codedata h3{margin:0 0 6px;font-size:13px}
+.codedata table{width:100%;border-collapse:collapse}
+.codedata td{border:1px solid #111;padding:3px 5px;vertical-align:top}
+.codedata td:first-child{font-weight:700;width:38%}
+.sheetindex td{border:1px solid #111;padding:3px 6px;font-size:12px}
+.sheetindex{border-collapse:collapse;width:100%}
+.gp-err{background:#fee2e2;color:#7f1d1d;border:1px solid #fca5a5;border-radius:8px;padding:8px 10px;font-size:12px;margin:6px 0}
 .sheet svg{font-family:Arial,Helvetica,sans-serif}
 .sheet svg text{fill:#111}
-.tblock{position:absolute;left:16px;right:16px;bottom:8px;height:72px;border:1.5px solid #111;display:grid;grid-template-columns:160px 1.2fr 230px 140px;font-size:12px;line-height:1.25;background:#fff}
+.tblock{position:absolute;left:16px;right:16px;bottom:8px;height:86px;overflow:hidden;border:1.5px solid #111;display:grid;grid-template-columns:160px 1.2fr 230px 140px;font-size:12px;line-height:1.25;background:#fff}
 .tblock>div{border-right:1px solid #111;padding:6px 8px}
 .tblock>div:last-child{border-right:0}
 .logo{font-weight:900;line-height:1.2;font-size:13px}
@@ -83,7 +92,7 @@ button{border:0;border-radius:7px;padding:8px 10px;font-weight:800;cursor:pointe
   .ov.sel{outline:none}
 }
 @media print{
-  @page{size:11in 17in landscape;margin:.35in}
+  @page{size:17in 11in;margin:.35in}
   html,body{height:auto!important;background:#fff!important}
   body{display:block!important}
   .sidebar,.toolbar,.statusbar,.loadbar,.codes,.btns,.no-print{display:none!important}
@@ -91,13 +100,17 @@ button{border:0;border-radius:7px;padding:8px 10px;font-weight:800;cursor:pointe
   .sheet-wrap{gap:0}
   .sheet-fit{overflow:visible!important;height:auto!important;width:auto!important}
   .sheet{box-shadow:none;margin:0 auto;page-break-after:always;transform:none!important;width:17in!important}
-  .sheet.letter{width:11in!important;min-height:8.5in!important}
+  .sheet.letter{width:17in!important;min-height:11in!important}
+  .sheet{zoom:.92}
+  .main,.sheet-wrap,.sheet-fit,#pages{background:#fff!important}
+  body.print-letter .sheet{zoom:.6}
 }
 @media(max-width:900px){
   body{flex-direction:column}
   .sidebar{width:100%;flex:none;max-height:46vh}
 }
 </style>
+<style id="pageSizeStyle">@media print{@page{size:17in 11in;margin:.35in}}</style>
 </head>
 <body>
 <aside class="sidebar">
@@ -145,6 +158,10 @@ button{border:0;border-radius:7px;padding:8px 10px;font-weight:800;cursor:pointe
   <div class="row2">
     <div><label>PIN / tax ID</label><input id="pin"></div>
     <div><label>Date</label><input id="planDate" type="date"></div>
+  </div>
+  <div class="row2">
+    <div><label>Revision #</label><input id="planRev" placeholder="0"></div>
+    <div></div>
   </div>
   <div class="row2">
     <div><label>Drawn by</label><select id="rep">
@@ -245,6 +262,11 @@ button{border:0;border-radius:7px;padding:8px 10px;font-weight:800;cursor:pointe
   <div class="row2"><div><label>House</label><input id="setHouse"></div><div><label>Side</label><input id="setSide"></div></div>
   <div class="row2"><div><label>Rear (alley)</label><input id="setRearA"></div><div><label>Rear (no alley)</label><input id="setRearN"></div></div>
   <div class="row2"><div><label>Corner</label><input id="setCorner"></div><div><label>Front</label><input id="setFront"></div></div>
+  <label>Site plan (actual distances, ft)</label>
+  <div class="row2"><div><label>Lot width</label><input id="lotW" type="number" min="0" placeholder="30"></div><div><label>Lot depth</label><input id="lotD" type="number" min="0" placeholder="125"></div></div>
+  <div class="row2"><div><label>Garage to side lot line</label><input id="distSide" type="number" min="0" step="0.5" placeholder="3"></div><div><label>Which side</label><select id="sideRef"><option value="left">Left</option><option value="right">Right</option></select></div></div>
+  <div class="row2"><div><label>Garage to rear lot line</label><input id="distRear" type="number" min="0" step="0.5" placeholder="3"></div><div><label>Garage to house</label><input id="distHouse" type="number" min="0" step="0.5" placeholder="10"></div></div>
+  <div class="row2"><div><label>Alley at rear</label><select id="alley"><option value="yes">Yes</option><option value="no">No</option></select></div><div></div></div>
   <label>Foundation</label>
   <div class="row2">
     <div><label>Footing</label><input id="footing" placeholder='12" x 12"'></div>
@@ -670,15 +692,32 @@ function openVillageSite(){
   const q=encodeURIComponent((name||'village')+' Illinois village building department garage permit');
   window.open(known||('https://www.google.com/search?q='+q),'_blank','noopener');
 }
-function sheetClass(){return ($('sheetSize')&&$('sheetSize').value==='letter')?'sheet letter':'sheet'}
+function isLetter(){return !!($('sheetSize')&&$('sheetSize').value==='letter');}
+function sheetClass(){return 'sheet'}
+function setPrintPageSize(){
+  const st=$('pageSizeStyle'); const L=isLetter();
+  if(st) st.textContent=L?'@media print{@page{size:11in 8.5in;margin:.3in}}':'@media print{@page{size:17in 11in;margin:.35in}}';
+  document.body.classList.toggle('print-letter',L);
+}
+window.addEventListener('beforeprint',()=>{try{setPrintPageSize()}catch(e){}});
+// Local (Chicago) date, never UTC
+function localISODate(d){d=d||new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+// Graphic scale bar: pxPerFt = drawing units per foot
+function scaleBar(x,y,pxPerFt){
+  const k=Number(pxPerFt)||1; let step=[1,2,4,5,10,20].find(v=>v*k>=22)||20; const n=4;
+  let g='<g class="gscale">';
+  for(let i=0;i<n;i++) g+=`<rect x="${x+i*step*k}" y="${y}" width="${step*k}" height="5" fill="${i%2?'#fff':'#111'}" stroke="#111" stroke-width=".8"/>`;
+  for(let i=0;i<=n;i++) g+=`<text x="${x+i*step*k}" y="${y+15}" text-anchor="middle" font-size="8">${i*step}'</text>`;
+  return g+`<text x="${x}" y="${y-4}" font-size="8" font-weight="700">GRAPHIC SCALE (FEET)</text></g>`;
+}
 function tblock(name, num, of){
   const village=cityName()?( (code()&&code().kind)||'VILLAGE')+' of '+cityName().toUpperCase() : 'VILLAGE';
   return `<div class="tblock">
-    <div class="logo">The Garage Guys<small>ABSOLUTE GARAGE BUILDERS</small></div>
+    <div class="logo">ABSOLUTE GARAGE BUILDERS<small>ROOFING LIC. 104.016731 · 105.006803</small></div>
     <div><div class="jobtitle">DETACHED GARAGE - ${esc(roofLabel())} ROOF</div>
-      ${esc(val('address')||'JOB ADDRESS')}, ${esc(village)} - ${esc(customerLabel())}</div>
+      ${esc(val('address')||'JOB ADDRESS')}, ${esc(village)}<br>OWNER: ${esc(customerLabel())} · PIN: ${esc(val('pin')||'—')}</div>
     <div>CONTRACTOR<br>ABSOLUTE GARAGE BUILDERS<br>3050 W. IRVING PARK RD.<br>CHICAGO, IL 60618<br>(773) 583-8800 · (847) 759-8877</div>
-    <div><b>${esc(name)}</b><br>SHEET ${num} OF ${of}<br>${esc(val('planDate')||'')}</div>
+    <div><b>${esc(name)}</b><br><span class="sheetno">SHEET ${num} OF ${of}</span><br>${esc(val('planDate')||'')} · REV ${esc(val('planRev')||'0')}<br><span style="font-size:10px">DRAWN: ${esc(val('rep')||'')}</span></div>
   </div>`;
 }
 function noteLines(x,y,lines, size){
@@ -707,11 +746,11 @@ function jobTitleLine(){
 }
 function sheetHead(title, sheetId, vbW){
   const w=vbW||800;
-  return `<text x="16" y="22" font-size="15" font-weight="800" text-decoration="underline">${esc(title)}</text>
-    <text x="${w/2}" y="22" text-anchor="middle" font-size="13" font-weight="800">${esc(jobTitleLine())}</text>
+  return `<text x="16" y="18" font-size="14" font-weight="800" text-decoration="underline">${esc(title)}</text>
+    <text x="16" y="32" font-size="10" font-weight="700">${esc(jobTitleLine())}</text>
     <text x="${w-16}" y="16" text-anchor="end" font-size="9">SHEET: ${esc(sheetId||'A-1')}</text>
-    <text x="${w-16}" y="28" text-anchor="end" font-size="9">SCALE: 1/4" = 1'-0"</text>
-    <line x1="16" y1="36" x2="${w-16}" y2="36" stroke="#111" stroke-width="1.4"/>`;
+    <text x="${w-16}" y="28" text-anchor="end" font-size="9">SCALE: SEE GRAPHIC SCALE</text>
+    <line x1="16" y1="37" x2="${w-16}" y2="37" stroke="#111" stroke-width="1.4"/>`;
 }
 function carCount(){
   const W=Number(val('width'))||22;
@@ -723,22 +762,37 @@ function conformCodesHTML(){
     'Oak Park':'2021','Riverside':'2006','Des Plaines':'2015','Mundelein':'2018',
     'Evergreen Park':'2009','Addison':'2018','Wheaton':'2024','Schaumburg':'2018'
   }[city]||'2018';
+  const basis=codeBasisLines();
+  const hasJobElec=!!val('electricNotes');
   return `<div class="elecbox notes-col">
     <h3>ALL CONSTRUCTION TO CONFORM TO:</h3>
-    <ul>
-      <li>${year} INTERNATIONAL RESIDENTIAL CODE WITH ${esc((city||'VILLAGE').toUpperCase())} AMENDMENTS</li>
-      <li>${year} INTERNATIONAL BUILDING CODE WITH ${esc((city||'VILLAGE').toUpperCase())} AMENDMENTS</li>
-      <li>NATIONAL ELECTRICAL CODE (NFPA 70) WITH ${esc((city||'VILLAGE').toUpperCase())} AMENDMENTS</li>
-    </ul>
-    <h3>ELECTRICAL DETAILS</h3>
+    <ul>${basis.map(t=>'<li>'+esc(t)+'</li>').join('')}</ul>
+    ${hasJobElec?'':`<h3>ELECTRICAL DETAILS</h3>
     <ul>
       <li>CIRCUITS: (1) 20 AMP #12 GA, (1) 15 AMP #14 GA</li>
       <li>CONTAINED IN 3/4" RIGID STEEL CONDUIT</li>
       <li>BURIAL DEPTH: 8 INCHES${/DES PLAINES/i.test(city)?' , 18" IF UNDER DRIVEWAY':''}</li>
       <li>WIRING: SEPARATE CIRCUITS TO SERVICE PANEL</li>
       <li>PROVIDE DISCONNECT SWITCH</li>
-    </ul>
+    </ul>`}
   </div>`;
+}
+function codeYear(){
+  return ({'Oak Park':'2021','Riverside':'2006','Des Plaines':'2015','Mundelein':'2018',
+    'Evergreen Park':'2009','Addison':'2018','Wheaton':'2024','Schaumburg':'2018'})[cityName()]||'2018';
+}
+function isChicago(){ return /^chicago$/i.test(String(cityName()||'').trim()); }
+function codeBasisLines(){
+  const city=(cityName()||'VILLAGE').toUpperCase();
+  if(isChicago()) return [
+    'CHICAGO BUILDING CODE — MUNICIPAL CODE TITLE 14B (BASED ON 2018 IBC)',
+    'CHICAGO ELECTRICAL CODE — MUNICIPAL CODE TITLE 14E',
+    'CHICAGO ZONING ORDINANCE — TITLE 17 (LOT LINES / ACCESSORY BUILDINGS)',
+    'CHICAGO CONSTRUCTION CODES ADMIN. PROVISIONS — TITLE 14A'];
+  const y=codeYear();
+  return [y+' INTERNATIONAL RESIDENTIAL CODE AS ADOPTED & AMENDED BY '+city,
+    'NATIONAL ELECTRICAL CODE (NFPA 70) AS ADOPTED BY '+city,
+    city+' ZONING ORDINANCE (SETBACKS / ACCESSORY STRUCTURES)'];
 }
 function doorReturns(){
   const wall=val('ohWall')||'front';
@@ -1016,7 +1070,7 @@ function applyJobRules(){
   return {r,brace,fire};
 }
 function needsBraceDetail(){ return computeBraceRequired(); }
-function sheetTotal(){ return 7+(needsBraceDetail()?1:0)+(computeFirewallRequired()?1:0); }
+function sheetTotal(){ return 9+(needsBraceDetail()?1:0)+(computeFirewallRequired()?1:0); }
 function doorScheduleHTML(){
   const rows=[];
   rows.push(['Overhead door', (val('ohW')||'16')+' x '+(val('ohH')||'7'), 'Raised panel steel', (val('ohWall')||'front')+' wall']);
@@ -1345,7 +1399,7 @@ function floorPlanSvg(){
   </g></g>`;
   return `<svg viewBox="0 0 720 760" width="100%" style="max-height:9.4in">
     <defs><pattern id="hatchRet" width="6" height="6" patternUnits="userSpaceOnUse"><path d="M0 6 L6 0" stroke="#444" stroke-width=".8"/></pattern></defs>
-    ${fpReduced?sheetHead('PROPOSED FLOOR PLAN','A-1',720).replace(`SCALE: 1/4" = 1'-0"`,'SCALE: NTS (REDUCED)'):sheetHead('PROPOSED FLOOR PLAN','A-1',720)}
+    ${fpReduced?sheetHead('PROPOSED FLOOR PLAN','A-1',720):sheetHead('PROPOSED FLOOR PLAN','A-1',720)}
     <rect x="${ox}" y="${oy}" width="${gw}" height="${gd}" fill="#fff" stroke="#111" stroke-width="2.4"/>
     <rect x="${ox+7}" y="${oy+7}" width="${gw-14}" height="${gd-14}" fill="none" stroke="#111" stroke-width="1.1"/>
     ${doorGap}${doorLab}${retHatch}
@@ -1374,7 +1428,8 @@ function floorPlanSvg(){
     <rect x="16" y="708" width="230" height="40" fill="none" stroke="#111"/>
     <text x="22" y="722" font-size="8">BUILDING: DETACHED GARAGE</text>
     <text x="22" y="734" font-size="8">VIEW: PROPOSED FLOOR PLAN</text>
-    <text x="22" y="746" font-size="8">SCALE: ${fpReduced?'NTS (REDUCED TO FIT SHEET)':'1/4" = 1\'-0"'}</text>
+    <text x="22" y="746" font-size="8">SCALE: SEE GRAPHIC SCALE</text>
+    ${scaleBar(270,724,sx)}
     <rect x="504" y="708" width="200" height="40" fill="none" stroke="#111"/>
     <text x="604" y="724" text-anchor="middle" font-size="9" font-weight="800">PERMIT DRAWING</text>
     <text x="604" y="738" text-anchor="middle" font-size="9" font-weight="800">NOT FOR CONSTRUCTION</text>
@@ -1566,11 +1621,12 @@ function roofFor(view,x,y,w){
       <rect x="${x-22}" y="${y-6}" width="${w+44}" height="7" fill="#fff" stroke="#111"/>
       ${vent}`;
   }
-  const peakR=y-48;
-  return `<polygon points="${x-18},${y} ${x+w/2},${peakR} ${x+w+18},${y}" fill="#fff" stroke="#111" stroke-width="1.7"/>
-    <line x1="${x-18}" y1="${y}" x2="${x+w/2}" y2="${peakR}" stroke="#111" stroke-width="1.5"/>
-    <line x1="${x+w+18}" y1="${y}" x2="${x+w/2}" y2="${peakR}" stroke="#111" stroke-width="1.5"/>
-    <rect x="${x-18}" y="${y-5}" width="${w+36}" height="6" fill="#fff" stroke="#111"/>`;
+  // Eave (run) face: roof plane seen as a flat band — straight eave, horizontal ridge, NO peak.
+  const ridgeY=y-60;
+  return `<rect x="${x-18}" y="${ridgeY}" width="${w+36}" height="${y-ridgeY}" fill="#d8d8d8" stroke="#111" stroke-width="1.7"/>
+    <g>${shingleFill(x-18,ridgeY+4,w+36,y-ridgeY-8)}</g>
+    <line x1="${x-20}" y1="${ridgeY}" x2="${x+w+20}" y2="${ridgeY}" stroke="#111" stroke-width="3"/>
+    <rect x="${x-20}" y="${y-5}" width="${w+40}" height="6" fill="#fff" stroke="#111"/>`;
 }
 function vinylPattern(id,x,y,w,h, openings){
   const vertical=(val('sidingDir')||'horizontal')==='vertical';
@@ -1742,6 +1798,7 @@ function elevLarge(view, title){
   const patE=patioDim();
   let patioCaption='';
   let patioLayer='';
+  let patioSideFace=null;
   const patioOnFace=patE.on && patE.wall===view;
   if(patioOnFace){
     const postW=11, postTop=y-6, slabY=y+wh;
@@ -1753,7 +1810,7 @@ function elevLarge(view, title){
     });
     patioLayer+=`<rect x="${x-8}" y="${slabY}" width="${ww+16}" height="14" fill="#cfcfcf" stroke="#111"/>
       <rect x="${x-10}" y="${slabY+14}" width="${ww+20}" height="22" fill="none" stroke="#111" stroke-dasharray="6 4"/>
-      <text x="${x+ww/2}" y="${slabY+48}" text-anchor="middle" font-size="11" font-weight="700">ROOFED PATIO ${ftLabel(patE.d)}  ·  (${patE.posts}) 4x4 POSTS  ·  CONC. SLAB</text>`;
+      <text x="${x+ww/2}" y="${slabY+62}" text-anchor="middle" font-size="11" font-weight="700">ROOFED PATIO ${ftLabel(patE.d)}  ·  (${patE.posts}) 4x4 POSTS  ·  CONC. SLAB</text>`;
     patioCaption='';
   } else if(patE.on){
     const side=(function(){
@@ -1773,8 +1830,9 @@ function elevLarge(view, title){
       });
       patioLayer+=`<rect x="${px}" y="${y+wh}" width="${pd}" height="14" fill="#cfcfcf" stroke="#111"/>
         <line x1="${px}" y1="${y-6}" x2="${px+pd}" y2="${y-6}" stroke="#111" stroke-width="2"/>
-        <text x="${px+pd/2}" y="${y+wh+36}" text-anchor="middle" font-size="10" font-weight="700">${patE.d}' PATIO</text>`;
+        <text x="${px+pd/2}" y="${y+wh+50}" text-anchor="middle" font-size="10" font-weight="700">${patE.d}' PATIO</text>`;
     }
+    patioSideFace=side;
   }
   const retBits=[];
   if(val('ohWall')===view){ const r=doorReturns(); retBits.push('OH '+r.left+"' L / "+r.right+"' R"); }
@@ -1829,12 +1887,15 @@ function elevLarge(view, title){
   const L=28;
   const notes=[];
   if(!patioOnFace){
-  notes.push(`<text x="${x+ww/2}" y="${y-28}" text-anchor="middle" font-size="9" font-weight="700">${vinylNote}</text>
-    ${vinylExp?`<text x="${x+ww/2}" y="${y-16}" text-anchor="middle" font-size="9">${vinylExp}</text>`:''}`);
+  const vnx=patioSideFace==='right'?L:x+ww+54, vny=patioSideFace==='right'?y+40:y+wh/2+20;
+  notes.push(`<text x="${vnx}" y="${vny}" font-size="9" font-weight="700">${vinylNote}</text>
+    ${vinylExp?`<text x="${vnx}" y="${vny+12}" font-size="9">${vinylExp}</text>`:''}`);
   if(showTies){
-    notes.push(`<text x="${L}" y="${y+wh+22}" font-size="9" font-weight="700">HURRICANE TIES</text>
-      <text x="${L}" y="${y+wh+34}" font-size="9">AT RAFTER-TO-WALL</text>
-      <line x1="${L+90}" y1="${y+wh+20}" x2="${x-2}" y2="${y+8}" stroke="#111"/>
+    const tR=patioSideFace==='left';
+    const tx=tR?x+ww+60:L, ty=tR?y+196:y+wh-24;
+    notes.push(`<text x="${tx}" y="${ty}" font-size="9" font-weight="700">HURRICANE TIES</text>
+      <text x="${tx}" y="${ty+12}" font-size="9">AT RAFTER-TO-WALL</text>
+      <line x1="${tR?tx-2:tx+60}" y1="${ty-10}" x2="${tR?x+ww+2:x-2}" y2="${y+8}" stroke="#111"/>
       <polygon points="${x-2},${y+2} ${x+10},${y-7} ${x+12},${y-3} ${x},${y+6}" fill="#fff" stroke="#111"/>
       <polygon points="${x+ww+2},${y+2} ${x+ww-10},${y-7} ${x+ww-12},${y-3} ${x+ww},${y+6}" fill="#fff" stroke="#111"/>`);
   }
@@ -1865,15 +1926,20 @@ function elevLarge(view, title){
   }
   if(val('partyWall')===view){
     const ps=val('partySize')||'6x7';
-    notes.push(`<text x="${x+8}" y="${y+wh+slabH+68}" font-size="10" font-weight="700">${esc(ps)} PARTY DOOR</text>`);
+    notes.push(`<text x="${x+8}" y="${y+wh+slabH+82}" font-size="10" font-weight="700">${esc(ps)} PARTY DOOR</text>`);
   }
   if(val('svcWall')===view){
     const swi=svcSwingInfo();
-    notes.push(`<text x="${x+ww-4}" y="${y+wh+slabH+84}" text-anchor="end" font-size="10" font-weight="700">36" x 80" SERVICE DOOR (${esc((swi.dir||'IN').toUpperCase()==='OUT'?'OUT':'IN')})</text>`);
+    notes.push(`<text x="${x+ww-4}" y="${y+wh+slabH+98}" text-anchor="end" font-size="10" font-weight="700">36" x 80" SERVICE DOOR (${esc((swi.dir||'IN').toUpperCase()==='OUT'?'OUT':'IN')})</text>`);
   }
   if(apronOn){
-    notes.push(`<text x="${L}" y="${y+wh+slabH+8}" font-size="10" font-weight="700">FULL-WIDTH CONCRETE APRON</text>
+    if(patioSideFace==='left'){
+      notes.push(`<text x="${x+ww+24}" y="${y+wh+slabH+22}" font-size="10" font-weight="700">FULL-WIDTH CONCRETE APRON</text>
+      <line x1="${x+ww+22}" y1="${y+wh+slabH+18}" x2="${x+ww+8}" y2="${y+wh+8}" stroke="#111"/>`);
+    } else {
+      notes.push(`<text x="${L}" y="${y+wh+slabH+8}" font-size="10" font-weight="700">FULL-WIDTH CONCRETE APRON</text>
       <line x1="${L+168}" y1="${y+wh+slabH+4}" x2="${x-8}" y2="${y+wh+8}" stroke="#111"/>`);
+    }
   }
   const plateH=ftLabel(wall);
   const overall=ftLabel(tot);
@@ -1894,11 +1960,11 @@ function elevLarge(view, title){
     <text x="${x+ww+54}" y="${y+wh/2-56}" font-size="11" font-weight="700">${overall}</text>`;
   return `<div>
     <svg viewBox="0 0 900 640" width="100%" style="max-height:9.4in">
-      <text x="16" y="24" font-size="18" font-weight="800" text-decoration="underline">${esc(viewName)}</text>
-      <text x="450" y="24" text-anchor="middle" font-size="15" font-weight="800">${esc(jobTitle)}</text>
+      <text x="16" y="20" font-size="17" font-weight="800" text-decoration="underline">${esc(viewName)}</text>
+      <text x="16" y="36" font-size="12" font-weight="700">${esc(jobTitle)}</text>
       <text x="884" y="16" text-anchor="end" font-size="10">SHEET: ${view==='front'?'A-2':view==='back'?'A-3':view==='left'?'A-4':'A-5'}</text>
-      <text x="884" y="30" text-anchor="end" font-size="10">SCALE: 1/4" = 1'-0"</text>
-      <line x1="16" y1="40" x2="884" y2="40" stroke="#111" stroke-width="1.6"/>
+      <text x="884" y="30" text-anchor="end" font-size="10">SCALE: SEE GRAPHIC SCALE</text>
+      <line x1="16" y1="42" x2="884" y2="42" stroke="#111" stroke-width="1.6"/>
       ${roofFor(view,x,y,ww)}
       ${gableSid}
       ${vinyl}
@@ -1914,12 +1980,13 @@ function elevLarge(view, title){
       <line x1="${x}" y1="${y+wh+slabH+14}" x2="${x}" y2="${y+wh+slabH+22}" stroke="#111"/>
       <line x1="${x+ww}" y1="${y+wh+slabH+14}" x2="${x+ww}" y2="${y+wh+slabH+22}" stroke="#111"/>
       <text x="${x+ww/2}" y="${y+wh+slabH+32}" text-anchor="middle" font-size="12" font-weight="700">${ftLabel(span)}</text>
-      ${retBits.length?`<text class="edit-svg" x="${x+ww/2}" y="${y+wh+slabH+52}" text-anchor="middle" font-size="8">${esc(retBits.join('   ·   '))}</text>`:''}
+      ${retBits.length?`<text class="edit-svg" x="${x+ww/2}" y="${y+wh+slabH+66}" text-anchor="middle" font-size="8">${esc(retBits.join('   ·   '))}</text>`:''}
       ${patioCaption?`<text x="${x+ww/2}" y="${y+wh+slabH+68}" text-anchor="middle" font-size="9" font-weight="700">${esc(patioCaption)}</text>`:''}
       <rect x="16" y="584" width="240" height="46" fill="none" stroke="#111"/>
       <text x="22" y="600" font-size="10">BUILDING: DETACHED GARAGE</text>
       <text x="22" y="614" font-size="10">VIEW: ${esc(viewName)}</text>
-      <text x="22" y="626" font-size="10">SCALE: 1/4" = 1'-0"</text>
+      <text x="22" y="626" font-size="10">SCALE: SEE GRAPHIC SCALE</text>
+      ${scaleBar(420,600,ww/Math.max(span,1))}
       <rect x="656" y="584" width="228" height="46" fill="none" stroke="#111"/>
       <text x="770" y="604" text-anchor="middle" font-size="11" font-weight="800">PERMIT DRAWING</text>
       <text x="770" y="620" text-anchor="middle" font-size="11" font-weight="800">NOT FOR CONSTRUCTION</text>
@@ -2022,7 +2089,7 @@ function pageFoundation(){
 function roofPlanSvg(){
   const W=Number(val('width'))||20, D=Number(val('depth'))||20;
   const t=val('roof');
-  const sx=8, ox=70, oy=70, gw=W*sx, gd=D*sx;
+  const sx=Math.min(8, 340/Math.max(W,D,1)), ox=70, oy=70, gw=W*sx, gd=D*sx;
   let hips='';
   if(t==='hip'){
     hips=`<line x1="${ox}" y1="${oy}" x2="${ox+gw/2}" y2="${oy+gd/2}" stroke="#111"/>
@@ -2046,8 +2113,10 @@ function roofPlanSvg(){
     patio=`<rect x="${px}" y="${py}" width="${plw}" height="${plh}" fill="#f4f4f4" stroke="#111" stroke-dasharray="5 3"/>`;
   }
   const legendY=oy+gd+28;
-  return `<svg viewBox="0 0 520 520" width="100%" style="max-height:7.2in">
+  const vbH=Math.max(520, legendY+70);
+  return `<svg viewBox="0 0 520 ${vbH}" width="100%" style="max-height:7.2in">
     ${sheetHead('PROPOSED ROOF PLAN','A-4',520)}
+    ${scaleBar(300,legendY+6,sx)}
     <rect x="${ox}" y="${oy}" width="${gw}" height="${gd}" fill="#fff" stroke="#111" stroke-width="1.8"/>
     <rect x="${ox-8}" y="${oy-8}" width="${gw+16}" height="${gd+16}" fill="none" stroke="#888" stroke-dasharray="4 3"/>
     ${hips}
@@ -2056,7 +2125,7 @@ function roofPlanSvg(){
     <text x="16" y="${legendY}" font-size="11" font-weight="700">${esc((t==='hip'?'HIP':t==='revgable'?'REV. GABLE':'GABLE')+' ROOF')}</text>
     <text x="16" y="${legendY+16}" font-size="11">RIDGE / HIP as shown · ${esc(rafterCallout())}</text>
     <text x="16" y="${legendY+32}" font-size="11">PITCH ${pitchNum()}/12</text>
-    ${pat.on?`<text x="16" y="${legendY+48}" font-size="11">ROOFED PATIO ${pat.w}' x ${pat.d}' · (${pat.posts}) ${pat.post} POSTS · ${pat.wall.toUpperCase()} WALL</text>`:''}
+    ${pat.on?`<text x="16" y="${legendY+48}" font-size="11">ROOFED PATIO ${pat.w}' x ${pat.d}' · (${pat.posts}) ${pat.post} POSTS</text><text x="16" y="${legendY+62}" font-size="11">${pat.wall.toUpperCase()} WALL</text>`:''}
   </svg>`;
 }
 function pageSectionRoof(){
@@ -2248,8 +2317,186 @@ function fitSheetsToPanel(){
     wrap.style.height=Math.max(220, Math.round(h*scale))+'px';
   });
 }
+function ohWallSpan(){
+  const w=val('ohWall')||'front';
+  return (w==='front'||w==='back')?Number(val('width')):Number(val('depth'));
+}
+function validatePlanInputs(){
+  const e=[];
+  const W=Number(val('width')), D=Number(val('depth')), H=Number(val('wallH'));
+  if(!(W>0)) e.push('Garage width must be a number greater than 0.');
+  if(!(D>0)) e.push('Garage depth must be a number greater than 0.');
+  if(W>0&&W<8) e.push('Garage width under 8 ft is not a garage — check the width.');
+  if(D>0&&D<8) e.push('Garage depth under 8 ft is not a garage — check the depth.');
+  if(W>80||D>80) e.push('Width/depth over 80 ft — check the size.');
+  if(val('wallH')!=='' && !(H>0)) e.push('Wall height must be greater than 0.');
+  const ohW=Number(val('ohW')), ohH=Number(val('ohH'));
+  if(val('ohW')!=='' && !(ohW>0)) e.push('Overhead door width must be greater than 0.');
+  if(val('ohH')!=='' && !(ohH>0)) e.push('Overhead door height must be greater than 0.');
+  const span=ohWallSpan();
+  if(span>0 && ohW>0 && ohW+2>span) e.push('A '+ohW+"' overhead door does not fit on the "+(val('ohWall')||'front')+" wall ("+span+"' wide). Leave at least 1' each side — max door "+Math.max(0,span-2)+"'.");
+  ['distSide','distRear','distHouse','lotW','lotD'].forEach(k=>{ if(val(k)!=='' && Number(val(k))<0) e.push('Site plan distances cannot be negative.'); });
+  return [...new Set(e)];
+}
+function showPlanErrors(errs){
+  let box=$('planErrBox');
+  if(!box){ box=document.createElement('div'); box.id='planErrBox'; box.className='gp-err no-print'; const pg=$('pages'); if(pg&&pg.parentNode) pg.parentNode.insertBefore(box,pg); }
+  box.style.display=errs.length?'block':'none';
+  box.innerHTML=errs.length?'<b>Fix before generating:</b><br>'+errs.map(esc).join('<br>'):'';
+}
+function siteNums(){
+  const W=Number(val('width'))||20, D=Number(val('depth'))||20;
+  const alley=val('alley')!=='no';
+  const minSide=parseFt(val('setSide')), minRear=parseFt(alley?val('setRearA'):val('setRearN'));
+  const side=val('distSide')!==''?Number(val('distSide')):(minSide??3);
+  const rear=val('distRear')!==''?Number(val('distRear')):(minRear??3);
+  const house=val('distHouse')!==''?Number(val('distHouse')):null;
+  const lotW=Number(val('lotW'))||Math.max(30, W+side+3);
+  const lotD=Number(val('lotD'))||125;
+  return {W,D,alley,side,rear,house,lotW,lotD,guessSide:val('distSide')==='',guessRear:val('distRear')==='',guessLot:!val('lotW')||!val('lotD'),minSide,minRear};
+}
+function sitePlanSvg(){
+  const n=siteNums();
+  const VW=520, VH=600, top=66, availW=VW-140, availH=VH-top-70;
+  const k=Math.min(availW/n.lotW, availH/n.lotD);
+  const lx=70, ly=top+ (n.alley?18:0), lw=n.lotW*k, ld=n.lotD*k;
+  const right=val('sideRef')==='right';
+  const gw=n.W*k, gd=n.D*k;
+  const gx=right? lx+lw-n.side*k-gw : lx+n.side*k;
+  const gy=ly+n.rear*k;
+  const hd=Math.min(40*k, ld*0.35), hy=Math.min(ly+ld-hd-20*k, gy+gd+(n.house!=null?n.house*k:Math.max(10*k,ld*0.2)));
+  const hx=lx+Math.max(3*k, lw*0.1), hw=lw-2*Math.max(3*k, lw*0.1);
+  const sideX1=right?gx+gw:lx, sideX2=right?lx+lw:gx;
+  const dim=(x1,y1,x2,y2,t,ty)=>`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#c00" stroke-width="1.2" marker-start="url(#arw)" marker-end="url(#arw)"/><text x="${(x1+x2)/2}" y="${ty!=null?ty:(y1+y2)/2-4}" text-anchor="middle" font-size="10" font-weight="800" fill="#c00">${esc(t)}</text>`;
+  return `<svg viewBox="0 0 ${VW} ${VH}" width="100%" style="max-height:8.2in">
+    <defs><marker id="arw" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto-start-reverse"><path d="M0,0 L6,3 L0,6 z" fill="#c00"/></marker></defs>
+    ${sheetHead('SITE PLAN','G-1',VW)}
+    ${n.alley?`<rect x="${lx}" y="${ly-18}" width="${lw}" height="16" fill="#eee" stroke="#111" stroke-dasharray="5 3"/><text x="${lx+lw/2}" y="${ly-6}" text-anchor="middle" font-size="9" font-weight="700">PUBLIC ALLEY</text>`:''}
+    <rect x="${lx}" y="${ly}" width="${lw}" height="${ld}" fill="none" stroke="#111" stroke-width="1.6" stroke-dasharray="10 4 2 4"/>
+    <text x="${lx+lw/2}" y="${ly+ld+14}" text-anchor="middle" font-size="9">FRONT LOT LINE / STREET</text>
+    <text x="${lx-8}" y="${ly+ld/2}" text-anchor="middle" font-size="9" transform="rotate(-90 ${lx-8} ${ly+ld/2})">LOT ${esc(ftLabel(n.lotD))}${n.guessLot?' (VERIFY W/ SURVEY)':''}</text>
+    <text x="${lx+lw/2}" y="${ly+ld+28}" text-anchor="middle" font-size="9">LOT WIDTH ${esc(ftLabel(n.lotW))}</text>
+    <rect x="${gx}" y="${gy}" width="${gw}" height="${gd}" fill="#e8e8e8" stroke="#111" stroke-width="2"/>
+    <text x="${gx+gw/2}" y="${gy+gd/2}" text-anchor="middle" font-size="${Math.max(6,Math.min(10,gw/9))}" font-weight="800">NEW GARAGE</text>
+    <text x="${gx+gw/2}" y="${gy+gd/2+11}" text-anchor="middle" font-size="${Math.max(6,Math.min(9,gw/10))}">${esc(ftLabel(n.W)+' x '+ftLabel(n.D))}</text>
+    <rect x="${hx}" y="${hy}" width="${hw}" height="${hd}" fill="#fff" stroke="#111" stroke-dasharray="3 2"/>
+    <text x="${hx+hw/2}" y="${hy+hd/2+3}" text-anchor="middle" font-size="9">EXISTING HOUSE</text>
+    ${dim(sideX1,gy+gd*0.3,sideX2,gy+gd*0.3, ftLabel(n.side)+(n.guessSide?' MIN.':''), gy+gd*0.3-5)}
+    ${dim(gx+gw*0.65,ly,gx+gw*0.65,gy, ftLabel(n.rear)+(n.guessRear?' MIN.':''), (ly+gy)/2+3)}
+    ${n.house!=null?dim(gx+gw*0.35,gy+gd,gx+gw*0.35,hy, ftLabel(n.house)+' TO HOUSE',(gy+gd+hy)/2+3):''}
+    <g transform="translate(${VW-40},${top+30})"><polygon points="0,-18 7,6 0,1 -7,6" fill="#111"/><text x="0" y="-22" text-anchor="middle" font-size="10" font-weight="800">N</text></g>
+    ${scaleBar(VW-200,VH-26,k)}
+    <text x="16" y="50" font-size="9">DISTANCES TO TWO LOT LINES SHOWN IN RED. VERIFY ALL LOT LINES WITH PLAT OF SURVEY.</text>
+  </svg>`;
+}
+function codeDataHTML(){
+  const c=code()||{};
+  const n=siteNums();
+  const area=(Number(val('width'))||0)*(Number(val('depth'))||0);
+  const max=c.maxSize?parseFt(c.maxSize):null;
+  const cap=c.height?parseFt(c.height):null;
+  const rows=[
+    ['Jurisdiction', (isChicago()?'CITY OF CHICAGO':((c.kind||'VILLAGE')+' OF '+(cityName()||'—').toUpperCase()))+(val('county')?' · '+val('county').toUpperCase()+' CO.':'')],
+    ['Code basis', codeBasisLines().join('<br>')],
+    ['Occupancy / use','GROUP U — PRIVATE GARAGE (DETACHED ACCESSORY)'],
+    ['Construction type','TYPE VB — WOOD FRAME, SLAB ON GRADE'],
+    ['Floor area', area+' SF'+(max&&max<2000?' (MAX '+esc(c.maxSize)+' SF)':'')+(isChicago()?' · EXPRESS PERMIT ≤ 600 SF':'')],
+    ['Height to ridge', ftLabel(totalH())+(cap?' (MAX '+esc(c.height)+')':'')],
+    ['Roof', roofLabel()+' · '+pitchNum()+'/12'],
+    ['Setbacks required', 'SIDE '+esc(val('setSide')||'—')+' · REAR '+esc((n.alley?val('setRearA'):val('setRearN'))||'—')+' · HOUSE '+esc(val('setHouse')||'—')],
+    ['Setbacks proposed', 'SIDE '+ftLabel(n.side)+' · REAR '+ftLabel(n.rear)+(n.house!=null?' · HOUSE '+ftLabel(n.house):'')],
+    ['Owner / PIN', esc(customerLabel())+' · PIN '+esc(val('pin')||'—')],
+  ];
+  if(isChicago()) rows.push(['Chicago notes','WALLS ≥ 2\'-0" FROM LOT LINES · EAVES/GUTTERS ≥ 20" FROM SIDE LOT LINES · SLAB ON GRADE · NO LOFT, PLUMBING OR HVAC']);
+  return `<div class="codedata"><h3>CODE DATA</h3><table>${rows.map(r=>`<tr><td>${esc(r[0])}</td><td>${r[1]}</td></tr>`).join('')}</table></div>`;
+}
+function pageCover(){
+  return `<section class="${sheetClass()}" data-sheet="cover">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #111;padding-bottom:6px;margin-bottom:8px">
+      <div><div style="font-size:22px;font-weight:800">PERMIT DRAWING SET — DETACHED GARAGE</div>
+      <div style="font-size:13px;font-weight:700">${esc(jobTitleLine())} · ${esc(roofLabel())} ROOF · ${esc(val('address')||'JOB ADDRESS')}</div></div>
+      <div style="text-align:right;font-size:12px"><b>ABSOLUTE GARAGE BUILDERS</b><br>3050 W. IRVING PARK RD., CHICAGO, IL 60618<br>(773) 583-8800</div>
+    </div>
+    <div class="cover-grid">
+      <div>${sitePlanSvg()}</div>
+      <div>${codeDataHTML()}
+        <div class="codedata" style="margin-top:10px"><h3>SHEET INDEX</h3><table class="sheetindex"><tbody id="sheetIndexBody"></tbody></table></div>
+        <div class="codedata" style="margin-top:10px"><h3>GENERAL NOTES</h3><ul style="margin:0;padding-left:16px">
+          <li>CONTRACTOR TO VERIFY ALL DIMENSIONS AND LOT LINES IN FIELD.</li>
+          <li>ALL WORK PER THE CODE BASIS LISTED ABOVE AND LOCAL AMENDMENTS.</li>
+          <li>FLOOR SLOPED TO DRAIN TOWARD OVERHEAD DOOR.</li>
+          <li>NO LIVING SPACE, PLUMBING OR HVAC IN GARAGE.</li></ul></div>
+      </div>
+    </div>
+    ${tblock('COVER / SITE PLAN / CODE DATA','1',String(sheetTotal()))}
+  </section>`;
+}
+function wallSectionSvg(){
+  const wall=Number(val('wallH'))||8;
+  const x=300, top=90, wallPx=330, slabY=top+wallPx, studW=26;
+  const ties=hurricaneRequired();
+  const callouts=[
+    [top-40,(val('shingles')||'ARCH. SHINGLES').toUpperCase()+' OVER 15# FELT'],
+    [top-24,'ROOF SHEATHING '+(cityStruct().roofSheath||val('roofSheath')||'7/16" OSB')],
+    [top-8,'RAFTERS '+rafterCallout()+(ties?' w/ HURRICANE TIES':'')],
+    [top+14,'DBL. 2x4 TOP PLATE'],
+    [top+34,(showOnPlan('gutters')?'ALUM. GUTTER, ':'')+(aluminumSoffitOn()?'ALUM. SOFFIT & FASCIA':'6" FASCIA / BOXED EAVE')],
+    [top+110,'STUDS '+studCallout()],
+    [top+136,'WALL SHEATHING '+(val('wallSheath')||'7/16" OSB')+' + HOUSEWRAP'],
+    [top+162,(val('siding')||'VINYL SIDING').toUpperCase()],
+    [slabY-22,'2x4 TREATED SILL PLATE'],
+    [slabY-6,'1/2" ANCHOR BOLTS @ 6\'-0" O.C., 12" FROM ENDS'],
+    [slabY+16,(val('slab')||'4" CONCRETE SLAB, 6 BAG MIX, WWF').toUpperCase()],
+    [slabY+34,'6-MIL VAPOR BARRIER ON 4" COMPACTED GRAVEL'],
+    [slabY+66,(val('footing')||'12" x 12" THICKENED EDGE FOOTING').toUpperCase()],
+  ];
+  const lbl=callouts.map(([yy,t])=>`<line x1="${x+studW+40}" y1="${yy-3}" x2="${x+studW+70}" y2="${yy-3}" stroke="#111"/><text x="${x+studW+74}" y="${yy}" font-size="11">${esc(String(t).slice(0,60))}</text>`).join('');
+  return `<svg viewBox="0 0 900 600" width="100%" style="max-height:8.6in">
+    ${sheetHead('TYPICAL WALL SECTION','A-6',900)}
+    <polygon points="${x-60},${top+14} ${x+studW+40},${top+14} ${x+studW+40},${top+4} ${x-60},${top-60}" fill="#f2f2f2" stroke="#111" stroke-width="1.5"/>
+    <line x1="${x-60}" y1="${top-62}" x2="${x+studW+44}" y2="${top+2}" stroke="#111" stroke-width="3"/>
+    <rect x="${x-4}" y="${top+14}" width="${studW+8}" height="8" fill="#e6d3a8" stroke="#111"/>
+    <rect x="${x-4}" y="${top+22}" width="${studW+8}" height="8" fill="#e6d3a8" stroke="#111"/>
+    <rect x="${x}" y="${top+30}" width="${studW}" height="${wallPx-38}" fill="#f6ead0" stroke="#111"/>
+    <rect x="${x+studW}" y="${top+14}" width="5" height="${wallPx-14}" fill="#c9b27c" stroke="#111"/>
+    <rect x="${x+studW+5}" y="${top+20}" width="5" height="${wallPx-24}" fill="#fff" stroke="#111" stroke-dasharray="3 2"/>
+    <rect x="${x-4}" y="${slabY-8}" width="${studW+8}" height="8" fill="#b9d3a8" stroke="#111"/>
+    <line x1="${x+studW/2}" y1="${slabY-12}" x2="${x+studW/2}" y2="${slabY+24}" stroke="#111" stroke-width="2"/>
+    <rect x="${x-180}" y="${slabY}" width="${studW+200}" height="16" fill="#ddd" stroke="#111"/>
+    <polygon points="${x-20},${slabY+16} ${x-30},${slabY+70} ${x+studW+30},${slabY+70} ${x+studW+20},${slabY+16}" fill="#ccc" stroke="#111"/>
+    <line x1="${x-200}" y1="${slabY+24}" x2="${x+studW+60}" y2="${slabY+24}" stroke="#111" stroke-dasharray="2 2"/>
+    ${ties?`<rect x="${x+studW-4}" y="${top+6}" width="8" height="18" fill="none" stroke="#c00" stroke-width="1.5"/>`:''}
+    <line x1="${x-110}" y1="${top+30}" x2="${x-110}" y2="${slabY}" stroke="#111"/>
+    <text x="${x-116}" y="${(top+slabY)/2}" text-anchor="end" font-size="12" font-weight="700">${esc(ftLabel(wall))} PLATE HT.</text>
+    ${lbl}
+    <text x="16" y="586" font-size="10">TYPICAL DETAIL — NOT TO SCALE. MEMBER SIZES PER CODE DATA / VILLAGE REQUIREMENTS.</text>
+  </svg>`;
+}
+function pageWallSection(){
+  return `<section class="${sheetClass()}" data-sheet="wallsection"><div class="elevpage">${wallSectionSvg()}</div>
+    ${tblock('TYPICAL WALL SECTION','6',String(sheetTotal()))}</section>`;
+}
+function renumberSheets(){
+  const secs=[...document.querySelectorAll('#pages .sheet')];
+  const n=secs.length; const rows=[];
+  secs.forEach((s,i)=>{
+    const no=s.querySelector('.tblock .sheetno'); if(no) no.textContent='SHEET '+(i+1)+' OF '+n;
+    const nm=s.querySelector('.tblock > div:last-child b');
+    rows.push('<tr><td>'+(i+1)+'</td><td>'+esc(nm?nm.textContent:'SHEET')+'</td></tr>');
+  });
+  const ib=$('sheetIndexBody'); if(ib) ib.innerHTML=rows.join('');
+}
 function buildPlans(scrollTo){
   try{
+    if(scrollTo){
+      const errs=validatePlanInputs(); showPlanErrors(errs);
+      if(errs.length){ setStatus('Fix the highlighted size problems first'); alert('Please fix before generating:\n\n• '+errs.join('\n• ')); return; }
+      if(!val('customer') && $('customer')){
+        const nm=prompt('Customer name for these plans (shows in the title block):','');
+        if(nm&&nm.trim()) $('customer').value=nm.trim();
+      }
+    }
+    try{ setPrintPageSize(); }catch(e){}
     if(scrollTo) window._planAiPhotos={};
     if($('width') && !(Number(val('width'))>0)) $('width').value='20';
     if($('depth') && !(Number(val('depth'))>0)) $('depth').value='20';
@@ -2261,7 +2508,7 @@ function buildPlans(scrollTo){
     seedPlanItems();
     const pages=$('pages'); if(!pages) return;
     const chunks=[];
-    [['floor',pageFloorSection],['found',pageFoundation],['elev',pageElevations],['sect',pageSectionRoof],['detail',pageDetail],['fire',pageFire]].forEach(([name,fn])=>{
+    [['cover',pageCover],['floor',pageFloorSection],['found',pageFoundation],['elev',pageElevations],['sect',pageSectionRoof],['wall',pageWallSection],['detail',pageDetail],['fire',pageFire]].forEach(([name,fn])=>{
       try{ chunks.push(fn()); }
       catch(err){ chunks.push('<div class="sheet"><div class="caption">Sheet error ('+name+')</div><pre class="notes-col">'+esc(String(err&&err.message||err))+'</pre></div>'); }
     });
@@ -2272,6 +2519,7 @@ function buildPlans(scrollTo){
       s.parentNode.insertBefore(wrap,s);
       wrap.appendChild(s);
     });
+    try{ renumberSheets(); }catch(e){ console.warn('renumber',e); }
     renderOverlay();
     makeSheetTextEditable();
     bindSvgTextEdit();
@@ -2417,9 +2665,11 @@ async function downloadPlansPdf(){
       tries++;
     }
     if(typeof window.html2pdf!=='function') throw new Error('PDF library did not load');
+    // NOTE: the host must NOT be position:absolute — html2pdf clones it and an absolutely
+    // positioned clone has 0 height, which produced a blank 1-page PDF.
     const host=document.createElement('div');
-    host.style.cssText='position:absolute;left:-20000px;top:0;background:#fff;';
-    document.body.appendChild(host);
+    host.style.cssText='background:#fff;width:17in;';
+    const letter=isLetter();
     sheets.forEach(s=>{
       const c=s.cloneNode(true);
       c.style.transform='none';
@@ -2435,10 +2685,9 @@ async function downloadPlansPdf(){
       filename:planFileName(),
       image:{type:isIOS?'jpeg':'png', quality:0.92},
       html2canvas:{scale:isIOS?1.4:2, useCORS:true, backgroundColor:'#ffffff'},
-      jsPDF:{unit:'in', format:[17,11], orientation:'landscape', compress:true},
+      jsPDF:{unit:'in', format:letter?[11,8.5]:[17,11], orientation:'landscape', compress:true},
       pagebreak:{mode:['css','legacy'], after:'.sheet'}
     }).from(host).save();
-    host.remove();
     setStatus('PDF downloaded', true);
   }catch(err){
     console.error(err);
@@ -2460,9 +2709,11 @@ async function currentStaff(){
   }catch(e){ return null; }
 }
 async function saveToHistory(){
-  if(!val('customer')){
-    const n=prompt('Customer name for this plan', val('customer')||'');
-    if(!n) return;
+  const errs=validatePlanInputs(); showPlanErrors(errs);
+  if(errs.length){ alert('Please fix before saving:\n\n• '+errs.join('\n• ')); return; }
+  if(!val('customer') || val('customer')==='TBD'){
+    const n=prompt('Customer name for this plan (required)', '');
+    if(!n || !n.trim()){ alert('A customer name is required to save to Plan History.'); return; }
     $('customer').value=n.trim();
   }
   buildPlans();
@@ -2609,7 +2860,15 @@ function showJobs(){
 document.addEventListener('DOMContentLoaded',()=>{
   try{ fillCitySelect(); }catch(e){ console.warn('fillCitySelect',e); }
   try{ loadPrefs(); }catch(e){ console.warn('loadPrefs',e); }
-  if($('planDate')&&!$('planDate').value) $('planDate').value=new Date().toISOString().slice(0,10);
+  if($('planDate')&&!$('planDate').value) $('planDate').value=localISODate();
+  try{
+    const qp=new URLSearchParams(location.search);
+    if(!qp.get('planId')){
+      if(qp.get('customer')&&$('customer')) $('customer').value=qp.get('customer');
+      if(qp.get('address')&&$('address')) $('address').value=qp.get('address');
+    }
+  }catch(e){}
+  try{ setPrintPageSize(); $('sheetSize')&&$('sheetSize').addEventListener('change',setPrintPageSize); }catch(e){}
   const planId=new URLSearchParams(location.search).get('planId');
   if(planId) try{ loadPlanFromId(planId); }catch(e){}
   if(val('city')||val('cityManual')) setStatus('Restored last city/size — Apply Codes or Generate when ready', true);

@@ -23,6 +23,7 @@ main{max-width:1500px;margin:auto;padding:22px}.titlebar{display:flex;justify-co
 .home-tile b{font-size:15px;color:var(--navy)}
 .home-group h4{margin:14px 0 2px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 .home-tile{position:relative}.tile-count{position:absolute;top:10px;right:10px;min-width:24px;text-align:center;border-radius:999px;padding:2px 8px;font-size:12px;font-weight:900;background:#eef2f7;color:var(--navy)}.tile-count.alert{background:#fee2e2;color:#b91c1c}
+.recent-row{display:flex;gap:8px;overflow-x:auto;padding:2px 0 6px;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity}.recent-chip{flex:0 0 auto;max-width:220px;text-align:left;background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px 12px;cursor:pointer;scroll-snap-align:start;font:inherit}.recent-chip:hover{border-color:var(--gold)}.recent-chip b{display:block;color:var(--navy);font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.recent-chip span{display:block;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .home-search{margin:10px 0 4px}.home-search input{width:100%;font-size:16px;padding:11px 12px;margin-top:4px;box-sizing:border-box}
 .home-panels{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px}.home-panels h3{margin-top:0}
 .home-row{display:block;width:100%;text-align:left;background:#fff;border:0;border-bottom:1px solid var(--line);padding:9px 4px;cursor:pointer;font:inherit}.home-row:hover{background:#f8fafc}.home-row:last-child{border-bottom:0}
@@ -150,6 +151,15 @@ body.estimator-mode .estimator-exit{display:block}
 .upcoming-item{display:flex;justify-content:space-between;gap:12px;align-items:center;border-top:1px solid #bfdbfe;padding:10px 0}
 .upcoming-item:first-child{border-top:0}
 @media(max-width:900px){.personal-calendar-layout{grid-template-columns:1fr}.personal-task-sidebar{position:static;max-height:none}}
+.cm-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:12px}.cm-tbl{width:100%;border-collapse:collapse;min-width:0;font-size:13px}.cm-tbl th,.cm-tbl td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}.cm-tbl th:first-child,.cm-tbl td:first-child{text-align:left}.cm-tbl tr.tot td{font-weight:900;background:#f1f5f9}.cm-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}.cm-box{border:1px solid var(--line);border-radius:10px;padding:10px;background:#f8fafc;font-size:13px}.cm-box .ln{display:flex;justify-content:space-between;gap:10px;padding:3px 0}.cm-box .ln b{white-space:nowrap}.cm-note{color:#b45309;font-weight:800;font-size:12px}
+@media(max-width:650px){.cm-grid{grid-template-columns:1fr}}
+.map-bar{display:grid;grid-template-columns:2fr 1fr 1fr 1fr auto;gap:10px;align-items:end;padding:12px}.map-bar input,.map-bar select{width:100%}
+.map-layout{display:grid;grid-template-columns:1fr 320px;gap:12px}.jobs-map{height:68vh;min-height:420px;border-radius:14px;border:1px solid var(--line);box-shadow:var(--shadow);background:#e5e9f0;z-index:1}
+.map-side{display:flex;flex-direction:column;gap:12px;max-height:68vh;overflow:auto}.map-side .card{padding:12px}
+.lg-row{display:flex;align-items:center;gap:8px;padding:3px 0;font-size:13px}.lg-dot{width:14px;height:14px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px #0004;flex:0 0 auto}.lg-row b{margin-left:auto}
+.near-row{display:block;width:100%;text-align:left;background:#fff;border:0;border-bottom:1px solid var(--line);padding:8px 2px;font:inherit;cursor:pointer}.near-row:hover{background:#f8fafc}
+.map-pop b{color:var(--navy)}.map-pop div{font-size:12px;margin-top:2px}
+@media(max-width:900px){.map-layout{grid-template-columns:1fr}.map-side{max-height:none}.jobs-map{height:58vh;min-height:340px}.map-bar{grid-template-columns:1fr 1fr}.map-search{grid-column:1/-1}}
 </style>
 </head>
 <body class="on-home">
@@ -165,6 +175,12 @@ body.estimator-mode .estimator-exit{display:block}
  </div>
 </header>
 
+<div id="estPickBg" class="modalbg" onclick="if(event.target===this)closeEstimatePicker()">
+ <div class="modal sm-modal" style="max-height:88vh;overflow:auto">
+  <div class="modalhead"><h3 id="estPickTitle">Saved estimates</h3><button class="btn light sm" type="button" onclick="closeEstimatePicker()">✕</button></div>
+  <div id="estPickBody" style="padding:12px 16px"></div>
+ </div>
+</div>
 <div id="pwBg" class="modalbg">
  <div class="modal sm-modal">
   <div class="modalhead"><h3>Change Password</h3><button class="btn light sm" type="button" onclick="closeChangePassword()">✕</button></div>
@@ -196,6 +212,8 @@ body.estimator-mode .estimator-exit{display:block}
   <button class="tab" data-view="estimateHistory" onclick="setView('estimateHistory',this)">Estimate History</button>
   <button class="tab" data-view="planHistory" onclick="setView('planHistory',this)">Plan History</button>
   <button class="tab" data-view="completed" onclick="setView('completed',this)">Completed Archive</button>
+  <button id="commissionTab" class="tab" data-view="commission" onclick="setView('commission',this)">Sales &amp; Commission</button>
+  <button id="mapTab" class="tab" data-view="map" onclick="setView('map',this)">Jobs Map</button>
   <button id="trashTab" class="tab hidden" data-view="trash" onclick="setView('trash',this)">Trash</button>
  </div>
 
@@ -206,6 +224,7 @@ body.estimator-mode .estimator-exit{display:block}
  <div id="editRequestsCard" class="card hidden" style="margin-bottom:12px"><h3 class="split"><span>Salesman Edit / Note Requests</span><span id="editRequestCount" class="pill yellow">0</span></h3><div id="editRequestList" class="list"></div></div>
 
  <section id="homeView">
+  <div id="homeRecent" class="home-recent hidden"><div class="small muted" style="font-weight:800;margin:8px 0 4px">Recent files</div><div id="homeRecentList" class="recent-row"></div></div>
   <div class="home-search card"><label for="homeSearch" class="small muted">Find a job</label><input id="homeSearch" type="search" autocomplete="off" placeholder="Customer, address, or job #" oninput="renderHomeSearch()" onkeydown="if(event.key==='Enter'){const f=document.querySelector('#homeSearchResults .home-row');if(f)f.click()}"><div id="homeSearchResults"></div></div>
   <div id="homeTiles"></div>
   <div class="home-panels">
@@ -272,6 +291,18 @@ body.estimator-mode .estimator-exit{display:block}
   <div class="table"><table style="min-width:980px"><thead><tr><th>Date</th><th>Customer</th><th>Salesman</th><th>Address</th><th>Garage</th><th>Roof</th><th>Village</th><th></th></tr></thead><tbody id="planHistoryRows"></tbody></table></div>
  </section>
  <section id="completedView" class="hidden"><div class="table"><table><thead><tr><th>Customer</th><th>Salesman</th><th>Address</th><th>Garage</th><th>Completed</th><th>Final Payment</th><th></th></tr></thead><tbody id="completedRows"></tbody></table></div></section>
+ <section id="mapView" class="hidden">
+  <div class="card map-bar">
+   <div class="field map-search"><label>Find work near an address or city</label><div style="display:flex;gap:6px"><input id="mapSearch" placeholder="e.g. 123 Oak St, Naperville" onkeydown="if(event.key==='Enter'){event.preventDefault();mapSearchGo()}"><button class="btn primary" type="button" onclick="mapSearchGo()">Search</button></div></div>
+   <div class="field"><label>Within</label><select id="mapRadius" onchange="renderMapNearby()"><option value="5">5 miles</option><option value="10" selected>10 miles</option><option value="25">25 miles</option><option value="50">50 miles</option></select></div>
+   <div class="field"><label>Salesman</label><select id="mapSales" onchange="renderMapPins()"><option value="">All Salespeople</option></select></div>
+   <div class="field"><label>Status</label><select id="mapStatus" onchange="renderMapPins()"><option value="">All jobs</option><option value="open">In progress (orange)</option><option value="done">Built / completed</option></select></div>
+   <div class="field"><label>&nbsp;</label><div style="display:flex;gap:6px"><button class="btn light sm" type="button" onclick="mapView('chicago')">Chicago area</button><button class="btn light sm" type="button" onclick="mapView('il')">Show all Illinois</button></div></div>
+  </div>
+  <div id="mapMsg" class="muted small" style="margin:6px 2px"></div>
+  <div class="map-layout"><div id="jobsMap" class="jobs-map"></div><div class="map-side"><div class="card"><h4 style="margin:0 0 6px">Legend</h4><div id="mapLegend"></div></div><div class="card" id="mapNearbyCard"><h4 style="margin:0 0 6px">Nearby jobs</h4><div id="mapNearby" class="muted small">Search an address to list jobs nearby.</div></div></div></div>
+ </section>
+ <section id="commissionView" class="hidden"><div id="commissionContent"></div></section>
  <section id="trashView" class="hidden"><div class="card" style="margin-bottom:12px"><h3>Trash</h3><div class="muted small">Deleted jobs are hidden from everyone else. Sam or Randy can restore them or permanently delete them here.</div></div><div class="table"><table><thead><tr><th>Customer</th><th>Salesman</th><th>Address</th><th>Deleted</th><th>Actions</th></tr></thead><tbody id="trashRows"></tbody></table></div></section>
 </main>
 
@@ -436,10 +467,7 @@ function setStaffPhone(user,phone){
   localStorage.setItem(STAFF_PHONE_KEY, JSON.stringify(all));
 }
 function staffPhone(user){ return staffPhones()[String(user||'').toLowerCase()]||''; }
-function canTextSalesman(){
-  const u=String(profile&&profile.username||'').toLowerCase();
-  return u==='randy'||u==='sam';
-}
+function canTextSalesman(){ return false; } // texting salesmen removed per owner
 function openNotifySalesman(pre){
   if(!canTextSalesman()) return alert('Randy or Sam can send these texts.');
   const who=(pre&&pre.who)||'ramsey';
@@ -515,8 +543,32 @@ function jobMatchesRecord(j, rec){
   const ja=normJobText(j.address), ra=normJobText(rec.address);
   return !ja || !ra || ja===ra || ja.includes(ra) || ra.includes(ja);
 }
+// ---- Estimate lookup: match by customer name OR normalized address ----
+const ADDR_WORDS={street:'st',str:'st',avenue:'ave',av:'ave',road:'rd',drive:'dr',boulevard:'blvd',court:'ct',place:'pl',lane:'ln',parkway:'pkwy',terrace:'ter',circle:'cir',highway:'hwy',north:'n',south:'s',east:'e',west:'w',northeast:'ne',northwest:'nw',southeast:'se',southwest:'sw'};
+const ADDR_SUFFIX=new Set(['st','ave','rd','dr','blvd','ct','pl','ln','pkwy','ter','cir','hwy','way','trl','sq']);
+const ADDR_DIRS=new Set(['n','s','e','w','ne','nw','se','sw']);
+function normAddress(a){
+  let s=String(a||'').toLowerCase().split(',')[0];                 // drop ", City, ST 60601"
+  s=s.replace(/\b(apt|apartment|unit|suite|ste|fl|floor|rm)\b\.?\s*[\w-]*/g,' ').replace(/#\s*[\w-]+/g,' ');
+  let t=s.replace(/[^a-z0-9]+/g,' ').trim().split(/\s+/).filter(Boolean).map(w=>ADDR_WORDS[w]||w);
+  t=t.map(w=>w.replace(/^(\d+)(st|nd|rd|th)$/,'$1'));             // 1st -> 1
+  const k=t.findIndex((w,i)=>i>1&&ADDR_SUFFIX.has(w));
+  if(k>0){let end=k+1;if(t[end]&&ADDR_DIRS.has(t[end]))end++;t=t.slice(0,end);} // drop "chicago il 60601" after street type
+  while(t.length>2&&(/^\d{5}(\d{4})?$/.test(t[t.length-1])||(/^[a-z]{2}$/.test(t[t.length-1])&&!ADDR_SUFFIX.has(t[t.length-1])&&!ADDR_DIRS.has(t[t.length-1]))))t.pop();
+  return t.join(' ');
+}
+function addrCore(n){return String(n||'').split(' ').filter(w=>w&&!ADDR_SUFFIX.has(w)).join(' ')}
+function normName(n){return String(n||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim().split(/\s+/).filter(w=>w&&!['mr','mrs','ms','dr','jr','sr','and'].includes(w)).sort().join(' ')}
+function addressesMatch(a,b){const x=normAddress(a),y=normAddress(b);if(!x||!y||!/\d/.test(x))return false;if(x===y)return true;const cx=addrCore(x),cy=addrCore(y);return !!cx&&cx===cy}
+function namesMatch(a,b){const x=normName(a),y=normName(b);return !!x&&x===y}
+function estimateMatchReason(j,e){
+  const snap=e.estimate_snapshot||{};
+  if((e.job_id&&String(e.job_id)===String(j.id))||(snap.job_id&&String(snap.job_id)===String(j.id)))return 'Linked to job';
+  const n=namesMatch(j.customer,e.customer),a=addressesMatch(j.address,e.address);
+  return n&&a?'Name + address':a?'Address':n?'Name':'';
+}
 function estimatesForJob(j){
-  return estimateOnlyRows().filter(e=>jobMatchesRecord(j,e)).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+  return estimateOnlyRows().filter(e=>estimateMatchReason(j,e)).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
 }
 function plansForJob(j){
   return planHistoryRows().filter(e=>jobMatchesRecord(j,e)).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
@@ -533,11 +585,31 @@ function jobQs(j){
   p.set('v', Date.now());
   return p.toString();
 }
+function openEstimateInCalculator(estId,jobId){window.location.href='estimator.html?editEstimate='+encodeURIComponent(estId)+(jobId?'&jobId='+encodeURIComponent(jobId):'')+'&v='+Date.now()}
+function closeEstimatePicker(){$('estPickBg')?.classList.remove('show')}
+function estimateHasSheet(e){return !!(e&&(listHistoryOptionSheets(e).some(o=>o.html)||(e.estimate_snapshot||{}).sheet_html))}
+// Open the saved estimate SHEET (Estimate History viewer). If no sheet was saved, say so and offer the calculator.
+async function openEstimateSheet(estId,jobId){
+  const e=await fetchFullEstimateRecord(estId);
+  if(!e)return alert('Estimate not found.');
+  if(estimateHasSheet(e)){closeEstimatePicker();return viewEstimateHistory(estId);}
+  $('estPickTitle').textContent='No saved sheet';
+  $('estPickBody').innerHTML=`<p><b>${esc(e.customer||'This estimate')}</b> (${e.created_at?new Date(e.created_at).toLocaleDateString():'—'}) has no saved estimate sheet — it was saved before sheets were stored, or only the numbers were saved.</p><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" onclick="openEstimateInCalculator('${esc(estId)}','${esc(jobId||'')}')">Open in calculator</button><button class="btn light" onclick="viewEstimateHistory('${esc(estId)}')">View saved summary</button><button class="btn light" onclick="closeEstimatePicker()">Cancel</button></div>`;
+  $('estPickBg').classList.add('show');
+}
+function showEstimatePicker(title,list,jobId,newHref){
+  $('estPickTitle').textContent=title;
+  $('estPickBody').innerHTML=(list.length?`<div class="muted small" style="margin-bottom:8px">${list.length} saved estimate${list.length===1?'':'s'} found. Tap one to open its sheet.</div>`+list.map(({e,why})=>`<div class="rowbox est-match" style="margin-bottom:8px"><div class="split" style="gap:10px;flex-wrap:wrap"><div><strong>${esc(e.customer||'—')}</strong> <span class="pill ${/Address|Linked/.test(why)?'blue':'yellow'} est-why">${esc(why==='Address'?'Matched by address: '+(e.address||''):why==='Name'?'Matched by name: '+(e.customer||''):why==='Name + address'?'Matched by name + address: '+(e.customer||'')+', '+(e.address||''):'Linked to this job')}</span><div class="sub">${e.created_at?new Date(e.created_at).toLocaleDateString():'—'} • ${esc(DISPLAY[e.salesman_username]||e.salesman_username||'—')} • ${esc(e.address||'')}${e.city?', '+esc(e.city):''}</div><div class="sub" data-est-opts="${esc(e.id)}">${esc([e.garage_size,e.roof_type].filter(Boolean).join(' • ')||'—')}</div></div><div style="text-align:right"><div><b>${money(e.estimate_price)}</b></div><div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;justify-content:flex-end"><button class="btn primary sm" onclick="openEstimateSheet('${esc(e.id)}','${esc(jobId||'')}')">Open sheet</button><button class="btn light sm" onclick="openEstimateInCalculator('${esc(e.id)}','${esc(jobId||'')}')">Open in calculator</button></div></div></div></div>`).join(''):'<p class="muted">No saved estimates match this customer name or address.</p>')+(newHref?`<div style="margin-top:10px"><button class="btn light" onclick="window.location.href='${newHref}'">Start a new estimate</button></div>`:'');
+  $('estPickBg').classList.add('show');
+  list.forEach(async({e})=>{const f=await fetchFullEstimateRecord(e.id);const el=document.querySelector(`[data-est-opts="${CSS.escape(e.id)}"]`);if(!el||!f)return;const opts=listHistoryOptionSheets(f);el.textContent=(opts.length?opts.map(o=>`${o.label}${o.size?' '+o.size:''}${o.quote?' '+money(o.quote):''}`).join(' | '):[f.garage_size,f.roof_type].filter(Boolean).join(' • ')||'—')+(estimateHasSheet(f)?'':' — no saved sheet');});
+}
 function openJobEstimator(id){
   const j=jobs.find(x=>x.id===id); if(!j) return;
-  const latest=latestEstimateForJob(j);
-  if(latest) window.location.href='estimator.html?editEstimate='+encodeURIComponent(latest.id)+'&jobId='+encodeURIComponent(j.id)+'&v='+Date.now();
-  else window.location.href='estimator.html?'+jobQs(j);
+  recordRecentJob(j.id);
+  const list=estimatesForJob(j).map(e=>({e,why:estimateMatchReason(j,e)}));
+  if(list.length===1) return openEstimateSheet(list[0].e.id,j.id);
+  if(!list.length) return void(window.location.href='estimator.html?'+jobQs(j));
+  showEstimatePicker('Saved estimates — '+(j.customer||''),list,j.id,'estimator.html?'+jobQs(j));
 }
 function openJobDrawing(id){
   const j=jobs.find(x=>x.id===id); if(!j) return;
@@ -607,7 +679,7 @@ function renderHomeTiles(){
   ].filter(t=>t[6]!==false&&!(t[0]==='Requests'&&!mgr&&!c.myRequests));
   const groups=['Sell','Build','Paperwork','Admin'].map(g=>[g,tiles.filter(t=>t[3]===g)]).filter(g=>g[1].length);
   box.innerHTML=groups.map(([g,ts])=>`<div class="home-group"><h4>${g}</h4><div class="home-grid">${ts.map(t=>`<button type="button" class="home-tile" data-tile="${esc(t[0])}" onclick='${t[2]}'>${t[4]!=null?`<em class="tile-count${t[5]&&t[4]?' alert':''}">${t[4]}</em>`:''}<b>${esc(t[0])}</b><span>${esc(t[1])}</span></button>`).join('')}</div></div>`).join('');
-  renderHomeAttention();renderHomeSchedule();renderHomeSearch();
+  renderHomeAttention();renderHomeSchedule();renderHomeSearch();renderHomeRecent();
 }
 function localISO(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
 function renderHomeAttention(){
@@ -624,10 +696,21 @@ function renderHomeSchedule(){
     return `<div class="sched-day">${d.toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'})}</div>`+ev.map(e=>`<button type="button" class="home-row" onclick="openDrawer('${esc(e.j.id)}')"><b>${esc(e.type)}</b> — ${esc(e.crew||'Crew not set')}<div class="sub">${esc(e.j.customer)} • ${esc(e.j.address||'')}</div></button>`).join('')}).join('');
   box.innerHTML=out||'<div class="home-empty">No crew work scheduled in the next 5 days.</div>';
 }
+function recentKey(){const u=profile&&(profile.id||profile.email||profile.username);return u?'agb_recent_jobs_'+String(u).toLowerCase():null}
+function getRecentJobs(){const k=recentKey();if(!k)return[];try{const a=JSON.parse(localStorage.getItem(k)||'[]');return Array.isArray(a)?a:[]}catch(e){return[]}}
+function recordRecentJob(id){const k=recentKey();if(!k||!id)return;try{const a=getRecentJobs().filter(x=>String(x)!==String(id));a.unshift(String(id));localStorage.setItem(k,JSON.stringify(a.slice(0,12)))}catch(e){}if(currentView==='home')renderHomeRecent()}
+function renderHomeRecent(){
+  const wrap=$('homeRecent'),box=$('homeRecentList');if(!wrap||!box)return;
+  const ids=getRecentJobs(),live=ids.filter(id=>jobs.some(j=>String(j.id)===id&&!j.deleted_at));
+  if(jobs.length&&live.length!==ids.length){try{localStorage.setItem(recentKey(),JSON.stringify(live))}catch(e){}}  // drop deleted / missing jobs
+  const list=live.slice(0,6).map(id=>jobs.find(j=>String(j.id)===id));
+  wrap.classList.toggle('hidden',!list.length);
+  box.innerHTML=list.map(j=>`<button type="button" class="recent-chip" onclick="openDrawer('${esc(j.id)}')" title="${esc((j.customer||'')+' — '+(j.address||''))}"><b>${esc(j.customer||'—')}</b><span>${esc(j.address||j.city||'')}</span></button>`).join('');
+}
 function renderHomeSearch(){
   const box=$('homeSearchResults'),inp=$('homeSearch');if(!box||!inp)return;
   const q=inp.value.trim().toLowerCase();if(!q){box.innerHTML='';return}
-  const hits=jobs.filter(j=>[j.customer,j.address,j.city,j.job_number].join(' ').toLowerCase().includes(q)).slice(0,8);
+  const hits=jobs.filter(j=>jobSearchMatch(j,q)).slice(0,8);
   box.innerHTML=hits.length?hits.map(j=>`<button type="button" class="home-row" onclick="openDrawer('${esc(j.id)}')"><b>${esc(j.customer)}</b>${j.job_number?` <span class="sub">#${esc(j.job_number)}</span>`:''}<div class="sub">${esc(j.address||'')}${j.city?', '+esc(j.city):''} • ${esc(status(j))}</div></button>`).join(''):'<div class="home-empty">No jobs match.</div>';
 }
 
@@ -831,7 +914,7 @@ async function refresh(){
   sb.from('salesman_calendar_entries').select('*').order('appointment_at',{ascending:true})
  ]);
  if(je)console.error(je);if(tje)console.error(tje);if(re)console.error(re);if(de)console.error(de);if(ere)console.error(ere);if(ehe)console.error('estimate_history load failed',ehe);if(cee)console.error(cee);
- jobs=j||[];trashJobs=tj||[];requests=r||[];documents=d||[];editRequests=er||[];estimateHistory=eh||[];calendarEntries=ce||[];
+ jobs=(j||[]).map(parseProfitTag);trashJobs=(tj||[]).map(parseProfitTag);requests=r||[];documents=d||[];editRequests=er||[];estimateHistory=eh||[];calendarEntries=ce||[];
  if(ehe){
   $('syncState').textContent='Estimate history blocked: '+(ehe.message||'RLS/permission error');
  }else{
@@ -850,7 +933,7 @@ async function refresh(){
  }catch(e){}
  renderAll();
 }
-function renderAll(){if($('allPersonalCalendarsTab'))$('allPersonalCalendarsTab').classList.toggle('hidden',!privateAccessManager());try{showCarpenterNav()}catch(e){}try{renderHomeTiles()}catch(e){}renderStats();renderRequests();renderEditRequests();renderJobs();renderWeek();renderCalendar();renderPersonalCalendar();renderAllPersonalCalendars();renderUpcomingAppointments();renderEstimateHistory();renderPlanHistory();renderCompleted();renderTrash();openHashView()}
+function renderAll(){if($('allPersonalCalendarsTab'))$('allPersonalCalendarsTab').classList.toggle('hidden',!privateAccessManager());try{showCarpenterNav()}catch(e){}try{renderHomeTiles()}catch(e){}renderStats();renderRequests();renderEditRequests();renderJobs();renderWeek();renderCalendar();renderPersonalCalendar();renderAllPersonalCalendars();renderUpcomingAppointments();renderEstimateHistory();renderPlanHistory();renderCompleted();try{renderCommission()}catch(e){console.error('commission',e)}try{if(currentView==='map')openJobsMap()}catch(e){console.error('map',e)}renderTrash();openHashView()}
 function openHashView(){
   const h=(location.hash||'').replace('#','');
   if(h==='planHistory'){
@@ -858,6 +941,101 @@ function openHashView(){
     setView('planHistory', btn);
   }
 }
+/* ===== Jobs Map (Leaflet + OSM, Nominatim geocoding cached per device in localStorage; no DB writes) ===== */
+const MAP_CHICAGO={c:[41.88,-87.85],z:10}, MAP_IL={b:[[36.97,-91.51],[42.51,-87.02]]};
+const MAP_ORANGE='#f97316', GEO_CACHE_KEY='agb_geo_cache_v1', GEO_EMAIL=''; // optional contact email for Nominatim
+const SALES_COLORS={randy:'#1e4a8c',sam:'#15803d',wally:'#7c3aed'};
+const MAP_PALETTE=['#0891b2','#be185d','#4d7c0f','#b91c1c','#0f766e','#a16207','#e11d48','#0369a1','#854d0e','#334155'];
+let jobsMap=null,mapLayer=null,mapSearchLayer=null,mapSearchPt=null,mapJobs=[],mapMarkers={},geoQueue=[],geoBusy=false,leafletLoading=null;
+function salesColor(u){u=ukey(u);if(SALES_COLORS[u])return SALES_COLORS[u];let h=0;for(const ch of u)h=(h*31+ch.charCodeAt(0))>>>0;return MAP_PALETTE[h%MAP_PALETTE.length]}
+function jobFinal(j){return status(j)==='Completed'}
+function jobFullAddress(j){const a=String(j.address||'').trim(),c=String(j.city||'').trim();if(!a&&!c)return '';let s=[a,c].filter(Boolean).join(', ');if(!/\b(il|illinois|in|indiana|wi|wisconsin)\b/i.test(s))s+=', IL';return s}
+function geoKey(addr){return normAddress(addr)}
+function geoCache(){try{return JSON.parse(localStorage.getItem(GEO_CACHE_KEY)||'{}')||{}}catch(e){return{}}}
+function geoCacheSet(k,v){try{const c=geoCache();c[k]=v;localStorage.setItem(GEO_CACHE_KEY,JSON.stringify(c))}catch(e){}}
+function geoLookup(addr){const v=geoCache()[geoKey(addr)];if(!v)return null;if(v.fail)return (Date.now()-v.fail<7*864e5)?{fail:true}:null;return v}
+async function geocode(q){const u='https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=us&viewbox=-91.6,42.6,-87.0,36.9&q='+encodeURIComponent(q)+(GEO_EMAIL?'&email='+encodeURIComponent(GEO_EMAIL):'');const r=await fetch(u,{headers:{'Accept':'application/json'},referrerPolicy:'strict-origin-when-cross-origin'});if(!r.ok)throw new Error('geocoder '+r.status);const d=await r.json();if(!Array.isArray(d)||!d.length)return null;const lat=+d[0].lat,lng=+d[0].lon;return Number.isFinite(lat)&&Number.isFinite(lng)?{lat,lng}:null}
+const geoSleep=ms=>new Promise(r=>setTimeout(r,ms));
+async function runGeoQueue(){if(geoBusy)return;geoBusy=true;try{while(geoQueue.length){const addr=geoQueue.shift();if(geoLookup(addr))continue;mapMsg(`Locating job addresses… ${geoQueue.length+1} left (first time on this device only).`);try{const p=await geocode(addr);geoCacheSet(geoKey(addr),p||{fail:Date.now()})}catch(e){console.warn('geocode',e);geoQueue.unshift(addr);mapMsg('Address lookup is unavailable right now; will retry shortly.');await geoSleep(15000);continue}renderMapPins(true);await geoSleep(1100)}}finally{geoBusy=false;renderMapPins(true)}}
+function loadLeaflet(){if(window.L)return Promise.resolve();if(leafletLoading)return leafletLoading;leafletLoading=new Promise((res,rej)=>{const l=document.createElement('link');l.rel='stylesheet';l.href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';document.head.appendChild(l);const s=document.createElement('script');s.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';s.onload=()=>window.L?res():rej(new Error('Leaflet missing'));s.onerror=()=>rej(new Error('Leaflet failed to load'));document.head.appendChild(s)}).catch(e=>{leafletLoading=null;throw e});return leafletLoading}
+function mapMsg(t){if($('mapMsg'))$('mapMsg').textContent=t||''}
+function mapView(w){if(!jobsMap)return;if(w==='il')jobsMap.fitBounds(MAP_IL.b);else jobsMap.setView(MAP_CHICAGO.c,MAP_CHICAGO.z)}
+async function loadMapJobs(){// Everyone sees all jobs on the map. Prefer optional RPC agb_map_jobs (non-financial columns, bypasses salesman RLS) if deployed; else use loaded jobs.
+ try{const {data,error}=await sb.rpc('agb_map_jobs');if(!error&&Array.isArray(data)&&data.length)return data.filter(j=>!j.deleted_at)}catch(e){}
+ return jobs.filter(j=>!j.deleted_at)}
+async function openJobsMap(){if(!profile)return;try{await loadLeaflet()}catch(e){mapMsg('Map could not load (no internet or map service blocked). Try again later.');return}
+ if(!jobsMap){jobsMap=L.map('jobsMap',{zoomControl:true}).setView(MAP_CHICAGO.c,MAP_CHICAGO.z);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap contributors'}).addTo(jobsMap);mapLayer=L.layerGroup().addTo(jobsMap);mapSearchLayer=L.layerGroup().addTo(jobsMap)}
+ setTimeout(()=>jobsMap.invalidateSize(),60);
+ mapJobs=(await loadMapJobs()).map(j=>({id:j.id,customer:j.customer,address:j.address,city:j.city,salesman_username:j.salesman_username,garage_size:j.garage_size,_status:status(j),_final:jobFinal(j)}));
+ const sel=$('mapSales'),cur=sel.value;const us=[...new Set(mapJobs.map(j=>ukey(j.salesman_username)).filter(Boolean))].sort((a,b)=>(DISPLAY[a]||a).localeCompare(DISPLAY[b]||b));sel.innerHTML='<option value="">All Salespeople</option>'+us.map(u=>`<option value="${esc(u)}">${esc(DISPLAY[u]||u)}</option>`).join('');sel.value=us.includes(cur)?cur:'';
+ geoQueue=[...new Set(mapJobs.map(jobFullAddress).filter(a=>a&&!geoLookup(a)))];renderMapPins();runGeoQueue()}
+function mapPopup(j){return `<div class="map-pop"><b>${esc(j.customer||'Customer')}</b><div>${esc(j.address||'')}${j.city?', '+esc(j.city):''}</div><div>Salesman: ${esc(DISPLAY[ukey(j.salesman_username)]||j.salesman_username||'—')}</div><div>Status: ${esc(j._status)}</div>${j.garage_size?`<div>Size: ${esc(j.garage_size)}</div>`:''}</div>`}
+function mapFiltered(){const s=$('mapSales')?.value||'',st=$('mapStatus')?.value||'';return mapJobs.filter(j=>(!s||ukey(j.salesman_username)===s)&&(!st||(st==='done'?j._final:!j._final)))}
+function jobPoint(j){const a=jobFullAddress(j);const g=a&&geoLookup(a);return g&&!g.fail?g:null}
+function renderMapPins(){if(!jobsMap||!mapLayer)return;mapLayer.clearLayers();mapMarkers={};let placed=0,missing=0,failed=0;
+ mapFiltered().forEach(j=>{const p=jobPoint(j);if(!p){const a=jobFullAddress(j);(a&&geoLookup(a)?.fail?failed++:missing++);return}const col=j._final?salesColor(j.salesman_username):MAP_ORANGE;const m=L.circleMarker([p.lat,p.lng],{radius:8,color:'#fff',weight:2,fillColor:col,fillOpacity:.95}).bindPopup(mapPopup(j));m.options.agbColor=col;m.addTo(mapLayer);mapMarkers[j.id]=m;placed++});
+ if(!geoBusy||!geoQueue.length)mapMsg(`${placed} job${placed===1?'':'s'} on map`+(missing?` • ${missing} still locating or no address`:'')+(failed?` • ${failed} address${failed===1?'':'es'} not found`:''));
+ renderMapLegend();renderMapNearby()}
+function renderMapLegend(){const box=$('mapLegend');if(!box)return;const built={};let open=0;mapJobs.forEach(j=>{if(j._final){const u=ukey(j.salesman_username)||'unassigned';built[u]=(built[u]||0)+1}else open++});
+ const us=[...new Set(['randy','sam','wally',...Object.keys(built)])].sort((a,b)=>(DISPLAY[a]||a).localeCompare(DISPLAY[b]||b));
+ box.innerHTML=`<div class="lg-row"><span class="lg-dot" style="background:${MAP_ORANGE}"></span>In progress (not finalized)<b>${open}</b></div><div class="muted small" style="margin:6px 0 2px">Jobs built, by salesman</div>`+us.map(u=>`<div class="lg-row" data-u="${esc(u)}"><span class="lg-dot" style="background:${salesColor(u)}"></span>${esc(DISPLAY[u]||u)}<b>${built[u]||0}</b></div>`).join('')}
+function milesBetween(a,b){const R=3958.8,r=x=>x*Math.PI/180;const dl=r(b.lat-a.lat),dg=r(b.lng-a.lng);const h=Math.sin(dl/2)**2+Math.cos(r(a.lat))*Math.cos(r(b.lat))*Math.sin(dg/2)**2;return 2*R*Math.asin(Math.sqrt(h))}
+async function mapSearchGo(){const q=String($('mapSearch').value||'').trim();if(!q)return;if(!jobsMap)await openJobsMap();if(!jobsMap)return;const full=/\b(il|illinois)\b/i.test(q)?q:q+', IL';let p=geoLookup(full);if(p&&p.fail)p=null;
+ if(!p){mapMsg('Searching…');try{p=await geocode(full);if(p)geoCacheSet(geoKey(full),p)}catch(e){mapMsg('Address search is unavailable right now. Check your connection and try again.');return}}
+ if(!p){mapMsg('Could not find that address. Try adding the city, e.g. "123 Oak St, Naperville".');return}
+ mapSearchPt={...p,label:q};mapSearchLayer.clearLayers();L.circleMarker([p.lat,p.lng],{radius:11,color:'#0b1f3a',weight:3,fillColor:'#e8c547',fillOpacity:1}).bindPopup(`<b>${esc(q)}</b>`).addTo(mapSearchLayer);
+ jobsMap.setView([p.lat,p.lng],12);renderMapNearby();renderMapPins()}
+function renderMapNearby(){const box=$('mapNearby');if(!box)return;if(!mapSearchPt){box.innerHTML='<span class="muted small">Search an address to list jobs nearby.</span>';return}const rad=Number($('mapRadius').value)||10;
+ const list=mapFiltered().map(j=>{const p=jobPoint(j);return p?{j,d:milesBetween(mapSearchPt,p)}:null}).filter(x=>x&&x.d<=rad).sort((a,b)=>a.d-b.d);
+ box.innerHTML=`<div class="small muted" style="margin-bottom:4px">${list.length} job${list.length===1?'':'s'} within ${rad} mi of ${esc(mapSearchPt.label)}</div>`+(list.length?list.map(x=>`<button type="button" class="near-row" onclick="mapFocusJob('${esc(x.j.id)}')"><span class="lg-dot" style="display:inline-block;vertical-align:middle;background:${x.j._final?salesColor(x.j.salesman_username):MAP_ORANGE}"></span> <b>${esc(x.j.customer||'')}</b> <span class="sub">${x.d.toFixed(1)} mi</span><div class="sub">${esc(x.j.address||'')}${x.j.city?', '+esc(x.j.city):''} • ${esc(DISPLAY[ukey(x.j.salesman_username)]||x.j.salesman_username||'')} • ${esc(x.j._status)}${x.j.garage_size?' • '+esc(x.j.garage_size):''}</div></button>`).join(''):'<div class="muted small">No jobs in this radius. Try a larger distance.</div>')}
+function mapFocusJob(id){const m=mapMarkers[id];if(!m||!jobsMap)return;jobsMap.setView(m.getLatLng(),Math.max(jobsMap.getZoom(),14));m.openPopup();if(window.innerWidth<900)$('jobsMap').scrollIntoView({behavior:'smooth',block:'center'})}
+
+/* ===== Sales tracker & commission (profit stored as a tag line in jobs.notes; no DB migration) ===== */
+const HOUSE_MONEY=2000, WALLY_EXTRA=100, BONUS_MIN_JOBS=5, BONUS_PER_JOB=250;
+const PROFIT_TAG_RE=/\n*\[AGB-PROFIT:(-?\d+(?:\.\d+)?)\]\s*$/;
+function parseProfitTag(j){if(!j)return j;const n=String(j.notes||'');const m=n.match(PROFIT_TAG_RE);return {...j,notes:m?n.replace(PROFIT_TAG_RE,''):n,_profit:m?Number(m[1]):null}}
+function withProfitTag(notes,j){const base=String(notes||'').replace(PROFIT_TAG_RE,'');const p=j&&j._profit;return (p==null||!Number.isFinite(p))?base:(base?base+'\n\n':'')+`[AGB-PROFIT:${p}]`}
+function commissionAdmin(){return !!profile&&['randy','sam'].includes(String(profile.username||'').toLowerCase())}
+function chicagoTodayISO(){const p=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Chicago',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());const g=t=>p.find(x=>x.type===t).value;return `${g('year')}-${g('month')}-${g('day')}`}
+function chicagoISOOf(v){if(!v)return null;const s=String(v);if(/^\d{4}-\d{2}-\d{2}$/.test(s))return s;const d=new Date(s);if(isNaN(d))return null;const p=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Chicago',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(d);const g=t=>p.find(x=>x.type===t).value;return `${g('year')}-${g('month')}-${g('day')}`}
+function soldISO(j){return chicagoISOOf(j.sold_date)||chicagoISOOf(j.created_at)}
+function periodRanges(){const t=chicagoTodayISO();const [y,m,d]=t.split('-').map(Number);const dt=new Date(Date.UTC(y,m-1,d));const dow=(dt.getUTCDay()+6)%7;const ws=new Date(dt);ws.setUTCDate(dt.getUTCDate()-dow);const we=new Date(ws);we.setUTCDate(ws.getUTCDate()+6);const iso=x=>x.toISOString().slice(0,10);return {week:[iso(ws),iso(we)],month:[t.slice(0,7)+'-01',t.slice(0,7)+'-31'],year:[y+'-01-01',y+'-12-31']}}
+function inPeriod(j,r){const s=soldISO(j);return !!s&&s>=r[0]&&s<=r[1]}
+const ukey=u=>String(u||'').toLowerCase().trim();
+function monthlySoldCount(u,ym){return jobs.filter(j=>ukey(j.salesman_username)===u&&(soldISO(j)||'').slice(0,7)===ym).length}
+function calcCommission(j){const profit=Number(j._profit),has=j._profit!=null&&Number.isFinite(profit);const u=ukey(j.salesman_username),ym=(soldISO(j)||'').slice(0,7);const cnt=ym?monthlySoldCount(u,ym):0;const bonus=cnt>=BONUS_MIN_JOBS?BONUS_PER_JOB:0;const wally=u==='wally'?WALLY_EXTRA:0;if(!has)return {has:false,u,ym,monthCount:cnt,bonus,wally};const house=Math.min(HOUSE_MONEY,Math.max(0,profit));const rem=Math.max(0,profit-HOUSE_MONEY);const half=rem/2;return {has:true,u,ym,monthCount:cnt,profit,house,remainder:rem,floored:profit<HOUSE_MONEY,salesHalf:half,companyHalf:half,wally,bonus,salesmanTotal:half+wally+bonus,companyKeeps:house+half-wally-bonus}}
+const $$=n=>new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:2}).format(Number(n)||0);
+function commissionBreakdownHTML(c,j){if(!c.has)return '<div class="muted small">Profit not entered yet.</div>';const nm=DISPLAY[c.u]||c.u||'Salesman';const ln=(a,b)=>`<div class="ln"><span>${a}</span><b>${b}</b></div>`;let h=ln('Total profit',$$(c.profit))+ln('House money (to business)',$$(c.house))+ln(`Remainder = ${$$(c.profit)} − ${$$(HOUSE_MONEY)}`,$$(c.remainder));if(c.floored)h+=`<div class="cm-note">Profit is under ${$$(HOUSE_MONEY)} house money, so remainder is floored at $0${c.profit<HOUSE_MONEY?' and house money is the full profit':''}.</div>`;h+=ln(`${esc(nm)} half (remainder ÷ 2)`,$$(c.salesHalf))+ln('Company half (remainder ÷ 2)',$$(c.companyHalf));if(c.wally)h+=ln('Wally extra (per job)','+'+$$(c.wally));h+=ln(`Monthly 5+ bonus (${c.monthCount} sold in ${esc(c.ym||'—')})`,c.bonus?'+'+$$(c.bonus):'$0 — needs '+BONUS_MIN_JOBS+'+');h+=`<div class="ln" style="border-top:1px solid var(--line);margin-top:4px;padding-top:6px"><span><strong>${esc(nm)} commission</strong></span><b>${$$(c.salesmanTotal)}</b></div>`;if(commissionAdmin())h+=ln('Company keeps (house + company half − extras − bonus)',$$(c.companyKeeps));return h}
+function commissionCard(j){const admin=commissionAdmin();const own=profile&&ukey(j.salesman_username)===ukey(profile.username);if(!admin&&!own)return '';const done=status(j)==='Completed';if(!admin&&!done)return '';const c=calcCommission(j);return `<div class="card full"><h4>Commission</h4>${!done?'<div class="muted small" style="margin-bottom:8px">Profit can be entered once the job is finalized and moved to the Completed Archive.</div>':''}${admin&&done?`<div class="field" style="max-width:260px;margin-bottom:8px"><label>Total job profit ($)</label><div style="display:flex;gap:6px"><input id="cmProfit" type="number" inputmode="decimal" step="0.01" value="${c.has?esc(c.profit):''}" placeholder="Enter profit" oninput="previewCommission('${j.id}')"><button class="btn primary sm" onclick="saveProfit('${j.id}')">Save</button></div></div>`:''}<div class="cm-box" id="cmBreakdown">${commissionBreakdownHTML(c,j)}</div></div>`}
+function previewCommission(id){const j=jobs.find(x=>x.id===id);if(!j)return;const v=$('cmProfit').value;const tmp={...j,_profit:v===''?null:Number(v)};$('cmBreakdown').innerHTML=commissionBreakdownHTML(calcCommission(tmp),tmp)}
+async function saveProfit(id){if(!commissionAdmin())return;const j=jobs.find(x=>x.id===id);if(!j)return;const v=$('cmProfit').value.trim();const p=v===''?null:Number(v);if(p!=null&&!Number.isFinite(p))return alert('Enter a valid profit amount.');const notes=withProfitTag(j.notes,{_profit:p});const {error}=await sb.from('jobs').update({notes}).eq('id',id);if(error)return alert(error.message);try{const {data:{user}}=await sb.auth.getUser();await sb.from('job_activity').insert({job_id:id,actor_id:user.id,action:p==null?'Job profit cleared':'Job profit entered',details:{profit:p}})}catch(e){}await refresh();openDrawer(id)}
+function commissionTotals(list){const t={sold:list.length,withProfit:0,profit:0,house:0,companyHalf:0,salesHalf:0,wally:0,bonus:0,commission:0,companyKeeps:0};list.forEach(j=>{const c=calcCommission(j);if(!c.has)return;t.withProfit++;t.profit+=c.profit;t.house+=c.house;t.companyHalf+=c.companyHalf;t.salesHalf+=c.salesHalf;t.wally+=c.wally;t.bonus+=c.bonus;t.commission+=c.salesmanTotal;t.companyKeeps+=c.companyKeeps});return t}
+function commissionSalesmen(){const set=new Set(['randy','sam','wally']);jobs.forEach(j=>{const u=ukey(j.salesman_username);if(u)set.add(u)});return [...set].sort((a,b)=>(DISPLAY[a]||a).localeCompare(DISPLAY[b]||b))}
+let commissionPeriod='month';
+/* Total commissions paid = sum of salesman commission (half + Wally extra + 5+ bonus) on jobs with profit entered. */
+function commissionPaidHTML(admin,me,base,R,P){const per=commissionPeriod,pl=base.filter(j=>inPeriod(j,R[per]));const all=commissionTotals(base),pt=commissionTotals(pl);
+ const card=(t,lbl)=>`<div class="stat"><div class="n">${$$(t.commission)}</div><div class="l">${lbl}</div><div class="sub">${t.withProfit} job${t.withProfit===1?'':'s'} • half ${$$(t.salesHalf)} + extras ${$$(t.wally)} + bonuses ${$$(t.bonus)}</div></div>`;
+ let h=`<div class="card" style="margin-bottom:12px" id="cmPaidCard"><h3 style="margin-bottom:3px">${admin?'Total Commissions Paid':'My Commissions Paid'}</h3><div class="muted small" style="margin-bottom:8px">${admin?'Counts jobs with profit entered. Salesman half + Wally $100 extras + 5+ $250 bonuses (extras/bonuses come out of the company half).':'Counts my jobs with profit entered: my half'+(me==='wally'?' + $100/job extra':'')+' + 5+ $250 bonuses.'}</div><div class="cm-grid">${card(all,admin?'All-time grand total':'My all-time total')}${card(pt,(admin?'Company — ':'Me — ')+P[per])}</div>`;
+ if(admin){const S=commissionSalesmen();h+=`<div class="cm-wrap" style="margin-top:10px"><table class="cm-tbl" id="cmPaidTbl"><thead><tr><th>Salesman</th><th>Half (all-time)</th><th>Wally extra</th><th>5+ bonus</th><th>All-time paid</th><th>${P[per]} paid</th></tr></thead><tbody>${S.map(u=>{const a=commissionTotals(jobs.filter(j=>ukey(j.salesman_username)===u)),p=commissionTotals(pl.filter(j=>ukey(j.salesman_username)===u));return `<tr><td>${esc(DISPLAY[u]||u)}</td><td>${$$(a.salesHalf)}</td><td>${$$(a.wally)}</td><td>${$$(a.bonus)}</td><td><b>${$$(a.commission)}</b></td><td>${$$(p.commission)}</td></tr>`}).join('')}<tr class="tot"><td>Grand total</td><td>${$$(all.salesHalf)}</td><td>${$$(all.wally)}</td><td>${$$(all.bonus)}</td><td>${$$(all.commission)}</td><td>${$$(pt.commission)}</td></tr></tbody></table></div>`}
+ return h+'</div>'}
+function setCommissionPeriod(p){commissionPeriod=p;renderCommission()}
+function renderCommission(){const box=$('commissionContent');if(!box||!profile)return;const admin=commissionAdmin();const me=ukey(profile.username);const R=periodRanges();const base=admin?jobs:jobs.filter(j=>ukey(j.salesman_username)===me);const P={week:'This Week',month:'This Month',year:'This Year'};
+ const soldCards=['week','month','year'].map(k=>{const n=base.filter(j=>inPeriod(j,R[k])).length;return `<div class="stat"><div class="n">${n}</div><div class="l">${admin?'Company jobs sold':'My jobs sold'} — ${P[k]}</div><div class="sub">${fmt(R[k][0])} – ${fmt(k==='month'?R.month[0].slice(0,8)+String(new Date(Date.UTC(+R.month[0].slice(0,4),+R.month[0].slice(5,7),0)).getUTCDate()).padStart(2,'0'):R[k][1])}</div></div>`}).join('');
+ let html=`<div class="card" style="margin-bottom:12px"><h3 style="margin-bottom:3px">${admin?'Sales Tracker':'My Sales'}</h3><div class="muted small">Sold = job's Sold Date (or created date if blank), Chicago time. Week runs Monday–Sunday.</div></div><div class="cm-grid">${soldCards}</div>`;
+ html+=commissionPaidHTML(admin,me,base,R,P);
+ if(admin){const S=commissionSalesmen();html+=`<div class="card" style="margin-bottom:12px"><h3>Jobs Sold by Salesman</h3><div class="cm-wrap"><table class="cm-tbl"><thead><tr><th>Salesman</th><th>Week</th><th>Month</th><th>Year</th></tr></thead><tbody>${S.map(u=>`<tr><td>${esc(DISPLAY[u]||u)}</td>${['week','month','year'].map(k=>`<td>${jobs.filter(j=>ukey(j.salesman_username)===u&&inPeriod(j,R[k])).length}</td>`).join('')}</tr>`).join('')}<tr class="tot"><td>Company total</td>${['week','month','year'].map(k=>`<td>${jobs.filter(j=>inPeriod(j,R[k])).length}</td>`).join('')}</tr></tbody></table></div></div>`}
+ const pb=['week','month','year'].map(k=>`<button class="btn ${commissionPeriod===k?'primary':'light'} sm" onclick="setCommissionPeriod('${k}')">${P[k]}</button>`).join(' ');
+ const plist=base.filter(j=>inPeriod(j,R[commissionPeriod]));
+ html+=`<div class="card" style="margin-bottom:12px"><div class="split" style="flex-wrap:wrap;gap:8px"><h3 style="margin:0">${admin?'Commission Tracking':'My Commission'}</h3><div>${pb}</div></div><div class="muted small" style="margin:6px 0 10px">House money ${$$(HOUSE_MONEY)}/job, remainder split 50/50${admin?', Wally +'+$$(WALLY_EXTRA)+'/job, ':me==='wally'?', +'+$$(WALLY_EXTRA)+'/job extra, ':', '}${$$(BONUS_PER_JOB)}/job bonus on every job in a month with ${BONUS_MIN_JOBS}+ sold. Only jobs with profit entered are counted in dollars.${admin?' Assumption: Wally extras and 5+ bonuses are paid out of the company half.':''}</div>`;
+ if(admin){const S=commissionSalesmen();const rows=S.map(u=>[DISPLAY[u]||u,commissionTotals(plist.filter(j=>ukey(j.salesman_username)===u))]);const tot=commissionTotals(plist);const cols=t=>`<td>${t.sold}</td><td>${t.withProfit}</td><td>${$$(t.profit)}</td><td>${$$(t.house)}</td><td>${$$(t.companyHalf)}</td><td>${$$(t.salesHalf)}</td><td>${$$(t.wally)}</td><td>${$$(t.bonus)}</td><td>${$$(t.commission)}</td><td>${$$(t.companyKeeps)}</td>`;html+=`<div class="cm-wrap"><table class="cm-tbl"><thead><tr><th>Salesman</th><th>Sold</th><th>w/ Profit</th><th>Profit</th><th>House</th><th>Company ½</th><th>Salesman ½</th><th>Wally extra</th><th>5+ bonus</th><th>Commission</th><th>Company keeps</th></tr></thead><tbody>${rows.map(([n,t])=>`<tr><td>${esc(n)}</td>${cols(t)}</tr>`).join('')}<tr class="tot"><td>Overall</td>${cols(tot)}</tr></tbody></table></div>`}
+ else{const t=commissionTotals(plist);html+=`<div class="cm-box">${[['Jobs sold',t.sold],['Jobs with profit entered',t.withProfit],['My half of remainders',$$(t.salesHalf)],...(me==='wally'?[['Wally extras',$$(t.wally)]]:[]),['5+ monthly bonuses',$$(t.bonus)],['My total commission',$$(t.commission)]].map(x=>`<div class="ln"><span>${x[0]}</span><b>${x[1]}</b></div>`).join('')}</div>`}
+ // monthly bonus lines
+ const months={};plist.forEach(j=>{const u=ukey(j.salesman_username),ym=(soldISO(j)||'').slice(0,7);if(!ym)return;const k=u+'|'+ym;months[k]=months[k]||{u,ym,n:monthlySoldCount(u,ym)}});const bl=Object.values(months).filter(x=>x.n>=BONUS_MIN_JOBS);
+ html+=`<h4 style="margin:12px 0 6px">Monthly 5+ Bonus</h4>${bl.length?bl.map(x=>`<div class="rowbox split"><div><strong>${esc(DISPLAY[x.u]||x.u)} — ${esc(x.ym)}</strong><div class="sub">${x.n} garages sold → ${$$(BONUS_PER_JOB)} × ${x.n} jobs (retroactive to every job that month)</div></div><b>${$$(BONUS_PER_JOB*x.n)}</b></div>`).join(''):'<div class="muted small">No salesman has 5+ garages sold in a month in this period yet.</div>'}`;
+ html+=`</div>`;
+ const list=plist.slice().sort((a,b)=>(soldISO(b)||'').localeCompare(soldISO(a)||''));
+ html+=`<div class="card"><h3>${admin?'Jobs':'My Jobs'} — ${P[commissionPeriod]}</h3><div class="cm-wrap"><table class="cm-tbl"><thead><tr><th>Customer</th><th>Sold</th>${admin?'<th>Salesman</th>':''}<th>Status</th><th>Profit</th>${admin?'<th>House</th><th>Company ½</th>':''}<th>${admin?'Salesman ½':'My ½'}</th><th>Extra</th><th>Bonus</th><th>Commission</th>${admin?'<th>Company keeps</th>':''}</tr></thead><tbody>${list.length?list.map(j=>{const c=calcCommission(j);const d=v=>c.has?$$(v):'—';return `<tr onclick="openDrawer('${j.id}')" style="cursor:pointer"><td>${esc(j.customer||'—')}</td><td>${fmt(soldISO(j))}</td>${admin?`<td>${esc(DISPLAY[c.u]||c.u)}</td>`:''}<td>${esc(status(j))}</td><td>${c.has?$$(c.profit):(admin&&status(j)==='Completed'?'<span class="pill yellow">Enter</span>':'—')}</td>${admin?`<td>${d(c.house)}</td><td>${d(c.companyHalf)}</td>`:''}<td>${d(c.salesHalf)}</td><td>${c.has&&c.wally?$$(c.wally):'—'}</td><td>${c.has&&c.bonus?$$(c.bonus):'—'}</td><td>${d(c.salesmanTotal)}</td>${admin?`<td>${d(c.companyKeeps)}</td>`:''}</tr>`}).join(''):`<tr><td colspan="12" style="text-align:center;color:#6f7a8d;padding:20px">No jobs sold in this period.</td></tr>`}</tbody></table></div><div class="muted small" style="margin-top:6px">Tap a job to open it. ${admin?'Enter profit in the Commission box on completed (archived) jobs.':''}</div></div>`;
+ box.innerHTML=html}
 function renderStats(){const active=jobs.filter(j=>status(j)!=='Completed').length,p=jobs.filter(j=>['Applied/Submitted','Submitted','Corrections Needed'].includes(j.permit_status)).length,c=jobs.filter(j=>j.concrete_status==='Scheduled').length,carp=jobs.filter(j=>['Scheduled','In Progress'].includes(j.carpentry_status)).length,h=jobs.filter(j=>j.hold_status).length,o=jobs.filter(overdue).length,done=jobs.filter(j=>status(j)==='Completed').length;$('stats').innerHTML=[['Active Jobs',active,''],['Permits Pending',p,''],['Concrete Scheduled',c,''],['Carpentry Active',carp,''],['On Hold',h,h?'alert':''],['Overdue',o,o?'alert':''],['Completed',done,'']].map(x=>`<div class="stat ${x[2]}"><div class="n">${x[1]}</div><div class="l">${x[0]}</div></div>`).join('')}
 function renderRequests(){
  const pend=requests.filter(r=>r.status==='Pending');$('managerRequests').classList.toggle('hidden',!manager()||!pend.length);$('pendingCount').textContent=pend.length;
@@ -885,7 +1063,7 @@ async function approveEditRequest(id){
   if(r.request_type==='Note'&&r.job_id){
     const j=jobs.find(x=>x.id===r.job_id);
     const note=[j?.notes||'',`[${DISPLAY[r.salesman_username]||r.salesman_username} request] ${r.request_text}`].filter(Boolean).join('\n\n');
-    const {error}=await sb.from('jobs').update({notes:note}).eq('id',r.job_id);
+    const {error}=await sb.from('jobs').update({notes:withProfitTag(note,j)}).eq('id',r.job_id);
     if(error)return alert(error.message);
     await sb.from('job_activity').insert({job_id:r.job_id,actor_id:user.id,action:'Salesman note request approved',details:{request:r.request_text}});
   }else if(r.request_type==='Edit'&&r.job_id){
@@ -1364,7 +1542,7 @@ async function submitQuickJobCommand(){
         const patch={...parsed.updates};
         if(parsed.notes){
           const prev=parsed.matchedJob.notes||'';
-          patch.notes=[prev,`[${profile.display_name||profile.username}] ${parsed.notes}`].filter(Boolean).join('\n\n');
+          patch.notes=withProfitTag([prev,`[${profile.display_name||profile.username}] ${parsed.notes}`].filter(Boolean).join('\n\n'),parsed.matchedJob);
         }
         const {error}=await sb.from('jobs').update(patch).eq('id',parsed.matchedJob.id);
         if(error)throw error;
@@ -1456,7 +1634,19 @@ async function submitQuickJobCommand(){
   }
 }
 function populateFilters(){const fill=(id,vals,label)=>{const e=$(id),v=e.value;e.innerHTML=`<option value="">${label}</option>`+[...new Set(vals.filter(Boolean))].sort().map(x=>`<option value="${esc(x)}">${esc(DISPLAY[x]||x)}</option>`).join('');e.value=v};fill('salesFilter',jobs.map(j=>j.salesman_username),'All Salespeople');fill('statusFilter',jobs.map(status),'All Statuses');fill('cityFilter',jobs.map(j=>j.city),'All Cities')}
-function filteredJobs(){const q=$('search').value.toLowerCase(),s=$('salesFilter').value,st=$('statusFilter').value,c=$('cityFilter').value;return jobs.filter(j=>status(j)!=='Completed'&&(!q||[j.customer,j.address,j.city,j.job_number,j.garage_size].join(' ').toLowerCase().includes(q))&&(!s||j.salesman_username===s)&&(!st||status(j)===st)&&(!c||j.city===c))}
+// Typed search: partial, case-insensitive name match OR normalized address match. Returns '' or a reason.
+function searchMatchReason(rec,q){
+  q=String(q||'').trim();if(!q)return '';
+  const nq=q.toLowerCase().replace(/[^a-z0-9]+/g,' ').trim(),nameN=String(rec.customer||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+  const nameToks=nameN.split(' ');
+  const byName=!!nq&&!!nameN&&(nameN.includes(nq)||nq.split(' ').every(w=>nameToks.some(t=>t.includes(w))));
+  const aq=normAddress(q),aj=normAddress(rec.address);
+  const byAddr=!!aq&&!!aj&&/\d/.test(aq)&&(aj.includes(aq)||(!!addrCore(aq)&&addrCore(aj).includes(addrCore(aq))));
+  return byName&&byAddr?'name + address':byName?'name':byAddr?'address':'';
+}
+function searchMatchLabel(rec,q){const w=searchMatchReason(rec,q);return w==='name'?'Matched by name: '+(rec.customer||''):w==='address'?'Matched by address: '+(rec.address||''):w?'Matched by name + address':''}
+function jobSearchMatch(j,q){q=String(q||'').trim().toLowerCase();if(!q)return true;if(searchMatchReason(j,q))return true;return [j.customer,j.address,j.city,j.job_number,j.garage_size].join(' ').toLowerCase().includes(q)}
+function filteredJobs(){const q=$('search').value.toLowerCase(),s=$('salesFilter').value,st=$('statusFilter').value,c=$('cityFilter').value;return jobs.filter(j=>status(j)!=='Completed'&&(!q||jobSearchMatch(j,q))&&(!s||j.salesman_username===s)&&(!st||status(j)===st)&&(!c||j.city===c))}
 function renderJobs(){const rows=filteredJobs();$('jobRows').innerHTML=rows.length?rows.map(j=>`<tr onclick="openDrawer('${j.id}')" style="cursor:pointer"><td><div class="cust">${esc(j.customer)}</div><div class="sub">${esc(DISPLAY[j.salesman_username]||j.salesman_username)}${j.job_number?` • ${esc(j.job_number)}`:''}</div></td><td><div class="job-address">${esc(j.address||'Address not entered')}</div><div class="sub">${esc(j.city||'')}</div><div class="sub">Next: ${esc(nextJobDate(j))}</div></td><td><span class="pill ${tone(status(j))}">${esc(status(j))}</span>${j.hold_status?`<div class="sub hold">ON HOLD — ${esc(holdReasonText(j)||'Reason not entered')}</div>`:''}${overdue(j)?'<div class="sub overdue">OVERDUE</div>':''}${lastComplete(j)?`<div class="sub progress-last"><strong>Last Complete:</strong> ${esc(lastComplete(j))}</div>`:''}<div class="sub progress-next"><strong>Next Step:</strong> ${esc(next(j))}</div><div class="sub job-age">Job age: ${esc(jobAgeLabel(j))}</div></td><td>${jobFileButtons(j)}</td></tr>`).join(''):`<tr><td colspan="4" style="text-align:center;padding:40px;color:#6f7a8d">No active jobs match these filters.</td></tr>`}
 function cell(s,d){return `<span class="pill ${tone(s)}">${esc(s||'—')}</span><div class="sub">${fmt(d)}</div>`}
 function clearFilters(){['search','salesFilter','statusFilter','cityFilter'].forEach(id=>$(id).value='');renderJobs()}
@@ -1471,7 +1661,7 @@ function setView(v,btn){
   const match=document.querySelector('.tab[data-view="'+v+'"]');
   if(match) match.classList.add('active');
  }
- ['home','dashboard','week','calendar','personalCalendar','allPersonalCalendars','estimator','estimateHistory','planHistory','completed','trash'].forEach(x=>$(x+'View')?.classList.toggle('hidden',x!==v));
+ ['home','dashboard','week','calendar','personalCalendar','allPersonalCalendars','estimator','estimateHistory','planHistory','completed','commission','map','trash'].forEach(x=>$(x+'View')?.classList.toggle('hidden',x!==v));
  const onHome=v==='home';
  document.body.classList.toggle('on-home',onHome);
  if($('stats')) $('stats').classList.toggle('hidden', onHome);
@@ -1479,7 +1669,9 @@ function setView(v,btn){
  if(v==='estimateHistory') renderEstimateHistory();
  if(v==='planHistory') renderPlanHistory();
  if(v==='home') try{renderHomeTiles()}catch(e){}
- $('pageTitle').textContent=v==='home'?'Home':v==='week'?'Today':v==='calendar'?'Project Calendar':v==='personalCalendar'?'Personal Calendar':v==='allPersonalCalendars'?'All Personal Calendars':v==='estimator'?'Garage Estimator':v==='estimateHistory'?'Estimate History':v==='planHistory'?'Plan History':v==='completed'?'Completed Archive':v==='trash'?'Trash':(canViewAllJobs()?'Jobs':'My jobs');
+ if(v==='commission') try{renderCommission()}catch(e){console.error(e)}
+ if(v==='map') try{openJobsMap()}catch(e){console.error('map',e)}
+ $('pageTitle').textContent=v==='home'?'Home':v==='week'?'Today':v==='calendar'?'Project Calendar':v==='personalCalendar'?'Personal Calendar':v==='allPersonalCalendars'?'All Personal Calendars':v==='estimator'?'Garage Estimator':v==='estimateHistory'?'Estimate History':v==='planHistory'?'Plan History':v==='completed'?'Completed Archive':v==='commission'?(commissionAdmin()?'Sales & Commission':'My Sales & Commission'):v==='map'?'Jobs Map':v==='trash'?'Trash':(canViewAllJobs()?'Jobs':'My jobs');
  $('subtitle').textContent=v==='home'?'Pick what you need':v==='allPersonalCalendars'?'Management view of everyone’s appointments and tasks':v==='personalCalendar'?'Your private appointments and tasks':v==='estimator'?'Quick estimating and customer estimate sheets':v==='estimateHistory'?(privateAccessManager()||manager()?'All saved company estimates':'Your private saved estimates'):v==='planHistory'?(privateAccessManager()||manager()?'All saved garage permit plans':'Your saved garage permit plans'):v==='week'?'Jobs scheduled for today':'Live shared office data';
 }
 function exitEstimator(){const b=document.querySelector('.tab[data-view="dashboard"]');setView('dashboard',b)}
@@ -1948,12 +2140,12 @@ function renderPlanHistory(){
  }
  let a=planHistoryRows();
  if(sf) a=a.filter(e=>String(e.salesman_username||'').toLowerCase().trim()===String(sf).toLowerCase());
- if(q) a=a.filter(e=>[e.customer,e.address,e.city,e.garage_size,e.roof_type,DISPLAY[e.salesman_username]||e.salesman_username].some(v=>String(v||'').toLowerCase().includes(q)));
+ if(q) a=a.filter(e=>jobSearchMatch({customer:e.customer,address:e.address},q)||[e.customer,e.address,e.city,e.garage_size,e.roof_type,DISPLAY[e.salesman_username]||e.salesman_username].some(v=>String(v||'').toLowerCase().includes(q)));
  const emptyMsg=!planHistoryRows().length?'No saved garage plans yet. Open Garage Plans and press Save to History.':'No plans match this search.';
  rows.innerHTML=a.length?a.map(e=>{
   const salesKey=String(e.salesman_username||'').toLowerCase().trim();
   const canDel=privateAccessManager()||manager()||(myUser&&salesKey===myUser);
-  return `<tr><td>${new Date(e.created_at).toLocaleDateString()}<div class="sub">${new Date(e.created_at).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}</div></td><td><strong>${esc(e.customer)}</strong></td><td>${esc(DISPLAY[e.salesman_username]||e.salesman_username)}</td><td>${esc(e.address||'')}<div class="sub">${esc(e.city||'')}</div></td><td>${esc(e.garage_size||'—')}</td><td>${esc(e.roof_type||'—')}</td><td>${esc(e.city||'—')}</td><td><div style="display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end"><button class="btn light sm" onclick="openSavedPlan('${e.id}')">Open / Edit</button>${canDel?`<button type="button" class="estimate-delete-btn" onclick="deleteEstimateHistory('${e.id}','${esc(e.customer||'Plan')}')">Delete</button>`:''}</div></td></tr>`;
+  return `<tr><td>${new Date(e.created_at).toLocaleDateString()}<div class="sub">${new Date(e.created_at).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}</div></td><td><strong>${esc(e.customer)}</strong>${q&&searchMatchLabel(e,q)?`<div class="sub est-why" style="color:#1d4ed8;font-weight:700">${esc(searchMatchLabel(e,q))}</div>`:''}</td><td>${esc(DISPLAY[e.salesman_username]||e.salesman_username)}</td><td>${esc(e.address||'')}<div class="sub">${esc(e.city||'')}</div></td><td>${esc(e.garage_size||'—')}</td><td>${esc(e.roof_type||'—')}</td><td>${esc(e.city||'—')}</td><td><div style="display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end"><button class="btn light sm" onclick="openSavedPlan('${e.id}')">Open / Edit</button>${canDel?`<button type="button" class="estimate-delete-btn" onclick="deleteEstimateHistory('${e.id}','${esc(e.customer||'Plan')}')">Delete</button>`:''}</div></td></tr>`;
  }).join(''):`<tr><td colspan="8" style="text-align:center;padding:35px;color:#6f7a8d">${esc(emptyMsg)}</td></tr>`;
 }
 function openSavedPlan(id){ location.href='GaragePlans.html?planId='+encodeURIComponent(id)+'&v='+Date.now(); }
@@ -1966,14 +2158,14 @@ function renderEstimateHistory(){
  // except optional search + salesman dropdown filters (case-insensitive).
  let a=estimateOnlyRows();
  if(sf) a=a.filter(e=>String(e.salesman_username||'').toLowerCase().trim()===String(sf).toLowerCase());
- if(q) a=a.filter(e=>[e.customer,e.address,e.city,e.garage_size,e.roof_type,DISPLAY[e.salesman_username]||e.salesman_username,e.salesman_username].some(v=>String(v||'').toLowerCase().includes(q)));
+ if(q) a=a.filter(e=>jobSearchMatch({customer:e.customer,address:e.address},q)||[e.customer,e.address,e.city,e.garage_size,e.roof_type,DISPLAY[e.salesman_username]||e.salesman_username,e.salesman_username].some(v=>String(v||'').toLowerCase().includes(q)));
  const emptyMsg=!estimateOnlyRows().length
    ? 'No saved estimates returned from the database yet.'
    : 'No estimates match this search / salesman filter. Clear filters to see all.';
  rows.innerHTML=a.length?a.map(e=>{
    const salesKey=String(e.salesman_username||'').toLowerCase().trim();
    const canDel=privateAccessManager()||manager()||(myUser&&salesKey===myUser);
-   return `<tr><td>${new Date(e.created_at).toLocaleDateString()}<div class="sub">${new Date(e.created_at).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}</div></td><td><strong>${esc(e.customer)}</strong></td><td>${esc(DISPLAY[e.salesman_username]||e.salesman_username)}</td><td>${esc(e.address||'')}<div class="sub">${esc(e.city||'')}</div></td><td>${esc(e.garage_size||'—')}</td><td>${esc(e.roof_type||'—')}</td><td><strong>${money(e.estimate_price)}</strong></td><td><div style="display:flex;gap:7px;align-items:center;justify-content:flex-end;flex-wrap:wrap"><button class="btn light sm" onclick="viewEstimateHistory('${e.id}')">View / Print</button><button class="btn light sm" style="background:#0f274b;color:#fff;border-color:#0f274b" onclick="editEstimateHistory('${e.id}')">Edit</button>${canDel?`<button type="button" class="estimate-delete-btn" title="Delete estimate" aria-label="Delete estimate" onclick="deleteEstimateHistory('${e.id}','${esc(e.customer||'Estimate')}')">Delete</button>`:''}</div></td></tr>`;
+   return `<tr><td>${new Date(e.created_at).toLocaleDateString()}<div class="sub">${new Date(e.created_at).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}</div></td><td><strong>${esc(e.customer)}</strong>${q&&searchMatchLabel(e,q)?`<div class="sub est-why" style="color:#1d4ed8;font-weight:700">${esc(searchMatchLabel(e,q))}</div>`:''}</td><td>${esc(DISPLAY[e.salesman_username]||e.salesman_username)}</td><td>${esc(e.address||'')}<div class="sub">${esc(e.city||'')}</div></td><td>${esc(e.garage_size||'—')}</td><td>${esc(e.roof_type||'—')}</td><td><strong>${money(e.estimate_price)}</strong></td><td><div style="display:flex;gap:7px;align-items:center;justify-content:flex-end;flex-wrap:wrap"><button class="btn light sm" onclick="viewEstimateHistory('${e.id}')">View / Print</button><button class="btn light sm" style="background:#0f274b;color:#fff;border-color:#0f274b" onclick="editEstimateHistory('${e.id}')">Edit</button>${canDel?`<button type="button" class="estimate-delete-btn" title="Delete estimate" aria-label="Delete estimate" onclick="deleteEstimateHistory('${e.id}','${esc(e.customer||'Estimate')}')">Delete</button>`:''}</div></td></tr>`;
  }).join(''):`<tr><td colspan="8" style="text-align:center;padding:35px;color:#6f7a8d">${esc(emptyMsg)}</td></tr>`;
 }
 
@@ -2014,7 +2206,7 @@ async function uploadManagerJobPaperwork(jobId,user){
 }
 function openJobForm(id=null){if(!manager())return;openJobId=id;resetManagerJobPaperwork();$('jobFormTitle').textContent=id?'Edit Job — Attach Paperwork':'Add Job — Attach Paperwork';$('deleteJobBtn').classList.toggle('hidden',!id);fields.forEach(k=>{const e=$('f_'+k);if(e)e.value=''});$('f_id').value=id||'';$('f_city').value='Chicago';$('f_priority').value='Normal';$('f_hold_status').value='false';$('f_salesman_username').value='ramsey';$('f_sold_date').value=todayISO();$('f_permit_status').value='Not Submitted';$('f_demolition_required').value='true';$('f_demo_status').value='Pending';$('f_concrete_status').value='Pending';$('f_carpentry_status').value='Pending';$('f_electric_status').value='Pending';$('f_extras_required').value='false';$('f_extras_status').value='N/A';if(id){const j=jobs.find(x=>x.id===id);fields.forEach(k=>{const e=$('f_'+k);if(e)e.value=(['hold_status','demolition_required','extras_required'].includes(k)?String(!!j[k]):(j[k]??''))})}syncDemoRequirement();syncExtrasRequirement();$('jobBg').classList.add('show')}
 function closeJobForm(){$('jobBg').classList.remove('show');openJobId=null}
-async function saveJob(e){e.preventDefault();if(!manager())return;const {data:{user}}=await sb.auth.getUser();const rec={};fields.forEach(k=>{let v=$('f_'+k).value;if(['sold_date','deposit_date','permit_date','scheduled_demo','demo_date','concrete_scheduled','concrete_poured','concrete_ready','carpentry_scheduled','built_date','electric_date','extras_scheduled','extras_complete_date','inspection_date','completed_date'].includes(k))v=v||null;if(['price','deposit'].includes(k))v=Number(v)||0;if(['hold_status','demolition_required','extras_required'].includes(k))v=v==='true';rec[k]=v});if(rec.demolition_required===false)rec.demo_status='N/A';else if(rec.demo_status==='N/A')rec.demo_status='Pending';if(rec.extras_required===false)rec.extras_status='N/A';else if(rec.extras_status==='N/A')rec.extras_status='Pending';let id=$('f_id').value,err;if(id){({error:err}=await sb.from('jobs').update(rec).eq('id',id));if(!err)await sb.from('job_activity').insert({job_id:id,actor_id:user.id,action:'Job updated',details:{status:status({...jobs.find(x=>x.id===id),...rec})}})}else{rec.created_by=user.id;const res=await sb.from('jobs').insert(rec).select().single();err=res.error;id=res.data?.id;if(id)await sb.from('job_activity').insert({job_id:id,actor_id:user.id,action:'Job created',details:{}})}if(err)return alert(err.message);
+async function saveJob(e){e.preventDefault();if(!manager())return;const {data:{user}}=await sb.auth.getUser();const rec={};fields.forEach(k=>{let v=$('f_'+k).value;if(['sold_date','deposit_date','permit_date','scheduled_demo','demo_date','concrete_scheduled','concrete_poured','concrete_ready','carpentry_scheduled','built_date','electric_date','extras_scheduled','extras_complete_date','inspection_date','completed_date'].includes(k))v=v||null;if(['price','deposit'].includes(k))v=Number(v)||0;if(['hold_status','demolition_required','extras_required'].includes(k))v=v==='true';rec[k]=v});if($('f_id').value)rec.notes=withProfitTag(rec.notes,jobs.find(x=>x.id===$('f_id').value));if(rec.demolition_required===false)rec.demo_status='N/A';else if(rec.demo_status==='N/A')rec.demo_status='Pending';if(rec.extras_required===false)rec.extras_status='N/A';else if(rec.extras_status==='N/A')rec.extras_status='Pending';let id=$('f_id').value,err;if(id){({error:err}=await sb.from('jobs').update(rec).eq('id',id));if(!err)await sb.from('job_activity').insert({job_id:id,actor_id:user.id,action:'Job updated',details:{status:status({...jobs.find(x=>x.id===id),...rec})}})}else{rec.created_by=user.id;const res=await sb.from('jobs').insert(rec).select().single();err=res.error;id=res.data?.id;if(id)await sb.from('job_activity').insert({job_id:id,actor_id:user.id,action:'Job created',details:{}})}if(err)return alert(err.message);
  const uploadErr=await uploadManagerJobPaperwork(id,user);
  if(uploadErr)return alert('Job was saved, but paperwork upload failed: '+uploadErr.message);
  closeJobForm();
@@ -2028,7 +2220,7 @@ async function deleteJob(){if(!manager()||!openJobId||!confirm('Move this job to
 async function restoreJob(id){if(!manager()||!confirm('Restore this job for everyone?'))return;const {data:{user}}=await sb.auth.getUser();const {error}=await sb.from('jobs').update({deleted_at:null,deleted_by:null}).eq('id',id);if(error)return alert(error.message);await sb.from('job_activity').insert({job_id:id,actor_id:user.id,action:'Job restored from Trash',details:{}});await refresh()}
 async function permanentlyDeleteJob(id){if(!manager()||!confirm('PERMANENTLY delete this job? This cannot be undone.'))return;const {error}=await sb.from('jobs').delete().eq('id',id);if(error)return alert(error.message);await refresh()}
 function renderTrash(){if(!manager())return;const rows=$('trashRows');if(!rows)return;rows.innerHTML=trashJobs.length?trashJobs.map(j=>`<tr><td><strong>${esc(j.customer)}</strong><div class="sub">${esc(j.job_number||'No job #')}</div></td><td>${esc(DISPLAY[j.salesman_username]||j.salesman_username)}</td><td>${esc(j.address||'')} ${esc(j.city||'')}</td><td>${j.deleted_at?new Date(j.deleted_at).toLocaleString():'—'}</td><td><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn primary sm" onclick="restoreJob('${j.id}')">Restore</button><button class="btn danger sm" onclick="permanentlyDeleteJob('${j.id}')">Delete Forever</button></div></td></tr>`).join(''):`<tr><td colspan="5" style="text-align:center;padding:35px;color:#6f7a8d">Trash is empty.</td></tr>`}
-async function openDrawer(id){openJobId=id;const j=jobs.find(x=>x.id===id);if(!j)return;const [a,d]=await Promise.all([sb.from('job_activity').select('*').eq('job_id',id).order('created_at',{ascending:false}).limit(30),sb.from('job_documents').select('*').eq('job_id',id).order('created_at',{ascending:false})]);const activity=a.data||[],docs=d.data||[];const tl=[['Sold',!!j.sold_date,j.sold_date],['Deposit',j.deposit_status==='Received',j.deposit_date],['Permit',['Approved','N/A'].includes(j.permit_status),j.permit_date],['Demo',j.demolition_required===false||j.demo_status==='N/A'||j.demo_status==='Complete',j.demo_date||j.scheduled_demo],['Concrete',['Poured','N/A'].includes(j.concrete_status),j.concrete_poured||j.concrete_scheduled],['Carpentry',j.carpentry_status==='Garage Built',j.built_date||j.carpentry_scheduled],['Electric',['Complete','Not Included','N/A'].includes(j.electric_status),j.electric_date],['Gutters / Extras',j.extras_required!==true||j.extras_status==='N/A'||j.extras_status==='Complete',j.extras_complete_date||j.extras_scheduled],['Inspection',['Passed','N/A'].includes(j.inspection_status),j.inspection_date],['Complete',!!j.completed_date,j.completed_date]];let first=tl.findIndex(x=>!x[1]);$('drawerContent').innerHTML=`<div class="drawerhead"><div class="split"><div><div class="sub">${esc(j.job_number||'')}</div><h2 style="margin:0">${esc(j.customer)}</h2><div class="sub">${esc(j.address||'')} ${esc(j.city||'')}</div></div><div style="display:flex;gap:6px"><button class="btn light sm" onclick="printJobSummary('${j.id}')">Print Summary</button>${manager()?`<button class="btn light sm" onclick="closeDrawer();openJobForm('${j.id}')">Edit</button>`:''}<button class="btn light sm" onclick="closeDrawer()">✕</button></div></div><div style="margin-top:9px"><span class="pill ${tone(status(j))}">${esc(status(j))}</span> ${j.hold_status?`<span class="pill red">${esc(holdReasonText(j)||'Hold')}</span>`:''}</div></div>
+async function openDrawer(id){openJobId=id;const j=jobs.find(x=>x.id===id);if(!j)return;recordRecentJob(id);const [a,d]=await Promise.all([sb.from('job_activity').select('*').eq('job_id',id).order('created_at',{ascending:false}).limit(30),sb.from('job_documents').select('*').eq('job_id',id).order('created_at',{ascending:false})]);const activity=a.data||[],docs=d.data||[];const tl=[['Sold',!!j.sold_date,j.sold_date],['Deposit',j.deposit_status==='Received',j.deposit_date],['Permit',['Approved','N/A'].includes(j.permit_status),j.permit_date],['Demo',j.demolition_required===false||j.demo_status==='N/A'||j.demo_status==='Complete',j.demo_date||j.scheduled_demo],['Concrete',['Poured','N/A'].includes(j.concrete_status),j.concrete_poured||j.concrete_scheduled],['Carpentry',j.carpentry_status==='Garage Built',j.built_date||j.carpentry_scheduled],['Electric',['Complete','Not Included','N/A'].includes(j.electric_status),j.electric_date],['Gutters / Extras',j.extras_required!==true||j.extras_status==='N/A'||j.extras_status==='Complete',j.extras_complete_date||j.extras_scheduled],['Inspection',['Passed','N/A'].includes(j.inspection_status),j.inspection_date],['Complete',!!j.completed_date,j.completed_date]];let first=tl.findIndex(x=>!x[1]);$('drawerContent').innerHTML=`<div class="drawerhead"><div class="split"><div><div class="sub">${esc(j.job_number||'')}</div><h2 style="margin:0">${esc(j.customer)}</h2><div class="sub">${esc(j.address||'')} ${esc(j.city||'')}</div></div><div style="display:flex;gap:6px"><button class="btn light sm" onclick="printJobSummary('${j.id}')">Print Summary</button>${manager()?`<button class="btn light sm" onclick="closeDrawer();openJobForm('${j.id}')">Edit</button>`:''}<button class="btn light sm" onclick="closeDrawer()">✕</button></div></div><div style="margin-top:9px"><span class="pill ${tone(status(j))}">${esc(status(j))}</span> ${j.hold_status?`<span class="pill red">${esc(holdReasonText(j)||'Hold')}</span>`:''}</div></div>
 <div class="drawergrid">
 <div class="card full"><h4>Production Timeline</h4><div class="timeline">${tl.map((x,i)=>`<div class="step ${x[1]?'done':i===first?'current':''}"><div class="circle">${x[1]?'✓':i+1}</div><div class="stepname">${x[0]}</div><div class="stepdate">${fmt(x[2])}</div></div>`).join('')}</div></div>
 <div class="card"><h4>Job Information</h4>${info('Salesman',DISPLAY[j.salesman_username]||j.salesman_username)}${info('Phone',j.phone)}${info('Garage',j.garage_size)}${info('Job Age',jobAgeLabel(j))}${info('Contract',money(j.price))}${info('Deposit',money(j.deposit))}${info('Priority',j.priority)}${info('Next date',nextJobDate(j))}</div>
@@ -2037,7 +2229,7 @@ async function openDrawer(id){openJobId=id;const j=jobs.find(x=>x.id===id);if(!j
 <div class="card full"><h4>Key Dates</h4><div class="grid">${ibox('Demo Scheduled',fmt(j.scheduled_demo))}${ibox('Demo Crew',j.demo_crew||'—')}${ibox('Concrete Scheduled',fmt(j.concrete_scheduled))}${ibox('Concrete Crew',j.concrete_crew||'—')}${ibox('Concrete Poured',fmt(j.concrete_poured))}${ibox('Carpentry Scheduled',fmt(j.carpentry_scheduled))}${ibox('Carpentry Crew',j.carpentry_crew||'—')}${ibox('Garage Built',fmt(j.built_date))}${ibox('Electric',fmt(j.electric_date))}${ibox('Electric Crew',j.electric_crew||'—')}${ibox('Inspection',fmt(j.inspection_date))}</div></div>
 <div class="card full"><h4>Contract & Paperwork</h4>${!docs.some(x=>x.document_type==='Contract')?`<div style="margin-bottom:10px;padding:12px;border:2px solid #b91c1c;background:#fef2f2;color:#b91c1c;font-size:19px;font-weight:1000;text-align:center;border-radius:9px">MISSING PAPERWORK</div>`:''}<div class="scan-paperwork-box"><div class="scan-paperwork-title">📷 Scan / Upload Paperwork</div><div class="scan-paperwork-help">On a phone, tap <b>Scan with Camera</b> to photograph handwritten paperwork. You can also choose an existing PDF or photo. Pick the paperwork type first so it is filed correctly under this customer.</div><div class="scan-actions"><div class="field"><label>Paperwork Type</label><select id="docType"><option>Contract</option><option>Deposit Check / Proof of Payment</option><option>Plat of Survey</option><option>Demolition Sheet</option><option>Concrete Sheet</option><option>Permit</option><option>Inspection</option><option>Photo</option><option>Other</option></select></div><button class="btn primary scan-btn" onclick="startPaperworkScan('${j.id}')">📷 Scan with Camera</button><button class="btn light scan-btn" onclick="choosePaperworkFiles('${j.id}')">Choose PDF / Photos</button><input id="docCameraFile" type="file" accept="image/*" capture="environment" style="display:none" onchange="uploadSelectedPaperwork('${j.id}','docCameraFile')"><input id="docFile" type="file" multiple accept=".pdf,image/*" style="display:none" onchange="uploadSelectedPaperwork('${j.id}','docFile')"></div></div><div class="list">${docs.length?docs.map(x=>`<div class="rowbox split"><div><strong>${esc(x.document_type||'Document')}: ${esc(x.file_name)}</strong><div class="sub">${new Date(x.created_at).toLocaleString()}</div></div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn light sm" onclick="viewDoc('${esc(x.storage_path)}','${esc(x.file_name)}')">Pop Up</button><button type="button" onclick="deleteSavedPaperwork('${x.id}','${j.id}')" style="display:inline-block!important;visibility:visible!important;opacity:1!important;background:#dc2626!important;color:#fff!important;border:2px solid #b91c1c!important;border-radius:8px!important;padding:9px 14px!important;font-weight:1000!important;cursor:pointer!important;min-width:88px!important">Delete</button></div></div>`).join(''):'<div class="muted small">No paperwork uploaded yet.</div>'}</div></div>
 <div class="card full"><h4>Activity History</h4><div class="list">${activity.length?activity.map(x=>`<div class="rowbox"><strong>${esc(x.action)}</strong><div class="sub">${new Date(x.created_at).toLocaleString()}</div></div>`).join(''):'<div class="muted small">No activity recorded yet.</div>'}</div></div>
-<div class="card full"><h4>Notes</h4><div style="white-space:pre-wrap">${esc(j.notes||'No notes.')}</div>${!manager()?`<div class="request-box"><strong>Need Randy or Sam to change something?</strong><div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:8px"><button class="btn light sm" onclick="submitJobChangeRequest('${j.id}','Edit')">Request an Edit</button><button class="btn light sm" onclick="submitJobChangeRequest('${j.id}','Note')">Request a Note</button></div></div>`:''}</div>
+${commissionCard(j)}<div class="card full"><h4>Notes</h4><div style="white-space:pre-wrap">${esc(j.notes||'No notes.')}</div>${!manager()?`<div class="request-box"><strong>Need Randy or Sam to change something?</strong><div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:8px"><button class="btn light sm" onclick="submitJobChangeRequest('${j.id}','Edit')">Request an Edit</button><button class="btn light sm" onclick="submitJobChangeRequest('${j.id}','Note')">Request a Note</button></div></div>`:''}</div>
 </div>`;$('drawerBg').classList.add('show')}
 
 function printJobSummary(id){

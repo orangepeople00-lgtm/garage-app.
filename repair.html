@@ -103,6 +103,7 @@ input.c:focus,select.c:focus,textarea.c:focus{outline:none;border-color:#3b82f6}
 .rs-pill{display:inline-block;background:#111;color:#F5A623;border-radius:22px;padding:4px 44px;font-weight:900;font-size:15px;line-height:1.15;text-transform:uppercase}
 .rs-photos{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:9px 18px 0}
 .rs-photo{position:relative;height:2.35in;background:#e5e7eb;overflow:hidden}
+.rs-photos.one{grid-template-columns:1fr;justify-items:center}.rs-photos.one .rs-photo{width:68%}
 .rs-photo img,.rs-photo svg.phs{width:100%;height:100%;object-fit:cover;display:block}
 .rs-cap{position:absolute;left:0;bottom:6px;background:#111;color:#fff;font-weight:800;font-size:11.5px;padding:3px 9px;line-height:1.2}.rs-cap small{display:block;font-size:8px;font-weight:600}
 .rs-std{margin:8px auto 0;width:82%;border:1.5px solid #111;border-radius:5px;padding:5px 12px;display:flex;align-items:center;gap:14px;font-size:12.5px}
@@ -143,7 +144,7 @@ tr.optrow td{background:#fff7e6}
   .rs{margin:0!important}
   .rs [contenteditable]:hover{outline:none}
 }
-</style>
+</style><style>.rl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}.rl-sec{grid-column:1/-1;font-weight:800;color:#fbbf24;border-bottom:1px solid #3f3f46;padding:6px 0 4px;margin-top:6px}.rl-card{border:2px solid #3f3f46;border-radius:12px;overflow:hidden;cursor:pointer;background:#18181b}.rl-card.rl-sel{border-color:#10b981}.rl-card img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block;background:#27272a}.rl-tags{font-size:11px;padding:5px 7px;color:#d4d4d8}</style>
 </head>
 <body>
 <a class="back" href="index.html?v=20260818v2">← Back To Dashboard</a>
@@ -187,6 +188,7 @@ tr.optrow td{background:#fff7e6}
     </div>
     <div class="card" style="margin-top:16px">
       <div class="sh">📷 Sheet photos</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px"><label class="l" for="photoCount" style="margin:0">Photos on the sheet</label><select id="photoCount" class="c" style="width:auto" onchange="renderPhotos();calc();saveDraft()"><option value="1" selected>1 photo</option><option value="2">2 photos (side by side)</option></select></div>
       <div class="photos" id="sheetPhotos"></div>
       <label style="display:flex;gap:8px;align-items:center;margin-top:8px;font-size:14px;min-height:44px"><input type="checkbox" id="exampleTag" onchange="calc()" style="width:22px;height:22px"> Add "EXAMPLE PHOTO - STYLE MAY VARY" tag</label>
       <label style="display:flex;gap:8px;align-items:center;margin-top:4px;font-size:14px;min-height:44px"><input type="checkbox" id="insuranceJob" onchange="calc();saveDraft()" style="width:22px;height:22px"> Insurance job <span class="muted" style="font-size:12px">(sheet states it is for insurance)</span></label>
@@ -466,7 +468,7 @@ const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const money=v=>'$'+Math.round(Number(v)||0).toLocaleString('en-US');
 const money2=v=>'$'+(Number(v)||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
-const FIELDS=['salesman','customerName','customerPhone','customerEmail','customerAddress','customerCity','gW','gD','roofStyle','pitch','showPill','profitMode','profitValue','exampleTag','insuranceJob','damageNotes'];
+const FIELDS=['salesman','customerName','customerPhone','customerEmail','customerAddress','customerCity','gW','gD','roofStyle','pitch','showPill','profitMode','profitValue','exampleTag','insuranceJob','photoCount','damageNotes'];
 function renderItems(){
   let h='',lastG=-1;
   ITEMS.forEach(it=>{ if(it.g!==lastG){h+='<div class="grp">'+GROUPS[it.g]+'</div>';lastG=it.g;}
@@ -487,12 +489,67 @@ function setF(id,k,v){S.items[id].f[k]=v;calc();}
 function renderExtras(){ $('extras').innerHTML=S.extras.map((e,i)=>'<div class="exrow custom-extra-row"><input class="c" placeholder="Description (shows on sheet)" value="'+esc(e.desc)+'" oninput="S.extras['+i+'].desc=this.value;calc()"><input class="c" type="number" inputmode="decimal" min="0" placeholder="'+(e.disp==='option'?'Customer price $':'Internal cost $')+'" value="'+esc(e.cost)+'" oninput="S.extras['+i+'].cost=this.value;calc()"><select class="c" onchange="S.extras['+i+'].disp=this.value;renderExtras();calc()"><option value="included"'+(e.disp!=='option'?' selected':'')+'>Included in Price</option><option value="option"'+(e.disp==='option'?' selected':'')+'>Option price (not in total)</option></select><button class="btn" type="button" onclick="S.extras.splice('+i+',1);renderExtras();calc()">✕</button></div>').join(''); }
 function addExtra(){S.extras.push({desc:'',cost:'',disp:'included'});renderExtras();calc();}
 function renderCond(){ $('condList').innerHTML=CONDITIONS.map((c,i)=>'<div class="cond"><span>'+esc(c)+'</span><select class="c" onchange="S.cond[CONDITIONS['+i+']]=this.value;saveDraft()">'+['—','Good','Fair','Poor','Replace'].map(o=>'<option'+((S.cond[c]||'—')===o?' selected':'')+'>'+o+'</option>').join('')+'</select></div>').join(''); }
+function photoCount(){return $('photoCount')&&$('photoCount').value==='2'?2:1;}
 function renderPhotos(){
-  $('sheetPhotos').innerHTML=S.photos.map((p,i)=>'<div class="ph">'+(p.src?'<img src="'+p.src+'" alt="">':'<div class="empty">Example placeholder</div>')+'<input type="file" accept="image/*" id="pf'+i+'" style="display:none" onchange="loadPhoto(this,'+i+')"><div style="display:flex;gap:4px;margin-top:6px"><button class="btn" type="button" style="flex:1;padding:6px" onclick="$(\'pf'+i+'\').click()">📷 Photo</button>'+(p.src?'<button class="btn" type="button" style="padding:6px" onclick="S.photos['+i+'].src=\'\';renderPhotos();calc()">✕</button>':'')+'</div><select class="c" style="margin-top:6px" onchange="S.photos['+i+'].cap=this.value;calc()">'+['FRONT VIEW','REAR VIEW','DETAIL VIEW','LEFT SIDE VIEW','RIGHT SIDE VIEW'].map(o=>'<option'+(o===p.cap?' selected':'')+'>'+o+'</option>').join('')+'</select></div>').join('');
+  $('sheetPhotos').innerHTML=S.photos.slice(0,photoCount()).map((p,i)=>'<div class="ph">'+(p.src?'<img src="'+p.src+'" alt="">':'<div class="empty">Example placeholder</div>')+'<input type="file" accept="image/*" id="pf'+i+'" style="display:none" onchange="loadPhoto(this,'+i+')"><div style="display:flex;gap:4px;margin-top:6px"><button class="btn" type="button" style="flex:1;padding:6px" onclick="openRepairLibrary('+i+')">📚 Library</button><button class="btn" type="button" style="flex:1;padding:6px" onclick="$(\'pf'+i+'\').click()">📷 Own photo</button>'+(p.src?'<button class="btn" type="button" style="padding:6px" onclick="S.photos['+i+'].src=\'\';renderPhotos();calc()">✕</button>':'')+'</div><select class="c" style="margin-top:6px" onchange="S.photos['+i+'].cap=this.value;calc()">'+['FRONT VIEW','REAR VIEW','DETAIL VIEW','LEFT SIDE VIEW','RIGHT SIDE VIEW'].map(o=>'<option'+(o===p.cap?' selected':'')+'>'+o+'</option>').join('')+'</select></div>').join('');
   $('damagePhotos').innerHTML=S.damagePhotos.map((p,i)=>'<div class="ph"><img src="'+p.src+'" alt=""><input class="c" style="margin-top:6px" placeholder="Note" value="'+esc(p.note)+'" oninput="S.damagePhotos['+i+'].note=this.value;saveDraft()"><button class="btn" type="button" style="margin-top:6px;width:100%" onclick="S.damagePhotos.splice('+i+',1);renderPhotos();saveDraft()">Remove</button></div>').join('');
 }
+const LIBRARY_SEED=[
+  {id:'seed:garage-01',file:'garage-01.jpg',tags:{carSize:2,roof:'hip',ohDoors:1,doorStyle:'raised panel',color:'white',trim:'aluminum',offCenter:false,patio:false}},
+  {id:'seed:garage-02',file:'garage-02.jpg',tags:{carSize:2,roof:'gable',ohDoors:1,doorStyle:'raised panel w/ windows',color:'gray',trim:'aluminum',offCenter:false,patio:false}},
+  {id:'seed:garage-03',file:'garage-03.jpg',tags:{carSize:2.5,roof:'hip',ohDoors:2,doorStyle:'raised panel',color:'tan',trim:'aluminum',offCenter:false,patio:false}},
+  {id:'seed:garage-04',file:'garage-04.jpg',tags:{carSize:2,roof:'hip',ohDoors:1,doorStyle:'raised panel',color:'green',trim:'aluminum',offCenter:false,patio:false}},
+  {id:'seed:garage-05',file:'garage-05.jpg',tags:{carSize:2,roof:'hip',ohDoors:1,doorStyle:'raised panel',color:'red',trim:'aluminum',offCenter:false,patio:false}},
+  {id:'seed:garage-06',file:'garage-06.jpg',tags:{carSize:2,roof:'gable',ohDoors:1,doorStyle:'flush',color:'tan',trim:'aluminum',offCenter:false,patio:false}},
+  {id:'seed:garage-07',file:'garage-07.jpg',tags:{carSize:1,roof:'gable',ohDoors:1,doorStyle:'raised panel + service door',color:'white',trim:'aluminum',offCenter:true,patio:false}},
+  {id:'seed:garage-08',file:'garage-08.jpg',tags:{carSize:2,roof:'gable',ohDoors:1,doorStyle:'flush',color:'navy',trim:'aluminum',offCenter:false,patio:false}},
+  {id:'seed:garage-09',file:'garage-09.jpg',tags:{carSize:2,roof:'hip',ohDoors:1,doorStyle:'raised panel carriage',color:'green',trim:'wood',offCenter:false,patio:false}},
+  {id:'seed:garage-10',file:'garage-10.jpg',tags:{carSize:2,roof:'gable',ohDoors:0,doorStyle:'rear view (no overhead door)',color:'white',trim:'wood',offCenter:false,patio:true}},
+  {id:'seed:garage-11',file:'garage-11.jpg',tags:{carSize:1,roof:'gable',ohDoors:1,doorStyle:'raised panel + service door + window',color:'gray',trim:'aluminum',offCenter:true,patio:false}},
+  {id:'seed:garage-12',file:'garage-12.jpg',tags:{carSize:2,roof:'gable',ohDoors:1,doorStyle:'wood-look',color:'navy',trim:'wood',offCenter:false,patio:false}},
+  {id:'seed:garage-13',file:'garage-13.jpg',tags:{carSize:2,roof:'hip',ohDoors:0,doorStyle:'rear view (no overhead door)',color:'tan',trim:'aluminum',offCenter:false,patio:true}},
+  {id:'seed:garage-14',file:'garage-14.jpg',tags:{carSize:2,roof:'hip',ohDoors:1,doorStyle:'raised panel w/ windows',color:'tan',trim:'aluminum',offCenter:false,patio:false}},
+  {id:'seed:garage-15',file:'garage-15.jpg',tags:{carSize:2,roof:'hip',ohDoors:1,doorStyle:'flush black + service door',color:'white',trim:'aluminum',offCenter:true,patio:false}},
+  {id:'seed:garage-16',file:'garage-16.jpg',tags:{carSize:2.5,roof:'gable',ohDoors:2,doorStyle:'carriage black w/ windows',color:'white',trim:'wood',offCenter:false,patio:false}},
+  {id:'seed:garage-17',file:'garage-17.jpg',tags:{carSize:2,roof:'gable',ohDoors:0,doorStyle:'rear view (no overhead door)',color:'navy',trim:'wood',offCenter:false,patio:true}},
+  {id:'seed:garage-18',file:'garage-18.jpg',tags:{carSize:2,roof:'hip',ohDoors:1,doorStyle:'raised panel w/ windows',color:'brown',trim:'aluminum',offCenter:false,patio:false}},
+  {id:'seed:garage-19',file:'garage-19.jpg',tags:{carSize:2,roof:'gable',ohDoors:1,doorStyle:'flush',color:'red',trim:'aluminum',offCenter:true,patio:false}},
+  {id:'seed:garage-20',file:'garage-20.jpg',tags:{carSize:2,roof:'hip',ohDoors:2,doorStyle:'wood-look',color:'gray',trim:'wood',offCenter:false,patio:false}},
+  {id:'seed:garage-21',file:'garage-21.jpg',tags:{carSize:2,roof:'hip',ohDoors:0,doorStyle:'rear view (no overhead door)',color:'white',trim:'aluminum',offCenter:false,patio:true}},
+  {id:'seed:garage-22',file:'garage-22.jpg',tags:{carSize:2,roof:'gable',ohDoors:1,doorStyle:'carriage w/ arched windows',color:'green',trim:'aluminum',offCenter:false,patio:false}},
+  {id:'seed:garage-23',file:'garage-23.jpg',tags:{carSize:2,roof:'hip',ohDoors:1,doorStyle:'raised panel + service door',color:'tan',trim:'aluminum',offCenter:true,patio:false}},
+  {id:'seed:garage-24',file:'garage-24.jpg',tags:{carSize:2,roof:'gable',ohDoors:1,doorStyle:'raised panel w/ windows',color:'charcoal',trim:'aluminum',offCenter:false,patio:false}},
+  {id:'seed:garage-25',file:'garage-25.jpg',tags:{carSize:2,roof:'gable',ohDoors:0,doorStyle:'rear view (no overhead door)',color:'gray',trim:'wood',offCenter:false,patio:true}},
+  {id:'seed:garage-26',file:'garage-26.jpg',tags:{carSize:2,roof:'hip',ohDoors:1,doorStyle:'raised panel',color:'brown',trim:'aluminum',offCenter:false,patio:false}},
+  {id:'seed:garage-27',file:'garage-27.jpg',tags:{carSize:3,roof:'hip',ohDoors:3,doorStyle:'carriage black w/ windows',color:'gray',trim:'wood',offCenter:false,patio:false}},
+  {id:'seed:garage-28',file:'garage-28.jpg',tags:{carSize:2,roof:'gable',ohDoors:1,doorStyle:'black w/ windows + service door',color:'white',trim:'aluminum',offCenter:true,patio:false}}
+];
+/* ===== Photo library picker (same library as the estimator; picking only, no AI) ===== */
+const RL_TABLE='garage_photo_library', RL_LOCAL='agb_photo_library_local_v1';
+let rlSlot=0, rlEntries=[], rlSharedOk=null;
+function rlTags(){const c=ctx();const r=/Gable/.test(c.roof)?'gable':/Hip/.test(c.roof)?'hip':'';const W=c.W;return {carSize:W<=14?1:(W<=24?2:(W<30?2.5:3)),roof:r,patio:false};}
+function rlScore(t,cur){t=t||{};if(t.carSize==null)return null;if(Number(t.carSize)!==Number(cur.carSize))return null;if(!!t.patio!==!!cur.patio)return null;let sc=0;if(cur.roof&&String(t.roof||'').toLowerCase()===cur.roof)sc+=40;else if(cur.roof==='gable'&&/gable/.test(t.roof||''))sc+=15;if(t.ohDoors>0)sc+=5;return sc;}
+function rlLocal(){try{return JSON.parse(localStorage.getItem(RL_LOCAL))||[]}catch(e){return []}}
+async function rlShared(){try{if(window._agbOffline||!garageSb||garageSb._offline){rlSharedOk=false;return []}const {data,error}=await garageSb.from(RL_TABLE).select('id,thumb_data,image_url,tags,deleted').eq('deleted',false).order('created_at',{ascending:false}).limit(200);if(error){rlSharedOk=false;return []}rlSharedOk=true;return data||[]}catch(e){rlSharedOk=false;return []}}
+function rlEnsure(){let m=$('rlModal');if(m)return m;m=document.createElement('div');m.id='rlModal';m.className='modal';m.innerHTML='<div class="mbar"><button class="btn" type="button" onclick="closeModal(\'rlModal\')">✕ Close</button><span class="muted" id="rlNote" style="align-self:center"></span></div><div class="panel"><div id="rlGrid" class="rl-grid"></div></div>';document.body.appendChild(m);return m;}
+function rlCard(e){const t=e.tags||{};const bits=[t.carSize?t.carSize+'-car':'',t.roof,t.color,t.ohDoors?t.ohDoors+' door'+(t.ohDoors>1?'s':''):'',t.doorStyle,t.trim?t.trim+' trim':'',t.offCenter?'off-center':'',t.patio?'rear patio':''].filter(Boolean).map(esc).join(' · ');
+  const sel=(S.photos[rlSlot]||{}).libId===e.id;return '<div class="rl-card'+(sel?' rl-sel':'')+'" data-id="'+esc(e.id)+'"><img loading="lazy" alt="" src="'+esc(e.thumb||e.src)+'"><div class="rl-tags"><b>'+esc(e.kind)+'</b> '+bits+'</div></div>';}
+async function openRepairLibrary(slot){rlSlot=slot;const m=rlEnsure();m.classList.add('open');$('rlNote').textContent='Loading photos…';
+  const shared=await rlShared();
+  rlEntries=[].concat(LIBRARY_SEED.map(p=>({id:p.id,kind:'Approved',src:new URL('library/'+p.file,document.baseURI).href,thumb:new URL('library/thumbs/'+p.file,document.baseURI).href,tags:p.tags})),
+    shared.map(r=>({id:r.id,kind:'AI library',thumb:r.thumb_data||r.image_url,src:'',tags:r.tags||{}})),
+    rlLocal().map(r=>({id:r.id,kind:'AI (this device)',thumb:r.thumb_data||r.image_data,src:r.image_data||r.image_url,tags:r.tags||{}})));
+  const cur=rlTags();const rec=rlEntries.map(e=>({e,sc:rlScore(e.tags,cur)})).filter(x=>x.sc!=null).sort((a,b)=>b.sc-a.sc).slice(0,8);
+  $('rlNote').textContent='Photo '+(slot+1)+' — tap a photo to put it on the sheet'+(rlSharedOk?'':' · shared AI library not available, showing approved photos and this device');
+  $('rlGrid').innerHTML='<div class="rl-sec">Recommended for this repair ('+cur.carSize+'-car'+(cur.roof?' · '+cur.roof:'')+')</div>'+(rec.length?rec.map(x=>rlCard(x.e)).join(''):'<div class="muted">No close matches — pick from all photos below.</div>')+'<div class="rl-sec">All photos</div>'+rlEntries.map(rlCard).join('');
+  $('rlGrid').querySelectorAll('.rl-card').forEach(el=>el.addEventListener('click',()=>rlPick(el.getAttribute('data-id'))));}
+async function rlPick(id){const e=rlEntries.find(x=>x.id===id);if(!e)return;let src=e.src;
+  if(!src){try{const {data}=await garageSb.from(RL_TABLE).select('image_data,image_url').eq('id',id).maybeSingle();src=(data&&(data.image_data||data.image_url))||''}catch(_){}}
+  if(!src){toast('Could not load that photo.',true);return;}
+  S.photos[rlSlot]=Object.assign({},S.photos[rlSlot]||{cap:rlSlot?'REAR VIEW':'FRONT VIEW'},{src,libId:id});
+  closeModal('rlModal');renderPhotos();calc();saveDraft();}
 function shrink(file,max){return new Promise(res=>{const r=new FileReader();r.onload=()=>{const img=new Image();img.onload=()=>{const sc=Math.min(1,max/Math.max(img.width,img.height));const c=document.createElement('canvas');c.width=Math.round(img.width*sc);c.height=Math.round(img.height*sc);c.getContext('2d').drawImage(img,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',.8));};img.onerror=()=>res('');img.src=r.result;};r.readAsDataURL(file);});}
-async function loadPhoto(inp,i){const f=inp.files&&inp.files[0];if(!f)return;S.photos[i].src=await shrink(f,1400);renderPhotos();calc();}
+async function loadPhoto(inp,i){const f=inp.files&&inp.files[0];if(!f)return;S.photos[i].src=await shrink(f,1400);S.photos[i].libId='';renderPhotos();calc();}
 async function addDamagePhotos(inp){for(const f of Array.from(inp.files||[])){const s=await shrink(f,1000);if(s)S.damagePhotos.push({src:s,note:''});}inp.value='';renderPhotos();saveDraft();}
 // ================= CALCULATION =================
 function ctx(){
@@ -605,7 +662,8 @@ function buildSheet(R){
   const v=id=>esc($(id).value.trim());
   const ex=$('exampleTag').checked, showPill=$('showPill').value==='1';
   const ce=t=>'<span contenteditable="true">'+t+'</span>';
-  const photos=S.photos.map(p=>'<div class="rs-photo">'+(p.src?'<img src="'+p.src+'" alt="">':placeholderPhoto(p.cap))+'<div class="rs-cap">'+ce(esc(p.cap))+(ex||!p.src?'<small>(EXAMPLE PHOTO - STYLE MAY VARY)</small>':'')+'</div></div>').join('');
+  const nPh=photoCount();
+  const photos=S.photos.slice(0,nPh).map(p=>'<div class="rs-photo">'+(p.src?'<img src="'+p.src+'" alt="">':placeholderPhoto(p.cap))+'<div class="rs-cap">'+ce(esc(p.cap))+(ex||!p.src?'<small>(EXAMPLE PHOTO - STYLE MAY VARY)</small>':'')+'</div></div>').join('');
   const chk='<span class="bchk">'+icon('check',3.2)+'</span>';
   const catCell=r=>'<td class="cat"><div class="rs-cat">'+icon(r.ic,1.6)+ce(esc(r.cat))+'</div></td>';
   const ul=r=>'<td><ul>'+r.scope.map(s=>'<li>'+ce(esc(s))+'</li>').join('')+'</ul></td>';
@@ -619,7 +677,7 @@ function buildSheet(R){
   +'<div class="rs-bc"><div class="rs-sales"><div class="rs-bl">SALESMAN:</div><div class="rs-bv" style="font-size:16px">'+ce(esc(sm.name))+'</div>'+(sm.phone?'<div class="rs-bs">'+icon('phone',2)+ce(esc(sm.phone))+'</div>':'')+(sm.email?'<div class="rs-bs">'+icon('mail',2)+ce(esc(sm.email))+'</div>':'')+'</div></div></div>'
   +'<div class="rs-title"><h1>'+ce('REPAIR ESTIMATE')+'</h1><div class="rs-sub">'+ce('REPAIR OF EXISTING GARAGE')+'</div>'+($('insuranceJob')&&$('insuranceJob').checked?'<div class="rs-insurance" style="margin:6px auto 0;display:inline-block;border:2px solid #b91c1c;color:#b91c1c;background:#fef2f2;font-weight:800;font-size:15px;padding:4px 14px;border-radius:6px;-webkit-print-color-adjust:exact;print-color-adjust:exact">This estimate is prepared for insurance purposes.</div>':'')+'</div>'
   +(showPill?'<div class="rs-pillw"><span class="rs-pill" contenteditable="true">'+R.c.W+'’ x '+R.c.D+'’ EXISTING GARAGE<br>'+esc(R.c.roof)+'</span></div>':'')
-  +'<div class="rs-photos">'+photos+'</div>'
+  +'<div class="rs-photos'+(nPh===1?' one':'')+'">'+photos+'</div>'
   +'<div class="rs-std"><span class="ck">'+icon('check',3.2)+'</span>'+ce('All work will be completed in accordance with industry standards and local building codes.')+'</div>'
   +'<table class="rs-tbl"><thead><tr><th>CATEGORY</th><th>SCOPE OF WORK / MATERIALS</th><th>INCLUDED</th></tr></thead><tbody>'+(rowsHtml||'<tr><td colspan="3" style="text-align:center;padding:14px">No repair items selected.</td></tr>')+'</tbody></table>'
   +'<div class="rs-total"><div class="a">TOTAL PROJECT PRICE</div><div class="b" id="sheetTotal">'+money(R.total)+'</div></div>'
@@ -653,6 +711,26 @@ function openSheet(print){
 }
 window.addEventListener('resize',()=>{if($('sheetModal').classList.contains('open'))fitPreview();});
 function closeModal(id){if(id==='sheetModal'&&_repAutoT)repairSheetSaveNow();$(id).classList.remove('open');}
+
+// ===== Standalone, editable repair sheet document stored in History (estimate_snapshot.sheet_html) =====
+function repairSheetDoc(inner){
+  const css=Array.from(document.querySelectorAll('style')).map(x=>x.textContent).join('\n');
+  const tools='<div class="noprint rsd-bar"><button type="button" id="sheetEditRowsBtn" onclick="rsdToggle()">Edit Rows</button><button type="button" onclick="window.print()">Print</button><span id="popupChangeStatus"></span></div>';
+  const js="<scr"+"ipt>(function(){"
+   +"window.rsdToggle=function(f){var on=typeof f==='boolean'?f:!document.body.classList.contains('sheet-editing');document.body.classList.toggle('sheet-editing',on);var b=document.getElementById('sheetEditRowsBtn');if(b)b.textContent=on?'Done Editing':'Edit Rows';};"
+   +"function tools(tr){if(tr.querySelector('.rsd-rt'))return;var td=tr.lastElementChild;if(!td)return;var d=document.createElement('span');d.className='rsd-rt noprint';d.innerHTML='<button type=button class=sheet-row-add title=\"Add row below\">＋</button><button type=button class=sheet-row-remove title=\"Delete row\">✕</button>';td.appendChild(d);}"
+   +"function all(){document.querySelectorAll('.rs-tbl tbody tr').forEach(tools);}all();"
+   +"function fit(){var sh=document.getElementById('repairSheet'),inn=document.getElementById('rsIn');if(!sh||!inn)return;inn.style.transform='';inn.style.width='';var av=sh.clientHeight,h=inn.scrollHeight;if(h>av){var k=av/h;inn.style.transform='scale('+k+')';inn.style.transformOrigin='top left';inn.style.width=(100/k)+'%';}}window.addEventListener('load',fit);window.addEventListener('beforeprint',fit);setTimeout(fit,300);"
+   +"document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('.sheet-row-add'),r=e.target.closest&&e.target.closest('.sheet-row-remove');if(r){var tr=r.closest('tr');if(tr&&confirm('Delete this row?'))tr.remove();}if(a){var t=a.closest('tr');var n=document.createElement('tr');n.className='inc-row';n.innerHTML='<td class=cat><div class=rs-cat><span contenteditable=true>New item</span></div></td><td><ul><li><span contenteditable=true>Describe the work</span></li></ul></td><td class=inc></td>';t.after(n);tools(n);}});"
+   +"})();</scr"+"ipt>";
+  return '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Repair Estimate</title><style>'+css
+   +'\nbody{background:#e5e7eb!important;margin:0;padding:0}#sheetModal{display:block!important;position:static!important;background:#e5e7eb!important;overflow:visible}#sheetHost{padding:10px 0}.sheetScale{margin:0 auto;width:8.5in}'
+   +'.rsd-bar{position:sticky;top:0;z-index:5;display:flex;gap:8px;align-items:center;padding:8px;background:#0f172a}.rsd-bar button{background:#1d4ed8;color:#fff;border:0;border-radius:8px;padding:6px 12px;font-weight:700}#popupChangeStatus{color:#86efac;font:600 12px Arial}'
+   +'.rsd-rt{display:none;margin-left:6px;white-space:nowrap}.sheet-editing .rsd-rt{display:inline-flex;gap:4px}.rsd-rt button{border:1px solid #94a3b8;background:#fff;border-radius:6px;font-size:12px;padding:1px 6px;cursor:pointer}.rsd-rt .sheet-row-remove{color:#b91c1c}'
+   +'@media print{.rsd-bar,.rsd-rt{display:none!important}}</style></head><body>'+tools
+   +'<div id="sheetModal" class="modal open"><div id="sheetHost"><div class="sheetScale" id="sheetScale">'+inner+'</div></div></div>'+js+'</body></html>';
+}
+function currentRepairSheetInner(){ if(S.sheet_html && S.sheet_sig===sheetSig(compute())) return S.sheet_html; return buildSheet(compute()); }
 // ===== audit-fix 2026-10-14: sheet autosave (typing ~1s, structural/photo changes right away, blur/print/close too) =====
 let _repAutoT=null,_repLastSheet='',_repSaving=false,_repPending=false,_repObs=null;
 function repPill(m,k){const p=$('repairAutoPill');if(!p)return;p.textContent=m;p.style.color=k==='ok'?'#86efac':k==='err'?'#fca5a5':'';p.style.cursor=k==='err'?'pointer':'';p.onclick=k==='err'?()=>repairSheetSaveNow():null;}
@@ -669,7 +747,7 @@ async function repairSheetSaveNow(){
     let ok=true;
     if(window._repairHistoryId && !window._agbOffline){
       try{const {data:row,error:le}=await garageSb.from('estimate_history').select('estimate_snapshot').eq('id',window._repairHistoryId).maybeSingle();if(le)throw le;
-        const snap=Object.assign({},(row&&row.estimate_snapshot)||{});snap.sheet_html=html;snap.sheet_edits_at=new Date().toISOString();snap.insurance_job=!!($("insuranceJob")&&$("insuranceJob").checked);snap.repair_state=stripPhotos(snapshot());
+        const snap=Object.assign({},(row&&row.estimate_snapshot)||{});snap.sheet_html=repairSheetDoc(html);snap.sheet_edits_at=new Date().toISOString();snap.insurance_job=!!($("insuranceJob")&&$("insuranceJob").checked);snap.repair_state=stripPhotos(snapshot());
         const {error}=await garageSb.from('estimate_history').update({estimate_snapshot:snap}).eq('id',window._repairHistoryId);if(error)throw error;}
       catch(e){ok=false;console.warn('repair sheet autosave',e);}
     }
@@ -696,11 +774,12 @@ function setPrice(inp){const k=inp.dataset.k;const v=parseFloat(inp.value);PRICE
 function resetPrices(){if(!confirm('Reset all prices to the example placeholders?'))return;try{localStorage.removeItem('agb_repair_prices');}catch(e){}loadPrices();openSettings();calc();}
 // ================= SAVE / LOAD =================
 function snapshot(){const o={v:1,type:'repair',saved_at:new Date().toISOString(),fields:{},state:S,history_id:window._repairHistoryId||null,local_id:window._repairLocalId||null};FIELDS.forEach(id=>{const el=$(id);o.fields[id]=el.type==='checkbox'?el.checked:el.value;});return o;}
-function stripPhotos(s){const c=JSON.parse(JSON.stringify(s));c.state.damagePhotos=(c.state.damagePhotos||[]).map(p=>({src:'',note:p.note}));(c.state.photos||[]).forEach(p=>p.src='');return c;}
+function stripPhotos(s){const c=JSON.parse(JSON.stringify(s));c.state.damagePhotos=(c.state.damagePhotos||[]).map(p=>({src:'',note:p.note}));(c.state.photos||[]).forEach(p=>{if(/^data:/i.test(p.src||''))p.src='';});if(c.state.sheet_html&&c.state.sheet_html.length>300000)c.state.sheet_html='';return c;}
 function applySnap(o){if(!o)return;window._repairHistoryId=o.history_id||null;window._repairLocalId=o.local_id||null;const d=defState();S=Object.assign(d,JSON.parse(JSON.stringify(o.state||{})));
   ITEMS.forEach(it=>{if(!S.items[it.id])S.items[it.id]=d.items[it.id];else S.items[it.id].f=Object.assign({},d.items[it.id].f,S.items[it.id].f);});
   S.damagePhotos=(S.damagePhotos||[]).filter(p=>p.src);
   if($('insuranceJob'))$('insuranceJob').checked=false; // older estimates without the field = not insurance
+  if($('photoCount')){ const f=o.fields||{}; const st=o.state||{}; $('photoCount').value=(f.photoCount==null)?(((st.photos||[]).filter(p=>p&&p.src).length>=2)?'2':'1'):String(f.photoCount); }
   Object.keys(o.fields||{}).forEach(id=>{const el=$(id);if(!el)return;if(el.type==='checkbox')el.checked=!!o.fields[id];else el.value=o.fields[id];});
   renderItems();renderExtras();renderCond();renderPhotos();onProfitMode();}
 let _dt;function saveDraft(){clearTimeout(_dt);_dt=setTimeout(()=>{try{localStorage.setItem('agb_repair_draft',JSON.stringify(snapshot()));}catch(e){try{localStorage.setItem('agb_repair_draft',JSON.stringify(stripPhotos(snapshot())));}catch(e2){}}},300);}
@@ -730,7 +809,7 @@ async function saveToHistory(){
   const record={created_by:user.id,salesman_username:estimatorStaffName(user,un)||$('salesman').value,customer:$('customerName').value||'Customer',address:$('customerAddress').value||'',city:$('customerCity').value||'',
     garage_size:'REPAIR '+R.c.W+'x'+R.c.D,roof_type:R.c.roof,wall_height:'',siding:'Repair estimate',estimate_price:R.total,
     estimate_snapshot:{estimate_type:'repair',app:'repair.html',insurance_job:!!($('insuranceJob')&&$('insuranceJob').checked),repair_state:light,repair_rows:R.rows.map(r=>({cat:r.cat,scope:r.scope,internal_cost:r.cost})),repair_options:R.opts.map(o=>({cat:o.cat,scope:o.scope,price:o.price})),internal_total:R.internal,permit_fee:R.permit,customer_quote:R.total,prices_are_examples:!window._pricesCustomized}};
-  if(S.sheet_html) record.estimate_snapshot.sheet_html=S.sheet_html;
+  try{ record.estimate_snapshot.sheet_html=repairSheetDoc(currentRepairSheetInner()); }catch(e){ console.warn('repair sheet doc',e); }
   try{let res;
     if(window._repairHistoryId){
       // audit-fix 2026-10-14: same estimate -> update its row (no duplicate History rows)
@@ -746,5 +825,8 @@ function newEstimate(){if(!confirm('Start a new repair estimate? Unsaved work is
 loadPrices();S=defState();
 (function(){let d=null;try{d=JSON.parse(localStorage.getItem('agb_repair_draft')||'null');}catch(e){}window._hadDraft=!!d;if(d)applySnap(d);else{renderItems();renderExtras();renderCond();renderPhotos();calc();}})();
 syncSignedInSalesman();
+(async function(){ const id=new URLSearchParams(location.search).get('editRepair'); if(!id) return;
+  try{ const {data,error}=await garageSb.from('estimate_history').select('id,estimate_snapshot').eq('id',id).maybeSingle(); if(error||!data) { toast('Could not load that repair estimate.',true); return; }
+    const st=(data.estimate_snapshot||{}).repair_state; if(st){ applySnap(st); } window._repairHistoryId=data.id; calc(); toast('Loaded repair estimate from History.'); }catch(e){ toast('Could not load that repair estimate.',true); } })();
 </script>
 </body></html>

@@ -2249,6 +2249,7 @@ async function editEstimateHistory(id){
  const e=await fetchFullEstimateRecord(id);if(!e)return alert('Estimate not found.');
  const own=!!(profile&&String(e.salesman_username||'').toLowerCase()===String(profile.username||'').toLowerCase());
  if(!own&&!privateAccessManager()&&!manager())return alert('You can edit your own estimates. Sam and Ramsey can edit any salesperson’s estimate.');
+ if((e.estimate_snapshot||{}).estimate_type==='repair'){ window.location.href='repair.html?editRepair='+encodeURIComponent(id)+'&v='+Date.now(); return; }
  try{sessionStorage.setItem('garage_edit_estimate_record',JSON.stringify(e));}catch(err){console.warn('Could not cache estimate edit record',err)}
  window.location.href=`estimator.html?editEstimate=${encodeURIComponent(id)}&v=20260820edit3`;
 }

@@ -144,7 +144,15 @@ tr.optrow td{background:#fff7e6}
   .rs{margin:0!important}
   .rs [contenteditable]:hover{outline:none}
 }
-</style><style>.rl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}.rl-sec{grid-column:1/-1;font-weight:800;color:#fbbf24;border-bottom:1px solid #3f3f46;padding:6px 0 4px;margin-top:6px}.rl-card{border:2px solid #3f3f46;border-radius:12px;overflow:hidden;cursor:pointer;background:#18181b}.rl-card.rl-sel{border-color:#10b981}.rl-card img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block;background:#27272a}.rl-tags{font-size:11px;padding:5px 7px;color:#d4d4d8}</style>
+</style><style>.rl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}.rl-sec{grid-column:1/-1;font-weight:800;color:#fbbf24;border-bottom:1px solid #3f3f46;padding:6px 0 4px;margin-top:6px}.rl-card{border:2px solid #3f3f46;border-radius:12px;overflow:hidden;cursor:pointer;background:#18181b}.rl-card.rl-sel{border-color:#10b981}.rl-card img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block;background:#27272a}.rl-tags{font-size:11px;padding:5px 7px;color:#d4d4d8}
+/* iOS Safari fix: grid inside flex column collapsed card heights */
+.pl-dialog,#rlModal .rl-dialog{overflow:hidden}
+.pl-grid,.rl-grid{flex:1 1 auto;min-height:0;grid-auto-rows:max-content;align-content:start;-webkit-overflow-scrolling:touch}
+.pl-card,.rl-card,.pl-sec,.rl-sec{flex-shrink:0;min-height:min-content}
+.pl-card img,.rl-card img{height:auto;min-height:120px;max-height:none;flex-shrink:0}
+@supports not (aspect-ratio:1){.pl-card img,.rl-card img{height:130px}}
+@media (max-width:600px){.pl-grid,.rl-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:8px}.pl-card img,.rl-card img{height:120px;min-height:120px;aspect-ratio:auto}.pl-tags,.rl-tags{font-size:10px;line-height:1.3;word-break:break-word}}
+</style>
 </head>
 <body>
 <a class="back" href="index.html?v=20260818v2">← Back To Dashboard</a>
@@ -533,7 +541,7 @@ function rlLocal(){try{return JSON.parse(localStorage.getItem(RL_LOCAL))||[]}cat
 async function rlShared(){try{if(window._agbOffline||!garageSb||garageSb._offline){rlSharedOk=false;return []}const {data,error}=await garageSb.from(RL_TABLE).select('id,thumb_data,image_url,tags,deleted').eq('deleted',false).order('created_at',{ascending:false}).limit(200);if(error){rlSharedOk=false;return []}rlSharedOk=true;return data||[]}catch(e){rlSharedOk=false;return []}}
 function rlEnsure(){let m=$('rlModal');if(m)return m;m=document.createElement('div');m.id='rlModal';m.className='modal';m.innerHTML='<div class="mbar"><button class="btn" type="button" onclick="closeModal(\'rlModal\')">✕ Close</button><span class="muted" id="rlNote" style="align-self:center"></span></div><div class="panel"><div id="rlGrid" class="rl-grid"></div></div>';document.body.appendChild(m);return m;}
 function rlCard(e){const t=e.tags||{};const bits=[t.carSize?t.carSize+'-car':'',t.roof,t.color,t.ohDoors?t.ohDoors+' door'+(t.ohDoors>1?'s':''):'',t.doorStyle,t.trim?t.trim+' trim':'',t.offCenter?'off-center':'',t.patio?'rear patio':''].filter(Boolean).map(esc).join(' · ');
-  const sel=(S.photos[rlSlot]||{}).libId===e.id;return '<div class="rl-card'+(sel?' rl-sel':'')+'" data-id="'+esc(e.id)+'"><img loading="lazy" alt="" src="'+esc(e.thumb||e.src)+'"><div class="rl-tags"><b>'+esc(e.kind)+'</b> '+bits+'</div></div>';}
+  const sel=(S.photos[rlSlot]||{}).libId===e.id;return '<div class="rl-card'+(sel?' rl-sel':'')+'" data-id="'+esc(e.id)+'"><img alt="" decoding="async" src="'+esc(e.thumb||e.src)+'"><div class="rl-tags"><b>'+esc(e.kind)+'</b> '+bits+'</div></div>';}
 async function openRepairLibrary(slot){rlSlot=slot;const m=rlEnsure();m.classList.add('open');$('rlNote').textContent='Loading photos…';
   const shared=await rlShared();
   rlEntries=[].concat(LIBRARY_SEED.map(p=>({id:p.id,kind:'Approved',src:new URL('library/'+p.file,document.baseURI).href,thumb:new URL('library/thumbs/'+p.file,document.baseURI).href,tags:p.tags})),
@@ -720,7 +728,7 @@ function repairSheetDoc(inner){
    +"window.rsdToggle=function(f){var on=typeof f==='boolean'?f:!document.body.classList.contains('sheet-editing');document.body.classList.toggle('sheet-editing',on);var b=document.getElementById('sheetEditRowsBtn');if(b)b.textContent=on?'Done Editing':'Edit Rows';};"
    +"function tools(tr){if(tr.querySelector('.rsd-rt'))return;var td=tr.lastElementChild;if(!td)return;var d=document.createElement('span');d.className='rsd-rt noprint';d.innerHTML='<button type=button class=sheet-row-add title=\"Add row below\">＋</button><button type=button class=sheet-row-remove title=\"Delete row\">✕</button>';td.appendChild(d);}"
    +"function all(){document.querySelectorAll('.rs-tbl tbody tr').forEach(tools);}all();"
-   +"function fit(){var sh=document.getElementById('repairSheet'),inn=document.getElementById('rsIn');if(!sh||!inn)return;inn.style.transform='';inn.style.width='';var av=sh.clientHeight,h=inn.scrollHeight;if(h>av){var k=av/h;inn.style.transform='scale('+k+')';inn.style.transformOrigin='top left';inn.style.width=(100/k)+'%';}}window.addEventListener('load',fit);window.addEventListener('beforeprint',fit);setTimeout(fit,300);"
+   +"function fit(){var sh=document.getElementById('repairSheet'),inn=document.getElementById('rsIn');if(!sh||!inn)return;inn.style.transform='';inn.style.width='';var av=sh.clientHeight,h=inn.scrollHeight;if(h>av){var k=av/h;inn.style.transform='scale('+k+')';inn.style.transformOrigin='top left';inn.style.width=(100/k)+'%';}}window.addEventListener('load',fit);window.addEventListener('beforeprint',fit);setTimeout(fit,300);function vw(){var s=document.getElementById('sheetScale');if(!s)return;s.style.zoom='';var k=Math.min(1,(window.innerWidth-8)/Math.max(816,s.scrollWidth));if(k<1)s.style.zoom=k;}window.addEventListener('load',vw);window.addEventListener('resize',vw);window.addEventListener('beforeprint',function(){var s=document.getElementById('sheetScale');if(s)s.style.zoom='';});window.addEventListener('afterprint',vw);setTimeout(vw,320);"
    +"document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('.sheet-row-add'),r=e.target.closest&&e.target.closest('.sheet-row-remove');if(r){var tr=r.closest('tr');if(tr&&confirm('Delete this row?'))tr.remove();}if(a){var t=a.closest('tr');var n=document.createElement('tr');n.className='inc-row';n.innerHTML='<td class=cat><div class=rs-cat><span contenteditable=true>New item</span></div></td><td><ul><li><span contenteditable=true>Describe the work</span></li></ul></td><td class=inc></td>';t.after(n);tools(n);}});"
    +"})();</scr"+"ipt>";
   return '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Repair Estimate</title><style>'+css

@@ -9059,8 +9059,8 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             const fb = resolvedGarage.fallbacks || [];
             const garagePhotoFallbackSrc = fb[0] || garagePhotoSrc;
             const garagePhotoOriginalSrc = fb[1] || fb[0] || garagePhotoSrc;
-            const usedAI = resolvedGarage.source==='openai' || resolvedGarage.source==='ai' || resolvedGarage.aiSource;
-            const aiBadge = resolvedGarage.source==='rg-preset' ? 'Reverse gable example photo' : (usedAI ? 'AI preview based on this estimate' : 'Library photo (AI unavailable)');
+            const usedAI = resolvedGarage.source!=='library' && (resolvedGarage.source==='openai' || resolvedGarage.source==='ai' || resolvedGarage.aiSource);
+            const aiBadge = resolvedGarage.source==='rg-preset' ? 'Reverse gable example photo' : (usedAI ? 'AI preview based on this estimate' : (resolvedGarage.aiSource==='library' ? 'Library photo' : 'Library photo (AI unavailable)'));
             const photoFailNote = (!usedAI && resolvedGarage.error)
                 ? `<div style="font-size:9px;color:#b91c1c;padding:4px 6px;background:#fef2f2;border:1px solid #fecaca;margin-top:4px">AI photo failed: ${esc(String(resolvedGarage.error).slice(0,180))}</div>`
                 : '';
@@ -11545,7 +11545,7 @@ function renderGrid(){
   const rec=allEntries.map(e=>({e,sc:photoScore(e.tags,cur)})).filter(x=>x.sc!=null).sort((a,b)=>b.sc-a.sc).slice(0,8);
   const card=e=>{ const t=e.tags||{}; const bits=[t.carSize?(t.carSize+'-car'):'',t.size,t.roof,t.color,t.ohDoors?(t.ohDoors+' door'+(t.ohDoors>1?'s':'')):'',t.doorStyle,t.trim?t.trim+' trim':'',t.offCenter?'off-center':'',t.patio?'rear patio':''].filter(Boolean).map(esc).join(' · ');
     const canDel=e.kind==='AI' && (isAdmin || e.local);
-    return '<div class="pl-card'+(e.id===sel?' pl-sel':'')+'" data-id="'+esc(e.id)+'"><img loading="lazy" alt="" src="'+esc(e.thumb||e.src||'')+'"'+(e.alt?' onerror="if(!this.dataset.t){this.dataset.t=1;this.src=\''+esc(e.alt)+'\'}"':'')+'><div class="pl-tags"><b>'+esc(e.kind)+'</b> '+bits+'</div>'+(canDel?'<button type="button" class="pl-del" data-del="'+esc(e.id)+'">Delete</button>':'')+'</div>'; };
+    return '<div class="pl-card'+(e.id===sel?' pl-sel':'')+'" data-id="'+esc(e.id)+'"><img alt="" decoding="async" src="'+esc(e.thumb||e.src||'')+'"'+(e.alt?' onerror="if(!this.dataset.t){this.dataset.t=1;this.src=\''+esc(e.alt)+'\'}"':'')+'><div class="pl-tags"><b>'+esc(e.kind)+'</b> '+bits+'</div>'+(canDel?'<button type="button" class="pl-del" data-del="'+esc(e.id)+'">Delete</button>':'')+'</div>'; };
   g.innerHTML='<div class="pl-sec">Recommended for this estimate</div>'+(rec.length?rec.map(x=>card(x.e)).join(''):'<div class="pl-note">No close matches (same car size and patio) — pick from all photos below.</div>')
     +'<div class="pl-sec">All photos</div>'+(list.length?list.map(card).join(''):'<div class="pl-note">No photos match these filters.</div>');
   g.querySelectorAll('.pl-card').forEach(el=>el.addEventListener('click',ev=>{ if(ev.target.closest('[data-del]')) return; const e=allEntries.find(x=>x.id===el.getAttribute('data-id')); if(!e) return; window._libraryPhotoSrcId=null; choiceSet(e); if(e.kind!=='AI'||e.src) { window._libraryPhotoSrc=e.src; window._libraryPhotoSrcId=e.id; } closePhotoLibrary(); }));
@@ -11604,6 +11604,14 @@ window.agbUpdatePhotoSourceRow=updateRow;
 .pl-card img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;background:#27272a}
 .pl-tags{font-size:11px;padding:5px 7px;color:#d4d4d8}
 .pl-del{position:absolute;top:6px;right:6px;background:#b91c1c;color:#fff;font-size:11px;border:0;border-radius:6px;padding:3px 7px}
+/* iOS Safari fix: grid inside flex column collapsed card heights */
+.pl-dialog,#rlModal .rl-dialog{overflow:hidden}
+.pl-grid,.rl-grid{flex:1 1 auto;min-height:0;grid-auto-rows:max-content;align-content:start;-webkit-overflow-scrolling:touch}
+.pl-card,.rl-card,.pl-sec,.rl-sec{flex-shrink:0;min-height:min-content}
+.pl-card img,.rl-card img{height:auto;min-height:120px;max-height:none;flex-shrink:0}
+@supports not (aspect-ratio:1){.pl-card img,.rl-card img{height:130px}}
+@media (max-width:600px){.pl-grid,.rl-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:8px}.pl-card img,.rl-card img{height:120px;min-height:120px;aspect-ratio:auto}.pl-tags,.rl-tags{font-size:10px;line-height:1.3;word-break:break-word}}
+
 </style>
 </body>
 </html>

@@ -2136,10 +2136,26 @@ function wireHistorySheetFrame(frame, viewer){
    try{ const cw=frame.contentWindow; if(cw && !cw.opener) cw.opener=viewer; }catch(e){}
    try{ const cw=frame.contentWindow; if(cw && frame.dataset.optionSlot) cw.ESTIMATE_OPTION_SLOT=frame.dataset.optionSlot; if(cw && frame.dataset.estimateId) cw.ESTIMATE_HISTORY_ID=frame.dataset.estimateId; }catch(e){}
    try{ setTimeout(()=>historyFrameAutosave(frame, viewer), 2500); }catch(e){}
+   try{ mirrorSheetPill(frame); }catch(e){}
    // The "AI Sheet Changes" panel is retired: strip it from sheets saved by older versions
    try{ const d=frame.contentDocument; if(d) d.querySelectorAll('.sheet-ai-panel').forEach(el=>el.remove()); }catch(e){}
   });
  }catch(e){}
+}
+// The sheet's own Saving/Saved pill is position:fixed inside a tall frame, so on a phone it sits far below
+// the screen. Mirror it into the viewer window so it is always visible.
+function mirrorSheetPill(frame){
+ if(frame._pillMirror) return; const hd=frame.ownerDocument; let last='';
+ frame._pillMirror=setInterval(()=>{
+  if(!frame.isConnected){ clearInterval(frame._pillMirror); return; }
+  let d=null; try{ d=frame.contentDocument; }catch(e){}
+  const src=d&&(d.getElementById('sheetAutoPill')||d.getElementById('repairAutoPill'));
+  const txt=src?src.textContent.trim():''; if(!txt||txt===last) return; last=txt;
+  let p=hd.getElementById('hostSheetPill');
+  if(!p){ p=hd.createElement('div'); p.id='hostSheetPill'; p.className='no-print'; p.style.cssText='position:fixed;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:99999;padding:7px 12px;border-radius:999px;font:700 13px Arial,sans-serif;background:rgba(24,24,27,.9);box-shadow:0 4px 14px rgba(0,0,0,.25)'; hd.body.appendChild(p); }
+  p.textContent=txt; p.style.color=src.style.color||'#e4e4e7';
+  p.onclick=()=>{ try{ src.click(); }catch(e){} };
+ },400);
 }
 // audit-fix 2026-10-14: autosave for sheets in the History viewer. New sheets carry their own autosave;
 // older saved sheets get this host-side one (structural changes save right away, typing after ~1s).

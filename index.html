@@ -206,6 +206,7 @@ body.estimator-mode .estimator-exit{display:block}
   <button class="tab" data-view="personalCalendar" onclick="setView('personalCalendar',this)">Personal Calendar</button>
   <button id="allPersonalCalendarsTab" class="tab hidden" data-view="allPersonalCalendars" onclick="setView('allPersonalCalendars',this)">All Personal Calendars</button>
   <button class="tab" data-view="estimator" onclick="window.location.href='estimator.html?v='+Date.now()">Estimator</button>
+  <button class="tab" type="button" onclick="window.location.href='repair.html?v='+Date.now()">Repair</button>
   <button class="tab" data-view="drawing" onclick="window.location.href='Drawing.html?v='+Date.now()">Drawing</button>
   <button id="carpenterTab" class="tab" type="button" onclick="window.location.href='Carpenter.html?v='+Date.now()">Carpenter</button>
   <button id="garagePlansTab" class="tab" type="button" onclick="window.location.href='GaragePlans.html?v='+Date.now()">Garage Plans</button>
@@ -662,6 +663,7 @@ function renderHomeTiles(){
   // [label, desc, action, group, countValue, alertIfNonZero, show]
   const tiles=[
     ['Estimator','Price a garage',L('estimator.html?v='),'Sell'],
+    ['Repair','Price a repair',L('repair.html?v='),'Sell'],
     ['Drawing','Site sketch — starts blank',L('Drawing.html?fresh=1&v='),'Sell'],
     [mgr?'Estimate History':'History',mgr?'Saved customer sheets':'Your saved estimates',V('estimateHistory'),'Sell'],
     ['Today',mgr?'Jobs on the schedule today':'Your jobs scheduled today',V('week'),'Build',c.today],

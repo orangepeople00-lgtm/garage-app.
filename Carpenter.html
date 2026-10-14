@@ -162,9 +162,9 @@ html,body{margin:0;min-height:100%;background:#e8edf3;color:var(--ink);font-fami
       <h3>OPTIONS</h3>
       <label>Roof</label>
       <div class="opts" id="roofOpts">
-        <button type="button" data-v="Gable" class="on" onclick="setChoice('roof','Gable',this)">Gable</button>
+        <button type="button" data-v="Gable" onclick="setChoice('roof','Gable',this)">Gable</button>
         <button type="button" data-v="Reverse Gable" onclick="setChoice('roof','Reverse Gable',this)">Rev Gable</button>
-        <button type="button" data-v="Hip" onclick="setChoice('roof','Hip',this)">Hip</button>
+        <button type="button" data-v="Hip" class="on" onclick="setChoice('roof','Hip',this)">Hip</button>
       </div>
       <label>Pitch</label>
       <select id="pitch" onchange="touch()">
@@ -198,8 +198,8 @@ html,body{margin:0;min-height:100%;background:#e8edf3;color:var(--ink);font-fami
       <input id="shingleColor" placeholder="Shingle color" oninput="touch()"/>
       <label>Header</label>
       <div class="opts" id="headerOpts">
-        <button type="button" data-v="2-2x12 w/ 1/2 Flitchplate" class="on" onclick="setChoice('header','2-2x12 w/ 1/2 Flitchplate',this)">2-2x12 w/ ½ Flitchplate</button>
-        <button type="button" data-v="2 LVL" onclick="setChoice('header','2 LVL',this)">2 LVL</button>
+        <button type="button" data-v="2-2x12 w/ 1/2 Flitchplate" onclick="setChoice('header','2-2x12 w/ 1/2 Flitchplate',this)">2-2x12 w/ ½ Flitchplate</button>
+        <button type="button" data-v="2 LVL" class="on" onclick="setChoice('header','2 LVL',this)">2 LVL</button>
       </div>
       <label>Door jamb</label>
       <div class="opts" id="jambOpts">
@@ -410,9 +410,9 @@ html,body{margin:0;min-height:100%;background:#e8edf3;color:var(--ink);font-fami
           <div class="choice-row">
             <span class="k">ROOF</span>
             <span class="choices" id="roofCircles">
-              <span class="circ on" data-v="Gable" onclick="setChoice('roof','Gable')"><i></i> GABLE</span>
+              <span class="circ" data-v="Gable" onclick="setChoice('roof','Gable')"><i></i> GABLE</span>
               <span class="circ" data-v="Reverse Gable" onclick="setChoice('roof','Reverse Gable')"><i></i> REV GABLE</span>
-              <span class="circ" data-v="Hip" onclick="setChoice('roof','Hip')"><i></i> HIP</span>
+              <span class="circ on" data-v="Hip" onclick="setChoice('roof','Hip')"><i></i> HIP</span>
             </span>
           </div>
 
@@ -468,8 +468,8 @@ html,body{margin:0;min-height:100%;background:#e8edf3;color:var(--ink);font-fami
           <div class="choice-row">
             <span class="k">HEADER</span>
             <span class="choices" id="headerCircles">
-              <span class="circ on" data-v="2-2x12 w/ 1/2 Flitchplate" onclick="setChoice('header','2-2x12 w/ 1/2 Flitchplate')"><i></i> 2-2x12 W/ ½ FLITCHPLATE</span>
-              <span class="circ" data-v="2 LVL" onclick="setChoice('header','2 LVL')"><i></i> 2 LVL</span>
+              <span class="circ" data-v="2-2x12 w/ 1/2 Flitchplate" onclick="setChoice('header','2-2x12 w/ 1/2 Flitchplate')"><i></i> 2-2x12 W/ ½ FLITCHPLATE</span>
+              <span class="circ on" data-v="2 LVL" onclick="setChoice('header','2 LVL')"><i></i> 2 LVL</span>
             </span>
           </div>
           <div class="row"><span class="k">PATIO ROOF</span><input class="f" id="patioRoof"/></div>
@@ -507,7 +507,7 @@ function lbl(side,key,fallback){
   return (v!=null && String(v).trim()!=='') ? String(v) : fallback;
 }
 let selectedView='FRONT';
-let choices={roof:'Gable',eaves:'Realwood',siding:'D4',shingles:'ARCH',header:'2-2x12 w/ 1/2 Flitchplate',jamb:'',gutters:false,firewall:false};
+let choices={roof:'Hip',eaves:'Realwood',siding:'D4',shingles:'ARCH',header:'2 LVL',jamb:'',gutters:false,firewall:false};
 
 function $(id){return document.getElementById(id)}
 function val(id){return String($(id)?.value||'').trim()}

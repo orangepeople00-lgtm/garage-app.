@@ -1885,7 +1885,7 @@ body.bg-zinc-950{
                                     <i class="fa-solid fa-plus"></i>
                                     <span>Add Custom Extra / Option</span>
                                 </button>
-                                <div class="text-[9px] text-zinc-500 mt-1">Describe the item and internal cost. Included in Price is the default and hides the item's price on the customer estimate. Option prints the item in Notes / Inclusions with its +price.</div>
+                                <div class="text-[9px] text-zinc-500 mt-1">Describe the item and its internal cost. Included in Price is the default: the cost is marked up into the project price and hidden on the sheet. Option price: type the CUSTOMER price — it is not added to the total and prints as "Optional: … (not included in total)".</div>
                             </div>
                         
                         <!-- Other toggles -->
@@ -3484,7 +3484,15 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
 
             // Custom extras total
             let extrasTotal = 0;
-            document.querySelectorAll('.extra-cost').forEach(input => {
+            document.querySelectorAll('#extrasContainer .custom-extra-row').forEach(row => {
+                const input=row.querySelector('.extra-cost'); if(!input) return;
+                const isOpt=(row.querySelector('.extra-display')?.value||'included')==='option';
+                // Option price = customer price for an optional item: never part of internal cost or the project total
+                input.placeholder = isOpt ? 'Customer price $' : 'Internal cost $';
+                input.title = isOpt ? 'Customer price (shown as an option, not added to the total)' : 'Internal cost (marked up into the project price)';
+                const lb=row.querySelector('.extra-cost-label'); if(lb) lb.textContent = isOpt ? 'Customer price' : 'Internal cost';
+                row.classList.toggle('extra-is-option', isOpt);
+                if(isOpt) return;
                 extrasTotal += parseFloat(input.value) || 0;
             });
             
@@ -4105,7 +4113,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
         function addExtraRow() {
             const container=document.getElementById('extrasContainer');if(!container)return;
             const row=document.createElement('div');row.className='grid grid-cols-1 md:grid-cols-3 gap-2 items-center custom-extra-row';
-            row.innerHTML=`<input type="text" placeholder="Description" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2 text-sm extra-desc" oninput="calculateEstimate()"><input type="number" placeholder="Internal cost $" step="0.01" min="0" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2 text-sm extra-cost" oninput="calculateEstimate()"><div class="flex items-center gap-2"><select class="extra-display calc-input flex-1 bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2 text-sm" onchange="calculateEstimate()"><option value="included" selected>Included in Price</option><option value="option">Option (+price)</option></select><button type="button" onclick="removeExtraRow(this)" class="px-2 py-1 text-xs text-red-400 font-bold">×</button></div>`;
+            row.innerHTML=`<input type="text" placeholder="Description" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2 text-sm extra-desc" oninput="calculateEstimate()"><label class="block"><span class="extra-cost-label block text-xs text-zinc-400 mb-0.5">Internal cost</span><input type="number" placeholder="Internal cost $" step="0.01" min="0" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2 text-sm extra-cost" oninput="calculateEstimate()"></label><div class="flex items-center gap-2"><select class="extra-display calc-input flex-1 bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2 text-sm" onchange="calculateEstimate()"><option value="included" selected>Included in Price</option><option value="option">Option price (not in total)</option></select><button type="button" onclick="removeExtraRow(this)" class="px-2 py-1 text-xs text-red-400 font-bold">×</button></div>`;
             container.appendChild(row);calculateEstimate();
         }
 
@@ -4383,7 +4391,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             if (data.wheeling > 0) lines.push({ label: 'Wheeling charge', amount: data.wheeling, section: 'addons' });
             if (data.arlingtonSurvey > 0) lines.push({ label: 'Topographical survey', amount: data.arlingtonSurvey, section: 'addons', key: 'topo_survey' });
             if (data.andrewPermit > 0) lines.push({ label: 'Andrew for Permit', amount: data.andrewPermit, section: 'addons' });
-            document.querySelectorAll('#extrasContainer > div').forEach(row=>{const desc=String(row.querySelector('.extra-desc')?.value||'Custom Extra / Option').trim()||'Custom Extra / Option';const cost=parseFloat(row.querySelector('.extra-cost')?.value)||0;const display=row.querySelector('.extra-display')?.value||'included';if(cost>0)lines.push({label:`${desc}${display==='option'?' — customer option':' — included in price'}`,amount:cost,section:'addons'});});
+            document.querySelectorAll('#extrasContainer > div').forEach(row=>{const desc=String(row.querySelector('.extra-desc')?.value||'Custom Extra / Option').trim()||'Custom Extra / Option';const cost=parseFloat(row.querySelector('.extra-cost')?.value)||0;const display=row.querySelector('.extra-display')?.value||'included';if(cost>0&&display!=='option')lines.push({label:`${desc} — included in price`,amount:cost,section:'addons'});});
             
             // Editable summary amounts — manual overrides stick across recalculation
             const overrides = loadSummaryOverrides();
@@ -8936,7 +8944,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             if (val('additionalRemovalDims').trim() && remDimsNote.ok && remDimsNote.area > 0) notes.push(`Additional concrete removal: ${prettyConcreteEntry(val('additionalRemovalDims'))}.`);
 
             const extraDesc=[];
-            document.querySelectorAll('#extrasContainer > div').forEach(row=>{const desc=String(row.querySelector('.extra-desc')?.value||'').trim();const cost=parseFloat(row.querySelector('.extra-cost')?.value)||0;const display=row.querySelector('.extra-display')?.value||'included';if(desc)extraDesc.push(display==='option'&&cost>0?`${desc} (+$${cost.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})})`:desc);});
+            document.querySelectorAll('#extrasContainer > div').forEach(row=>{const desc=String(row.querySelector('.extra-desc')?.value||'').trim();const cost=parseFloat(row.querySelector('.extra-cost')?.value)||0;const display=row.querySelector('.extra-display')?.value||'included';if(display==='option'){ if(desc||cost>0) extraDesc.push(`Optional: ${desc||'Custom option'}${cost>0?` - $${cost.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}`:''} (not included in total)`); } else if(desc) extraDesc.push(desc);});
             extraDesc.forEach(text=>notes.push(text));
 
             // Customer-entered Additional Estimate Notes always flow directly

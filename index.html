@@ -21,6 +21,13 @@ main{max-width:1500px;margin:auto;padding:22px}.titlebar{display:flex;justify-co
 .home-tile{display:flex;flex-direction:column;align-items:flex-start;gap:6px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 14px;text-align:left;box-shadow:0 2px 10px #0f172a08;min-height:108px}
 .home-tile:hover{border-color:var(--gold);box-shadow:0 6px 18px #0b1f3a14}
 .home-tile b{font-size:15px;color:var(--navy)}
+.home-group h4{margin:14px 0 2px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.home-tile{position:relative}.tile-count{position:absolute;top:10px;right:10px;min-width:24px;text-align:center;border-radius:999px;padding:2px 8px;font-size:12px;font-weight:900;background:#eef2f7;color:var(--navy)}.tile-count.alert{background:#fee2e2;color:#b91c1c}
+.home-search{margin:10px 0 4px}.home-search input{width:100%;font-size:16px;padding:11px 12px;margin-top:4px;box-sizing:border-box}
+.home-panels{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px}.home-panels h3{margin-top:0}
+.home-row{display:block;width:100%;text-align:left;background:#fff;border:0;border-bottom:1px solid var(--line);padding:9px 4px;cursor:pointer;font:inherit}.home-row:hover{background:#f8fafc}.home-row:last-child{border-bottom:0}
+.home-empty{color:var(--muted);font-size:13px;padding:10px 2px}.sched-day{font-weight:900;color:var(--navy);margin:10px 0 2px;font-size:13px}
+@media(max-width:760px){.home-panels{grid-template-columns:1fr}.home-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .home-tile span{font-size:12px;color:var(--muted);line-height:1.35}
 .job-files{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .job-files .btn{padding:6px 9px;font-size:11px}
@@ -47,7 +54,7 @@ main{max-width:1500px;margin:auto;padding:22px}.titlebar{display:flex;justify-co
 .field{display:flex;flex-direction:column;gap:5px}.field label{font-size:10px;text-transform:uppercase;letter-spacing:.04em;font-weight:900;color:var(--muted)}input,select,textarea{border:1px solid #ccd5e1;border-radius:8px;padding:9px 10px;background:#fff;outline:none}input:focus,select:focus,textarea:focus{border-color:#8cb1ff;box-shadow:0 0 0 3px #dbeafe}
 .table{width:100%;overflow-x:auto;overflow-y:visible;background:#fff;border:1px solid var(--line);border-radius:13px;box-shadow:var(--shadow);padding-bottom:4px;-webkit-overflow-scrolling:touch}table{width:100%;border-collapse:separate;border-spacing:0;min-width:1280px;table-layout:auto}thead{position:relative;z-index:3}th,td{padding:14px 14px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle;line-height:1.35;white-space:normal}th{background:#f8fafc;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:.04em;position:sticky;top:0;z-index:4;white-space:nowrap}tbody tr{min-height:64px;background:#fff}tbody tr:hover{background:#f8fafc}td{font-size:12px;min-height:64px}td:first-child{min-width:210px}.cust{font-weight:900;font-size:14px;line-height:1.25;overflow-wrap:anywhere}.sub{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.35;overflow-wrap:anywhere}.table .pill{white-space:nowrap}.table .btn{white-space:nowrap}
 .pill{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:5px 8px;font-size:10px;font-weight:900}.pill:before{content:"";width:6px;height:6px;background:currentColor;border-radius:50%}.green{background:#ecfdf3;color:var(--green)}.blue{background:#eff6ff;color:#1d4ed8}.yellow{background:#fff7ed;color:var(--yellow)}.red{background:#fef2f2;color:var(--red)}.gray{background:#f1f5f9;color:#64748b}
-.overdue{color:var(--red);font-weight:900}.hold{color:var(--red);font-weight:900}.hidden{display:none!important}
+.overdue{color:var(--red);font-weight:900}.hold{color:var(--red);font-weight:900}.hidden{display:none!important}body.on-home #mainTabs{display:none!important}
 .modalbg{position:fixed;inset:0;background:#0f172a70;z-index:60;display:none}.modalbg.show{display:block}.modal{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(1080px,96vw);max-height:92vh;overflow:auto;background:#fff;border-radius:16px;box-shadow:0 25px 70px #0f172a55}.modal.sm-modal{width:min(440px,94vw)}
 .modalhead,.modalfoot{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:16px 18px;background:#fff;position:sticky;z-index:4}.modalhead{top:0;border-bottom:1px solid var(--line)}.modalfoot{bottom:0;border-top:1px solid var(--line)}.modalhead h3{margin:0}.body{padding:17px}
 .formsec{border:1px solid var(--line);border-radius:12px;padding:13px;margin-bottom:13px}.formsec h4{margin:0 0 10px}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}.span2{grid-column:span 2}.span4{grid-column:1/-1}
@@ -145,7 +152,7 @@ body.estimator-mode .estimator-exit{display:block}
 @media(max-width:900px){.personal-calendar-layout{grid-template-columns:1fr}.personal-task-sidebar{position:static;max-height:none}}
 </style>
 </head>
-<body>
+<body class="on-home">
 <header>
  <div class="brand"><div class="logo">AGB</div><div><h1>Absolute Garage Builders</h1><p>3050 W Irving Park Rd · Production</p></div></div>
  <div class="actions">
@@ -199,7 +206,12 @@ body.estimator-mode .estimator-exit{display:block}
  <div id="editRequestsCard" class="card hidden" style="margin-bottom:12px"><h3 class="split"><span>Salesman Edit / Note Requests</span><span id="editRequestCount" class="pill yellow">0</span></h3><div id="editRequestList" class="list"></div></div>
 
  <section id="homeView">
-  <div class="home-grid" id="homeTiles"></div>
+  <div class="home-search card"><label for="homeSearch" class="small muted">Find a job</label><input id="homeSearch" type="search" autocomplete="off" placeholder="Customer, address, or job #" oninput="renderHomeSearch()" onkeydown="if(event.key==='Enter'){const f=document.querySelector('#homeSearchResults .home-row');if(f)f.click()}"><div id="homeSearchResults"></div></div>
+  <div id="homeTiles"></div>
+  <div class="home-panels">
+   <div class="card"><h3 class="split"><span>Attention Needed</span><span id="homeAttentionCount" class="pill">0</span></h3><div id="homeAttention"></div></div>
+   <div class="card"><h3>Crew Schedule — Next 5 Days</h3><div id="homeSchedule"></div></div>
+  </div>
  </section>
 
  <section id="dashboardView" class="hidden">
@@ -328,7 +340,7 @@ body.estimator-mode .estimator-exit{display:block}
    <div class="field"><label>Priority</label><select id="f_priority"><option>Low</option><option selected>Normal</option><option>High</option><option>Urgent</option></select></div>
    <div class="field"><label>Job On Hold?</label><select id="f_hold_status"><option value="false">No</option><option value="true">Yes</option></select></div>
    <div class="field"><label>Hold Reason</label><select id="f_hold_reason"><option value=""></option><option>Waiting on Customer</option><option>Permit Issue</option><option>Weather</option><option>Concrete Issue</option><option>Material Delay</option><option>Payment Issue</option><option>Other</option></select></div>
-   <div class="field"><label>Hold Notes</label><input id="f_hold_notes"></div>
+   <div class="field"><label>Hold Notes / Other Reason</label><input id="f_hold_notes" placeholder="Type reason if not in list"></div>
   </div></div>
   <div class="formsec"><h4>Deposit, Permit & Demo</h4><div class="grid">
    <div class="field"><label>Deposit Status</label><select id="f_deposit_status"><option>Pending</option><option>Received</option></select></div><div class="field"><label>Deposit Date</label><input id="f_deposit_date" type="date"></div>
@@ -476,7 +488,7 @@ function loadEstimator(){
 
 
 const $=id=>document.getElementById(id), esc=s=>(s??'').toString().replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
-const todayISO=()=>new Date().toISOString().slice(0,10);
+const todayISO=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};// local date (not UTC)
 const fmt=d=>d?new Date(d+'T12:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric',year:'2-digit'}):'—';
 const money=n=>Number(n)?new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(n):'—';
 function dateOnly(v){if(!v)return null;const s=String(v).slice(0,10),p=s.split('-').map(Number);return p.length===3&&p.every(Number.isFinite)?new Date(p[0],p[1]-1,p[2]):null}
@@ -559,43 +571,67 @@ function nextJobDate(j){
   const upcoming=dates.find(x=>String(x[1]).slice(0,10)>=today)||dates[dates.length-1];
   return upcoming?`${upcoming[0]} ${fmt(upcoming[1])}`:'No date set';
 }
+function homeCounts(){
+  const t=todayISO(),active=jobs.filter(j=>status(j)!=='Completed');
+  const today=new Set();jobs.forEach(j=>jobEvents(j).forEach(e=>{if(e[1]===t)today.add(j.id)}));
+  const sold=manager()?requests.filter(r=>r.status==='Pending').length:0;
+  const edits=(manager()||privateAccessManager())?editRequests.filter(r=>r.status==='Pending'||!r.status).length:0;
+  return {today:today.size,active:active.length,hold:jobs.filter(j=>j.hold_status&&status(j)!=='Completed').length,overdue:jobs.filter(overdue).length,requests:sold+edits,completed:jobs.filter(j=>status(j)==='Completed').length,trash:trashJobs.length,myRequests:manager()?0:requests.filter(r=>r.status==='Pending').length};
+}
+function goRequests(){
+  setView('dashboard',document.querySelector('[data-view=dashboard]'));
+  const el=[$('managerRequests'),$('editRequestsCard'),$('salesRequests')].find(x=>x&&!x.classList.contains('hidden'));
+  if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
+}
 function renderHomeTiles(){
   const box=$('homeTiles'); if(!box) return;
-  const mgr=!!(manager()||privateAccessManager());
-  const tiles=mgr?[
-    ['Today','Jobs on the schedule today','setView("week",document.querySelector("[data-view=week]"))'],
-    ['Jobs','Sold jobs and status','setView("dashboard",document.querySelector("[data-view=dashboard]"))'],
-    ['Estimator','Price a garage','window.location.href="estimator.html?v="+Date.now()'],
-    ['Drawing','Site sketch — starts blank','window.location.href="Drawing.html?fresh=1&v="+Date.now()'],
-    ['Estimate History','Saved customer sheets','setView("estimateHistory",document.querySelector("[data-view=estimateHistory]"))'],
-    ['Garage Plans','Village permit drawings','window.location.href="GaragePlans.html?v="+Date.now()'],
-    ['Carpenter','Field ticket','window.location.href="Carpenter.html?v="+Date.now()'],
-    ['Plan History','Saved plan sets','setView("planHistory",document.querySelector("[data-view=planHistory]"))'],
-    ['Requests','Sold-job and edit requests','setView("dashboard",document.querySelector("[data-view=dashboard]"))'],
-    ['Text salesman','Job note by text','openNotifySalesman()'],
-    ['Trash','Deleted jobs','setView("trash",document.querySelector("[data-view=trash]"))']
-  ]:[
-    ['Today','Your jobs scheduled today','setView("week",document.querySelector("[data-view=week]"))'],
-    ['My jobs','Your sold jobs','setView("dashboard",document.querySelector("[data-view=dashboard]"))'],
-    ['Estimator','Price a garage','window.location.href="estimator.html?v="+Date.now()'],
-    ['Drawing','Site sketch — starts blank','window.location.href="Drawing.html?fresh=1&v="+Date.now()'],
-    ['History','Your saved estimates','setView("estimateHistory",document.querySelector("[data-view=estimateHistory]"))'],
-    ['Garage Plans','Permit drawings','window.location.href="GaragePlans.html?v="+Date.now()']
-  ];
-  if(!mgr){
-    // hide trash tile already omitted
-  } else if(!manager()){
-    // ramsey: no trash
-    const i=tiles.findIndex(t=>t[0]==='Trash');
-    if(i>=0) tiles.splice(i,1);
-  }
-  if(!canTextSalesman()){
-    const i=tiles.findIndex(t=>t[0]==='Text salesman');
-    if(i>=0) tiles.splice(i,1);
-  }
-  box.innerHTML=tiles.map(t=>`<button type="button" class="home-tile" onclick='${t[2]}'><b>${t[0]}</b><span>${t[1]}</span></button>`).join('');
+  const mgr=!!(manager()||privateAccessManager()),c=homeCounts();
+  const V=v=>`setView("${v}",document.querySelector("[data-view=${v}]"))`,L=u=>`window.location.href="${u}"+Date.now()`;
+  // [label, desc, action, group, countValue, alertIfNonZero, show]
+  const tiles=[
+    ['Estimator','Price a garage',L('estimator.html?v='),'Sell'],
+    ['Drawing','Site sketch — starts blank',L('Drawing.html?fresh=1&v='),'Sell'],
+    [mgr?'Estimate History':'History',mgr?'Saved customer sheets':'Your saved estimates',V('estimateHistory'),'Sell'],
+    ['Today',mgr?'Jobs on the schedule today':'Your jobs scheduled today',V('week'),'Build',c.today],
+    [mgr?'Jobs':'My jobs',(mgr?'Active jobs':'Your active jobs')+(c.hold||c.overdue?` • ${c.hold} on hold • ${c.overdue} overdue`:''),V('dashboard'),'Build',c.active,false],
+    ['Carpenter','Field ticket',L('Carpenter.html?v='),'Build'],
+    ['Project Calendar','Scheduled job work',V('calendar'),'Build'],
+    ['Personal Calendar','Your appointments and tasks',V('personalCalendar'),'Build'],
+    ['Garage Plans','Village permit drawings',L('GaragePlans.html?v='),'Paperwork'],
+    ['Plan History','Saved plan sets',V('planHistory'),'Paperwork'],
+    ['Completed Archive','Finished jobs',V('completed'),'Paperwork',c.completed],
+    ['Requests',mgr?'Sold-job and edit requests waiting':'Your sold-job requests waiting','goRequests()','Admin',mgr?c.requests:c.myRequests,true],
+    ['Text salesman','Job note by text','openNotifySalesman()','Admin',null,false,canTextSalesman()],
+    ['All Personal Calendars','Everyone\u2019s appointments',V('allPersonalCalendars'),'Admin',null,false,privateAccessManager()],
+    ['Trash','Deleted jobs',V('trash'),'Admin',c.trash,false,manager()]
+  ].filter(t=>t[6]!==false&&!(t[0]==='Requests'&&!mgr&&!c.myRequests));
+  const groups=['Sell','Build','Paperwork','Admin'].map(g=>[g,tiles.filter(t=>t[3]===g)]).filter(g=>g[1].length);
+  box.innerHTML=groups.map(([g,ts])=>`<div class="home-group"><h4>${g}</h4><div class="home-grid">${ts.map(t=>`<button type="button" class="home-tile" data-tile="${esc(t[0])}" onclick='${t[2]}'>${t[4]!=null?`<em class="tile-count${t[5]&&t[4]?' alert':''}">${t[4]}</em>`:''}<b>${esc(t[0])}</b><span>${esc(t[1])}</span></button>`).join('')}</div></div>`).join('');
+  renderHomeAttention();renderHomeSchedule();renderHomeSearch();
+}
+function localISO(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
+function renderHomeAttention(){
+  const box=$('homeAttention');if(!box)return;
+  const list=jobs.filter(j=>status(j)!=='Completed'&&(j.hold_status||overdue(j))).sort((a,b)=>(jobAgeDays(b)??-1)-(jobAgeDays(a)??-1));
+  $('homeAttentionCount').textContent=list.length;$('homeAttentionCount').className='pill'+(list.length?' red':'');
+  box.innerHTML=list.length?list.slice(0,12).map(j=>`<button type="button" class="home-row" onclick="openDrawer('${esc(j.id)}')"><b>${esc(j.customer)}</b> <span class="sub">${esc(j.address||'')}${j.city?', '+esc(j.city):''}</span><div class="sub ${j.hold_status?'hold':'overdue'}">${j.hold_status?`ON HOLD — ${esc(holdReasonText(j)||'Reason not entered')}`:`OVERDUE — ${esc(next(j))}`}</div><div class="sub">Job age: ${esc(jobAgeLabel(j))}</div></button>`).join('')+(list.length>12?`<div class="home-empty">+${list.length-12} more — see Jobs</div>`:''):'<div class="home-empty">Nothing on hold or overdue. ✓</div>';
+}
+function renderHomeSchedule(){
+  const box=$('homeSchedule');if(!box)return;
+  const days=[...Array(5)].map((_,i)=>{const d=new Date();d.setDate(d.getDate()+i);return d});
+  const out=days.map(d=>{const iso=localISO(d);const ev=[];jobs.forEach(j=>{if(status(j)==='Completed')return;jobEvents(j).forEach(([type,date,crew])=>{if(String(date).slice(0,10)===iso)ev.push({type,crew,j})})});
+    if(!ev.length)return '';ev.sort((a,b)=>a.type.localeCompare(b.type));
+    return `<div class="sched-day">${d.toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'})}</div>`+ev.map(e=>`<button type="button" class="home-row" onclick="openDrawer('${esc(e.j.id)}')"><b>${esc(e.type)}</b> — ${esc(e.crew||'Crew not set')}<div class="sub">${esc(e.j.customer)} • ${esc(e.j.address||'')}</div></button>`).join('')}).join('');
+  box.innerHTML=out||'<div class="home-empty">No crew work scheduled in the next 5 days.</div>';
+}
+function renderHomeSearch(){
+  const box=$('homeSearchResults'),inp=$('homeSearch');if(!box||!inp)return;
+  const q=inp.value.trim().toLowerCase();if(!q){box.innerHTML='';return}
+  const hits=jobs.filter(j=>[j.customer,j.address,j.city,j.job_number].join(' ').toLowerCase().includes(q)).slice(0,8);
+  box.innerHTML=hits.length?hits.map(j=>`<button type="button" class="home-row" onclick="openDrawer('${esc(j.id)}')"><b>${esc(j.customer)}</b>${j.job_number?` <span class="sub">#${esc(j.job_number)}</span>`:''}<div class="sub">${esc(j.address||'')}${j.city?', '+esc(j.city):''} • ${esc(status(j))}</div></button>`).join(''):'<div class="home-empty">No jobs match.</div>';
 }
 
+function holdReasonText(j){const r=String(j?.hold_reason||'').trim(),n=String(j?.hold_notes||'').trim();if((!r||/^other$/i.test(r))&&n)return n;return r;}
 function roleName(){return profile?.role==='owner'?'Owner':profile?.role==='business_manager'?'Business Manager':'Salesman'}
 function status(j){
  if(j.hold_status)return 'ON HOLD';
@@ -645,7 +681,7 @@ function lastComplete(j){
  return '';
 }
 function next(j){
- if(j.hold_status)return `Resolve hold: ${j.hold_reason||'Review job'}`;
+ if(j.hold_status)return `Resolve hold: ${holdReasonText(j)||'Review job'}`;
  const m={
   'Permit Not Submitted':'Apply / submit permit',
   'Permit Pending':'Wait for permit approval',
@@ -778,6 +814,8 @@ async function boot(){
   ?'Jobs (live update), personal calendar, or messages. Examples: “Smith — concrete poured”, “Calendar — meet Jones tomorrow 3pm”, “Message — need help on permit”.'
   :'Jobs (goes to Randy/Sam), personal calendar, or messages to Randy/Sam. Examples: “New job John Smith…”, “Calendar — appt Oak St Friday 2pm”, “Message Randy — question about deposit”.';
  await refresh();
+ // Garage Plans "Plan History" button links to index.html#planHistory — open that tab after login
+ try{ openHashView(); }catch(e){}
 }
 async function refresh(){
  $('syncState').textContent='Syncing…';
@@ -976,8 +1014,7 @@ function findMatchingCalendarEntry(parsed){
     }
     // If only one appointment on fromIso and no name, still match
     if(fromIso && e.appointment_at && score===0){
-      const ed=String(e.appointment_at).slice(0,10);
-      const onDay=mine.filter(x=>x.appointment_at && String(x.appointment_at).slice(0,10)===fromIso);
+      const onDay=mine.filter(x=>x.appointment_at && localISODate(x.appointment_at)===fromIso);
       if(onDay.length===1 && onDay[0].id===e.id) score+=30;
     }
     if(score>bestScore){best=e;bestScore=score;}
@@ -1420,7 +1457,7 @@ async function submitQuickJobCommand(){
 }
 function populateFilters(){const fill=(id,vals,label)=>{const e=$(id),v=e.value;e.innerHTML=`<option value="">${label}</option>`+[...new Set(vals.filter(Boolean))].sort().map(x=>`<option value="${esc(x)}">${esc(DISPLAY[x]||x)}</option>`).join('');e.value=v};fill('salesFilter',jobs.map(j=>j.salesman_username),'All Salespeople');fill('statusFilter',jobs.map(status),'All Statuses');fill('cityFilter',jobs.map(j=>j.city),'All Cities')}
 function filteredJobs(){const q=$('search').value.toLowerCase(),s=$('salesFilter').value,st=$('statusFilter').value,c=$('cityFilter').value;return jobs.filter(j=>status(j)!=='Completed'&&(!q||[j.customer,j.address,j.city,j.job_number,j.garage_size].join(' ').toLowerCase().includes(q))&&(!s||j.salesman_username===s)&&(!st||status(j)===st)&&(!c||j.city===c))}
-function renderJobs(){const rows=filteredJobs();$('jobRows').innerHTML=rows.length?rows.map(j=>`<tr onclick="openDrawer('${j.id}')" style="cursor:pointer"><td><div class="cust">${esc(j.customer)}</div><div class="sub">${esc(DISPLAY[j.salesman_username]||j.salesman_username)}${j.job_number?` • ${esc(j.job_number)}`:''}</div></td><td><div class="job-address">${esc(j.address||'Address not entered')}</div><div class="sub">${esc(j.city||'')}</div><div class="sub">Next: ${esc(nextJobDate(j))}</div></td><td><span class="pill ${tone(status(j))}">${esc(status(j))}</span>${j.hold_status?`<div class="sub hold">ON HOLD — ${esc(j.hold_reason||'Reason not entered')}</div>`:''}${overdue(j)?'<div class="sub overdue">OVERDUE</div>':''}${lastComplete(j)?`<div class="sub progress-last"><strong>Last Complete:</strong> ${esc(lastComplete(j))}</div>`:''}<div class="sub progress-next"><strong>Next Step:</strong> ${esc(next(j))}</div><div class="sub job-age">Job age: ${esc(jobAgeLabel(j))}</div></td><td>${jobFileButtons(j)}</td></tr>`).join(''):`<tr><td colspan="4" style="text-align:center;padding:40px;color:#6f7a8d">No active jobs match these filters.</td></tr>`}
+function renderJobs(){const rows=filteredJobs();$('jobRows').innerHTML=rows.length?rows.map(j=>`<tr onclick="openDrawer('${j.id}')" style="cursor:pointer"><td><div class="cust">${esc(j.customer)}</div><div class="sub">${esc(DISPLAY[j.salesman_username]||j.salesman_username)}${j.job_number?` • ${esc(j.job_number)}`:''}</div></td><td><div class="job-address">${esc(j.address||'Address not entered')}</div><div class="sub">${esc(j.city||'')}</div><div class="sub">Next: ${esc(nextJobDate(j))}</div></td><td><span class="pill ${tone(status(j))}">${esc(status(j))}</span>${j.hold_status?`<div class="sub hold">ON HOLD — ${esc(holdReasonText(j)||'Reason not entered')}</div>`:''}${overdue(j)?'<div class="sub overdue">OVERDUE</div>':''}${lastComplete(j)?`<div class="sub progress-last"><strong>Last Complete:</strong> ${esc(lastComplete(j))}</div>`:''}<div class="sub progress-next"><strong>Next Step:</strong> ${esc(next(j))}</div><div class="sub job-age">Job age: ${esc(jobAgeLabel(j))}</div></td><td>${jobFileButtons(j)}</td></tr>`).join(''):`<tr><td colspan="4" style="text-align:center;padding:40px;color:#6f7a8d">No active jobs match these filters.</td></tr>`}
 function cell(s,d){return `<span class="pill ${tone(s)}">${esc(s||'—')}</span><div class="sub">${fmt(d)}</div>`}
 function clearFilters(){['search','salesFilter','statusFilter','cityFilter'].forEach(id=>$(id).value='');renderJobs()}
 function setView(v,btn){
@@ -1436,6 +1473,7 @@ function setView(v,btn){
  }
  ['home','dashboard','week','calendar','personalCalendar','allPersonalCalendars','estimator','estimateHistory','planHistory','completed','trash'].forEach(x=>$(x+'View')?.classList.toggle('hidden',x!==v));
  const onHome=v==='home';
+ document.body.classList.toggle('on-home',onHome);
  if($('stats')) $('stats').classList.toggle('hidden', onHome);
  if(v==='estimator')loadEstimator();
  if(v==='estimateHistory') renderEstimateHistory();
@@ -1939,7 +1977,7 @@ async function deleteJob(){if(!manager()||!openJobId||!confirm('Move this job to
 async function restoreJob(id){if(!manager()||!confirm('Restore this job for everyone?'))return;const {data:{user}}=await sb.auth.getUser();const {error}=await sb.from('jobs').update({deleted_at:null,deleted_by:null}).eq('id',id);if(error)return alert(error.message);await sb.from('job_activity').insert({job_id:id,actor_id:user.id,action:'Job restored from Trash',details:{}});await refresh()}
 async function permanentlyDeleteJob(id){if(!manager()||!confirm('PERMANENTLY delete this job? This cannot be undone.'))return;const {error}=await sb.from('jobs').delete().eq('id',id);if(error)return alert(error.message);await refresh()}
 function renderTrash(){if(!manager())return;const rows=$('trashRows');if(!rows)return;rows.innerHTML=trashJobs.length?trashJobs.map(j=>`<tr><td><strong>${esc(j.customer)}</strong><div class="sub">${esc(j.job_number||'No job #')}</div></td><td>${esc(DISPLAY[j.salesman_username]||j.salesman_username)}</td><td>${esc(j.address||'')} ${esc(j.city||'')}</td><td>${j.deleted_at?new Date(j.deleted_at).toLocaleString():'—'}</td><td><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn primary sm" onclick="restoreJob('${j.id}')">Restore</button><button class="btn danger sm" onclick="permanentlyDeleteJob('${j.id}')">Delete Forever</button></div></td></tr>`).join(''):`<tr><td colspan="5" style="text-align:center;padding:35px;color:#6f7a8d">Trash is empty.</td></tr>`}
-async function openDrawer(id){openJobId=id;const j=jobs.find(x=>x.id===id);if(!j)return;const [a,d]=await Promise.all([sb.from('job_activity').select('*').eq('job_id',id).order('created_at',{ascending:false}).limit(30),sb.from('job_documents').select('*').eq('job_id',id).order('created_at',{ascending:false})]);const activity=a.data||[],docs=d.data||[];const tl=[['Sold',!!j.sold_date,j.sold_date],['Deposit',j.deposit_status==='Received',j.deposit_date],['Permit',['Approved','N/A'].includes(j.permit_status),j.permit_date],['Demo',j.demolition_required===false||j.demo_status==='N/A'||j.demo_status==='Complete',j.demo_date||j.scheduled_demo],['Concrete',['Poured','N/A'].includes(j.concrete_status),j.concrete_poured||j.concrete_scheduled],['Carpentry',j.carpentry_status==='Garage Built',j.built_date||j.carpentry_scheduled],['Electric',['Complete','Not Included','N/A'].includes(j.electric_status),j.electric_date],['Gutters / Extras',j.extras_required!==true||j.extras_status==='N/A'||j.extras_status==='Complete',j.extras_complete_date||j.extras_scheduled],['Inspection',['Passed','N/A'].includes(j.inspection_status),j.inspection_date],['Complete',!!j.completed_date,j.completed_date]];let first=tl.findIndex(x=>!x[1]);$('drawerContent').innerHTML=`<div class="drawerhead"><div class="split"><div><div class="sub">${esc(j.job_number||'')}</div><h2 style="margin:0">${esc(j.customer)}</h2><div class="sub">${esc(j.address||'')} ${esc(j.city||'')}</div></div><div style="display:flex;gap:6px"><button class="btn light sm" onclick="printJobSummary('${j.id}')">Print Summary</button>${manager()?`<button class="btn light sm" onclick="closeDrawer();openJobForm('${j.id}')">Edit</button>`:''}<button class="btn light sm" onclick="closeDrawer()">✕</button></div></div><div style="margin-top:9px"><span class="pill ${tone(status(j))}">${esc(status(j))}</span> ${j.hold_status?`<span class="pill red">${esc(j.hold_reason||'Hold')}</span>`:''}</div></div>
+async function openDrawer(id){openJobId=id;const j=jobs.find(x=>x.id===id);if(!j)return;const [a,d]=await Promise.all([sb.from('job_activity').select('*').eq('job_id',id).order('created_at',{ascending:false}).limit(30),sb.from('job_documents').select('*').eq('job_id',id).order('created_at',{ascending:false})]);const activity=a.data||[],docs=d.data||[];const tl=[['Sold',!!j.sold_date,j.sold_date],['Deposit',j.deposit_status==='Received',j.deposit_date],['Permit',['Approved','N/A'].includes(j.permit_status),j.permit_date],['Demo',j.demolition_required===false||j.demo_status==='N/A'||j.demo_status==='Complete',j.demo_date||j.scheduled_demo],['Concrete',['Poured','N/A'].includes(j.concrete_status),j.concrete_poured||j.concrete_scheduled],['Carpentry',j.carpentry_status==='Garage Built',j.built_date||j.carpentry_scheduled],['Electric',['Complete','Not Included','N/A'].includes(j.electric_status),j.electric_date],['Gutters / Extras',j.extras_required!==true||j.extras_status==='N/A'||j.extras_status==='Complete',j.extras_complete_date||j.extras_scheduled],['Inspection',['Passed','N/A'].includes(j.inspection_status),j.inspection_date],['Complete',!!j.completed_date,j.completed_date]];let first=tl.findIndex(x=>!x[1]);$('drawerContent').innerHTML=`<div class="drawerhead"><div class="split"><div><div class="sub">${esc(j.job_number||'')}</div><h2 style="margin:0">${esc(j.customer)}</h2><div class="sub">${esc(j.address||'')} ${esc(j.city||'')}</div></div><div style="display:flex;gap:6px"><button class="btn light sm" onclick="printJobSummary('${j.id}')">Print Summary</button>${manager()?`<button class="btn light sm" onclick="closeDrawer();openJobForm('${j.id}')">Edit</button>`:''}<button class="btn light sm" onclick="closeDrawer()">✕</button></div></div><div style="margin-top:9px"><span class="pill ${tone(status(j))}">${esc(status(j))}</span> ${j.hold_status?`<span class="pill red">${esc(holdReasonText(j)||'Hold')}</span>`:''}</div></div>
 <div class="drawergrid">
 <div class="card full"><h4>Production Timeline</h4><div class="timeline">${tl.map((x,i)=>`<div class="step ${x[1]?'done':i===first?'current':''}"><div class="circle">${x[1]?'✓':i+1}</div><div class="stepname">${x[0]}</div><div class="stepdate">${fmt(x[2])}</div></div>`).join('')}</div></div>
 <div class="card"><h4>Job Information</h4>${info('Salesman',DISPLAY[j.salesman_username]||j.salesman_username)}${info('Phone',j.phone)}${info('Garage',j.garage_size)}${info('Job Age',jobAgeLabel(j))}${info('Contract',money(j.price))}${info('Deposit',money(j.deposit))}${info('Priority',j.priority)}${info('Next date',nextJobDate(j))}</div>

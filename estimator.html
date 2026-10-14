@@ -6,6 +6,22 @@
     
 <title>Absolute Garage Builders • Quick Estimator</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>/* audit-fix 2026-10-14: offline fallback when the Tailwind CDN can't load (no internet) */
+    (function(){function fb(){if(window.tailwind||document.getElementById('agbTwFallback'))return;var s=document.createElement('style');s.id='agbTwFallback';s.textContent=
+    'body{background:#09090b;color:#e4e4e7;font-family:Arial,Helvetica,sans-serif;margin:0}.hidden{display:none!important}.flex{display:flex}.inline-flex{display:inline-flex}.grid{display:grid}.block{display:block}'+
+    '.flex-col{flex-direction:column}.flex-wrap{flex-wrap:wrap}.items-center{align-items:center}.justify-between{justify-content:space-between}.justify-center{justify-content:center}'+
+    '.grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}.grid-cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}.col-span-2{grid-column:span 2/span 2}'+
+    '.gap-1{gap:.25rem}.gap-2{gap:.5rem}.gap-3{gap:.75rem}.gap-4{gap:1rem}.w-full{width:100%}.max-w-7xl{max-width:80rem;margin:0 auto}.mx-auto{margin-left:auto;margin-right:auto}'+
+    '.p-2{padding:.5rem}.p-3{padding:.75rem}.p-4{padding:1rem}.p-6{padding:1.5rem}.px-3{padding-left:.75rem;padding-right:.75rem}.py-2{padding-top:.5rem;padding-bottom:.5rem}.mt-1{margin-top:.25rem}.mt-2{margin-top:.5rem}.mt-4{margin-top:1rem}.mb-2{margin-bottom:.5rem}'+
+    '.rounded,.rounded-lg,.rounded-xl,.rounded-2xl,.rounded-3xl{border-radius:12px}.border{border:1px solid #3f3f46}.text-xs{font-size:12px}.text-sm{font-size:14px}.text-lg{font-size:18px}.text-xl{font-size:20px}.text-2xl{font-size:24px}'+
+    '.font-bold,.font-semibold,.font-extrabold{font-weight:700}.text-white{color:#fff}.text-zinc-400,.text-zinc-500{color:#a1a1aa}.text-yellow-400{color:#facc15}.text-emerald-400,.text-green-400{color:#4ade80}.text-red-400{color:#f87171}'+
+    '[class*="bg-zinc-9"]{background:#18181b}[class*="bg-green-"],[class*="bg-emerald-"]{background:#15803d;color:#fff}[class*="bg-blue-"]{background:#1d4ed8;color:#fff}[class*="bg-red-"]{background:#b91c1c;color:#fff}'+
+    'input,select,textarea{background:#09090b;color:#e4e4e7;border:1px solid #3f3f46;border-radius:10px;padding:8px;font-size:14px;max-width:100%;box-sizing:border-box}button{cursor:pointer;border:1px solid #3f3f46;border-radius:10px;padding:8px 12px;background:#27272a;color:#fff;font-weight:600}'+
+    '@media(min-width:1280px){.xl\\:grid-cols-12{grid-template-columns:repeat(12,minmax(0,1fr))}.xl\\:col-span-4{grid-column:span 4/span 4}.xl\\:col-span-8{grid-column:span 8/span 8}.xl\\:col-span-12{grid-column:span 12/span 12}}'+
+    '#agbOfflineBar{position:sticky;top:0;z-index:99999;background:#7c2d12;color:#fff;font:600 13px Arial;padding:8px 12px;text-align:center}';
+    document.head.appendChild(s);}
+    function bar(){if(navigator.onLine!==false&&window.tailwind)return;if(document.getElementById('agbOfflineBar'))return;var d=document.createElement('div');d.id='agbOfflineBar';d.textContent='No internet connection — some features (sign-in, saving to the office, AI photos, maps) will work again when you reconnect. ';var b=document.createElement('button');b.textContent='Reload';b.style.cssText='margin-left:8px;background:#fff;color:#7c2d12;border:0;border-radius:8px;padding:3px 10px;font-weight:800';b.onclick=function(){location.reload()};d.appendChild(b);document.body&&document.body.insertBefore(d,document.body.firstChild);}
+    window.addEventListener('DOMContentLoaded',function(){fb();bar();});window.addEventListener('offline',bar);setTimeout(fb,4000);})();</script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
@@ -2118,6 +2134,15 @@ body.bg-zinc-950{
                     <textarea id="estimateChangeRequest" class="hidden" aria-hidden="true" tabindex="-1"></textarea>
                     <span id="estimateChangeStatus" class="hidden" aria-hidden="true"></span>
                     <button type="button" id="mainAiApplyBtn" class="hidden" aria-hidden="true" tabindex="-1"></button>
+                    <!-- audit-fix 2026-10-14: photo source for this sheet / option -->
+                    <div class="photo-src-row" id="photoSourceRow">
+                        <input type="hidden" id="photoSource" value="ai">
+                        <input type="hidden" id="libraryPhotoId" value="">
+                        <button type="button" class="pl-opt" data-photo-src="library" onclick="setPhotoSource('library')"><i class="fa-solid fa-images"></i> Use a photo from the library</button>
+                        <button type="button" class="pl-opt pl-on" data-photo-src="ai" onclick="setPhotoSource('ai')"><i class="fa-solid fa-wand-magic-sparkles"></i> Create new AI image</button>
+                        <button type="button" id="libraryPhotoBtn" class="pl-pick hidden" onclick="openPhotoLibrary()">Choose / change library photo</button>
+                        <span id="libraryPhotoLabel" class="pl-lbl"></span>
+                    </div>
 
                     <button type="button" onclick="safePrintEstimateSheet()"
                             class="print-action col-span-2 w-full px-3 py-2.5 text-xs font-semibold bg-green-700 hover:bg-green-600 active:bg-green-800 transition-all rounded-xl flex items-center justify-center gap-x-2 text-white">
@@ -3801,6 +3826,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             try{ if(typeof syncWindowQtyFromExtras==='function') syncWindowQtyFromExtras(); }catch(e){}
             try{ if(typeof calculateEstimate==='function') calculateEstimate(); }catch(e){}
             try{ if(typeof safeCalculateEstimate==='function') safeCalculateEstimate(); }catch(e){}
+            try{ window._libraryPhotoSrcId=null; if(typeof window.agbUpdatePhotoSourceRow==='function') window.agbUpdatePhotoSourceRow(); }catch(e){}
         }
 
         function persistMultiEstimates(){
@@ -3911,6 +3937,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             if(!slot) return;
             if(!estimateComparison[slot]) estimateComparison[slot]=currentComparisonSnapshot();
             estimateComparison[slot].sheet_html=html||estimateComparison[slot].sheet_html||'';
+            if(html) estimateComparison[slot].sheet_stale=false;
             if(Number.isFinite(quote)) estimateComparison[slot].quote=quote;
             if(Number.isFinite(internal)) estimateComparison[slot].internal=internal;
             estimateComparison[slot].savedAt=new Date().toLocaleString();
@@ -3924,11 +3951,38 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                 out[k]={
                     width:s.width, depth:s.depth, wall:s.wall, roof:s.roof,
                     internal:s.internal, quote:s.quote, savedAt:s.savedAt,
-                    sheet_html:s.sheet_html||''
+                    sheet_html:s.sheet_html||'',
+                    // audit-fix 2026-10-14: each option keeps its own full form data + AI photo
+                    formState:s.formState||null,
+                    sheet_stale:!!s.sheet_stale,
+                    ai_photo:(s.ai_photo && (!/^data:/i.test(s.ai_photo) || s.ai_photo.length<900000))?s.ai_photo:(s.ai_photo?'':undefined),
+                    ai_photo_hash:s.ai_photo_hash||''
                 };
             });
             return out;
         }
+
+        // audit-fix 2026-10-14: per-option AI photo. Same physical specs => reuse the image; different => new.
+        const AGB_PHYS_INCLUDE=/width|depth|wall|roof|pitch|eave|gable|siding|color|colour|door|^oh|window|patio|gutter|soffit|^rg|overhang|trim|shingle|photoView|garagePhotoView|french|party|service|apron|cupola|vent|garageSize|customSize|stories|loft/i;
+        const AGB_PHYS_EXCLUDE=/cost|price|customer|address|phone|email|note|markup|discount|salesman|permit|demo|tax|deposit|commission|qty?Cost|sheet|search|chat|prompt/i;
+        function physicalSpecString(state){
+            state=state||captureFormState();
+            const keys=Object.keys(state).filter(k=>k!=='__extras' && AGB_PHYS_INCLUDE.test(k) && !AGB_PHYS_EXCLUDE.test(k)).sort();
+            return keys.map(k=>k+'='+JSON.stringify(state[k]&&state[k].v)).join('|');
+        }
+        function physicalSpecHash(state){
+            const str=physicalSpecString(state);
+            let h1=0x811c9dc5, h2=5381;
+            for(let i=0;i<str.length;i++){const c=str.charCodeAt(i);h1=Math.imul(h1^c,16777619)>>>0;h2=((h2<<5)+h2+c)>>>0;}
+            return h1.toString(16)+h2.toString(16);
+        }
+        function findOptionPhotoForHash(hash){
+            if(!hash||typeof estimateComparison!=='object'||!estimateComparison) return '';
+            for(const k of ['A','B','C']){const o=estimateComparison[k];if(o&&o.ai_photo&&o.ai_photo_hash===hash)return o.ai_photo;}
+            return '';
+        }
+        window.physicalSpecHash=physicalSpecHash;
+        window.findOptionPhotoForHash=findOptionPhotoForHash;
         function attachCurrentSheetToOptions(sheetHtml, quote, internal){
             let slot=activeComparisonSlot;
             try{
@@ -9931,7 +9985,15 @@ function findSheetSaveHost(){
   for(const w of cands){ try{ if(typeof w.saveEditedEstimateSheetHtml==='function') return w; }catch(e){} }
   return null;
 }
+function sheetAutoPill(msg, kind){
+  var p=document.getElementById('sheetAutoPill');
+  if(!p){ p=document.createElement('div'); p.id='sheetAutoPill'; p.className='no-print'; p.style.cssText='position:fixed;right:12px;bottom:12px;z-index:9999;padding:5px 10px;border-radius:999px;font:600 12px Arial,sans-serif;background:rgba(24,24,27,.85);color:#e4e4e7;cursor:default'; document.body.appendChild(p); }
+  p.textContent=msg; p.style.color = kind==='ok' ? '#86efac' : (kind==='err' ? '#fca5a5' : '#e4e4e7');
+  p.style.cursor = kind==='err' ? 'pointer' : 'default';
+  p.onclick = kind==='err' ? function(){ sheetAutosaveNow(); } : null;
+}
 function showSheetSaveStatus(msg, kind){
+  if(window._sheetQuietSave){ sheetAutoPill(kind==='ok' ? 'Saved ✓' : (kind==='err' ? 'Save failed – retry' : 'Saving…'), kind); return; }
   const st=document.getElementById('popupChangeStatus');
   if(st){ st.textContent=msg||''; st.style.color = kind==='ok' ? '#86efac' : (kind==='err' ? '#fca5a5' : '#fde68a'); }
   let bar=document.getElementById('sheetSaveBanner');
@@ -9985,11 +10047,17 @@ function saveSheetEditsNow(){
       // Capture the sheet first, without our own status banner / "Saving…" button state
       const banner=document.getElementById('sheetSaveBanner');
       if(banner) banner.remove();
+      const autoPill=document.getElementById('sheetAutoPill');
+      if(autoPill) autoPill.remove();
+      window._sheetCapturing=true;
       const wasEditing=document.body.classList.contains('sheet-editing');
       if(wasEditing) toggleSheetEditRows(false);
       const html='<!DOCTYPE html>\\n'+document.documentElement.outerHTML;
       if(banner) document.body.appendChild(banner);
+      if(autoPill) document.body.appendChild(autoPill);
       if(wasEditing) toggleSheetEditRows(true);
+      setTimeout(function(){ window._sheetCapturing=false; }, 0);
+      if(window._sheetQuietSave && html===window._sheetLastSavedHtml){ sheetAutoPill('Saved ✓','ok'); return true; }
       if(btn){ btn.disabled=true; btn.textContent='Saving…'; }
       showSheetSaveStatus('Saving sheet changes…','info');
       const priceTxt=(document.querySelector('.total-price')?.innerText||'').replace(/[^0-9.]/g,'');
@@ -10009,6 +10077,7 @@ function saveSheetEditsNow(){
       const msg = (res && typeof res==='object' && res.message) ? res.message
         : (ok ? 'Sheet changes saved. They will be there when you view this estimate again.'
               : ((function(){ try{ return host._agbLastSaveError; }catch(e){ return ''; } })() || 'Save did not go through. Check the sign-in on the Dashboard and press Retry.'));
+      if(ok) window._sheetLastSavedHtml=html;
       showSheetSaveStatus(msg, ok?'ok':'err');
       if(btn) btn.textContent = ok ? 'Saved ✓' : 'Save Changes';
       return ok;
@@ -10024,6 +10093,72 @@ function saveSheetEditsNow(){
   })();
   return _sheetSaveRunning;
 }
+// audit-fix 2026-10-14: Google-Docs-style autosave. Every structural change saves right away,
+// typing saves ~1s after the last keystroke, and blur / print / close save too. Same row (no duplicates).
+var _sheetAutoT=null, _sheetAutoPending=false;
+function sheetAutosaveNow(){
+  clearTimeout(_sheetAutoT); _sheetAutoT=null;
+  if(!findSheetSaveHost()) return;
+  if(_sheetSaveRunning){ _sheetAutoPending=true; return; }
+  window._sheetQuietSave=true;
+  var pr=saveSheetEditsNow();
+  Promise.resolve(pr).then(function(){
+    window._sheetQuietSave=false;
+    if(_sheetAutoPending){ _sheetAutoPending=false; setTimeout(sheetAutosaveNow, 50); }
+  }, function(){ window._sheetQuietSave=false; });
+}
+function scheduleSheetAutosave(ms){
+  clearTimeout(_sheetAutoT);
+  _sheetAutoT=setTimeout(sheetAutosaveNow, ms==null?1000:ms);
+}
+window.sheetAutosaveNow=sheetAutosaveNow; window.scheduleSheetAutosave=scheduleSheetAutosave;
+function sheetAutosaveIgnore(node){
+  try{
+    var el=node && (node.nodeType===1 ? node : node.parentElement);
+    if(!el) return true;
+    if(el.closest('#sheetAutoPill,#sheetSaveBanner,#popupChangeStatus,#sheetSaveBtn,#sheetUndoBtn,#sheetEditRowsBtn')) return true;
+    return false;
+  }catch(e){ return true; }
+}
+function startSheetAutosave(){
+  if(window._sheetAutosaveStarted) return; window._sheetAutosaveStarted=true;
+  try{
+    // baseline: the sheet as opened counts as saved, so just opening never writes
+    var b=document.getElementById('sheetSaveBanner'), ap=document.getElementById('sheetAutoPill');
+    if(b) b.remove(); if(ap) ap.remove();
+    window._sheetLastSavedHtml='<!DOCTYPE html>\\n'+document.documentElement.outerHTML;
+    if(b) document.body.appendChild(b); if(ap) document.body.appendChild(ap);
+  }catch(e){}
+  var mo=new MutationObserver(function(list){
+    if(window._sheetCapturing || window._sheetQuietSave && _sheetSaveRunning && false) return;
+    var structural=false, typing=false;
+    for(var i=0;i<list.length;i++){
+      var m=list[i];
+      if(sheetAutosaveIgnore(m.target)) continue;
+      if(m.type==='attributes' && m.target===document.body) continue;
+      if(m.type==='attributes' && m.attributeName==='style' && m.target.closest && m.target.closest('.exterior,.exterior-title')) continue;
+      if(m.type==='characterData'){ typing=true; continue; }
+      if(m.type==='childList'){
+        var t=m.target && m.target.nodeType===1 ? m.target : null;
+        if(t && t.isContentEditable){ typing=true; continue; }
+      }
+      structural=true;
+    }
+    if(window._sheetCapturing) return;
+    if(structural) scheduleSheetAutosave(250);
+    else if(typing) scheduleSheetAutosave(1000);
+  });
+  mo.observe(document.body,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['style','class','src','hidden','data-hidden']});
+  document.addEventListener('input', function(e){ if(!sheetAutosaveIgnore(e.target)) scheduleSheetAutosave(1000); }, true);
+  document.addEventListener('focusout', function(e){ if(e.target && (e.target.isContentEditable || /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) && _sheetAutoT) sheetAutosaveNow(); }, true);
+  window.addEventListener('beforeprint', function(){ if(_sheetAutoT) sheetAutosaveNow(); });
+  window.addEventListener('pagehide', function(){ if(_sheetAutoT) sheetAutosaveNow(); });
+  window.addEventListener('beforeunload', function(){ if(_sheetAutoT) sheetAutosaveNow(); });
+  document.addEventListener('visibilitychange', function(){ if(document.visibilityState==='hidden' && _sheetAutoT) sheetAutosaveNow(); });
+}
+// start after the sheet finished its own first-load adjustments (photo checks etc.)
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', function(){ setTimeout(startSheetAutosave, 2500); });
+else setTimeout(startSheetAutosave, 2500);
 function undoSheetEdit(){
   const last=sheetUndoStack.pop();
   setSheetUndoBtn();
@@ -10762,6 +10897,57 @@ document.addEventListener('click', function(e){
         }
         document.addEventListener('DOMContentLoaded',()=>setTimeout(toggleOverhang,0));
 document.addEventListener('DOMContentLoaded',()=>{syncDemoPreset();syncWindowQtyFromExtras();try{togglePartyDoorSize()}catch(e){};try{applyOverheadDoorSizePreset()}catch(e){};try{ensureThreeCarDoorGrid();syncThreeCarDoorUI()}catch(e){};try{toggleExtraElecLocationFields()}catch(e){};calculateEstimate();});
+
+// audit-fix 2026-10-14: per-option AI photo cache (reuse when the physical specs hash matches)
+try{
+ (function(){
+  if(typeof resolveEstimateGaragePhotoSrc!=='function') return;
+  const orig=resolveEstimateGaragePhotoSrc;
+  window.__agbAiGenCount=0;
+  resolveEstimateGaragePhotoSrc=async function(){
+   let slot=null,hash='';
+   try{
+    if(typeof window.agbLibraryPhotoForSheet==='function'){
+     const lib=await window.agbLibraryPhotoForSheet();
+     if(lib){ slot=window._pendingOptionSlot||(typeof activeComparisonSlot!=='undefined'?activeComparisonSlot:null)||null; if(slot&&estimateComparison[slot]){estimateComparison[slot].library_photo_id=(document.getElementById('libraryPhotoId')||{}).value||'';} return lib; }
+    }
+   }catch(e){console.warn('library photo',e);}
+   try{
+    const rg=(typeof isReverseGableSelected==='function' && isReverseGableSelected());
+    slot=window._pendingOptionSlot||(typeof activeComparisonSlot!=='undefined'?activeComparisonSlot:null)||null;
+    if(rg) return await orig.apply(this,arguments);
+    hash=physicalSpecHash();
+    const mode=window._sheetPhotoMode||'generate';
+    if(slot && mode!=='edit'){
+     const hit=findOptionPhotoForHash(hash);
+     if(hit){
+      try{ setLastAiGaragePhotoUrl(hit); }catch(_){}
+      if(estimateComparison[slot]){estimateComparison[slot].ai_photo=hit;estimateComparison[slot].ai_photo_hash=hash;try{persistMultiEstimates();}catch(_){}}
+      window._sheetPhotoMode='generate';
+      return {primary:hit,fallbacks:[],source:'openai',aiSource:'reused-option',prompt:'(reused option photo — same physical specs)'};
+     }
+     // different specs than any option photo: never carry another option's image into this one
+     if(mode!=='reuse' || true){ const last=getLastAiGaragePhotoUrl(); const owner=['A','B','C'].find(k=>estimateComparison[k]&&estimateComparison[k].ai_photo===last); if(last && owner && owner!==slot){ window._lastAiGaragePhotoUrl=null; try{sessionStorage.removeItem('agb_last_ai_garage_photo');}catch(_){} window._sheetPhotoMode='generate'; } }
+    }
+   }catch(e){console.warn('option photo cache',e);}
+   const res=await orig.apply(this,arguments);
+   try{
+    if(res && res.primary && res.source==='openai' && !/reused/.test(String(res.aiSource||'')) && typeof window.agbSaveAiPhotoToLibrary==='function'){
+     window.agbSaveAiPhotoToLibrary(res.primary, hash||physicalSpecHash());
+    }
+   }catch(_){}
+   try{
+    if(slot && res && res.primary && res.source==='openai' && estimateComparison[slot]){
+     if(res.aiSource!=='reused') window.__agbAiGenCount++;
+     estimateComparison[slot].ai_photo=res.primary; estimateComparison[slot].ai_photo_hash=hash||physicalSpecHash();
+     try{persistMultiEstimates();}catch(_){}
+    }
+   }catch(_){}
+   return res;
+  };
+  window.resolveEstimateGaragePhotoSrc=resolveEstimateGaragePhotoSrc;
+ })();
+}catch(e){console.warn(e);}
 </script>
 
 <!-- Sticky Total Bar — always visible while scrolling -->
@@ -10797,6 +10983,7 @@ function toggleStickyInternal(){
 #rgPickerModal .rg-head p{margin:4px 0 0;font-size:12px;color:#a1a1aa;line-height:1.4}
 #rgPickerModal .rg-x{margin-left:auto;background:#27272a;border:1px solid #3f3f46;color:#e4e4e7;border-radius:12px;width:34px;height:34px;font-size:18px;cursor:pointer;flex:none}
 #rgPickerModal .rg-grid{padding:14px 20px;overflow:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+#rgPickerModal .rg-card.rg-mismatch img{opacity:.5}#rgPickerModal .rg-card .rg-warn{position:absolute;left:6px;right:6px;top:6px;background:rgba(180,83,9,.92);color:#fff;font-size:11px;font-weight:700;border-radius:6px;padding:3px 6px;line-height:1.2;z-index:2}
 #rgPickerModal .rg-card{position:relative;background:#09090b;border:2px solid #3f3f46;border-radius:16px;overflow:hidden;cursor:pointer;text-align:left;padding:0;color:inherit;font:inherit;transition:border-color .12s,transform .12s}
 #rgPickerModal .rg-card:hover{border-color:#60a5fa;transform:translateY(-1px)}
 #rgPickerModal .rg-card.rg-selected{border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.35)}
@@ -10875,6 +11062,29 @@ const REVERSE_GABLE_PRESETS = [
  * resolves (like every GARAGE_PHOTO_LIBRARY photo) to images/garage_001.jpg next to this file,
  * then ./garage_001.jpg. If it loads on this device it is a selectable card; if not, its card
  * is shown greyed out ("not found on this device"). */
+// audit-fix 2026-10-14: what each example photo shows, so the picker can warn on a door-count mismatch
+const RG_PRESET_TAGS = {
+    'rg-01-gray-centered':   { ohDoors:1, serviceDoor:false },
+    'rg-02-charcoal-left':   { ohDoors:1, serviceDoor:true  },
+    'rg-03-tan-double':      { ohDoors:2, serviceDoor:false },
+    'rg-04-white-navy-right':{ ohDoors:1, serviceDoor:false },
+    'rg-05-red-single':      { ohDoors:1, serviceDoor:false }
+};
+function rgEstimateDoorCount(){
+    try{
+        if(typeof isThreeCarLayout==='function' && isThreeCarLayout()){
+            let n=0; for(let i=1;i<=3;i++){ const el=document.getElementById('ohLayout'+i); if(el && el.value && el.value!=='none') n++; }
+            if(n) return n;
+        }
+    }catch(e){}
+    return Math.max(1, Math.min(3, parseInt(document.getElementById('ohDoorQty')?.value)||1));
+}
+function rgPresetMismatch(p){
+    const t=p && RG_PRESET_TAGS[p.id]; if(!t) return '';
+    const n=rgEstimateDoorCount();
+    if(t.ohDoors!==n) return 'Photo shows '+t.ohDoors+' overhead door'+(t.ohDoors>1?'s':'')+' — this estimate has '+n;
+    return '';
+}
 const RG_LIBRARY_PHOTO = { id:'rg-library-garage-001', label:'Approved photo (garage_001)', desc:'User-approved reverse gable photo from the photo library', file:'garage_001.jpg' };
 const RG_USER_PRESETS_KEY = 'agb_rg_user_presets_v1';
 
@@ -11023,7 +11233,8 @@ function rgRenderGrid(){
     const sel=rgGetSelectedPreset(); const selId=sel?sel.id:'';
     const cards=rgAllPresets().map(p=>{
         const isSel=p.id===selId;
-        const cls='rg-card'+(isSel?' rg-selected':'')+(p.missing?' rg-missing':'');
+        const mm=rgPresetMismatch(p);
+        const cls='rg-card'+(isSel?' rg-selected':'')+(p.missing?' rg-missing':'')+(mm?' rg-mismatch':'');
         const sub=p.missing?'Not found on this device (images/'+RG_LIBRARY_PHOTO.file+')':(p.user?'Added on this device':(p.desc||''));
         const img=p.library
             ? '<img alt="" src="'+rgEsc(p.src)+'" onerror="if(!this.dataset.t){this.dataset.t=1;this.src=\''+rgEsc(rgLibraryCandidates()[1])+'\'}else{this.style.visibility=\'hidden\';this.closest(\'.rg-card\').classList.add(\'rg-missing\')}">'
@@ -11031,13 +11242,15 @@ function rgRenderGrid(){
         return '<div class="'+cls+'" role="button" tabindex="0" data-rg-id="'+rgEsc(p.id)+'" aria-pressed="'+(isSel?'true':'false')+'">'
             + img
             + (isSel?'<span class="rg-badge">SELECTED</span>':'')
+            + (mm?'<span class="rg-warn" title="'+rgEsc(mm)+'">⚠ '+rgEsc(mm)+'</span>':'')
             + (p.user?'<button type="button" class="rg-remove" data-rg-remove="'+rgEsc(p.id)+'" title="Remove this photo from this device">Remove</button>':'')
             + '<div class="rg-label">'+rgEsc(p.label)+'<span class="rg-sub">'+rgEsc(sub)+'</span></div></div>';
     });
     cards.push('<div class="rg-card rg-add" role="button" tabindex="0" data-rg-add="1"><span class="rg-plus">+</span>Add photo<span class="rg-sub" style="font-weight:500;color:#a1a1aa">Upload from this device</span></div>');
-    grid.innerHTML=cards.join('');
+    const nDoors=rgEstimateDoorCount();
+    grid.innerHTML='<div class="rg-doorinfo" style="grid-column:1/-1;font-size:12px;color:#fbbf24;font-weight:700">This estimate has '+nDoors+' overhead door'+(nDoors>1?'s':'')+'. Photos marked ⚠ show a different number.</div>'+cards.join('');
     grid.querySelectorAll('[data-rg-id]').forEach(el=>{
-        const act=()=>{ if(el.classList.contains('rg-missing')) return; if(rgSelectPreset(el.getAttribute('data-rg-id'))) closeReverseGablePicker(); };
+        const act=()=>{ if(el.classList.contains('rg-missing')) return; if(el.classList.contains('rg-mismatch') && !confirm('This photo shows a different number of overhead doors than the estimate. Use it anyway?')) return; if(rgSelectPreset(el.getAttribute('data-rg-id'))) closeReverseGablePicker(); };
         el.addEventListener('click',e=>{ if(e.target.closest('[data-rg-remove]')) return; act(); });
         el.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); act(); } });
     });
@@ -11147,5 +11360,250 @@ document.addEventListener('keydown',e=>{
 })();
 </script>
 
+<script id="photoLibraryScript">
+/* audit-fix 2026-10-14: Photo source choice + shared photo library.
+ * - "Create new AI image" (default) or "Use a photo from the library".
+ * - Library = built-in example photos (GARAGE_PHOTO_LIBRARY) + reverse gable presets + shared AI library.
+ * - Every AI image generated is auto-saved to table garage_photo_library (see photo-library.sql).
+ *   If the table is missing, photos are kept in this browser (localStorage) and the picker says so.
+ */
+(function(){
+// audit-fix 2026-10-14: 28 approved library photos shipped in library/ (thumbs in library/thumbs/), tagged by hand
+const LIBRARY_SEED=[
+  {id:'seed:garage-01',file:'garage-01.jpg',tags:{carSize:2,roof:'hip',ohDoors:1,doorStyle:'raised panel',color:'white',trim:'aluminum',offCenter:false,patio:false}},
+  {id:'seed:garage-02',file:'garage-02.jpg',tags:{carSize:2,roof:'gable',ohDoors:1,doorStyle:'raised panel w/ windows',color:'gray',trim:'aluminum',offCenter:false,patio:false}},
+  {id:'seed:garage-03',file:'garage-03.jpg',tags:{carSize:2.5,roof:'hip',ohDoors:2,doorStyle:'raised panel',color:'tan',trim:'aluminum',offCenter:false,patio:false}},
+  {id:'seed:garage-04',file:'garage-04.jpg',tags:{carSize:2,roof:'hip',ohDoors:1,doorStyle:'raised panel',color:'green',trim:'aluminum',offCenter:false,patio:false}},
+  {id:'seed:garage-05',file:'garage-05.jpg',tags:{carSize:2,roof:'hip',ohDoors:1,doorStyle:'raised panel',color:'red',trim:'aluminum',offCenter:false,patio:false}},
+  {id:'seed:garage-06',file:'garage-06.jpg',tags:{carSize:2,roof:'gable',ohDoors:1,doorStyle:'flush',color:'tan',trim:'aluminum',offCenter:false,patio:false}},
+  {id:'seed:garage-07',file:'garage-07.jpg',tags:{carSize:1,roof:'gable',ohDoors:1,doorStyle:'raised panel + service door',color:'white',trim:'aluminum',offCenter:true,patio:false}},
+  {id:'seed:garage-08',file:'garage-08.jpg',tags:{carSize:2,roof:'gable',ohDoors:1,doorStyle:'flush',color:'navy',trim:'aluminum',offCenter:false,patio:false}},
+  {id:'seed:garage-09',file:'garage-09.jpg',tags:{carSize:2,roof:'hip',ohDoors:1,doorStyle:'raised panel carriage',color:'green',trim:'wood',offCenter:false,patio:false}},
+  {id:'seed:garage-10',file:'garage-10.jpg',tags:{carSize:2,roof:'gable',ohDoors:0,doorStyle:'rear view (no overhead door)',color:'white',trim:'wood',offCenter:false,patio:true}},
+  {id:'seed:garage-11',file:'garage-11.jpg',tags:{carSize:1,roof:'gable',ohDoors:1,doorStyle:'raised panel + service door + window',color:'gray',trim:'aluminum',offCenter:true,patio:false}},
+  {id:'seed:garage-12',file:'garage-12.jpg',tags:{carSize:2,roof:'gable',ohDoors:1,doorStyle:'wood-look',color:'navy',trim:'wood',offCenter:false,patio:false}},
+  {id:'seed:garage-13',file:'garage-13.jpg',tags:{carSize:2,roof:'hip',ohDoors:0,doorStyle:'rear view (no overhead door)',color:'tan',trim:'aluminum',offCenter:false,patio:true}},
+  {id:'seed:garage-14',file:'garage-14.jpg',tags:{carSize:2,roof:'hip',ohDoors:1,doorStyle:'raised panel w/ windows',color:'tan',trim:'aluminum',offCenter:false,patio:false}},
+  {id:'seed:garage-15',file:'garage-15.jpg',tags:{carSize:2,roof:'hip',ohDoors:1,doorStyle:'flush black + service door',color:'white',trim:'aluminum',offCenter:true,patio:false}},
+  {id:'seed:garage-16',file:'garage-16.jpg',tags:{carSize:2.5,roof:'gable',ohDoors:2,doorStyle:'carriage black w/ windows',color:'white',trim:'wood',offCenter:false,patio:false}},
+  {id:'seed:garage-17',file:'garage-17.jpg',tags:{carSize:2,roof:'gable',ohDoors:0,doorStyle:'rear view (no overhead door)',color:'navy',trim:'wood',offCenter:false,patio:true}},
+  {id:'seed:garage-18',file:'garage-18.jpg',tags:{carSize:2,roof:'hip',ohDoors:1,doorStyle:'raised panel w/ windows',color:'brown',trim:'aluminum',offCenter:false,patio:false}},
+  {id:'seed:garage-19',file:'garage-19.jpg',tags:{carSize:2,roof:'gable',ohDoors:1,doorStyle:'flush',color:'red',trim:'aluminum',offCenter:true,patio:false}},
+  {id:'seed:garage-20',file:'garage-20.jpg',tags:{carSize:2,roof:'hip',ohDoors:2,doorStyle:'wood-look',color:'gray',trim:'wood',offCenter:false,patio:false}},
+  {id:'seed:garage-21',file:'garage-21.jpg',tags:{carSize:2,roof:'hip',ohDoors:0,doorStyle:'rear view (no overhead door)',color:'white',trim:'aluminum',offCenter:false,patio:true}},
+  {id:'seed:garage-22',file:'garage-22.jpg',tags:{carSize:2,roof:'gable',ohDoors:1,doorStyle:'carriage w/ arched windows',color:'green',trim:'aluminum',offCenter:false,patio:false}},
+  {id:'seed:garage-23',file:'garage-23.jpg',tags:{carSize:2,roof:'hip',ohDoors:1,doorStyle:'raised panel + service door',color:'tan',trim:'aluminum',offCenter:true,patio:false}},
+  {id:'seed:garage-24',file:'garage-24.jpg',tags:{carSize:2,roof:'gable',ohDoors:1,doorStyle:'raised panel w/ windows',color:'charcoal',trim:'aluminum',offCenter:false,patio:false}},
+  {id:'seed:garage-25',file:'garage-25.jpg',tags:{carSize:2,roof:'gable',ohDoors:0,doorStyle:'rear view (no overhead door)',color:'gray',trim:'wood',offCenter:false,patio:true}},
+  {id:'seed:garage-26',file:'garage-26.jpg',tags:{carSize:2,roof:'hip',ohDoors:1,doorStyle:'raised panel',color:'brown',trim:'aluminum',offCenter:false,patio:false}},
+  {id:'seed:garage-27',file:'garage-27.jpg',tags:{carSize:3,roof:'hip',ohDoors:3,doorStyle:'carriage black w/ windows',color:'gray',trim:'wood',offCenter:false,patio:false}},
+  {id:'seed:garage-28',file:'garage-28.jpg',tags:{carSize:2,roof:'gable',ohDoors:1,doorStyle:'black w/ windows + service door',color:'white',trim:'aluminum',offCenter:true,patio:false}}
+];
+const LOCAL_KEY='agb_photo_library_local_v1';
+const TABLE='garage_photo_library';
+let sharedOk=null, sharedRows=[], isAdmin=false, currentUserId='', currentUserName='';
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const val=id=>(document.getElementById(id)||{}).value||'';
+function sb(){ try{ return (typeof garageSb!=='undefined')?garageSb:null; }catch(e){ return null; } }
+function currentTags(){
+  let w=20,d=20; try{ const g=getGarageDimensions(); w=g.width; d=g.depth; }catch(e){}
+  const roof=val('roofType')||'';
+  const reverse=(typeof isReverseGableSelected==='function' && isReverseGableSelected());
+  const n=(typeof rgEstimateDoorCount==='function')?rgEstimateDoorCount():(parseInt(val('ohDoorQty'))||1);
+  const cap=val('carCapacity');
+  const carSize=cap==='3'&&w>=27?3:(w<=14?1:(w<=24?2:(w<30?2.5:3)));
+  const patio=!!(document.getElementById('roofPatioEnabled')||{}).checked;
+  const alum=!!(document.getElementById('aluminumSoffit')||{}).checked;
+  return {size:w+'x'+d,width:w,depth:d,carSize,roof:reverse?'reverse gable':roof,reverse,siding:val('sidingType'),color:val('sidingColor')||val('vinylColor'),colorFamily:colorFamily(val('sidingColor')||val('vinylColor')),ohDoors:n,doorStyle:val('overheadDoorStyle'),serviceDoor:val('doorType'),trim:alum?'aluminum':'wood',patio};
+}
+function colorFamily(c){c=String(c||'').toLowerCase();if(/sage|green/.test(c))return 'green';if(/beige|almond|cream|tan|khaki/.test(c))return 'tan';if(/charcoal|black|dark/.test(c))return 'charcoal';if(/gray|grey|pewter/.test(c))return 'gray';if(/brown|clay|mocha/.test(c))return 'brown';if(/white/.test(c))return 'white';if(/navy|blue/.test(c))return 'navy';if(/red/.test(c))return 'red';return c;}
+// similarity of a library photo to the current estimate; null = hard-excluded from Recommended
+function photoScore(t,cur){
+  t=t||{};if(t.carSize!=null&&cur.carSize!=null&&Number(t.carSize)!==Number(cur.carSize))return null;
+  if(!!t.patio!==!!cur.patio)return null;
+  if(t.carSize==null)return null;
+  let sc=0;const r=String(t.roof||'').toLowerCase();
+  if(r===String(cur.roof||'').toLowerCase())sc+=40;else if(/gable/.test(r)&&/gable/.test(cur.roof||''))sc+=15;
+  if(t.ohDoors!=null&&Number(t.ohDoors)===Number(cur.ohDoors))sc+=25;else if(t.ohDoors===0&&cur.patio)sc+=10;
+  const cf=colorFamily(t.color);if(cf&&cf===cur.colorFamily)sc+=20;
+  if(t.trim&&t.trim===cur.trim)sc+=5;
+  if(t.doorStyle&&cur.doorStyle&&String(t.doorStyle).toLowerCase().includes(String(cur.doorStyle).toLowerCase().split(' ')[0]))sc+=5;
+  return sc;
+}
+window.agbPhotoScore=photoScore;
+window.agbCurrentPhotoTags=currentTags;
+function getLocal(){ try{ return JSON.parse(localStorage.getItem(LOCAL_KEY))||[]; }catch(e){ return []; } }
+function setLocal(a){ try{ localStorage.setItem(LOCAL_KEY, JSON.stringify(a.slice(0,40))); }catch(e){ try{ localStorage.setItem(LOCAL_KEY, JSON.stringify(a.slice(0,10))); }catch(_){} } }
+function reencode(src, maxW, q){
+  return new Promise(resolve=>{
+    if(!src){ resolve(''); return; }
+    const img=new Image(); if(!/^data:/i.test(src)) img.crossOrigin='anonymous';
+    img.onload=()=>{ try{ const s=Math.min(1,maxW/img.naturalWidth); const c=document.createElement('canvas'); c.width=Math.max(1,Math.round(img.naturalWidth*s)); c.height=Math.max(1,Math.round(img.naturalHeight*s)); c.getContext('2d').drawImage(img,0,0,c.width,c.height); resolve(c.toDataURL('image/jpeg',q)); }catch(e){ resolve(''); } };
+    img.onerror=()=>resolve(''); img.src=src; setTimeout(()=>resolve(''),15000);
+  });
+}
+async function whoAmI(){
+  const c=sb(); if(!c) return;
+  try{ const {data:{user}}=await c.auth.getUser(); if(!user) return; currentUserId=user.id;
+    const {data}=await c.from('staff_profiles').select('username,role,full_name').eq('id',user.id).maybeSingle();
+    isAdmin=!!(data && ['owner','business_manager','admin'].includes(String(data.role||'').toLowerCase()));
+    currentUserName=(data&&(data.full_name||data.username))||user.email||'';
+  }catch(e){}
+}
+async function loadShared(){
+  const c=sb(); if(!c){ sharedOk=false; return []; }
+  try{
+    const {data,error}=await c.from(TABLE).select('id,created_at,created_by_name,thumb_data,image_url,tags,spec_hash,deleted').eq('deleted',false).order('created_at',{ascending:false}).limit(200);
+    if(error){ sharedOk=false; return []; }
+    sharedOk=true; sharedRows=data||[]; return sharedRows;
+  }catch(e){ sharedOk=false; return []; }
+}
+async function fetchSharedImage(id){
+  const c=sb(); if(!c) return '';
+  try{ const {data}=await c.from(TABLE).select('image_data,image_url').eq('id',id).maybeSingle(); return (data&&(data.image_data||data.image_url))||''; }catch(e){ return ''; }
+}
+// Auto-save every generated AI image to the shared library (local fallback)
+window.agbSaveAiPhotoToLibrary=async function(url, hash){
+  try{
+    if(!url) return;
+    const tags=currentTags();
+    const image=(/^data:/i.test(url) && url.length<400000)?url:(await reencode(url,900,.78))||'';
+    const thumb=(await reencode(image||url,260,.7))||'';
+    const row={source:'ai',deleted:false,image_data:image||null,image_url:image?null:(/^https?:/i.test(url)?url:null),thumb_data:thumb||null,spec_hash:hash||'',tags,created_by_name:currentUserName||null};
+    if(currentUserId) row.created_by=currentUserId;
+    const c=sb(); let ok=false;
+    if(c && sharedOk!==false){
+      try{ const {error}=await c.from(TABLE).insert(row); ok=!error; if(error) sharedOk=false; }catch(e){ ok=false; }
+    }
+    if(!ok){ const a=getLocal(); a.unshift(Object.assign({id:'local-'+Date.now(),created_at:new Date().toISOString(),local:true},row)); setLocal(a); }
+  }catch(e){ console.warn('photo library save', e); }
+};
+function builtins(){
+  const out=[];
+  try{ LIBRARY_SEED.forEach(p=>out.push({id:p.id,kind:'Approved',src:new URL('library/'+p.file,document.baseURI).href,thumb:new URL('library/thumbs/'+p.file,document.baseURI).href,tags:p.tags})); }catch(e){}
+  try{ (GARAGE_PHOTO_LIBRARY||[]).forEach(p=>{ if(!p||!p.src) return; const file=String(p.src).replace(/^.*\//,''); out.push({id:'lib:'+p.id,kind:'Example',src:new URL('images/'+file,document.baseURI).href,alt:new URL(file,document.baseURI).href,tags:{roof:p.reverseGable?'reverse gable':p.roof,siding:p.siding,color:p.color,ohDoors:/two_doors|double/.test(p.id)?2:1}}); }); }catch(e){}
+  try{ (REVERSE_GABLE_PRESETS||[]).forEach(p=>{ const t=(typeof RG_PRESET_TAGS!=='undefined'&&RG_PRESET_TAGS[p.id])||{}; out.push({id:'rg:'+p.id,kind:'Reverse gable',src:p.src,tags:{roof:'reverse gable',color:(p.label||'').split(',')[0],ohDoors:t.ohDoors||1}}); }); }catch(e){}
+  return out;
+}
+function choiceSet(entry){
+  const h=document.getElementById('libraryPhotoId'); if(h) h.value=entry?entry.id:'';
+  window._libraryPhotoSrc=entry?entry.src:'';
+  try{ if(entry && entry.src && !/^data:/i.test(entry.src)) sessionStorage.setItem('agb_libphoto_'+entry.id, entry.src); }catch(e){}
+  updateRow();
+}
+async function resolveChoiceSrc(){
+  const id=val('libraryPhotoId'); if(!id) return '';
+  if(window._libraryPhotoSrc && window._libraryPhotoSrcId===id) return window._libraryPhotoSrc;
+  let src='';
+  const b=builtins().find(x=>x.id===id); if(b) src=b.src;
+  else if(id.startsWith('local-')){ const l=getLocal().find(x=>x.id===id); src=l?(l.image_data||l.image_url):''; }
+  else src=await fetchSharedImage(id);
+  window._libraryPhotoSrc=src; window._libraryPhotoSrcId=id; return src;
+}
+window.agbLibraryPhotoForSheet=async function(){
+  if(val('photoSource')!=='library') return null;
+  const src=await resolveChoiceSrc();
+  return src?{primary:src,fallbacks:[],source:'library',aiSource:'library',prompt:'(library photo — no AI)'}:null;
+};
+function updateRow(){
+  const src=val('photoSource')||'ai';
+  document.querySelectorAll('[data-photo-src]').forEach(b=>{ const on=b.getAttribute('data-photo-src')===src; b.classList.toggle('pl-on',on); b.setAttribute('aria-pressed',on?'true':'false'); });
+  const lbl=document.getElementById('libraryPhotoLabel'); const btn=document.getElementById('libraryPhotoBtn');
+  if(btn) btn.classList.toggle('hidden', src!=='library');
+  if(lbl){ const id=val('libraryPhotoId'); lbl.textContent=src!=='library'?'A new AI image is made for this sheet (reused if the garage specs did not change).':(id?'Library photo picked — no AI call.':'Pick a photo from the library.'); }
+}
+window.setPhotoSource=function(src){ const h=document.getElementById('photoSource'); if(h){ h.value=src; } updateRow(); if(src==='library' && !val('libraryPhotoId')) openPhotoLibrary(); };
+function ensureModal(){
+  let m=document.getElementById('photoLibModal'); if(m) return m;
+  m=document.createElement('div'); m.id='photoLibModal'; m.className='pl-modal hidden';
+  m.innerHTML='<div class="pl-dialog"><div class="pl-head"><b>Photo library</b><button type="button" class="pl-x" onclick="closePhotoLibrary()">✕</button></div>'
+   +'<div class="pl-filters"><select id="plRoof"><option value="">Any roof</option><option value="hip">Hip</option><option value="gable">Gable</option><option value="reverse gable">Reverse gable</option></select>'
+   +'<select id="plDoors"><option value="">Any doors</option><option value="1">1 overhead door</option><option value="2">2 doors</option><option value="3">3 doors</option></select>'
+   +'<input id="plColor" placeholder="Siding color"><input id="plSize" placeholder="Size e.g. 24x24"><select id="plKind"><option value="">All photos</option><option value="AI">AI library</option><option value="Approved">Approved photos</option><option value="Example">Examples</option><option value="Reverse gable">Reverse gable presets</option></select>'
+   +'<button type="button" onclick="plMatchCurrent()">Match this estimate</button></div><div id="plNote" class="pl-note"></div><div id="plGrid" class="pl-grid"></div></div>';
+  document.body.appendChild(m);
+  m.addEventListener('click',e=>{ if(e.target===m) closePhotoLibrary(); });
+  m.querySelectorAll('select,input').forEach(el=>el.addEventListener('input',renderGrid));
+  return m;
+}
+let allEntries=[];
+function matches(e){
+  const r=val('plRoof'), d=val('plDoors'), c=val('plColor').trim().toLowerCase(), s=val('plSize').replace(/\s/g,'').toLowerCase(), k=val('plKind');
+  const t=e.tags||{};
+  if(k && e.kind!==k) return false;
+  if(r){ const er=String(t.roof||'').toLowerCase(); if(r==='gable'?er!=='gable':er!==r) return false; }
+  if(d && String(t.ohDoors||'')!==d) return false;
+  if(c && !String(t.color||'').toLowerCase().includes(c)) return false;
+  if(s && String(t.size||'').toLowerCase()!==s) return false;
+  return true;
+}
+function renderGrid(){
+  const g=document.getElementById('plGrid'); if(!g) return;
+  const sel=val('libraryPhotoId');
+  const list=allEntries.filter(matches);
+  const cur=currentTags();
+  const rec=allEntries.map(e=>({e,sc:photoScore(e.tags,cur)})).filter(x=>x.sc!=null).sort((a,b)=>b.sc-a.sc).slice(0,8);
+  const card=e=>{ const t=e.tags||{}; const bits=[t.carSize?(t.carSize+'-car'):'',t.size,t.roof,t.color,t.ohDoors?(t.ohDoors+' door'+(t.ohDoors>1?'s':'')):'',t.doorStyle,t.trim?t.trim+' trim':'',t.offCenter?'off-center':'',t.patio?'rear patio':''].filter(Boolean).map(esc).join(' · ');
+    const canDel=e.kind==='AI' && (isAdmin || e.local);
+    return '<div class="pl-card'+(e.id===sel?' pl-sel':'')+'" data-id="'+esc(e.id)+'"><img loading="lazy" alt="" src="'+esc(e.thumb||e.src||'')+'"'+(e.alt?' onerror="if(!this.dataset.t){this.dataset.t=1;this.src=\''+esc(e.alt)+'\'}"':'')+'><div class="pl-tags"><b>'+esc(e.kind)+'</b> '+bits+'</div>'+(canDel?'<button type="button" class="pl-del" data-del="'+esc(e.id)+'">Delete</button>':'')+'</div>'; };
+  g.innerHTML='<div class="pl-sec">Recommended for this estimate</div>'+(rec.length?rec.map(x=>card(x.e)).join(''):'<div class="pl-note">No close matches (same car size and patio) — pick from all photos below.</div>')
+    +'<div class="pl-sec">All photos</div>'+(list.length?list.map(card).join(''):'<div class="pl-note">No photos match these filters.</div>');
+  g.querySelectorAll('.pl-card').forEach(el=>el.addEventListener('click',ev=>{ if(ev.target.closest('[data-del]')) return; const e=allEntries.find(x=>x.id===el.getAttribute('data-id')); if(!e) return; window._libraryPhotoSrcId=null; choiceSet(e); if(e.kind!=='AI'||e.src) { window._libraryPhotoSrc=e.src; window._libraryPhotoSrcId=e.id; } closePhotoLibrary(); }));
+  g.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click',ev=>{ ev.stopPropagation(); plDelete(b.getAttribute('data-del')); }));
+}
+window.plMatchCurrent=function(){ const t=currentTags(); const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.value=v; }; set('plRoof',t.roof==='reverse gable'?'reverse gable':(t.roof||'')); set('plDoors',String(t.ohDoors||'')); set('plColor',''); set('plSize',''); renderGrid(); };
+window.plClearFilters=function(){ ['plRoof','plDoors','plColor','plSize','plKind'].forEach(id=>{const el=document.getElementById(id); if(el) el.value='';}); renderGrid(); };
+async function plDelete(id){
+  if(!confirm('Delete this photo from the shared library for everyone?')) return;
+  if(id.startsWith('local-')){ setLocal(getLocal().filter(x=>x.id!==id)); }
+  else{
+    if(!isAdmin){ alert('Only an admin can delete shared photos.'); return; }
+    const c=sb(); try{ const {error}=await c.from(TABLE).update({deleted:true}).eq('id',id); if(error){ alert('Could not delete: '+error.message); return; } }catch(e){ alert('Could not delete.'); return; }
+  }
+  if(val('libraryPhotoId')===id) choiceSet(null);
+  await openPhotoLibrary(true);
+}
+window.openPhotoLibrary=async function(keepFilters){
+  const m=ensureModal(); m.classList.remove('hidden');
+  const note=document.getElementById('plNote'); note.textContent='Loading photos…';
+  if(!currentUserId) await whoAmI();
+  const shared=await loadShared();
+  const local=getLocal();
+  allEntries=[].concat(
+    shared.map(r=>({id:r.id,kind:'AI',thumb:r.thumb_data||r.image_url,src:'',tags:r.tags||{}})),
+    local.map(r=>({id:r.id,kind:'AI',local:true,thumb:r.thumb_data||r.image_data,src:r.image_data||r.image_url,tags:r.tags||{}})),
+    builtins());
+  note.textContent=sharedOk?(shared.length+' shared AI photos · tap a photo to use it (no AI call)'):'Shared AI library is not set up yet (run photo-library.sql) — showing example photos and AI photos saved on this device.';
+  if(!keepFilters) plClearFilters(); else renderGrid();
+};
+window.closePhotoLibrary=function(){ const m=document.getElementById('photoLibModal'); if(m) m.classList.add('hidden'); };
+document.addEventListener('DOMContentLoaded',()=>{ updateRow(); setTimeout(whoAmI,1500); });
+if(document.readyState!=='loading') setTimeout(updateRow,0);
+document.addEventListener('change',e=>{ if(e.target && e.target.id==='photoSource') updateRow(); });
+window.agbUpdatePhotoSourceRow=updateRow;
+})();
+</script>
+<style>
+.photo-src-row{grid-column:span 2/span 2;display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:4px 0}
+.photo-src-row .pl-opt{flex:1 1 140px;font-size:12px;font-weight:700;padding:8px 10px;border-radius:12px;border:1px solid #3f3f46;background:#18181b;color:#d4d4d8}
+.photo-src-row .pl-opt.pl-on{border-color:#10b981;background:#064e3b;color:#fff}
+.photo-src-row .pl-pick{font-size:12px;padding:6px 10px;border-radius:10px;background:#1d4ed8;color:#fff;font-weight:700}
+.photo-src-row .pl-lbl{flex-basis:100%;font-size:11px;color:#a1a1aa}
+.pl-modal{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:12px}
+.pl-modal.hidden{display:none}
+.pl-dialog{background:#0a0a0b;border:1px solid #3f3f46;border-radius:16px;width:min(1000px,100%);max-height:92vh;display:flex;flex-direction:column;color:#e4e4e7}
+.pl-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid #27272a}
+.pl-x{font-size:18px;background:none;border:0;color:#e4e4e7}
+.pl-filters{display:flex;flex-wrap:wrap;gap:6px;padding:8px 14px}
+.pl-filters select,.pl-filters input,.pl-filters button{background:#18181b;border:1px solid #3f3f46;border-radius:8px;color:#e4e4e7;font-size:12px;padding:6px 8px}
+.pl-note{padding:4px 14px;font-size:12px;color:#fbbf24}
+.pl-sec{grid-column:1/-1;font-weight:800;font-size:13px;color:#fbbf24;margin-top:6px;border-bottom:1px solid #3f3f46;padding-bottom:4px}
+.pl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;padding:10px 14px;overflow:auto}
+.pl-card{position:relative;border:2px solid #3f3f46;border-radius:12px;overflow:hidden;cursor:pointer;background:#18181b}
+.pl-card.pl-sel{border-color:#10b981}
+.pl-card img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;background:#27272a}
+.pl-tags{font-size:11px;padding:5px 7px;color:#d4d4d8}
+.pl-del{position:absolute;top:6px;right:6px;background:#b91c1c;color:#fff;font-size:11px;border:0;border-radius:6px;padding:3px 7px}
+</style>
 </body>
 </html>

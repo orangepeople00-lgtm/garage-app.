@@ -242,7 +242,7 @@ tr.optrow td{background:#fff7e6}
   </div>
 </div>
 <div class="sticky noprint"><div><div class="muted">Project price</div><div class="v" id="stickyTotal">$0</div></div><button class="btn yellow" type="button" onclick="openSheet()">📄 Sheet</button></div>
-<div class="modal" id="sheetModal"><div class="mbar"><button class="btn" type="button" onclick="closeModal('sheetModal')">✕ Close</button><button class="btn primary" type="button" onclick="window.print()">🖨 Print / Save PDF</button><span class="muted" style="align-self:center">Tap any text on the sheet to edit before printing.</span></div><div id="sheetHost"><div class="sheetScale" id="sheetScale"></div></div></div>
+<div class="modal" id="sheetModal"><div class="mbar"><button class="btn" type="button" onclick="closeModal('sheetModal')">✕ Close</button><button class="btn primary" type="button" onclick="window.print()">🖨 Print / Save PDF</button><span class="muted" style="align-self:center">Tap any text on the sheet to edit — changes save automatically.</span><span id="repairAutoPill" class="muted" style="align-self:center;font-weight:700"></span></div><div id="sheetHost"><div class="sheetScale" id="sheetScale"></div></div></div>
 <div class="modal" id="settingsModal"><div class="mbar"><button class="btn" type="button" onclick="closeModal('settingsModal');calc()">✓ Done</button><button class="btn" type="button" onclick="resetPrices()">Reset to example prices</button></div>
  <div class="panel"><h2 class="font-display" style="margin:0 0 4px;color:#fff">PRICE TABLE (internal unit costs)</h2>
  <div class="banner" style="margin-top:8px">These are EXAMPLE placeholder prices only. Replace every value with real costs. Saved on this device (localStorage).</div>
@@ -640,13 +640,52 @@ function fitSheet(){
 }
 function fitPreview(){const host=$('sheetHost'),sc=$('sheetScale');if(!sc)return;const pw=96*8.5,ph=96*11;const k=Math.min(1,(host.clientWidth-8)/pw);
   sc.style.transform=k<1?'scale('+k+')':'';sc.style.width=pw+'px';sc.style.height=(ph*k)+'px';sc.style.margin=k<1?'0 4px':'0 auto';}
+function sheetSig(R){try{return JSON.stringify([R.total,R.rows.map(r=>[r.cat,r.scope]),R.opts.map(o=>[o.cat,o.price]),FIELDS.map(id=>{const el=$(id);return el?(el.type==='checkbox'?el.checked:el.value):''}),(S.photos||[]).map(p=>(p.src||'').length+p.cap)])}catch(e){return ''}}
 function openSheet(print){
-  const R=calc();$('sheetScale').innerHTML=buildSheet(R);$('sheetModal').classList.add('open');
+  const R=calc();const sig=sheetSig(R);
+  // audit-fix 2026-10-14: reopening shows the exact edited sheet (rebuilt only if the estimate itself changed)
+  $('sheetScale').innerHTML=(S.sheet_html&&S.sheet_sig===sig)?S.sheet_html:buildSheet(R);
+  S.sheet_sig=sig;_repLastSheet=$('sheetScale').innerHTML;
+  $('sheetModal').classList.add('open');setTimeout(startRepairSheetAutosave,0);
   const go=()=>{fitSheet();if(print)setTimeout(()=>window.print(),300);};
   if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>requestAnimationFrame(go));else requestAnimationFrame(go);
 }
 window.addEventListener('resize',()=>{if($('sheetModal').classList.contains('open'))fitPreview();});
-function closeModal(id){$(id).classList.remove('open');}
+function closeModal(id){if(id==='sheetModal'&&_repAutoT)repairSheetSaveNow();$(id).classList.remove('open');}
+// ===== audit-fix 2026-10-14: sheet autosave (typing ~1s, structural/photo changes right away, blur/print/close too) =====
+let _repAutoT=null,_repLastSheet='',_repSaving=false,_repPending=false,_repObs=null;
+function repPill(m,k){const p=$('repairAutoPill');if(!p)return;p.textContent=m;p.style.color=k==='ok'?'#86efac':k==='err'?'#fca5a5':'';p.style.cursor=k==='err'?'pointer':'';p.onclick=k==='err'?()=>repairSheetSaveNow():null;}
+function repairSheetHtml(){const sc=$('sheetScale');if(!sc)return '';const inn=$('rsIn');const keep=inn?[inn.style.transform,inn.style.width]:null;const phs=[...sc.querySelectorAll('.rs-photo')].map(e=>e.style.height);if(inn){inn.style.transform='';inn.style.width='';}sc.querySelectorAll('.rs-photo').forEach(e=>e.style.height='');const h=sc.innerHTML;if(inn){inn.style.transform=keep[0];inn.style.width=keep[1];}sc.querySelectorAll('.rs-photo').forEach((e,i)=>e.style.height=phs[i]);return h;}
+async function repairSheetSaveNow(){
+  clearTimeout(_repAutoT);_repAutoT=null;
+  if(_repSaving){_repPending=true;return;}
+  const html=repairSheetHtml();if(!html||html===_repLastSheet)return;
+  _repSaving=true;repPill('Saving…');
+  try{
+    S.sheet_html=html;_repLastSheet=html;
+    try{localStorage.setItem('agb_repair_draft',JSON.stringify(snapshot()));}catch(e){try{localStorage.setItem('agb_repair_draft',JSON.stringify(stripPhotos(snapshot())));}catch(_){}}
+    if(window._repairLocalId) saveLocal(true);
+    let ok=true;
+    if(window._repairHistoryId && !window._agbOffline){
+      try{const {data:row,error:le}=await garageSb.from('estimate_history').select('estimate_snapshot').eq('id',window._repairHistoryId).maybeSingle();if(le)throw le;
+        const snap=Object.assign({},(row&&row.estimate_snapshot)||{});snap.sheet_html=html;snap.sheet_edits_at=new Date().toISOString();snap.repair_state=stripPhotos(snapshot());
+        const {error}=await garageSb.from('estimate_history').update({estimate_snapshot:snap}).eq('id',window._repairHistoryId);if(error)throw error;}
+      catch(e){ok=false;console.warn('repair sheet autosave',e);}
+    }
+    repPill(ok?(window._repairHistoryId?'Saved ✓':'Saved on this device ✓'):'Save failed – retry',ok?'ok':'err');
+  }finally{_repSaving=false;if(_repPending){_repPending=false;setTimeout(repairSheetSaveNow,50);}}
+}
+function repSched(ms){clearTimeout(_repAutoT);_repAutoT=setTimeout(repairSheetSaveNow,ms);}
+function startRepairSheetAutosave(){
+  const sc=$('sheetScale');if(!sc||_repObs)return;
+  _repObs=new MutationObserver(list=>{let st=false,ty=false;for(const m of list){const el=m.target.nodeType===1?m.target:m.target.parentElement;if(!el)continue;if(m.type==='attributes'&&m.attributeName==='style')continue;if(m.type==='characterData'||el.isContentEditable)ty=true;else st=true;}if(st)repSched(250);else if(ty)repSched(1000);});
+  _repObs.observe(sc,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['src','class','hidden']});
+  sc.addEventListener('input',()=>repSched(1000),true);
+  sc.addEventListener('focusout',()=>{if(_repAutoT)repairSheetSaveNow();},true);
+  window.addEventListener('beforeprint',()=>{if(_repAutoT)repairSheetSaveNow();});
+  window.addEventListener('pagehide',()=>{if(_repAutoT)repairSheetSaveNow();});
+  window.addEventListener('beforeunload',()=>{if(_repAutoT)repairSheetSaveNow();});
+}
 // ================= SETTINGS / PRICE TABLE =================
 function openSettings(){
   $('priceTable').innerHTML='<tr><td><b>Item</b></td><td class="u"><b>Unit</b></td><td><b>Unit cost $</b></td></tr>'+Object.keys(PRICES).map(k=>'<tr><td>'+esc(PRICES[k].label)+'</td><td class="u">'+esc(PRICES[k].unit)+'</td><td style="width:130px"><input class="c" type="number" inputmode="decimal" min="0" step="0.01" data-k="'+k+'" value="'+PRICES[k].price+'" oninput="setPrice(this)"></td></tr>').join('');
@@ -655,9 +694,9 @@ function openSettings(){
 function setPrice(inp){const k=inp.dataset.k;const v=parseFloat(inp.value);PRICES[k].price=Number.isFinite(v)&&v>=0?v:0;const o={};Object.keys(PRICES).forEach(x=>o[x]=PRICES[x].price);try{localStorage.setItem('agb_repair_prices',JSON.stringify(o));}catch(e){}window._pricesCustomized=true;calc();}
 function resetPrices(){if(!confirm('Reset all prices to the example placeholders?'))return;try{localStorage.removeItem('agb_repair_prices');}catch(e){}loadPrices();openSettings();calc();}
 // ================= SAVE / LOAD =================
-function snapshot(){const o={v:1,type:'repair',saved_at:new Date().toISOString(),fields:{},state:S};FIELDS.forEach(id=>{const el=$(id);o.fields[id]=el.type==='checkbox'?el.checked:el.value;});return o;}
+function snapshot(){const o={v:1,type:'repair',saved_at:new Date().toISOString(),fields:{},state:S,history_id:window._repairHistoryId||null,local_id:window._repairLocalId||null};FIELDS.forEach(id=>{const el=$(id);o.fields[id]=el.type==='checkbox'?el.checked:el.value;});return o;}
 function stripPhotos(s){const c=JSON.parse(JSON.stringify(s));c.state.damagePhotos=(c.state.damagePhotos||[]).map(p=>({src:'',note:p.note}));(c.state.photos||[]).forEach(p=>p.src='');return c;}
-function applySnap(o){if(!o)return;const d=defState();S=Object.assign(d,JSON.parse(JSON.stringify(o.state||{})));
+function applySnap(o){if(!o)return;window._repairHistoryId=o.history_id||null;window._repairLocalId=o.local_id||null;const d=defState();S=Object.assign(d,JSON.parse(JSON.stringify(o.state||{})));
   ITEMS.forEach(it=>{if(!S.items[it.id])S.items[it.id]=d.items[it.id];else S.items[it.id].f=Object.assign({},d.items[it.id].f,S.items[it.id].f);});
   S.damagePhotos=(S.damagePhotos||[]).filter(p=>p.src);
   Object.keys(o.fields||{}).forEach(id=>{const el=$(id);if(!el)return;if(el.type==='checkbox')el.checked=!!o.fields[id];else el.value=o.fields[id];});
@@ -666,7 +705,9 @@ let _dt;function saveDraft(){clearTimeout(_dt);_dt=setTimeout(()=>{try{localStor
 function toast(m,err){const t=$('toast');t.textContent=m;t.className=err?'err':'';t.style.display='block';clearTimeout(t._t);t._t=setTimeout(()=>t.style.display='none',5000);}
 function readSaved(){try{return JSON.parse(localStorage.getItem('agb_repair_saved')||'[]')||[];}catch(e){return [];}}
 function saveLocal(quiet){const R=compute();const list=readSaved();const s=snapshot();
-  const rec={id:'r'+Date.now(),customer:$('customerName').value||'Customer',address:$('customerAddress').value,total:R.total,saved_at:s.saved_at,snap:s};
+  const lid=window._repairLocalId||('r'+Date.now());window._repairLocalId=lid;s.local_id=lid;
+  const rec={id:lid,customer:$('customerName').value||'Customer',address:$('customerAddress').value,total:R.total,saved_at:s.saved_at,snap:s};
+  const at=list.findIndex(x=>x.id===lid);if(at>=0)list.splice(at,1);
   list.unshift(rec);
   try{localStorage.setItem('agb_repair_saved',JSON.stringify(list.slice(0,30)));}
   catch(e){rec.snap=stripPhotos(rec.snap);try{localStorage.setItem('agb_repair_saved',JSON.stringify(list.slice(0,30)));}catch(e2){toast('Could not save on device (storage full).',true);return null;}}
@@ -674,7 +715,7 @@ function saveLocal(quiet){const R=compute();const list=readSaved();const s=snaps
 function openSaved(){const list=readSaved();
   $('savedList').innerHTML='<h2 class="font-display" style="margin:0 0 10px;color:#fff">Saved repair estimates (this device)</h2>'+(list.length?list.map((r,i)=>'<div class="sumline" style="align-items:center"><span><b>'+esc(r.customer)+'</b> — '+esc(r.address||'')+'<br><span class="muted">'+new Date(r.saved_at).toLocaleString()+' • '+money(r.total)+'</span></span><span style="display:flex;gap:6px"><button class="btn" type="button" onclick="loadSaved('+i+')">Open</button><button class="btn" type="button" onclick="delSaved('+i+')">✕</button></span></div>').join(''):'<div class="muted">Nothing saved yet.</div>');
   $('savedModal').classList.add('open');}
-function loadSaved(i){const list=readSaved();if(list[i]){applySnap(list[i].snap);closeModal('savedModal');toast('Loaded.');}}
+function loadSaved(i){const list=readSaved();if(list[i]){applySnap(list[i].snap);window._repairLocalId=list[i].id;closeModal('savedModal');toast('Loaded.');}}
 function delSaved(i){if(!confirm('Delete this saved estimate from this device?'))return;const list=readSaved();list.splice(i,1);localStorage.setItem('agb_repair_saved',JSON.stringify(list));openSaved();}
 // Save into the EXISTING estimate_history table (same table/columns the Quick Estimator writes). Repair rows are tagged
 // estimate_snapshot.estimate_type='repair' and siding='Repair estimate'. Always also saved on the device first.
@@ -687,11 +728,18 @@ async function saveToHistory(){
   const record={created_by:user.id,salesman_username:estimatorStaffName(user,un)||$('salesman').value,customer:$('customerName').value||'Customer',address:$('customerAddress').value||'',city:$('customerCity').value||'',
     garage_size:'REPAIR '+R.c.W+'x'+R.c.D,roof_type:R.c.roof,wall_height:'',siding:'Repair estimate',estimate_price:R.total,
     estimate_snapshot:{estimate_type:'repair',app:'repair.html',repair_state:light,repair_rows:R.rows.map(r=>({cat:r.cat,scope:r.scope,internal_cost:r.cost})),repair_options:R.opts.map(o=>({cat:o.cat,scope:o.scope,price:o.price})),internal_total:R.internal,permit_fee:R.permit,customer_quote:R.total,prices_are_examples:!window._pricesCustomized}};
-  try{const res=await agbWithTimeout(garageSb.from('estimate_history').insert(record).select('id').maybeSingle(),45000,'Saving to History');
-    if(res.error) throw res.error; const m='Saved to History'+(res.data&&res.data.id?' (#'+res.data.id+')':'')+'.';toast(m);$('saveNote').textContent=m;return res.data;}
+  if(S.sheet_html) record.estimate_snapshot.sheet_html=S.sheet_html;
+  try{let res;
+    if(window._repairHistoryId){
+      // audit-fix 2026-10-14: same estimate -> update its row (no duplicate History rows)
+      res=await agbWithTimeout(garageSb.from('estimate_history').update(Object.assign({},record,{created_by:undefined})).eq('id',window._repairHistoryId).select('id').maybeSingle(),45000,'Saving to History');
+      if(!res.error && !res.data){ window._repairHistoryId=null; }
+    }
+    if(!window._repairHistoryId){ res=await agbWithTimeout(garageSb.from('estimate_history').insert(record).select('id').maybeSingle(),45000,'Saving to History'); if(!res.error && res.data && res.data.id) window._repairHistoryId=res.data.id; }
+    if(res.error) throw res.error; saveDraft(); if(window._repairLocalId) saveLocal(true); const m='Saved to History'+(res.data&&res.data.id?' (#'+res.data.id+')':'')+'.';toast(m);$('saveNote').textContent=m;return res.data;}
   catch(e){const m='Not saved to History: '+agbFriendlySaveError(e)+' (Saved on this device.)';toast(m,true);$('saveNote').textContent=m;return null;}
 }
-function newEstimate(){if(!confirm('Start a new repair estimate? Unsaved work is cleared.'))return;try{localStorage.removeItem('agb_repair_draft');}catch(e){}S=defState();['customerName','customerPhone','customerEmail','customerAddress','customerCity','damageNotes'].forEach(id=>$(id).value='');renderItems();renderExtras();renderCond();renderPhotos();calc();}
+function newEstimate(){if(!confirm('Start a new repair estimate? Unsaved work is cleared.'))return;try{localStorage.removeItem('agb_repair_draft');}catch(e){}window._repairHistoryId=null;window._repairLocalId=null;S=defState();['customerName','customerPhone','customerEmail','customerAddress','customerCity','damageNotes'].forEach(id=>$(id).value='');renderItems();renderExtras();renderCond();renderPhotos();calc();}
 // ================= INIT =================
 loadPrices();S=defState();
 (function(){let d=null;try{d=JSON.parse(localStorage.getItem('agb_repair_draft')||'null');}catch(e){}window._hadDraft=!!d;if(d)applySnap(d);else{renderItems();renderExtras();renderCond();renderPhotos();calc();}})();

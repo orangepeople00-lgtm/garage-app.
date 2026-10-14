@@ -17,7 +17,7 @@ header{background:var(--navy);color:#fff;padding:14px 20px;display:flex;align-it
 .actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.user{font-size:12px;background:#223451;border:1px solid #46566f;padding:8px 10px;border-radius:9px}
 .btn{border:0;border-radius:9px;padding:10px 13px;font-weight:800}.primary{background:var(--blue);color:#fff}.light{background:#fff;border:1px solid var(--line);color:var(--navy)}.dark{background:#223451;color:#fff}.danger{background:var(--red);color:#fff}.sm{padding:7px 9px;font-size:12px}
 main{max-width:1500px;margin:auto;padding:22px}.titlebar{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}.titlebar h2{margin:0 0 4px;font-size:27px}.muted{color:var(--muted)}.small{font-size:11px}
-.tabs{display:flex;gap:7px;margin:16px 0;flex-wrap:wrap}.home-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin:8px 0 18px}
+.tabs{display:flex;gap:7px;margin:16px 0;flex-wrap:wrap}@media(max-width:600px){.tabs{gap:5px;margin:10px 0}.tabs .tab{padding:7px 10px;font-size:13px}}.home-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin:8px 0 18px}
 .home-tile{display:flex;flex-direction:column;align-items:flex-start;gap:6px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 14px;text-align:left;box-shadow:0 2px 10px #0f172a08;min-height:108px}
 .home-tile:hover{border-color:var(--gold);box-shadow:0 6px 18px #0b1f3a14}
 .home-tile b{font-size:15px;color:var(--navy)}
@@ -202,6 +202,8 @@ body.estimator-mode .estimator-exit{display:block}
  <div class="tabs" id="mainTabs">
   <button class="tab active" data-view="home" onclick="setView('home',this)">Home</button>
   <button class="tab" data-view="week" onclick="setView('week',this)">Today</button>
+  <button id="mapTab" class="tab" data-view="map" onclick="setView('map',this)">Map</button>
+  <button id="commissionTab" class="tab" data-view="commission" onclick="setView('commission',this)">Commissions &amp; Stats</button>
   <button class="tab" data-view="calendar" onclick="setView('calendar',this)">Project Calendar</button>
   <button class="tab" data-view="personalCalendar" onclick="setView('personalCalendar',this)">Personal Calendar</button>
   <button id="allPersonalCalendarsTab" class="tab hidden" data-view="allPersonalCalendars" onclick="setView('allPersonalCalendars',this)">All Personal Calendars</button>
@@ -213,8 +215,6 @@ body.estimator-mode .estimator-exit{display:block}
   <button class="tab" data-view="estimateHistory" onclick="setView('estimateHistory',this)">Estimate History</button>
   <button class="tab" data-view="planHistory" onclick="setView('planHistory',this)">Plan History</button>
   <button class="tab" data-view="completed" onclick="setView('completed',this)">Completed Archive</button>
-  <button id="commissionTab" class="tab" data-view="commission" onclick="setView('commission',this)">Sales &amp; Commission</button>
-  <button id="mapTab" class="tab" data-view="map" onclick="setView('map',this)">Jobs Map</button>
   <button id="trashTab" class="tab hidden" data-view="trash" onclick="setView('trash',this)">Trash</button>
  </div>
 
@@ -457,7 +457,20 @@ body.estimator-mode .estimator-exit{display:block}
 <script>
 const SB_URL='https://iomcekniylxfptswcxoi.supabase.co';
 const SB_KEY='sb_publishable_G_ZAnQ_CoJjWsn8-HgduLw_IziPWEmn';
-const sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true}});
+// audit-fix 2026-10-14: no internet -> friendly message instead of a blank page / createClient crash
+function agbOfflineClient(){
+ const res={data:null,error:{message:'No internet connection'}};
+ const chain=()=>{const q=new Proxy(function(){},{get(t,k){ if(k==='then') return (r,j)=>Promise.resolve(res).then(r,j); return ()=>q; }, apply(){ return q; }}); return q;};
+ return {_offline:true,from:()=>chain(),rpc:()=>Promise.resolve(res),storage:{from:()=>({upload:()=>Promise.resolve(res),download:()=>Promise.resolve(res),remove:()=>Promise.resolve(res),createSignedUrl:()=>Promise.resolve(res),getPublicUrl:()=>({data:{publicUrl:''}})})},
+  auth:{getSession:()=>Promise.resolve({data:{session:null},error:null}),getUser:()=>Promise.resolve({data:{user:null},error:null}),refreshSession:()=>Promise.resolve({data:{session:null},error:null}),onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}}),signInWithPassword:()=>Promise.resolve({data:null,error:{message:'No internet connection. Connect to Wi-Fi or cell data, then tap Reload.'}}),signOut:()=>Promise.resolve({error:null}),updateUser:()=>Promise.resolve(res)},
+  channel:()=>({on(){return this},subscribe(){return this}}),removeChannel(){}};
+}
+function agbShowOffline(){
+ const show=()=>{ if(document.getElementById('agbOfflineBar')) return; const d=document.createElement('div'); d.id='agbOfflineBar'; d.style.cssText='position:sticky;top:0;z-index:9999;background:#7c2d12;color:#fff;font:600 14px Arial,sans-serif;padding:10px 14px;text-align:center'; d.innerHTML='No internet connection. The dashboard needs internet to sign in and load jobs. Connect to Wi-Fi or cell data, then <button type="button" onclick="location.reload()" style="margin-left:6px;background:#fff;color:#7c2d12;border:0;border-radius:8px;padding:4px 12px;font-weight:800">Reload</button>'; document.body.insertBefore(d,document.body.firstChild); };
+ if(document.body) show(); else document.addEventListener('DOMContentLoaded',show);
+}
+const sb=(window.supabase&&typeof window.supabase.createClient==='function')?window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true}}):(agbShowOffline(),agbOfflineClient());
+window.addEventListener('offline',agbShowOffline);
 const USER_EMAIL=u=>({tomb:'agbtombartyzel@gmail.com'}[u.toLowerCase()]||`${u.toLowerCase()}@absolute-garage.local`);
 const DISPLAY={randy:'Randy',sam:'Sam',ramsey:'Ramsey',wally:'Wally',tom:'Tom',tomb:'Tom Bartyzel'};
 const STAFF_PHONE_KEY='agb_staff_phones_v1';
@@ -520,15 +533,18 @@ const $=id=>document.getElementById(id), esc=s=>(s??'').toString().replace(/[&<>
 const todayISO=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};// local date (not UTC)
 const fmt=d=>d?new Date(d+'T12:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric',year:'2-digit'}):'—';
 const money=n=>Number(n)?new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(n):'—';
-function dateOnly(v){if(!v)return null;const s=String(v).slice(0,10),p=s.split('-').map(Number);return p.length===3&&p.every(Number.isFinite)?new Date(p[0],p[1]-1,p[2]):null}
+function dateOnly(v){if(!v)return null;if(/T\d\d:/.test(String(v))&&String(v).length>10){const d=new Date(v);if(!isNaN(d)){const p=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Chicago',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(d);const g=t=>Number(p.find(x=>x.type===t).value);return new Date(g('year'),g('month')-1,g('day'))}}const s=String(v).slice(0,10),p=s.split('-').map(Number);return p.length===3&&p.every(Number.isFinite)?new Date(p[0],p[1]-1,p[2]):null}
 function jobAgeDays(j){const start=dateOnly(j.sold_date)||dateOnly(j.created_at);if(!start)return null;const end=dateOnly(j.completed_date)||new Date();const a=new Date(start.getFullYear(),start.getMonth(),start.getDate());const b=new Date(end.getFullYear(),end.getMonth(),end.getDate());return Math.max(0,Math.floor((b-a)/86400000))}
 function jobAgeLabel(j){const d=jobAgeDays(j);return d===null?'—':`${d} day${d===1?'':'s'}`}
 
 const manager=()=>profile&&['owner','business_manager'].includes(profile.role);
 const privateAccessManager=()=>profile&&['sam','ramsey','randy'].includes(String(profile.username||'').toLowerCase());
 function carpenterAccount(){ return !!profile; }
+// audit-fix 2026-10-14: same rule as Carpenter.html (office usernames or owner/business_manager/admin role)
+function carpenterAllowed(){ if(!profile) return false; const u=String(profile.username||'').toLowerCase(), r=String(profile.role||'').toLowerCase(); return ['randy','sam','samer','ramsey'].includes(u)||['owner','business_manager','admin'].includes(r); }
 function showCarpenterNav(){
-  ['carpenterTab','garagePlansTab'].forEach(id=>$(id)?.classList.remove('hidden'));
+  $('garagePlansTab')?.classList.remove('hidden');
+  $('carpenterTab')?.classList.toggle('hidden', !carpenterAllowed());
   if($('notifySalesBtn')) $('notifySalesBtn').classList.toggle('hidden', !canTextSalesman());
 }
 // Ramsey + Sam can see everyone's jobs on the dashboard (same visibility as management for job list)
@@ -662,13 +678,15 @@ function renderHomeTiles(){
   const V=v=>`setView("${v}",document.querySelector("[data-view=${v}]"))`,L=u=>`window.location.href="${u}"+Date.now()`;
   // [label, desc, action, group, countValue, alertIfNonZero, show]
   const tiles=[
+    ['Map','All jobs on a map',V('map'),'Sell'],
+    ['Commissions & Stats',commissionAdmin()?'Sales, commission and stats':'Your sales, commission and stats',V('commission'),'Sell'],
     ['Estimator','Price a garage',L('estimator.html?v='),'Sell'],
     ['Repair','Price a repair',L('repair.html?v='),'Sell'],
     ['Drawing','Site sketch — starts blank',L('Drawing.html?fresh=1&v='),'Sell'],
     [mgr?'Estimate History':'History',mgr?'Saved customer sheets':'Your saved estimates',V('estimateHistory'),'Sell'],
     ['Today',mgr?'Jobs on the schedule today':'Your jobs scheduled today',V('week'),'Build',c.today],
     [mgr?'Jobs':'My jobs',(mgr?'Active jobs':'Your active jobs')+(c.hold||c.overdue?` • ${c.hold} on hold • ${c.overdue} overdue`:''),V('dashboard'),'Build',c.active,false],
-    ['Carpenter','Field ticket',L('Carpenter.html?v='),'Build'],
+    ['Carpenter','Field ticket',L('Carpenter.html?v='),'Build',null,false,carpenterAllowed()],
     ['Project Calendar','Scheduled job work',V('calendar'),'Build'],
     ['Personal Calendar','Your appointments and tasks',V('personalCalendar'),'Build'],
     ['Garage Plans','Village permit drawings',L('GaragePlans.html?v='),'Paperwork'],
@@ -1673,7 +1691,7 @@ function setView(v,btn){
  if(v==='home') try{renderHomeTiles()}catch(e){}
  if(v==='commission') try{renderCommission()}catch(e){console.error(e)}
  if(v==='map') try{openJobsMap()}catch(e){console.error('map',e)}
- $('pageTitle').textContent=v==='home'?'Home':v==='week'?'Today':v==='calendar'?'Project Calendar':v==='personalCalendar'?'Personal Calendar':v==='allPersonalCalendars'?'All Personal Calendars':v==='estimator'?'Garage Estimator':v==='estimateHistory'?'Estimate History':v==='planHistory'?'Plan History':v==='completed'?'Completed Archive':v==='commission'?(commissionAdmin()?'Sales & Commission':'My Sales & Commission'):v==='map'?'Jobs Map':v==='trash'?'Trash':(canViewAllJobs()?'Jobs':'My jobs');
+ $('pageTitle').textContent=v==='home'?'Home':v==='week'?'Today':v==='calendar'?'Project Calendar':v==='personalCalendar'?'Personal Calendar':v==='allPersonalCalendars'?'All Personal Calendars':v==='estimator'?'Garage Estimator':v==='estimateHistory'?'Estimate History':v==='planHistory'?'Plan History':v==='completed'?'Completed Archive':v==='commission'?(commissionAdmin()?'Commissions & Stats':'My Commissions & Stats'):v==='map'?'Map':v==='trash'?'Trash':(canViewAllJobs()?'Jobs':'My jobs');
  $('subtitle').textContent=v==='home'?'Pick what you need':v==='allPersonalCalendars'?'Management view of everyone’s appointments and tasks':v==='personalCalendar'?'Your private appointments and tasks':v==='estimator'?'Quick estimating and customer estimate sheets':v==='estimateHistory'?(privateAccessManager()||manager()?'All saved company estimates':'Your private saved estimates'):v==='planHistory'?(privateAccessManager()||manager()?'All saved garage permit plans':'Your saved garage permit plans'):v==='week'?'Jobs scheduled for today':'Live shared office data';
 }
 function exitEstimator(){const b=document.querySelector('.tab[data-view="dashboard"]');setView('dashboard',b)}
@@ -1752,7 +1770,7 @@ async function saveCalendarEntry(e){
    alert('Could not add personal calendar item: '+(err?.message||'Unknown error'));
  }
 }
-function viewCalendarEntry(id){const a=calendarEntries.find(x=>x.id===id);if(!a)return;const when=a.appointment_at?new Date(a.appointment_at).toLocaleString():'Unscheduled Task';if(confirm(`${a.customer_name||''}\n${a.address||''}\n${a.task||''}\n${when}\n\nDelete this personal calendar item?`))deleteCalendarEntry(id)}
+function viewCalendarEntry(id){openCalEdit('personal',id)}
 async function deleteCalendarEntry(id){const {error}=await sb.from('salesman_calendar_entries').delete().eq('id',id);if(error)return alert(error.message);await refresh()}
 function changeCalendarMonth(delta){calendarMonth=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth()+delta,1);renderCalendar()}
 function localISODate(v){const d=new Date(v);return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-')}
@@ -1766,7 +1784,7 @@ function renderCalendar(){
   const d=new Date(start);d.setDate(start.getDate()+i);
   const iso=[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-'),events=[];
   jobs.forEach(j=>jobEvents(j).forEach(([type,date,crew])=>{if(date===iso)events.push({type,crew,j})}));
-  cells.push(`<div class="cal-day ${d.getMonth()!==m?'other':''}"><div class="cal-date">${d.getDate()}</div>${events.map(e=>`<button class="cal-event" onclick="openDrawer('${e.j.id}')"><strong>${esc(e.type)} — ${esc(e.j.customer)}</strong><span>${esc(e.j.address||'')}</span>${e.crew?`<span class="crew-line">Crew: ${esc(e.crew)}</span>`:''}</button>`).join('')}</div>`);
+  cells.push(`<div class="cal-day ${d.getMonth()!==m?'other':''}"><div class="cal-date">${d.getDate()}</div>${events.map(e=>`<button class="cal-event" onclick="openCalEdit('job','${e.j.id}','${esc(e.type)}')"><strong>${esc(e.type)} — ${esc(e.j.customer)}</strong><span>${esc(e.j.address||'')}</span>${e.crew?`<span class="crew-line">Crew: ${esc(e.crew)}</span>`:''}</button>`).join('')}</div>`);
  }
  $('calendarGrid').innerHTML=cells.join('');
 }
@@ -1791,7 +1809,7 @@ function renderPersonalTasks(){
  if(!$('personalTaskList'))return;
  const tasks=myCalendarEntries().filter(a=>!a.appointment_at).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
  $('personalTaskCount').textContent=tasks.length;
- $('personalTaskList').innerHTML=tasks.length?tasks.map(a=>`<div class="personal-task"><strong>${esc(a.task||a.customer_name||'Task')}</strong>${a.customer_name&&a.task&&a.customer_name!==a.task?`<div class="small">${esc(a.customer_name)}</div>`:''}${a.address?`<div class="small muted">${esc(a.address)}</div>`:''}<div style="margin-top:8px"><button class="btn light sm" onclick="viewCalendarEntry('${a.id}')">View / Delete</button></div></div>`).join(''):'<div class="muted small">No unscheduled tasks.</div>';
+ $('personalTaskList').innerHTML=tasks.length?tasks.map(a=>`<div class="personal-task"><strong>${esc(a.task||a.customer_name||'Task')}</strong>${a.customer_name&&a.task&&a.customer_name!==a.task?`<div class="small">${esc(a.customer_name)}</div>`:''}${a.address?`<div class="small muted">${esc(a.address)}</div>`:''}<div style="margin-top:8px"><button class="btn light sm" onclick="viewCalendarEntry('${a.id}')">View / Edit</button></div></div>`).join(''):'<div class="muted small">No unscheduled tasks.</div>';
 }
 function renderUpcomingAppointments(){
  if(!$('upcomingAppointmentsCard'))return;
@@ -1834,7 +1852,87 @@ function renderAllPersonalCalendars(){
  $('allPersonalCalendarGrid').innerHTML=cells.join('');
  const tasks=entries.filter(a=>!a.appointment_at).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
  $('allPersonalTaskCount').textContent=tasks.length;
- $('allPersonalTaskList').innerHTML=tasks.length?tasks.map(a=>`<div class="personal-task"><strong>${esc(DISPLAY[a.salesman_username]||a.salesman_username)} — ${esc(a.task||a.customer_name||'Task')}</strong>${a.customer_name&&a.task&&a.customer_name!==a.task?`<div class="small">${esc(a.customer_name)}</div>`:''}${a.address?`<div class="small muted">${esc(a.address)}</div>`:''}<div style="margin-top:8px"><button class="btn light sm" onclick="viewCalendarEntry('${a.id}')">View / Delete</button></div></div>`).join(''):'<div class="muted small">No unscheduled tasks.</div>';
+ $('allPersonalTaskList').innerHTML=tasks.length?tasks.map(a=>`<div class="personal-task"><strong>${esc(DISPLAY[a.salesman_username]||a.salesman_username)} — ${esc(a.task||a.customer_name||'Task')}</strong>${a.customer_name&&a.task&&a.customer_name!==a.task?`<div class="small">${esc(a.customer_name)}</div>`:''}${a.address?`<div class="small muted">${esc(a.address)}</div>`:''}<div style="margin-top:8px"><button class="btn light sm" onclick="viewCalendarEntry('${a.id}')">View / Edit</button></div></div>`).join(''):'<div class="muted small">No unscheduled tasks.</div>';
+}
+/* audit-fix 2026-10-14: every calendar entry opens an edit form (Save / Delete / Cancel). */
+const JOB_EVENT_FIELDS={'Demo':['scheduled_demo','demo_crew'],'Concrete / Framing':['concrete_scheduled','concrete_crew'],'Carpentry':['carpentry_scheduled','carpentry_crew'],'Electric':['electric_date','electric_crew'],'Gutters / Extras':['extras_scheduled',''],'Inspection':['inspection_date','']};
+function calAdmin(){return !!(manager()||privateAccessManager()||(profile&&String(profile.role||'').toLowerCase()==='admin'))}
+function canEditPersonalEntry(a){return !!(a&&profile&&(calAdmin()||String(a.salesman_username||'').toLowerCase()===String(profile.username||'').toLowerCase()))}
+let calEditCtx=null;
+function ensureCalEditModal(){
+ if($('calEditBg'))return;
+ const d=document.createElement('div');d.id='calEditBg';d.className='modalbg';d.setAttribute('onclick',"if(event.target===this)closeCalEdit()");
+ d.innerHTML='<div class="modal sm-modal" onclick="event.stopPropagation()"><div class="modalhead"><h3 id="calEditTitle">Edit Calendar Entry</h3><button class="btn light sm" type="button" onclick="closeCalEdit()">✕</button></div><form onsubmit="saveCalEdit(event)"><div class="body"><div id="calEditFields" class="grid" style="grid-template-columns:1fr"></div><div id="calEditNote" class="sub" style="margin-top:10px"></div></div><div class="modalfoot"><button type="button" class="btn light" onclick="closeCalEdit()">Cancel</button><button type="button" id="calEditDelete" class="btn danger" onclick="deleteCalEdit()">Delete</button><button id="calEditSave" class="btn primary" type="submit">Save</button></div></form></div>';
+ document.body.appendChild(d);
+}
+function calLocalParts(v){if(!v)return['',''];const d=new Date(v);if(isNaN(d))return['',''];return[localISODate(d),String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')]}
+function openCalEdit(kind,id,type){
+ ensureCalEditModal();
+ const f=$('calEditFields');let can=false,html='';
+ if(kind==='personal'){
+  const a=calendarEntries.find(x=>x.id===id);if(!a)return alert('This calendar item was not found. It may have been deleted.');
+  can=canEditPersonalEntry(a);const [dt,tm]=calLocalParts(a.appointment_at);
+  const who=calAdmin()?`<label><span>Salesperson</span><select id="ce_user">${[...new Set(Object.keys(DISPLAY).concat(calendarEntries.map(x=>x.salesman_username)).filter(Boolean).concat([a.salesman_username]))].map(u=>`<option value="${esc(u)}" ${u===a.salesman_username?'selected':''}>${esc(DISPLAY[u]||u)}</option>`).join('')}</select></label>`:'';
+  html=who+`<label><span>Customer Name</span><input id="ce_customer" value="${esc(a.customer_name&&a.customer_name!==a.task?a.customer_name:'')}"></label><label><span>Customer Address</span><input id="ce_address" value="${esc(a.address||'')}"></label><label><span>Date</span><input id="ce_date" type="date" value="${dt}"></label><label><span>Time</span><input id="ce_time" type="time" value="${tm}"></label><label><span>Task *</span><textarea id="ce_task" rows="3" required>${esc(a.task||'')}</textarea></label>`;
+  $('calEditTitle').textContent=(calAdmin()&&a.salesman_username!==profile?.username?(DISPLAY[a.salesman_username]||a.salesman_username)+' — ':'')+'Edit Calendar Item';
+  $('calEditNote').textContent=can?'Clear both date and time to move this item to Tasks.':'Only the owner of this item or an admin can change it.';
+  calEditCtx={kind,id};
+ }else{
+  const j=jobs.find(x=>String(x.id)===String(id));if(!j)return;
+  const fl=JOB_EVENT_FIELDS[type];if(!fl)return openDrawer(id);
+  can=!!manager();
+  html=`<label><span>Job</span><input value="${esc(j.customer||'')} — ${esc(j.address||'')}" disabled></label><label><span>Stage</span><input value="${esc(type)}" disabled></label><label><span>Date</span><input id="ce_jdate" type="date" value="${esc(String(j[fl[0]]||'').slice(0,10))}"></label>`+(fl[1]?`<label><span>Crew</span><input id="ce_jcrew" value="${esc(j[fl[1]]||'')}"></label>`:'')+`<div><button type="button" class="btn light sm" onclick="closeCalEdit();openDrawer('${esc(String(j.id))}')">Open full job</button></div>`;
+  $('calEditTitle').textContent='Edit '+type+' — '+(j.customer||'Job');
+  $('calEditNote').textContent=can?'Saving changes the job\u2019s '+type+' date for everyone. Delete clears this date from the job.':'Only Sam, Randy or the business manager can change job schedule dates.';
+  calEditCtx={kind,id:j.id,type,fields:fl};
+ }
+ f.innerHTML=html;
+ f.querySelectorAll('input:not([disabled]),textarea,select').forEach(el=>el.disabled=!can);
+ $('calEditSave').classList.toggle('hidden',!can);$('calEditDelete').classList.toggle('hidden',!can);
+ $('calEditBg').classList.add('show');
+}
+function closeCalEdit(){$('calEditBg')?.classList.remove('show');calEditCtx=null}
+async function saveCalEdit(e){
+ e&&e.preventDefault();const c=calEditCtx;if(!c)return;
+ if(c.kind==='personal'){
+  const a=calendarEntries.find(x=>x.id===c.id);if(!canEditPersonalEntry(a))return alert('You can only edit your own calendar items.');
+  const task=$('ce_task').value.trim(),date=$('ce_date').value,time=$('ce_time').value,customer=$('ce_customer').value.trim(),address=$('ce_address').value.trim();
+  if(!task)return alert('Please enter a task or appointment description.');
+  if((date&&!time)||(!date&&time))return alert('Please enter both a date and a time, or leave both blank to keep this item in Tasks.');
+  let appointmentAt=null;if(date&&time){const d=new Date(`${date}T${time}:00`);if(isNaN(d))return alert('Please enter a valid date and time.');appointmentAt=d.toISOString()}
+  const patch={customer_name:customer||task,address,task,appointment_at:appointmentAt};
+  if($('ce_user')&&calAdmin())patch.salesman_username=$('ce_user').value;
+  if(address!==(a.address||'')){patch.latitude=null;patch.longitude=null}
+  const {data,error}=await sb.from('salesman_calendar_entries').update(patch).eq('id',c.id).select('*').maybeSingle();
+  if(error)return alert('Could not save: '+error.message);
+  calendarEntries=calendarEntries.map(x=>x.id===c.id?Object.assign({},x,data||patch):x);
+  closeCalEdit();renderPersonalCalendar();renderUpcomingAppointments();try{renderAllPersonalCalendars()}catch(_){}
+  refresh().catch(()=>{});
+ }else{
+  if(!manager())return alert('Only Sam, Randy or the business manager can change job schedule dates.');
+  const patch={};patch[c.fields[0]]=$('ce_jdate').value||null;if(c.fields[1]&&$('ce_jcrew'))patch[c.fields[1]]=$('ce_jcrew').value.trim()||null;
+  const {error}=await sb.from('jobs').update(patch).eq('id',c.id);
+  if(error)return alert('Could not save: '+error.message);
+  jobs=jobs.map(x=>String(x.id)===String(c.id)?Object.assign({},x,patch):x);
+  closeCalEdit();renderCalendar();try{renderWeek()}catch(_){}
+  refresh().catch(()=>{});
+ }
+}
+async function deleteCalEdit(){
+ const c=calEditCtx;if(!c)return;
+ if(c.kind==='personal'){
+  const a=calendarEntries.find(x=>x.id===c.id);if(!canEditPersonalEntry(a))return alert('You can only delete your own calendar items.');
+  if(!confirm('Delete this calendar item? This cannot be undone.'))return;
+  const {error}=await sb.from('salesman_calendar_entries').delete().eq('id',c.id);if(error)return alert(error.message);
+  calendarEntries=calendarEntries.filter(x=>x.id!==c.id);closeCalEdit();renderPersonalCalendar();renderUpcomingAppointments();try{renderAllPersonalCalendars()}catch(_){}
+  refresh().catch(()=>{});
+ }else{
+  if(!manager())return;
+  if(!confirm('Remove the '+c.type+' date from this job?'))return;
+  const patch={};patch[c.fields[0]]=null;
+  const {error}=await sb.from('jobs').update(patch).eq('id',c.id);if(error)return alert(error.message);
+  jobs=jobs.map(x=>String(x.id)===String(c.id)?Object.assign({},x,patch):x);closeCalEdit();renderCalendar();refresh().catch(()=>{});
+ }
 }
 
 function clearEstimateHistoryFilters(){if($('estimateHistorySearch'))$('estimateHistorySearch').value='';if($('estimateHistorySalesFilter'))$('estimateHistorySalesFilter').value='';renderEstimateHistory()}
@@ -2036,10 +2134,37 @@ function wireHistorySheetFrame(frame, viewer){
  try{
   frame.addEventListener('load', ()=>{
    try{ const cw=frame.contentWindow; if(cw && !cw.opener) cw.opener=viewer; }catch(e){}
+   try{ const cw=frame.contentWindow; if(cw && frame.dataset.optionSlot) cw.ESTIMATE_OPTION_SLOT=frame.dataset.optionSlot; if(cw && frame.dataset.estimateId) cw.ESTIMATE_HISTORY_ID=frame.dataset.estimateId; }catch(e){}
+   try{ setTimeout(()=>historyFrameAutosave(frame, viewer), 2500); }catch(e){}
    // The "AI Sheet Changes" panel is retired: strip it from sheets saved by older versions
    try{ const d=frame.contentDocument; if(d) d.querySelectorAll('.sheet-ai-panel').forEach(el=>el.remove()); }catch(e){}
   });
  }catch(e){}
+}
+// audit-fix 2026-10-14: autosave for sheets in the History viewer. New sheets carry their own autosave;
+// older saved sheets get this host-side one (structural changes save right away, typing after ~1s).
+function historyFrameAutosave(frame, viewer){
+ const cw=frame.contentWindow, d=frame.contentDocument; if(!cw||!d||!d.body) return;
+ if(typeof cw.sheetAutosaveNow==='function' || cw._agbHostAutosave) return;
+ cw._agbHostAutosave=true;
+ const id=frame.dataset.estimateId||window._lastEstimateHistoryId; const slot=frame.dataset.optionSlot||null; if(!id) return;
+ let t=null, running=false, pending=false;
+ const pill=(msg,kind)=>{ let p=d.getElementById('sheetAutoPill'); if(!p){ p=d.createElement('div'); p.id='sheetAutoPill'; p.className='no-print'; p.style.cssText='position:fixed;right:12px;bottom:12px;z-index:9999;padding:5px 10px;border-radius:999px;font:600 12px Arial,sans-serif;background:rgba(24,24,27,.85)'; d.body.appendChild(p); } p.textContent=msg; p.style.color=kind==='ok'?'#86efac':kind==='err'?'#fca5a5':'#e4e4e7'; p.style.cursor=kind==='err'?'pointer':'default'; p.onclick=kind==='err'?()=>run():null; };
+ const capture=()=>{ const keep=['sheetAutoPill','sheetSaveBanner'].map(x=>d.getElementById(x)).filter(Boolean); keep.forEach(x=>x.remove()); const ed=d.body.classList.contains('sheet-editing'); if(ed) d.body.classList.remove('sheet-editing'); const h='<!DOCTYPE html>\n'+d.documentElement.outerHTML; if(ed) d.body.classList.add('sheet-editing'); keep.forEach(x=>d.body.appendChild(x)); return h; };
+ let last=capture(), capturing=false;
+ const run=async()=>{ clearTimeout(t); t=null; if(running){ pending=true; return; } capturing=true; const html=capture(); capturing=false; if(html===last) return; running=true; pill('Saving…');
+  try{ try{ d.querySelectorAll('.sheet-edit').forEach(el=>{ try{ cw.saveSheetInlineEdit&&cw.saveSheetInlineEdit(el); }catch(_){} }); }catch(_){}
+   const price=parseFloat((d.querySelector('.total-price')?.innerText||'').replace(/[^0-9.]/g,''))||0;
+   const ok=await saveEditedEstimateSheetHtml(html,{id,price,option:slot,silent:true});
+   if(ok){ last=html; pill('Saved ✓','ok'); } else pill('Save failed – retry','err');
+  }catch(e){ pill('Save failed – retry','err'); }
+  finally{ running=false; if(pending){ pending=false; setTimeout(run,50); } } };
+ const sched=ms=>{ clearTimeout(t); t=setTimeout(run,ms); };
+ new cw.MutationObserver(list=>{ if(capturing) return; let st=false,ty=false; for(const m of list){ const el=m.target.nodeType===1?m.target:m.target.parentElement; if(!el||el.closest('#sheetAutoPill,#sheetSaveBanner,#popupChangeStatus,#sheetSaveBtn,#sheetUndoBtn,#sheetEditRowsBtn')) continue; if(m.type==='attributes'&&el===d.body) continue; if(m.type==='attributes'&&m.attributeName==='style'&&el.closest('.exterior,.exterior-title')) continue; if(m.type==='characterData'||(el.isContentEditable)) ty=true; else st=true; } if(st) sched(250); else if(ty) sched(1000); }).observe(d.body,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['style','class','src','hidden']});
+ d.addEventListener('input',()=>sched(1000),true);
+ d.addEventListener('focusout',()=>{ if(t) run(); },true);
+ cw.addEventListener('beforeprint',()=>{ if(t) run(); });
+ try{ viewer.addEventListener('beforeunload',()=>{ if(t) run(); }); viewer.addEventListener('pagehide',()=>{ if(t) run(); }); }catch(_){}
 }
 async function viewEstimateHistory(id){
  const e=await fetchFullEstimateRecord(id);if(!e)return alert('Estimate not found.');
@@ -2079,13 +2204,14 @@ async function viewEstimateHistory(id){
     }
     if(frame){
      frame.dataset.optionSlot=o.slot;
+     frame.dataset.estimateId=id;
      wireHistorySheetFrame(frame, w);
      if(o.html) frame.srcdoc=o.html;
     }
    });
   }else if(savedSheet){
    const frame=w.document.getElementById('savedEstimateFrame');
-   if(frame){ wireHistorySheetFrame(frame, w); frame.srcdoc=savedSheet; }
+   if(frame){ frame.dataset.estimateId=id; wireHistorySheetFrame(frame, w); frame.srcdoc=savedSheet; }
   }
  }catch(err){ console.warn(err); const frame=w.document.getElementById('savedEstimateFrame'); if(frame&&savedSheet) frame.srcdoc=savedSheet; }
  w.saveEditedEstimateSheetHtml=async function(html,meta){

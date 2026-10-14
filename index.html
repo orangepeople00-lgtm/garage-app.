@@ -1840,7 +1840,11 @@ function listHistoryOptionSheets(e){
 // "Save Changes" button (including on sheets saved by older versions) can reach the save function.
 function wireHistorySheetFrame(frame, viewer){
  try{
-  frame.addEventListener('load', ()=>{ try{ const cw=frame.contentWindow; if(cw && !cw.opener) cw.opener=viewer; }catch(e){} });
+  frame.addEventListener('load', ()=>{
+   try{ const cw=frame.contentWindow; if(cw && !cw.opener) cw.opener=viewer; }catch(e){}
+   // The "AI Sheet Changes" panel is retired: strip it from sheets saved by older versions
+   try{ const d=frame.contentDocument; if(d) d.querySelectorAll('.sheet-ai-panel').forEach(el=>el.remove()); }catch(e){}
+  });
  }catch(e){}
 }
 async function viewEstimateHistory(id){

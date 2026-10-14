@@ -699,12 +699,37 @@ body.bg-zinc-950{
 .est-fold > summary:after{ content:'▾'; color:#c9a227; }
 .est-fold:not([open]) > summary:after{ content:'▸'; }
 .est-fold .est-fold-body{ padding:12px; }
+.est-fold > summary .est-fold-title{ flex:none; }
+.est-fold > summary .est-fold-sum{ flex:1; min-width:0; text-align:right; font-weight:600; letter-spacing:0; text-transform:none; color:#93c5fd; font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.est-fold[open] > summary .est-fold-sum{ display:none; }
+.customer-top-panel > .section-header{ display:none; }
+</style>
+<style id="agbPhoneFit">
+/* Phone / small-tablet fit: compact header, >=40px touch targets, >=12px text */
+@media (max-width: 640px){
+  .back-production-btn{ position:static !important; display:inline-flex !important; margin:8px 12px 0 !important; padding:8px 12px !important; font-size:13px !important; min-height:40px; align-items:center; }
+  .agb-head{ padding:8px 12px 8px !important; gap:8px; flex-wrap:nowrap !important; }
+  .agb-head .font-display{ font-size:20px !important; }
+  .agb-head .w-11{ width:34px !important; height:34px !important; } .agb-head .w-11 i{ font-size:18px !important; }
+  .agb-live-pill{ display:none !important; }
+  .agb-head button{ padding:8px 10px !important; min-height:40px; font-size:12px !important; }
+  .agb-head button span{ white-space:nowrap; }
+  .agb-main{ padding:0 10px 110px !important; }
+  .agb-inputs-card{ padding:14px !important; }
+  input:not([type=checkbox]):not([type=radio]):not([type=range]), select, textarea{ min-height:40px; font-size:16px !important; }
+  button{ min-height:40px; }
+  input[type=checkbox], input[type=radio]{ width:22px !important; height:22px !important; }
+  .text-\[9px\], .text-\[10px\], .text-\[11px\], .text-\[10\.5px\], .text-\[8px\]{ font-size:12px !important; }
+  #stickyEstimateTotal{ bottom:6px !important; }
+  .text-xs, .text-xs span{ font-size:12px !important; }
+  .agb-main label, .agb-main label span, .agb-main span, .agb-main small{ font-size:max(12px, 1em) !important; }
+}
 </style>
 </head>
 <body class="bg-zinc-950 text-zinc-200"><a id="backToProductionBtn" class="back-production-btn" href="index.html?v=20260818v2">← Back To Dashboard</a>
     <div class="max-w-[1280px] mx-auto">
         <!-- Header -->
-        <div class="flex items-center justify-between px-8 pt-8 pb-6">
+        <div class="agb-head flex items-center justify-between px-8 pt-8 pb-6">
             <div class="flex items-center gap-x-3">
                 <div class="w-11 h-11 bg-blue-600 rounded-2xl flex items-center justify-center shadow-inner">
                     <i class="fa-solid fa-warehouse text-white text-3xl"></i>
@@ -716,7 +741,7 @@ body.bg-zinc-950{
             </div>
             
             <div class="flex items-center gap-x-2 text-sm">
-                <div class="px-3 py-1.5 bg-zinc-900 rounded-2xl flex items-center gap-x-2 text-xs">
+                <div class="agb-live-pill px-3 py-1.5 bg-zinc-900 rounded-2xl flex items-center gap-x-2 text-xs">
                     <div class="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
                     <span class="text-yellow-400 font-medium">LIVE CALCULATOR</span>
                 </div>
@@ -733,14 +758,14 @@ body.bg-zinc-950{
             </div>
         </div>
 
-        <div class="px-8 pb-8">
+        <div class="agb-main px-8 pb-8">
             <div class="mb-5 grid grid-cols-1 lg:grid-cols-3 gap-3">
 <div class="lg:col-span-2 rounded-2xl border border-zinc-700 bg-zinc-900 p-3"><label class="text-[10px] font-bold tracking-wider text-zinc-400 block mb-1">SEARCH ESTIMATOR</label><div class="flex gap-2"><input id="estimatorSearch" type="search" placeholder="Search retaining wall, EV, apron, window, demolition..." oninput="searchEstimatorOptions()" onkeydown="if(event.key==='Enter'){event.preventDefault();jumpToEstimatorSearchResult();}" class="calc-input flex-1 bg-zinc-950 border border-zinc-700 rounded-xl px-3 py-2 text-sm"><button type="button" onclick="jumpToEstimatorSearchResult()" class="px-3 py-2 rounded-xl bg-blue-700 text-xs font-bold">GO</button></div><div id="estimatorSearchStatus" class="text-[10px] text-zinc-500 mt-1">Type a feature name and press Go.</div></div>
 <!-- Estimate Health Check removed -->
 </div><div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
                 
                 <!-- INPUTS -->
-                <div class="xl:col-span-7 bg-zinc-900 border border-zinc-800 rounded-3xl p-7 garage-shadow">
+                <div class="agb-inputs-card xl:col-span-7 bg-zinc-900 border border-zinc-800 rounded-3xl p-7 garage-shadow">
                     <div class="flex items-center justify-between gap-4 mb-6 flex-wrap">
                         <div class="min-w-0">
                             <h1 class="font-display text-2xl tracking-tight">Quick Estimate</h1>
@@ -749,6 +774,49 @@ body.bg-zinc-950{
                         <div class="hidden md:flex items-center text-[10px] px-3 py-1 bg-zinc-950 border border-zinc-800 rounded-2xl text-zinc-400">
                             <i class="fa-solid fa-bolt-lightning mr-1.5 text-yellow-400"></i>
                             <span>INSTANT</span>
+                        </div>
+                    </div>
+
+                    <!-- Customer (moved to the top so the job starts here) -->
+                    <div class="customer-top-panel mb-6 bg-zinc-950/60 border border-zinc-800 rounded-2xl p-4">
+                        <div class="section-header flex items-center gap-x-2 mb-3 text-sm"><i class="fa-solid fa-user"></i><span>CUSTOMER</span></div>
+                        <div class="customer-print-form grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-xs text-zinc-400 block mb-0.5">Salesman</label>
+                        <select id="salesman" class="calc-input w-full bg-zinc-950 border border-zinc-700 text-white rounded-xl px-3 py-2.5 text-base min-h-[44px] focus:border-blue-500">
+                            <option value="ramsey" selected>Ramsey Barakat</option>
+                            <option value="sam">Sam Barakat</option>
+                            <option value="samer">Samer Barakat</option>
+                            <option value="wally">Wally</option>
+                            <option value="tom">Tom</option>
+                            <option value="tomb">Tom Bartyzel</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-xs text-zinc-400 block mb-0.5">Customer Name</label>
+                        <input type="text" id="customerName" placeholder="Name"
+                               class="calc-input w-full bg-zinc-950 border border-zinc-700 text-white rounded-xl px-3 py-2.5 text-base min-h-[44px] focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="text-xs text-zinc-400 block mb-0.5">Email <span class="text-zinc-600">(opt)</span></label>
+                        <input type="email" id="customerEmail" placeholder="Email"
+                               class="calc-input w-full bg-zinc-950 border border-zinc-700 text-white rounded-xl px-3 py-2.5 text-base min-h-[44px] focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="text-xs text-zinc-400 block mb-0.5">Phone</label>
+                        <input type="tel" id="customerPhone1" placeholder="Phone"
+                               class="calc-input w-full bg-zinc-950 border border-zinc-700 text-white rounded-xl px-3 py-2.5 text-base min-h-[44px] focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="text-xs text-zinc-400 block mb-0.5">2nd Phone <span class="text-zinc-600">(opt)</span></label>
+                        <input type="tel" id="customerPhone2" placeholder="Optional"
+                               class="calc-input w-full bg-zinc-950 border border-zinc-700 text-white rounded-xl px-3 py-2.5 text-base min-h-[44px] focus:border-blue-500">
+                    </div>
+                    <div class="address-field">
+                        <label class="text-xs text-zinc-400 block mb-0.5">Address</label>
+                        <input type="text" id="customerAddress" placeholder="Address"
+                               class="calc-input w-full bg-zinc-950 border border-zinc-700 text-white rounded-xl px-3 py-2.5 text-base min-h-[44px] focus:border-blue-500">
+                    </div>
                         </div>
                     </div>
 
@@ -2013,42 +2081,6 @@ body.bg-zinc-950{
                     <span>PRINT ESTIMATE SHEET</span>
                 </div>
                 <div class="customer-print-form grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="text-[10px] text-zinc-400 block mb-0.5">Salesman</label>
-                        <select id="salesman" class="calc-input w-full bg-zinc-950 border border-zinc-700 text-white rounded-xl px-2.5 py-2 text-xs focus:border-blue-500">
-                            <option value="ramsey" selected>Ramsey Barakat</option>
-                            <option value="sam">Sam Barakat</option>
-                            <option value="samer">Samer Barakat</option>
-                            <option value="wally">Wally</option>
-                            <option value="tom">Tom</option>
-                            <option value="tomb">Tom Bartyzel</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="text-[10px] text-zinc-400 block mb-0.5">Customer Name</label>
-                        <input type="text" id="customerName" placeholder="Name"
-                               class="calc-input w-full bg-zinc-950 border border-zinc-700 text-white rounded-xl px-2.5 py-2 text-xs focus:border-blue-500">
-                    </div>
-                    <div>
-                        <label class="text-[10px] text-zinc-400 block mb-0.5">Email <span class="text-zinc-600">(opt)</span></label>
-                        <input type="email" id="customerEmail" placeholder="Email"
-                               class="calc-input w-full bg-zinc-950 border border-zinc-700 text-white rounded-xl px-2.5 py-2 text-xs focus:border-blue-500">
-                    </div>
-                    <div>
-                        <label class="text-[10px] text-zinc-400 block mb-0.5">Phone</label>
-                        <input type="tel" id="customerPhone1" placeholder="Phone"
-                               class="calc-input w-full bg-zinc-950 border border-zinc-700 text-white rounded-xl px-2.5 py-2 text-xs focus:border-blue-500">
-                    </div>
-                    <div>
-                        <label class="text-[10px] text-zinc-400 block mb-0.5">2nd Phone <span class="text-zinc-600">(opt)</span></label>
-                        <input type="tel" id="customerPhone2" placeholder="Optional"
-                               class="calc-input w-full bg-zinc-950 border border-zinc-700 text-white rounded-xl px-2.5 py-2 text-xs focus:border-blue-500">
-                    </div>
-                    <div class="address-field">
-                        <label class="text-[10px] text-zinc-400 block mb-0.5">Address</label>
-                        <input type="text" id="customerAddress" placeholder="Address"
-                               class="calc-input w-full bg-zinc-950 border border-zinc-700 text-white rounded-xl px-2.5 py-2 text-xs focus:border-blue-500">
-                    </div>
                     <div class="col-span-2 rounded-xl border border-violet-700/40 bg-zinc-950 p-2.5">
                         <div class="text-[10px] font-bold text-violet-300 mb-1.5 flex items-center gap-1.5">
                             <i class="fa-solid fa-wand-magic-sparkles"></i> PHOTO
@@ -6982,34 +7014,6 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                 if(btn) btn.disabled=false;
             }
         }
-        // localStorage bridge: sheet popup can queue a change if opener is missing
-        window.addEventListener('storage', function(ev){
-            if(ev.key==='agb_pending_sheet_ai' && ev.newValue){
-                try{
-                    const data=JSON.parse(ev.newValue);
-                    if(data && data.q && Date.now()-(data.t||0)<120000){
-                        const box=document.getElementById('estimateChangeRequest');
-                        if(box) box.value=data.q;
-                        applyMainPageSheetAI();
-                        try{ localStorage.removeItem('agb_pending_sheet_ai'); }catch(e){}
-                    }
-                }catch(e){}
-            }
-        });
-        // Also poll for same-tab sessionStorage flag
-        setInterval(function(){
-            try{
-                const raw=sessionStorage.getItem('agb_pending_sheet_ai_now');
-                if(!raw) return;
-                sessionStorage.removeItem('agb_pending_sheet_ai_now');
-                const data=JSON.parse(raw);
-                if(data && data.q){
-                    const box=document.getElementById('estimateChangeRequest');
-                    if(box) box.value=data.q;
-                    applyMainPageSheetAI();
-                }
-            }catch(e){}
-        }, 800);
 
         async function logSheetAIRevision(requestText, appliedMsg){
             try{
@@ -8738,7 +8742,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                     addSpec('Floor', 'Build On Existing Slab');
                 } else {
                     addSpec('Floor', `New ${width}' x ${depth}' - ${concreteThickness}" Reinforced Concrete Slab, 4,000 PSI`);
-                    addSpec('Apron', apronSpecText === 'None' ? 'None' : (apronNumeric ? `${apronDepth}'` : (checked('newConcrete') && apronDepth > 0 ? `${apronDepth}'` : 'None')));
+                    addSpec('Apron', apronSpecText === 'None' ? 'None' : ((apronNumeric || (checked('newConcrete') && apronDepth > 0)) ? `${width}' x ${apronDepth}' New Concrete Apron` : 'None'));
                     addSpec('Perimeter Curb', 'Water Ledge, Included');
                     addSpec('Retaining Wall', 'Included As Needed');
                 }
@@ -8754,7 +8758,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                 addSpec('Roof Sheathing', (typeof sheathingSheetText==='function'?sheathingSheetText('roof'):((val('roofSheathSize')||'7/16"')+' '+(val('roofSheathType')||'OSB'))));
                 addSpec('Eaves', `${getEavesInches()}" Eaves - 4 Sides Boxed`);
                 if(checked('roofPatioEnabled')){const d=getRoofPatioDepth(),side=checked('roofPatioSide'),span=side?depth:width;addSpec('Roof Patio',`${span}' x ${d}' ${side?'Side':'Rear'} Roof Patio - 4 Support Posts`);}
-                addSpec('Overhang', checked('gutters') ? (roofType === 'gable' ? 'Seamless Gutters 2 Sides - 2 Down Spouts' : 'Seamless Gutters 4 Sides - 2 Down Spouts') : '" "');
+                if(checked('gutters')) addSpec('Gutters', roofType === 'gable' ? 'Seamless Gutters 2 Sides - 2 Down Spouts' : 'Seamless Gutters 4 Sides - 2 Down Spouts');
                 addSpec('Cross Ties', '2x6 48 O.C');
                 addSpec('Roofing', 'Architectural Shingles + 15lbs Felt Paper');
                 addSpec('Studs', `${wallHeight >= 10 ? '2x6' : '2x4'} 16" O.C.`);
@@ -8998,7 +9002,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             const photoFailNote = (!usedAI && resolvedGarage.error)
                 ? `<div style="font-size:9px;color:#b91c1c;padding:4px 6px;background:#fef2f2;border:1px solid #fecaca;margin-top:4px">AI photo failed: ${esc(String(resolvedGarage.error).slice(0,180))}</div>`
                 : '';
-            const garageSvg = `<div class="photo-config photo-only"><img src="${garagePhotoSrc}" alt="${aiBadge}" onerror="if(String(this.src||'').indexOf('data:image')===0){return;} if(!this.dataset.tryRoot){this.dataset.tryRoot='1';this.src='${garagePhotoFallbackSrc}';}else if(!this.dataset.tryOriginal){this.dataset.tryOriginal='1';this.src='${garagePhotoOriginalSrc}';}else{this.style.visibility='hidden';}"></div>${photoFailNote}`;
+            const garageSvg = `<div class="photo-config photo-only"><img src="${garagePhotoSrc}" alt="${aiBadge}" onerror="if(String(this.src||'').indexOf('data:image')===0){return;} if(!this.dataset.tryRoot){this.dataset.tryRoot='1';this.src='${garagePhotoFallbackSrc}';}else if(!this.dataset.tryOriginal){this.dataset.tryOriginal='1';this.src='${garagePhotoOriginalSrc}';}else{var ex=this.closest('.exterior');if(ex){ex.style.display='none';var t=ex.previousElementSibling;if(t&&t.classList.contains('exterior-title'))t.style.display='none';}else{this.style.visibility='hidden';}}"></div>${photoFailNote}`;
 
             const notesCount = notes.length;
             const notesClass = notesCount <= 1 ? 'notes-1' : notesCount === 2 ? 'notes-2' : notesCount <= 4 ? 'notes-few' : notesCount <= 7 ? 'notes-medium' : 'notes-many';
@@ -9293,62 +9297,6 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
     .actions button { border:0; border-radius:8px; padding:11px 18px; font-size:13px; font-weight:800; cursor:pointer; }
     .print { background:#0b5bd3; color:#fff; }
     .close { background:#d9dde4; color:#172033; }
-    .sheet-ai-panel {
-      width: min(8.5in, 96vw);
-      margin: 0 auto 36px;
-      background: #0f172a;
-      color: #e2e8f0;
-      border: 2px solid #6366f1;
-      border-radius: 16px;
-      padding: 16px 18px 18px;
-      box-shadow: 0 12px 40px rgba(15,23,42,.35);
-      font-family: Arial, Helvetica, sans-serif;
-    }
-    .sheet-ai-panel h3 {
-      margin: 0 0 6px;
-      font-size: 15px;
-      font-weight: 900;
-      color: #a5b4fc;
-      letter-spacing: .04em;
-      text-transform: uppercase;
-    }
-    .sheet-ai-panel p {
-      margin: 0 0 10px;
-      font-size: 12px;
-      line-height: 1.45;
-      color: #94a3b8;
-    }
-    .sheet-ai-panel textarea {
-      width: 100%;
-      min-height: 110px;
-      border-radius: 12px;
-      border: 1px solid #475569;
-      background: #020617;
-      color: #f8fafc;
-      padding: 12px;
-      font-size: 14px;
-      line-height: 1.4;
-      resize: vertical;
-      box-sizing: border-box;
-    }
-    .sheet-ai-panel .ai-row {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-top: 10px;
-      align-items: center;
-    }
-    .sheet-ai-panel button.ai-apply {
-      background: #4f46e5;
-      color: #fff;
-      border: 0;
-      border-radius: 10px;
-      padding: 11px 18px;
-      font-size: 13px;
-      font-weight: 800;
-      cursor: pointer;
-    }
-    .sheet-ai-panel button.ai-apply:disabled { opacity: .55; cursor: wait; }
     .sheet-edit {
       display: inline;
       min-width: 1em;
@@ -9368,6 +9316,9 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
       background: #fff8d6;
       box-shadow: 0 0 0 2px #f5c542;
     }
+    /* Row +/× tools only show in Edit Rows mode (never printed / PDF'd) */
+    body:not(.sheet-editing) .sheet-row-tools, body:not(.sheet-editing) .sheet-add-row,
+    body:not(.sheet-editing) .sheet-row-remove, body:not(.sheet-editing) .sheet-row-add { display:none !important; }
     .sheet-row-tools {
       float: right;
       display: inline-flex;
@@ -9411,12 +9362,6 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
     @media print {
       .sheet-edit:focus { background: transparent; box-shadow: none; }
       .sheet-row-remove, .sheet-row-add, .sheet-row-tools, .sheet-add-row, .no-print { display: none !important; }
-    }
-    .sheet-ai-panel #popupChangeStatus {
-      font-size: 12px;
-      color: #86efac;
-      min-height: 18px;
-      flex: 1;
     }
 
     /* Configurable photo-style exterior overlays */
@@ -9672,21 +9617,14 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
 <div class="actions">
     <button class="print" onclick="window.print()">Print</button>
     <button type="button" class="sheet-undo-btn no-print" id="sheetUndoBtn" onclick="undoSheetEdit()" style="background:#92400e;color:#fff" disabled>Undo</button>
+    <button type="button" class="no-print" id="sheetEditRowsBtn" onclick="toggleSheetEditRows()" style="background:#475569;color:#fff">Edit Rows</button>
     <button type="button" class="no-print" id="sheetSaveBtn" onclick="saveSheetEditsNow()" style="background:#0f766e;color:#fff">Save Changes</button>
     <button class="download" onclick="downloadEstimatePdf()" style="background:#166534;color:#fff">Download PDF</button>
     <button class="email" onclick="emailEstimateToCustomer()" style="background:#1d4ed8;color:#fff">Email Customer</button>
     <button class="close" onclick="window.close()">Close</button>
 </div>
 
-<div class="sheet-ai-panel no-print">
-  <h3>AI Sheet Changes</h3>
-  <p>Full control for <b>this sheet only</b>: photo, specs, notes, wording, landscape/portrait, colors, font size, hide/show sections, item details. Type a change and tap Apply to rebuild.</p>
-  <textarea id="popupChangeRequest" placeholder="Examples:&#10;• hip roof&#10;• Remove Gutters row&#10;• make the garage wider&#10;• Landscape · larger font&#10;• Change Overhead Door details to 16x7 raised panel"></textarea>
-  <div class="ai-row">
-    <button type="button" class="ai-apply" id="popupAiApplyBtn">Apply AI Change &amp; Rebuild Sheet</button>
-    <div id="popupChangeStatus" style="min-height:1.2em;color:#fde68a;font-size:12px;font-weight:600;"></div>
-  </div>
-</div>
+<div id="popupChangeStatus" class="no-print" style="width:min(8.5in,96vw);margin:0 auto 24px;min-height:1.2em;text-align:center;color:#0f766e;font:600 12px Arial,sans-serif;"></div>
 
 <script>
 const ESTIMATE_EMAIL_TO=${JSON.stringify(customerEmail||'')};
@@ -10008,6 +9946,26 @@ function showSheetSaveStatus(msg, kind){
   }
   if(kind==='ok'){ clearTimeout(window._sheetSaveBannerT); window._sheetSaveBannerT=setTimeout(function(){ bar.style.display='none'; }, 6000); }
 }
+// If the example photo can't load on this device, hide the empty Exterior View box instead of printing a blank panel
+function hideBrokenExteriorPhoto(final){
+  try{
+    const ex=document.querySelector('.exterior'); if(!ex || ex.style.display==='none') return;
+    const img=ex.querySelector('img');
+    const broken = !img || !img.getAttribute('src') || (img.complete && img.naturalWidth===0) || img.style.visibility==='hidden' || (final===true && img.naturalWidth===0);
+    if(!broken) return;
+    const t=ex.previousElementSibling;
+    ex.style.display='none';
+    if(t && t.classList.contains('exterior-title')) t.style.display='none';
+    // A slow photo that finally arrives is shown again
+    if(img) img.addEventListener('load', function(){ if(img.naturalWidth>0){ ex.style.display=''; if(t) t.style.display=''; } }, {once:true});
+  }catch(e){}
+}
+[1500,4000].forEach(function(ms){ setTimeout(hideBrokenExteriorPhoto, ms); }); setTimeout(function(){ hideBrokenExteriorPhoto(true); }, 9000);
+function toggleSheetEditRows(force){
+  const on = typeof force==='boolean' ? force : !document.body.classList.contains('sheet-editing');
+  document.body.classList.toggle('sheet-editing', on);
+  const b=document.getElementById('sheetEditRowsBtn'); if(b) b.textContent = on ? 'Done Editing' : 'Edit Rows';
+}
 var _sheetSaveRunning=null;
 function saveSheetEditsNow(){
   if(_sheetSaveRunning) return _sheetSaveRunning; // double-click: one save only
@@ -10019,8 +9977,11 @@ function saveSheetEditsNow(){
       // Capture the sheet first, without our own status banner / "Saving…" button state
       const banner=document.getElementById('sheetSaveBanner');
       if(banner) banner.remove();
+      const wasEditing=document.body.classList.contains('sheet-editing');
+      if(wasEditing) toggleSheetEditRows(false);
       const html='<!DOCTYPE html>\\n'+document.documentElement.outerHTML;
       if(banner) document.body.appendChild(banner);
+      if(wasEditing) toggleSheetEditRows(true);
       if(btn){ btn.disabled=true; btn.textContent='Saving…'; }
       showSheetSaveStatus('Saving sheet changes…','info');
       const priceTxt=(document.querySelector('.total-price')?.innerText||'').replace(/[^0-9.]/g,'');
@@ -10181,81 +10142,6 @@ document.addEventListener('click', function(e){
   const add=e.target && e.target.closest && e.target.closest('.sheet-row-add');
   if(add){ e.preventDefault(); addSheetRow(add.closest('tr')); }
 });
-function applyPopupChange(){ return applyPopupAIChange(); }
-function setPopupAIStatus(t){
-  var status=document.getElementById('popupChangeStatus');
-  if(status) status.textContent=t||'';
-}
-async function applyPopupAIChange(){
-  var box=document.getElementById('popupChangeRequest');
-  var status=document.getElementById('popupChangeStatus');
-  var btn=document.getElementById('popupAiApplyBtn');
-  var q=(box&&box.value||'').trim();
-  function st(t){ if(status) status.textContent=t||''; }
-  if(!q){
-    st('Type the change you want first.');
-    try{ alert('Type the change you want first.'); }catch(e){}
-    return;
-  }
-  if(btn) btn.disabled=true;
-  st('Applying change…');
-  // Always queue for the main Estimator page (works even if opener is broken)
-  try{
-    localStorage.setItem('agb_pending_sheet_ai', JSON.stringify({q:q,t:Date.now()}));
-    sessionStorage.setItem('agb_pending_sheet_ai_now', JSON.stringify({q:q,t:Date.now()}));
-  }catch(e){}
-  var host=null;
-  try{
-    if(window.opener && !window.opener.closed) host=window.opener;
-  }catch(e){ host=null; }
-  try{
-    if(host && typeof host.__runPendingSheetAI==='function'){
-      var msg=await host.__runPendingSheetAI(q, window);
-      st((msg||'Done.')+' Sheet rebuilt.');
-      if(btn) btn.disabled=false;
-      return;
-    }
-    if(host && typeof host.applyMainPageSheetAI==='function'){
-      try{
-        var box2=host.document.getElementById('estimateChangeRequest');
-        if(box2) box2.value=q;
-      }catch(e){}
-      await host.applyMainPageSheetAI();
-      st('Sent to main Estimator — check that tab for the new sheet.');
-      if(btn) btn.disabled=false;
-      return;
-    }
-    // No opener: instruct user
-    st('Change queued. Switch to the Estimator tab and it will apply, or use AI SHEET UPDATE on the main page.');
-    try{ alert('Could not reach the main Estimator page.\\n\\nDo this:\\n1) Keep Estimator open\\n2) On the Estimator page use the yellow \"AI SHEET UPDATE\" box\\n3) Type the same change and tap Apply\\n\\nOr reopen the sheet from Estimator and try again.'); }catch(e){}
-    if(btn) btn.disabled=false;
-  }catch(err){
-    var em=err&&err.message?err.message:String(err);
-    st('Error: '+em);
-    try{ alert('AI change error: '+em); }catch(e){}
-    if(btn) btn.disabled=false;
-  }
-}
-async function openPopupChatGPT(){
-  if(window.opener && window.opener.copyEstimateForChatGPT) await window.opener.copyEstimateForChatGPT();
-  window.open('https://chatgpt.com/','_blank','noopener');
-  setPopupAIStatus('Estimate copied. Paste it into ChatGPT.');
-}
-// Wire Apply button reliably (iOS / no inline-handler quirks)
-(function(){
-  function wire(){
-    var btn=document.getElementById('popupAiApplyBtn');
-    if(!btn || btn.__wiredAI) return;
-    btn.__wiredAI=true;
-    btn.addEventListener('click', function(ev){
-      try{ ev.preventDefault(); }catch(e){}
-      applyPopupAIChange();
-    }, false);
-  }
-  wire();
-  document.addEventListener('DOMContentLoaded', wire);
-  setTimeout(wire, 50);
-})();
 <\/script>
 
 </body>
@@ -10696,7 +10582,9 @@ async function openPopupChatGPT(){
             const folds=[];
             let bucket=null;
             const titleOf=el=>{
-                const h=el.querySelector && el.querySelector('.section-header span, .section-header');
+                // Prefer the heading's own label span (the header row can also hold toggles like "Electric Included")
+                const sp=el.querySelector && el.querySelector('.section-header span');
+                const h=(sp && sp.textContent.trim()) ? sp : (el.querySelector && el.querySelector('.section-header'));
                 const t=(h && h.textContent || '').replace(/\s+/g,' ').trim();
                 return t.slice(0,42) || 'More options';
             };
@@ -10712,9 +10600,11 @@ async function openPopupChatGPT(){
             folds.forEach((g,i)=>{
                 const d=document.createElement('details');
                 d.className='est-fold';
-                d.open = i < 3; // city/size, roof, concrete stay open
+                d.open = i < 4; // customer, city/size, roof, concrete stay open
                 const s=document.createElement('summary');
-                s.textContent=g.title;
+                const tt=document.createElement('span'); tt.className='est-fold-title'; tt.textContent=g.title;
+                const sm=document.createElement('span'); sm.className='est-fold-sum';
+                s.appendChild(tt); s.appendChild(sm);
                 const body=document.createElement('div');
                 body.className='est-fold-body';
                 g.nodes.forEach(n=>body.appendChild(n));
@@ -10722,6 +10612,36 @@ async function openPopupChatGPT(){
                 col.appendChild(d);
             });
         }
+
+        // Short "what's chosen" summary on each closed section heading
+        function updateFoldSummaries(){
+            document.querySelectorAll('details.est-fold').forEach(d=>{
+                const out=document.querySelector?d.querySelector(':scope > summary .est-fold-sum'):null; if(!out) return;
+                const parts=[];
+                const lblOf=el=>{ const l=el.closest('label'); if(l) return l.textContent; const f=el.id&&d.querySelector('label[for="'+el.id+'"]'); if(f) return f.textContent; const n=el.nextElementSibling; return n?n.textContent:''; };
+                d.querySelectorAll('.est-fold-body input[type=checkbox]').forEach(cb=>{
+                    if(!cb.checked||cb.offsetParent===null&&!d.open&&cb.closest('.hidden')) return;
+                    const t=(lblOf(cb)||'').replace(/\s+/g,' ').trim(); if(t&&t.length<40) parts.push(t);
+                });
+                d.querySelectorAll('.est-fold-body select').forEach(se=>{
+                    if(se.closest('.hidden')) return;
+                    const v=String(se.value||'').toLowerCase(); if(!v||v==='none'||v==='0'||v==='no') return;
+                    const t=(se.options[se.selectedIndex]?.text||'').replace(/\s+/g,' ').trim(); if(t&&t.length<40&&!/^(none|select|—|-)/i.test(t)) parts.push(t);
+                });
+                const txt=[...new Set(parts)].slice(0,4).join(' · ');
+                out.textContent=txt; out.title=txt;
+            });
+        }
+        document.addEventListener('change', ()=>{ try{ updateFoldSummaries(); }catch(e){} });
+        document.addEventListener('DOMContentLoaded', ()=>setTimeout(()=>{
+            try{ updateFoldSummaries(); }catch(e){}
+            // Keep summaries current after programmatic changes (reset, reopen, presets)
+            try{ if(typeof window.calculateEstimate==='function' && !window.calculateEstimate.__foldWrapped){
+                const _ce=window.calculateEstimate;
+                const w=function(){ const r=_ce.apply(this,arguments); clearTimeout(window._foldSumT); window._foldSumT=setTimeout(()=>{ try{ updateFoldSummaries(); }catch(e){} },150); return r; };
+                w.__foldWrapped=true; window.calculateEstimate=w;
+            } }catch(e){}
+        },400));
 
         // Initialize everything
         function initApp() {
@@ -10837,19 +10757,27 @@ document.addEventListener('DOMContentLoaded',()=>{syncDemoPreset();syncWindowQty
 </script>
 
 <!-- Sticky Total Bar — always visible while scrolling -->
-<div id="stickyEstimateTotal" class="fixed bottom-3 left-1/2 -translate-x-1/2 z-[80] rounded-2xl border border-blue-700 bg-zinc-950/95 shadow-2xl px-5 py-2.5 flex items-center gap-5 backdrop-blur max-w-[94vw]">
-  <div>
-    <div class="text-[9px] text-zinc-500 font-bold tracking-wider">INTERNAL</div>
-    <div id="stickyInternalTotal" class="font-mono text-sm font-bold text-white">\$0.00</div>
+<div id="stickyEstimateTotal" class="fixed bottom-3 left-1/2 -translate-x-1/2 z-[80] rounded-2xl border border-blue-700 bg-zinc-950/95 shadow-2xl px-3 sm:px-5 py-2 flex items-center gap-2 sm:gap-4 backdrop-blur w-max max-w-[96vw]">
+  <button type="button" id="stickyEyeBtn" onclick="toggleStickyInternal()" aria-label="Show internal cost" title="Show / hide internal cost" class="shrink-0 w-10 h-10 rounded-xl bg-zinc-800 text-zinc-300 text-lg leading-none flex items-center justify-center">&#128065;</button>
+  <div id="stickyInternalWrap" class="hidden shrink-0">
+    <div class="text-[11px] text-zinc-400 font-bold tracking-wider">INTERNAL</div>
+    <div id="stickyInternalTotal" class="font-mono text-sm font-bold text-white whitespace-nowrap">$0.00</div>
   </div>
-  <div class="w-px h-9 bg-zinc-700"></div>
-  <div>
-    <div class="text-[9px] text-yellow-500 font-bold tracking-wider">PROJECT PRICE</div>
-    <div id="stickyCustomerQuote" class="font-mono text-lg font-extrabold text-yellow-400">\$0.00</div>
+  <div class="shrink-0">
+    <div class="text-[11px] text-yellow-500 font-bold tracking-wider whitespace-nowrap">PROJECT PRICE</div>
+    <div id="stickyCustomerQuote" class="font-mono text-lg font-extrabold text-yellow-400 whitespace-nowrap">$0.00</div>
   </div>
-  <button type="button" onclick="document.getElementById('breakdown')?.scrollIntoView({behavior:'smooth',block:'start'})" class="ml-auto px-3 py-2 rounded-xl bg-[#0f274b] text-white text-xs font-extrabold">Summary</button>
-  <button type="button" onclick="typeof safePrintEstimateSheet==='function'&&safePrintEstimateSheet()" class="px-3 py-2 rounded-xl bg-[#c9a227] text-[#0b1220] text-xs font-extrabold">Create sheet</button>
+  <button type="button" onclick="document.getElementById('breakdown')?.scrollIntoView({behavior:'smooth',block:'start'})" class="ml-auto shrink-0 min-h-[40px] px-3 rounded-xl bg-[#0f274b] text-white text-sm font-extrabold whitespace-nowrap">Summary</button>
+  <button type="button" onclick="typeof safePrintEstimateSheet==='function'&&safePrintEstimateSheet()" class="shrink-0 min-h-[40px] px-3 rounded-xl bg-[#c9a227] text-[#0b1220] text-sm font-extrabold whitespace-nowrap">Sheet</button>
 </div>
+<script>
+// Internal cost is hidden by default (the phone is often turned toward the customer); tap the eye to peek.
+function toggleStickyInternal(){
+  var w=document.getElementById('stickyInternalWrap'), b=document.getElementById('stickyEyeBtn'); if(!w) return;
+  var show=w.classList.contains('hidden'); w.classList.toggle('hidden',!show);
+  if(b){ b.classList.toggle('bg-blue-700',show); b.setAttribute('aria-label', show?'Hide internal cost':'Show internal cost'); }
+}
+</script>
 
 <style id="rgPickerStyles">
 /* ===== Reverse-gable example photo picker (self-contained; works offline without Tailwind) ===== */

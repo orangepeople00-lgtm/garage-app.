@@ -162,7 +162,7 @@ tr.optrow td{background:#fff7e6}
   <div class="grid">
    <div>
     <div class="card">
-      <div class="sh">👤 Customer & job</div>
+      <div class="sh">👤 Customer &amp; job</div>
       <div class="f2">
         <div><label class="l">Salesman</label><select id="salesman" class="c" onchange="calc()">
           <option value="ramsey" selected>Ramsey Barakat</option><option value="sam">Sam Barakat</option><option value="samer">Samer Barakat</option><option value="wally">Wally</option><option value="tom">Tom</option><option value="tomb">Tom Bartyzel</option></select></div>
@@ -192,7 +192,7 @@ tr.optrow td{background:#fff7e6}
       <label style="display:flex;gap:8px;align-items:center;margin-top:4px;font-size:14px;min-height:44px"><input type="checkbox" id="insuranceJob" onchange="calc();saveDraft()" style="width:22px;height:22px"> Insurance job <span class="muted" style="font-size:12px">(sheet states it is for insurance)</span></label>
     </div>
     <div class="card" style="margin-top:16px">
-      <div class="sh">📝 Damage photos & notes <span class="muted" style="text-transform:none;letter-spacing:0;font-weight:400">internal — not printed</span></div>
+      <div class="sh">📝 Damage photos &amp; notes <span class="muted" style="text-transform:none;letter-spacing:0;font-weight:400">internal — not printed</span></div>
       <textarea id="damageNotes" class="c" placeholder="What you saw on site: rot at bottom plate south wall, roof sag, cracked apron..." oninput="saveDraft()"></textarea>
       <input type="file" id="damageFile" accept="image/*" capture="environment" multiple style="display:none" onchange="addDamagePhotos(this)">
       <button class="btn" type="button" style="margin-top:8px" onclick="document.getElementById('damageFile').click()">📷 Add damage photos</button>
@@ -463,7 +463,7 @@ let S={};
 function defState(){const s={items:{},extras:[],photos:[{src:'',cap:'FRONT VIEW'},{src:'',cap:'REAR VIEW'}],damagePhotos:[],cond:{}};
   ITEMS.forEach(it=>{const f={};it.f.forEach(x=>f[x.k]=x.v);s.items[it.id]={on:false,mode:'inc',f,ov:'',add:''};});return s;}
 const $=id=>document.getElementById(id);
-const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&','<':'<','>':'>','"':'"',"'":'&#39;'}[c]));
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const money=v=>'$'+Math.round(Number(v)||0).toLocaleString('en-US');
 const money2=v=>'$'+(Number(v)||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
 const FIELDS=['salesman','customerName','customerPhone','customerEmail','customerAddress','customerCity','gW','gD','roofStyle','pitch','showPill','profitMode','profitValue','exampleTag','insuranceJob','damageNotes'];

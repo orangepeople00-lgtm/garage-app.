@@ -11,6 +11,7 @@
 html,body{margin:0}
 body{font-family:'Inter',system-ui,sans-serif;background:#09090b;color:#e4e4e7;-webkit-text-size-adjust:100%}
 .font-display{font-family:'Space Grotesk','Inter',sans-serif;font-weight:600}
+div.topnav{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding-right:14px}a.hist-btn{display:inline-block;margin:10px 0 0;padding:9px 16px;border-radius:999px;background:#f59e0b;color:#111;font-weight:800;font-size:14px;text-decoration:none;min-height:40px;box-sizing:border-box}
 a.back{display:inline-block;margin:10px 14px 0;color:#93c5fd;font-size:14px;text-decoration:none;padding:8px 0}
 .wrap{max-width:1280px;margin:0 auto;padding:0 14px 120px}
 .head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 0 16px;flex-wrap:wrap}
@@ -155,7 +156,7 @@ tr.optrow td{background:#fff7e6}
 </style>
 </head>
 <body>
-<a class="back" href="index.html?v=20260818v2">← Back To Dashboard</a>
+<div class="topnav"><a class="back" href="index.html?v=20260818v2">← Back To Dashboard</a><a class="hist-btn" href="index.html?history=repair#history-repair">Repair History</a></div>
 <div id="toast"></div>
 <div class="wrap">
   <div class="head">
@@ -714,6 +715,8 @@ function openSheet(print){
   $('sheetScale').innerHTML=(S.sheet_html&&S.sheet_sig===sig)?S.sheet_html:buildSheet(R);
   S.sheet_sig=sig;_repLastSheet=$('sheetScale').innerHTML;
   $('sheetModal').classList.add('open');setTimeout(startRepairSheetAutosave,0);
+  // fix 2026-10-14: creating the sheet saves it to Estimate History right away (insert first time, update the same row after)
+  setTimeout(()=>saveSheetToHistoryNow(),0);
   const go=()=>{fitSheet();if(print)setTimeout(()=>window.print(),300);};
   if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>requestAnimationFrame(go));else requestAnimationFrame(go);
 }
@@ -741,7 +744,7 @@ function repairSheetDoc(inner){
 function currentRepairSheetInner(){ if(S.sheet_html && S.sheet_sig===sheetSig(compute())) return S.sheet_html; return buildSheet(compute()); }
 // ===== audit-fix 2026-10-14: sheet autosave (typing ~1s, structural/photo changes right away, blur/print/close too) =====
 let _repAutoT=null,_repLastSheet='',_repSaving=false,_repPending=false,_repObs=null;
-function repPill(m,k){const p=$('repairAutoPill');if(!p)return;p.textContent=m;p.style.color=k==='ok'?'#86efac':k==='err'?'#fca5a5':'';p.style.cursor=k==='err'?'pointer':'';p.onclick=k==='err'?()=>repairSheetSaveNow():null;}
+function repPill(m,k){const p=$('repairAutoPill');if(!p)return;p.textContent=m;p.style.color=k==='ok'?'#86efac':k==='err'?'#fca5a5':'';p.style.cursor=k==='err'?'pointer':'';p.onclick=k==='err'?()=>(window._repairHistoryId?repairSheetSaveNow():saveSheetToHistoryNow()):null;}
 function repairSheetHtml(){const sc=$('sheetScale');if(!sc)return '';const inn=$('rsIn');const keep=inn?[inn.style.transform,inn.style.width]:null;const phs=[...sc.querySelectorAll('.rs-photo')].map(e=>e.style.height);if(inn){inn.style.transform='';inn.style.width='';}sc.querySelectorAll('.rs-photo').forEach(e=>e.style.height='');const h=sc.innerHTML;if(inn){inn.style.transform=keep[0];inn.style.width=keep[1];}sc.querySelectorAll('.rs-photo').forEach((e,i)=>e.style.height=phs[i]);return h;}
 async function repairSheetSaveNow(){
   clearTimeout(_repAutoT);_repAutoT=null;
@@ -753,6 +756,7 @@ async function repairSheetSaveNow(){
     try{localStorage.setItem('agb_repair_draft',JSON.stringify(snapshot()));}catch(e){try{localStorage.setItem('agb_repair_draft',JSON.stringify(stripPhotos(snapshot())));}catch(_){}}
     if(window._repairLocalId) saveLocal(true);
     let ok=true;
+    if(!window._repairHistoryId && !window._agbOffline){ _repSaving=false; const r=await saveSheetToHistoryNow(); _repSaving=true; return; }
     if(window._repairHistoryId && !window._agbOffline){
       try{const {data:row,error:le}=await garageSb.from('estimate_history').select('estimate_snapshot').eq('id',window._repairHistoryId).maybeSingle();if(le)throw le;
         const snap=Object.assign({},(row&&row.estimate_snapshot)||{});snap.sheet_html=repairSheetDoc(html);snap.sheet_edits_at=new Date().toISOString();snap.insurance_job=!!($("insuranceJob")&&$("insuranceJob").checked);snap.repair_state=stripPhotos(snapshot());
@@ -761,6 +765,17 @@ async function repairSheetSaveNow(){
     }
     repPill(ok?(window._repairHistoryId?'Saved ✓':'Saved on this device ✓'):'Save failed – retry',ok?'ok':'err');
   }finally{_repSaving=false;if(_repPending){_repPending=false;setTimeout(repairSheetSaveNow,50);}}
+}
+let _histP=null;
+function saveSheetToHistoryNow(){
+  if(_histP) return _histP;
+  repPill('Saving to History…');
+  _histP=(async()=>{try{const r=await saveToHistory();
+      if(r&&r.id) repPill('Saved to History ✓','ok');
+      else repPill(($('saveNote').textContent||'Not saved to History')+' – tap to retry','err');
+      return r;}
+    finally{_histP=null;}})();
+  return _histP;
 }
 function repSched(ms){clearTimeout(_repAutoT);_repAutoT=setTimeout(repairSheetSaveNow,ms);}
 function startRepairSheetAutosave(){

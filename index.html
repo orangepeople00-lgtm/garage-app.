@@ -21,6 +21,8 @@ main{max-width:1500px;margin:auto;padding:22px}.titlebar{display:flex;justify-co
 .home-tile{display:flex;flex-direction:column;align-items:flex-start;gap:6px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 14px;text-align:left;box-shadow:0 2px 10px #0f172a08;min-height:108px}
 .home-tile:hover{border-color:var(--gold);box-shadow:0 6px 18px #0b1f3a14}
 .home-tile b{font-size:15px;color:var(--navy)}
+.eh-type-bar{display:flex;gap:8px;margin:0 0 12px;flex-wrap:wrap}.eh-type{flex:0 0 auto;min-width:92px;min-height:42px;padding:9px 18px;border-radius:999px;border:1.5px solid var(--line);background:#fff;color:var(--navy);font-weight:800;font-size:15px;cursor:pointer}.eh-type.on{background:var(--navy);border-color:var(--navy);color:#fff}
+@media (max-width:600px){.eh-type-bar{display:grid;grid-template-columns:repeat(3,1fr)}.eh-type{min-width:0;padding:10px 6px}}
 .home-group h4{margin:14px 0 2px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 .home-tile{position:relative}.tile-count{position:absolute;top:10px;right:10px;min-width:24px;text-align:center;border-radius:999px;padding:2px 8px;font-size:12px;font-weight:900;background:#eef2f7;color:var(--navy)}.tile-count.alert{background:#fee2e2;color:#b91c1c}
 .recent-row{display:flex;gap:8px;overflow-x:auto;padding:2px 0 6px;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity}.recent-chip{flex:0 0 auto;max-width:220px;text-align:left;background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px 12px;cursor:pointer;scroll-snap-align:start;font:inherit}.recent-chip:hover{border-color:var(--gold)}.recent-chip b{display:block;color:var(--navy);font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.recent-chip span{display:block;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -276,6 +278,7 @@ body.estimator-mode .estimator-exit{display:block}
  </section>
  <section id="estimatorView" class="hidden"><button class="estimator-exit" onclick="exitEstimator()">← Back to Production</button><div class="estimator-shell"><iframe id="estimatorFrame" title="Absolute Garage Builders Estimator"></iframe></div></section>
  <section id="estimateHistoryView" class="hidden">
+  <div id="ehTypeBar" class="eh-type-bar" role="group" aria-label="Estimate type"><button type="button" class="eh-type on" data-type="all" onclick="setEstimateTypeFilter('all')">All</button><button type="button" class="eh-type" data-type="garage" onclick="setEstimateTypeFilter('garage')">Garage</button><button type="button" class="eh-type" data-type="repair" onclick="setEstimateTypeFilter('repair')">Repair</button></div>
   <div class="card toolbar estimate-history-toolbar">
    <div class="field"><label>Search Estimates</label><input id="estimateHistorySearch" placeholder="Customer, address, city, garage size" oninput="renderEstimateHistory()"></div>
    <div id="estimateHistorySalesFilterWrap" class="field"><label>Salesman</label><select id="estimateHistorySalesFilter" onchange="renderEstimateHistory()"><option value="">All Salespeople</option></select></div>
@@ -682,6 +685,7 @@ function renderHomeTiles(){
     ['Commissions & Stats',commissionAdmin()?'Sales, commission and stats':'Your sales, commission and stats',V('commission'),'Sell'],
     ['Estimator','Price a garage',L('estimator.html?v='),'Sell'],
     ['Repair','Price a repair',L('repair.html?v='),'Sell'],
+    ['Repair History','Saved repair sheets','openRepairHistory()','Sell'],
     ['Drawing','Site sketch — starts blank',L('Drawing.html?fresh=1&v='),'Sell'],
     [mgr?'Estimate History':'History',mgr?'Saved customer sheets':'Your saved estimates',V('estimateHistory'),'Sell'],
     ['Today',mgr?'Jobs on the schedule today':'Your jobs scheduled today',V('week'),'Build',c.today],
@@ -956,6 +960,11 @@ async function refresh(){
 function renderAll(){if($('allPersonalCalendarsTab'))$('allPersonalCalendarsTab').classList.toggle('hidden',!privateAccessManager());try{showCarpenterNav()}catch(e){}try{renderHomeTiles()}catch(e){}renderStats();renderRequests();renderEditRequests();renderJobs();renderWeek();renderCalendar();renderPersonalCalendar();renderAllPersonalCalendars();renderUpcomingAppointments();renderEstimateHistory();renderPlanHistory();renderCompleted();try{renderCommission()}catch(e){console.error('commission',e)}try{if(currentView==='map')openJobsMap()}catch(e){console.error('map',e)}renderTrash();openHashView()}
 function openHashView(){
   const h=(location.hash||'').replace('#','');
+  let qp=''; try{qp=new URLSearchParams(location.search).get('history')||''}catch(e){}
+  if(h==='history-repair'||qp==='repair'){
+    try{const u=new URL(location.href);u.hash='';u.searchParams.delete('history');history.replaceState(null,'',u.pathname+u.search)}catch(e){}
+    openRepairHistory(); return;
+  }
   if(h==='planHistory'){
     const btn=document.querySelector('.tab[data-view="planHistory"]');
     setView('planHistory', btn);
@@ -1935,7 +1944,7 @@ async function deleteCalEdit(){
  }
 }
 
-function clearEstimateHistoryFilters(){if($('estimateHistorySearch'))$('estimateHistorySearch').value='';if($('estimateHistorySalesFilter'))$('estimateHistorySalesFilter').value='';renderEstimateHistory()}
+function clearEstimateHistoryFilters(){setEstimateTypeFilter('all');if($('estimateHistorySearch'))$('estimateHistorySearch').value='';if($('estimateHistorySalesFilter'))$('estimateHistorySalesFilter').value='';renderEstimateHistory()}
 function estimatePricingAccess(e){
  const own=!!(profile&&e&&e.salesman_username===profile.username);
  return {own,canSeeInternal:own||privateAccessManager(),canSeeMethod:privateAccessManager()};
@@ -2294,6 +2303,9 @@ function renderPlanHistory(){
  }).join(''):`<tr><td colspan="8" style="text-align:center;padding:35px;color:#6f7a8d">${esc(emptyMsg)}</td></tr>`;
 }
 function openSavedPlan(id){ location.href='GaragePlans.html?planId='+encodeURIComponent(id)+'&v='+Date.now(); }
+function isRepairEstimate(e){if(!e)return false;if(String((e.estimate_snapshot||{}).estimate_type||'').toLowerCase()==='repair')return true;return String(e.siding||'')==='Repair estimate'||/^REPAIR\b/i.test(String(e.garage_size||''))}
+function setEstimateTypeFilter(t){window._ehType=['all','garage','repair'].includes(t)?t:'all';document.querySelectorAll('#ehTypeBar .eh-type').forEach(b=>{const on=b.dataset.type===window._ehType;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});renderEstimateHistory()}
+function openRepairHistory(){setView('estimateHistory',document.querySelector('[data-view=estimateHistory]'));setEstimateTypeFilter('repair');setTimeout(()=>{try{$('ehTypeBar').scrollIntoView({block:'start',behavior:'auto'})}catch(e){}},60)}
 function renderEstimateHistory(){
  const rows=$('estimateHistoryRows');if(!rows)return;
  const q=($('estimateHistorySearch')?.value||'').trim().toLowerCase();
@@ -2302,11 +2314,13 @@ function renderEstimateHistory(){
  // Show whatever the database/RLS already returned. Do not hide rows client-side
  // except optional search + salesman dropdown filters (case-insensitive).
  let a=estimateOnlyRows();
+ const tf=window._ehType||'all';
+ if(tf==='repair') a=a.filter(isRepairEstimate); else if(tf==='garage') a=a.filter(e=>!isRepairEstimate(e));
  if(sf) a=a.filter(e=>String(e.salesman_username||'').toLowerCase().trim()===String(sf).toLowerCase());
  if(q) a=a.filter(e=>jobSearchMatch({customer:e.customer,address:e.address},q)||[e.customer,e.address,e.city,e.garage_size,e.roof_type,DISPLAY[e.salesman_username]||e.salesman_username,e.salesman_username].some(v=>String(v||'').toLowerCase().includes(q)));
  const emptyMsg=!estimateOnlyRows().length
    ? 'No saved estimates returned from the database yet.'
-   : 'No estimates match this search / salesman filter. Clear filters to see all.';
+   : (window._ehType==='repair'&&!estimateOnlyRows().some(isRepairEstimate))?'No saved repair estimates yet.':'No estimates match this search / filter. Clear filters to see all.';
  rows.innerHTML=a.length?a.map(e=>{
    const salesKey=String(e.salesman_username||'').toLowerCase().trim();
    const canDel=privateAccessManager()||manager()||(myUser&&salesKey===myUser);

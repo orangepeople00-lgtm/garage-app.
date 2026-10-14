@@ -1748,34 +1748,70 @@ async function fetchFullEstimateRecord(id){
  }catch(err){ console.warn('fetchFullEstimateRecord',err); }
  return e;
 }
-async function saveEditedEstimateSheetHtml(html, meta){
- try{
-  const editId=(meta&&meta.id)||window._lastEstimateHistoryId||'';
-  if(!editId){ alert('No estimate selected to save.'); return false; }
-  const {data:row,error:loadErr}=await sb.from('estimate_history').select('*').eq('id',editId).maybeSingle();
-  if(loadErr||!row){ alert('Could not load the saved estimate.'); return false; }
-  const snap=Object.assign({}, row.estimate_snapshot||{});
-  snap.sheet_html=String(html||'');
-  snap.sheet_edits_at=new Date().toISOString();
-  if(meta&&meta.option_sheets&&typeof meta.option_sheets==='object'){
-   snap.option_sheets=meta.option_sheets;
+// Plain-English save errors for the Estimate History sheet viewer (never a raw JS / database error)
+function friendlySheetSaveError(err){
+ const raw=String((err&&(err.message||err.details||err.hint))||err||'');
+ const m=(raw+' '+String((err&&(err.code||err.status))||'')).toLowerCase();
+ if(err&&err.agbReason==='signin'||/jwt|token|expired|not authenticated|401|pgrst30[0-3]|refresh/.test(m)) return 'Your sign-in has expired. Sign in again on the Dashboard tab, then press Save again (your changes are still here).';
+ if(err&&err.agbTimeout||/timed? ?out|timeout|57014/.test(m)) return 'The save took too long (slow connection or a very large sheet). Wait a moment and press Save again.';
+ if(/payload|too large|413|request entity|body size/.test(m)) return 'This sheet is too large to save (usually big embedded photos).';
+ if(/failed to fetch|network|load failed|connection|503|502|504/.test(m)) return 'Could not reach the database (connection problem). Check the internet connection and press Save again.';
+ if(err&&err.agbReason==='norows'||/permission|row-level|42501|403|policy/.test(m)) return 'This estimate could not be updated — it may belong to another salesperson or was deleted.';
+ return 'The database did not accept the save'+(raw?' ('+raw.slice(0,140)+')':'')+'. Press Save again; if it keeps failing, tell the office.';
+}
+function sheetSaveTimeout(p,ms){ let t; return Promise.race([Promise.resolve(p).finally(()=>clearTimeout(t)), new Promise((_,r)=>{t=setTimeout(()=>r(Object.assign(new Error('timeout'),{agbTimeout:true})),ms);})]); }
+let _historySheetSaveRunning=null;
+// opts.silent: return false without alerting (the sheet shows its own message via window._agbLastSaveError)
+function saveEditedEstimateSheetHtml(html, meta){
+ if(_historySheetSaveRunning) return _historySheetSaveRunning; // double-click: one save
+ _historySheetSaveRunning=(async()=>{
+  const fail=(e)=>{ const msg=friendlySheetSaveError(e); window._agbLastSaveError=msg; if(!(meta&&meta.silent)) alert(msg); return false; };
+  try{
+   window._agbLastSaveError='';
+   const editId=(meta&&meta.id)||window._lastEstimateHistoryId||'';
+   if(!editId){ window._agbLastSaveError='No estimate selected to save. Re-open it from Estimate History.'; if(!(meta&&meta.silent)) alert(window._agbLastSaveError); return false; }
+   // Refresh an expired sign-in once before saving
+   try{
+    const {data:{session}}=await sheetSaveTimeout(sb.auth.getSession(),15000);
+    if(!session || (session.expires_at && session.expires_at*1000-Date.now()<60000)) await sheetSaveTimeout(sb.auth.refreshSession(),15000);
+    const {data:{user}}=await sheetSaveTimeout(sb.auth.getUser(),15000);
+    if(!user) return fail({agbReason:'signin'});
+   }catch(e){ return fail(e); }
+   const load=await sheetSaveTimeout(sb.from('estimate_history').select('*').eq('id',editId).maybeSingle(),45000).catch(e=>({error:e}));
+   if(load.error) return fail(load.error);
+   const row=load.data; if(!row) return fail({agbReason:'norows'});
+   const snap=Object.assign({}, row.estimate_snapshot||{});
+   snap.sheet_html=String(html||'');
+   snap.sheet_edits_at=new Date().toISOString();
+   if(typeof snap.exterior_photo==='string' && /^data:/i.test(snap.exterior_photo)) snap.exterior_photo='(embedded in sheet_html)';
+   if(meta&&meta.option_sheets&&typeof meta.option_sheets==='object'){
+    snap.option_sheets=meta.option_sheets;
+   }else if(meta&&meta.option&&snap.option_sheets&&snap.option_sheets[meta.option]){
+    snap.option_sheets=Object.assign({},snap.option_sheets); snap.option_sheets[meta.option]=Object.assign({},snap.option_sheets[meta.option],{sheet_html:snap.sheet_html});
+   }
+   const patch={ estimate_snapshot: snap };
+   const price=Number(meta&&meta.price);
+   if(Number.isFinite(price)&&price>0){
+    patch.estimate_price=price;
+    snap.final_project_price=price;
+   }
+   let up=await sheetSaveTimeout(sb.from('estimate_history').update(patch).eq('id',editId).select('id'),45000).catch(e=>({error:e}));
+   if(up.error && /fetch|network|timeout|503|502|504/i.test(String(up.error.message||'')+(up.error.agbTimeout?' timeout':''))){
+    await new Promise(r=>setTimeout(r,1200));
+    up=await sheetSaveTimeout(sb.from('estimate_history').update(patch).eq('id',editId).select('id'),45000).catch(e=>({error:e}));
+   }
+   if(up.error) return fail(up.error);
+   if(Array.isArray(up.data)&&up.data.length===0) return fail({agbReason:'norows'});
+   const i=estimateHistory.findIndex(x=>x.id===editId);
+   if(i>=0) estimateHistory[i]={...estimateHistory[i],...row,estimate_snapshot:snap,estimate_price:patch.estimate_price||row.estimate_price};
+   return true;
+  }catch(err){
+   console.error(err);
+   return fail(err);
   }
-  const patch={ estimate_snapshot: snap };
-  const price=Number(meta&&meta.price);
-  if(Number.isFinite(price)&&price>0){
-   patch.estimate_price=price;
-   snap.final_project_price=price;
-  }
-  const {error}=await sb.from('estimate_history').update(patch).eq('id',editId);
-  if(error){ alert('Save failed: '+error.message); return false; }
-  const i=estimateHistory.findIndex(x=>x.id===editId);
-  if(i>=0) estimateHistory[i]={...estimateHistory[i],...row,estimate_snapshot:snap,estimate_price:patch.estimate_price||row.estimate_price};
-  return true;
- }catch(err){
-  console.error(err);
-  alert('Save failed.');
-  return false;
- }
+ })();
+ const p=_historySheetSaveRunning; p.finally(()=>{ _historySheetSaveRunning=null; });
+ return p;
 }
 function listHistoryOptionSheets(e){
  const snap=e&&e.estimate_snapshot||{};
@@ -1799,6 +1835,13 @@ function listHistoryOptionSheets(e){
   out.push({slot:'A',label:'Estimate',size:e.garage_size||'',roof:e.roof_type||'',quote:Number(e.estimate_price||snap.final_project_price||0),internal:Number(snap.internal_cost||0),html:snap.sheet_html});
  }
  return out;
+}
+// A sheet shown inside the History viewer frame has no window.opener; point it at the viewer so its own
+// "Save Changes" button (including on sheets saved by older versions) can reach the save function.
+function wireHistorySheetFrame(frame, viewer){
+ try{
+  frame.addEventListener('load', ()=>{ try{ const cw=frame.contentWindow; if(cw && !cw.opener) cw.opener=viewer; }catch(e){} });
+ }catch(e){}
 }
 async function viewEstimateHistory(id){
  const e=await fetchFullEstimateRecord(id);if(!e)return alert('Estimate not found.');
@@ -1838,16 +1881,20 @@ async function viewEstimateHistory(id){
     }
     if(frame){
      frame.dataset.optionSlot=o.slot;
+     wireHistorySheetFrame(frame, w);
      if(o.html) frame.srcdoc=o.html;
     }
    });
   }else if(savedSheet){
    const frame=w.document.getElementById('savedEstimateFrame');
-   if(frame) frame.srcdoc=savedSheet;
+   if(frame){ wireHistorySheetFrame(frame, w); frame.srcdoc=savedSheet; }
   }
  }catch(err){ console.warn(err); const frame=w.document.getElementById('savedEstimateFrame'); if(frame&&savedSheet) frame.srcdoc=savedSheet; }
  w.saveEditedEstimateSheetHtml=async function(html,meta){
-  return await saveEditedEstimateSheetHtml(html,Object.assign({},meta||{},{id:id}));
+  // Sheets inside this viewer show their own message, so save silently and pass the message back
+  const ok=await saveEditedEstimateSheetHtml(html,Object.assign({},meta||{},{id:id,silent:true}));
+  w._agbLastSaveError=window._agbLastSaveError||'';
+  return ok;
  };
  w.saveHistorySheetEdits=async function(){
   try{
@@ -1867,10 +1914,10 @@ async function viewEstimateHistory(id){
     option_sheets[slot]=Object.assign({}, option_sheets[slot]||{}, {sheet_html:html, quote:price||((option_sheets[slot]||{}).quote)||0});
    });
    if(!primaryHtml){ alert('Sheet did not capture. Wait for it to finish loading and press Save again.'); return; }
-   const ok=await saveEditedEstimateSheetHtml(primaryHtml,{id:id,price:primaryPrice,option_sheets});
-   if(ok) alert('Saved. Both option sheets and prices are stored on this estimate.');
-   else alert('Save failed. Stay logged in on the dashboard tab and try again.');
-  }catch(err){ console.error(err); alert('Save failed.'); }
+   const ok=await saveEditedEstimateSheetHtml(primaryHtml,{id:id,price:primaryPrice,option_sheets,silent:true});
+   if(ok) w.alert('Saved. '+(frames.length>1?'All option sheets and prices are':'The sheet and price are')+' stored on this estimate.');
+   else w.alert(window._agbLastSaveError||'Save did not go through. Press Save again.');
+  }catch(err){ console.error(err); w.alert(friendlySheetSaveError(err)); }
  };
  w.focus();
 }

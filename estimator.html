@@ -3045,7 +3045,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             // (roof structure + labor still priced). Switching back to New slab charges it again automatically.
             const existingSlabNoConcrete=(document.getElementById('slabMode')?.value==='existing')||(document.getElementById('concreteThickness')?.value==='existing');
             const roofPatioConcreteCost=existingSlabNoConcrete?0:roofPatioArea*8.5;
-            const roofPatioLaborCost=roofPatioArea*6;
+            const roofPatioLaborCost=existingSlabNoConcrete?0:roofPatioArea*6; // $6/sq ft patio slab labor — none on existing slab
             const roofPatioMaterialUnits=roofPatioEnabled?Math.ceil(roofPatioDepth/2):0;
             const roofPatioMaterialCost=roofPatioMaterialUnits*550;
             const roofPatioPostCount=roofPatioEnabled?4:0;
@@ -3180,6 +3180,15 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             if (document.getElementById('openerQty')) document.getElementById('openerQty').value = String(openerQty);
             const openerType=document.getElementById('openerType').value||'2200';
             const ohDoorOpenerPrice = Math.max(0, parseFloat(document.getElementById('ohDoorOpenerPrice')?.value) || 1200);
+            // Main LiftMaster 8500 choice covers extra overhead door openers too: each is the base $450 opener here and
+            // its +$400 8500 upgrade is counted once in the "LiftMaster 8500 … (N × $400)" line (450 + 400 = the $850 per-door 8500 price)
+            if (openerType === '8500') {
+                extraOhList.forEach((d,i)=>{
+                    if(!d.hasOp) return;
+                    d.opType='8500'; d.opCost=450;
+                    const sel=document.getElementById('extraOh'+(i+1)+'OpenerType'); if(sel) sel.value='8500';
+                });
+            }
             const extraOhDoorCost = extraOhList.reduce((s,d)=>s+800+(d.extra||0)+(d.ins||0)+(d.opCost||0),0);
             const doorInsulCost = (typeof insulationCost==='function')
                 ? (insulationCost('oh') + insulationCost('svc') + (doorType==='party'?insulationCost('party'):0))
@@ -3353,7 +3362,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             if (openerType === '8500') {
                 opener8500Qty = (isThreeCarLayout() && threeCarDoors.length)
                     ? threeCarDoors.filter(d => d && (d.opIncluded || d.hasOp || Number(d.opAmt || 0) > 0)).length
-                    : 1;
+                    : 1 + extraOhOpeners.length; // main door + each extra overhead door with an opener
                 opener8500Upgrade = opener8500Qty * 400;
             }
             const overheadCost = isThreeCarLayout() && threeCarDoors.length
@@ -3456,7 +3465,8 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             let footingCost = 0;
             let rodsCost = 0;
             const isOutsideChicago = city !== 'Chicago';
-            if (forceFootingChicago || (isOutsideChicago && forceFootingChicago)) {
+            // 42" frost protected footing REPLACES the regular footing: never charge both
+            if ((forceFootingChicago || (isOutsideChicago && forceFootingChicago)) && !document.getElementById('frostProtectedFooting')?.checked) {
                 const perimeter = 2 * (width + depth);
                 footingCost = perimeter * 35;
                 rodsCost = 300;
@@ -3726,6 +3736,8 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                     el.value=item.v;
                 }
             });
+            // Extra overhead door fields only exist after the door grid is built for the restored door count
+            try{ syncExtraOhDoors(); applyExtraOhValues(state); }catch(e){}
             // Restore custom extras
             const container=document.getElementById('extrasContainer');
             if(container && Array.isArray(state.__extras)){
@@ -4193,7 +4205,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             if(data.roofPatioEnabled&&data.roofPatioArea>0){
                 const loc=data.roofPatioSide?'Side':'Rear';
                 if(data.roofPatioConcreteCost>0) lines.push({label:`${loc} roof patio concrete (${data.roofPatioSpan}×${data.roofPatioDepth} = ${data.roofPatioArea} sq ft × $8.50)`,amount:data.roofPatioConcreteCost,section:'core',key:'roof_patio_concrete'});
-                lines.push({label:`${loc} roof patio labor (${data.roofPatioArea} sq ft × $6.00)`,amount:data.roofPatioLaborCost,section:'core',key:'roof_patio_labor'});
+                if(data.roofPatioLaborCost>0) lines.push({label:`${loc} roof patio labor (${data.roofPatioArea} sq ft × $6.00)`,amount:data.roofPatioLaborCost,section:'core',key:'roof_patio_labor'});
                 lines.push({label:`Roof patio materials (${data.roofPatioMaterialUnits} × $550 per 2 ft; includes 4 support posts)`,amount:data.roofPatioMaterialCost,section:'core',key:'roof_patio_materials'});
             }
             if (data.wallHeightSurcharge > 0) {
@@ -4684,6 +4696,74 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             return makeOfflineSupabaseStub();
         })();
         const AGB_OFFLINE_SAVE_MSG='Offline — database unavailable. Estimate NOT saved to History (calculator and sheets still work). Reconnect and reload to save.';
+        // ---------- Reliable saving helpers (sign-in check, timeouts, plain-English errors) ----------
+        function agbWithTimeout(promise, ms, label){
+            let t;
+            return Promise.race([
+                Promise.resolve(promise).finally(()=>clearTimeout(t)),
+                new Promise((_,rej)=>{ t=setTimeout(()=>rej(Object.assign(new Error((label||'Request')+' timed out'),{agbTimeout:true})), ms); })
+            ]);
+        }
+        // Turns any Supabase / network / JS error into a message a salesperson can act on
+        function agbFriendlySaveError(err){
+            if(window._agbOffline) return 'You are offline — the database could not be reached. Your sheet is still open; reconnect, reload the estimator, and save again.';
+            const raw=String((err&&(err.message||err.error_description||err.details||err.hint))||err||'');
+            const code=String((err&&(err.code||err.status||err.statusCode))||'');
+            const m=(raw+' '+code).toLowerCase();
+            if(err&&err.agbReason==='signin' || /jwt|token|expired|not authenticated|auth session|401|pgrst30[0-3]|refresh/.test(m))
+                return 'Your sign-in has expired. Open the Dashboard in another tab, sign in again, then press Save again (your changes are still here).';
+            if(err&&err.agbTimeout || /timed? ?out|timeout|57014|statement timeout/.test(m))
+                return 'The save took too long (slow connection or a very large sheet). Wait a moment and press Retry.';
+            if(/payload|too large|413|request entity|body size|exceeds/.test(m))
+                return 'This sheet is too large to save (usually big embedded photos). Try a smaller photo, then save again.';
+            if(/failed to fetch|network|load failed|fetch|connection|offline|econn|503|502|504/.test(m))
+                return 'Could not reach the database (connection problem). Check the internet connection and press Retry.';
+            if(err&&err.agbReason==='norows' || /permission|row-level|rls|42501|403|policy/.test(m))
+                return 'This estimate could not be updated — it may belong to another salesperson or was deleted. Ask Sam or Ramsey, or create the sheet again.';
+            if(/column|schema cache|pgrst204|42703/.test(m))
+                return 'The database is missing a field this version of the estimator uses. Please tell the office; your sheet is still open.';
+            return 'The database did not accept the save'+(raw?' ('+raw.slice(0,140)+')':'')+'. Press Retry; if it keeps failing, tell the office.';
+        }
+        // Make sure we have a live sign-in (refreshes an expired token once). Returns the user or throws a friendly-tagged error.
+        async function agbEnsureSignedIn(){
+            if(window._agbOffline) throw Object.assign(new Error('offline'),{agbReason:'offline'});
+            let user=null;
+            try{
+                const sess=await agbWithTimeout(garageSb.auth.getSession(),15000,'Sign-in check');
+                const se=sess&&sess.data&&sess.data.session;
+                const expSoon=se && se.expires_at && (se.expires_at*1000 - Date.now() < 60000);
+                if(!se || expSoon){
+                    try{ await agbWithTimeout(garageSb.auth.refreshSession(),15000,'Sign-in refresh'); }catch(e){}
+                }
+                const u=await agbWithTimeout(garageSb.auth.getUser(),15000,'Sign-in check');
+                user=u&&u.data&&u.data.user||null;
+                if(!user && u && u.error && !/session|jwt|auth/i.test(String(u.error.message||''))) throw u.error;
+            }catch(e){
+                if(e && (e.agbTimeout || /fetch|network/i.test(String(e.message||'')))) throw e;
+            }
+            if(!user) throw Object.assign(new Error('not signed in'),{agbReason:'signin'});
+            return user;
+        }
+        // Run a database call, retrying once after a short wait if it was a connection / timeout problem
+        async function agbDbRetry(fn, label){
+            let lastErr=null;
+            for(let attempt=0; attempt<2; attempt++){
+                try{
+                    const res=await agbWithTimeout(fn(), 45000, label||'Save');
+                    if(res && res.error){
+                        const m=String(res.error.message||'')+' '+String(res.error.code||res.error.status||'');
+                        if(attempt===0 && /fetch|network|timeout|503|502|504/i.test(m)){ lastErr=res.error; await new Promise(r=>setTimeout(r,1200)); continue; }
+                        if(attempt===0 && /jwt|expired|401|pgrst30/i.test(m)){ try{ await garageSb.auth.refreshSession(); }catch(e){} lastErr=res.error; continue; }
+                    }
+                    return res;
+                }catch(e){
+                    lastErr=e;
+                    if(attempt===0 && (e.agbTimeout || /fetch|network/i.test(String(e.message||'')))){ await new Promise(r=>setTimeout(r,1200)); continue; }
+                    return {data:null,error:e};
+                }
+            }
+            return {data:null,error:lastErr};
+        }
         function estimateNumberFromText(text){
             const n=Number(String(text||'').replace(/[^0-9.-]/g,''));
             return Number.isFinite(n)?n:0;
@@ -4726,16 +4806,26 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             }
             return s;
         }
-        async function saveEstimateHistoryRecord(data, opts){
+        // One History save at a time: a double-click (or a second Create Sheet) waits for / reuses the running save
+        // instead of inserting a duplicate row.
+        function saveEstimateHistoryRecord(data, opts){
+            const prev=window._agbHistorySavePromise;
+            const run=(async()=>{
+                if(prev){ try{ await prev; }catch(e){} }
+                return saveEstimateHistoryRecordInner(data, opts);
+            })();
+            window._agbHistorySavePromise=run;
+            run.finally(()=>{ if(window._agbHistorySavePromise===run) window._agbHistorySavePromise=null; });
+            return run;
+        }
+        async function saveEstimateHistoryRecordInner(data, opts){
             try{
                 const boundId=(new URLSearchParams(location.search).get('editEstimate')||window._lastEstimateHistoryId||'');
                 const forceNew=!!(opts && opts.forceNew);
                 if(window._agbOffline){ noticeEstimateHistory(AGB_OFFLINE_SAVE_MSG, false); return null; }
-                const {data:{user}}=await garageSb.auth.getUser();
-                if(!user){
-                    noticeEstimateHistory('Not signed in — estimate not saved to History.', false);
-                    return null;
-                }
+                let user=null;
+                try{ user=await agbEnsureSignedIn(); }
+                catch(e){ noticeEstimateHistory('Not saved to History: '+agbFriendlySaveError(e), false); return window._lastEstimateHistoryId||null; }
                 let staffUsername='';
                 try{
                     const staffRes=await garageSb.from('staff_profiles').select('username').eq('id',user.id).maybeSingle();
@@ -4774,11 +4864,17 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                     estimate_price:Number(data.estimate_price)||0,
                     estimate_snapshot:snapshot
                 };
+                if(record.estimate_snapshot && typeof record.estimate_snapshot.exterior_photo==='string' && /^data:/i.test(record.estimate_snapshot.exterior_photo)){
+                    // The photo is already embedded in sheet_html — don't store a second multi-MB copy (field is never read back)
+                    record.estimate_snapshot=Object.assign({}, record.estimate_snapshot, {exterior_photo:'(embedded in sheet_html)'});
+                }
                 const write=async (payload, asUpdate)=>{
                     if(asUpdate){
-                        return garageSb.from('estimate_history').update(payload).eq('id',editId);
+                        return agbDbRetry(()=>garageSb.from('estimate_history').update(payload).eq('id',editId),'Saving to History');
                     }
-                    return garageSb.from('estimate_history').insert(payload).select('id').maybeSingle();
+                    // Inserts are NOT auto-retried (a retry after a lost reply could create a duplicate row)
+                    try{ return await agbWithTimeout(garageSb.from('estimate_history').insert(payload).select('id').maybeSingle(),45000,'Saving to History'); }
+                    catch(e){ return {data:null,error:e}; }
                 };
                 let result=null, error=null, newId=editId;
                 if(editId){
@@ -4840,7 +4936,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                 }
                 if(error){
                     console.error('Estimate history save failed:', error);
-                    noticeEstimateHistory('History save failed: '+(error.message||'database error'), false);
+                    noticeEstimateHistory('History save failed: '+agbFriendlySaveError(error), false);
                     return window._lastEstimateHistoryId||null;
                 }
                 if(saved){
@@ -4856,55 +4952,73 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                 return saved||null;
             }catch(err){
                 console.error('Estimate history save failed:',err);
-                noticeEstimateHistory('History save failed. Sign in on Dashboard and try again.', false);
-                return null;
+                noticeEstimateHistory('History save failed: '+agbFriendlySaveError(err), false);
+                return window._lastEstimateHistoryId||null;
             }
         }
 
-        async function saveEditedEstimateSheetHtml(html, meta){
-            try{
-                const {data:{user}}=await garageSb.auth.getUser();
-                if(!user){ alert('Sign in to save sheet changes.'); return false; }
-                let editId=(meta&&meta.id) || window._lastEstimateHistoryId || new URLSearchParams(location.search).get('editEstimate') || '';
-                if(!editId){
-                    alert('This sheet is not in Estimate History yet. Close and create the sheet once, then Save Changes.');
-                    return false;
-                }
-                const {data:row,error:loadErr}=await garageSb.from('estimate_history').select('*').eq('id',editId).maybeSingle();
-                if(loadErr||!row){ alert('Could not load the saved estimate to update.'); return false; }
-                const snap=Object.assign({}, row.estimate_snapshot||{});
-                const slot=(meta&&meta.option)||window._pendingOptionSlot||activeComparisonSlot||snap.active_option||null;
-                snap.sheet_html=String(html||'');
-                snap.sheet_edits_at=new Date().toISOString();
-                snap.active_option=slot||snap.active_option||null;
-                let sheets=(meta&&meta.option_sheets&&typeof meta.option_sheets==='object')
-                    ? meta.option_sheets
-                    : (snap.option_sheets&&typeof snap.option_sheets==='object'?snap.option_sheets:{});
-                sheets=Object.assign({}, sheets);
-                if(slot){
-                    sheets[slot]=Object.assign({}, sheets[slot]||estimateComparison[slot]||{}, {
-                        sheet_html:String(html||''),
-                        sheet_stale:false,
-                        quote: Number.isFinite(Number(meta&&meta.price))?Number(meta.price):(sheets[slot]&&sheets[slot].quote)||0
-                    });
-                    rememberOptionSheet(slot, html, Number(meta&&meta.price), undefined);
-                }
-                snap.option_sheets=sheets;
-                const patch={ estimate_snapshot: snap };
-                const price=Number(meta&&meta.price);
-                if(Number.isFinite(price)&&price>0){
-                    patch.estimate_price=price;
-                    snap.final_project_price=price;
-                }
-                const {error}=await garageSb.from('estimate_history').update(patch).eq('id',editId);
-                if(error){ alert('Save failed: '+error.message); return false; }
-                window._lastEstimateHistoryId=editId;
-                return true;
-            }catch(err){
-                console.error('saveEditedEstimateSheetHtml',err);
-                alert('Save failed.');
-                return false;
+        // Save Changes from the estimate sheet window. Returns {ok, message} (never throws, never shows a raw JS error).
+        // Concurrent clicks share one save; a still-running "Create Estimate Sheet" history save is awaited first.
+        function saveEditedEstimateSheetHtml(html, meta){
+            if(window._agbSheetSavePromise) return window._agbSheetSavePromise;
+            const run=(async()=>{
+                let res;
+                try{ res=await saveEditedEstimateSheetHtmlInner(html, meta); }
+                catch(err){ console.warn('saveEditedEstimateSheetHtml',err); res={ok:false,message:agbFriendlySaveError(err)}; }
+                window._agbLastSaveError=res.ok?'':res.message;
+                return res;
+            })();
+            window._agbSheetSavePromise=run;
+            run.finally(()=>{ window._agbSheetSavePromise=null; });
+            return run;
+        }
+        async function saveEditedEstimateSheetHtmlInner(html, meta){
+            if(window._agbOffline) return {ok:false,message:agbFriendlySaveError()};
+            // The sheet can be opened before its first History save finishes — wait for it (gives us the row id)
+            if(window._agbHistorySavePromise){ try{ await agbWithTimeout(window._agbHistorySavePromise, 60000, 'History save'); }catch(e){} }
+            try{ await agbEnsureSignedIn(); }catch(e){ return {ok:false,message:agbFriendlySaveError(e)}; }
+            const editId=(meta&&meta.id) || window._lastEstimateHistoryId || new URLSearchParams(location.search).get('editEstimate') || '';
+            if(!editId) return {ok:false,message:'This sheet is not in Estimate History yet (the first save did not finish). Close the sheet, press Create Estimate Sheet again, then Save.'};
+            const htmlStr=String(html||'');
+            if(htmlStr.length<200) return {ok:false,message:'The sheet had not finished loading. Wait a second and press Save again.'};
+            const load=await agbDbRetry(()=>garageSb.from('estimate_history').select('*').eq('id',editId).maybeSingle(),'Loading the saved estimate');
+            if(load.error) return {ok:false,message:agbFriendlySaveError(load.error)};
+            const row=load.data;
+            if(!row) return {ok:false,message:agbFriendlySaveError({agbReason:'norows'})};
+            const snap=Object.assign({}, row.estimate_snapshot||{});
+            const slot=(meta&&meta.option)||window._pendingOptionSlot||activeComparisonSlot||snap.active_option||null;
+            snap.sheet_html=htmlStr;
+            snap.sheet_edits_at=new Date().toISOString();
+            snap.active_option=slot||snap.active_option||null;
+            if(typeof snap.exterior_photo==='string' && /^data:/i.test(snap.exterior_photo)) snap.exterior_photo='(embedded in sheet_html)';
+            let sheets=(meta&&meta.option_sheets&&typeof meta.option_sheets==='object')
+                ? meta.option_sheets
+                : (snap.option_sheets&&typeof snap.option_sheets==='object'?snap.option_sheets:{});
+            sheets=Object.assign({}, sheets);
+            const price=Number(meta&&meta.price);
+            if(slot){
+                const baseSlot=(sheets[slot]||(typeof estimateComparison==='object'&&estimateComparison?estimateComparison[slot]:null)||{});
+                sheets[slot]=Object.assign({}, baseSlot, {
+                    sheet_html:htmlStr,
+                    sheet_stale:false,
+                    quote: Number.isFinite(price)?price:(sheets[slot]&&sheets[slot].quote)||0
+                });
+                try{ rememberOptionSheet(slot, htmlStr, price, undefined); }catch(e){}
             }
+            snap.option_sheets=sheets;
+            const patch={ estimate_snapshot: snap };
+            if(Number.isFinite(price)&&price>0){
+                patch.estimate_price=price;
+                snap.final_project_price=price;
+            }
+            const sizeMb=(JSON.stringify(patch).length/1048576);
+            if(sizeMb>25) return {ok:false,message:'This sheet is too large to save ('+sizeMb.toFixed(1)+' MB — usually big embedded photos). Use a smaller photo, then save again.'};
+            const up=await agbDbRetry(()=>garageSb.from('estimate_history').update(patch).eq('id',editId).select('id'),'Saving the sheet');
+            if(up.error) return {ok:false,message:agbFriendlySaveError(up.error)};
+            // No row back = nothing was updated (deleted, or not allowed to change it) — don't report success
+            if(Array.isArray(up.data) && up.data.length===0) return {ok:false,message:agbFriendlySaveError({agbReason:'norows'})};
+            window._lastEstimateHistoryId=editId;
+            return {ok:true,message:'Sheet changes saved to Estimate History'+(slot?' (Option '+slot+')':'')+' at '+new Date().toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})+'.'};
         }
 
         async function syncOptionSlotToHistory(slot){
@@ -5176,6 +5290,8 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                         if(key==='customExtras'||key==='multi_options'||key==='summaryLineOverrides')return;
                         setEstimatorField(key,value);
                     });
+                    // Extra overhead door fields only exist after the door grid is built for the saved door count
+                    try{ syncExtraOhDoors(); applyExtraOhValues(state, true); }catch(_e){}
                     if(state.slabMode===undefined) setEstimatorField('slabMode', state.newConcrete===false ? 'existing' : 'new');
                     if(state.demoCostInput===undefined) setEstimatorField('demoCostInput','1300');
                     restoreCustomExtras(state.customExtras||[]);
@@ -5432,6 +5548,9 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             if(!show) return;
             if(grid.dataset.n===String(addl) && grid.childElementCount===addl) return;
             grid.dataset.n=String(addl);
+            // Keep the choices already made on doors that stay when the door count changes (2 -> 3 used to wipe door 1)
+            const keepExtraOh={};
+            grid.querySelectorAll('input[id],select[id]').forEach(el=>{ keepExtraOh[el.id]=(el.type==='checkbox')?{c:el.checked}:{v:el.value}; });
             grid.innerHTML='';
             for(let i=1;i<=addl;i++){
                 const box=document.createElement('div');
@@ -5463,6 +5582,26 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                         <option value="8500">LiftMaster 8500 Wall Mount (+$850)</option>
                     </select>`;
                 grid.appendChild(box);
+            }
+            applyExtraOhValues(keepExtraOh);
+        }
+        // Re-apply saved extra-overhead-door field values (ids extraOh1…) once their grid exists
+        function applyExtraOhValues(map, plain){
+            Object.keys(map||{}).forEach(id=>{
+                if(!/^extraOh\d/.test(id)) return;
+                const el=document.getElementById(id); if(!el) return;
+                const it=map[id]; if(it===undefined||it===null) return;
+                if(plain){ if(el.type==='checkbox') el.checked=!!it; else el.value=String(it); }
+                else if(it.c!==undefined || it.t==='c') el.checked=!!(it.c!==undefined?it.c:it.v);
+                else el.value=String(it.v);
+            });
+            for(let i=1;i<=2;i++){
+                const sz=document.getElementById('extraOh'+i+'Size'); const cu=document.getElementById('extraOh'+i+'Custom');
+                if(sz&&cu) cu.classList.toggle('hidden', sz.value!=='custom');
+                const op=document.getElementById('extraOh'+i+'Opener'); const ot=document.getElementById('extraOh'+i+'OpenerType');
+                if(op&&ot) ot.classList.toggle('hidden', !op.checked);
+                const ins=document.getElementById('extraOh'+i+'Insulated'); const it2=document.getElementById('extraOh'+i+'InsulType');
+                if(ins&&it2) it2.classList.toggle('hidden', !ins.checked);
             }
         }
         function extraOhDoorMeta(i){
@@ -7051,13 +7190,9 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                 // Offline: the sheet can still be created; it just cannot be saved to History
                 try{ noticeEstimateHistory(AGB_OFFLINE_SAVE_MSG, false); }catch(e){}
             } else try{
-                const {data:{user}}=await garageSb.auth.getUser();
-                if(!user){
-                    alert('Sign in on the Dashboard first. Estimates will not save to History until you are signed in.');
-                    return;
-                }
+                await agbEnsureSignedIn(); // refreshes an expired sign-in once before giving up
             }catch(e){
-                alert('Sign in on the Dashboard first so this estimate can save to History.');
+                alert(agbFriendlySaveError(e)+'\n\nThe estimate sheet was not created so nothing is lost — fix the sign-in and press the button again.');
                 return;
             }
             try{ decideSheetPhotoModeBeforeCreate(); }catch(e){ console.warn('photo mode decide', e); }
@@ -8571,7 +8706,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                 const electricOnPrint=typeof isElectricIncluded==='function'?isElectricIncluded():true;
                 const electricAltPrint=typeof getElectricAltOption==='function'?getElectricAltOption():'owner';
                 const hideOpener=false; // opener is charged even when electric is off, so it always prints
-                const openerQtyW=tcDoorsW ? tcDoorsW.filter(d=>d.opener).length : 1+Math.max(0, parseInt(document.getElementById('addlOpenersInput')?.value)||0);
+                const openerQtyW=tcDoorsW ? tcDoorsW.filter(d=>d.opener).length : 1+(typeof collectExtraOhDoors==='function'?collectExtraOhDoors().filter(d=>d.hasOp&&(val('openerType')==='8500'||d.opType!=='8500')).length:0);
                 if(!hideOpener && openerQtyW>0){
                     const openerQtyPrint=openerQtyW;
                     const openerTypePrint=val('openerType')||'2200';
@@ -8598,7 +8733,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                 addSpec('Window Type', wallyWindowDetail);
                 const fw=(document.getElementById('footingWidth')?.value||'').trim();
                 const fd=(document.getElementById('footingDepth')?.value||'').trim();
-                if(checked('forceFootingChicago') && !existingSlabBuild) addSpec('Footing', (fw && fd) ? `Footing Included (${fw}x${fd})` : 'Footing Included');
+                if(checked('forceFootingChicago') && !frostProtectedFooting) addSpec('Footing', (fw && fd) ? `Footing Included (${fw}x${fd})` : 'Footing Included');
                 if (existingSlabBuild) {
                     addSpec('Floor', 'Build On Existing Slab');
                 } else {
@@ -8635,7 +8770,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                 const electricOnPrint2=typeof isElectricIncluded==='function'?isElectricIncluded():true;
                 const electricAltPrint2=typeof getElectricAltOption==='function'?getElectricAltOption():'owner';
                 const hideOpener2=false; // opener is charged even when electric is off, so it always prints
-                const openerQtyS=tcDoorsS ? tcDoorsS.filter(d=>d.opener).length : 1+Math.max(0, parseInt(document.getElementById('addlOpenersInput')?.value)||0);
+                const openerQtyS=tcDoorsS ? tcDoorsS.filter(d=>d.opener).length : 1+(typeof collectExtraOhDoors==='function'?collectExtraOhDoors().filter(d=>d.hasOp&&(val('openerType')==='8500'||d.opType!=='8500')).length:0);
                 if(!hideOpener2 && openerQtyS>0){
                     const openerQtyPrint=openerQtyS;
                     const openerTypePrint=val('openerType')||'2200';
@@ -8657,7 +8792,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                 addSpec('Window Type', typeof formatWindowSheetDetail==='function' ? formatWindowSheetDetail() : (windowType === 'none' ? 'No Window' : `(${Math.max(1,Number(windowQty)||1)}) Single Hung`));
                 const fw2=(document.getElementById('footingWidth')?.value||'').trim();
                 const fd2=(document.getElementById('footingDepth')?.value||'').trim();
-                if(checked('forceFootingChicago') && !existingSlabBuild) addSpec('Footing', (fw2 && fd2) ? `Footing Included (${fw2}x${fd2})` : 'Footing Included');
+                if(checked('forceFootingChicago') && !frostProtectedFooting) addSpec('Footing', (fw2 && fd2) ? `Footing Included (${fw2}x${fd2})` : 'Footing Included');
                 if (existingSlabBuild) {
                     addSpec('Floor', 'Build On Existing Slab');
                 } else {
@@ -8951,7 +9086,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/script>
+<script async src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/script>
 <title>${esc(customerName)} - Absolute Garage Builders ${salesman.wally ? "Proposal" : "Estimate"}</title>
 <style>
     @page { size: Letter ${sheetIsLandscape?'landscape':'portrait'}; margin: 0; }
@@ -9841,33 +9976,84 @@ function pushSheetUndo(label, fn){
   if(sheetUndoStack.length>40) sheetUndoStack.shift();
   setSheetUndoBtn();
 }
-async function saveSheetEditsNow(){
+// Window that can save this sheet: the estimator (opener), or the Estimate History viewer when the sheet is shown in its frame
+function findSheetSaveHost(){
+  const cands=[];
+  try{ if(window.opener && !window.opener.closed) cands.push(window.opener); }catch(e){}
+  try{ if(window.parent && window.parent!==window) cands.push(window.parent); }catch(e){}
+  try{ if(window.parent && window.parent!==window && window.parent.opener && !window.parent.opener.closed) cands.push(window.parent.opener); }catch(e){}
+  for(const w of cands){ try{ if(typeof w.saveEditedEstimateSheetHtml==='function') return w; }catch(e){} }
+  return null;
+}
+function showSheetSaveStatus(msg, kind){
   const st=document.getElementById('popupChangeStatus');
-  const btn=document.getElementById('sheetSaveBtn');
-  try{
-    document.querySelectorAll('.sheet-edit').forEach(function(el){ try{ saveSheetInlineEdit(el); }catch(e){} });
-    if(st) st.textContent='Saving sheet changes…';
-    if(btn){ btn.disabled=true; btn.textContent='Saving…'; }
-    const html='<!DOCTYPE html>\\n'+document.documentElement.outerHTML;
-    const priceTxt=(document.querySelector('.total-price')?.innerText||'').replace(/[^0-9.]/g,'');
-    const price=parseFloat(priceTxt)||0;
-    if(!window.opener || window.opener.closed || typeof window.opener.saveEditedEstimateSheetHtml!=='function'){
-      if(st) st.textContent='Open this sheet from the estimator or Estimate History to save.';
-      alert('Keep the estimator or dashboard tab open, then press Save Changes again.');
-      return;
-    }
-    const saveId=window.ESTIMATE_HISTORY_ID||ESTIMATE_HISTORY_ID||null;
-    const optSlot=window.ESTIMATE_OPTION_SLOT||null;
-    const ok=await window.opener.saveEditedEstimateSheetHtml(html,{price:price,id:saveId,option:optSlot});
-    if(st) st.textContent=ok?'Sheet changes saved. They will be there when you view this estimate again.':'Save failed.';
-    if(ok && btn) btn.textContent='Saved';
-  }catch(err){
-    console.warn(err);
-    if(st) st.textContent='Save failed.';
-    alert('Could not save sheet changes.');
-  }finally{
-    if(btn){ btn.disabled=false; if(btn.textContent==='Saving…') btn.textContent='Save Changes'; }
+  if(st){ st.textContent=msg||''; st.style.color = kind==='ok' ? '#86efac' : (kind==='err' ? '#fca5a5' : '#fde68a'); }
+  let bar=document.getElementById('sheetSaveBanner');
+  if(!bar){
+    bar=document.createElement('div'); bar.id='sheetSaveBanner'; bar.className='no-print';
+    bar.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:16px;z-index:9999;max-width:560px;padding:10px 14px;border-radius:12px;font:600 13px Arial,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.35);display:none';
+    document.body.appendChild(bar);
   }
+  if(!msg){ bar.style.display='none'; return; }
+  bar.style.display='block';
+  bar.style.background = kind==='ok' ? '#14532d' : (kind==='err' ? '#7f1d1d' : '#1e3a8a');
+  bar.style.color='#fff';
+  bar.innerHTML='';
+  const span=document.createElement('span'); span.textContent=msg; bar.appendChild(span);
+  if(kind==='err'){
+    const b=document.createElement('button'); b.type='button'; b.textContent='Retry';
+    b.style.cssText='margin-left:10px;background:#fff;color:#7f1d1d;border:0;border-radius:8px;padding:4px 10px;font-weight:800;cursor:pointer';
+    b.onclick=function(){ saveSheetEditsNow(); };
+    bar.appendChild(b);
+  }
+  if(kind==='ok'){ clearTimeout(window._sheetSaveBannerT); window._sheetSaveBannerT=setTimeout(function(){ bar.style.display='none'; }, 6000); }
+}
+var _sheetSaveRunning=null;
+function saveSheetEditsNow(){
+  if(_sheetSaveRunning) return _sheetSaveRunning; // double-click: one save only
+  _sheetSaveRunning=(async function(){
+    const btn=document.getElementById('sheetSaveBtn');
+    try{
+      if(document.readyState==='loading') await new Promise(function(r){ document.addEventListener('DOMContentLoaded', r, {once:true}); });
+      document.querySelectorAll('.sheet-edit').forEach(function(el){ try{ saveSheetInlineEdit(el); }catch(e){} });
+      // Capture the sheet first, without our own status banner / "Saving…" button state
+      const banner=document.getElementById('sheetSaveBanner');
+      if(banner) banner.remove();
+      const html='<!DOCTYPE html>\\n'+document.documentElement.outerHTML;
+      if(banner) document.body.appendChild(banner);
+      if(btn){ btn.disabled=true; btn.textContent='Saving…'; }
+      showSheetSaveStatus('Saving sheet changes…','info');
+      const priceTxt=(document.querySelector('.total-price')?.innerText||'').replace(/[^0-9.]/g,'');
+      const price=parseFloat(priceTxt)||0;
+      const host=findSheetSaveHost();
+      if(!host){
+        showSheetSaveStatus('Can’t save from here: the estimator / Estimate History tab that opened this sheet was closed or reloaded. Re-open the sheet from the estimator or Estimate History, then Save.','err');
+        return false;
+      }
+      const saveId=window.ESTIMATE_HISTORY_ID||(typeof ESTIMATE_HISTORY_ID!=='undefined'?ESTIMATE_HISTORY_ID:null)||null;
+      const optSlot=window.ESTIMATE_OPTION_SLOT||null;
+      let res=null;
+      try{ res=await host.saveEditedEstimateSheetHtml(html,{price:price,id:saveId,option:optSlot}); }
+      catch(e){ res={ok:false,message:'Could not reach the estimator to save ('+((e&&e.message)||'error')+'). Press Retry.'}; }
+      // New estimator returns {ok,message}; the Estimate History viewer returns true/false
+      const ok = res===true || !!(res && res.ok===true);
+      const msg = (res && typeof res==='object' && res.message) ? res.message
+        : (ok ? 'Sheet changes saved. They will be there when you view this estimate again.'
+              : ((function(){ try{ return host._agbLastSaveError; }catch(e){ return ''; } })() || 'Save did not go through. Check the sign-in on the Dashboard and press Retry.'));
+      showSheetSaveStatus(msg, ok?'ok':'err');
+      if(btn) btn.textContent = ok ? 'Saved ✓' : 'Save Changes';
+      return ok;
+    }catch(err){
+      console.warn('saveSheetEditsNow', err);
+      showSheetSaveStatus('Save did not go through because of an unexpected problem. Press Retry; if it keeps failing, close and re-open the sheet.','err');
+      if(btn) btn.textContent='Save Changes';
+      return false;
+    }finally{
+      if(btn){ btn.disabled=false; if(btn.textContent==='Saving…') btn.textContent='Save Changes'; }
+      setTimeout(function(){ _sheetSaveRunning=null; }, 0);
+    }
+  })();
+  return _sheetSaveRunning;
 }
 function undoSheetEdit(){
   const last=sheetUndoStack.pop();
@@ -10303,6 +10489,8 @@ async function openPopupChatGPT(){
         function resetForm(runCalc = true) {
             try{ clearCityDefaultTouched(); }catch(e){}
             try{ clearSummaryLineOverrides(); }catch(e){}
+            // New Estimate / Reset: back to a single overhead door (extra doors + their openers used to carry over)
+            try{ const q=document.getElementById('ohDoorQty'); if(q){ q.value='1'; syncExtraOhDoors(); const g=document.getElementById('extraOhDoorsGrid'); if(g){ g.innerHTML=''; g.dataset.n='0'; } } }catch(e){}
             try{ document.querySelectorAll('[id$="ClampNote"]').forEach(n=>n.textContent=''); }catch(e){}
             try{
                 clearEstimateEditBinding();
@@ -10631,6 +10819,14 @@ async function openPopupChatGPT(){
                     });
                     try{ if(typeof toggleCustomGarageSize==='function') toggleCustomGarageSize(); }catch(e){}
                 }
+            }
+            // Dashboard job = a new estimate: demo ON with the $1,300 default, same as New Estimate
+            if(!q.get('editEstimate') && (document.getElementById('demoSlabPreset')?.value||'none')==='none'){
+                setEstimatorField('demoSlabPreset','custom');
+                setEstimatorField('oldConcreteOverride','');
+                setEstimatorField('demoCostInput','1300');
+                setEstimatorField('demoApronDepth','3');
+                try{ if(typeof syncDemoPreset==='function') syncDemoPreset(); }catch(e){}
             }
             if(city){ try{ if(typeof onCityChange==='function') onCityChange(); }catch(e){} }
             try{ calculateEstimate(); }catch(e){}

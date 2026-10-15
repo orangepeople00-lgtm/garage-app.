@@ -165,7 +165,7 @@ button{border:0;border-radius:7px;padding:8px 10px;font-weight:800;cursor:pointe
   </div>
   <div class="row2">
     <div><label>Drawn by</label><select id="rep">
-      <option>Ramsey Barakat</option><option>Sam Barakat</option><option>Wally B.</option>
+      <option value="" selected>—</option><option>Ramsey Barakat</option><option>Sam Barakat</option><option>Wally B.</option>
       <option>Tomaz</option><option value="Tomas" hidden>Tomaz</option><option>Tom Bartyzel</option><option>Luis</option>
     </select></div>
     <div><label>Sheet size</label><select id="sheetSize"><option value="tabloid">11×17</option><option value="letter">Letter</option></select></div>
@@ -186,7 +186,7 @@ button{border:0;border-radius:7px;padding:8px 10px;font-weight:800;cursor:pointe
     <div><label>Siding run</label><select id="sidingDir"><option value="horizontal" selected>Horizontal (standard)</option><option value="vertical">Vertical</option></select></div>
   </div>
   <div class="row2">
-    <div><label>Shingles</label><select id="shingles"><option>25 year fiberglass</option><option>235# asphalt</option><option>Architectural</option><option>3-Tab</option></select></div>
+    <div><label>Shingles</label><select id="shingles"><option>25 year fiberglass</option><option selected>235# asphalt</option><option>Architectural</option><option>3-Tab</option></select></div>
     <div><label>Corner boards</label><input id="cornerBoards" value='5/4" x 4"'></div>
   </div>
   <div class="row2">
@@ -308,6 +308,7 @@ All outlets tamperproof. GARAGE DISCONNECT at first point of entrance inside gar
   <div class="btns">
     <button class="btn-gold" type="button" onclick="applyVillage()">Apply Village Codes</button>
     <button class="btn-white" type="button" onclick="loadVillagePacket(true)">Load village packet</button>
+    <button class="btn-white" type="button" onclick="gpNewPlan()">New plan (clear info)</button>
     <button class="btn-white" type="button" onclick="buildPlans(true)">Generate Plans</button>
     <button class="btn-gold" type="button" onclick="generateAiPlanPictures()">AI plan pictures (OpenAI)</button>
     <button class="btn-gold" type="button" onclick="window.print()">Print plans</button>
@@ -575,9 +576,9 @@ const PREFS_KEY='agb_garageplans_prefs_v1';
 function savePrefs(){
   try{
     localStorage.setItem(PREFS_KEY, JSON.stringify({
-      city:val('city'), cityManual:val('cityManual'),
+      /* structural/design prefs only - never customer/job info (city, customer, drawn by…) */
       width:val('width'), depth:val('depth'), wallH:val('wallH'),
-      sheetSize:val('sheetSize'), rep:val('rep'), roof:val('roof'), pitch:val('pitch')
+      sheetSize:val('sheetSize'), roof:val('roof'), pitch:val('pitch')
     }));
   }catch(e){}
 }
@@ -585,12 +586,7 @@ function loadPrefs(){
   try{
     const p=JSON.parse(localStorage.getItem(PREFS_KEY)||'null');
     if(!p || typeof p!=='object') return;
-    if(p.city && $('city')){
-      const opt=[...$('city').options].find(o=>o.value===p.city || o.textContent===p.city);
-      if(opt) $('city').value=opt.value;
-    }
-    if(p.cityManual!=null && $('cityManual')) $('cityManual').value=p.cityManual;
-    ['wallH','sheetSize','rep','pitch'].forEach(k=>{
+    ['wallH','sheetSize','pitch'].forEach(k=>{
       if(p[k]!=null && String(p[k]).trim()!=='' && $(k)) $(k).value=p[k];
     });
   }catch(e){}
@@ -2933,10 +2929,14 @@ async function gpApplyJobPrefill(){
   try{ snapshot&&snapshot(); }catch(e){}
   setStatus('Filled from job'+(o.customer?' — '+o.customer:'')+'. Check sizes, then Generate.', true);
 }
+// 2026-10-15: customer/job info fields always start blank (no last-used values, no hardcoded defaults); a dashboard job link fills only what the job has
+const GP_INFO_IDS=['city','cityManual','county','customer','address','pin','planDate','planRev','rep'];
+function gpClearInfo(){GP_INFO_IDS.forEach(id=>{const e=$(id);if(!e)return;e.setAttribute('autocomplete','off');e.value=''})}
+function gpNewPlan(){if(!confirm('Start a new plan? Customer and job info will be cleared (garage design settings stay).'))return;gpClearInfo();try{history.replaceState(null,'',location.pathname)}catch(e){}try{applyVillage()}catch(e){}try{buildPlans()}catch(e){}setStatus('New plan — info cleared.',true)}
 document.addEventListener('DOMContentLoaded',()=>{
   try{ fillCitySelect(); }catch(e){ console.warn('fillCitySelect',e); }
+  try{ gpClearInfo(); }catch(e){}
   try{ loadPrefs(); }catch(e){ console.warn('loadPrefs',e); }
-  if($('planDate')&&!$('planDate').value) $('planDate').value=localISODate();
   try{
     const qp=new URLSearchParams(location.search);
     if(!qp.get('planId') && (qp.get('jobId')||qp.get('customer')||qp.get('estId'))) gpApplyJobPrefill();
@@ -2944,7 +2944,6 @@ document.addEventListener('DOMContentLoaded',()=>{
   try{ setPrintPageSize(); $('sheetSize')&&$('sheetSize').addEventListener('change',setPrintPageSize); }catch(e){}
   const planId=new URLSearchParams(location.search).get('planId');
   if(planId) try{ loadPlanFromId(planId); }catch(e){}
-  if(val('city')||val('cityManual')) setStatus('Restored last city/size — Apply Codes or Generate when ready', true);
   document.querySelectorAll('.sidebar input,.sidebar select,.sidebar textarea').forEach(el=>{
     el.addEventListener('change',()=>{
       if(el.id==='winWall' && el.value!=='none' && Number(val('winCount'))===0) $('winCount').value='1';

@@ -6,7 +6,11 @@
     
 <title>Absolute Garage Builders • Quick Estimator</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>/* audit-fix 2026-10-14: offline fallback when the Tailwind CDN can't load (no internet) */
+    <script>
+/* 2026-10-15: soft warning (never a hard block) when customer name / address are blank */
+function agbMissingInfoConfirm(missing){missing=(missing||[]).filter(Boolean);if(!missing.length)return Promise.resolve(true);return new Promise(res=>{let bg=document.getElementById('agbMissBg');if(bg)bg.remove();bg=document.createElement('div');bg.id='agbMissBg';bg.setAttribute('role','dialog');bg.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:100000;display:flex;align-items:center;justify-content:center;padding:16px;font-family:system-ui,-apple-system,Segoe UI,Arial,sans-serif';bg.innerHTML='<div style="background:#fff;color:#111;border-radius:14px;max-width:420px;width:100%;padding:18px 18px 14px;box-shadow:0 10px 40px rgba(0,0,0,.35)"><div style="font-weight:800;font-size:18px;margin-bottom:6px">No customer name or address entered</div><div style="font-size:14px;color:#374151;margin-bottom:6px">Missing:</div><ul style="margin:0 0 10px 18px;padding:0;font-size:15px">'+missing.map(m=>'<li>'+String(m).replace(/[<>&]/g,'')+'</li>').join('')+'</ul><div style="font-size:13px;color:#6b7280;margin-bottom:14px">You can continue; those spots will be left blank.</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><button type="button" data-a="back" style="min-height:48px;border-radius:10px;border:1px solid #cbd5e1;background:#fff;color:#111;font-weight:700;font-size:16px">Go back</button><button type="button" data-a="go" style="min-height:48px;border-radius:10px;border:0;background:#0f274b;color:#fff;font-weight:800;font-size:16px">Continue anyway</button></div></div>';document.body.appendChild(bg);const done=v=>{bg.remove();res(v)};bg.querySelector('[data-a=back]').onclick=()=>done(false);bg.querySelector('[data-a=go]').onclick=()=>done(true);bg.addEventListener('click',e=>{if(e.target===bg)done(false)})})}
+function agbMissingList(name,addr){const m=[];if(!String(name||'').trim())m.push('Customer name');if(!String(addr||'').trim())m.push('Address');return m}
+/* audit-fix 2026-10-14: offline fallback when the Tailwind CDN can't load (no internet) */
     (function(){function fb(){if(window.tailwind||document.getElementById('agbTwFallback'))return;var s=document.createElement('style');s.id='agbTwFallback';s.textContent=
     'body{background:#09090b;color:#e4e4e7;font-family:Arial,Helvetica,sans-serif;margin:0}.hidden{display:none!important}.flex{display:flex}.inline-flex{display:inline-flex}.grid{display:grid}.block{display:block}'+
     '.flex-col{flex-direction:column}.flex-wrap{flex-wrap:wrap}.items-center{align-items:center}.justify-between{justify-content:space-between}.justify-center{justify-content:center}'+
@@ -3883,10 +3887,8 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
 
         function saveEstimateComparison(slot){
             const customer=(document.getElementById('customerName')?.value||'').trim();
-            if(!customer){
-                alert('Type the customer name first so Option '+slot+' can save to Estimate History.');
-                document.getElementById('customerName')?.scrollIntoView({behavior:'smooth',block:'center'});
-                document.getElementById('customerName')?.focus();
+            if(!customer && !window._agbSlotOk){
+                agbMissingInfoConfirm(['Customer name']).then(ok=>{ if(ok){ window._agbSlotOk=true; try{ saveEstimateComparison(slot); } finally { window._agbSlotOk=false; } } });
                 return;
             }
             const prev=estimateComparison[slot]||{};
@@ -4020,12 +4022,8 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             const customerName=(document.getElementById('customerName')?.value||'').trim();
             const customerAddress=(document.getElementById('customerAddress')?.value||'').trim();
             if(!customerName || !customerAddress){
-                // Still load the option so numbers are ready
+                // Still load the option so numbers are ready; the sheet step shows a soft "Continue anyway" warning
                 try{ loadEstimateComparison(slot); }catch(e){}
-                alert('Option '+slot+' is loaded.\n\nEnter Customer Name and Customer Address, then tap View Estimate Sheet '+slot+' again.\n\n(Or scroll down and use Create / View Estimate Sheet.)');
-                document.getElementById('customerName')?.scrollIntoView({behavior:'smooth',block:'center'});
-                document.getElementById('customerName')?.focus();
-                return;
             }
 
             // Open popup RIGHT NOW (must be direct from the tap or iPhone blocks it)
@@ -7287,10 +7285,6 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             const customerAddress = (document.getElementById('customerAddress')?.value || '').trim();
 
             const skipCustomer = !!(opts && (opts.skipHealth || opts.skipCustomer));
-            if (!skipCustomer && (!customerName || !customerAddress)) {
-                alert('Please enter the customer name and customer address before creating the estimate.');
-                return;
-            }
 
             // Rebuild into the same sheet window when provided (AI sheet changes).
             // Otherwise open a new popup — must stay inside the user click when possible.
@@ -7301,6 +7295,13 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             if (!estimateWindow) {
                 alert('Your browser blocked the estimate sheet. Please allow popups for this site and click Create / View Estimate Sheet again.');
                 return;
+            }
+            // soft warning (window is already open, so the popup is not blocked)
+            if (!skipCustomer && (!customerName || !customerAddress)) {
+                try{ estimateWindow.document.write('<p style="font:16px system-ui;padding:20px">Waiting for you to confirm in the estimator tab…</p>'); }catch(e){}
+                const okGo = await agbMissingInfoConfirm(agbMissingList(customerName, customerAddress));
+                if (!okGo) { try{ estimateWindow.close(); }catch(e){} return; }
+                window._agbMissOkAt = Date.now();
             }
 
             // Show real internal / project price while AI photo + sheet prepare
@@ -8624,10 +8625,9 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             const customerPhone2 = formatUsPhone(document.getElementById('customerPhone2')?.value || '');
             const customerAddress = (document.getElementById('customerAddress').value || '').trim();
 
-            if (!customerName || !customerAddress) {
-                if (estimateWindow && !estimateWindow.closed) estimateWindow.close();
-                alert('Please enter the customer name and customer address before creating the estimate.');
-                return;
+            if ((!customerName || !customerAddress) && !(window._agbMissOkAt && Date.now()-window._agbMissOkAt<120000)) {
+                const okGo = await agbMissingInfoConfirm(agbMissingList(customerName, customerAddress));
+                if (!okGo) { if (estimateWindow && !estimateWindow.closed) estimateWindow.close(); return; }
             }
 
             calculateEstimate();

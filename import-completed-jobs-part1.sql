@@ -103,7 +103,7 @@ from (values
 ('Alfreda Barrera','2835 N Kenneth Ave',null,'unassigned','2019-08-12'::date,null,41.932693,-87.737711,'[AGB-IMPORT:mymaps-2026-10-15]'),
 ('Tristian Hummel','2852 N Albany Ave',null,'unassigned','2019-08-05'::date,'19x23',41.933615,-87.705378,'19X23 GABLE CEMENT BOARD, FIRE RATED GARAGE
 [AGB-IMPORT:mymaps-2026-10-15]'),
-('Michael Ochoa','2920 N Sayre Ave',null,'tomas','2023-10-31'::date,null,41.9332937,-87.8013184,'[AGB-IMPORT:mymaps-2026-10-15]'),
+('Michael Ochoa','2920 N Sayre Ave',null,'tomaz','2023-10-31'::date,null,41.9332937,-87.8013184,'[AGB-IMPORT:mymaps-2026-10-15]'),
 ('Also Construction','2933 N Spaulding Ave',null,'unassigned','2019-08-05'::date,'20x20',41.934892,-87.709595,'20X20 HIP
 [AGB-IMPORT:mymaps-2026-10-15]'),
 ('Shasha Jiang','2939 S Emerald Ave',null,'unassigned','2019-08-12'::date,'20x22',41.840568,-87.644773,'20X22 Hip D4 Grey Brownwood Shingles

@@ -237,7 +237,7 @@ from (values
 ('Marvin Brandt','5700 W Leland Ave','Chicago','wally','2020-05-06'::date,null,41.9661291,-87.7700319,'[AGB-IMPORT:mymaps-2026-10-15]'),
 ('Mary Greer','1146 N Parkside Ave','Chicago','luis','2020-11-17'::date,null,41.90165,-87.7671225,'[AGB-IMPORT:mymaps-2026-10-15]'),
 ('Mary Hughes','4511 N Meade Ave','Chicago','tomaz','2020-06-25'::date,null,41.9625165,-87.7792431,'[AGB-IMPORT:mymaps-2026-10-15]'),
-('Mary Neal','1535 S Lawndale Ave','Chicago','tomas','2020-06-01'::date,null,41.8597149,-87.7174206,'[AGB-IMPORT:mymaps-2026-10-15]'),
+('Mary Neal','1535 S Lawndale Ave','Chicago','tomaz','2020-06-01'::date,null,41.8597149,-87.7174206,'[AGB-IMPORT:mymaps-2026-10-15]'),
 ('Matt Giles','1331 Dobson St','Evanston','wally','2020-08-22'::date,null,42.020554,-87.6917024,'[AGB-IMPORT:mymaps-2026-10-15]'),
 ('Matthew Carter','1124 N Perry Dr','Palatine','sam','2020-06-09'::date,null,42.1307654,-88.0617473,'[AGB-IMPORT:mymaps-2026-10-15]'),
 ('Matthew Pryor','1239 W Glenlake Ave','Chicago','wally','2020-01-08'::date,null,41.9925128,-87.6619818,'[AGB-IMPORT:mymaps-2026-10-15]'),

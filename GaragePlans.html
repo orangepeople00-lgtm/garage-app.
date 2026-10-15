@@ -110,6 +110,7 @@ button{border:0;border-radius:7px;padding:8px 10px;font-weight:800;cursor:pointe
   .sidebar{width:100%;flex:none;max-height:46vh}
 }
 .gpa-bar{display:flex;gap:8px;margin:8px 0}.gpa-bar button{flex:1;min-height:40px;border-radius:8px;border:1px solid #ffffff40;background:transparent;color:#e8eef6;font-weight:700;cursor:pointer}.gpa-sec{border:1px solid #ffffff2a;border-radius:10px;margin-bottom:8px;overflow:hidden}.gpa-h{display:flex;align-items:center;gap:8px;width:100%;min-height:48px;padding:8px 12px;border:0;background:#ffffff12;color:#fff;text-align:left;cursor:pointer;font:inherit}.gpa-sec.open .gpa-h{background:#e8c547;color:#0b1f3a}.gpa-t{font-weight:800;white-space:nowrap;font-size:14px}.gpa-s{flex:1;min-width:0;font-size:11px;opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.gpa-c{transition:transform .2s}.gpa-sec.open .gpa-c{transform:rotate(180deg)}.gpa-b{display:none;padding:4px 10px 10px}.gpa-sec.open .gpa-b{display:block}.gp-addout{min-height:36px;white-space:nowrap;padding:0 10px}@media print{.gpa-bar,.gpa-h{display:none}}
+#pages section.gp-active{outline:4px solid #2563eb;outline-offset:3px}.overlay.gp-ov{z-index:5}@media print{#pages section.gp-active{outline:none}}
 </style>
 <style id="pageSizeStyle">@media print{@page{size:17in 11in;margin:.35in}}</style>
 </head>
@@ -284,6 +285,7 @@ All outlets tamperproof. GARAGE DISCONNECT at first point of entrance inside gar
   <label>Special project notes</label>
   <textarea id="notes"></textarea>
   <label>Drawing toolbox</label>
+  <div id="gpAddTo" class="no-print" style="font-size:12px;font-weight:800;color:#e8c547;margin:2px 0 6px">Adding to: tap a drawing</div>
   <div class="toolbox no-print">
     <button type="button" class="btn-ghost" onclick="toolAddText()">Add text</button>
     <button type="button" class="btn-ghost" onclick="toolAddRect()">Box</button>
@@ -2199,26 +2201,43 @@ function seedPlanItems(){
   planItems=others.concat(gfis);
 }
 function pushHist(){ planHist.push(JSON.stringify(planItems)); if(planHist.length>40) planHist.shift(); }
+// 2026-10-15: active drawing — tap a sheet to make it the target for Add tools
+let gpActiveView=null;
+function gpViews(){const out=[];document.querySelectorAll('#pages section.sheet, #pages section[class*=sheet]').forEach((sec,i)=>{
+  let key,name,layer;
+  if(sec.querySelector('#floorHost')){key='floor';layer=$('floorOverlay');}
+  else{const sn=sec.querySelector('.sheetno');name=(sn&&sn.parentElement.querySelector('b')||{}).textContent||('Sheet '+(i+1));key='v-'+String(name).toLowerCase().replace(/[^a-z0-9]+/g,'-');
+    layer=sec.querySelector(':scope>.overlay.gp-ov');if(!layer){layer=document.createElement('div');layer.className='overlay gp-ov';sec.appendChild(layer);}}
+  if(!name){const sn=sec.querySelector('.sheetno');name=(sn&&sn.parentElement.querySelector('b')||{}).textContent||'Floor plan';}
+  sec.dataset.view=key;layer.dataset.view=key;out.push({key,name:gpNice(name),sec,layer});});return out}
+function gpNice(n){n=String(n||'').trim();return n.charAt(0)+n.slice(1).toLowerCase()}
+function gpFirstVisible(vs){const h=innerHeight;return vs.find(v=>{const r=v.sec.getBoundingClientRect();return r.bottom>60&&r.top<h})||vs[0]}
+function gpTarget(type){const vs=gpViews();let v=vs.find(x=>x.key===gpActiveView);if(!v)v=type==='gfi'?(vs.find(x=>x.key==='floor')||gpFirstVisible(vs)):gpFirstVisible(vs);return v}
+function gpSetActive(key){gpActiveView=key;gpMarkActive()}
+function gpMarkActive(){const vs=gpViews();vs.forEach(v=>v.sec.classList.toggle('gp-active',v.key===gpActiveView));const lb=$('gpAddTo');if(lb){const v=vs.find(x=>x.key===gpActiveView);lb.textContent=v?'Adding to: '+v.name:'Adding to: tap a drawing (GFI → Floor plan, others → visible sheet)'}}
+function gpAddItem(it){pushHist();const v=gpTarget(it.type);it.view=v?v.key:'floor';const w=it.type==='gfi'?6:(it.w||(it.type==='txt'?8:0));const h=it.type==='gfi'?7:(it.h||(it.type==='txt'?3:0));it.x=Math.max(0,50-w/2);it.y=Math.max(0,50-h/2);planItems.push(it);selectedItem=it.id;renderOverlay();if(v&&!gpActiveView)gpSetActive(v.key);setStatus('Added to '+(v?v.name:'floor plan')+' — drag to place.',true)}
+document.addEventListener('pointerdown',e=>{const sec=e.target.closest&&e.target.closest('#pages section');if(sec&&sec.dataset.view)gpSetActive(sec.dataset.view)},true);
 function renderOverlay(){
-  const layer=$('floorOverlay'); if(!layer) return;
-  layer.innerHTML=planItems.map(it=>{
+  const vs=gpViews(); if(!vs.length) return;
+  vs.forEach(v=>{ const layer=v.layer; if(!layer) return;
+  layer.innerHTML=planItems.filter(it=>(it.view||'floor')===v.key).map(it=>{
     const sel=selectedItem===it.id?' sel':'';
     if(it.type==='gfi') return `<div class="ov gfi${sel}" data-id="${it.id}" style="left:${it.x}%;top:${it.y}%">${esc(it.text||'GFI')}</div>`;
     if(it.type==='txt') return `<div class="ov txt${sel}" data-id="${it.id}" contenteditable="true" style="left:${it.x}%;top:${it.y}%">${esc(it.text||'TEXT')}</div>`;
     if(it.type==='box') return `<div class="ov box${sel}" data-id="${it.id}" style="left:${it.x}%;top:${it.y}%;width:${it.w||12}%;height:${it.h||8}%"></div>`;
     if(it.type==='line') return `<div class="ov line${sel}" data-id="${it.id}" style="left:${it.x}%;top:${it.y}%;width:${it.w||18}%"></div>`;
     return '';
-  }).join('');
-  bindOverlay();
+  }).join(''); });
+  if(!vs.some(v=>v.key===gpActiveView)) gpActiveView=null;
+  gpMarkActive(); bindOverlay();
 }
 function bindOverlay(){
-  const host=$('floorHost'); if(!host) return;
-  host.querySelectorAll('.ov').forEach(el=>{
+  document.querySelectorAll('#pages .overlay .ov').forEach(el=>{ const host=el.parentElement;
     el.onpointerdown=e=>{
       if(el.classList.contains('txt') && e.detail>1) return;
       e.preventDefault();
       selectedItem=el.dataset.id;
-      host.querySelectorAll('.ov').forEach(n=>n.classList.toggle('sel', n.dataset.id===selectedItem));
+      document.querySelectorAll('#pages .ov').forEach(n=>n.classList.toggle('sel', n.dataset.id===selectedItem));
       const it=planItems.find(x=>x.id===selectedItem); if(!it) return;
       const r=host.getBoundingClientRect();
       const sx=e.clientX, sy=e.clientY, ox=it.x, oy=it.y;
@@ -2242,10 +2261,10 @@ function bindOverlay(){
     }
   });
 }
-function toolAddText(){ pushHist(); planItems.push({id:itemId(),type:'txt',x:40,y:20,text:'NOTE'}); renderOverlay(); }
-function toolAddRect(){ pushHist(); planItems.push({id:itemId(),type:'box',x:40,y:40,w:16,h:10}); renderOverlay(); }
-function toolAddLine(){ pushHist(); planItems.push({id:itemId(),type:'line',x:30,y:50,w:20}); renderOverlay(); }
-function toolAddGfi(){ pushHist(); planItems.push({id:itemId(),type:'gfi',x:50,y:50,text:'GFI'}); const n=planItems.filter(i=>i.type==='gfi').length; if($('gfiCount')) $('gfiCount').value=String(n); renderOverlay(); }
+function toolAddText(){ gpAddItem({id:itemId(),type:'txt',text:'NOTE'}); }
+function toolAddRect(){ gpAddItem({id:itemId(),type:'box',w:16,h:10}); }
+function toolAddLine(){ gpAddItem({id:itemId(),type:'line',w:20}); }
+function toolAddGfi(){ gpAddItem({id:itemId(),type:'gfi',text:'GFI'}); const n=planItems.filter(i=>i.type==='gfi').length; if($('gfiCount')) $('gfiCount').value=String(n); }
 function toolUndo(){ if(!planHist.length) return; planItems=JSON.parse(planHist.pop()); selectedItem=null; renderOverlay(); }
 function toolDelete(){ if(!selectedItem) return; pushHist(); planItems=planItems.filter(i=>i.id!==selectedItem); selectedItem=null; if($('gfiCount')) $('gfiCount').value=String(planItems.filter(i=>i.type==='gfi').length); renderOverlay(); }
 function toolClearAnnot(){

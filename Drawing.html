@@ -2317,6 +2317,9 @@ button.danger{color:#b42318}
   overflow: hidden !important;
 }
 
+/* 2026-10-15: survey inner-wall numbers are small and transparent so they never hide the garage label */
+#paper .obj[data-role^="garageWallDim"]{z-index:6!important;background:transparent!important}
+#paper .obj[data-role^="garageWallDim"] > .label{background:transparent!important;font-size:12px!important}
 </style>
 </head>
 <body>
@@ -4769,11 +4772,13 @@ function spApplyAlleyApron(skipRender){
   if(state.mode!=='siteplan')return;const g=byRole('proposedGarage');document.querySelectorAll('#spAlleyBox .sp-al').forEach(e=>e.style.display=spCfg().alley?'':'none');if(!g)return;
   const c=spCfg();g.alleyCfg=c;const sc=g.pxf||4;
   state.objects=state.objects.filter(o=>!['proposedApron','spAlleyDim','spAlleyLbl'].includes(o.role)&&!(o.role==='spRearSb'&&c.alley));
+  let spRightEdge=g.x+g.wf*sc;
   if(c.alley){
     // keep the garage exactly "dist" ft from the alley edge: alley edge = garage rear + dist (rear = bottom on the survey sheet)
     if(c.on&&c.h>0){const aw=c.w>0?c.w:(+g.wf||20);
       state.objects.push({id:uid++,kind:'apron',role:'proposedApron',x:g.x+((+g.wf)-aw)/2*sc+c.off*sc,y:g.y+g.hf*sc,wf:aw,hf:c.h,label:`NEW CONCRETE APRON\n${spFt(aw)} x ${spFt(c.h)}`,angle:0,pxf:sc})}
-    state.objects.push({id:uid++,kind:'dimension',role:'spAlleyDim',x:g.x+g.wf*sc+6,y:g.y+g.hf*sc,wf:Math.max(c.dist,0.5),hf:1.1,label:`${spFt(c.dist)} TO ALLEY`,angle:90,pxf:sc});
+    {const ap=state.objects.find(o=>o.role==='proposedApron');if(ap)spRightEdge=Math.max(spRightEdge,ap.x+ap.wf*sc);}
+    state.objects.push({id:uid++,kind:'dimension',role:'spAlleyDim',x:spRightEdge+6,y:g.y+g.hf*sc,wf:Math.max(c.dist,0.5),hf:1.1,label:`${spFt(c.dist)} TO ALLEY`,angle:90,pxf:sc});
   }
   if(!skipRender){try{saveActiveSheetState()}catch(e){}try{renderObjects()}catch(e){}}
 }
@@ -5667,7 +5672,7 @@ function decorateApronRemove(){
     if(el.querySelector('.apron-remove')) return;
     const b=document.createElement('button'); b.type='button'; b.className='apron-remove agb-noprint'; b.textContent='✕';b.title='Remove apron';
     b.setAttribute('aria-label','Remove apron');
-    b.style.cssText='position:absolute;right:2px;top:2px;z-index:30;width:24px;height:24px;padding:0;line-height:20px;border-radius:50%;border:1.5px solid #b91c1c;background:#fff;color:#b91c1c;font:800 13px Arial;cursor:pointer;touch-action:manipulation;opacity:.85';
+    b.style.cssText='position:absolute;right:-28px;top:-2px;z-index:30;width:24px;height:24px;padding:0;line-height:20px;border-radius:50%;border:1.5px solid #b91c1c;background:#fff;color:#b91c1c;font:800 13px Arial;cursor:pointer;touch-action:manipulation;opacity:.85';
     ['pointerdown','mousedown','touchstart'].forEach(t=>b.addEventListener(t,e=>e.stopPropagation(),{passive:true}));
     b.addEventListener('click',e=>{ e.stopPropagation(); e.preventDefault(); setNoApron(true); });
     el.appendChild(b);
@@ -7210,7 +7215,7 @@ function buildWizardForMode(forcedMode){
   // Customer/job information is edited only in the side panel. The wizard never overwrites it.
   $('salesman').value=$('wSalesman').value;$('salesPhone').value=$('wSalesPhone').value;
   // Never wipe a loaded survey / placed garage when building All or Site Plan.
-  if(mode==='siteplan' && surveyData){
+  if(mode==='siteplan'){
     const gwKeep=+$('wGarageW').value||0, ghKeep=+$('wGarageH').value||0;
     if(gwKeep&&ghKeep){
       if($('spGarageW'))$('spGarageW').value=gwKeep;
@@ -7222,6 +7227,12 @@ function buildWizardForMode(forcedMode){
     if($('spRearSetback'))$('spRearSetback').value=$('wRearSetback').value;
     if($('spLotWidth'))$('spLotWidth').value=$('wLotWidth').value||$('spLotWidth').value;
     if($('spLotLength'))$('spLotLength').value=$('wLotLength').value||$('spLotLength').value;
+    // 2026-10-15: one code path for the proposed garage (same as "Place garage"): keeps property lines,
+    // plat and user items, honours the Alley & new apron box, and is undoable.
+    const GEN=new Set(['garage','apron','leftSetback','rightSetback','rearSetback','rearGap']);
+    try{ snapshot(); }catch(_){}
+    state.objects=state.objects.filter(o=>!(o&&o.role&&GEN.has(o.role)));state.selected=null;
+    if(gwKeep&&ghKeep){ try{ const h=state.history.length; placeProposedGarageOnSurvey({sync:false,autoErase:false}); if(state.history.length>h) state.history.pop(); }catch(e){console.error(e)} }
     saveActiveSheetState();renderSheet();renderObjects();
     return;
   }

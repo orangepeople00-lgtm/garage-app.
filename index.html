@@ -3019,4 +3019,68 @@ function payApplyFromDoc(h,docRows){const s=PAY[h];if(!s||!Array.isArray(docRows
 .pay-sum{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:8px;font-size:14px}.pay-warn{margin-top:6px;background:#fff7ed;color:#c2410c;border:1px solid #fdba74;border-radius:8px;padding:8px;font-weight:800}
 @media(max-width:600px){.pay-grid{grid-template-columns:1fr 1fr}.pay-grid .pay-due{grid-column:1/-1}}
 </style>
+<script>
+/* ===== 2026-10-15: "Fill from this document" — reads a contract/work order with the read-contract Supabase Edge Function
+   (same functions.invoke pattern as Drawing's analyze-site-survey; AI key lives server-side only). Never auto-saves. ===== */
+const FFD_FIELDS=[['customer','Customer name'],['phone','Phone'],['email','Email'],['address','Address'],['city','City'],['garage_size','Garage size'],['wall_height','Wall height'],['roof','Roof style / pitch'],['doors','Overhead doors (count & sizes)'],['windows','Windows'],['service_doors','Service doors'],['siding','Siding'],['concrete','Concrete / apron'],['demo','Demo'],['electrical','Electrical'],['price','Price'],['deposit','Deposit'],['sold_date','Sold date'],['salesman','Salesman']];
+const FFD_NOTE_KEYS=['email','wall_height','roof','doors','windows','service_doors','siding','concrete','electrical'];
+let ffd={target:null,result:null};
+function ffdIsDoc(f){return f&&(/^image\//.test(f.type)||/pdf$/i.test(f.type)||/\.(pdf|jpe?g|png|webp|heic)$/i.test(f.name||''))}
+function ffdSalesKey(s){const t=String(s||'').trim().toLowerCase().replace(/\s+/g,' ');if(!t)return '';if(/^tom[aá][sz]\b/.test(t))return 'tomaz';if(/^tom b/.test(t)||/bartyzel/.test(t))return 'tomb';if(/^tom( milan)?$/.test(t)||/milan/.test(t))return 'tom';if(/^randy/.test(t))return '';const k=Object.keys(DISPLAY).find(k=>k===t||String(DISPLAY[k]).toLowerCase()===t);return k&&k!=='randy'&&k!=='unassigned'?k:''}
+function ffdYesNo(v){const t=String(v||'').trim().toLowerCase();if(/^(yes|y|included|incl|demo|remove|tear ?down|x)\b/.test(t))return 'true';if(/^(no|n|none|not included|n\/a)\b/.test(t))return 'false';return ''}
+function ffdMoney(v){const m=String(v||'').replace(/[, ]/g,'').match(/\d+(\.\d+)?/);return m?m[0]:''}
+function ffdDate(v){const s=String(v||'').trim();let m=s.match(/^(\d{4})-(\d\d)-(\d\d)$/);if(m)return s;m=s.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{2,4})$/);if(m){const y=m[3].length===2?'20'+m[3]:m[3];return `${y}-${m[1].padStart(2,'0')}-${m[2].padStart(2,'0')}`}return ''}
+async function ffdImageFromFile(file){
+  if(/pdf$/i.test(file.type)||/\.pdf$/i.test(file.name||'')){
+    if(!window.pdfjsLib){await new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';s.onload=res;s.onerror=()=>rej(new Error('Could not load the PDF reader. Take a photo of the contract instead.'));document.head.appendChild(s)});window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'}
+    const pdf=await window.pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;const pg=await pdf.getPage(1);const vp0=pg.getViewport({scale:1});const vp=pg.getViewport({scale:Math.min(2.5,1800/Math.max(vp0.width,vp0.height))});
+    const c=document.createElement('canvas');c.width=vp.width;c.height=vp.height;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);await pg.render({canvasContext:x,viewport:vp}).promise;return c.toDataURL('image/jpeg',0.85)}
+  const url=URL.createObjectURL(file);try{const im=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=()=>rej(new Error('This picture could not be opened (it may be HEIC or damaged). Take a new photo or upload a JPG/PDF.'));i.src=url});
+    if(!im.naturalWidth||im.naturalWidth<200||im.naturalHeight<200)throw new Error('The picture is too small to read. Take a closer, sharper photo.');
+    const sc=Math.min(1,1800/Math.max(im.naturalWidth,im.naturalHeight)),c=document.createElement('canvas');c.width=Math.round(im.naturalWidth*sc);c.height=Math.round(im.naturalHeight*sc);const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0,c.width,c.height);return c.toDataURL('image/jpeg',0.85)}finally{URL.revokeObjectURL(url)}}
+function ffdModal(html){let bg=$('ffdBg');if(!bg){document.body.insertAdjacentHTML('beforeend','<div id="ffdBg" class="modalbg" style="z-index:9999"><div class="modal" style="width:min(680px,96vw);max-height:90vh;overflow:auto"><div class="modalhead"><h3>Fill from document</h3><button type="button" class="btn light sm" onclick="ffdClose()">✕</button></div><div class="body" id="ffdBody"></div></div></div>');bg=$('ffdBg')}$('ffdBody').innerHTML=html;bg.classList.add('show')}
+function ffdClose(){$('ffdBg')?.classList.remove('show')}
+async function ffdStart(file,target){
+  if(!ffdIsDoc(file))return alert('Pick a photo or PDF of the contract.');ffd={target,result:null};
+  ffdModal('<div class="ffd-wait">⏳ Reading the document… this can take up to a minute.</div>');
+  let image;try{image=await ffdImageFromFile(file)}catch(e){return ffdModal(`<div class="ffd-err">${esc(e.message||String(e))}</div><div class="modalfoot"><button class="btn light" onclick="ffdClose()">Close</button></div>`)}
+  let data=null,msg='';
+  try{const inv=await Promise.race([sb.functions.invoke('read-contract',{body:{image}}),new Promise((_,r)=>setTimeout(()=>r(new Error('timeout')),90000))]);
+    if(inv.error){const st=inv.error.context&&inv.error.context.status;let b=null;try{b=await inv.error.context.json()}catch(_){}
+      msg=st===404||/not found|FunctionsFetchError|Failed to send/i.test((inv.error.name||'')+' '+(inv.error.message||''))&&!b?.error?'setup':(b&&b.error)||inv.error.message}
+    else{data=typeof inv.data==='string'?JSON.parse(inv.data):inv.data}}catch(e){msg=e.message==='timeout'?'The reader took too long. Try again or with a smaller/clearer photo.':String(e.message||e)}
+  if(msg==='setup')return ffdModal('<div class="ffd-err setup"><b>Setup needed:</b> the document reader (Supabase Edge Function <code>read-contract</code>) is not deployed yet. Your file was not changed — keep filling the form by hand.</div><div class="modalfoot"><button class="btn light" onclick="ffdClose()">Close</button></div>');
+  if(msg||!data||data.error)return ffdModal(`<div class="ffd-err">Could not read this document: ${esc(msg||data&&data.error||'empty response')}. Nothing was filled in.</div><div class="modalfoot"><button class="btn light" onclick="ffdClose()">Close</button></div>`);
+  const f=data.fields||{};const anyRead=FFD_FIELDS.some(([k])=>f[k]!=null&&String(f[k]).trim());
+  if(data.readable===false||!anyRead)return ffdModal('<div class="ffd-err">This document could not be read (blurry, cut off, or not a contract). Nothing was filled in. Try a straight, well-lit photo of the whole page.</div><div class="modalfoot"><button class="btn light" onclick="ffdClose()">Close</button></div>');
+  ffd.result=data;ffdConfirm()}
+function ffdConfirm(){const f=ffd.result.fields||{},ps=(ffd.result.payment_schedule||[]).filter(p=>p&&p.stage);
+  ffdModal(`<div class="muted small" style="margin-bottom:8px">Check every value. <span class="ffd-chip">Highlighted</span> = read from the document. Blank = not found (left as is). Nothing is saved until you press the form's normal Save / Submit.</div>
+  <div class="ffd-grid">${FFD_FIELDS.map(([k,l])=>{const v=f[k]==null?'':String(f[k]);return `<label class="ffd-f${v?' ffd-read':''}">${esc(l)}<input id="ffd_${k}" value="${esc(v)}" oninput="this.parentNode.classList.toggle('ffd-edited',true)"></label>`}).join('')}</div>
+  ${ps.length?`<div class="ffd-pay"><label style="font-weight:800"><input type="checkbox" id="ffd_pay" checked> Apply payment schedule from the document</label>${ps.map(p=>`<div class="small">• ${esc(p.stage)}${p.amount!=null?' — '+money(p.amount):''}${p.percent!=null?' ('+esc(p.percent)+'%)':''}${p.due?' — '+esc(p.due):''}</div>`).join('')}</div>`:''}
+  <div class="modalfoot"><button type="button" class="btn light" onclick="ffdClose()">Cancel</button><button type="button" class="btn primary" id="ffdApplyBtn" onclick="ffdApply()">Apply to form</button></div>`)}
+function ffdApply(){const v=k=>($('ffd_'+k)?.value||'').trim(),t=ffd.target;const set=(id,val)=>{const e=$(id);if(e&&val!==''){e.value=val;e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}))}};
+  const P=t==='req'?'r_':'f_';set(P+'customer',v('customer'));set(P+'phone',v('phone'));set(P+'address',v('address'));set(P+'city',v('city'));set(P+'garage_size',v('garage_size'));set(P+'price',ffdMoney(v('price')));set(P+'deposit',ffdMoney(v('deposit')));set(P+'sold_date',ffdDate(v('sold_date')));set(P+'demolition_required',ffdYesNo(v('demo')));
+  if(t==='job'){const sk=ffdSalesKey(v('salesman'));const ss=$('f_salesman_username');if(sk&&ss){if(![...ss.options].some(o=>o.value===sk)){const o=document.createElement('option');o.value=sk;o.textContent=DISPLAY[sk]||sk;o.dataset.extra='1';ss.appendChild(o)}ss.value=sk}}
+  const lines=FFD_NOTE_KEYS.filter(k=>v(k)).map(k=>`${FFD_FIELDS.find(x=>x[0]===k)[1]}: ${v(k)}`);if(v('demo')&&!ffdYesNo(v('demo')))lines.push('Demo: '+v('demo'));if(t==='req'&&v('salesman'))lines.push('Salesman on contract: '+v('salesman'));
+  const n=$(P+'notes');if(n&&lines.length){const block='From contract:\n'+lines.join('\n');if(!n.value.includes(block))n.value=(n.value.trim()?n.value.trim()+'\n\n':'')+block}
+  if($('ffd_pay')?.checked)try{payApplyFromDoc(t==='req'?'payReqHost':'payJobHost',(ffd.result.payment_schedule||[]).map(p=>({stage:p.stage,amount:p.amount==null?'':p.amount,percent:p.percent==null?'':p.percent,due:p.due||''})))}catch(e){console.warn(e)}
+  ffdClose();try{if(t==='job')jaSummaries()}catch(e){}alert('Filled in. Review the form, then press '+(t==='req'?'Submit for Approval':'Save Job')+'.')}
+function ffdOffer(inputId,target,afterEl){const inp=$(inputId);if(!inp)return;const host=afterEl||inp;let b=document.querySelector(`[data-ffd-for="${inputId}"]`);const f=[...(inp.files||[])].find(ffdIsDoc);
+  if(!f){b?.remove();return}if(!b){host.insertAdjacentHTML('afterend',`<button type="button" class="btn primary ffd-btn" data-ffd-for="${inputId}">✨ Fill from this document</button>`);b=document.querySelector(`[data-ffd-for="${inputId}"]`)}
+  b.onclick=()=>{const cur=[...(inp.files||[])].find(ffdIsDoc);if(cur)ffdStart(cur,target)}}
+(function(){
+  const r=$('r_files');if(r)r.addEventListener('change',()=>ffdOffer('r_files','req'));
+  ['f_doc_camera','f_doc_files'].forEach(id=>{const e=$(id);if(e)e.addEventListener('change',()=>{ffdOffer(id,'job',$('f_doc_selected'));['f_doc_camera','f_doc_files'].filter(x=>x!==id).forEach(x=>document.querySelector(`[data-ffd-for="${x}"]`)?.remove())})});
+  const o=openDrawer;window.openDrawer=openDrawer=async function(id){const res=await o.apply(this,arguments);try{if(manager()){const box=document.querySelector('#drawerContent .scan-actions');if(box&&!$('ffdDrawerFile'))box.insertAdjacentHTML('beforeend',`<button type="button" class="btn primary scan-btn ffd-btn" onclick="$('ffdDrawerFile').value='';$('ffdDrawerFile').click()">✨ Fill job from a document</button><input id="ffdDrawerFile" type="file" accept=".pdf,image/*" style="display:none" onchange="ffdFromDrawer('${id}',this)">`)}}catch(e){}return res};
+})();
+function ffdFromDrawer(id,inp){const f=inp.files&&inp.files[0];if(!f)return;closeDrawer();openJobForm(id);ffdStart(f,'job')}
+</script>
+<style>
+.ffd-btn{margin-top:8px}.ffd-wait{padding:24px;text-align:center;font-weight:800;font-size:17px}.ffd-err{background:#fef2f2;color:#b91c1c;border-radius:10px;padding:14px;font-weight:700}.ffd-err.setup{background:#fffbeb;color:#92400e}
+.ffd-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.ffd-f{display:flex;flex-direction:column;gap:3px;font-size:12px;font-weight:700;color:#475569;padding:6px;border-radius:8px;border:1px solid transparent}.ffd-f input{font-size:16px;padding:9px;border:1px solid #cbd5e1;border-radius:8px;min-height:44px}
+.ffd-read{background:#fef9c3;border-color:#facc15}.ffd-read input{border-color:#eab308;background:#fffbeb}.ffd-chip{background:#fef9c3;border:1px solid #facc15;border-radius:6px;padding:1px 6px;font-weight:800;color:#854d0e}
+.ffd-pay{margin-top:12px;padding:10px;border:1px solid #dbe2ea;border-radius:10px;background:#f8fafc}
+@media(max-width:600px){.ffd-grid{grid-template-columns:1fr}}
+</style>
 </body></html>

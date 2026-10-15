@@ -5687,7 +5687,22 @@ function scaleApronButtons(){
   });
 }
 setInterval(()=>{ try{ if(document.querySelector('.apron-remove')) scaleApronButtons(); }catch(e){} },400);
-function renderObjectsNow(){ renderObjectsNowInner(); try{ decorateApronRemove(); }catch(e){} }
+// 2026-10-15: on the proposed site plan the apron, TO ALLEY dim, wall numbers and setback labels follow the
+// garage live while it is dragged or resized (mouse or touch), because every drag/resize step re-renders.
+function agbFollowProposedGarage(){
+  if(state.mode!=='siteplan') return; const g=byRole('proposedGarage'); if(!g) return;
+  const p=g.pxf||4, key=[g.x,g.y,g.wf,g.hf,p,g.visualWpx||'',g.visualHpx||''].join('|'), last=g._follow;
+  if(last===key) return;
+  if(last){ const [lx,ly,lw,lh,lp]=last.split('|').map(Number); const dx=g.x-lx, dy=g.y-ly, dr=g.x+g.wf*p-(lx+lw*lp), db=g.y+g.hf*p-(ly+lh*lp);
+    ['spLeftSb'].forEach(r=>{const o=byRole(r);if(o){o.x+=dx;o.y+=dy+(db-dy)/2}});
+    ['spRightSb'].forEach(r=>{const o=byRole(r);if(o){o.x+=dr;o.y+=dy+(db-dy)/2}});
+    ['spRearSb'].forEach(r=>{const o=byRole(r);if(o){o.x+=dx+(dr-dx)/2;o.y+=db}});
+    try{ if(typeof spApplyAlleyApron==='function' && (state.objects.some(o=>o.role==='proposedApron'||o.role==='spAlleyDim'))) spApplyAlleyApron(true); else { const a=state.objects.find(o=>o.role==='proposedApron'); if(a){a.x+=dx;a.y+=db} } }catch(_){}
+    try{ window.agbSyncProposedWallDims&&window.agbSyncProposedWallDims(g); }catch(_){}
+  }
+  g._follow=key;
+}
+function renderObjectsNow(){ try{ agbFollowProposedGarage(); }catch(e){} renderObjectsNowInner(); try{ decorateApronRemove(); }catch(e){} }
 function renderObjectsNowInner(){
   tidyGeneratedLayout();
   let _wl=document.getElementById('whiteoutDotLayer');
@@ -7232,7 +7247,20 @@ function buildWizardForMode(forcedMode){
     const GEN=new Set(['garage','apron','leftSetback','rightSetback','rearSetback','rearGap']);
     try{ snapshot(); }catch(_){}
     state.objects=state.objects.filter(o=>!(o&&o.role&&GEN.has(o.role)));state.selected=null;
-    if(gwKeep&&ghKeep){ try{ const h=state.history.length; placeProposedGarageOnSurvey({sync:false,autoErase:false}); if(state.history.length>h) state.history.pop(); }catch(e){console.error(e)} }
+    // No survey: the site plan is drawn on the real lot. Make sure the lot lines exist (never removed),
+    // then place the garage at the lot's scale so it reads clearly.
+    let lotBlank=null;
+    if(!surveyData){ try{
+      lotBlank=byRole('lotOutline');
+      const W=+$('spLotWidth').value||40, L=+$('spLotLength').value||125;
+      if(!lotBlank){ const sc=window.agbBlankScale(W,L), t=currentTemplate();
+        lotBlank={id:uid++,kind:'custom',role:'lotOutline',cat:'none',label:'',x:Math.round((t.w-W*sc)/2),y:70,wf:W,hf:L,pxf:sc,angle:0,locked:true,hidden:false,visualWpx:null,visualHpx:null,fontSize:16,fontWeight:'700'};
+        state.objects.unshift(lotBlank); try{localStorage.setItem('agbSitePlanBlank','1')}catch(_){} }
+      const lsc=(lotBlank.pxf||window.agbPxOf(lotBlank)); if($('spScaleFeet')&&lsc) $('spScaleFeet').value=+(72/lsc).toFixed(2);
+    }catch(e){console.error(e)} }
+    if(gwKeep&&ghKeep){ try{ const h=state.history.length; placeProposedGarageOnSurvey({sync:false,autoErase:false}); if(state.history.length>h) state.history.pop();
+      const g=byRole('proposedGarage'); if(g&&lotBlank){ window.agbPlaceGarageInBlankLot(g,gwKeep,ghKeep); try{spApplyAlleyApron(true)}catch(_){} } }catch(e){console.error(e)} }
+    try{ renderSitePlanBackground(); }catch(_){}
     saveActiveSheetState();renderSheet();renderObjects();
     return;
   }
@@ -8484,6 +8512,7 @@ function startBlankSitePlan(){
   const st=$('aiSurveyStatus'); if(st) st.textContent='Blank site plan: tap a garage size preset to place the proposed garage. You can still upload a survey later.';
 }
 window.startBlankSitePlan=startBlankSitePlan;
+window.agbBlankScale=blankScale;window.agbSyncProposedWallDims=syncProposedWallDims;window.agbPxOf=pxOf;window.agbPlaceGarageInBlankLot=placeGarageInBlankLot;
 function removeSurveyKeepDrawing(){
   if(!surveyData){alert('No survey is loaded.');return}
   if(!confirm('Remove the survey image? Your drawn garage, dimensions and marks stay.'))return;

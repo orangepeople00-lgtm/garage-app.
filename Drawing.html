@@ -5665,9 +5665,9 @@ function syncNoApronUi(){ const t=$('noApronToggle'); if(!t) return; const g=byR
 function decorateApronRemove(){
   document.querySelectorAll('#paper .obj[data-role="apron"]').forEach(el=>{
     if(el.querySelector('.apron-remove')) return;
-    const b=document.createElement('button'); b.type='button'; b.className='apron-remove agb-noprint'; b.textContent='✕ Remove apron';
+    const b=document.createElement('button'); b.type='button'; b.className='apron-remove agb-noprint'; b.textContent='✕';b.title='Remove apron';
     b.setAttribute('aria-label','Remove apron');
-    b.style.cssText='position:absolute;right:4px;top:50%;transform:translateY(-50%);z-index:30;min-height:36px;padding:6px 12px;border-radius:999px;border:2px solid #b91c1c;background:#fff;color:#b91c1c;font:800 14px Arial;cursor:pointer;white-space:nowrap;touch-action:manipulation';
+    b.style.cssText='position:absolute;right:2px;top:2px;z-index:30;width:24px;height:24px;padding:0;line-height:20px;border-radius:50%;border:1.5px solid #b91c1c;background:#fff;color:#b91c1c;font:800 13px Arial;cursor:pointer;touch-action:manipulation;opacity:.85';
     ['pointerdown','mousedown','touchstart'].forEach(t=>b.addEventListener(t,e=>e.stopPropagation(),{passive:true}));
     b.addEventListener('click',e=>{ e.stopPropagation(); e.preventDefault(); setNoApron(true); });
     el.appendChild(b);
@@ -5678,7 +5678,7 @@ function decorateApronRemove(){
 function scaleApronButtons(){
   document.querySelectorAll('#paper .obj[data-role="apron"] .apron-remove').forEach(b=>{
     const el=b.parentElement; const k=(el.getBoundingClientRect().width/(el.offsetWidth||1))||1;
-    b.style.transform='translateY(-50%) scale('+(1/k).toFixed(3)+')'; b.style.transformOrigin='right center';
+    b.style.transform='scale('+(1/k).toFixed(3)+')'; b.style.transformOrigin='right top';
   });
 }
 setInterval(()=>{ try{ if(document.querySelector('.apron-remove')) scaleApronButtons(); }catch(e){} },400);
@@ -7225,7 +7225,13 @@ function buildWizardForMode(forcedMode){
     saveActiveSheetState();renderSheet();renderObjects();
     return;
   }
-  state.objects=[];state.selected=null;state.history=[];state.future=[];
+  if(mode==='siteplan'){
+    // Proposed site plan: NEVER wipe property lines / plat / user items. Replace only the
+    // previously generated proposed garage set, and keep undo history so it can be undone.
+    const GEN=new Set(['proposedGarage','garage','apron','proposedApron','spAlleyDim','spRearSb','leftSetback','rightSetback','rearSetback','rearGap','frontLeft','frontMiddle','frontRight','rearLeft','rearMiddle','rearRight']);
+    try{ snapshot(); }catch(_){}
+    state.objects=state.objects.filter(o=>!(o&&o.role&&GEN.has(o.role)));state.selected=null;
+  } else { state.objects=[];state.selected=null;state.history=[];state.future=[]; }
 
   const t=TEMPLATES[mode], d=t.draw, P=DRAW_PXF;
   const gw=(mode==='obstruction'?(+$('wDemoGarageW').value||0):(+$('wGarageW').value||0)),gh=(mode==='obstruction'?(+$('wDemoGarageH').value||0):(+$('wGarageH').value||0)),aw=(mode==='obstruction'?(+$('wDemoApronW').value||0):(+$('wApronW')?.value||0)),ah=(mode==='obstruction'?(+$('wDemoApronH').value||0):(+$('wApronH')?.value||0));

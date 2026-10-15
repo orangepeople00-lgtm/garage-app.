@@ -118,6 +118,7 @@ button{border:0;border-radius:7px;padding:8px 10px;font-weight:800;cursor:pointe
 <aside class="sidebar">
   <h1>Garage Plans</h1>
   <div class="sub">Permit drawings · Absolute Garage Builders</div>
+  <button type="button" class="btn-ghost" onclick="agbPullOpen()" style="width:100%;min-height:42px;margin:4px 0 6px">Pull info from…</button>
   <label>Village / City</label>
   <select id="city">
     <option value="">Select village…</option>
@@ -3212,6 +3213,79 @@ async function generateAiPlanPictures(){
     setLoad(false);
   }
 }
+
+// ===== 2026-10-15: "Pull info from…" (dashboard jobs, estimate history, this device). Every value is editable before applying; nothing is locked after. =====
+const AGBP={rows:[],src:'jobs'};
+function agbpEsc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function agbpCss(){if(document.getElementById('agbpCss'))return;const st=document.createElement('style');st.id='agbpCss';st.textContent=`.agbp-bk{position:fixed;inset:0;background:#0009;z-index:99999;display:flex;align-items:flex-end;justify-content:center;font:14px/1.35 system-ui,Arial,sans-serif;color:#111}.agbp{background:#fff;width:100%;max-width:640px;max-height:92vh;border-radius:16px 16px 0 0;display:flex;flex-direction:column;overflow:hidden}@media(min-width:700px){.agbp-bk{align-items:center}.agbp{border-radius:16px}}.agbp h3{margin:0;padding:14px 16px 6px;font-size:17px}.agbp-tabs{display:flex;gap:6px;padding:0 12px 8px}.agbp-tabs button{flex:1;min-height:40px;border:1px solid #cbd5e1;border-radius:10px;background:#f8fafc;font-weight:700}.agbp-tabs button.on{background:#0b1f3a;color:#fff}.agbp input.q{margin:0 12px 8px;min-height:42px;border:1px solid #cbd5e1;border-radius:10px;padding:0 10px;font-size:16px}.agbp-list{overflow:auto;flex:1;padding:0 8px}.agbp-row{display:block;width:100%;text-align:left;border:0;border-bottom:1px solid #eef2f7;background:#fff;padding:10px 8px;min-height:48px;cursor:pointer;color:#111}.agbp-row small{color:#64748b}.agbp-ft{display:flex;gap:8px;padding:10px 12px;border-top:1px solid #e2e8f0}.agbp-ft button{flex:1;min-height:46px;border-radius:10px;border:1px solid #cbd5e1;background:#fff;font-weight:800}.agbp-ft .pri{background:#0b1f3a;color:#fff;border-color:#0b1f3a}.agbp-f{display:grid;grid-template-columns:28px 1fr;gap:2px 6px;align-items:center;padding:8px;border-bottom:1px solid #eef2f7}.agbp-f input[type=checkbox]{width:22px;height:22px}.agbp-f b{font-size:13px}.agbp-f .cur{grid-column:2;font-size:11px;color:#64748b}.agbp-f .in{grid-column:2;min-height:40px;border:1px solid #cbd5e1;border-radius:8px;padding:0 8px;font-size:16px;width:100%;box-sizing:border-box;background:#fff;color:#111}`;document.head.appendChild(st)}
+function agbpClose(){const b=document.getElementById('agbpBk');if(b)b.remove()}
+function agbpShell(inner){agbpCss();agbpClose();const b=document.createElement('div');b.className='agbp-bk';b.id='agbpBk';b.innerHTML='<div class="agbp">'+inner+'</div>';b.addEventListener('click',e=>{if(e.target===b)agbpClose()});document.body.appendChild(b);return b}
+function agbPullOpen(){const b=agbpShell(`<h3>Pull info from…</h3><div class="agbp-tabs"><button type="button" data-s="jobs">Dashboard jobs</button><button type="button" data-s="est">Estimates</button><button type="button" data-s="dev">On this device</button></div><input class="q" id="agbpQ" placeholder="Search name, address, city…" autocomplete="off"><div class="agbp-list" id="agbpList"><p style="padding:10px">Loading…</p></div><div class="agbp-ft"><button type="button" onclick="agbpClose()">Cancel</button></div>`);
+ b.querySelectorAll('.agbp-tabs button').forEach(x=>x.onclick=()=>agbpLoad(x.dataset.s));let t;b.querySelector('#agbpQ').oninput=()=>{clearTimeout(t);t=setTimeout(agbpList,150)};agbpLoad(AGBP.src)}
+async function agbpLoad(src){AGBP.src=src;document.querySelectorAll('#agbpBk .agbp-tabs button').forEach(x=>x.classList.toggle('on',x.dataset.s===src));const L=document.getElementById('agbpList');L.innerHTML='<p style="padding:10px">Loading…</p>';AGBP.rows=[];
+ try{const c=(AGB_PULL_CFG.client&&AGB_PULL_CFG.client())||null;
+  if(src==='jobs'){if(!c)throw new Error('Not connected — sign in on the dashboard first.');const {data,error}=await c.from('jobs').select('id,customer,address,city,phone,garage_size,salesman_username,roof_type,sold_date').order('id',{ascending:false}).limit(1500);if(error)throw error;AGBP.rows=(data||[]).map(j=>({kind:'job',id:j.id,customer:j.customer,address:j.address,city:j.city,phone:j.phone,size:j.garage_size,sales:j.salesman_username,roof:j.roof_type,sub:j.sold_date||''}))}
+  else if(src==='est'){if(!c)throw new Error('Not connected — sign in on the dashboard first.');const {data,error}=await c.from('estimate_history').select('id,customer,address,city,garage_size,roof_type,wall_height,siding,estimate_price,salesman_username,created_at').order('created_at',{ascending:false}).limit(500);if(error)throw error;AGBP.rows=(data||[]).map(e=>({kind:'est',id:e.id,customer:e.customer,address:e.address,city:e.city,size:e.garage_size,sales:e.salesman_username,roof:e.roof_type,wall:e.wall_height,sub:(e.created_at||'').slice(0,10)+(e.estimate_price?' · $'+Number(e.estimate_price).toLocaleString():'')}))}
+  else{const out=[];const add=(lbl,o)=>{if(o&&(o.customer||o.address))out.push(Object.assign({kind:'dev',sub:lbl},o))};
+   try{const v=JSON.parse(localStorage.getItem('agbSharedInfo')||'{}');add('Drawing app (shared info)',{customer:v.customerName,address:v.jobAddress,city:v.city,phone:v.homePhone,sales:v.salesman})}catch(e){}
+   try{const v=JSON.parse(localStorage.getItem('agb_carpenter_ticket')||'{}');add('Carpenter ticket',{customer:v.customer,address:v.address,city:v.city||v.citySel,phone:v.phone,size:v.sizeW&&v.sizeL?v.sizeW+'x'+v.sizeL:'',sales:v.rep,wall:v.wallHeight})}catch(e){}
+   try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(!/^(agb_plan_history|garagePlanHistory|gp_history)/i.test(k))continue;const a=JSON.parse(localStorage.getItem(k)||'[]');(Array.isArray(a)?a:[]).slice(0,30).forEach(p=>{const s=p.state||p.data||p;add('Saved garage plan',{customer:s.customer,address:s.address,city:s.cityManual||s.city,size:s.width&&s.depth?s.width+'x'+s.depth:'',roof:s.roof,wall:s.wallH})})}}catch(e){}
+   AGBP.rows=out}
+ }catch(e){L.innerHTML='<p style="padding:10px;color:#b91c1c">'+agbpEsc(e.message||e)+'</p>';return}
+ agbpList()}
+function agbpList(){const L=document.getElementById('agbpList');if(!L)return;const q=String((document.getElementById('agbpQ')||{}).value||'').toLowerCase().trim();
+ const rows=AGBP.rows.filter(r=>!q||[r.customer,r.address,r.city,r.size,r.sales].join(' ').toLowerCase().includes(q)).slice(0,120);
+ L.innerHTML=rows.length?rows.map((r,i)=>`<button type="button" class="agbp-row" data-i="${AGBP.rows.indexOf(r)}"><b>${agbpEsc(r.customer||'(no name)')}</b><br><small>${agbpEsc([r.address,r.city].filter(Boolean).join(', '))}${r.size?' · '+agbpEsc(r.size):''}${r.sub?' · '+agbpEsc(r.sub):''}</small></button>`).join(''):'<p style="padding:10px;color:#64748b">Nothing found.</p>';
+ L.querySelectorAll('.agbp-row').forEach(x=>x.onclick=()=>agbpPick(AGBP.rows[+x.dataset.i]))}
+async function agbpPick(r){const R=Object.assign({},r);
+ if(r.kind==='est'){try{const c=AGB_PULL_CFG.client();const {data}=await c.from('estimate_history').select('id,calc:estimate_snapshot->calculator_state').eq('id',r.id).maybeSingle();R.st=(data&&data.calc)||{}}catch(e){R.st={}}}
+ R.st=R.st||{};const st=R.st;
+ const W=st.width==='custom'?st.customWidth:st.width, D=st.depth==='custom'?st.customDepth:st.depth;
+ const m=String(R.size||'').match(/(\d+(?:\.\d+)?)\s*['’]?\s*[x×X*]\s*(\d+(?:\.\d+)?)/);R.w=Number(W)||(m?+m[1]:'');R.d=Number(D)||(m?+m[2]:'');
+ const rf=String(st.roofType||R.roof||'');R.roofKey=/rev/i.test(rf)?'revgable':/gable/i.test(rf)?'gable':/hip/i.test(rf)?'hip':'';
+ R.wallFt=parseFloat(st.wallHeight||R.wall)||'';R.sales=String(R.sales||'').toLowerCase().replace(/@.*/,'');if(R.sales==='randy')R.sales='';if(R.sales==='tomas')R.sales='tomaz';
+ R.doors=agbpDoors(st);agbpConfirm(R)}
+function agbpDoors(st){if(!st||typeof st!=='object')return [];const sz=v=>{const m=String(v||'').match(/(\d+(?:\.\d+)?)\s*x\s*(\d+(?:\.\d+)?)/i);return m?{w:+m[1],h:+m[2]}:null};const out=[];
+ if(String(st.carCapacity||'')==='3'&&Number(st.width)>=27){for(let i=1;i<=3;i++){const v=st['ohLayout'+i];if(!v)continue;const d=v==='custom'?{w:+st['ohLayoutW'+i]||0,h:+st['ohLayoutH'+i]||0}:sz(v);if(d&&d.w&&d.h)out.push(d)}}
+ else{const w=Number(st.overheadDoorWidth)||0,h=Number(st.overheadDoorHeight)||0;if(w&&h)out.push({w,h});const n=Math.max(1,Math.min(3,parseInt(st.ohDoorQty)||1));for(let i=1;i<n;i++){const v=st['extraOh'+i+'Size'];const d=v==='custom'?{w:+st['extraOh'+i+'W']||0,h:+st['extraOh'+i+'H']||0}:sz(v||'16x7');if(d&&d.w&&d.h)out.push(d)}}
+ const add=parseInt(st.addlOverheadDoors)||0;for(let i=0;i<add;i++)out.push({w:9,h:7,extra:true});return out}
+function agbpConfirm(R){const F=AGB_PULL_CFG.fields.map(f=>{let v;try{v=f.from(R)}catch(e){v=''}return {f,v:v==null?'':String(v)}}).filter(x=>x.v!=='');
+ const b=agbpShell(`<h3>Pull from ${agbpEsc(R.customer||'record')}</h3><div style="padding:0 16px 6px;font-size:12px;color:#64748b">Edit any value, untick what you don't want, then Apply. Everything stays editable afterwards.</div><div class="agbp-list" id="agbpF"></div><div class="agbp-ft"><button type="button" onclick="agbPullOpen()">Back</button><button type="button" class="pri" id="agbpGo">Apply ${F.length} field(s)</button></div>`);
+ const box=b.querySelector('#agbpF');if(!F.length)box.innerHTML='<p style="padding:10px">This record has nothing to fill here.</p>';
+ F.forEach((x,i)=>{const d=document.createElement('label');d.className='agbp-f';let cur='';try{cur=x.f.cur?x.f.cur():''}catch(e){}
+  const opts=x.f.opts?x.f.opts():null;let inp;
+  if(opts){inp=document.createElement('select');let has=false;opts.forEach(([v,t])=>{const o=document.createElement('option');o.value=v;o.textContent=t;if(String(v)===x.v){o.selected=true;has=true}inp.appendChild(o)});if(!has){const o=document.createElement('option');o.value=x.v;o.textContent=x.v;o.selected=true;inp.prepend(o)}}
+  else{inp=x.v.length>60||x.f.multi?document.createElement('textarea'):document.createElement('input');inp.value=x.v;if(inp.tagName==='TEXTAREA')inp.rows=3}
+  inp.className='in';inp.dataset.i=i;d.innerHTML=`<input type="checkbox" checked data-c="${i}"><b>${agbpEsc(x.f.label)}</b>${cur?'<span class="cur">Now: '+agbpEsc(String(cur).slice(0,80))+'</span>':''}`;d.appendChild(inp);box.appendChild(d)});
+ b.querySelector('#agbpGo').onclick=()=>{let n=0;F.forEach((x,i)=>{if(!b.querySelector(`[data-c="${i}"]`).checked)return;const v=b.querySelector(`.in[data-i="${i}"]`).value;try{x.f.set(v);n++}catch(e){console.warn('pull set',x.f.k,e)}});
+  try{AGB_PULL_CFG.after&&AGB_PULL_CFG.after()}catch(e){console.warn('pull after',e)}agbpClose();try{(window.setStatus||alert)('Pulled '+n+' field(s) from '+(R.customer||'record')+'. All fields stay editable.',true)}catch(e){}}}
+function agbpSetCity(selId,inId,v,manualVal){const c=String(v||'').replace(/^(village|city|town) of\s+/i,'').trim();const sel=document.getElementById(selId);const opt=sel&&[...sel.options].find(x=>String(x.value||'').toLowerCase()===c.toLowerCase()||String(x.textContent||'').trim().toLowerCase()===c.toLowerCase());return {sel,opt,c}}
+const AGBP_REPS=[['','—'],['sam','Sam'],['ramsey','Ramsey'],['wally','Wally'],['tomaz','Tomaz'],['tom','Tom Milan'],['tomb','Tom Bartyzel'],['luis','Luis']];
+function agbpRepOpts(sel){return sel?[...sel.options].filter(o=>!o.hidden&&!/randy/i.test(o.textContent+o.value)).map(o=>[o.value,o.textContent.trim()||'—']):AGBP_REPS}
+function agbpRepVal(sel,u){if(!sel||!u)return u;u=String(u).toLowerCase();const want={sam:'sam',ramsey:'ramsey',wally:'wally',tomaz:'tomaz',tom:'tom milan',tomb:'tom bartyzel',luis:'luis'}[u]||u;const o=[...sel.options].find(x=>String(x.value).toLowerCase()===u||String(x.textContent).trim().toLowerCase().startsWith(want));return o?o.value:u}
+const AGB_PULL_CFG={client:()=>garageSb,
+ fields:(()=>{const g=id=>($(id)||{}).value||'';const s=(id,v)=>{const e=$(id);if(e){e.value=v}};const st=R=>R.st||{};const yes=v=>v===true||v==='true';
+ const so=id=>()=>[...$(id).options].map(o=>[o.value,o.textContent]);
+ return [
+ {k:'customer',label:'Customer',cur:()=>g('customer'),from:R=>R.customer,set:v=>s('customer',v)},
+ {k:'address',label:'Address',cur:()=>g('address'),from:R=>R.address,set:v=>s('address',v)},
+ {k:'city',label:'Village / city',cur:()=>g('cityManual')||g('city'),from:R=>R.city,set:v=>{const c=String(v).replace(/^(village|city|town) of\s+/i,'').trim().toLowerCase();const o=[...$('city').options].find(x=>String(x.value||'').toLowerCase()===c||String(x.textContent||'').toLowerCase()===c);if(o){$('city').value=o.value;s('cityManual','')}else{$('city').value='Other';s('cityManual',v)}try{applyVillage()}catch(e){}}},
+ {k:'rep',label:'Drawn by / salesman',cur:()=>g('rep'),opts:()=>agbpRepOpts($('rep')),from:R=>agbpRepVal($('rep'),R.sales),set:v=>s('rep',v)},
+ {k:'w',label:'Width (ft)',cur:()=>g('width'),from:R=>R.w,set:v=>s('width',v)},
+ {k:'d',label:'Depth (ft)',cur:()=>g('depth'),from:R=>R.d,set:v=>s('depth',v)},
+ {k:'wall',label:'Wall height',cur:()=>g('wallH'),from:R=>R.wallFt,set:v=>s('wallH',v)},
+ {k:'roof',label:'Roof',cur:()=>g('roof'),opts:so('roof'),from:R=>R.roofKey,set:v=>s('roof',v)},
+ {k:'pitch',label:'Pitch',cur:()=>g('pitch'),opts:so('pitch'),from:R=>st(R).pitch,set:v=>s('pitch',v)},
+ {k:'siding',label:'Siding',cur:()=>g('siding'),opts:so('siding'),from:R=>st(R).sidingType==='hardie'?'Hardieboard':st(R).sidingType==='vinyl'?$('siding').options[0].value:'',set:v=>s('siding',v)},
+ {k:'ohW',label:'Overhead door width',cur:()=>g('ohW'),from:R=>R.doors&&R.doors[0]?R.doors[0].w:'',set:v=>s('ohW',v)},
+ {k:'ohH',label:'Overhead door height',cur:()=>g('ohH'),from:R=>R.doors&&R.doors[0]?R.doors[0].h:'',set:v=>s('ohH',v)},
+ {k:'ohCount',label:'Overhead door count',cur:()=>g('ohCount'),from:R=>R.doors&&R.doors.length?Math.min(3,R.doors.filter(d=>!d.extra).length):'',set:v=>s('ohCount',v)},
+ {k:'svcWall',label:'Service door wall',cur:()=>g('svcWall'),opts:so('svcWall'),from:R=>st(R).serviceDoorLocation||'',set:v=>s('svcWall',v)},
+ {k:'winCount',label:'Windows',cur:()=>g('winCount'),from:R=>st(R).windowType&&st(R).windowType!=='none'?(st(R).windowQty||''):'',set:v=>s('winCount',v)},
+ {k:'gfi',label:'GFI / outlets',cur:()=>g('gfiCount'),from:R=>R.kind==='est'&&st(R).electricIncluded!==false?2+(Number(st(R).extraOutlets)||0):'',set:v=>s('gfiCount',v)}
+ ]})(),
+ after:()=>{try{seedPlanItems()}catch(e){}try{gpaSum()}catch(e){}try{snapshot&&snapshot()}catch(e){}try{buildPlans()}catch(e){}}};
+
 </script>
 </body>
 </html>

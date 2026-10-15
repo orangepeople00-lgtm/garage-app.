@@ -2854,4 +2854,88 @@ sb.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_OUT')return;if(se
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&profile)refresh()});setInterval(()=>{if(profile)refresh()},15000);
 (async()=>{const {data:{session}}=await sb.auth.getSession();if(session)boot()})();
 </script>
+<script>
+/* ===== 2026-10-15: Job Folder (one-tap) + Crew Schedule week view. Uses only existing job / estimate_history (light list) / job_documents data. ===== */
+const JF_PHOTO_TYPES=['Photo','Land/Site'];
+function jfDrawingSaved(j){try{const raw=localStorage.getItem('agb_drawing_job_'+j.id);if(!raw)return null;const d=JSON.parse(raw);return d&&d.savedAt?d.savedAt:'saved'}catch(e){return null}}
+function jfRow(title,info,buttons){return `<div class="rowbox jf-row"><div class="jf-info"><strong>${title}</strong><div class="sub">${info}</div></div><div class="jf-btns">${buttons}</div></div>`}
+function jfBtn(label,js,primary){return `<button type="button" class="btn ${primary?'primary':'light'} sm" onclick="${js}">${label}</button>`}
+function jfScroll(sel){const el=document.querySelector('#drawerContent '+sel);if(el)el.scrollIntoView({behavior:'smooth',block:'start'})}
+function jobFolderHtml(j,docs){
+  const id=j.id,none='<span class="jf-none">none yet</span>';
+  const ests=estimatesForJob(j),plans=plansForJob(j);
+  const photos=docs.filter(d=>JF_PHOTO_TYPES.includes(d.document_type)),paper=docs.filter(d=>!JF_PHOTO_TYPES.includes(d.document_type));
+  const dt=x=>x&&x.created_at?new Date(x.created_at).toLocaleDateString():'';
+  const out=[];
+  out.push(ests.length?ests.map(e=>jfRow('Estimate',`${esc([e.garage_size,e.roof_type].filter(Boolean).join(' • ')||'—')}${e.estimate_price?' • '+money(e.estimate_price):''} • ${dt(e)}`,jfBtn('Open',`openEstimateSheet('${esc(e.id)}','${id}')`,1))).join('')
+    :jfRow('Estimate',none,jfBtn('+ Create',`window.location.href='estimator.html?'+jobQs(jobs.find(x=>x.id==='${id}'))`,1)));
+  const ds=jfDrawingSaved(j);
+  out.push(jfRow('Drawing',ds?('Saved on this device'+(ds!=='saved'?' • '+new Date(ds).toLocaleDateString():'')):none+' <span class="muted small">(drawings are saved per device)</span>',jfBtn(ds?'Open':'+ Create',`openJobDrawing('${id}')`,1)));
+  out.push(plans.length?plans.map(p=>jfRow('Garage Plans',`Plan set • ${dt(p)}`,jfBtn('Open',`window.location.href='GaragePlans.html?planId='+encodeURIComponent('${esc(p.id)}')+'&jobId=${id}&v='+Date.now()`,1))).join('')
+    :jfRow('Garage Plans',none,jfBtn('+ Create',`window.location.href='GaragePlans.html?'+jobQs(jobs.find(x=>x.id==='${id}'))`,1)));
+  out.push(jfRow('Carpenter Sheet','Built from this job'+(ests.length?' + linked estimate':''),jfBtn('Open',`openJobCarpenter('${id}')`,1)));
+  out.push(jfRow('Job Photos',photos.length?`${photos.length} photo${photos.length===1?'':'s'}`:none,photos.length?jfBtn('Open',`jfScroll('.ph-card')`,1)+jfBtn('+ Add',`phOpen('${id}')`):jfBtn('+ Add photos',`phOpen('${id}')`,1)));
+  out.push(jfRow('Paperwork',paper.length?esc([...new Set(paper.map(d=>d.document_type||'Document'))].join(', '))+` (${paper.length})`:none,paper.length?jfBtn('Open',`jfScroll('.scan-paperwork-box')`,1):jfBtn('+ Add paperwork',`jfScroll('.scan-paperwork-box')`,1)));
+  return `<div class="card full jf-card" id="jobFolder"><h4 style="margin:0 0 8px">📁 Job Folder</h4><div class="list">${out.join('')}</div></div>`;
+}
+(function(){const orig=openDrawer;window.openDrawer=openDrawer=async function(id){const r=await orig.apply(this,arguments);try{const j=jobs.find(x=>x.id===id);const head=document.querySelector('#drawerContent .drawerhead');if(j&&head&&!$('jobFolder')){const docs=(documents||[]).filter(d=>d.job_id===id);head.insertAdjacentHTML('afterend',jobFolderHtml(j,docs))}}catch(e){console.warn('job folder',e)}return r}})();
+
+/* ---- Crew Schedule (existing fields: scheduled_demo/demo_crew, concrete_scheduled/concrete_crew, carpentry_scheduled/carpentry_crew, electric_date/electric_crew) ---- */
+const CREW_STAGES=[['Demo','scheduled_demo','demo_crew'],['Concrete','concrete_scheduled','concrete_crew'],['Carpentry','carpentry_scheduled','carpentry_crew'],['Electric','electric_date','electric_crew']];
+let crewWeekStart=null,crewFilter='';
+function crewMonday(d){const x=new Date(d);x.setHours(0,0,0,0);const w=(x.getDay()+6)%7;x.setDate(x.getDate()-w);return x}
+function crewCanEdit(){return !!(privateAccessManager()||manager())}
+function crewNames(){const s=new Set();document.querySelectorAll('#demoCrews option,#concreteCrews option,#carpentryCrews option,#electricCrews option').forEach(o=>o.value&&s.add(o.value.trim()));jobs.forEach(j=>CREW_STAGES.forEach(st=>{const c=String(j[st[2]]||'').trim();if(c)s.add(c)}));return [...s].sort((a,b)=>a.localeCompare(b))}
+function crewWeekItems(){const days=[...Array(7)].map((_,i)=>{const d=new Date(crewWeekStart);d.setDate(d.getDate()+i);return localISO(d)});const items=[];jobs.filter(j=>status(j)!=='Completed').forEach(j=>CREW_STAGES.forEach(([stage,df,cf])=>{const d=String(j[df]||'').slice(0,10);if(days.includes(d))items.push({j,stage,date:d,crew:String(j[cf]||'').trim(),df,cf})}));return {days,items}}
+function crewMapLink(j){const a=[j.address,j.city].filter(Boolean).join(', ');return a?'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(a):''}
+function crewLink(c){return location.origin+location.pathname+'#crew='+encodeURIComponent(c)}
+function crewShift(n){crewWeekStart.setDate(crewWeekStart.getDate()+7*n);renderCrewSchedule()}
+function crewSetFilter(c){crewFilter=c||'';try{history.replaceState(null,'',location.pathname+location.search+(crewFilter?'#crew='+encodeURIComponent(crewFilter):'#crew'))}catch(e){}renderCrewSchedule()}
+function crewCopyLink(c){const u=crewLink(c);(navigator.clipboard?navigator.clipboard.writeText(u):Promise.reject()).then(()=>alert('Link copied for '+c+':\n'+u)).catch(()=>prompt('Crew link for '+c,u))}
+function renderCrewSchedule(){
+  const box=$('crewContent');if(!box)return;if(!crewWeekStart)crewWeekStart=crewMonday(new Date());
+  const {days,items}=crewWeekItems(),names=crewNames(),ed=crewCanEdit(),t=todayISO();
+  const shown=crewFilter?items.filter(x=>x.crew.toLowerCase()===crewFilter.toLowerCase()):items;
+  const dn=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const card=x=>{const j=x.j,m=crewMapLink(j);return `<div class="crew-item"><div class="crew-top"><span class="pill blue">${esc(x.stage)}</span> <b>${esc(x.crew||'No crew')}</b></div><div class="crew-cust">${esc(j.customer||'')}</div><div class="sub">${esc([j.address,j.city].filter(Boolean).join(', ')||'No address')}</div><div class="crew-btns">${m?`<a class="btn light sm" href="${m}" target="_blank" rel="noopener">🗺 Map</a>`:''}<button type="button" class="btn light sm" onclick="openJobCarpenter('${j.id}')">Carpenter sheet</button><button type="button" class="btn light sm" onclick="openDrawer('${j.id}')">Job</button>${ed?`<button type="button" class="btn primary sm" onclick="crewAssignOpen('${j.id}','${x.stage}')">Change</button>`:''}</div></div>`};
+  const end=new Date(crewWeekStart);end.setDate(end.getDate()+6);
+  box.innerHTML=`<div class="card"><div class="crew-head"><div class="crew-nav"><button class="btn light sm" onclick="crewShift(-1)">‹ Prev</button><b>Week of ${crewWeekStart.toLocaleDateString(undefined,{month:'short',day:'numeric'})} – ${end.toLocaleDateString(undefined,{month:'short',day:'numeric'})}</b><button class="btn light sm" onclick="crewShift(1)">Next ›</button><button class="btn light sm" onclick="crewWeekStart=crewMonday(new Date());renderCrewSchedule()">This week</button></div>
+  <div class="crew-filter"><label class="small muted">Crew</label><select id="crewFilterSel" onchange="crewSetFilter(this.value)"><option value="">All crews</option>${names.map(c=>`<option ${c.toLowerCase()===crewFilter.toLowerCase()?'selected':''}>${esc(c)}</option>`).join('')}</select>${crewFilter?`<button class="btn light sm" onclick="crewCopyLink('${esc(crewFilter)}')">🔗 Copy crew link</button>`:''}${ed?`<button class="btn primary sm" onclick="crewAssignOpen('','')">+ Assign crew</button>`:''}</div></div>
+  <div class="crew-week">${days.map((d,i)=>{const di=shown.filter(x=>x.date===d);return `<div class="crew-day${d===t?' today':''}"><div class="crew-dayh">${dn[i]} <span>${fmtUS(d).slice(0,5)}</span></div>${di.length?di.map(card).join(''):'<div class="muted small crew-empty">—</div>'}</div>`}).join('')}</div>
+  ${!crewFilter&&names.length?`<div class="crew-links"><div class="small muted" style="margin:10px 0 4px">Crew phone links (each shows only that crew's week):</div>${names.map(c=>`<button class="btn light sm" onclick="crewSetFilter('${esc(c)}')">${esc(c)}</button>`).join(' ')}</div>`:''}</div>`;
+}
+function crewAssignOpen(jobId,stage){
+  if(!crewCanEdit())return;let bg=$('crewAssignBg');
+  if(!bg){document.body.insertAdjacentHTML('beforeend',`<div id="crewAssignBg" class="modalbg" onclick="if(event.target===this)this.classList.remove('show')"><div class="modal" style="max-width:460px"><h3 style="margin-top:0">Assign crew</h3><div class="field"><label>Job</label><select id="ca_job"></select></div><div class="field"><label>Stage</label><select id="ca_stage">${CREW_STAGES.map(s=>`<option>${s[0]}</option>`).join('')}</select></div><div class="field"><label>Crew</label><input id="ca_crew" list="ca_crews" placeholder="Choose or type crew"><datalist id="ca_crews"></datalist></div><div class="field"><label>Date</label><input id="ca_date" type="date"></div><div style="display:flex;gap:8px;margin-top:12px"><button class="btn primary" id="ca_save" onclick="crewAssignSave()">Save</button><button class="btn light" onclick="$('crewAssignBg').classList.remove('show')">Cancel</button></div></div></div>`);bg=$('crewAssignBg');$('ca_job').onchange=$('ca_stage').onchange=crewAssignFill}
+  const act=jobs.filter(j=>status(j)!=='Completed').sort((a,b)=>String(a.customer||'').localeCompare(String(b.customer||'')));
+  $('ca_job').innerHTML=act.map(j=>`<option value="${j.id}">${esc(j.customer||'')}${j.address?' — '+esc(j.address):''}</option>`).join('');
+  $('ca_crews').innerHTML=crewNames().map(c=>`<option value="${esc(c)}">`).join('');
+  if(jobId)$('ca_job').value=jobId;$('ca_stage').value=stage||'Carpentry';crewAssignFill();bg.classList.add('show');
+}
+function crewAssignFill(){const j=jobs.find(x=>x.id===$('ca_job').value),s=CREW_STAGES.find(x=>x[0]===$('ca_stage').value);if(!j||!s)return;$('ca_crew').value=j[s[2]]||'';$('ca_date').value=String(j[s[1]]||'').slice(0,10)}
+async function crewAssignSave(){
+  if(!crewCanEdit())return;const id=$('ca_job').value,s=CREW_STAGES.find(x=>x[0]===$('ca_stage').value),j=jobs.find(x=>x.id===id);if(!j||!s)return;
+  const patch={[s[2]]:$('ca_crew').value.trim(),[s[1]]:$('ca_date').value||null};
+  const {error}=await sb.from('jobs').update(patch).eq('id',id);if(error)return alert(error.message);
+  try{const {data:{user}}=await sb.auth.getUser();await sb.from('job_activity').insert({job_id:id,actor_id:user.id,action:'Crew assigned',details:{stage:s[0],...patch}})}catch(e){}
+  Object.assign(j,patch);$('crewAssignBg').classList.remove('show');renderCrewSchedule();
+}
+(function(){
+  const sec=document.createElement('section');sec.id='crewView';sec.className='hidden';sec.innerHTML='<div id="crewContent"></div>';$('weekView').after(sec);
+  const tab=document.createElement('button');tab.className='tab';tab.dataset.view='crew';tab.textContent='Crew Schedule';tab.onclick=function(){setView('crew',this)};document.querySelector('#mainTabs [data-view="calendar"]').before(tab);
+  const sv=setView;window.setView=setView=function(v,btn){if(v==='crew'){sv('home',null);$('homeView')?.classList.add('hidden');document.body.classList.remove('on-home');currentView='crew';document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.view==='crew'));$('crewView').classList.remove('hidden');$('stats')?.classList.add('hidden');$('pageTitle').textContent='Crew Schedule';$('subtitle').textContent='Which crew is on which job this week';renderCrewSchedule();return}$('crewView')?.classList.add('hidden');return sv.apply(this,arguments)};
+  const ra=renderAll;window.renderAll=renderAll=function(){const r=ra.apply(this,arguments);try{if(currentView==='crew')renderCrewSchedule()}catch(e){}return r};
+  const rt=renderHomeTiles;window.renderHomeTiles=renderHomeTiles=function(){const r=rt.apply(this,arguments);try{const g=[...document.querySelectorAll('#homeTiles .home-group, .home-group')].find(x=>/Build/.test(x.querySelector('h4')?.textContent||''));const grid=g&&g.querySelector('.home-grid');if(grid&&!grid.querySelector('[data-tile="Crew Schedule"]'))grid.insertAdjacentHTML('beforeend',`<button type="button" class="home-tile" data-tile="Crew Schedule" onclick="setView('crew')"><b>Crew Schedule</b><span>Who is on which job this week</span></button>`)}catch(e){}return r};
+  function hashCrew(){const m=(location.hash||'').match(/^#crew(?:=(.*))?$/);if(!m)return false;crewFilter=m[1]?decodeURIComponent(m[1]):'';if(typeof jobs!=='undefined'&&jobs.length||$('appMain')&&!$('appMain').classList.contains('hidden')){setView('crew');return true}return false}
+  window.addEventListener('hashchange',hashCrew);
+  if(/^#crew/.test(location.hash||'')){let n=0;const iv=setInterval(()=>{if(hashCrew()||++n>60)clearInterval(iv)},500)}
+})();
+</script>
+<style>
+.jf-row{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.jf-info{min-width:0;flex:1 1 180px}.jf-btns{display:flex;gap:6px;flex-wrap:wrap}.jf-btns .btn{min-height:40px;min-width:72px}.jf-none{color:#b45309;font-weight:800}
+.crew-head{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px}.crew-nav,.crew-filter{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.crew-filter select{min-height:40px;font-size:16px}
+.crew-week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}.crew-day{background:#f8fafc;border:1px solid #e2e8f0;border-radius:9px;padding:6px;min-height:90px}.crew-day.today{border-color:#2563eb;background:#eff6ff}.crew-dayh{font-weight:900;font-size:13px;margin-bottom:5px}.crew-dayh span{color:#64748b;font-weight:600}
+.crew-item{background:#fff;border:1px solid #dbe2ea;border-radius:8px;padding:6px;margin-bottom:6px;font-size:12px}.crew-cust{font-weight:800;margin-top:3px}.crew-btns{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px}.crew-btns .btn{padding:6px 8px;text-decoration:none}
+@media(max-width:900px){.crew-week{grid-template-columns:1fr}.crew-day{min-height:0}.crew-day:not(.today) .crew-empty{display:none}.crew-item{font-size:14px}.crew-btns .btn{min-height:40px;padding:8px 10px}}
+</style>
 </body></html>

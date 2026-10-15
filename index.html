@@ -181,6 +181,7 @@ body.estimator-mode .estimator-exit{display:block}
   <button id="requestBtn" class="btn primary hidden" onclick="openRequest()">+ Request Sold Job</button>
   <button id="addBtn" class="btn primary hidden" onclick="openJobForm()">+ Add Job</button>
   <button id="notifySalesBtn" class="btn light hidden" onclick="openNotifySalesman()">Text salesman</button>
+  <button id="testAlertBtn" class="btn light hidden" type="button" style="min-height:44px" onclick="agbTestAlert()">🔔 Send test alert</button>
   <button id="changePwBtn" class="btn light hidden" onclick="openChangePassword()">Change Password</button>
   <button id="logoutBtn" class="btn dark hidden" onclick="logout()">Log Out</button>
  </div>
@@ -872,7 +873,7 @@ async function login(e){
  await boot();
 }
 async function showLoggedInChrome(){
- ['userBadge','logoutBtn','changePwBtn'].forEach(id=>{const el=$(id); if(el) el.classList.remove('hidden');});
+ ['userBadge','logoutBtn','changePwBtn'].forEach(id=>{const el=$(id); if(el) el.classList.remove('hidden');});try{$('testAlertBtn').classList.toggle('hidden',!manager()||!ALERT_URL)}catch(e){}
 }
 function openChangePassword(){
  ['pwCurrent','pwNew','pwConfirm'].forEach(id=>{const el=$(id); if(el) el.value='';});
@@ -908,7 +909,7 @@ async function logout(){
  profile=null;jobs=[];trashJobs=[];requests=[];editRequests=[];estimateHistory=[];
  $('appMain').classList.add('hidden');$('loginBg').classList.add('show');
  if($('loginPass'))$('loginPass').value='';
- if($('changePwBtn'))$('changePwBtn').classList.add('hidden');
+ if($('changePwBtn'))$('changePwBtn').classList.add('hidden');if($('testAlertBtn'))$('testAlertBtn').classList.add('hidden');
  if($('logoutBtn'))$('logoutBtn').classList.add('hidden');
  if($('userBadge'))$('userBadge').classList.add('hidden');
 }
@@ -964,7 +965,7 @@ async function refresh(){
  }else{
   $('syncState').textContent='Connected • '+new Date().toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})+' • '+estimateOnlyRows().length+' estimates • '+planHistoryRows().length+' plans';
  }
- populateFilters();
+ populateFilters();try{$('testAlertBtn').classList.toggle('hidden',!manager()||!ALERT_URL)}catch(e){}
  // Fill Estimate History salesman dropdown from loaded rows
  try{
   const sel=$('estimateHistorySalesFilter');
@@ -2600,7 +2601,12 @@ function jaInit(id){jaBuild();if($('f_deposit_mirror'))$('f_deposit_mirror').val
 // 2026-10-15: free new-job alerts via a Google Apps Script web app (see new-job-alert.gs). Empty = off. Fire-and-forget; never blocks a save.
 const ALERT_URL='https://script.google.com/macros/s/AKfycbzh84pJmuxSMMejGMiIDbIxMcqlYvOTDbY4ahvi-7W3dMiz07UiZ9Q120UZUe5FB7VOWw/exec';
 const ALERT_TOKEN='GARAGESMSG'; // not real security: this page is public, anyone can read it
-function agbNewJobAlert(j,src){try{if(!ALERT_URL||!j)return;const payload={token:ALERT_TOKEN,source:src||'dashboard',customer:j.customer||'',address:[j.address,j.city].filter(Boolean).join(', '),size:j.garage_size||'',salesman:DISPLAY[ukey(j.salesman_username)]||j.salesman_username||'',price:Number(j.price)||0,sold_date:j.sold_date||'',by:(profile&&profile.username)||''};fetch(ALERT_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(payload)}).catch(()=>{})}catch(e){}}
+function agbSendAlert(payload){try{if(!ALERT_URL)return false;const body=JSON.stringify(payload);let ok=false;
+ try{if(navigator.sendBeacon)ok=navigator.sendBeacon(ALERT_URL,new Blob([body],{type:'text/plain'}))}catch(e){ok=false}
+ if(!ok){try{fetch(ALERT_URL,{method:'POST',mode:'no-cors',keepalive:true,headers:{'Content-Type':'text/plain'},body}).catch(e=>console.log('AGB alert fetch failed',e))}catch(e){}}
+ console.log('AGB alert sent via '+(ok?'sendBeacon':'fetch'),payload.source,payload.customer);return true}catch(e){console.log('AGB alert error',e);return false}}
+function agbNewJobAlert(j,src){try{if(!ALERT_URL||!j)return;agbSendAlert({token:ALERT_TOKEN,source:src||'dashboard',customer:j.customer||'',address:[j.address,j.city].filter(Boolean).join(', '),size:j.garage_size||'',salesman:DISPLAY[ukey(j.salesman_username)]||j.salesman_username||'',price:Number(j.price)||0,sold_date:j.sold_date||'',by:(profile&&profile.username)||''})}catch(e){}}
+function agbTestAlert(){if(!manager())return;if(!ALERT_URL)return alert('Alerts are not set up (ALERT_URL is empty).');agbSendAlert({token:ALERT_TOKEN,source:'test button',customer:'Test Customer',address:'123 Oak St, Chicago',size:'24x24',salesman:'Sam',price:30000,by:(profile&&profile.username)||''});alert('Test alert sent — check your phone')}
 function openJobForm(id=null){if(!manager())return;openJobId=id;resetManagerJobPaperwork();$('jobFormTitle').textContent=id?'Edit Job — Attach Paperwork':'Add Job — Attach Paperwork';$('deleteJobBtn').classList.toggle('hidden',!id);fields.forEach(k=>{const e=$('f_'+k);if(e)e.value=''});$('f_id').value=id||'';$('f_city').value='Chicago';$('f_priority').value='Normal';$('f_hold_status').value='false';$('f_salesman_username').value='ramsey';$('f_sold_date').value=todayISO();$('f_permit_status').value='Not Submitted';$('f_demolition_required').value='true';$('f_demo_status').value='Pending';$('f_concrete_status').value='Pending';$('f_carpentry_status').value='Pending';$('f_electric_status').value='Pending';$('f_extras_required').value='false';$('f_extras_status').value='N/A';if(id){const j=jobs.find(x=>x.id===id);/* keep salesmen not in the fixed list (imported/past reps) instead of blanking them on save */const ss=$('f_salesman_username');[...ss.querySelectorAll('option[data-extra]')].forEach(o=>o.remove());const sv=j.salesman_username||'';if(sv&&![...ss.options].some(o=>o.value===sv)){const o=document.createElement('option');o.value=sv;o.textContent=DISPLAY[ukey(sv)]||sv;o.dataset.extra='1';ss.appendChild(o)}fields.forEach(k=>{const e=$('f_'+k);if(e)e.value=(['hold_status','demolition_required','extras_required'].includes(k)?String(!!j[k]):(k==='notes'?displayNotes(j[k]):(/(_date|^scheduled_demo|_scheduled|_poured|_ready)$/.test(k)&&j[k]?String(j[k]).slice(0,10):(j[k]??''))))})}syncDemoRequirement();syncExtrasRequirement();try{jaInit(id)}catch(e){console.warn('job form sections',e)}$('jobBg').classList.add('show')}
 function closeJobForm(){$('jobBg').classList.remove('show');openJobId=null}
 async function saveJob(e){e.preventDefault();if(!manager())return;const {data:{user}}=await sb.auth.getUser();const rec={};fields.forEach(k=>{let v=$('f_'+k).value;if(['sold_date','deposit_date','permit_date','scheduled_demo','demo_date','concrete_scheduled','concrete_poured','concrete_ready','carpentry_scheduled','built_date','electric_date','extras_scheduled','extras_complete_date','inspection_date','completed_date'].includes(k))v=v||null;if(['price','deposit'].includes(k))v=Number(v)||0;if(['hold_status','demolition_required','extras_required'].includes(k))v=v==='true';rec[k]=v});if($('f_id').value){const oj=jobs.find(x=>x.id===$('f_id').value);rec.notes=withProfitTag(rec.notes,oj);for(const im of [String(oj&&oj.notes||'').match(/\[AGB-IMPORT:[^\]]*\]/),String(oj&&oj.notes||'').match(/\[AGB-YEAR:\d{4}\]/)])if(im&&!rec.notes.includes(im[0])){/* keep the hidden import marker before the cost/profit tags */const t=rec.notes.search(/\n*\[AGB-(COSTS|PROFIT):/);rec.notes=t<0?(rec.notes?rec.notes+'\n':'')+im[0]:rec.notes.slice(0,t)+(t?'\n':'')+im[0]+rec.notes.slice(t)}}if(rec.demolition_required===false)rec.demo_status='N/A';else if(rec.demo_status==='N/A')rec.demo_status='Pending';if(rec.extras_required===false)rec.extras_status='N/A';else if(rec.extras_status==='N/A')rec.extras_status='Pending';let id=$('f_id').value,err;if(id){({error:err}=await sb.from('jobs').update(rec).eq('id',id));if(!err)await sb.from('job_activity').insert({job_id:id,actor_id:user.id,action:'Job updated',details:{status:status({...jobs.find(x=>x.id===id),...rec})}})}else{rec.created_by=user.id;const res=await sb.from('jobs').insert(rec).select().single();err=res.error;id=res.data?.id;if(!err&&id)agbNewJobAlert(res.data||rec,'new job');if(id)await sb.from('job_activity').insert({job_id:id,actor_id:user.id,action:'Job created',details:{}})}if(err)return alert(err.message);

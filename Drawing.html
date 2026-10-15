@@ -4778,7 +4778,8 @@ function spApplyAlleyApron(skipRender){
     if(c.on&&c.h>0){const aw=c.w>0?c.w:(+g.wf||20);
       state.objects.push({id:uid++,kind:'apron',role:'proposedApron',x:g.x+((+g.wf)-aw)/2*sc+c.off*sc,y:g.y+g.hf*sc,wf:aw,hf:c.h,label:`NEW CONCRETE APRON\n${spFt(aw)} x ${spFt(c.h)}`,angle:0,pxf:sc})}
     {const ap=state.objects.find(o=>o.role==='proposedApron');if(ap)spRightEdge=Math.max(spRightEdge,ap.x+ap.wf*sc);}
-    state.objects.push({id:uid++,kind:'dimension',role:'spAlleyDim',x:spRightEdge+6,y:g.y+g.hf*sc,wf:Math.max(c.dist,0.5),hf:1.1,label:`${spFt(c.dist)} TO ALLEY`,angle:90,pxf:sc});
+    let spDimX=spRightEdge+6; try{ const L=(typeof agbLotBox==='function')?agbLotBox():null; if(L && spDimX+14>L.r){ const ap=state.objects.find(o=>o.role==='proposedApron'); const le=Math.min(g.x,ap?ap.x:g.x); spDimX=(le-20>=L.x)?le-20:L.r-16; } }catch(_){}
+    state.objects.push({id:uid++,kind:'dimension',role:'spAlleyDim',x:spDimX,y:g.y+g.hf*sc,wf:Math.max(c.dist,0.5),hf:1.1,label:`${spFt(c.dist)} TO ALLEY`,angle:90,pxf:sc});
   }
   if(!skipRender){try{saveActiveSheetState()}catch(e){}try{renderObjects()}catch(e){}}
 }
@@ -4952,7 +4953,7 @@ function placeProposedGarageOnSurvey(opts={}){
  // Left wall (depth/length)
  state.objects.push({id:uid++, ...dimStyle, role:'garageWallDimW', x:x+wallPad, y:y+gh*sc/2-8, wf:4, hf:1.2, label:hLabel});
  // Right wall (depth/length)
- state.objects.push({id:uid++, ...dimStyle, role:'garageWallDimE', x:x+gw*sc-wallPad-16, y:y+gh*sc/2-8, wf:4, hf:1.2, label:hLabel});
+ state.objects.push({id:uid++, ...dimStyle, role:'garageWallDimE', x:x+gw*sc-wallPad-56, y:y+gh*sc/2-8, wf:4, hf:1.2, label:hLabel});
  // Small survey-style setback labels (NOT big-dim concrete-sheet sizes)
  const sbH=1.1;
  if(placement==='bottom-left' || placement==='custom'){
@@ -5691,6 +5692,7 @@ setInterval(()=>{ try{ if(document.querySelector('.apron-remove')) scaleApronBut
 // garage live while it is dragged or resized (mouse or touch), because every drag/resize step re-renders.
 function agbFollowProposedGarage(){
   if(state.mode!=='siteplan') return; const g=byRole('proposedGarage'); if(!g) return;
+  try{ agbKeepGarageInLot(g); }catch(_){}
   const p=g.pxf||4, key=[g.x,g.y,g.wf,g.hf,p,g.visualWpx||'',g.visualHpx||''].join('|'), last=g._follow;
   if(last===key) return;
   if(last){ const [lx,ly,lw,lh,lp]=last.split('|').map(Number); const dx=g.x-lx, dy=g.y-ly, dr=g.x+g.wf*p-(lx+lw*lp), db=g.y+g.hf*p-(ly+lh*lp);
@@ -5701,6 +5703,28 @@ function agbFollowProposedGarage(){
     try{ window.agbSyncProposedWallDims&&window.agbSyncProposedWallDims(g); }catch(_){}
   }
   g._follow=key;
+}
+// Keep the proposed garage (and the apron behind it) inside the drawn lot; warn when it cannot fit.
+function agbLotBox(){ const lot=byRole('lotOutline'); if(!lot||lot.hidden) return null; const lp=lot.pxf||(window.agbPxOf?window.agbPxOf(lot):4);
+  return {x:lot.x,y:lot.y,r:lot.x+(lot.visualWpx||lot.wf*lp),b:lot.y+(lot.visualHpx||lot.hf*lp),wf:lot.wf}; }
+function agbKeepGarageInLot(g){
+  const L0=agbLotBox(); if(L0&&!surveyData&&window.agbResizing){ if(+g.wf>L0.wf){g.wf=L0.wf;delete g.visualWpx} const lotL=(byRole('lotOutline')||{}).hf; if(lotL&&+g.hf>lotL){g.hf=lotL;delete g.visualHpx} }
+  const L=agbLotBox(); const warn=agbLotWarn(g,L); if(!L||surveyData) return;
+  const p=g.pxf||4, gw=(g.visualWpx||g.wf*p), gh=(g.visualHpx||g.hf*p);
+  const a=state.objects.find(o=>o.role==='proposedApron'); const c=(typeof spCfg==='function')?spCfg():{};
+  const behind=Math.max(a?a.hf*p:0, (c.alley&&c.dist>0)?c.dist*p:0);
+  const aw=a?a.wf*(a.pxf||p):0, aOff=a?(gw-aw)/2+(c.off||0)*p:0;   // apron left edge relative to garage
+  let minX=L.x, maxX=L.r-gw; if(a){ minX=Math.max(minX,L.x-aOff); maxX=Math.min(maxX,L.r-aOff-aw); }
+  if(!warn && maxX>=minX) g.x=Math.min(maxX,Math.max(minX,g.x)); else g.x=Math.max(L.x,Math.min(g.x,L.r-gw));
+  const maxY=L.b-gh-behind; if(maxY>=L.y) g.y=Math.min(maxY,Math.max(L.y,g.y));
+}
+function agbLotWarn(g,L){
+  let el=document.getElementById('agbLotWarn'); const too=!!(L&&g&&!surveyData&&(+g.wf>(+L.wf)+.01));
+  if(too&&!el){ el=document.createElement('div'); el.id='agbLotWarn'; el.className='agb-noprint'; el.setAttribute('role','status');
+    el.style.cssText='position:fixed;left:50%;top:8px;transform:translateX(-50%);z-index:9999;background:#fef3c7;color:#7c2d12;border:1px solid #f59e0b;border-radius:8px;padding:6px 10px;font:700 13px Arial;max-width:92vw;pointer-events:none';
+    document.body.appendChild(el); }
+  if(el){ el.style.display=too?'':'none'; if(too) el.textContent=`⚠ Garage (${g.wf}') is wider than the lot (${L.wf}'). Check the sizes.`; }
+  return too;
 }
 function renderObjectsNow(){ try{ agbFollowProposedGarage(); }catch(e){} renderObjectsNowInner(); try{ decorateApronRemove(); }catch(e){} }
 function renderObjectsNowInner(){
@@ -6327,6 +6351,7 @@ function objectPointerDown(e){
   }
   const resizing=e.target.dataset.handle==='1', rotating=e.target.dataset.rotate==='1', cutSizing=e.target.dataset.cutend==='1';
   const sideHandle=e.target.dataset.side||null; // n,s,e,w
+  window.agbResizing=!!(resizing||sideHandle);
   activeSnap = null; // fresh drag — no sticky snap yet
   // UX: a tap/select no longer creates an undo step or nudges the shape; the drag
   // only starts after the pointer travels a few px (more on touch).
@@ -6574,6 +6599,7 @@ function objectPointerDown(e){
     if(!_mvRaf) _mvRaf=requestAnimationFrame(()=>{_mvRaf=0; if(_mvEv) moveInner(_mvEv);});
   };
   const up=()=>{
+    window.agbResizing=false;
     if(_mvRaf){cancelAnimationFrame(_mvRaf);_mvRaf=0; if(_mvEv) moveInner(_mvEv);}
     activeSnap = null;
     hideSnapPreview();
@@ -8426,7 +8452,7 @@ function syncProposedWallDims(g){
   const sc=pxOf(g),pad=Math.max(10,sc*0.45),W=String(g.wf),H=String(g.hf),gw=g.wf*sc,gh=g.hf*sc;
   const set=(r,x,y,l)=>{const d=byRole(r);if(d){d.x=x;d.y=y;d.label=l}};
   set('garageWallDimN',g.x+gw/2-12,g.y+pad,W);set('garageWallDimS',g.x+gw/2-12,g.y+gh-pad-14,W);
-  set('garageWallDimW',g.x+pad,g.y+gh/2-8,H);set('garageWallDimE',g.x+gw-pad-16,g.y+gh/2-8,H);
+  set('garageWallDimW',g.x+pad,g.y+gh/2-8,H);set('garageWallDimE',g.x+gw-pad-56,g.y+gh/2-8,H);
   const rs=byRole('spRearSb');if(rs){rs.x=g.x+gw/2-10;rs.y=g.y+gh+2+((apronFor(g)?.hf||0)*sc)}
   const rr=byRole('spRightSb');if(rr){rr.x=g.x+gw;rr.y=g.y+gh/2-6}
   const ll=byRole('spLeftSb');if(ll){ll.x=Math.max(4,g.x-ll.wf*sc);ll.y=g.y+gh/2-6}

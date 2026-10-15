@@ -223,11 +223,13 @@ button{border:0;border-radius:7px;padding:8px 10px;font-weight:800;cursor:pointe
     <div><label>Posts</label><input id="patioPosts" type="number" min="4" max="8" value="4" title="Default 4"></div>
     <div><label>Post size</label><input id="patioPostSize" value='4x4' readonly></div>
   </div>
-  <label>Overhead door — type any size (16x7, 16x8, 18x7…)</label>
+  <label>Overhead doors</label>
+  <div class="row2" id="carTypeRow" style="display:none"><div><label>27'+ wide garage is a…</label><select id="carType"><option value="3car">3-car</option><option value="over2">Oversized 2-car</option></select></div><div></div></div>
+  <div class="row2"><div><label>Number of overhead doors</label><select id="ohCount"><option value="1" selected>1 door</option><option value="2">2 doors</option><option value="3">3 doors</option></select></div><input type="hidden" id="ohEdited" value=""></div>
+  <div class="row3 " data-ohrow="1"><div><label>Door 1 size</label><select id="oh1Size" class="ohsz"><option value="16x7">16x7</option><option value="16x8">16x8</option><option value="18x7">18x7</option><option value="18x8">18x8</option><option value="9x7">9x7</option><option value="8x7">8x7</option><option value="10x7">10x7</option><option value="9x8">9x8</option><option value="custom">Custom W×H</option></select></div><div><label>Door 1 W ft</label><input id="ohW" type="number" step="0.5" min="6" max="20" value="16"></div><div><label>Door 1 H ft</label><input id="ohH" type="number" step="0.5" min="6" max="12" value="7"></div></div>
+  <div class="row3 ohx" data-ohrow="2"><div><label>Door 2 size</label><select id="oh2Size" class="ohsz"><option value="16x7">16x7</option><option value="16x8">16x8</option><option value="18x7">18x7</option><option value="18x8">18x8</option><option value="9x7">9x7</option><option value="8x7">8x7</option><option value="10x7">10x7</option><option value="9x8">9x8</option><option value="custom">Custom W×H</option></select></div><div><label>Door 2 W ft</label><input id="oh2W" type="number" step="0.5" min="6" max="20" value="8"></div><div><label>Door 2 H ft</label><input id="oh2H" type="number" step="0.5" min="6" max="12" value="7"></div></div>
+  <div class="row3 ohx" data-ohrow="3"><div><label>Door 3 size</label><select id="oh3Size" class="ohsz"><option value="16x7">16x7</option><option value="16x8">16x8</option><option value="18x7">18x7</option><option value="18x8">18x8</option><option value="9x7">9x7</option><option value="8x7">8x7</option><option value="10x7">10x7</option><option value="9x8">9x8</option><option value="custom">Custom W×H</option></select></div><div><label>Door 3 W ft</label><input id="oh3W" type="number" step="0.5" min="6" max="20" value="8"></div><div><label>Door 3 H ft</label><input id="oh3H" type="number" step="0.5" min="6" max="12" value="7"></div></div>
   <div class="row3">
-    <div><label>OH width ft</label><input id="ohW" type="number" step="0.5" min="6" max="20" value="16"></div>
-    <div><label>OH doors</label><select id="ohCount"><option value="1" selected>1 door</option><option value="2">2 doors</option><option value="3">3 doors</option></select></div>
-    <div><label>OH height ft</label><input id="ohH" type="number" step="0.5" min="6" max="12" value="7"></div>
     <div><label>OH wall</label><select id="ohWall"><option value="front">Front</option><option value="back">Back</option><option value="left">Left</option><option value="right">Right</option></select></div>
   </div>
   <div class="row2">
@@ -761,7 +763,7 @@ function ftLabel(n){
 }
 function carsWord(){
   const n=carCount();
-  return n===3?'THREE-CAR':n===2?'TWO-CAR':'ONE-CAR';
+  return n===3?'THREE-CAR':n===2?((Number(val('width'))||22)>=27?'OVERSIZED TWO-CAR':'TWO-CAR'):'ONE-CAR';
 }
 function jobTitleLine(){
   const W=Number(val('width'))||22, D=Number(val('depth'))||24;
@@ -777,7 +779,7 @@ function sheetHead(title, sheetId, vbW){
 }
 function carCount(){
   const W=Number(val('width'))||22;
-  return W>=27?3:(W>=18?2:1);
+  return W>=27?(val('carType')==='over2'?2:3):(W>=18?2:1);
 }
 function conformCodesHTML(){
   const city=cityName();
@@ -1096,7 +1098,7 @@ function needsBraceDetail(){ return computeBraceRequired(); }
 function sheetTotal(){ return 9+(needsBraceDetail()?1:0)+(computeFirewallRequired()?1:0); }
 function doorScheduleHTML(){
   const rows=[];
-  rows.push(['Overhead door', (val('ohW')||'16')+' x '+(val('ohH')||'7'), 'Raised panel steel', (val('ohWall')||'front')+' wall']);
+  ohDoors().forEach((d,i)=>rows.push(['Overhead door'+(ohCount()>1?' '+(i+1):''), d.w+' x '+d.h, 'Raised panel steel', (val('ohWall')||'front')+' wall']));
   if(val('partyWall') && val('partyWall')!=='none'){
     const ps=val('partySize')||'6x7';
     rows.push(['Party door', ps, 'Raised panel overhead', val('partyWall')+' wall']);
@@ -1199,7 +1201,7 @@ function withCite(label, kind){
 function floorPlanSvg(){
   const W=Number(val('width'))||22, D=Number(val('depth'))||24;
   const ohW1=Number(val('ohW'))||16, ohW=ohGroupW(), ohH=Number(val('ohH'))||7, ohN=ohCount();
-  const ohLbl=(ohN>1?ohN+') ':'')+ohW1+'x'+ohH+' OH';
+  const ohLbl=ohDoorsText().replace(/'/g,'')+' OH';
   const ohWall=val('ohWall')||'front';
   const ret=doorReturns();
   const L=ret.left, R=ret.right;
@@ -1278,7 +1280,7 @@ function floorPlanSvg(){
     dimAlong=`<text x="${ox+L*sx/2}" y="${oy+gd+Math.max(54,eF+14)}" text-anchor="middle" font-size="11">${L}' L</text>
       <text x="${doorX+doorW+R*sx/2}" y="${oy+gd+Math.max(54,eF+14)}" text-anchor="middle" font-size="11">${R}' R</text>`;
   }
-  if(ohN>1){ for(let k=1;k<ohN;k++){ const a=L+k*ohW1+(k-1)*ohPostFt(), pw=ohPostFt()*sx;
+  if(ohN>1){ const _ds=ohDoors(); let _acc=L; for(let k=1;k<ohN;k++){ _acc+=_ds[k-1].w; const a=_acc+(k-1)*ohPostFt(), pw=ohPostFt()*sx;
       if(ohWall==='back') doorGap+=`<rect x="${ox+a*sx}" y="${oy-4}" width="${pw}" height="8" fill="#111"/>`;
       else if(ohWall==='left') doorGap+=`<rect x="${ox-4}" y="${oy+a*sx}" width="8" height="${pw}" fill="#111"/>`;
       else if(ohWall==='right') doorGap+=`<rect x="${ox+gw-4}" y="${oy+a*sx}" width="8" height="${pw}" fill="#111"/>`;
@@ -1737,7 +1739,7 @@ function windowDraw(x,y,w,h, slider){
 let planVis={};
 let planVisGeom='';
 function visGeom(){
-  return [val('width'),val('depth'),val('wallH'),val('ohW'),val('ohH'),val('ohWall'),val('partyWall'),val('partySize'),val('svcWall'),val('winWall'),val('winSize'),val('winCount')].join('|');
+  return [val('width'),val('depth'),val('wallH'),val('ohW'),val('ohH'),val('ohCount'),val('oh2W'),val('oh2H'),val('oh3W'),val('oh3H'),val('ohWall'),val('partyWall'),val('partySize'),val('svcWall'),val('winWall'),val('winSize'),val('winCount')].join('|');
 }
 function prunePlanVis(){
   const g=visGeom();
@@ -1762,7 +1764,27 @@ function visWrap(key, kind, view, inner, box){
 // ===== Style D elevations (owner-approved 2026-10-14): bold contrast, true scale, leaders on every label =====
 function ohCount(){ const n=Number(val('ohCount')); return n>=2&&n<=3?n:1; }
 function ohPostFt(){ return 1.5; }
-function ohGroupW(){ const w=Number(val('ohW'))||16, n=ohCount(); return +(n*w+(n-1)*ohPostFt()).toFixed(2); }
+function ohDoors(){ const n=ohCount(), out=[]; const ids=[['ohW','ohH'],['oh2W','oh2H'],['oh3W','oh3H']];
+  for(let i=0;i<n;i++){ const w=Number(val(ids[i][0]))||(i?8:16), h=Number(val(ids[i][1]))||7; out.push({w,h}); } return out; }
+function ohDoorsText(){ const d=ohDoors(); const same=d.every(x=>x.w===d[0].w&&x.h===d[0].h); return same?(d.length>1?d.length+' × ':'')+d[0].w+"'x"+d[0].h+"'":d.map(x=>x.w+"'x"+x.h+"'").join(' + '); }
+function ohMaxH(){ return Math.max(...ohDoors().map(d=>d.h)); }
+function ohGroupW(){ const d=ohDoors(); return +(d.reduce((a,x)=>a+x.w,0)+(d.length-1)*ohPostFt()).toFixed(2); }
+// defaults by car type; only applied while the user hasn't edited the doors by hand
+function gpSetDoors(ds){ ds=(ds||[]).filter(d=>d&&d.w&&d.h&&!d.extra).slice(0,3); if(!ds.length) return; $('ohCount').value=String(ds.length); const ids=[['ohW','ohH'],['oh2W','oh2H'],['oh3W','oh3H']]; ds.forEach((d,i)=>{ $(ids[i][0]).value=d.w; $(ids[i][1]).value=d.h; }); $('ohEdited').value='1'; ohSyncUi(); }
+function gpParseDoors(t){ return String(t||'').split(/\s*\+\s*/).map(x=>{const m=x.match(/(\d+(?:\.\d+)?)\D+(\d+(?:\.\d+)?)/);return m?{w:+m[1],h:+m[2]}:null}).filter(Boolean); }
+function ohDefaultDoors(){ const W=Number(val('width'))||22, c=carCount(); return c===3?[[16,7],[8,7]]:c===2?[[16,7]]:[[9,7]]; }
+function ohApplyDefaults(force){ if(!force && val('ohEdited')==='1') return; const d=ohDefaultDoors(); $('ohCount').value=String(d.length);
+  const ids=[['ohW','ohH'],['oh2W','oh2H'],['oh3W','oh3H']]; d.forEach((x,i)=>{ $(ids[i][0]).value=x[0]; $(ids[i][1]).value=x[1]; }); ohSyncUi(); }
+function ohSyncUi(){ const n=ohCount(); document.querySelectorAll('[data-ohrow]').forEach(r=>r.style.display=Number(r.dataset.ohrow)<=n?'':'none');
+  const ids=[['ohW','ohH'],['oh2W','oh2H'],['oh3W','oh3H']]; ids.forEach(([w,h],i)=>{ const sel=$('oh'+(i+1)+'Size'); if(!sel) return; const k=(val(w)||'')+'x'+(val(h)||''); sel.value=[...sel.options].some(o=>o.value===k)?k:'custom'; });
+  const cr=$('carTypeRow'); if(cr) cr.style.display=(Number(val('width'))||0)>=27?'':'none'; }
+document.addEventListener('change',e=>{const t=e.target; if(!t||!t.id) return;
+  const m=t.id.match(/^oh([123])Size$/); if(m&&t.value!=='custom'){ const [w,h]=t.value.split('x'); const ids=[['ohW','ohH'],['oh2W','oh2H'],['oh3W','oh3H']][m[1]-1]; $(ids[0]).value=w; $(ids[1]).value=h; }
+  if(/^(oh[123]Size|ohW|ohH|oh2W|oh2H|oh3W|oh3H|ohCount)$/.test(t.id)) $('ohEdited').value='1';
+  if(t.id==='width'||t.id==='carType') ohApplyDefaults(false);
+  ohSyncUi(); }, true);
+document.addEventListener('input',e=>{const t=e.target; if(!t||!t.id) return; if(/^(ohW|ohH|oh2W|oh2H|oh3W|oh3H)$/.test(t.id)){ $('ohEdited').value='1'; ohSyncUi(); } if(t.id==='width'){ ohApplyDefaults(false); ohSyncUi(); } }, true);
+document.addEventListener('DOMContentLoaded',()=>setTimeout(ohSyncUi,0));
 function gutterStyle(){
   if(!guttersRequired()) return 'none';
   const g=val('gutterStyle')||'seamless';
@@ -1839,7 +1861,7 @@ function elevLarge(view, title){
     for(let r=0;r<rows;r++){if(r)ln(X(x0),Y(h)+r*ph,X(x0+w),Y(h)+r*ph,w1*1.2);for(let c=0;c<cols;c++)o.push(`<rect x="${X(x0)+c*pw+pw*.14}" y="${Y(h)+r*ph+ph*.2}" width="${pw*.72}" height="${ph*.6}" fill="none" stroke="#000" stroke-width="${w1*.8}"/>`)}
     tags.push([X(x0+w/2),Y(h)+ph*.5+4,lbl]);};
   if(val('ohWall')===view){ const r=doorReturns(); const n=ohCount();
-    for(let k=0;k<n;k++){ const x0=r.left+k*(ohW1+ohPostFt()); ops.push({x:x0,w:ohW1}); panelDoor(x0,ohW1,ohH,ftl(ohW1)+'x'+ftl(ohH)+' O.H.'); } }
+    const ds=ohDoors(); let x0=r.left; for(let k=0;k<n;k++){ const d=ds[k]; ops.push({x:x0,w:d.w}); panelDoor(x0,d.w,Math.min(d.h,H-.5),ftl(d.w)+'x'+ftl(d.h)+' O.H.'); x0+=d.w+ohPostFt(); } }
   if(val('partyWall')===view){ const p=partyReturns(); const ph=Math.min(p.h,H-.5); ops.push({x:p.left,w:p.w}); panelDoor(p.left,p.w,ph,ftl(p.w)+'x'+ftl(ph)+' PARTY'); }
   if(val('svcWall')===view){ const s=svcReturns(); const x0=s.left,w=3,h=6.67; ops.push({x:x0,w});
     rc(X(x0)-3,Y(h)-3,w*S+6,h*S+3,'#fff',w2);rc(X(x0),Y(h),w*S,h*S,'#fff',w2);
@@ -2538,7 +2560,7 @@ function aiToggle(v){const cur=window._planAiMode[v]||(['floor','roofplan'].incl
 function planAiPlanPrompt(v){
   const W=Number(val('width'))||20,D=Number(val('depth'))||20,roof=val('roof')||'hip',pitch=val('pitch')||'4/12';
   const wallTxt=w=>({front:'bottom (front)',back:'top (rear)',left:'left',right:'right'}[w]||w);
-  const ops=[];if((val('ohWall')||'front')) ops.push((val('ohCount')||1)+' overhead door opening(s) '+(val('ohW')||16)+' ft wide in the '+wallTxt(val('ohWall')||'front')+' wall');
+  const ops=[];if((val('ohWall')||'front')) ops.push(ohDoors().length+' overhead door opening(s) ('+ohDoors().map(d=>d.w+' ft').join(' + ')+' wide) in the '+wallTxt(val('ohWall')||'front')+' wall');
   if(val('svcWall')&&val('svcWall')!=='none')ops.push('one 3 ft service door in the '+wallTxt(val('svcWall'))+' wall');
   if(val('winWall')&&val('winWall')!=='none'&&Number(val('winCount'))>0)ops.push(val('winCount')+' window(s) in the '+wallTxt(val('winWall'))+' wall');
   if(val('partyWall')&&val('partyWall')!=='none')ops.push('one party door in the '+wallTxt(val('partyWall'))+' wall');
@@ -2553,7 +2575,7 @@ function planAiPlanPrompt(v){
 function aiFeatures(view){
   const W=Number(val('width'))||20,D=Number(val('depth'))||20,H=Number(val('wallH'))||8,roof=val('roof')||'hip';
   if(view==='floor'){const o=[];const ww={front:[50,85],back:[50,15],left:[15,50],right:[85,50]};
-    const oh=val('ohWall')||'front';o.push({id:'oh',text:(Number(val('ohCount'))>1?val('ohCount')+' × ':'')+(val('ohW')||16)+"'x"+(val('ohH')||7)+"' OVERHEAD DOOR",tx:ww[oh][0],ty:ww[oh][1]});
+    const oh=val('ohWall')||'front';o.push({id:'oh',text:ohDoorsText()+" OVERHEAD DOOR"+(ohCount()>1?'S':''),tx:ww[oh][0],ty:ww[oh][1]});
     if(val('svcWall')&&val('svcWall')!=='none'){const p=ww[val('svcWall')];o.push({id:'svc',text:'36"x80" SERVICE DOOR',tx:p[0]+(p[1]===50?0:18),ty:p[1]+(p[1]===50?15:0)})}
     if(val('winWall')&&val('winWall')!=='none'&&Number(val('winCount'))>0){const p=ww[val('winWall')];o.push({id:'win',text:val('winCount')+' × '+(val('winSize')||'')+' WINDOW',tx:p[0]-(p[1]===50?0:18),ty:p[1]-(p[1]===50?15:0)})}
     o.push({id:'slab',text:'4" CONCRETE SLAB, SLOPE TO OH DOOR',tx:40,ty:45});o.push({id:'walls',text:'2x4 STUDS @ 16" O.C.',tx:85,ty:30});
@@ -2580,7 +2602,7 @@ function aiFeatures(view){
   out.push({id:'pitch',text:'ROOF PITCH '+(val('pitch')||'4/12')+' · '+({hip:'HIP',gable:'GABLE',revgable:'REVERSE GABLE'}[roof]||'')+' ROOF',tx:50,ty:isEave?27:20});
   out.push({id:'shing',text:aiShingleLabel(),tx:34,ty:33});
   out.push({id:'siding',text:String(val('siding')||'VINYL').toUpperCase()+' SIDING',tx:24,ty:64});
-  if((val('ohWall')||'front')===view){const n=Number(val('ohCount'))||1;out.push({id:'oh',text:(n>1?n+' × ':'')+(val('ohW')||16)+"'x"+(val('ohH')||7)+"' OVERHEAD DOOR",tx:50,ty:72})}
+  if((val('ohWall')||'front')===view){const n=Number(val('ohCount'))||1;out.push({id:'oh',text:ohDoorsText()+" OVERHEAD DOOR"+(n>1?'S':''),tx:50,ty:72})}
   if((val('partyWall')||'none')===view) out.push({id:'party',text:(val('partySize')||'6x7')+' PARTY DOOR',tx:38,ty:72});
   if((val('svcWall')||'none')===view) out.push({id:'svc',text:'36"x80" SERVICE DOOR',tx:70,ty:70});
   if((val('winWall')||'none')===view&&Number(val('winCount'))>0) out.push({id:'win',text:val('winCount')+' × '+(val('winSize')||'')+' '+String(val('winType')||'').toUpperCase()+' WINDOW',tx:36,ty:57});
@@ -3075,12 +3097,7 @@ async function gpApplyJobPrefill(){
   if(o.w) set('width',o.w); if(o.d) set('depth',o.d);
   if(o.roofKey) set('roof',o.roofKey);
   if(o.wallFt) set('wallH',o.wallFt);
-  if(o.doors && o.doors.length){
-    const main=o.doors.reduce((a,b)=>b.w>a.w?b:a,o.doors[0]);
-    const same=o.doors.every(d=>d.w===o.doors[0].w&&d.h===o.doors[0].h);
-    set('ohW', same?main.w:main.w); set('ohH',main.h);
-    if($('ohCount')) $('ohCount').value=String(same?Math.min(3,o.doors.length):1);
-  }
+  if(o.doors && o.doors.length){ gpSetDoors(o.doors); }
   try{ snapshot&&snapshot(); }catch(e){}
   setStatus('Filled from job'+(o.customer?' — '+o.customer:'')+'. Check sizes, then Generate.', true);
 }
@@ -3205,7 +3222,7 @@ function planAiJobPrompt(view){
 
   const openings=[];
   if(ohWall===view){
-    openings.push('THIS WALL HAS the '+ohW+'x'+ohH+' raised-panel steel OVERHEAD door'+(ohRet!==''?' with '+ohRet+' ft left return':' centered')+'. Door to grade. Label the door size on the door.');
+    openings.push('THIS WALL HAS '+ohDoors().length+' raised-panel steel OVERHEAD door(s): '+ohDoors().map(d=>d.w+' ft wide x '+d.h+' ft tall').join(', then ')+', side by side with a 1.5 ft post between'+(ohRet!==''?' with '+ohRet+' ft left return':' centered')+'. Door to grade. Label the door size on the door.');
   }
   if(partyWall===view){
     openings.push('THIS WALL HAS one '+partySize+' raised-panel steel PARTY door (mini overhead, ONE door, no knob, no center split)'+(partyRet!==''?' , '+partyRet+' ft from the left end':'')+'. Label the size on the door.');
@@ -3411,9 +3428,8 @@ const AGB_PULL_CFG={client:()=>garageSb,
  {k:'roof',label:'Roof',cur:()=>g('roof'),opts:so('roof'),from:R=>R.roofKey,set:v=>s('roof',v)},
  {k:'pitch',label:'Pitch',cur:()=>g('pitch'),opts:so('pitch'),from:R=>st(R).pitch,set:v=>s('pitch',v)},
  {k:'siding',label:'Siding',cur:()=>g('siding'),opts:so('siding'),from:R=>st(R).sidingType==='hardie'?'Hardieboard':st(R).sidingType==='vinyl'?$('siding').options[0].value:'',set:v=>s('siding',v)},
- {k:'ohW',label:'Overhead door width',cur:()=>g('ohW'),from:R=>R.doors&&R.doors[0]?R.doors[0].w:'',set:v=>s('ohW',v)},
- {k:'ohH',label:'Overhead door height',cur:()=>g('ohH'),from:R=>R.doors&&R.doors[0]?R.doors[0].h:'',set:v=>s('ohH',v)},
- {k:'ohCount',label:'Overhead door count',cur:()=>g('ohCount'),from:R=>R.doors&&R.doors.length?Math.min(3,R.doors.filter(d=>!d.extra).length):'',set:v=>s('ohCount',v)},
+ {k:'carType',label:"27'+ garage type",cur:()=>g('carType'),opts:()=>[['3car','3-car'],['over2','Oversized 2-car']],from:R=>(Number(R.w)||0)>=27?(String(st(R).carCapacity||'')==='3'?'3car':'over2'):'',set:v=>s('carType',v)},
+ {k:'doors',label:'Overhead doors (W x H, + between doors)',cur:()=>ohDoorsText(),from:R=>(R.doors||[]).filter(d=>!d.extra).slice(0,3).map(d=>d.w+'x'+d.h).join(' + '),set:v=>gpSetDoors(gpParseDoors(v))},
  {k:'svcWall',label:'Service door wall',cur:()=>g('svcWall'),opts:so('svcWall'),from:R=>st(R).serviceDoorLocation||'',set:v=>s('svcWall',v)},
  {k:'winCount',label:'Windows',cur:()=>g('winCount'),from:R=>st(R).windowType&&st(R).windowType!=='none'?(st(R).windowQty||''):'',set:v=>s('winCount',v)},
  {k:'gfi',label:'GFI / outlets',cur:()=>g('gfiCount'),from:R=>R.kind==='est'&&st(R).electricIncluded!==false?2+(Number(st(R).extraOutlets)||0):'',set:v=>s('gfiCount',v)}

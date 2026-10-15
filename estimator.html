@@ -3234,7 +3234,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             const extraOhOpeners = extraOhList.filter(d=>d.hasOp);
             const addlOpeners = extraOhOpeners.length;
             const openerQty = 1 + addlOpeners;
-            if (document.getElementById('openerQty')) document.getElementById('openerQty').value = String(openerQty);
+            if (document.getElementById('openerQty')) { let q=openerQty; try{ q=realOpenerCounts().total; }catch(e){} document.getElementById('openerQty').value = String(q); }
             const openerType=document.getElementById('openerType').value||'2200';
             const ohDoorOpenerPrice = Math.max(0, parseFloat(document.getElementById('ohDoorOpenerPrice')?.value) || 1200);
             // Main LiftMaster 8500 choice covers extra overhead door openers too: each is the base $450 opener here and
@@ -8587,6 +8587,20 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
         }
 
         // 3-car layout: the doors exactly as priced (door grid), for the customer sheets. null when not a 3-car layout.
+        // fix 2026-10-15: one source for the real opener count (3-car door grid or main + extra doors).
+        // Extra doors may carry their own LiftMaster 8500 while the main door is a 2200 - list both.
+        function realOpenerCounts(){
+            const main=(document.getElementById('openerType')||{}).value||'2200';
+            const tc=threeCarSheetDoors();
+            if(tc){ const n=tc.filter(d=>d.opener).length; return main==='8500'?{n2200:0,n8500:n,total:n}:{n2200:n,n8500:0,total:n}; }
+            let n2200=main==='8500'?0:1, n8500=main==='8500'?1:0;
+            (typeof collectExtraOhDoors==='function'?collectExtraOhDoors():[]).forEach(d=>{ if(!d.hasOp) return; if(main==='8500'||d.opType==='8500') n8500++; else n2200++; });
+            return {n2200,n8500,total:n2200+n8500};
+        }
+        function openerSheetText(){
+            const c=realOpenerCounts(), A='LiftMaster 2220L 3/4HP Opener w/ Camera', B='LiftMaster 8500 Wall Mount JackShaft Opener';
+            return [c.n2200?`(${c.n2200}) ${A}`:'', c.n8500?`(${c.n8500}) ${B}`:''].filter(Boolean).join(' + ');
+        }
         function threeCarSheetDoors(){
             try{
                 if(typeof isThreeCarLayout!=='function' || !isThreeCarLayout()) return null;
@@ -8772,12 +8786,9 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                 const electricOnPrint=typeof isElectricIncluded==='function'?isElectricIncluded():true;
                 const electricAltPrint=typeof getElectricAltOption==='function'?getElectricAltOption():'owner';
                 const hideOpener=false; // opener is charged even when electric is off, so it always prints
-                const openerQtyW=tcDoorsW ? tcDoorsW.filter(d=>d.opener).length : 1+(typeof collectExtraOhDoors==='function'?collectExtraOhDoors().filter(d=>d.hasOp&&(val('openerType')==='8500'||d.opType!=='8500')).length:0);
+                const openerQtyW=realOpenerCounts().total;
                 if(!hideOpener && openerQtyW>0){
-                    const openerQtyPrint=openerQtyW;
-                    const openerTypePrint=val('openerType')||'2200';
-                    const openerNamePrint=openerTypePrint==='8500'?'LiftMaster 8500 Wall Mount JackShaft Opener':'LiftMaster 2220L 3/4HP Opener w/ Camera';
-                    addSpec('Opener', `(${openerQtyPrint}) ${openerNamePrint}`);
+                    addSpec('Opener', openerSheetText());
                 }
 
                 if (doorType === 'party') {
@@ -8836,12 +8847,9 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                 const electricOnPrint2=typeof isElectricIncluded==='function'?isElectricIncluded():true;
                 const electricAltPrint2=typeof getElectricAltOption==='function'?getElectricAltOption():'owner';
                 const hideOpener2=false; // opener is charged even when electric is off, so it always prints
-                const openerQtyS=tcDoorsS ? tcDoorsS.filter(d=>d.opener).length : 1+(typeof collectExtraOhDoors==='function'?collectExtraOhDoors().filter(d=>d.hasOp&&(val('openerType')==='8500'||d.opType!=='8500')).length:0);
+                const openerQtyS=realOpenerCounts().total;
                 if(!hideOpener2 && openerQtyS>0){
-                    const openerQtyPrint=openerQtyS;
-                    const openerTypePrint=val('openerType')||'2200';
-                    const openerNamePrint=openerTypePrint==='8500'?'LiftMaster 8500 Wall Mount JackShaft Opener':'LiftMaster 2220L 3/4HP Opener w/ Camera';
-                    addSpec('Opener', `(${openerQtyPrint}) ${openerNamePrint}`);
+                    addSpec('Opener', openerSheetText());
                 }
                 if (doorType === 'party') {
                     const pw=Math.max(6,Math.min(10,Math.round(Number(val('partyDoorWidth')||6))));
@@ -11405,6 +11413,12 @@ let sharedOk=null, sharedRows=[], isAdmin=false, currentUserId='', currentUserNa
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const val=id=>(document.getElementById(id)||{}).value||'';
 function sb(){ try{ return (typeof garageSb!=='undefined')?garageSb:null; }catch(e){ return null; } }
+// fix 2026-10-15: tag AI photos with the overhead door position (off-center doors) from the estimate
+function agbDoorPosTags(){
+  try{ if(typeof isThreeCarLayout==='function'&&isThreeCarLayout()) return {};
+    const p=(typeof updateOverheadDoorOffsetControl==='function')?updateOverheadDoorOffsetControl():null; const off=Number(p&&p.offset)||0;
+    return off?{offCenter:true,doorOffset:off,doorSide:off<0?'left':'right'}:{offCenter:false}; }catch(e){ return {}; }
+}
 function currentTags(){
   let w=20,d=20; try{ const g=getGarageDimensions(); w=g.width; d=g.depth; }catch(e){}
   const roof=val('roofType')||'';
@@ -11414,7 +11428,7 @@ function currentTags(){
   const carSize=cap==='3'&&w>=27?3:(w<=14?1:(w<=24?2:(w<30?2.5:3)));
   const patio=!!(document.getElementById('roofPatioEnabled')||{}).checked;
   const alum=!!(document.getElementById('aluminumSoffit')||{}).checked;
-  return {size:w+'x'+d,width:w,depth:d,carSize,roof:reverse?'reverse gable':roof,reverse,siding:val('sidingType'),color:val('sidingColor')||val('vinylColor'),colorFamily:colorFamily(val('sidingColor')||val('vinylColor')),ohDoors:n,doorStyle:val('overheadDoorStyle'),serviceDoor:val('doorType'),trim:alum?'aluminum':'wood',patio};
+  return {size:w+'x'+d,width:w,depth:d,carSize,roof:reverse?'reverse gable':roof,reverse,siding:val('sidingType'),color:val('sidingColor')||val('vinylColor'),colorFamily:colorFamily(val('sidingColor')||val('vinylColor')),ohDoors:n,doorStyle:val('overheadDoorStyle'),serviceDoor:val('doorType'),trim:alum?'aluminum':'wood',patio,...agbDoorPosTags()};
 }
 function colorFamily(c){c=String(c||'').toLowerCase();if(/sage|green/.test(c))return 'green';if(/beige|almond|cream|tan|khaki/.test(c))return 'tan';if(/charcoal|black|dark/.test(c))return 'charcoal';if(/gray|grey|pewter/.test(c))return 'gray';if(/brown|clay|mocha/.test(c))return 'brown';if(/white/.test(c))return 'white';if(/navy|blue/.test(c))return 'navy';if(/red/.test(c))return 'red';return c;}
 // similarity of a library photo to the current estimate; null = hard-excluded from Recommended
@@ -11422,7 +11436,7 @@ function isRgRoof(r){ return /^\s*rev(erse)?[\s_-]*gable\s*$|^\s*revgable\s*$/i.
 function photoScore(t,cur){
   t=t||{};
   // fix 2026-10-15: reverse-gable estimates always get the reverse-gable photos first (presets have no car-size tag)
-  if(cur&&cur.reverse&&isRgRoof(t.roof)){ let s=100; if(t.ohDoors!=null&&Number(t.ohDoors)===Number(cur.ohDoors))s+=25; const f=colorFamily(t.color); if(f&&f===cur.colorFamily)s+=20; return s; }
+  if(cur&&cur.reverse&&isRgRoof(t.roof)){ let s=100; if(t.ohDoors!=null&&Number(t.ohDoors)===Number(cur.ohDoors))s+=25; const f=colorFamily(t.color); if(f&&f===cur.colorFamily)s+=20; if(t.offCenter!=null&&cur.offCenter!=null&&!!t.offCenter===!!cur.offCenter)s+=10; if(t.doorSide&&t.doorSide===cur.doorSide)s+=5; return s; }
   if(t.carSize!=null&&cur.carSize!=null&&Number(t.carSize)!==Number(cur.carSize))return null;
   if(!!t.patio!==!!cur.patio)return null;
   if(t.carSize==null)return null;
@@ -11431,6 +11445,7 @@ function photoScore(t,cur){
   if(t.ohDoors!=null&&Number(t.ohDoors)===Number(cur.ohDoors))sc+=25;else if(t.ohDoors===0&&cur.patio)sc+=10;
   const cf=colorFamily(t.color);if(cf&&cf===cur.colorFamily)sc+=20;
   if(t.trim&&t.trim===cur.trim)sc+=5;
+  if(t.offCenter!=null&&cur.offCenter!=null&&!!t.offCenter===!!cur.offCenter)sc+=10;
   if(t.doorStyle&&cur.doorStyle&&String(t.doorStyle).toLowerCase().includes(String(cur.doorStyle).toLowerCase().split(' ')[0]))sc+=5;
   return sc;
 }
@@ -11486,7 +11501,7 @@ function builtins(){
   const out=[];
   try{ LIBRARY_SEED.forEach(p=>out.push({id:p.id,kind:'Approved',src:new URL('library/'+p.file,document.baseURI).href,thumb:new URL('library/thumbs/'+p.file,document.baseURI).href,tags:p.tags})); }catch(e){}
   try{ (GARAGE_PHOTO_LIBRARY||[]).forEach(p=>{ if(!p||!p.src) return; const file=String(p.src).replace(/^.*\//,''); out.push({id:'lib:'+p.id,kind:'Example',src:new URL('images/'+file,document.baseURI).href,alt:new URL(file,document.baseURI).href,tags:{roof:p.reverseGable?'reverse gable':p.roof,siding:p.siding,color:p.color,ohDoors:/two_doors|double/.test(p.id)?2:1}}); }); }catch(e){}
-  try{ (REVERSE_GABLE_PRESETS||[]).forEach(p=>{ const t=(typeof RG_PRESET_TAGS!=='undefined'&&RG_PRESET_TAGS[p.id])||{}; out.push({id:'rg:'+p.id,kind:'Reverse gable',src:p.src,tags:{roof:'reverse gable',color:(p.label||'').split(',')[0],ohDoors:t.ohDoors||1}}); }); }catch(e){}
+  try{ (REVERSE_GABLE_PRESETS||[]).forEach(p=>{ const t=(typeof RG_PRESET_TAGS!=='undefined'&&RG_PRESET_TAGS[p.id])||{}; out.push({id:'rg:'+p.id,kind:'Reverse gable',src:p.src,tags:{roof:'reverse gable',color:(p.label||'').split(',')[0],ohDoors:t.ohDoors||1,offCenter:/-(left|right)$/.test(p.id),doorSide:(p.id.match(/-(left|right)$/)||[])[1]}}); }); }catch(e){}
   return out;
 }
 function choiceSet(entry){

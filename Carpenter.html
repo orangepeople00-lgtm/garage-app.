@@ -770,10 +770,8 @@ function applyDefaults(){
   if(code){
     if(code.rafters) $('rafters').value=code.rafters;
     if(code.ties && code.ties.indexOf('EPA')<0 && code.ties.indexOf('TOPO')<0) $('crossties').value=code.ties;
-    if(code.header){
-      if(/LVL/i.test(code.header)) setChoiceSilent('header','2 LVL');
-      else setChoiceSilent('header','2-2x12 w/ 1/2 Flitchplate');
-    }
+    // fix 2026-10-15: header ALWAYS defaults to 2 LVL (stronger than 2-2x12, meets every city's 2x12 minimum).
+    // City code never switches it; the carpenter can still pick 2-2x12 manually.
     const kept=val('notes').split(/\n+/).filter(l=>l && !/\bCODE\s*:/i.test(l)).join('\n');
     if(code.notes){
       const line=city.toUpperCase()+' CODE: '+code.notes;
@@ -1293,9 +1291,64 @@ function bindDoorDrag(){
   });
 }
 
+// ===== fix 2026-10-15: prefill from a dashboard job (URL params first, then Supabase job / linked estimate) =====
+async function agbReadJobPrefill(sbc){
+  const q=new URLSearchParams(location.search), o={};
+  ['customer','address','city','phone','size','roof','wall'].forEach(k=>{const v=(q.get(k)||'').trim(); if(v) o[k]=v;});
+  const jobId=q.get('jobId'), estId=q.get('estId');
+  if(!jobId && !estId && !Object.keys(o).length) return null;
+  if(sbc && jobId && (!o.customer||!o.address||!o.size||!o.city)){
+    try{ const {data}=await sbc.from('jobs').select('customer,address,city,phone,garage_size').eq('id',jobId).maybeSingle();
+      if(data){ o.customer=o.customer||data.customer||''; o.address=o.address||data.address||''; o.city=o.city||data.city||''; o.phone=o.phone||data.phone||''; o.size=o.size||data.garage_size||''; } }catch(e){ console.warn('job prefill',e); }
+  }
+  if(sbc && estId){
+    try{ const {data}=await sbc.from('estimate_history').select('roof_type,wall_height,garage_size,calc:estimate_snapshot->calculator_state').eq('id',estId).maybeSingle();
+      if(data){ o.roof=o.roof||data.roof_type||''; o.wall=o.wall||data.wall_height||'';
+        const st=data.calc||((data.estimate_snapshot||{}).calculator_state)||{};
+        if(!o.size && st.width && st.depth) o.size=st.width+'x'+st.depth;
+        o.doors=agbDoorsFromState(st); } }catch(e){ console.warn('estimate prefill',e); }
+  }
+  const m=String(o.size||'').match(/(\d+(?:\.\d+)?)\s*['’]?\s*[x×X*]\s*(\d+(?:\.\d+)?)/); if(m){ o.w=+m[1]; o.d=+m[2]; }
+  const r=String(o.roof||''); o.roofKey=/rev/i.test(r)?'revgable':/gable/i.test(r)?'gable':/hip/i.test(r)?'hip':'';
+  const wh=parseFloat(o.wall); if(wh>0) o.wallFt=wh;
+  return o;
+}
+function agbDoorsFromState(st){
+  if(!st||typeof st!=='object') return null;
+  const sz=v=>{const m=String(v||'').match(/(\d+(?:\.\d+)?)\s*x\s*(\d+(?:\.\d+)?)/i);return m?{w:+m[1],h:+m[2]}:null;};
+  const out=[];
+  if(String(st.carCapacity||'')==='3' && Number(st.width)>=27){
+    for(let i=1;i<=3;i++){const v=st['ohLayout'+i]; if(!v) continue; const d=v==='custom'?{w:+st['ohLayoutW'+i]||0,h:+st['ohLayoutH'+i]||0}:sz(v); if(d&&d.w&&d.h) out.push(d);}
+  } else {
+    const w=Number(st.overheadDoorWidth)||0,h=Number(st.overheadDoorHeight)||0; if(w&&h) out.push({w,h});
+    const n=Math.max(1,Math.min(3,parseInt(st.ohDoorQty)||1));
+    for(let i=1;i<n;i++){const v=st['extraOh'+i+'Size']; const d=v==='custom'?{w:+st['extraOh'+i+'W']||0,h:+st['extraOh'+i+'H']||0}:sz(v||'16x7'); if(d&&d.w&&d.h) out.push(d);}
+  }
+  return out.length?out:null;
+}
+function agbDoorsText(doors){ return (doors||[]).map(d=>d.w+' x '+d.h).join(' + '); }
+
+async function carpApplyJobPrefill(){
+  const o=await agbReadJobPrefill(sb); if(!o) return false;
+  const set=(id,v)=>{const e=$(id); if(e&&v!==undefined&&v!==null&&v!=='') e.value=String(v);};
+  set('customer',o.customer); set('phone',o.phone); set('address',o.address);
+  if(o.city && $('citySel')){
+    const c=o.city.replace(/^(village|city|town) of\s+/i,'').trim().toLowerCase();
+    const opt=[...$('citySel').options].find(x=>String(x.value||'').toLowerCase()===c||String(x.textContent||'').toLowerCase()===c);
+    if(opt){ $('citySel').value=opt.value; $('city').value=opt.value; $('city').style.display='none'; }
+    else { $('citySel').value='__manual__'; $('city').style.display='block'; $('city').value=o.city; }
+  }
+  const sz=(selId,inId,n)=>{ if(!n) return; const sel=$(selId); const opt=sel&&[...sel.options].find(x=>x.value===String(n)||x.textContent===String(n)); if(sel) sel.value=opt?opt.value:'custom'; set(inId,n); };
+  sz('sizeWSel','sizeW',o.w); sz('sizeLSel','sizeL',o.d);
+  if(o.roofKey) setChoiceSilent('roof',{hip:'Hip',gable:'Gable',revgable:'Reverse Gable'}[o.roofKey]);
+  if(o.wallFt) set('wallHeight',o.wallFt);
+  if(o.doors&&o.doors.length){ set('ohDoors',agbDoorsText(o.doors)); set('ohWidth',Math.max(...o.doors.map(d=>d.w))); }
+  persist(); return true;
+}
 function loadLocal(){
-  // Start blank. Nothing is typed until Apply Changes.
+  // Start blank. Nothing is typed until Apply Changes — except a ticket opened from a dashboard job is filled from that job.
   makePlans();
+  carpApplyJobPrefill().then(ok=>{ if(ok) makePlans(); }).catch(e=>console.warn('carp prefill',e));
 }
 
 document.addEventListener('focusin', e=>{ if(e.target.classList?.contains('f')) pushUndo(); });

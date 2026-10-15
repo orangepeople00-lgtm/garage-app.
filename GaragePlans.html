@@ -2374,6 +2374,10 @@ function verifiedCodeRows(){
     R.push(['Zoning (verified)','≥ 3\' FROM LOT LINES · ≥ 10\' FROM PRINCIPAL BLDG · PITCHED ROOF ≤ 20\' (ORD. 86-O-20, TITLE 6)']);
   } else if(n==='downers grove'){
     R.push(['Zoning (verify with village)','5\' SIDE/REAR (R-4) OR 6\' (OTHER R) · ≥ 10\' FROM HOUSE · MAX 23\' · FOOTINGS 42" OR APPROVED FROST DESIGN — VERIFY WITH VILLAGE']);
+  } else {
+    const XR={"schaumburg": [["Zoning (verified)", "§154.63: ONE DETACHED GARAGE · ≤ 600 SF OR 40% OF REAR YARD (LESSER) · ≥ 10' WIDE, ≤ 25' DEEP · ≤ 15' (FIN. FLOOR TO HIGHEST POINT, ≤ HOUSE) · 5' SIDE & REAR · 6' FROM DWELLING"]], "naperville": [["Zoning (verified)", "§6-2-10: 5' FROM REAR & INTERIOR SIDE LOT LINES · ≤ 18' (GRADE TO HIGHEST POINT, ≤ HOUSE) · DETACHED ACCESSORY ≤ 25% OF REQ. REAR/SIDE YARD OR 480 SF (GREATER) · FOOTPRINT ≤ HOUSE"]], "oak park": [["Zoning (verified)", "ONE ACCESSORY BLDG > 200 SF · ALL ACCESSORY ≤ 10% OF LOT & ≤ 600 SF · ≤ 13' MEAN ROOF HEIGHT · ≥ 2' FROM SIDE/REAR LOT LINE · KEEP REAR EASEMENT · LOT COVERAGE ≤ 35%"]], "skokie": [["Zoning (verified)", "§118-60: 1 STORY · ≤ 15' TO PEAK (PITCHED) · EAVE/GUTTER ≤ 10' · REAR YARD ONLY, ≥ 60' FROM FRONT LOT LINE · ≥ 3' FROM LOT LINE, 5' FROM ALLEY · > 10' FROM HOUSE UNLESS RATED · ≤ 30% OF REAR YARD"]], "park ridge": [["Zoning (verified)", "DETACHED GARAGE ≤ 720 SF · ≥ 10' FROM HOUSE · ≥ 3' FROM SIDE/REAR LOT LINES · MAX 2 DETACHED ACCESSORY BLDGS · ALLEY LOTS: ACCESS FROM ALLEY"], ["Height (verify with city)", "18' FLOOR TO PEAK, SIDEWALL ≤ 10' (> 15' NEEDS APPEARANCE COMMISSION) — VERIFY WITH CITY"]], "palatine": [["Zoning (verified)", "REAR YARD ONLY · ≤ 15' (GRADE TO MEAN EAVE/RIDGE, PEAK ≤ HOUSE) · ≥ 10' FROM HOUSE · ≥ 5' SIDE & REAR · NO EASEMENTS · REAR ACCESSORY ≤ LESSER OF 20% REAR YARD / 700 SF / 50% OF HOUSE"]], "mount prospect": [["Zoning (verified)", "§14.306: ≤ 720 SF · ≤ 15' GRADE TO PEAK · 5' REAR/INT. SIDE (LOTS > 55' WIDE) OR 3' (≤ 55') · 10' EXT. SIDE · 10' FROM HOUSE (3' W/ 5/8\" DRYWALL) · OH DOOR ≤ 8' HIGH"], ["Construction (verified)", "§21.106: 5\" SLAB W/ #10 MESH ON 4\" STONE · 12\"x12\" PERIMETER FOOTING · 2-2x12 HDR ≤ 9' DOORS, LVL ≤ 17' · SERVICE DOOR + 5 SF WINDOW · 2 SPARE EV CONDUITS · GFCI"]], "elmhurst": [["Zoning (verify with city)", "DETACHED GARAGE ≤ 720 SF FOOTPRINT · ≤ 21' · ≥ 10' FROM OTHER BLDGS · NO EASEMENTS — VERIFY WITH CITY"]], "oak lawn": [["Zoning (verified)", "ONE GARAGE · ≤ 840 SF & ≤ 35' LONG · ≤ 16' TO PEAK FROM APRON · OH DOOR ≤ 8' · 3' SIDE / 5' REAR, OFF EASEMENTS · ≥ 3' FROM HOUSE (1-HR RATED WITHIN 10')"], ["Foundation (verified)", "FLOATING SLAB OK: 4\" SLAB THICKENED TO 20\" x 10\" WIDE ON 4\" STONE · APRON SEPARATE FROM SLAB"]], "orland park": [["Zoning (verified)", "LDC §6-302: ≥ 5' FROM LOT LINES, OFF EASEMENTS · ≤ 13' MEAN HEIGHT · ≤ 720 SF (R-2/R-3/R-4), 800 SF (R-1), 1,000 SF (E-1)"]], "tinley park": [["Zoning (verified)", "DETACHED GARAGE ≤ 720 SF · 1-STORY FRAME ≤ 18' TO PEAK FROM FIN. FLOOR · ≥ 10' BEHIND HOUSE · ≥ 5' SIDE & REAR"]], "bolingbrook": [["Zoning (verify with village)", "ONE DETACHED GARAGE · ≤ 14' · ≤ 640 SF · 5' SIDE & REAR · 10' FROM HOUSE — VERIFY WITH VILLAGE"]], "joliet": [["Zoning (verify with city)", "LIMITS VARY BY ZONING DISTRICT — VERIFY HEIGHT, SIZE AND SETBACKS WITH CITY OF JOLIET"]], "elgin": [["Zoning (verify with city)", "§19.12.500: TYP. ≤ 15' IN RESIDENCE DISTRICTS · 3' INTERIOR LOT LINE (RC/TFR) — VERIFY WITH CITY"]], "wheaton": [["Zoning (verified)", "ART. XXIV: GARAGE ≤ LESSER OF 700 SF OR 30% OF REAR YARD (LARGER = SPECIAL USE) · ≤ 1-1/2 STORIES · ≥ 4' FROM HOUSE"], ["Setbacks (verify with city)", "1-STORY > 40' BEHIND FRONT SETBACK: 5' REAR / 3' SIDE — VERIFY WITH CITY"]], "glenview": [["Zoning (verified)", "§98: ≤ 35' x 27' CLEAR INSIDE · ≤ 20' HIGH, EAVE ≤ 12' (ALLEY LOTS 28'/20') · ≤ HOUSE HEIGHT · REAR 25% OF LOT: ≥ 3' SIDE, 5' REAR"]], "northbrook": [["Zoning (verified)", "ACCESSORY ≤ 15' · ≥ 5' FROM INTERIOR SIDE & REAR LOT LINES · ≥ 5' BEHIND FRONT/CORNER-SIDE FACE OF HOUSE"]], "berwyn": [["Zoning (verified)", "§1244.04(C)(7): REAR YARD · ≥ 3' REAR & INT. SIDE · ≤ 16' PITCHED / 14' FLAT · ≤ 528 SF (LOT < 40' WIDE) OR 768 SF (≥ 40') · NOT HABITABLE"]], "cicero": [["Zoning (verified)", "1 STORY · ≤ 17' GRADE TO RIDGE · ≥ 10' FROM HOUSE · REAR YARD ≥ 5' FROM ANY LOT LINE · ≤ 30% OF REAR YARD · NOT IN FRONT/SIDE SETBACK"]], "hoffman estates": [["Zoning (verified)", "≤ 15' · 440–750 SF TOTAL GARAGE AREA · ≥ 3' SIDE, 5' REAR · NO EASEMENT INCL. OVERHANG"], ["Foundation (verified)", "≤ 600 SF: THICKENED-EDGE SLAB, 12\"x12\" MIN · > 600 SF: 42\" FOOTINGS · WALLS FULLY SHEATHED 3/8\" MIN · DISCONNECT AT GARAGE"]]};
+    const k=n.replace(/^(village|city|town) of\s+/,'').trim();
+    if(XR[k]) XR[k].forEach(r=>R.push(r));
   }
   if(!isChicago() && !/unincorporated|^cook county/.test(n)) R.push(['Electrical','GARAGE RECEPTACLES GFCI PROTECTED (NEC 210.8)']);
   return R;
@@ -2865,16 +2869,73 @@ function showJobs(){
   }
 }
 
+// ===== fix 2026-10-15: prefill from a dashboard job (URL params first, then Supabase job / linked estimate) =====
+async function agbReadJobPrefill(sbc){
+  const q=new URLSearchParams(location.search), o={};
+  ['customer','address','city','phone','size','roof','wall'].forEach(k=>{const v=(q.get(k)||'').trim(); if(v) o[k]=v;});
+  const jobId=q.get('jobId'), estId=q.get('estId');
+  if(!jobId && !estId && !Object.keys(o).length) return null;
+  if(sbc && jobId && (!o.customer||!o.address||!o.size||!o.city)){
+    try{ const {data}=await sbc.from('jobs').select('customer,address,city,phone,garage_size').eq('id',jobId).maybeSingle();
+      if(data){ o.customer=o.customer||data.customer||''; o.address=o.address||data.address||''; o.city=o.city||data.city||''; o.phone=o.phone||data.phone||''; o.size=o.size||data.garage_size||''; } }catch(e){ console.warn('job prefill',e); }
+  }
+  if(sbc && estId){
+    try{ const {data}=await sbc.from('estimate_history').select('roof_type,wall_height,garage_size,calc:estimate_snapshot->calculator_state').eq('id',estId).maybeSingle();
+      if(data){ o.roof=o.roof||data.roof_type||''; o.wall=o.wall||data.wall_height||'';
+        const st=data.calc||((data.estimate_snapshot||{}).calculator_state)||{};
+        if(!o.size && st.width && st.depth) o.size=st.width+'x'+st.depth;
+        o.doors=agbDoorsFromState(st); } }catch(e){ console.warn('estimate prefill',e); }
+  }
+  const m=String(o.size||'').match(/(\d+(?:\.\d+)?)\s*['’]?\s*[x×X*]\s*(\d+(?:\.\d+)?)/); if(m){ o.w=+m[1]; o.d=+m[2]; }
+  const r=String(o.roof||''); o.roofKey=/rev/i.test(r)?'revgable':/gable/i.test(r)?'gable':/hip/i.test(r)?'hip':'';
+  const wh=parseFloat(o.wall); if(wh>0) o.wallFt=wh;
+  return o;
+}
+function agbDoorsFromState(st){
+  if(!st||typeof st!=='object') return null;
+  const sz=v=>{const m=String(v||'').match(/(\d+(?:\.\d+)?)\s*x\s*(\d+(?:\.\d+)?)/i);return m?{w:+m[1],h:+m[2]}:null;};
+  const out=[];
+  if(String(st.carCapacity||'')==='3' && Number(st.width)>=27){
+    for(let i=1;i<=3;i++){const v=st['ohLayout'+i]; if(!v) continue; const d=v==='custom'?{w:+st['ohLayoutW'+i]||0,h:+st['ohLayoutH'+i]||0}:sz(v); if(d&&d.w&&d.h) out.push(d);}
+  } else {
+    const w=Number(st.overheadDoorWidth)||0,h=Number(st.overheadDoorHeight)||0; if(w&&h) out.push({w,h});
+    const n=Math.max(1,Math.min(3,parseInt(st.ohDoorQty)||1));
+    for(let i=1;i<n;i++){const v=st['extraOh'+i+'Size']; const d=v==='custom'?{w:+st['extraOh'+i+'W']||0,h:+st['extraOh'+i+'H']||0}:sz(v||'16x7'); if(d&&d.w&&d.h) out.push(d);}
+  }
+  return out.length?out:null;
+}
+function agbDoorsText(doors){ return (doors||[]).map(d=>d.w+' x '+d.h).join(' + '); }
+
+async function gpApplyJobPrefill(){
+  const o=await agbReadJobPrefill(garageSb); if(!o) return;
+  const set=(id,v,ev)=>{const e=$(id); if(!e||v===undefined||v===null||v==='') return; e.value=String(v); if(ev) e.dispatchEvent(new Event('change',{bubbles:true}));};
+  set('customer',o.customer); set('address',o.address);
+  if(o.city && $('city')){
+    const c=o.city.replace(/^(village|city|town) of\s+/i,'').trim().toLowerCase();
+    const opt=[...$('city').options].find(x=>String(x.value||'').toLowerCase()===c||String(x.textContent||'').toLowerCase()===c);
+    if(opt){ $('city').value=opt.value; if($('cityManual')) $('cityManual').value=''; }
+    else { $('city').value='Other'; set('cityManual',o.city); }
+    try{ applyVillage(); }catch(e){}
+  }
+  if(o.w) set('width',o.w); if(o.d) set('depth',o.d);
+  if(o.roofKey) set('roof',o.roofKey);
+  if(o.wallFt) set('wallH',o.wallFt);
+  if(o.doors && o.doors.length){
+    const main=o.doors.reduce((a,b)=>b.w>a.w?b:a,o.doors[0]);
+    const same=o.doors.every(d=>d.w===o.doors[0].w&&d.h===o.doors[0].h);
+    set('ohW', same?main.w:main.w); set('ohH',main.h);
+    if($('ohCount')) $('ohCount').value=String(same?Math.min(3,o.doors.length):1);
+  }
+  try{ snapshot&&snapshot(); }catch(e){}
+  setStatus('Filled from job'+(o.customer?' — '+o.customer:'')+'. Check sizes, then Generate.', true);
+}
 document.addEventListener('DOMContentLoaded',()=>{
   try{ fillCitySelect(); }catch(e){ console.warn('fillCitySelect',e); }
   try{ loadPrefs(); }catch(e){ console.warn('loadPrefs',e); }
   if($('planDate')&&!$('planDate').value) $('planDate').value=localISODate();
   try{
     const qp=new URLSearchParams(location.search);
-    if(!qp.get('planId')){
-      if(qp.get('customer')&&$('customer')) $('customer').value=qp.get('customer');
-      if(qp.get('address')&&$('address')) $('address').value=qp.get('address');
-    }
+    if(!qp.get('planId') && (qp.get('jobId')||qp.get('customer')||qp.get('estId'))) gpApplyJobPrefill();
   }catch(e){}
   try{ setPrintPageSize(); $('sheetSize')&&$('sheetSize').addEventListener('change',setPrintPageSize); }catch(e){}
   const planId=new URLSearchParams(location.search).get('planId');

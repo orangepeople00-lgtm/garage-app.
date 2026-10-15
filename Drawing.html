@@ -2432,6 +2432,7 @@ button.danger{color:#b42318}
 <div class="field"><label>New garage slab (width x length)</label><input class="combo-dim" id="cSizeCombo" placeholder="20 x 20" value="20 x 20"/></div>
 <div class="field"><label>New apron (width x depth)</label><input class="combo-dim" id="cApronCombo" placeholder="20 x 3"/></div>
 </div>
+<label class="no-apron-toggle" style="display:flex;align-items:center;gap:8px;min-height:40px;font-weight:800;margin:4px 0"><input type="checkbox" id="noApronToggle" style="width:22px;height:22px" onchange="setNoApron(this.checked)"> Slab only, no apron</label>
 <input class="hidden-dim-source" id="cSizeW" value="20"/><input class="hidden-dim-source" id="cSizeL" value="20"/>
 <input class="hidden-dim-source" id="cApronW"/><input class="hidden-dim-source" id="cApronL"/>
 <div class="row">
@@ -3543,7 +3544,7 @@ function redrawGeneratedConcrete(opts={}){
  const awPanel=+$('cApronW').value||0, ahPanel=+$('cApronL').value||0;
  const apronComboTxt=String($('cApronCombo')?.value||'').trim();
  const apronIncomplete=!!apronComboTxt && !(awPanel&&ahPanel);
- if(awPanel && ahPanel && !a){
+ if(awPanel && ahPanel && !a && !(g&&g.noApron)){
    a={
      id:uid++,kind:'apron',role:'apron',
      x:g.x,y:g.y+garageHpx,
@@ -5362,7 +5363,8 @@ function addObject(kind){
       obj.pathPts=[{x:0,y:0},{x:w,y:0},{x:w,y:h},{x:0,y:h}];
     }
     state.objects.push(obj);
-    if(kind==='garage'){
+    if(kind==='garage' && agbNoApronPref()){ obj.role='garage'; obj.noApron=true; }
+    else if(kind==='garage'){
       const apron={
         id:uid++, kind:'apron', role:'apron', x:obj.x, y:obj.y+(hf*(obj.pxf||DRAW_PXF||22)),
         wf, hf:3, label:'', angle:0, locked:false, hidden:false, fontSize:32, fontWeight:'700',
@@ -5601,7 +5603,55 @@ function syncWhiteoutDots(layer){
   });
   _dotEls.forEach((el,key)=>{ if(!seen.has(key)){ el.remove(); _dotEls.delete(key); } });
 }
-function renderObjectsNow(){
+// ===== fix 2026-10-15: one-tap apron removal + "Slab only, no apron" (saved on the garage object and as this device's default) =====
+function agbNoApronPref(){ try{ return localStorage.getItem('agb_draw_no_apron')==='1'; }catch(e){ return false; } }
+function setNoApron(on){
+  try{ localStorage.setItem('agb_draw_no_apron', on?'1':'0'); }catch(e){}
+  const g=byRole('garage');
+  if(on){
+    if(!state.objects.some(o=>o.role==='apron')){ if(g){ g.noApron=true; renderObjects(); saveActiveSheetState(); } syncNoApronUi(); return; }
+    snapshot();
+    state.objects=state.objects.filter(o=>o.role!=='apron');
+    if(g){ g.noApron=true; delete g.pairId; }
+    ['cApronW','cApronL'].forEach(id=>{ if($(id)) $(id).value=''; });
+    if($('cApronCombo')) $('cApronCombo').value='';
+    if(state.selected && !state.objects.some(o=>o.id===state.selected)) state.selected=null;
+  } else {
+    if(g){ delete g.noApron;
+      if(!state.objects.some(o=>o.role==='apron')){
+        snapshot();
+        const p=g.pxf||DRAW_PXF||22;
+        const a={id:uid++,kind:'apron',role:'apron',x:g.x,y:g.y+(g.hf*p),wf:g.wf,hf:3,label:'',angle:g.angle||0,locked:false,hidden:false,fontSize:32,fontWeight:'700',pairId:g.id,pxf:g.pxf};
+        g.pairId=a.id; state.objects.push(a);
+        if($('cApronW')) $('cApronW').value=g.wf; if($('cApronL')) $('cApronL').value=3; if($('cApronCombo')) $('cApronCombo').value=g.wf+' x 3';
+      } }
+  }
+  renderObjects(); saveActiveSheetState(); syncNoApronUi();
+}
+window.setNoApron=setNoApron;
+function syncNoApronUi(){ const t=$('noApronToggle'); if(!t) return; const g=byRole('garage'); t.checked=g?(!!g.noApron && !state.objects.some(o=>o.role==='apron')):agbNoApronPref(); }
+function decorateApronRemove(){
+  document.querySelectorAll('#paper .obj[data-role="apron"]').forEach(el=>{
+    if(el.querySelector('.apron-remove')) return;
+    const b=document.createElement('button'); b.type='button'; b.className='apron-remove agb-noprint'; b.textContent='✕ Remove apron';
+    b.setAttribute('aria-label','Remove apron');
+    b.style.cssText='position:absolute;right:4px;top:50%;transform:translateY(-50%);z-index:30;min-height:36px;padding:6px 12px;border-radius:999px;border:2px solid #b91c1c;background:#fff;color:#b91c1c;font:800 14px Arial;cursor:pointer;white-space:nowrap;touch-action:manipulation';
+    ['pointerdown','mousedown','touchstart'].forEach(t=>b.addEventListener(t,e=>e.stopPropagation(),{passive:true}));
+    b.addEventListener('click',e=>{ e.stopPropagation(); e.preventDefault(); setNoApron(true); });
+    el.appendChild(b);
+  });
+  scaleApronButtons(); syncNoApronUi();
+}
+// keep the button finger-sized on screen whatever the drawing zoom is
+function scaleApronButtons(){
+  document.querySelectorAll('#paper .obj[data-role="apron"] .apron-remove').forEach(b=>{
+    const el=b.parentElement; const k=(el.getBoundingClientRect().width/(el.offsetWidth||1))||1;
+    b.style.transform='translateY(-50%) scale('+(1/k).toFixed(3)+')'; b.style.transformOrigin='right center';
+  });
+}
+setInterval(()=>{ try{ if(document.querySelector('.apron-remove')) scaleApronButtons(); }catch(e){} },400);
+function renderObjectsNow(){ renderObjectsNowInner(); try{ decorateApronRemove(); }catch(e){} }
+function renderObjectsNowInner(){
   tidyGeneratedLayout();
   let _wl=document.getElementById('whiteoutDotLayer');
   if(!_wl || _wl.parentNode!==drawLayer){ drawLayer.innerHTML=''; _wl=document.createElement('div'); _wl.id='whiteoutDotLayer'; _dotEls.clear(); }

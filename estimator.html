@@ -11418,8 +11418,12 @@ function currentTags(){
 }
 function colorFamily(c){c=String(c||'').toLowerCase();if(/sage|green/.test(c))return 'green';if(/beige|almond|cream|tan|khaki/.test(c))return 'tan';if(/charcoal|black|dark/.test(c))return 'charcoal';if(/gray|grey|pewter/.test(c))return 'gray';if(/brown|clay|mocha/.test(c))return 'brown';if(/white/.test(c))return 'white';if(/navy|blue/.test(c))return 'navy';if(/red/.test(c))return 'red';return c;}
 // similarity of a library photo to the current estimate; null = hard-excluded from Recommended
+function isRgRoof(r){ return /^\s*rev(erse)?[\s_-]*gable\s*$|^\s*revgable\s*$/i.test(String(r||'')); }
 function photoScore(t,cur){
-  t=t||{};if(t.carSize!=null&&cur.carSize!=null&&Number(t.carSize)!==Number(cur.carSize))return null;
+  t=t||{};
+  // fix 2026-10-15: reverse-gable estimates always get the reverse-gable photos first (presets have no car-size tag)
+  if(cur&&cur.reverse&&isRgRoof(t.roof)){ let s=100; if(t.ohDoors!=null&&Number(t.ohDoors)===Number(cur.ohDoors))s+=25; const f=colorFamily(t.color); if(f&&f===cur.colorFamily)s+=20; return s; }
+  if(t.carSize!=null&&cur.carSize!=null&&Number(t.carSize)!==Number(cur.carSize))return null;
   if(!!t.patio!==!!cur.patio)return null;
   if(t.carSize==null)return null;
   let sc=0;const r=String(t.roof||'').toLowerCase();
@@ -11531,7 +11535,7 @@ function matches(e){
   const r=val('plRoof'), d=val('plDoors'), c=val('plColor').trim().toLowerCase(), s=val('plSize').replace(/\s/g,'').toLowerCase(), k=val('plKind');
   const t=e.tags||{};
   if(k && e.kind!==k) return false;
-  if(r){ const er=String(t.roof||'').toLowerCase(); if(r==='gable'?er!=='gable':er!==r) return false; }
+  if(r){ const er=String(t.roof||'').toLowerCase(); if(r==='reverse gable'){ if(!isRgRoof(er)) return false; } else if(r==='gable'?er!=='gable':er!==r) return false; }
   if(d && String(t.ohDoors||'')!==d) return false;
   if(c && !String(t.color||'').toLowerCase().includes(c)) return false;
   if(s && String(t.size||'').toLowerCase()!==s) return false;
@@ -11540,14 +11544,24 @@ function matches(e){
 function renderGrid(){
   const g=document.getElementById('plGrid'); if(!g) return;
   const sel=val('libraryPhotoId');
-  const list=allEntries.filter(matches);
+  let list=allEntries.filter(matches), closeNote='';
+  // fix 2026-10-15: never an empty list for reverse gable - relax the other filters, then fall back to gable photos
+  if(!list.length && val('plRoof')==='reverse gable'){
+    list=allEntries.filter(e=>isRgRoof((e.tags||{}).roof));
+    if(list.length) closeNote='No reverse-gable photo matches every filter — showing all reverse-gable photos.';
+    else { list=allEntries.filter(e=>/gable/i.test(String((e.tags||{}).roof||''))); closeNote='No reverse-gable photos in the library yet — showing the closest (gable) photos.'; }
+  }
   const cur=currentTags();
-  const rec=allEntries.map(e=>({e,sc:photoScore(e.tags,cur)})).filter(x=>x.sc!=null).sort((a,b)=>b.sc-a.sc).slice(0,8);
+  // fix 2026-10-15: with a filter on, Recommended obeys the filter too (it used to stay the same 8 photos above the results)
+  const filtersOn=['plRoof','plDoors','plColor','plSize','plKind'].some(id=>String(val(id)||'').trim());
+  const rec=allEntries.filter(e=>!filtersOn||matches(e)).map(e=>({e,sc:photoScore(e.tags,cur)})).filter(x=>x.sc!=null).sort((a,b)=>b.sc-a.sc).slice(0,8);
   const card=e=>{ const t=e.tags||{}; const bits=[t.carSize?(t.carSize+'-car'):'',t.size,t.roof,t.color,t.ohDoors?(t.ohDoors+' door'+(t.ohDoors>1?'s':'')):'',t.doorStyle,t.trim?t.trim+' trim':'',t.offCenter?'off-center':'',t.patio?'rear patio':''].filter(Boolean).map(esc).join(' · ');
     const canDel=e.kind==='AI' && (isAdmin || e.local);
     return '<div class="pl-card'+(e.id===sel?' pl-sel':'')+'" data-id="'+esc(e.id)+'"><img alt="" decoding="async" src="'+esc(e.thumb||e.src||'')+'"'+(e.alt?' onerror="if(!this.dataset.t){this.dataset.t=1;this.src=\''+esc(e.alt)+'\'}"':'')+'><div class="pl-tags"><b>'+esc(e.kind)+'</b> '+bits+'</div>'+(canDel?'<button type="button" class="pl-del" data-del="'+esc(e.id)+'">Delete</button>':'')+'</div>'; };
-  g.innerHTML='<div class="pl-sec">Recommended for this estimate</div>'+(rec.length?rec.map(x=>card(x.e)).join(''):'<div class="pl-note">No close matches (same car size and patio) — pick from all photos below.</div>')
-    +'<div class="pl-sec">All photos</div>'+(list.length?list.map(card).join(''):'<div class="pl-note">No photos match these filters.</div>');
+  const recHtml=filtersOn&&!rec.length?'':'<div class="pl-sec">Recommended for this estimate</div>'+(rec.length?rec.map(x=>card(x.e)).join(''):'<div class="pl-note">No close matches (same car size and patio) — pick from all photos below.</div>');
+  const allHtml='<div class="pl-sec">'+(filtersOn?'Photos matching your filters ('+list.length+' of '+allEntries.length+')':'All photos ('+allEntries.length+')')+'</div>'+(closeNote?'<div class="pl-note">'+esc(closeNote)+'</div>':'')+(list.length?list.map(card).join(''):'<div class="pl-note">No photos match these filters.</div>');
+  g.innerHTML=filtersOn?(allHtml+recHtml):(recHtml+allHtml);
+  try{ g.scrollTop=0; }catch(e){}
   g.querySelectorAll('.pl-card').forEach(el=>el.addEventListener('click',ev=>{ if(ev.target.closest('[data-del]')) return; const e=allEntries.find(x=>x.id===el.getAttribute('data-id')); if(!e) return; window._libraryPhotoSrcId=null; choiceSet(e); if(e.kind!=='AI'||e.src) { window._libraryPhotoSrc=e.src; window._libraryPhotoSrcId=e.id; } closePhotoLibrary(); }));
   g.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click',ev=>{ ev.stopPropagation(); plDelete(b.getAttribute('data-del')); }));
 }

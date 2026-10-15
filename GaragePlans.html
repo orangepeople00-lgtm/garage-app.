@@ -109,6 +109,7 @@ button{border:0;border-radius:7px;padding:8px 10px;font-weight:800;cursor:pointe
   body{flex-direction:column}
   .sidebar{width:100%;flex:none;max-height:46vh}
 }
+.gpa-bar{display:flex;gap:8px;margin:8px 0}.gpa-bar button{flex:1;min-height:40px;border-radius:8px;border:1px solid #ffffff40;background:transparent;color:#e8eef6;font-weight:700;cursor:pointer}.gpa-sec{border:1px solid #ffffff2a;border-radius:10px;margin-bottom:8px;overflow:hidden}.gpa-h{display:flex;align-items:center;gap:8px;width:100%;min-height:48px;padding:8px 12px;border:0;background:#ffffff12;color:#fff;text-align:left;cursor:pointer;font:inherit}.gpa-sec.open .gpa-h{background:#e8c547;color:#0b1f3a}.gpa-t{font-weight:800;white-space:nowrap;font-size:14px}.gpa-s{flex:1;min-width:0;font-size:11px;opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.gpa-c{transition:transform .2s}.gpa-sec.open .gpa-c{transform:rotate(180deg)}.gpa-b{display:none;padding:4px 10px 10px}.gpa-sec.open .gpa-b{display:block}.gp-addout{min-height:36px;white-space:nowrap;padding:0 10px}@media print{.gpa-bar,.gpa-h{display:none}}
 </style>
 <style id="pageSizeStyle">@media print{@page{size:17in 11in;margin:.35in}}</style>
 </head>
@@ -257,7 +258,7 @@ button{border:0;border-radius:7px;padding:8px 10px;font-weight:800;cursor:pointe
     <div><label># of windows</label><input id="winCount" type="number" min="0" max="6" value="0"></div>
   </div>
   <div class="row2">
-    <div><label>GFI / outlets shown</label><input id="gfiCount" type="number" min="0" max="8" value="2"></div>
+    <div><label>GFI / outlets shown</label><div style="display:flex;gap:6px"><input id="gfiCount" type="number" min="0" max="8" value="2" style="flex:1"><button type="button" class="btn-ghost gp-addout" onclick="gpAddOutlet()" title="Add an outlet">+ outlet</button></div></div>
     <div><label>Lights noted</label><input id="lightCount" type="number" min="0" max="8" value="2"></div>
   </div>
   <label>Setbacks (auto from village)</label>
@@ -1403,7 +1404,7 @@ function floorPlanSvg(){
          <text class="fp-mv" data-fp-axis="x" x="${ox+gw/2}" y="${oy+gd+26}" text-anchor="middle" font-size="11" font-weight="700">APRON</text>`;
     }
   }
-  const gfi=[ox+22, ox+gw-22].map(gx=>`<g class="fp-mv" data-fp-axis="y"><circle cx="${gx}" cy="${oy+gd/2}" r="7" fill="#fff" stroke="#111"/><text x="${gx}" y="${oy+gd/2+3}" text-anchor="middle" font-size="6" font-weight="700">GFI</text></g>`).join('');
+  const gfi=''; // 2026-10-15: GFI symbols come only from the GFI / outlets count (movable overlay), default 2
   const north=`<g class="fp-mv"><g transform="translate(${Math.min(694,ox+gw+70+eR)} ${oy+18})">
     <polygon points="0,-22 6,8 -6,8" fill="#111"/>
     <line x1="0" y1="8" x2="0" y2="20" stroke="#111"/>
@@ -2931,9 +2932,40 @@ async function gpApplyJobPrefill(){
 }
 // 2026-10-15: customer/job info fields always start blank (no last-used values, no hardcoded defaults); a dashboard job link fills only what the job has
 const GP_INFO_IDS=['city','cityManual','county','customer','address','pin','planDate','planRev','rep'];
+// 2026-10-15: left panel as collapsible sections (controls are only moved; ids, values and listeners unchanged)
+const GPA_SECS=[['job','Job Info'],['size','Size & Walls'],['roof','Roof'],['ext','Siding & Exterior'],['gut','Gutters & Patio'],['doors','Doors & Windows'],['elec','Electrical'],['site','Site, Setbacks & Foundation'],['notes','Notes & Drawing Tools'],['flags','Flags & Codes'],['print','Sheet / Print & Save']];
+function gpaKeyFor(el){const t=el.tagName==='LABEL'?el.textContent.trim():'';const has=id=>el.id===id||!!(el.querySelector&&el.querySelector('#'+id));
+ if(/^Village \/ City/.test(t))return 'job';if(/^Garage size/.test(t))return 'size';if(has('roof'))return 'roof';if(has('siding'))return 'ext';if(has('gutters'))return 'gut';if(/^Overhead door/.test(t))return 'doors';if(has('gfiCount'))return 'elec';if(/^Setbacks/.test(t))return 'site';if(/^Electrical notes/.test(t))return 'elec';if(/^Special project notes/.test(t))return 'notes';if(/^Flags/.test(t))return 'flags';if(el.classList&&el.classList.contains('btns'))return 'print';return null}
+function gpaBuild(){const sb=document.querySelector('aside.sidebar');if(!sb||sb.dataset.gpa)return;sb.dataset.gpa='1';
+ const kids=[...sb.children];const secs={};const host=document.createElement('div');host.className='gpa-host';
+ GPA_SECS.forEach(([k,t])=>{const d=document.createElement('div');d.className='gpa-sec';d.dataset.k=k;d.innerHTML=`<button type="button" class="gpa-h" aria-expanded="false" onclick="gpaToggle('${k}')"><span class="gpa-t">${t}</span><span class="gpa-s"></span><span class="gpa-c">▾</span></button><div class="gpa-b"></div>`;secs[k]=d;host.appendChild(d)});
+ let cur=null;const start=kids.findIndex(e=>gpaKeyFor(e)==='job');if(start<0)return;
+ kids.slice(start).forEach(e=>{const k=gpaKeyFor(e);if(k){if(k==='elec'&&cur==='site'&&/^Electrical notes/.test(e.textContent.trim())){secs.elec.querySelector('.gpa-b').appendChild(e);cur='elecNotes';return}cur=k}else if(cur==='elecNotes'){if(e.tagName==='TEXTAREA'&&e.id==='electricNotes'){secs.elec.querySelector('.gpa-b').appendChild(e);return}cur='notes'}
+  secs[cur].querySelector('.gpa-b').appendChild(e)});
+ const bar=document.createElement('div');bar.className='gpa-bar';bar.innerHTML='<button type="button" onclick="gpaAll(true)">Expand all</button><button type="button" onclick="gpaAll(false)">Collapse all</button>';
+ sb.appendChild(bar);sb.appendChild(host);
+ Object.values(secs).forEach(d=>{if(!d.querySelector('.gpa-b').children.length)d.remove()});
+ gpaAll(false);gpaOpen('job',true);gpaOpen('size',true);gpaSum();sb.addEventListener('input',gpaSum);sb.addEventListener('change',gpaSum)}
+function gpaOpen(k,on){const d=document.querySelector(`.gpa-sec[data-k="${k}"]`);if(!d)return;d.classList.toggle('open',on);d.querySelector('.gpa-h').setAttribute('aria-expanded',on?'true':'false')}
+function gpaToggle(k){const d=document.querySelector(`.gpa-sec[data-k="${k}"]`);gpaOpen(k,!d.classList.contains('open'))}
+function gpaAll(on){GPA_SECS.forEach(([k])=>gpaOpen(k,on))}
+function gpaSum(){const v=id=>{const e=document.getElementById(id);if(!e)return'';if(e.tagName==='SELECT')return(e.selectedOptions[0]||{}).text||'';return e.value||''};const S={
+ job:[v('customer'),v('address'),v('cityManual')||(val('city')?v('city'):'')].filter(Boolean).join(' • '),
+ size:[v('width')&&v('depth')?v('width')+'×'+v('depth'):'',v('wallH')?v('wallH')+"' walls":''].filter(Boolean).join(' • '),
+ roof:[v('roof'),v('pitch')].filter(Boolean).join(' '),
+ ext:[v('siding'),v('shingles')].filter(Boolean).join(' • '),
+ gut:[v('gutterStyle'),val('patioWall')&&val('patioWall')!=='none'?'Patio '+v('patioWall'):''].filter(Boolean).join(' • '),
+ doors:[v('ohW')&&v('ohH')?'OH '+v('ohW')+'×'+v('ohH')+(Number(val('ohCount'))>1?' ×'+val('ohCount'):''):'',val('svcWall')&&val('svcWall')!=='none'?'Service '+v('svcWall'):'',Number(val('winCount'))>0&&val('winWall')!=='none'?val('winCount')+' window(s)':''].filter(Boolean).join(' • '),
+ elec:[val('gfiCount')!==''?val('gfiCount')+' GFI':'',val('lightCount')!==''?val('lightCount')+' lights':''].filter(Boolean).join(' • '),
+ site:[val('setHouse')?'House '+val('setHouse'):'',val('setSide')?'Side '+val('setSide'):''].filter(Boolean).join(' • '),
+ notes:String(val('notes')||'').slice(0,40),
+ flags:(()=>{const n=[...document.querySelectorAll('.gpa-sec[data-k=flags] input[type=checkbox]')].filter(c=>c.checked).length;return n?n+' on':''})(),print:v('sheetSize')};
+ for(const k in S){const d=document.querySelector(`.gpa-sec[data-k="${k}"] .gpa-s`);if(d)d.textContent=S[k]||'—'}}
+function gpAddOutlet(){const e=$('gfiCount');if(!e)return;e.value=String(Math.min(8,(Number(e.value)||0)+1));e.dispatchEvent(new Event('change',{bubbles:true}))}
 function gpClearInfo(){GP_INFO_IDS.forEach(id=>{const e=$(id);if(!e)return;e.setAttribute('autocomplete','off');e.value=''})}
 function gpNewPlan(){if(!confirm('Start a new plan? Customer and job info will be cleared (garage design settings stay).'))return;gpClearInfo();try{history.replaceState(null,'',location.pathname)}catch(e){}try{applyVillage()}catch(e){}try{buildPlans()}catch(e){}setStatus('New plan — info cleared.',true)}
 document.addEventListener('DOMContentLoaded',()=>{
+  try{ gpaBuild(); }catch(e){ console.warn('panel sections',e); }
   try{ fillCitySelect(); }catch(e){ console.warn('fillCitySelect',e); }
   try{ gpClearInfo(); }catch(e){}
   try{ loadPrefs(); }catch(e){ console.warn('loadPrefs',e); }

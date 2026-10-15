@@ -2622,6 +2622,15 @@ button.danger{color:#b42318}
 <div class="field"><label>Existing sidewalk size</label><input class="combo-dim" id="spExistingWalkCombo" placeholder="3 x 35"/></div>
 <input class="hidden-dim-source" id="spExistingWalkW"/><input class="hidden-dim-source" id="spExistingWalkH"/>
 <div class="field"><label>Rear setback (ft)</label><input id="spRearSetback" step=".5" type="number" value="5"/></div>
+<div style="border:2px solid #0f274b;border-radius:10px;padding:10px;margin-top:8px" id="spAlleyBox">
+  <div style="font-size:11px;font-weight:900;color:#0f274b;margin-bottom:6px;text-transform:uppercase">Alley &amp; new apron</div>
+  <div class="row"><div class="field"><label>Alley at rear</label><select id="spAlley"><option value="yes">Yes</option><option value="no">No</option></select></div>
+  <div class="field sp-al"><label>Garage to alley (ft)</label><input id="spAlleyDist" step=".5" type="number" value="3"/></div></div>
+  <div class="field sp-al"><label style="display:flex;gap:6px;align-items:center"><input id="spApronOn" type="checkbox" checked style="width:20px;height:20px"/> New concrete apron to alley</label></div>
+  <div class="row sp-al"><div class="field"><label>Apron width (ft)</label><input id="spApronW" step=".5" type="number" placeholder="= garage width"/></div>
+  <div class="field"><label>Apron length (ft)</label><input id="spApronH" step=".5" type="number" value="3"/></div></div>
+  <div class="field sp-al"><label>Apron offset (ft, − left / + right)</label><input id="spApronOff" step=".5" type="number" placeholder="0 = centered"/></div>
+</div>
 </details>
 
 
@@ -4751,6 +4760,27 @@ function syncSitePlanDimsFromWizardAndConcrete(){
   copyIf('wLotWidth','spLotWidth');
   copyIf('wLotLength','spLotLength');
 }
+
+// ===== 2026-10-15: proposed site plan — alley distance (default 3'-0") + new concrete apron (width/length/offset editable) =====
+function spCfg(){const n=id=>{const v=$(id)?.value;return v===''||v==null?null:Number(v)};return {alley:$('spAlley')?.value!=='no',dist:n('spAlleyDist')??3,on:!!$('spApronOn')?.checked,w:n('spApronW'),h:n('spApronH')??3,off:n('spApronOff')||0}}
+function spRearFt(){const c=spCfg();return c.alley?c.dist:(+$('spRearSetback').value||5)}
+function spFt(v){v=Math.round(v*12);return Math.floor(v/12)+"'-"+(v%12)+'"'}
+function spApplyAlleyApron(skipRender){
+  if(state.mode!=='siteplan')return;const g=byRole('proposedGarage');document.querySelectorAll('#spAlleyBox .sp-al').forEach(e=>e.style.display=spCfg().alley?'':'none');if(!g)return;
+  const c=spCfg();g.alleyCfg=c;const sc=g.pxf||4;
+  state.objects=state.objects.filter(o=>!['proposedApron','spAlleyDim','spAlleyLbl'].includes(o.role)&&!(o.role==='spRearSb'&&c.alley));
+  if(c.alley){
+    // keep the garage exactly "dist" ft from the alley edge: alley edge = garage rear + dist (rear = bottom on the survey sheet)
+    if(c.on&&c.h>0){const aw=c.w>0?c.w:(+g.wf||20);
+      state.objects.push({id:uid++,kind:'apron',role:'proposedApron',x:g.x+((+g.wf)-aw)/2*sc+c.off*sc,y:g.y+g.hf*sc,wf:aw,hf:c.h,label:`NEW CONCRETE APRON\n${spFt(aw)} x ${spFt(c.h)}`,angle:0,pxf:sc})}
+    state.objects.push({id:uid++,kind:'dimension',role:'spAlleyDim',x:g.x+g.wf*sc+6,y:g.y+g.hf*sc,wf:Math.max(c.dist,0.5),hf:1.1,label:`${spFt(c.dist)} TO ALLEY`,angle:90,pxf:sc});
+  }
+  if(!skipRender){try{saveActiveSheetState()}catch(e){}try{renderObjects()}catch(e){}}
+}
+function spLoadAlleyCfg(){const g=byRole('proposedGarage');const c=g&&g.alleyCfg;if(!c)return;const set=(id,v)=>{if($(id))$(id).value=v==null?'':v};
+  set('spAlley',c.alley?'yes':'no');set('spAlleyDist',c.dist);if($('spApronOn'))$('spApronOn').checked=!!c.on;set('spApronW',c.w);set('spApronH',c.h);set('spApronOff',c.off||'');document.querySelectorAll('#spAlleyBox .sp-al').forEach(e=>e.style.display=c.alley?'':'none')}
+document.addEventListener('DOMContentLoaded',()=>{['spAlley','spAlleyDist','spApronOn','spApronW','spApronH','spApronOff'].forEach(id=>{const e=$(id);if(!e)return;e.addEventListener('input',()=>spApplyAlleyApron());e.addEventListener('change',()=>spApplyAlleyApron())});
+  setTimeout(()=>{try{spLoadAlleyCfg()}catch(e){}},800);$('mode')&&$('mode').addEventListener('change',()=>setTimeout(()=>{try{spLoadAlleyCfg()}catch(e){}},50))});
 function getApronDimsForSurvey(){
   try{
     if(typeof parseDims==='function'){
@@ -4786,7 +4816,7 @@ function placeProposedGarageOnSurvey(opts={}){
  snapshot();
  const t=currentTemplate();
  const gw=+$('spGarageW').value||20,gh=+$('spGarageH').value||22;
- const ls=+$('spLeftSetback').value||3,rsd=+$('spRightSetback').value||3,rs=+$('spRearSetback').value||5;
+ const ls=+$('spLeftSetback').value||3,rsd=+$('spRightSetback').value||3,rs=spRearFt();
  // Survey drawings use a finer visual scale so labels match plat text size
  const scaleFeet=Math.max(.5,+$('spScaleFeet').value||20);
  const sc=Math.max(2.2, Math.min(5.5, 72/scaleFeet)); // tighter than concrete sheet
@@ -4894,7 +4924,7 @@ function placeProposedGarageOnSurvey(opts={}){
    label:'PROPOSED GARAGE',
    angle:0,pxf:sc
  });
- const apron=typeof getApronDimsForSurvey==='function'?getApronDimsForSurvey():{w:null,h:null};
+ const apron={h:0}; // 2026-10-15: apron is drawn by spApplyAlleyApron() from the Alley & apron inputs
  if(apron && apron.h){
    const apronW=apron.w||gw, apronH=apron.h;
    state.objects.push({
@@ -4926,7 +4956,8 @@ function placeProposedGarageOnSurvey(opts={}){
  if(placement==='bottom-right' || placement==='custom'){
    state.objects.push({id:uid++,kind:'dimension',role:'spRightSb',x:x+gw*sc,y:y+gh*sc/2-6,wf:Math.max(rsd,0.5),hf:sbH,label:`${rsd}'`,angle:0,pxf:sc});
  }
- state.objects.push({id:uid++,kind:'dimension',role:'spRearSb',x:x+gw*sc/2-10,y:y+gh*sc+2,wf:Math.max(rs,0.5),hf:sbH,label:`${rs}'`,angle:0,pxf:sc});
+ if($('spAlley')?.value==='no') state.objects.push({id:uid++,kind:'dimension',role:'spRearSb',x:x+gw*sc/2-10,y:y+gh*sc+2,wf:Math.max(rs,0.5),hf:sbH,label:`${rs}'`,angle:0,pxf:sc});
+ spApplyAlleyApron(true);
  saveActiveSheetState();renderObjects();
 }
 

@@ -119,6 +119,7 @@ button{border:0;border-radius:7px;padding:8px 10px;font-weight:800;cursor:pointe
 .ov.txt,.ov.gfi{text-shadow:0 0 2px #fff,0 0 2px #fff,0 0 3px #fff}
 @media print{.aic.sel{outline:none}.aic-tip,.gpa-bar,.toolbox{display:none!important}.aic{cursor:default}}
 .ai-tog{position:absolute;top:4px;right:4px;z-index:8;display:flex;gap:6px}.ai-tog button{min-height:34px;padding:0 10px;border-radius:8px;border:1px solid #0b1f3a;background:#fff;color:#0b1f3a;font:700 12px Arial,sans-serif;cursor:pointer}
+.alleyOnly.off{display:none}
 </style>
 <style id="pageSizeStyle">@media print{@page{size:17in 11in;margin:.35in}}</style>
 </head>
@@ -279,7 +280,9 @@ button{border:0;border-radius:7px;padding:8px 10px;font-weight:800;cursor:pointe
   <div class="row2"><div><label>Lot width</label><input id="lotW" type="number" min="0" placeholder="30"></div><div><label>Lot depth</label><input id="lotD" type="number" min="0" placeholder="125"></div></div>
   <div class="row2"><div><label>Garage to side lot line</label><input id="distSide" type="number" min="0" step="0.5" placeholder="3"></div><div><label>Which side</label><select id="sideRef"><option value="left">Left</option><option value="right">Right</option></select></div></div>
   <div class="row2"><div><label>Garage to rear lot line</label><input id="distRear" type="number" min="0" step="0.5" placeholder="3"></div><div><label>Garage to house</label><input id="distHouse" type="number" min="0" step="0.5" placeholder="10"></div></div>
-  <div class="row2"><div><label>Alley at rear</label><select id="alley"><option value="yes">Yes</option><option value="no">No</option></select></div><div></div></div>
+  <div class="row2"><div><label>Alley at rear</label><select id="alley"><option value="yes">Yes</option><option value="no">No</option></select></div><div class="alleyOnly"><label>Garage to alley (ft)</label><input id="distAlley" type="number" min="0" step="0.5" value="3"></div></div>
+  <div class="row2 alleyOnly"><div><label style="display:flex;gap:6px;align-items:center"><input id="siteApron" type="checkbox" checked style="width:20px;height:20px"> Concrete apron to alley</label></div><div><label>Apron length (ft)</label><input id="siteApronFt" type="number" min="0" step="0.5" value="3"></div></div>
+  <div class="row2 alleyOnly"><div><label>Apron width (ft)</label><input id="siteApronW" type="number" min="0" step="0.5" placeholder="= garage width"></div><div><label>Apron offset (ft, − left / + right)</label><input id="siteApronOff" type="number" step="0.5" placeholder="0 = centered"></div></div>
   <label>Foundation</label>
   <div class="row2">
     <div><label>Footing</label><input id="footing" placeholder='12" x 12"'></div>
@@ -2334,16 +2337,20 @@ function showPlanErrors(errs){
   box.style.display=errs.length?'block':'none';
   box.innerHTML=errs.length?'<b>Fix before generating:</b><br>'+errs.map(esc).join('<br>'):'';
 }
+function gpAlleyRows(){const on=val('alley')!=='no';document.querySelectorAll('.alleyOnly').forEach(e=>e.classList.toggle('off',!on))}
+document.addEventListener('change',e=>{if(e.target&&e.target.id==='alley')gpAlleyRows()});document.addEventListener('DOMContentLoaded',()=>setTimeout(gpAlleyRows,0));
 function siteNums(){
   const W=Number(val('width'))||20, D=Number(val('depth'))||20;
   const alley=val('alley')!=='no';
   const minSide=parseFt(val('setSide')), minRear=parseFt(alley?val('setRearA'):val('setRearN'));
   const side=val('distSide')!==''?Number(val('distSide')):(minSide??3);
-  const rear=val('distRear')!==''?Number(val('distRear')):(minRear??3);
+  // 2026-10-15: with an alley, the rear distance is the garage-to-alley distance (default 3'-0")
+  const rear=alley?(val('distAlley')!==''?Number(val('distAlley')):(val('distRear')!==''?Number(val('distRear')):3)):(val('distRear')!==''?Number(val('distRear')):(minRear??3));
+  const apron=alley&&$('siteApron')&&$('siteApron').checked?(val('siteApronFt')!==''?Number(val('siteApronFt')):3):0;
   const house=val('distHouse')!==''?Number(val('distHouse')):null;
   const lotW=Number(val('lotW'))||Math.max(30, W+side+3);
   const lotD=Number(val('lotD'))||125;
-  return {W,D,alley,side,rear,house,lotW,lotD,guessSide:val('distSide')==='',guessRear:val('distRear')==='',guessLot:!val('lotW')||!val('lotD'),minSide,minRear};
+  return {W,D,alley,side,rear,house,lotW,lotD,apron,apronW:Number(val('siteApronW'))>0?Number(val('siteApronW')):W,apronOff:Number(val('siteApronOff'))||0,guessSide:val('distSide')==='',guessRear:alley?false:val('distRear')==='',guessLot:!val('lotW')||!val('lotD'),minSide,minRear};
 }
 function sitePlanSvg(){
   const n=siteNums();
@@ -2372,7 +2379,12 @@ function sitePlanSvg(){
     <rect x="${hx}" y="${hy}" width="${hw}" height="${hd}" fill="#fff" stroke="#111" stroke-dasharray="3 2"/>
     <text x="${hx+hw/2}" y="${hy+hd/2+3}" text-anchor="middle" font-size="9">EXISTING HOUSE</text>
     ${dim(sideX1,gy+gd*0.3,sideX2,gy+gd*0.3, ftLabel(n.side)+(n.guessSide?' MIN.':''), gy+gd*0.3-5)}
-    ${dim(gx+gw*0.65,ly,gx+gw*0.65,gy, ftLabel(n.rear)+(n.guessRear?' MIN.':''), (ly+gy)/2+3)}
+    ${n.apron>0?(()=>{const ah=n.apron*k,ay=gy-ah,aw=n.apronW*k,ax=gx+(gw-aw)/2+n.apronOff*k,lab="NEW CONCRETE APRON "+ftLabel(n.apronW)+" x "+ftLabel(n.apron),tx=right?lx-6:lx+lw+6,ty=Math.max(ay+ah/2,ly+16);
+      return `<rect x="${ax}" y="${ay}" width="${aw}" height="${ah}" fill="#d9d9d9" stroke="#111" stroke-width="1"/><g stroke="#999" stroke-width=".6">${Array.from({length:Math.max(0,Math.floor(aw/8))},(_,i)=>`<circle cx="${ax+4+i*8}" cy="${ay+ah/2}" r=".7"/>`).join('')}</g>`+
+        (Math.abs(aw-gw)>0.5||n.apronOff?`<line x1="${ax}" y1="${ay-3}" x2="${ax+aw}" y2="${ay-3}" stroke="#c00" stroke-width=".8" marker-start="url(#arw)" marker-end="url(#arw)"/>`:'')+
+        dim(ax+aw*0.12,ay,ax+aw*0.12,gy,'',null)+
+        `<line x1="${right?ax+4:ax+aw-4}" y1="${ay+ah/2}" x2="${tx}" y2="${ty}" stroke="#111" stroke-width=".8"/><text x="${tx+(right?-2:2)}" y="${ty+3}" text-anchor="${right?'end':'start'}" font-size="8.5" font-weight="800">${esc(lab)}</text>`})():''}
+    ${n.alley?(()=>{const dx=gx+gw*0.65,tx=right?lx-6:lx+lw+6,ty=ly+2;return dim(dx,ly,dx,gy,'',null)+`<line x1="${dx}" y1="${(ly+gy)/2}" x2="${tx}" y2="${ty}" stroke="#c00" stroke-width=".8"/><text x="${tx+(right?-2:2)}" y="${ty+3}" text-anchor="${right?'end':'start'}" font-size="10" font-weight="800" fill="#c00">${esc(ftLabel(n.rear)+' TO ALLEY')}</text>`})():dim(gx+gw*0.65,ly,gx+gw*0.65,gy, ftLabel(n.rear)+(n.guessRear?' MIN.':''), (ly+gy)/2+3)}
     ${n.house!=null?dim(gx+gw*0.35,gy+gd,gx+gw*0.35,hy, ftLabel(n.house)+' TO HOUSE',(gy+gd+hy)/2+3):''}
     <g transform="translate(${VW-40},${top+30})"><polygon points="0,-18 7,6 0,1 -7,6" fill="#111"/><text x="0" y="-22" text-anchor="middle" font-size="10" font-weight="800">N</text></g>
     ${scaleBar(VW-200,VH-26,k)}

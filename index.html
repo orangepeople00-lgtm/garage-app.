@@ -948,7 +948,7 @@ async function boot(){
 async function refresh(){
  $('syncState').textContent='Syncing…';
  // LIGHT estimate list only — do NOT select estimate_snapshot (huge HTML times out / fails for managers)
- const estimateListSelect='id,customer,address,city,garage_size,roof_type,wall_height,siding,estimate_price,salesman_username,created_by,created_at,_sold:estimate_snapshot->sold';
+ const estimateListSelect='id,customer,address,city,garage_size,roof_type,wall_height,siding,estimate_price,salesman_username,created_by,created_at';
  const [{data:j,error:je},{data:tj,error:tje},{data:r,error:re},{data:d,error:de},{data:er,error:ere},{data:eh,error:ehe},{data:ce,error:cee}]=await Promise.all([
   sb.from('jobs').select('*').is('deleted_at',null).order('created_at',{ascending:false}),
   manager()?sb.from('jobs').select('*').not('deleted_at','is',null).order('deleted_at',{ascending:false}):Promise.resolve({data:[],error:null}),
@@ -2184,7 +2184,9 @@ async function fetchFullEstimateRecord(id){
   if(!error && data){
    e=data;
    const i=estimateHistory.findIndex(x=>x.id===id);
-   if(i>=0) estimateHistory[i]={...estimateHistory[i],...data};
+   if(i>=0) estimateHistory[i]={...estimateHistory[i],...data,_sold:(data.estimate_snapshot&&data.estimate_snapshot.sold)||estimateHistory[i]._sold||null};
+   e._sold=(data.estimate_snapshot&&data.estimate_snapshot.sold)||null;
+   try{estSoldBtnUpdate(id,e._sold)}catch(x){}
   }
  }catch(err){ console.warn('fetchFullEstimateRecord',err); }
  return e;
@@ -2452,6 +2454,8 @@ function agbModalClose(){$('agbMBg').classList.remove('show')}
 function estSoldInfo(e){const s=(e&&e.estimate_snapshot)||{};return s.sold||(e&&e._sold)||null}
 function estLinkedJob(e){const s=(e&&e.estimate_snapshot)||{};const id=(s.sold&&s.sold.job_id)||s.job_id||e.job_id;return id?jobs.find(j=>String(j.id)===String(id))||{id,_missing:true}:null}
 function estDupJob(e){const n=normName(e.customer),a=normAddress(e.address);return jobs.find(j=>!j.deleted_at&&a&&normAddress(j.address)===a&&(!n||normName(j.customer)===n))||null}
+function estSoldBtnHtml(id,sold){return sold?`<button class="btn light sm est-sold" data-sold-btn="${esc(id)}" onclick="openMarkSold('${esc(id)}')">✓ Sold</button>`:`<button class="btn light sm est-mark" data-sold-btn="${esc(id)}" onclick="openMarkSold('${esc(id)}')">Mark as Sold</button>`}
+function estSoldBtnUpdate(id,sold){document.querySelectorAll(`[data-sold-btn="${CSS.escape(String(id))}"]`).forEach(b=>{b.outerHTML=estSoldBtnHtml(id,sold)})}
 async function openMarkSold(id){const e=await fetchFullEstimateRecord(id);if(!e)return alert('Estimate not found.');
  const sold=estSoldInfo(e),lj=estLinkedJob(e),dup=!lj&&estDupJob(e);
  const warn=sold?`<div class="ms-warn">This estimate was already marked sold${sold.date?' on '+esc(fmtUS(sold.date)):''}${sold.by?' by '+esc(DISPLAY[ukey(sold.by)]||sold.by):''}${sold.request?' (sent for approval)':''}. Creating another job would double count it.</div>`:lj&&!lj._missing?`<div class="ms-warn">This estimate is already linked to the job <b>${esc(lj.customer||'')}</b>. Creating another job would double count it.</div>`:dup?`<div class="ms-warn">A job for <b>${esc(dup.customer||'')}</b> at ${esc(dup.address||'')} already exists. Make sure this is a different sale.</div>`:'';
@@ -2507,7 +2511,7 @@ function renderEstimateHistory(){
  rows.innerHTML=a.length?a.map(e=>{
    const salesKey=String(e.salesman_username||'').toLowerCase().trim();
    const canDel=privateAccessManager()||manager()||(myUser&&salesKey===myUser);
-   return `<tr><td>${new Date(e.created_at).toLocaleDateString()}<div class="sub">${new Date(e.created_at).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}</div></td><td><strong>${esc(e.customer)}</strong>${q&&searchMatchLabel(e,q)?`<div class="sub est-why" style="color:#1d4ed8;font-weight:700">${esc(searchMatchLabel(e,q))}</div>`:''}</td><td>${esc(DISPLAY[ukey(e.salesman_username)]||e.salesman_username)}</td><td>${esc(e.address||'')}<div class="sub">${esc(e.city||'')}</div></td><td>${esc(e.garage_size||'—')}</td><td>${esc(e.roof_type||'—')}</td><td><strong>${money(e.estimate_price)}</strong></td><td><div style="display:flex;gap:7px;align-items:center;justify-content:flex-end;flex-wrap:wrap"><button class="btn light sm" onclick="viewEstimateHistory('${e.id}')">View / Print</button><button class="btn light sm" style="background:#0f274b;color:#fff;border-color:#0f274b" onclick="editEstimateHistory('${e.id}')">Edit</button>${isRepairEstimate(e)?'':(estSoldInfo(e)?`<button class="btn light sm est-sold" onclick="openMarkSold('${e.id}')">✓ Sold</button>`:`<button class="btn light sm est-mark" onclick="openMarkSold('${e.id}')">Mark as Sold</button>`)}<button class="btn light sm" onclick="openEstNearby('${e.id}')">Nearby jobs</button>${canDel?`<button type="button" class="estimate-delete-btn" title="Delete estimate" aria-label="Delete estimate" onclick="deleteEstimateHistory('${e.id}','${esc(e.customer||'Estimate')}')">Delete</button>`:''}</div></td></tr>`;
+   return `<tr><td>${new Date(e.created_at).toLocaleDateString()}<div class="sub">${new Date(e.created_at).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}</div></td><td><strong>${esc(e.customer)}</strong>${q&&searchMatchLabel(e,q)?`<div class="sub est-why" style="color:#1d4ed8;font-weight:700">${esc(searchMatchLabel(e,q))}</div>`:''}</td><td>${esc(DISPLAY[ukey(e.salesman_username)]||e.salesman_username)}</td><td>${esc(e.address||'')}<div class="sub">${esc(e.city||'')}</div></td><td>${esc(e.garage_size||'—')}</td><td>${esc(e.roof_type||'—')}</td><td><strong>${money(e.estimate_price)}</strong></td><td><div style="display:flex;gap:7px;align-items:center;justify-content:flex-end;flex-wrap:wrap"><button class="btn light sm" onclick="viewEstimateHistory('${e.id}')">View / Print</button><button class="btn light sm" style="background:#0f274b;color:#fff;border-color:#0f274b" onclick="editEstimateHistory('${e.id}')">Edit</button>${isRepairEstimate(e)?'':estSoldBtnHtml(e.id,estSoldInfo(e))}<button class="btn light sm" onclick="openEstNearby('${e.id}')">Nearby jobs</button>${canDel?`<button type="button" class="estimate-delete-btn" title="Delete estimate" aria-label="Delete estimate" onclick="deleteEstimateHistory('${e.id}','${esc(e.customer||'Estimate')}')">Delete</button>`:''}</div></td></tr>`;
  }).join(''):`<tr><td colspan="8" style="text-align:center;padding:35px;color:#6f7a8d">${esc(emptyMsg)}</td></tr>`;
 }
 

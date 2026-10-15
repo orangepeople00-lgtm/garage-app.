@@ -2872,12 +2872,12 @@ function showJobs(){
 // ===== fix 2026-10-15: prefill from a dashboard job (URL params first, then Supabase job / linked estimate) =====
 async function agbReadJobPrefill(sbc){
   const q=new URLSearchParams(location.search), o={};
-  ['customer','address','city','phone','size','roof','wall'].forEach(k=>{const v=(q.get(k)||'').trim(); if(v) o[k]=v;});
+  ['customer','address','city','phone','size','roof','wall','sales'].forEach(k=>{const v=(q.get(k)||'').trim(); if(v) o[k]=v;});
   const jobId=q.get('jobId'), estId=q.get('estId');
   if(!jobId && !estId && !Object.keys(o).length) return null;
   if(sbc && jobId && (!o.customer||!o.address||!o.size||!o.city)){
-    try{ const {data}=await sbc.from('jobs').select('customer,address,city,phone,garage_size').eq('id',jobId).maybeSingle();
-      if(data){ o.customer=o.customer||data.customer||''; o.address=o.address||data.address||''; o.city=o.city||data.city||''; o.phone=o.phone||data.phone||''; o.size=o.size||data.garage_size||''; } }catch(e){ console.warn('job prefill',e); }
+    try{ const {data}=await sbc.from('jobs').select('*').eq('id',jobId).maybeSingle();
+      if(data){ o.customer=o.customer||data.customer||''; o.address=o.address||data.address||''; o.city=o.city||data.city||''; o.phone=o.phone||data.phone||''; o.size=o.size||data.garage_size||''; o.sales=o.sales||data.salesman_username||''; o.roof=o.roof||data.roof_type||''; } }catch(e){ console.warn('job prefill',e); }
   }
   if(sbc && estId){
     try{ const {data}=await sbc.from('estimate_history').select('roof_type,wall_height,garage_size,calc:estimate_snapshot->calculator_state').eq('id',estId).maybeSingle();
@@ -2904,6 +2904,9 @@ function agbDoorsFromState(st){
   }
   return out.length?out:null;
 }
+function agbSetRep(sel,u){ if(!sel||!u) return; u=String(u).trim().toLowerCase().replace(/@.*/,''); if(u==='randy') return;
+  const names={sam:'sam',ramsey:'ramsey',wally:'wally',tomaz:'tomaz',tomas:'tomaz',tom:'tom milan',tomb:'tom bartyzel',luis:'luis'}; const want=names[u]||u;
+  const opt=[...sel.options].find(x=>!x.hidden&&(String(x.textContent).trim().toLowerCase().startsWith(want)||String(x.value).toLowerCase()===want)); if(opt){ sel.value=opt.value; sel.dispatchEvent(new Event('change',{bubbles:true})); } }
 function agbDoorsText(doors){ return (doors||[]).map(d=>d.w+' x '+d.h).join(' + '); }
 
 async function gpApplyJobPrefill(){
@@ -2917,6 +2920,7 @@ async function gpApplyJobPrefill(){
     else { $('city').value='Other'; set('cityManual',o.city); }
     try{ applyVillage(); }catch(e){}
   }
+  try{ agbSetRep($('rep'),o.sales); }catch(e){}
   if(o.w) set('width',o.w); if(o.d) set('depth',o.d);
   if(o.roofKey) set('roof',o.roofKey);
   if(o.wallFt) set('wallH',o.wallFt);

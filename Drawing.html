@@ -2951,7 +2951,8 @@ function loadDrawingDraft(preferJob){
     const q=new URLSearchParams(location.search);
     const job=q.get('jobId')||'', name=String(q.get('customer')||'').trim().toLowerCase();
     if(job) raw=localStorage.getItem('agb_drawing_job_'+job);
-    if(!raw && name) raw=localStorage.getItem('agb_drawing_cust_'+name.replace(/[^a-z0-9]+/g,'_').slice(0,40));
+    /* a job link opens ONLY that job's drawing; the customer-name key is used only when no jobId (same name can be another job) */
+    if(!raw && name && !job) raw=localStorage.getItem('agb_drawing_cust_'+name.replace(/[^a-z0-9]+/g,'_').slice(0,40));
     if(!raw) return false;
   } else {
   if(preferJob) raw=localStorage.getItem(drawingStorageKey());

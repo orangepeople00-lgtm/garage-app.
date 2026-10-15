@@ -608,7 +608,9 @@ function jobQs(j){
   if(j.city) p.set('city', j.city);
   if(j.phone) p.set('phone', j.phone);
   if(j.garage_size) p.set('size', j.garage_size);
-  try{ const e=latestEstimateForJob(j); if(e){ p.set('estId', e.id); if(e.roof_type) p.set('roof', e.roof_type); if(e.wall_height) p.set('wall', e.wall_height); if(!j.garage_size && e.garage_size && !/^REPAIR/i.test(e.garage_size)) p.set('size', e.garage_size); } }catch(e){}
+  if(j.salesman_username) p.set('sales', j.salesman_username);
+  try{ const rf=roofOf(j); if(rf) p.set('roof', rf); }catch(e){}
+  try{ const e=latestEstimateForJob(j); if(e){ p.set('estId', e.id); if(e.roof_type && !p.get('roof')) p.set('roof', e.roof_type); if(e.wall_height) p.set('wall', e.wall_height); if(!j.garage_size && e.garage_size && !/^REPAIR/i.test(e.garage_size)) p.set('size', e.garage_size); } }catch(e){}
   p.set('v', Date.now());
   return p.toString();
 }

@@ -478,7 +478,7 @@ function agbShowOffline(){
 const sb=(window.supabase&&typeof window.supabase.createClient==='function')?window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true}}):(agbShowOffline(),agbOfflineClient());
 window.addEventListener('offline',agbShowOffline);
 const USER_EMAIL=u=>({tomb:'agbtombartyzel@gmail.com'}[u.toLowerCase()]||`${u.toLowerCase()}@absolute-garage.local`);
-const DISPLAY={randy:'Randy',sam:'Sam',ramsey:'Ramsey',wally:'Wally',tom:'Tom',tomb:'Tom Bartyzel',luis:'Luis',tomaz:'Tomaz',tomas:'Tomas',aman:'Aman',matt:'Matt',bill:'Bill',rich:'Rich',unassigned:'No sales rep listed'}; // past reps from the My Maps import have no logins
+const DISPLAY={randy:'Randy',sam:'Sam',ramsey:'Ramsey',wally:'Wally',tom:'Tom Milan',tomb:'Tom Bartyzel',luis:'Luis',tomaz:'Tomaz',tomas:'Tomaz',aman:'Aman',matt:'Matt',bill:'Bill',rich:'Rich',unassigned:'No sales rep listed'}; // past reps from the My Maps import have no logins
 const STAFF_PHONE_KEY='agb_staff_phones_v1';
 function staffPhones(){ try{return JSON.parse(localStorage.getItem(STAFF_PHONE_KEY)||'{}');}catch(e){return{};} }
 function setStaffPhone(user,phone){
@@ -1085,7 +1085,7 @@ function soldISO(j){return chicagoISOOf(j.sold_date)||chicagoISOOf(j.created_at)
 function periodRanges(){const t=chicagoTodayISO();const [y,m,d]=t.split('-').map(Number);const dt=new Date(Date.UTC(y,m-1,d));const dow=(dt.getUTCDay()+6)%7;const ws=new Date(dt);ws.setUTCDate(dt.getUTCDate()-dow);const we=new Date(ws);we.setUTCDate(ws.getUTCDate()+6);const iso=x=>x.toISOString().slice(0,10);return {week:[iso(ws),iso(we)],month:[t.slice(0,7)+'-01',t.slice(0,7)+'-31'],year:[y+'-01-01',y+'-12-31']}}
 function inPeriod(j,r){const s=soldISO(j);return !!s&&s>=r[0]&&s<=r[1]}
 // fix 2026-10-15: one salesman key everywhere (map colors, legend, filters, commissions) - Sam's aliases fold into 'sam'
-const SALES_ALIASES={luid:'luis','no rep':'unassigned',sam:'sam',samer:'sam',samb:'sam','sam b':'sam','sam barakat':'sam','samer barakat':'sam','sam b.':'sam'};
+const SALES_ALIASES={luid:'luis',tomas:'tomaz','no rep':'unassigned',sam:'sam',samer:'sam',samb:'sam','sam b':'sam','sam barakat':'sam','samer barakat':'sam','sam b.':'sam'};
 const ukey=u=>{let k=String(u||'').toLowerCase().trim().replace(/\s+/g,' ');if(!k)return '';const local=k.includes('@')?k.split('@')[0].replace(/[._-]+/g,' ').trim():k;return SALES_ALIASES[local]||SALES_ALIASES[local.replace(/\s+/g,'')]||SALES_ALIASES[k]||(k.includes('@')?local:k)};
 function monthlySoldCount(u,ym){return jobs.filter(j=>ukey(j.salesman_username)===u&&(soldISO(j)||'').slice(0,7)===ym).length}
 // fix 2026-10-15: imported past jobs (My Maps) have no profit and never count toward commissions or 5+ bonuses

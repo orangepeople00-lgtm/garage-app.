@@ -8,7 +8,7 @@ insert into public.jobs (customer,address,city,salesman_username,sold_date,garag
   inspection_status,final_payment,deposit_status,hold_status,price,deposit,priority,created_by)
 select v.customer,v.address,v.city,v.salesman,v.d,v.gs,v.d,v.lat,v.lng,v.notes,
   'N/A',false,'N/A','N/A','Garage Built','Not Included',false,'N/A','Passed','Paid','Received',false,0,0,'Normal',
-  coalesce((select user_id from public.staff_profiles where lower(username)='ramsey' limit 1),auth.uid())
+  coalesce((select id from public.staff_profiles where lower(username)='ramsey' limit 1),auth.uid())
 from (values
 ('Harold Hansan','7414 N Sheridan Rd','Chicago','wally','2019-10-03'::date,null,42.0165792,-87.6656356,'[AGB-IMPORT:mymaps-2026-10-15]'),
 ('Helana Tsoukalas','4810 S Indiana Ave','Chicago','luis','2019-10-31'::date,null,41.8070873,-87.6215068,'[AGB-IMPORT:mymaps-2026-10-15]'),

@@ -8,7 +8,7 @@ insert into public.jobs (customer,address,city,salesman_username,sold_date,garag
   inspection_status,final_payment,deposit_status,hold_status,price,deposit,priority,created_by)
 select v.customer,v.address,v.city,v.salesman,v.d,v.gs,v.d,v.lat,v.lng,v.notes,
   'N/A',false,'N/A','N/A','Garage Built','Not Included',false,'N/A','Passed','Paid','Received',false,0,0,'Normal',
-  coalesce((select user_id from public.staff_profiles where lower(username)='ramsey' limit 1),auth.uid())
+  coalesce((select id from public.staff_profiles where lower(username)='ramsey' limit 1),auth.uid())
 from (values
 ('Micheal Mass','7438 N Oriole Ave','Chicago','wally','2019-06-01'::date,null,42.0162464,-87.8166352,'[AGB-IMPORT:mymaps-2026-10-15]'),
 ('Marc Schellhorn','1S522 Stillwell Rd',null,'wally','2023-10-31'::date,null,41.8513077,-87.9637485,'[AGB-IMPORT:mymaps-2026-10-15]'),

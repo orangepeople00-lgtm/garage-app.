@@ -2258,6 +2258,8 @@ button.danger{color:#b42318}
   top: 52% !important;
   letter-spacing: 0.04em !important;
 }
+/* 2026-10-15: LOT LENGTH sits at the sheet edge; wrap to two short lines so it never gets cut off (screen + print) */
+#paper .obj.lot-length-special .lot-vtitle{white-space:normal!important;width:64px!important;line-height:1.05!important;word-spacing:64px!important;padding:2px 0!important}
 
 
 /* V82: Garage slab + apron labels ALWAYS centered INSIDE the box */
@@ -2319,7 +2321,7 @@ button.danger{color:#b42318}
 
 /* 2026-10-15: survey inner-wall numbers are small and transparent so they never hide the garage label */
 #paper .obj[data-role^="garageWallDim"]{z-index:60!important;background:transparent!important}
-#paper .obj[data-role^="garageWallDim"] > .label{background:transparent!important;font-size:12px!important}
+#paper .obj[data-role^="garageWallDim"] > .label{background:transparent!important;font-size:12px!important;text-align:center!important;justify-content:center!important;left:0!important;right:0!important;transform:translateY(-50%)!important;width:100%!important}
 </style>
 </head>
 <body>
@@ -4781,7 +4783,7 @@ function spApplyAlleyApron(skipRender){
   if(c.alley){
     // keep the garage exactly "dist" ft from the alley edge: alley edge = garage rear + dist (rear = bottom on the survey sheet)
     if(c.on&&c.h>0){const aw=c.w>0?c.w:(+g.wf||20);
-      state.objects.push({id:uid++,kind:'apron',role:'proposedApron',x:g.x+((+g.wf)-aw)/2*sc+c.off*sc,y:g.y+g.hf*sc,wf:aw,hf:c.h,label:`NEW CONCRETE APRON\n${spFt(aw)} x ${spFt(c.h)}`,angle:0,pxf:sc})}
+      state.objects.push({id:uid++,kind:'apron',role:'proposedApron',x:g.x+((+g.wf)-aw)/2*sc+c.off*sc,y:g.y+g.hf*sc,wf:aw,hf:c.h,label:(c.h*sc<26?'NEW APRON':`NEW CONCRETE APRON\n${spFt(aw)} x ${spFt(c.h)}`),angle:0,pxf:sc})}
     {const ap=state.objects.find(o=>o.role==='proposedApron');if(ap)spRightEdge=Math.max(spRightEdge,ap.x+ap.wf*sc);}
     let spDimX=spRightEdge+6; try{ const L=(typeof agbLotBox==='function')?agbLotBox():null; if(L && spDimX+14>L.r){ const ap=state.objects.find(o=>o.role==='proposedApron'); const le=Math.min(g.x,ap?ap.x:g.x); spDimX=(le-20>=L.x)?le-20:L.r-16; } }catch(_){}
     state.objects.push({id:uid++,kind:'dimension',role:'spAlleyDim',x:spDimX,y:g.y+g.hf*sc,wf:Math.max(c.dist,0.5),hf:1.1,label:`${spFt(c.dist)} TO ALLEY`,angle:90,pxf:sc});
@@ -4952,13 +4954,13 @@ function placeProposedGarageOnSurvey(opts={}){
  const wLabel=String(gw).replace(/\.0$/,'');
  const hLabel=String(gh).replace(/\.0$/,'');
  // Top wall (width)
- state.objects.push({id:uid++, ...dimStyle, role:'garageWallDimN', x:x+gw*sc/2-12, y:y+wallPad, wf:4, hf:1.2, label:wLabel});
+ state.objects.push({id:uid++, ...dimStyle, role:'garageWallDimN', x:x+gw*sc/2-40, y:y+wallPad, wf:4, hf:1.2, label:wLabel});
  // Bottom wall (width)
- state.objects.push({id:uid++, ...dimStyle, role:'garageWallDimS', x:x+gw*sc/2-12, y:y+gh*sc-wallPad-14, wf:4, hf:1.2, label:wLabel});
+ state.objects.push({id:uid++, ...dimStyle, role:'garageWallDimS', x:x+gw*sc/2-40, y:y+gh*sc-wallPad-14, wf:4, hf:1.2, label:wLabel});
  // Left wall (depth/length)
- state.objects.push({id:uid++, ...dimStyle, role:'garageWallDimW', x:x+wallPad, y:y+gh*sc/2-8, wf:4, hf:1.2, label:hLabel});
+ state.objects.push({id:uid++, ...dimStyle, role:'garageWallDimW', x:x+wallPad-40, y:y+gh*sc/2-8, wf:4, hf:1.2, label:hLabel});
  // Right wall (depth/length)
- state.objects.push({id:uid++, ...dimStyle, role:'garageWallDimE', x:x+gw*sc-wallPad-56, y:y+gh*sc/2-8, wf:4, hf:1.2, label:hLabel});
+ state.objects.push({id:uid++, ...dimStyle, role:'garageWallDimE', x:x+gw*sc-wallPad-48, y:y+gh*sc/2-8, wf:4, hf:1.2, label:hLabel});
  // Small survey-style setback labels (NOT big-dim concrete-sheet sizes)
  const sbH=1.1;
  if(placement==='bottom-left' || placement==='custom'){
@@ -5699,13 +5701,15 @@ function agbFollowProposedGarage(){
   if(state.mode!=='siteplan') return; const g=byRole('proposedGarage'); if(!g) return;
   try{ agbKeepGarageInLot(g); }catch(_){}
   const p=g.pxf||4, key=[g.x,g.y,g.wf,g.hf,p,g.visualWpx||'',g.visualHpx||''].join('|'), last=g._follow;
+  try{ const d=byRole('spAlleyDim'); if(d&&d.wf>0.5&&$('spAlleyDist')&&document.activeElement!==$('spAlleyDist')&&+$('spAlleyDist').value!==+d.wf) $('spAlleyDist').value=d.wf; }catch(_){}
+  try{ const small=(g.visualWpx||g.wf*(g.pxf||4))<130; ['garageWallDimW','garageWallDimE'].forEach(r=>{const d=byRole(r); if(d) d.label=small?'':String(g.hf);}); }catch(_){}   // side numbers would collide with the label on a small garage
+  try{ if(agbLotBox()&&state.objects.some(o=>['spLeftSb','spRightSb','spRearSb'].includes(o.role))) state.objects=state.objects.filter(o=>!['spLeftSb','spRightSb','spRearSb'].includes(o.role)); }catch(_){}   // the lot's auto setback dims replace the small survey labels
   if(last===key) return;
   if(last){ const [lx,ly,lw,lh,lp]=last.split('|').map(Number); const dx=g.x-lx, dy=g.y-ly, dr=g.x+g.wf*p-(lx+lw*lp), db=g.y+g.hf*p-(ly+lh*lp);
     ['spLeftSb'].forEach(r=>{const o=byRole(r);if(o){o.x+=dx;o.y+=dy+(db-dy)/2}});
     ['spRightSb'].forEach(r=>{const o=byRole(r);if(o){o.x+=dr;o.y+=dy+(db-dy)/2}});
     ['spRearSb'].forEach(r=>{const o=byRole(r);if(o){o.x+=dx+(dr-dx)/2;o.y+=db}});
-    // TO ALLEY always shows the real distance from the garage rear to the rear lot line once the garage moves.
-    try{ const L=agbLotBox(); if(L&&!surveyData&&$('spAlley')?.value!=='no'&&$('spAlleyDist')){ const d=Math.round((L.b-(g.y+g.hf*p))/p*2)/2; if(d>=0) $('spAlleyDist').value=d; } }catch(_){}
+    try{ const L=agbLotBox(); if(L&&$('spAlley')?.value!=='no'&&$('spAlleyDist')){ const d=Math.round((L.b-(g.y+g.hf*p))/p*2)/2; if(d>=0) $('spAlleyDist').value=d; } }catch(_){}
     try{ if(typeof spApplyAlleyApron==='function' && (state.objects.some(o=>o.role==='proposedApron'||o.role==='spAlleyDim'))) spApplyAlleyApron(true); else { const a=state.objects.find(o=>o.role==='proposedApron'); if(a){a.x+=dx;a.y+=db} } }catch(_){}
     try{ window.agbSyncProposedWallDims&&window.agbSyncProposedWallDims(g); }catch(_){}
   }
@@ -5715,7 +5719,8 @@ function agbFollowProposedGarage(){
 function agbLotBox(){ const lot=byRole('lotOutline'); if(!lot||lot.hidden) return null; const lp=lot.pxf||(window.agbPxOf?window.agbPxOf(lot):4);
   return {x:lot.x,y:lot.y,r:lot.x+(lot.visualWpx||lot.wf*lp),b:lot.y+(lot.visualHpx||lot.hf*lp),wf:lot.wf}; }
 function agbKeepGarageInLot(g){
-  const L=agbLotBox(); const warn=agbLotWarn(g,L); if(!L||surveyData) return;
+  const L=agbLotBox(); const warn=agbLotWarn(g,L);   // survey or blank: any drawn lot outline counts
+  if(!L){ try{ const t=currentTemplate(), p0=g.pxf||4, w0=g.visualWpx||g.wf*p0, h0=g.visualHpx||g.hf*p0; g.x=Math.max(0,Math.min(t.w-w0,g.x)); g.y=Math.max(0,Math.min(t.h-h0,g.y)); }catch(_){} return; }
   const p=g.pxf||4, gw=(g.visualWpx||g.wf*p), gh=(g.visualHpx||g.hf*p);
   const a=state.objects.find(o=>o.role==='proposedApron'); const c=(typeof spCfg==='function')?spCfg():{};
   const behind=a?a.hf*(a.pxf||p):0;   // only the apron must stay inside the lot; TO ALLEY is recalculated
@@ -5725,7 +5730,7 @@ function agbKeepGarageInLot(g){
   const maxY=L.b-gh-behind; if(maxY>=L.y) g.y=Math.min(maxY,Math.max(L.y,g.y));
 }
 function agbLotWarn(g,L){
-  let el=document.getElementById('agbLotWarn'); const too=!!(L&&g&&!surveyData&&(+g.wf>(+L.wf)+.01));
+  let el=document.getElementById('agbLotWarn'); const too=!!(L&&g&&(+g.wf>(+L.wf)+.01));
   if(too&&!el){ el=document.createElement('div'); el.id='agbLotWarn'; el.className='agb-noprint'; el.setAttribute('role','status');
     el.style.cssText='position:fixed;left:50%;top:8px;transform:translateX(-50%);z-index:9999;background:#fef3c7;color:#7c2d12;border:1px solid #f59e0b;border-radius:8px;padding:6px 10px;font:700 13px Arial;max-width:92vw;pointer-events:none';
     document.body.appendChild(el); }
@@ -8471,8 +8476,8 @@ try{renderObjectsNow=window.renderObjectsNow}catch(_){}
 function syncProposedWallDims(g){
   const sc=pxOf(g),pad=Math.max(10,sc*0.45),W=String(g.wf),H=String(g.hf),gw=g.wf*sc,gh=g.hf*sc;
   const set=(r,x,y,l)=>{const d=byRole(r);if(d){d.x=x;d.y=y;d.label=l}};
-  set('garageWallDimN',g.x+gw/2-12,g.y+pad,W);set('garageWallDimS',g.x+gw/2-12,g.y+gh-pad-14,W);
-  set('garageWallDimW',g.x+pad,g.y+gh/2-8,H);set('garageWallDimE',g.x+gw-pad-56,g.y+gh/2-8,H);
+  set('garageWallDimN',g.x+gw/2-40,g.y+pad,W);set('garageWallDimS',g.x+gw/2-40,g.y+gh-pad-14,W);
+  set('garageWallDimW',g.x+pad-40,g.y+gh/2-8,H);set('garageWallDimE',g.x+gw-pad-48,g.y+gh/2-8,H);
   const rs=byRole('spRearSb');if(rs){rs.x=g.x+gw/2-10;rs.y=g.y+gh+2+((apronFor(g)?.hf||0)*sc)}
   const rr=byRole('spRightSb');if(rr){rr.x=g.x+gw;rr.y=g.y+gh/2-6}
   const ll=byRole('spLeftSb');if(ll){ll.x=Math.max(4,g.x-ll.wf*sc);ll.y=g.y+gh/2-6}

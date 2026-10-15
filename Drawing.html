@@ -4838,7 +4838,7 @@ function placeProposedGarageOnSurvey(opts={}){
  // Clear previous AI/manual proposed garage pieces (keep other brush whiteouts)
  state.objects=state.objects.filter(o=>!(
    o.role==='proposedGarage' || o.role==='proposedApron' ||
-   o.role==='surveyEraseGarage' ||
+   (o.role==='surveyEraseGarage' && (autoErase || opts.eraseBox)) ||   // keep the old-garage whiteout unless a new one is being made
    o.role==='spLeftSb' || o.role==='spRightSb' || o.role==='spRearSb' ||
    o.role==='garageWallDimN' || o.role==='garageWallDimS' || o.role==='garageWallDimE' || o.role==='garageWallDimW' ||
    (o.kind==='garage' && state.mode==='siteplan') ||
@@ -5176,7 +5176,7 @@ $('surveyUpload').onchange=e=>{
   }
   // Do not auto-drop a corner garage — wait for AI or user tap
   const status=$('aiSurveyStatus');
-  if(status)status.textContent='Survey loaded. Use AI Place, or Tap Existing Garage and click the center of the old garage.';
+  if(status)status.textContent='Survey loaded. Next: tap the orange “Remove Old Garage + Place New One” button, then tap the center of the old garage. (Or use AI Place.)';
  };
  r.readAsDataURL(f);
 };

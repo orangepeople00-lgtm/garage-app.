@@ -111,8 +111,8 @@ button{border:0;border-radius:7px;padding:8px 10px;font-weight:800;cursor:pointe
 }
 .gpa-bar{display:flex;gap:8px;margin:8px 0}.gpa-bar button{flex:1;min-height:40px;border-radius:8px;border:1px solid #ffffff40;background:transparent;color:#e8eef6;font-weight:700;cursor:pointer}.gpa-sec{border:1px solid #ffffff2a;border-radius:10px;margin-bottom:8px;overflow:hidden}.gpa-h{display:flex;align-items:center;gap:8px;width:100%;min-height:48px;padding:8px 12px;border:0;background:#ffffff12;color:#fff;text-align:left;cursor:pointer;font:inherit}.gpa-sec.open .gpa-h{background:#e8c547;color:#0b1f3a}.gpa-t{font-weight:800;white-space:nowrap;font-size:14px}.gpa-s{flex:1;min-width:0;font-size:11px;opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.gpa-c{transition:transform .2s}.gpa-sec.open .gpa-c{transform:rotate(180deg)}.gpa-b{display:none;padding:4px 10px 10px}.gpa-sec.open .gpa-b{display:block}.gp-addout{min-height:36px;white-space:nowrap;padding:0 10px}@media print{.gpa-bar,.gpa-h{display:none}}
 #pages section.gp-active{outline:4px solid #2563eb;outline-offset:3px}.overlay.gp-ov{z-index:5}@media print{#pages section.gp-active{outline:none}}
-.aiw{position:relative;width:100%;max-width:11.2in;margin:0 auto;touch-action:none}.aiw img{display:block;width:100%;height:auto;max-height:none!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-.aid,.ail{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}.aid line{stroke:#111;stroke-width:1.2;vector-effect:non-scaling-stroke}
+.aiw:not(.ready) .aid,.aiw:not(.ready) .ail,.aiw:not(.ready) .aic-layer{display:none!important}.aiw{position:relative;width:100%;max-width:11.2in;margin:0 auto;touch-action:none}.aiw img{display:block;width:100%;height:auto;max-height:none!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.aid,.ail{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}.aid line{stroke:#111;stroke-width:1.3;fill:none}
 .aic-layer{position:absolute;inset:0}.aic{position:absolute;box-sizing:border-box;padding:2px 4px;font:700 11px/1.2 Arial,Helvetica,sans-serif;color:#111;background:#fffffff2;border:1px solid #111;border-radius:2px;cursor:move;white-space:normal;overflow-wrap:anywhere;text-shadow:0 0 2px #fff,0 0 2px #fff;user-select:none;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .aic.dim{border:0;background:#fff;padding:0 3px;white-space:nowrap;transform:translateX(-50%)}.aic.dim.rot{transform:translate(-50%,-50%) rotate(-90deg)}.aic.sel{outline:2px solid #2563eb;outline-offset:1px}
 .aic-tip{position:absolute;width:calc(30px*var(--inv,1));height:calc(30px*var(--inv,1));margin:calc(-15px*var(--inv,1)) 0 0 calc(-15px*var(--inv,1));border-radius:50%;border:2px dashed #2563eb88;cursor:crosshair;touch-action:none}
@@ -2548,19 +2548,26 @@ function aiLayout(view){
   ['L','R'].forEach(side=>{const list=items.filter(i=>!i.dim&&i.auto&&((i.tx<50)===(side==='L'))).sort((a,b)=>a.ty-b.ty);let y=3;
     list.forEach(i=>{i.w=i.w||12;i.bx=side==='L'?0.6:87.4;i.by=Math.max(y,i.ty-4);y=i.by+(i.h||8)+1.5})});
   return items}
-function aiDimSvg(view){if(view==='foundation')return '<line x1="15" y1="88" x2="85" y2="88"/><line x1="15" y1="86" x2="15" y2="90"/><line x1="85" y1="86" x2="85" y2="90"/>';
+function aiDimSvg(view,W,H){const L=(x1,y1,x2,y2)=>`<line x1="${(x1*W/100).toFixed(1)}" y1="${(y1*H/100).toFixed(1)}" x2="${(x2*W/100).toFixed(1)}" y2="${(y2*H/100).toFixed(1)}"/>`;
+ if(view==='foundation')return L(15,88,85,88)+L(15,86,15,90)+L(85,86,85,90);
+ return L(15,94,85,94)+L(15,92,15,96)+L(85,92,85,96)+L(15.5,45,15.5,86)+L(14.5,45,16.5,45)+L(14.5,86,16.5,86);
+}
+function aiDimSvgOld(view){if(view==='foundation')return '<line x1="15" y1="88" x2="85" y2="88"/><line x1="15" y1="86" x2="15" y2="90"/><line x1="85" y1="86" x2="85" y2="90"/>';
   return '<line x1="15" y1="94" x2="85" y2="94"/><line x1="15" y1="92" x2="15" y2="96"/><line x1="85" y1="92" x2="85" y2="96"/><line x1="15.5" y1="45" x2="15.5" y2="86" /><line x1="14.5" y1="45" x2="16.5" y2="45"/><line x1="14.5" y1="86" x2="16.5" y2="86"/>'}
-function aiSheetHtml(view,url,alt){return `<div class="aiw" data-ai="${view}"><img alt="${esc(alt)}" src="${String(url).replace(/"/g,'')}"><svg class="aid" viewBox="0 0 100 100" preserveAspectRatio="none">${aiDimSvg(view)}</svg><svg class="ail" viewBox="0 0 100 100" preserveAspectRatio="none"></svg><div class="aic-layer"></div></div>`}
+function aiSheetHtml(view,url,alt){return `<div class="aiw" data-ai="${view}"><img alt="${esc(alt)}" onload="aiImgReady(this)" onerror="aiImgReady(this)" src="${String(url).replace(/"/g,'')}"><svg class="aid"></svg><svg class="ail"></svg><div class="aic-layer"></div></div>`}
 function aiRenderAll(){document.querySelectorAll('#pages .aiw').forEach(w=>aiRender(w))}
-function aiRender(w){const view=w.dataset.ai;const L=w.querySelector('.aic-layer');const items=aiLayout(view);w._items=items;
+function aiImgReady(img){const w=img&&img.closest('.aiw');if(w)aiRender(w)}
+function aiRender(w){const im=w.querySelector('img');if(!(im&&im.complete&&im.naturalHeight&&w.offsetHeight>40)){w.classList.remove('ready');return}w.classList.add('ready');const view=w.dataset.ai;const L=w.querySelector('.aic-layer');const items=aiLayout(view);w._items=items;
   L.innerHTML=items.map(i=>`<div class="aic${i.dim?' dim':''}${i.rot?' rot':''}${aiSel&&aiSel.view===view&&aiSel.id===i.id?' sel':''}" data-id="${i.id}" style="left:${i.bx}%;top:${i.by}%;${i.dim?'':'width:'+(i.w||12)+'%;'}font-size:${i.fs||11}px">${esc(i.text)}</div>`+(i.dim?'':`<div class="aic-tip no-print" data-tip="${i.id}" style="left:${i.tx}%;top:${i.ty}%"></div>`)).join('');
   // measure real heights, re-resolve stacking so callouts never overlap
   const r=w.getBoundingClientRect();if(r.height){items.forEach(i=>{const el=L.querySelector(`.aic[data-id="${i.id}"]`);if(el)i.h=el.offsetHeight/w.offsetHeight*100});
     ['L','R'].forEach(side=>{let y=3;items.filter(i=>!i.dim&&i.auto&&((i.tx<50)===(side==='L'))).sort((a,b)=>a.by-b.by).forEach(i=>{i.by=Math.max(y,i.by);y=i.by+i.h+1.2;const el=L.querySelector(`.aic[data-id="${i.id}"]`);if(el)el.style.top=i.by+'%'})})}
   aiLeaders(w);aiBind(w)}
-function aiLeaders(w){const svg=w.querySelector('.ail');const ar=(w.offsetWidth||1)/(w.offsetHeight||1);
-  svg.innerHTML='<defs><marker id="aiArr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,1 L10,5 L0,9 z" fill="#111"/></marker></defs>'+(w._items||[]).filter(i=>!i.dim).map(i=>{const h=i.h||5,wd=i.w||12;const sx=i.tx<i.bx?i.bx:(i.tx>i.bx+wd?i.bx+wd:i.bx+wd/2);const sy=i.ty<i.by?i.by:(i.ty>i.by+h?i.by+h:i.by+h/2);
-   return `<line x1="${sx}" y1="${sy}" x2="${i.tx}" y2="${i.ty}" stroke="#fff" stroke-width="4" vector-effect="non-scaling-stroke"/><line x1="${sx}" y1="${sy}" x2="${i.tx}" y2="${i.ty}" stroke="#111" stroke-width="1.3" vector-effect="non-scaling-stroke"/><circle cx="${i.tx}" cy="${i.ty}" r="0.55" fill="#111" transform="translate(${i.tx} ${i.ty}) scale(1 ${ar}) translate(${-i.tx} ${-i.ty})"/>`}).join('')}
+function aiLeaders(w){const W=w.offsetWidth||1,H=w.offsetHeight||1,X=v=>(v*W/100).toFixed(1),Y=v=>(v*H/100).toFixed(1);
+  const d=w.querySelector('.aid');if(d){d.setAttribute('viewBox',`0 0 ${W} ${H}`);d.innerHTML=aiDimSvg(w.dataset.ai,W,H)}
+  const svg=w.querySelector('.ail');svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  svg.innerHTML=(w._items||[]).filter(i=>!i.dim).map(i=>{const h=i.h||5,wd=i.w||12;const sx=i.tx<i.bx?i.bx:(i.tx>i.bx+wd?i.bx+wd:i.bx+wd/2);const sy=i.ty<i.by?i.by:(i.ty>i.by+h?i.by+h:i.by+h/2);
+   return `<line x1="${X(sx)}" y1="${Y(sy)}" x2="${X(i.tx)}" y2="${Y(i.ty)}" stroke="#fff" stroke-width="3" stroke-linecap="round"/><line x1="${X(sx)}" y1="${Y(sy)}" x2="${X(i.tx)}" y2="${Y(i.ty)}" stroke="#111" stroke-width="1.3"/><circle cx="${X(i.tx)}" cy="${Y(i.ty)}" r="3" fill="#111"/>`}).join('')}
 function aiSave(view,i,extra){const s=window._planAiCallouts[view]=window._planAiCallouts[view]||{};s[i.id]=Object.assign(s[i.id]||{},{bx:i.bx,by:i.by,tx:i.tx,ty:i.ty,w:i.w,fs:i.fs,text:i.text,moved:true},extra||{});try{savePrefs()}catch(e){}}
 function aiBind(w){const view=w.dataset.ai;
   const drag=(el,i,mode)=>{el.onpointerdown=e=>{if(el.isContentEditable)return;if(mode==='box'){const now=Date.now();if(el._lt&&now-el._lt<350){el._lt=0;e.preventDefault();el.ondblclick&&el.ondblclick();return}el._lt=now}e.preventDefault();e.stopPropagation();aiSel={view,id:i.id};w.querySelectorAll('.aic').forEach(n=>n.classList.toggle('sel',n.dataset.id===i.id));

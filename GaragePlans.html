@@ -118,6 +118,7 @@ button{border:0;border-radius:7px;padding:8px 10px;font-weight:800;cursor:pointe
 .aic-tip{position:absolute;width:calc(30px*var(--inv,1));height:calc(30px*var(--inv,1));margin:calc(-15px*var(--inv,1)) 0 0 calc(-15px*var(--inv,1));border-radius:50%;border:2px dashed #2563eb88;cursor:crosshair;touch-action:none}
 .ov.txt,.ov.gfi{text-shadow:0 0 2px #fff,0 0 2px #fff,0 0 3px #fff}
 @media print{.aic.sel{outline:none}.aic-tip,.gpa-bar,.toolbox{display:none!important}.aic{cursor:default}}
+.ai-tog{position:absolute;top:4px;right:4px;z-index:8;display:flex;gap:6px}.ai-tog button{min-height:34px;padding:0 10px;border-radius:8px;border:1px solid #0b1f3a;background:#fff;color:#0b1f3a;font:700 12px Arial,sans-serif;cursor:pointer}
 </style>
 <style id="pageSizeStyle">@media print{@page{size:17in 11in;margin:.35in}}</style>
 </head>
@@ -196,7 +197,7 @@ button{border:0;border-radius:7px;padding:8px 10px;font-weight:800;cursor:pointe
     <div><label>Siding run</label><select id="sidingDir"><option value="horizontal" selected>Horizontal (standard)</option><option value="vertical">Vertical</option></select></div>
   </div>
   <div class="row2">
-    <div><label>Shingles</label><select id="shingles"><option>25 year fiberglass</option><option selected>235# asphalt</option><option>Architectural</option><option>3-Tab</option></select></div>
+    <div><label>Shingles</label><select id="shingles"><option>25 year fiberglass</option><option selected>235# architectural asphalt</option><option>Architectural</option><option>3-Tab</option></select></div>
     <div><label>Corner boards</label><input id="cornerBoards" value='5/4" x 4"'></div>
   </div>
   <div class="row2">
@@ -2009,7 +2010,7 @@ function braceDetailSvg(){
 function pageFloorSection(){
   return `<section class="${sheetClass()}">
     <div class="split">
-      <div class="draw-host" id="floorHost">${floorPlanSvg()}<div class="overlay" id="floorOverlay"></div></div>
+      <div class="draw-host" id="floorHost">${aiOr('floor',()=>floorPlanSvg(),'Floor plan')}<div class="overlay" id="floorOverlay"></div></div>
       <div>${conformCodesHTML()}${doorScheduleHTML()}${val('electricNotes')?`<div class="elecbox notes-col"><h3>JOB ELECTRICAL NOTES</h3><ul>${val('electricNotes').split(/\n+/).filter(Boolean).map(t=>'<li>'+esc(t)+'</li>').join('')}</ul></div>`:''}</div>
     </div>
     ${tblock('PROPOSED FLOOR PLAN','1',String(sheetTotal()))}
@@ -2053,9 +2054,7 @@ function foundationSvg(){
 }
 function pageFoundation(){
   const url=window._planAiPhotos && window._planAiPhotos.foundation;
-  const body=url
-    ? `<div class="elevpage ai-elev">${aiSheetHtml('foundation',url,'Foundation')}</div>`
-    : `<div class="elevpage">${foundationSvg()}</div>`;
+  const body=aiOr('foundation',()=>`<div class="elevpage">${foundationSvg()}</div>`,'Foundation',true);
   return `<section class="${sheetClass()}">
     ${body}
     ${tblock('FOUNDATION / SLAB / FOOTING','1A',String(sheetTotal()))}
@@ -2107,7 +2106,7 @@ function pageSectionRoof(){
   return `<section class="${sheetClass()}">
     <div class="split">
       <div>${buildingSectionSvg()}</div>
-      <div>${roofPlanSvg()}</div>
+      <div>${aiOr('roofplan',()=>roofPlanSvg(),'Roof plan')}</div>
     </div>
     ${tblock('BUILDING SECTION & ROOF PLAN', String(4), String(sheetTotal()))}
   </section>`;
@@ -2117,9 +2116,7 @@ function pageElevations(){
   const photos=window._planAiPhotos||{};
   return views.map(([view,title,num])=>{
     const url=photos[view];
-    const body=url
-      ? `<div class="elevpage ai-elev">${aiSheetHtml(view,url,title+' elevation')}</div>`
-      : `<div class="elevpage">${elevLarge(view,title)}</div>`;
+    const body=aiOr(view,()=>`<div class="elevpage">${elevLarge(view,title)}</div>`,title+' elevation',true);
     return `<section class="${sheetClass()}">
     ${body}
     ${tblock(title+' ELEVATION', num, String(sheetTotal()))}
@@ -2516,8 +2513,46 @@ function renumberSheets(){
 // ===== 2026-10-15: AI sheet overlay — the AI image is picture-only; labels, dimensions and callouts are real text placed by the app =====
 window._planAiCallouts=window._planAiCallouts||{};
 let aiSel=null; // {view,id}
+
+function aiShingleLabel(){const v=String(val('shingles')||'235# architectural asphalt');return /3.?tab/i.test(v)?'3-TAB ASPHALT SHINGLES':/fiberglass/i.test(v)?v.toUpperCase()+' SHINGLES':((v.match(/\d+#/)||[''])[0]+' ARCHITECTURAL ASPHALT SHINGLES').trim()}
+function aiShingleRule(){return /3.?tab/i.test(val('shingles')||'')?'Roof covering: 3-tab asphalt shingles.':'CRITICAL ROOF COVERING: dimensional / architectural LAMINATED asphalt shingles with staggered random-width tabs and shadow lines. NOT 3-tab shingles, no uniform tab grid.'}
+window._planAiMode=window._planAiMode||{};
+function aiOr(view,exact,alt,elev){const url=(window._planAiPhotos||{})[view];const mode=(window._planAiMode||{})[view]||(['floor','roofplan'].includes(view)?'exact':'ai'); // floor/roof plan: exact drawing is the permit default
+  if(!url)return exact();
+  const bar=`<div class="ai-tog no-print"><button type="button" onclick="aiToggle('${view}')">${mode==='ai'?'Show exact drawing':'Show AI picture'}</button><button type="button" onclick="aiRedoSheet('${view}')">Redo AI for this sheet</button></div>`;
+  const body=mode==='ai'?aiSheetHtml(view,url,alt):exact();
+  return elev?(mode==='ai'?`<div class="elevpage ai-elev" style="position:relative">${bar}${body}</div>`:`<div style="position:relative">${bar}${body}</div>`):`<div style="position:relative">${bar}${body}</div>`}
+function aiToggle(v){const cur=window._planAiMode[v]||(['floor','roofplan'].includes(v)?'exact':'ai');window._planAiMode[v]=cur==='ai'?'exact':'ai';buildPlans(false)}
+function planAiPlanPrompt(v){
+  const W=Number(val('width'))||20,D=Number(val('depth'))||20,roof=val('roof')||'hip',pitch=val('pitch')||'4/12';
+  const wallTxt=w=>({front:'bottom (front)',back:'top (rear)',left:'left',right:'right'}[w]||w);
+  const ops=[];if((val('ohWall')||'front')) ops.push((val('ohCount')||1)+' overhead door opening(s) '+(val('ohW')||16)+' ft wide in the '+wallTxt(val('ohWall')||'front')+' wall');
+  if(val('svcWall')&&val('svcWall')!=='none')ops.push('one 3 ft service door in the '+wallTxt(val('svcWall'))+' wall');
+  if(val('winWall')&&val('winWall')!=='none'&&Number(val('winCount'))>0)ops.push(val('winCount')+' window(s) in the '+wallTxt(val('winWall'))+' wall');
+  if(val('partyWall')&&val('partyWall')!=='none')ops.push('one party door in the '+wallTxt(val('partyWall'))+' wall');
+  const rf={hip:'hip roof (four sloped planes meeting at a short ridge)',gable:'front-to-back gable roof (ridge runs left to right… shown as one ridge line)',revgable:'reverse gable roof'}[roof]||roof;
+  const base=['Clean, professional top-down (plan view) architectural illustration, orthographic, viewed straight down, no perspective, white background, crisp black linework with subtle gray tones.',
+   'Orientation: the front of the garage is at the BOTTOM of the image.'];
+  const noText='ABSOLUTELY NO TEXT OF ANY KIND: no letters, numbers, labels, dimensions, dimension lines, arrows, north arrow, notes, title or title block. Picture only.';
+  if(v==='floor')return base.concat(['FLOOR PLAN of a '+W+' x '+D+' ft detached garage: the rectangle fills about 70% of the width and is centered (walls from 15% to 85% horizontally, 15% to 85% vertically, scaled to the '+W+':'+D+' ratio). Show wall thickness, concrete slab texture, '+ops.join(', ')+', door swings, empty interior.',noText]).join(' ');
+  if(v==='roofplan')return base.concat(['ROOF PLAN of a '+W+' x '+D+' ft garage with a '+rf+', pitch '+pitch+', eaves overhanging slightly, centered and filling about 70% of the frame. '+aiShingleRule()+' Show gutters along the eaves.',noText]).join(' ');
+  return base.concat(['SITE PLAN, top-down: a residential lot outline with thin property lines near the image edges. The existing house is a simple rectangle in the upper part (30%–70% wide, 10%–35% tall). The new '+W+' x '+D+' ft garage is a rectangle centered in the lower part (about 35%–65% wide, 55%–82% tall). An alley or driveway strip along the bottom edge. Light gray lawn texture, simple trees allowed outside the building footprints.',noText]).join(' ');
+}
 function aiFeatures(view){
   const W=Number(val('width'))||20,D=Number(val('depth'))||20,H=Number(val('wallH'))||8,roof=val('roof')||'hip';
+  if(view==='floor'){const o=[];const ww={front:[50,85],back:[50,15],left:[15,50],right:[85,50]};
+    const oh=val('ohWall')||'front';o.push({id:'oh',text:(Number(val('ohCount'))>1?val('ohCount')+' × ':'')+(val('ohW')||16)+"'x"+(val('ohH')||7)+"' OVERHEAD DOOR",tx:ww[oh][0],ty:ww[oh][1]});
+    if(val('svcWall')&&val('svcWall')!=='none'){const p=ww[val('svcWall')];o.push({id:'svc',text:'36"x80" SERVICE DOOR',tx:p[0]+(p[1]===50?0:18),ty:p[1]+(p[1]===50?15:0)})}
+    if(val('winWall')&&val('winWall')!=='none'&&Number(val('winCount'))>0){const p=ww[val('winWall')];o.push({id:'win',text:val('winCount')+' × '+(val('winSize')||'')+' WINDOW',tx:p[0]-(p[1]===50?0:18),ty:p[1]-(p[1]===50?15:0)})}
+    o.push({id:'slab',text:'4" CONCRETE SLAB, SLOPE TO OH DOOR',tx:40,ty:45});o.push({id:'walls',text:'2x4 STUDS @ 16" O.C.',tx:85,ty:30});
+    o.push({id:'dimW',dim:1,text:W+"'-0\"",bx:50,by:91});o.push({id:'dimH',dim:1,text:D+"'-0\"",bx:9,by:50,rot:1});return o}
+  if(view==='roofplan'){return [{id:'pitch',text:({hip:'HIP',gable:'GABLE',revgable:'REVERSE GABLE'}[roof]||'')+' ROOF · PITCH '+(val('pitch')||'4/12'),tx:50,ty:50},
+    {id:'shing',text:aiShingleLabel(),tx:35,ty:35},{id:'gutR',text:'5" SEAMLESS GUTTER',tx:85,ty:70},{id:'gutL',text:'DOWNSPOUT',tx:15,ty:85},
+    {id:'dimW',dim:1,text:W+"'-0\"",bx:50,by:91},{id:'dimH',dim:1,text:D+"'-0\"",bx:9,by:50,rot:1}]}
+  if(view==='site'){const sh=val('setHouse'),ss=val('setSide'),sr=val('setRearA')||val('setRearN');return [
+    {id:'gar',text:'NEW '+W+"'x"+D+"' DETACHED GARAGE",tx:50,ty:68},{id:'house',text:'EXISTING HOUSE',tx:50,ty:22},
+    sh?{id:'sh',text:sh+"' TO HOUSE",tx:50,ty:45}:null,ss?{id:'ss',text:ss+"' SIDE SETBACK",tx:30,ty:68}:null,sr?{id:'sr',text:sr+"' REAR SETBACK",tx:55,ty:88}:null,
+    {id:'lot',text:'PROPERTY LINE',tx:6,ty:50}].filter(Boolean)}
   if(view==='foundation'){const c=code()||{};return [
     {id:'slab',text:'SLAB: '+(val('slab')||((c.thickness||'4"')+' '+(c.slab||'6 BAG MIX'))).toUpperCase()+' ON 4" GRANULAR FILL',tx:50,ty:40},
     {id:'foot',text:'FOOTING / THICKENED EDGE: '+String(val('footing')||c.footings||'12" x 12"').toUpperCase(),tx:22,ty:68},
@@ -2531,7 +2566,7 @@ function aiFeatures(view){
   if(gut&&isEave){out.push({id:'gutR',text:gtxt,tx:84,ty:45});out.push({id:'gutL',text:gtxt+' & DOWNSPOUT',tx:16,ty:45})}
   if($('flagSoffit')?$('flagSoffit').checked:true) out.push({id:'soffit',text:'ALUM SOFFIT / FASCIA',tx:isEave?80:85,ty:47});
   out.push({id:'pitch',text:'ROOF PITCH '+(val('pitch')||'4/12')+' · '+({hip:'HIP',gable:'GABLE',revgable:'REVERSE GABLE'}[roof]||'')+' ROOF',tx:50,ty:isEave?27:20});
-  out.push({id:'shing',text:String(val('shingles')||'ARCHITECTURAL').toUpperCase()+' SHINGLES',tx:34,ty:33});
+  out.push({id:'shing',text:aiShingleLabel(),tx:34,ty:33});
   out.push({id:'siding',text:String(val('siding')||'VINYL').toUpperCase()+' SIDING',tx:24,ty:64});
   if((val('ohWall')||'front')===view){const n=Number(val('ohCount'))||1;out.push({id:'oh',text:(n>1?n+' × ':'')+(val('ohW')||16)+"'x"+(val('ohH')||7)+"' OVERHEAD DOOR",tx:50,ty:72})}
   if((val('partyWall')||'none')===view) out.push({id:'party',text:(val('partySize')||'6x7')+' PARTY DOOR',tx:38,ty:72});
@@ -2548,7 +2583,7 @@ function aiLayout(view){
   ['L','R'].forEach(side=>{const list=items.filter(i=>!i.dim&&i.auto&&((i.tx<50)===(side==='L'))).sort((a,b)=>a.ty-b.ty);let y=3;
     list.forEach(i=>{i.w=i.w||12;i.bx=side==='L'?0.6:87.4;i.by=Math.max(y,i.ty-4);y=i.by+(i.h||8)+1.5})});
   return items}
-function aiDimSvg(view,W,H){const L=(x1,y1,x2,y2)=>`<line x1="${(x1*W/100).toFixed(1)}" y1="${(y1*H/100).toFixed(1)}" x2="${(x2*W/100).toFixed(1)}" y2="${(y2*H/100).toFixed(1)}"/>`;
+function aiDimSvg(view,W,H){if(view==='site')return '';if(view==='floor'||view==='roofplan'){const L=(x1,y1,x2,y2)=>`<line x1="${(x1*W/100).toFixed(1)}" y1="${(y1*H/100).toFixed(1)}" x2="${(x2*W/100).toFixed(1)}" y2="${(y2*H/100).toFixed(1)}"/>`;return L(15,93,85,93)+L(15,91,15,95)+L(85,91,85,95)+L(11,15,11,85)+L(10,15,12,15)+L(10,85,12,85)}const L=(x1,y1,x2,y2)=>`<line x1="${(x1*W/100).toFixed(1)}" y1="${(y1*H/100).toFixed(1)}" x2="${(x2*W/100).toFixed(1)}" y2="${(y2*H/100).toFixed(1)}"/>`;
  if(view==='foundation')return L(15,88,85,88)+L(15,86,15,90)+L(85,86,85,90);
  return L(15,94,85,94)+L(15,92,15,96)+L(85,92,85,96)+L(15.5,45,15.5,86)+L(14.5,45,16.5,45)+L(14.5,86,16.5,86);
 }
@@ -3221,7 +3256,8 @@ function planAiJobPrompt(view){
     'CRITICAL VIEW: '+viewName.toUpperCase()+' ELEVATION ONLY. Straight-on ORTHOGRAPHIC elevation, camera perpendicular to the wall, zero perspective, zero vanishing points, no 3D, no angle.',
     'FRAMING (exact): white background. The garage is horizontally centered and its full width fills about 70% of the image width (15% empty margin left and right). The ground line is a straight horizontal line at 86% of the image height from the top. The eave / top of wall is at about 45% of the image height, the roof peak or ridge at about 20%. Keep the margins completely empty.',
     'Style: a beautiful, clean, professional architectural elevation rendering that exactly matches these specs — crisp black linework on a white background with subtle gray tones for shingles, siding courses and door panels. No people, cars, trees, shadows, sky, logo or watermark.',
-    'JOB: '+W+'x'+D+' ft garage, '+H+' ft walls, roof pitch '+pitch+'. Siding '+siding+' '+sidingDir+'. Shingles '+shingles+'.',
+    'JOB: '+W+'x'+D+' ft garage, '+H+' ft walls, roof pitch '+pitch+'. Siding '+siding+' '+sidingDir+'.',
+    aiShingleRule(),
     roof==='revgable'
       ? 'CRITICAL REVERSE GABLE: triangles ONLY on LEFT and RIGHT. FRONT and REAR are eave RUNS with NO peak over the wall. Ridge front-to-back.'
       : (roof==='gable'
@@ -3281,33 +3317,24 @@ async function callPlanPhoto(prompt){
   return url;
 }
 
+const AI_SHEETS=[['floor','FLOOR PLAN'],['roofplan','ROOF PLAN'],['front','FRONT ELEVATION'],['back','REAR ELEVATION'],['left','LEFT ELEVATION'],['right','RIGHT ELEVATION'],['foundation','FOUNDATION']];
+function aiPromptFor(v){return v==='foundation'?planAiFoundationPrompt():(['site','floor','roofplan'].includes(v)?planAiPlanPrompt(v):planAiJobPrompt(v))}
 async function generateAiPlanPictures(){
-  const views=['front','back','left','right'];
-  const titles={front:'FRONT',back:'REAR',left:'LEFT',right:'RIGHT'};
-  window._planAiPhotos=window._planAiPhotos||{};
-  window._planAiCallouts={}; aiSel=null;
-  setLoad(true,'AI elevations use village codes from the panel. About 20–40s per sheet.');
-  setStatus('Starting AI plan pictures for '+cityName()+'…');
+  window._planAiPhotos=window._planAiPhotos||{};window._planAiMode={};
+  window._planAiCallouts={}; aiSel=null;const N=AI_SHEETS.length;
+  setLoad(true,'AI pictures for all '+N+' sheets, one at a time (about 20–40s each).');
   try{
-    for(let i=0;i<views.length;i++){
-      const view=views[i];
-      setLoad(true,'OpenAI '+titles[view]+' elevation ('+(i+1)+'/5) — keep this tab open…');
-      setStatus('Drawing '+titles[view]+' elevation with OpenAI from the panel + '+cityName()+' codes…');
-      const url=await callPlanPhoto(planAiJobPrompt(view));
-      window._planAiPhotos[view]=url;
-      buildPlans(false);
-    }
-    setLoad(true,'OpenAI foundation / footing sheet (5/5)…');
-    setStatus('Drawing foundation / slab / footing from '+cityName()+' codes…');
-    window._planAiPhotos.foundation=await callPlanPhoto(planAiFoundationPrompt());
-    buildPlans(false);
-    setStatus('AI elevations + foundation ready for '+customerLabel()+' · '+cityName()+'. ↻ Refresh drawings restores the line drawings.', true);
-  }catch(err){
-    setStatus('AI plan pictures failed: '+(err&&err.message||err)+'. SVG sheets are still available via ↻ Refresh drawings.');
-  }finally{
-    setLoad(false);
-  }
+    for(let i=0;i<N;i++){const [v,t]=AI_SHEETS[i];
+      setLoad(true,'AI '+t+' ('+(i+1)+'/'+N+') — keep this tab open…');setStatus('Drawing '+t+' ('+(i+1)+'/'+N+')…');
+      window._planAiPhotos[v]=await callPlanPhoto(aiPromptFor(v));buildPlans(false);}
+    setStatus('AI pictures ready on all '+N+' sheets for '+customerLabel()+'. Elevations/foundation show AI; floor & roof plan stay exact (toggle per sheet); site plan is always the measured drawing.', true);
+  }catch(err){setStatus('AI pictures stopped: '+(err&&err.message||err)+'. Sheets without a picture show the exact drawing.');}
+  finally{setLoad(false);}
 }
+async function aiRedoSheet(v){const t=(AI_SHEETS.find(x=>x[0]===v)||[v,v])[1];
+  // keep everything the user moved/edited; untouched auto callouts re-place themselves
+  const sv=window._planAiCallouts[v]||{};Object.keys(sv).forEach(k=>{if(!sv[k].moved)delete sv[k]});
+  setLoad(true,'Redoing AI '+t+'…');try{window._planAiPhotos[v]=await callPlanPhoto(aiPromptFor(v));if(!['floor','roofplan'].includes(v))(window._planAiMode||{})[v]='ai';buildPlans(false);setStatus('AI '+t+' redone — your edits kept.',true)}catch(e){setStatus('Redo failed: '+(e&&e.message||e))}finally{setLoad(false)}}
 
 // ===== 2026-10-15: "Pull info from…" (dashboard jobs, estimate history, this device). Every value is editable before applying; nothing is locked after. =====
 const AGBP={rows:[],src:'jobs'};

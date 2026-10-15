@@ -1,0 +1,60 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AGB Crew Schedule</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:#eef2f7;color:#172033}
+header{background:#0f1f38;color:#fff;padding:14px 16px;display:flex;justify-content:space-between;align-items:center}header b{font-size:18px}
+.wrap{max-width:760px;margin:0 auto;padding:14px}.card{background:#fff;border-radius:14px;padding:16px;box-shadow:0 2px 10px #0001;margin-bottom:12px}
+h1{font-size:24px;margin:0 0 6px}.muted{color:#64748b}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:52px;padding:12px 16px;border-radius:12px;border:0;font-size:17px;font-weight:800;cursor:pointer;text-decoration:none;background:#e2e8f0;color:#0f1f38}
+.btn.p{background:#1e40af;color:#fff}.btn.g{background:#15803d;color:#fff}.btn.sm{min-height:40px;font-size:14px;padding:8px 12px}
+.pin{display:flex;gap:10px;justify-content:center;margin:14px 0}.pin input{width:100%;max-width:220px;font-size:36px;letter-spacing:14px;text-align:center;padding:12px;border:2px solid #cbd5e1;border-radius:12px}
+.pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:320px;margin:0 auto}.pad .btn{min-height:64px;font-size:26px}
+.nav{display:flex;gap:8px;align-items:center;justify-content:space-between}.nav b{font-size:17px;text-align:center}
+.day{font-weight:900;font-size:15px;color:#1e40af;margin:14px 0 6px}.job{border:1px solid #dbe2ea;border-radius:12px;padding:14px;margin-bottom:10px;background:#fff}
+.stage{display:inline-block;background:#dbeafe;color:#1e40af;border-radius:999px;padding:4px 10px;font-weight:800;font-size:13px}
+.cust{font-size:20px;font-weight:900;margin:6px 0 2px}.addr{font-size:16px}.acts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.err{background:#fef2f2;color:#b91c1c;border-radius:10px;padding:12px;font-weight:700;margin-top:10px}.setup{background:#fffbeb;color:#92400e}
+.sheet{display:none}
+@media print{header,.wrap>*:not(.printing),.noprint{display:none!important}.printing{display:block!important;box-shadow:none}body{background:#fff}}
+table.cs{width:100%;border-collapse:collapse;font-size:15px}table.cs th,table.cs td{border:1px solid #cbd5e1;padding:8px;text-align:left}table.cs th{width:38%;background:#f8fafc}
+</style></head><body>
+<header><b>AGB Crew Schedule</b><span id="who"></span></header>
+<div class="wrap" id="main"></div>
+<script>
+const SB_URL='https://iomcekniylxfptswcxoi.supabase.co';
+const SB_KEY='sb_publishable_G_ZAnQ_CoJjWsn8-HgduLw_IziPWEmn';
+const sb=window.supabase?window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:false}}):null;
+const $=id=>document.getElementById(id),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const qp=new URLSearchParams(location.search);let crew=(qp.get('crew')||decodeURIComponent((location.hash.match(/crew=([^&]*)/)||[])[1]||'')).trim();
+const pinKey=()=>'agb_crew_pin_'+crew.toLowerCase();let week=monday(new Date()),data=null;
+function monday(d){const x=new Date(d);x.setHours(0,0,0,0);x.setDate(x.getDate()-((x.getDay()+6)%7));return x}
+function iso(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function nice(s){const [y,m,d]=String(s).split('-').map(Number);return new Date(y,m-1,d).toLocaleDateString(undefined,{weekday:'long',month:'short',day:'numeric'})}
+function main(h){$('main').innerHTML=h}
+function askCrew(){main('<div class="card"><h1>Crew Schedule</h1><p class="muted">Open the link your office sent you, or type your crew name.</p><input id="cn" style="width:100%;font-size:20px;padding:12px;border-radius:10px;border:2px solid #cbd5e1"><p><button class="btn p" style="width:100%" onclick="crew=$(\'cn\').value.trim();if(crew)start()">Continue</button></p></div>')}
+function askPin(msg){$('who').textContent=crew;main('<div class="card"><h1>'+esc(crew)+'</h1><p class="muted">Enter your 4-digit crew PIN.</p><div class="pin"><input id="pin" inputmode="numeric" pattern="[0-9]*" maxlength="4" type="password" autocomplete="one-time-code"></div><div class="pad">'+[1,2,3,4,5,6,7,8,9,'⌫',0,'OK'].map(k=>'<button class="btn'+(k==='OK'?' g':'')+'" onclick="padKey(\''+k+'\')">'+k+'</button>').join('')+'</div>'+(msg||'')+'</div>');const p=$('pin');p.focus();p.oninput=()=>{p.value=p.value.replace(/\D/g,'').slice(0,4);if(p.value.length===4)tryPin(p.value)}}
+function padKey(k){const p=$('pin');if(k==='⌫')p.value=p.value.slice(0,-1);else if(k==='OK'){if(p.value.length===4)tryPin(p.value)}else if(p.value.length<4){p.value+=k;if(p.value.length===4)tryPin(p.value)}}
+async function load(pin){
+  if(!sb)return {error:'offline'};
+  try{const {data:r,error}=await sb.rpc('crew_schedule',{p_crew:crew,p_pin:pin,p_week_start:iso(week)});
+    if(error){if(/PGRST202|42883|Could not find the function|does not exist/i.test((error.code||'')+' '+(error.message||'')))return {error:'setup'};return {error:'net',msg:error.message}}
+    return r&&r.ok?{ok:r}:{error:(r&&r.error)||'bad_pin'}}catch(e){return {error:'net',msg:String(e&&e.message||e)}}}
+const ERR={bad_pin:'Wrong PIN. Try again or ask the office.',locked:'Too many wrong tries. Wait 15 minutes, or ask the office to reset your PIN.',setup:'Setup needed: the office has not turned on crew schedules yet (crew-pin.sql has not been run in Supabase).',offline:'No connection. Check Wi-Fi or data and reload.',net:'Could not reach the schedule. Check your connection and try again.'};
+async function tryPin(pin){main('<div class="card"><p class="muted">Loading…</p></div>');const r=await load(pin);
+  if(r.ok){try{localStorage.setItem(pinKey(),pin)}catch(e){}data=r.ok;return render()}
+  if(r.error==='bad_pin'||r.error==='locked')try{localStorage.removeItem(pinKey())}catch(e){}
+  askPin('<div class="err'+(r.error==='setup'?' setup':'')+'">'+ERR[r.error]+'</div>')}
+async function shift(n){week.setDate(week.getDate()+7*n);const pin=localStorage.getItem(pinKey())||'';main('<div class="card"><p class="muted">Loading…</p></div>');const r=await load(pin);if(r.ok){data=r.ok;render()}else askPin('<div class="err">'+ERR[r.error]+'</div>')}
+function mapUrl(j){return 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent([j.address,j.city].filter(Boolean).join(', '))}
+function sheetHtml(j,i){const rows=[['Customer',j.customer],['Address',[j.address,j.city].filter(Boolean).join(', ')],['Stage',j.stage],['Date',nice(j.date)],['Garage size',j.garage_size],['Wall height',j.wall_height],['Roof',j.roof_type],['Siding',j.siding],['Demo',j.demolition_required===true?'Yes':j.demolition_required===false?'No':'']];return '<div class="card sheet" id="sh'+i+'"><h1>Carpenter Sheet</h1><div class="muted">'+esc(crew)+' • Absolute Garage Builders</div><table class="cs">'+rows.map(r=>'<tr><th>'+r[0]+'</th><td>'+esc(r[1]||'—')+'</td></tr>').join('')+'</table><p class="noprint" style="display:flex;gap:8px"><button class="btn p" onclick="printSheet('+i+')">🖨 Print</button><button class="btn" onclick="toggleSheet('+i+')">Close</button></p></div>'}
+function toggleSheet(i){const s=$('sh'+i);s.style.display=s.style.display==='block'?'none':'block';if(s.style.display==='block')s.scrollIntoView({behavior:'smooth'})}
+function printSheet(i){const s=$('sh'+i);s.classList.add('printing');window.print();s.classList.remove('printing')}
+function render(){const end=new Date(week);end.setDate(end.getDate()+6);const jobs=(data&&data.jobs)||[];const f=d=>d.toLocaleDateString(undefined,{month:'short',day:'numeric'});
+  let h='<div class="card"><div class="nav"><button class="btn" onclick="shift(-1)">‹ Prev</button><b>'+f(week)+' – '+f(end)+'</b><button class="btn" onclick="shift(1)">Next ›</button></div>'+(iso(week)!==iso(monday(new Date()))?'<p style="text-align:center;margin:10px 0 0"><button class="btn sm" onclick="week=monday(new Date());shift(0)">This week</button></p>':'')+'</div>';
+  if(!jobs.length)h+='<div class="card"><p class="muted" style="font-size:17px">No jobs scheduled for '+esc(crew)+' this week.</p></div>';
+  let last='';jobs.forEach((j,i)=>{if(j.date!==last){h+='<div class="day">'+nice(j.date)+'</div>';last=j.date}
+    h+='<div class="job"><span class="stage">'+esc(j.stage)+'</span><div class="cust">'+esc(j.customer)+'</div><div class="addr">'+esc([j.address,j.city].filter(Boolean).join(', ')||'No address')+'</div><div class="acts">'+(j.address?'<a class="btn p" href="'+mapUrl(j)+'" target="_blank" rel="noopener">🗺 Map</a>':'<span></span>')+'<button class="btn" onclick="toggleSheet('+i+')">📋 Carpenter sheet</button></div></div>'+sheetHtml(j,i)});
+  h+='<p class="noprint" style="text-align:center"><button class="btn sm" onclick="localStorage.removeItem(pinKey());askPin()">Change PIN / sign out</button></p>';main(h)}
+function start(){$('who').textContent=crew;const pin=(()=>{try{return localStorage.getItem(pinKey())}catch(e){return null}})();if(pin)tryPin(pin);else askPin()}
+crew?start():askCrew();
+</script></body></html>

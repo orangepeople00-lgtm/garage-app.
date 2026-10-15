@@ -3,6 +3,7 @@
 -- UNDO (removes every imported row, all parts):
 --   delete from public.jobs where notes like '%AGB-IMPORT:mymaps-2026-10-15%';
 begin;
+alter table public.jobs add column if not exists roof_type text;
 insert into public.jobs (customer,address,city,salesman_username,sold_date,garage_size,completed_date,latitude,longitude,notes,
   permit_status,demolition_required,demo_status,concrete_status,carpentry_status,electric_status,extras_required,extras_status,
   inspection_status,final_payment,deposit_status,hold_status,price,deposit,priority,created_by)
@@ -306,5 +307,18 @@ from (values
 ) as v(customer,address,city,salesman,d,gs,lat,lng,notes)
 where not exists (select 1 from public.jobs j where j.notes like '%AGB-IMPORT:mymaps-2026-10-15%'
   and j.customer=v.customer and j.latitude=v.lat and j.longitude=v.lng);
+-- Roof style from the spec text (only where the text states it; most specific first)
+update public.jobs set roof_type = case
+  when notes ~* '\mrev(erse|\.)?\s*gable' then 'Reverse Gable'
+  when notes ~* '\mdutch\s*gable' then 'Dutch Gable'
+  when notes ~* '\mdutch\s*hip' then 'Dutch Hip'
+  when notes ~* '\mdutch\M' then 'Dutch'
+  when notes ~* '\mgambrel\M' then 'Gambrel'
+  when notes ~* '\mgable\M' then 'Gable'
+  when notes ~* '\mhip\M' then 'Hip' end
+where notes like '%[AGB-IMPORT:%' and roof_type is null
+  and notes ~* '\m(rev(erse|\.)?\s*gable|dutch|gambrel|gable|hip)\M';
+-- Dates: completed_date mirrors sold_date for imported rows (year-only rows stay null)
+update public.jobs set completed_date = sold_date where notes like '%[AGB-IMPORT:%' and completed_date is null and sold_date is not null;
 commit;
 -- Check: select count(*) from public.jobs where notes like '%AGB-IMPORT:mymaps-2026-10-15%';  -- expect 585 after all parts

@@ -199,7 +199,7 @@ button{border:0;border-radius:7px;padding:8px 10px;font-weight:800;cursor:pointe
   </div>
   <div class="row2">
     <div><label>Gutters</label><select id="gutters"><option>yes</option><option>none</option></select></div>
-    <div><label>Gutter style</label><select id="gutterStyle" onchange="onGutterStyleChange()"><option value="k" selected>K-style (default)</option><option value="half">Half-round</option><option value="sides">Sides only</option><option value="none">None</option></select></div>
+    <div><label>Gutter style</label><select id="gutterStyle" onchange="onGutterStyleChange()"><option value="seamless" selected>Seamless gutters (default)</option><option value="k">K-style</option><option value="half">Half-round</option><option value="sides">Sides only</option><option value="none">None</option></select></div>
     <div><label>Apron depth ft</label><input id="apronFt" value="3" title="0 = no apron"></div>
   </div>
   <label>Roofed patio</label>
@@ -309,9 +309,9 @@ All outlets tamperproof. GARAGE DISCONNECT at first point of entrance inside gar
     <button class="btn-gold" type="button" onclick="applyVillage()">Apply Village Codes</button>
     <button class="btn-white" type="button" onclick="loadVillagePacket(true)">Load village packet</button>
     <button class="btn-white" type="button" onclick="gpNewPlan()">New plan (clear info)</button>
-    <button class="btn-white" type="button" onclick="buildPlans(true)">Generate Plans</button>
+    <button class="btn-white" type="button" onclick="gpGenerate()">Generate Plans</button>
     <button class="btn-gold" type="button" onclick="generateAiPlanPictures()">AI plan pictures (OpenAI)</button>
-    <button class="btn-gold" type="button" onclick="window.print()">Print plans</button>
+    <button class="btn-gold" type="button" onclick="gpPrint()">Print plans</button>
     <button class="btn-white" type="button" onclick="downloadPlansPdf()">Download PDF</button>
     <button class="btn-gold" type="button" onclick="saveToHistory()">Save to History</button>
     <button class="btn-ghost" type="button" onclick="location.href='index.html#planHistory'">Plan History</button>
@@ -571,7 +571,13 @@ function setStatus(msg, ok){
   el.textContent=msg||'';
   el.classList.toggle('ok', !!ok);
 }
-function customerLabel(){ return val('customer')||'TBD'; }
+/* 2026-10-15: soft warning (never a hard block) when customer name / address are blank */
+function agbMissingInfoConfirm(missing){missing=(missing||[]).filter(Boolean);if(!missing.length)return Promise.resolve(true);return new Promise(res=>{let bg=document.getElementById('agbMissBg');if(bg)bg.remove();bg=document.createElement('div');bg.id='agbMissBg';bg.setAttribute('role','dialog');bg.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:100000;display:flex;align-items:center;justify-content:center;padding:16px;font-family:system-ui,-apple-system,Segoe UI,Arial,sans-serif';bg.innerHTML='<div style="background:#fff;color:#111;border-radius:14px;max-width:420px;width:100%;padding:18px 18px 14px;box-shadow:0 10px 40px rgba(0,0,0,.35)"><div style="font-weight:800;font-size:18px;margin-bottom:6px">No customer name or address entered</div><div style="font-size:14px;color:#374151;margin-bottom:6px">Missing:</div><ul style="margin:0 0 10px 18px;padding:0;font-size:15px">'+missing.map(m=>'<li>'+String(m).replace(/[<>&]/g,'')+'</li>').join('')+'</ul><div style="font-size:13px;color:#6b7280;margin-bottom:14px">You can continue; those spots will be left blank.</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><button type="button" data-a="back" style="min-height:48px;border-radius:10px;border:1px solid #cbd5e1;background:#fff;color:#111;font-weight:700;font-size:16px">Go back</button><button type="button" data-a="go" style="min-height:48px;border-radius:10px;border:0;background:#0f274b;color:#fff;font-weight:800;font-size:16px">Continue anyway</button></div></div>';document.body.appendChild(bg);const done=v=>{bg.remove();res(v)};bg.querySelector('[data-a=back]').onclick=()=>done(false);bg.querySelector('[data-a=go]').onclick=()=>done(true);bg.addEventListener('click',e=>{if(e.target===bg)done(false)})})}
+function agbMissingList(name,addr){const m=[];if(!String(name||'').trim())m.push('Customer name');if(!String(addr||'').trim())m.push('Address');return m}
+function gpInfoOk(){return agbMissingInfoConfirm(agbMissingList(val('customer'),val('address')))}
+async function gpGenerate(){if(await gpInfoOk())buildPlans(true)}
+async function gpPrint(){if(await gpInfoOk())window.print()}
+function customerLabel(){ return val('customer')||''; }
 const PREFS_KEY='agb_garageplans_prefs_v1';
 function savePrefs(){
   try{
@@ -711,11 +717,11 @@ function scaleBar(x,y,pxPerFt){
   return g+`<text x="${x}" y="${y-4}" font-size="9" font-weight="700">GRAPHIC SCALE (FEET)</text></g>`;
 }
 function tblock(name, num, of){
-  const village=cityName()?( (code()&&code().kind)||'VILLAGE')+' of '+cityName().toUpperCase() : 'VILLAGE';
+  const cityRaw=(val('cityManual')||val('city')||'').trim();const village=cityRaw?( (code()&&code().kind)||'VILLAGE')+' of '+cityRaw.toUpperCase() : '';
   return `<div class="tblock">
     <div class="logo">ABSOLUTE GARAGE BUILDERS<small>ROOFING LIC. 104.016731 · 105.006803</small></div>
     <div><div class="jobtitle">DETACHED GARAGE - ${esc(roofLabel())} ROOF</div>
-      ${esc(val('address')||'JOB ADDRESS')}, ${esc(village)}<br>OWNER: ${esc(customerLabel())} · PIN: ${esc(val('pin')||'—')}</div>
+      ${esc([val('address'),village].filter(Boolean).join(', '))}<br>OWNER: ${esc(customerLabel())} · PIN: ${esc(val('pin')||'—')}</div>
     <div>CONTRACTOR<br>ABSOLUTE GARAGE BUILDERS<br>3050 W. IRVING PARK RD.<br>CHICAGO, IL 60618<br>(773) 583-8800 · (847) 759-8877</div>
     <div><b>${esc(name)}</b><br><span class="sheetno">SHEET ${num} OF ${of}</span><br>${esc(val('planDate')||'')} · REV ${esc(val('planRev')||'0')}<br><span style="font-size:10px">DRAWN: ${esc(val('rep')||'')}</span></div>
   </div>`;
@@ -1742,11 +1748,11 @@ function ohPostFt(){ return 1.5; }
 function ohGroupW(){ const w=Number(val('ohW'))||16, n=ohCount(); return +(n*w+(n-1)*ohPostFt()).toFixed(2); }
 function gutterStyle(){
   if(!guttersRequired()) return 'none';
-  const g=val('gutterStyle')||'k';
-  return ['none','k','half','sides'].includes(g)?g:'k';
+  const g=val('gutterStyle')||'seamless';
+  return ['none','k','half','sides','seamless'].includes(g)?g:'seamless';
 }
 function onGutterStyleChange(){
-  const g=val('gutterStyle')||'k';
+  const g=val('gutterStyle')||'seamless';
   if($('flagGutters')) $('flagGutters').checked=(g!=='none');
   if($('gutters')) $('gutters').value=(g!=='none')?'yes':'none';
   try{ buildPlans(true); }catch(e){}
@@ -1903,8 +1909,8 @@ function elevLarge(view, title){
   else labs.push([rk==='hip'?X(L*.3):X(.4),Y(H+rise*(rk==='hip'?.35:.55)),'ARCH. SHINGLES']);
   if(rk!=='gableEnd') labs.push([X(-OH)+6,Y(H+.15)+3,showAlum?'ALUM. SOFFIT & FASCIA':'FASCIA']);
   labs.push([X(.6),Y(5.2),sidingTxt]);
-  if(gutRun){ labs.push([X(-OH)+14,gutY,half?'5" HALF-ROUND GUTTER':'5" K-STYLE GUTTER']); labs.push([X(0)+4,Y(3),(half?'3" RND.':'2x3')+' DOWNSPOUT + SPLASH BLOCK']); }
-  if(gutCaps) labs.push([X(-OH)-1,gutY,(half?'HALF-ROUND':'K-STYLE')+' GUTTER (END)']);
+  if(gutRun){ labs.push([X(-OH)+14,gutY,half?'5" HALF-ROUND GUTTER':(val('gutterStyle')==='seamless'?'5" SEAMLESS GUTTER':'5" K-STYLE GUTTER')]); labs.push([X(0)+4,Y(3),(half?'3" RND.':'2x3')+' DOWNSPOUT + SPLASH BLOCK']); }
+  if(gutCaps) labs.push([X(-OH)-1,gutY,(half?'HALF-ROUND':(val('gutterStyle')==='seamless'?'SEAMLESS':'K-STYLE'))+' GUTTER (END)']);
   if(hurricaneRequired()) labs.push([X(0),Y(H),'HURRICANE TIES AT RAFTER-TO-WALL']);
   if(apronOn) labs.push([X(-.6),gy-2,'CONC. APRON '+ftl(apronFt)+' DEEP']);
   if(patioFront) labs.push([X(-.5),Y((PLo.ya+PLo.yb)/2),'ROOFED PATIO · 1/12 ROOF']);
@@ -2404,7 +2410,7 @@ function pageCover(){
   return `<section class="${sheetClass()}" data-sheet="cover">
     <div style="display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #111;padding-bottom:6px;margin-bottom:8px">
       <div><div style="font-size:22px;font-weight:800">PERMIT DRAWING SET — DETACHED GARAGE</div>
-      <div style="font-size:13px;font-weight:700">${esc(jobTitleLine())} · ${esc(roofLabel())} ROOF · ${esc(val('address')||'JOB ADDRESS')}</div></div>
+      <div style="font-size:13px;font-weight:700">${esc(jobTitleLine())} · ${esc(roofLabel())} ROOF${val('address')?' · '+esc(val('address')):''}</div></div>
       <div style="text-align:right;font-size:12px"><b>ABSOLUTE GARAGE BUILDERS</b><br>3050 W. IRVING PARK RD., CHICAGO, IL 60618<br>(773) 583-8800</div>
     </div>
     <div class="cover-grid">
@@ -2481,10 +2487,6 @@ function buildPlans(scrollTo){
     if(scrollTo){
       const errs=validatePlanInputs(); showPlanErrors(errs);
       if(errs.length){ setStatus('Fix the highlighted size problems first'); alert('Please fix before generating:\n\n• '+errs.join('\n• ')); return; }
-      if(!val('customer') && $('customer')){
-        const nm=prompt('Customer name for these plans (shows in the title block):','');
-        if(nm&&nm.trim()) $('customer').value=nm.trim();
-      }
     }
     try{ setPrintPageSize(); }catch(e){}
     if(scrollTo) window._planAiPhotos={};
@@ -2492,7 +2494,6 @@ function buildPlans(scrollTo){
     if($('depth') && !(Number(val('depth'))>0)) $('depth').value='20';
     if($('wallH') && !(Number(val('wallH'))>0)) $('wallH').value='8';
     const W=Number(val('width'))||22, D=Number(val('depth'))||24;
-    if(scrollTo && !val('customer') && $('customer')) $('customer').value='TBD';
     applyJobRules();
     prunePlanVis();
     seedPlanItems();
@@ -2639,11 +2640,13 @@ function restore(o){
   buildPlans();
 }
 function planFileName(){
-  const who=(val('customer')||'Garage').replace(/[\\/:*?"<>|]+/g,'-');
-  const city=(cityName()||'Village').replace(/[\\/:*?"<>|]+/g,'-');
-  return 'AGB-Plans-'+who+'-'+city+'.pdf';
+  const clean=v=>String(v||'').trim().replace(/[\\/:*?"<>|]+/g,'-');
+  const who=clean(val('customer')), city=clean(val('cityManual')||val('city'));
+  if(!who && !city) return 'garage-plan.pdf';
+  return 'AGB-Plans-'+[who,city].filter(Boolean).join('-')+'.pdf';
 }
 async function downloadPlansPdf(){
+  if(!(await gpInfoOk()))return;
   if(!document.querySelector('.sheet')) buildPlans(true);
   const sheets=[...document.querySelectorAll('#pages .sheet')];
   if(!sheets.length){ alert('Generate plans first.'); return; }
@@ -2717,13 +2720,10 @@ async function currentStaff(){
   }catch(e){ return null; }
 }
 async function saveToHistory(){
+  if(!(await gpInfoOk()))return;
   const errs=validatePlanInputs(); showPlanErrors(errs);
   if(errs.length){ alert('Please fix before saving:\n\n• '+errs.join('\n• ')); return; }
-  if(!val('customer') || val('customer')==='TBD'){
-    const n=prompt('Customer name for this plan (required)', '');
-    if(!n || !n.trim()){ alert('A customer name is required to save to Plan History.'); return; }
-    $('customer').value=n.trim();
-  }
+  /* customer/job info is optional: blank saves as 'Untitled' */
   buildPlans();
   saveJob(true);
   const staff=await currentStaff();

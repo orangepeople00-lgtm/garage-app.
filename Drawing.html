@@ -2318,7 +2318,7 @@ button.danger{color:#b42318}
 }
 
 /* 2026-10-15: survey inner-wall numbers are small and transparent so they never hide the garage label */
-#paper .obj[data-role^="garageWallDim"]{z-index:6!important;background:transparent!important}
+#paper .obj[data-role^="garageWallDim"]{z-index:60!important;background:transparent!important}
 #paper .obj[data-role^="garageWallDim"] > .label{background:transparent!important;font-size:12px!important}
 </style>
 </head>
@@ -3250,6 +3250,11 @@ bindCombo('cServicePadCombo','cServicePadW','cServicePadL',{commitOnly:true,onch
 bindCombo('oSizeCombo','oSizeW','oSizeL',{commitOnly:true,onchange:()=>{syncSideToSheet('oSizeW');syncSideToSheet('oSizeL')}});
 bindCombo('oApronCombo','oApronW','oApronH');
 bindCombo('spGarageCombo','spGarageW','spGarageH');
+// Panel width x depth resizes the proposed garage live, in place (apron, setbacks, labels follow on render).
+function agbResizeProposedFromPanel(){ if(state.mode!=='siteplan')return; const g=byRole('proposedGarage'); if(!g)return;
+  const w=+$('spGarageW').value||0, h=+$('spGarageH').value||0; if(!(w>0&&h>0)||(w===+g.wf&&h===+g.hf))return;
+  snapshot(); g.wf=w; g.hf=h; delete g.visualWpx; delete g.visualHpx; if(g.label)g.label='PROPOSED GARAGE'; renderObjects(); saveActiveSheetState(); }
+['input','change'].forEach(ev=>$('spGarageCombo')?.addEventListener(ev,()=>setTimeout(agbResizeProposedFromPanel,0)));
 bindCombo('spExistingWalkCombo','spExistingWalkW','spExistingWalkH');
 bindCombo('cNewWalkCombo','cNewWalkW','cNewWalkH');
 bindCombo('cExistingWalkCombo','cExistingWalkW','cExistingWalkH');
@@ -5699,6 +5704,8 @@ function agbFollowProposedGarage(){
     ['spLeftSb'].forEach(r=>{const o=byRole(r);if(o){o.x+=dx;o.y+=dy+(db-dy)/2}});
     ['spRightSb'].forEach(r=>{const o=byRole(r);if(o){o.x+=dr;o.y+=dy+(db-dy)/2}});
     ['spRearSb'].forEach(r=>{const o=byRole(r);if(o){o.x+=dx+(dr-dx)/2;o.y+=db}});
+    // TO ALLEY always shows the real distance from the garage rear to the rear lot line once the garage moves.
+    try{ const L=agbLotBox(); if(L&&!surveyData&&$('spAlley')?.value!=='no'&&$('spAlleyDist')){ const d=Math.round((L.b-(g.y+g.hf*p))/p*2)/2; if(d>=0) $('spAlleyDist').value=d; } }catch(_){}
     try{ if(typeof spApplyAlleyApron==='function' && (state.objects.some(o=>o.role==='proposedApron'||o.role==='spAlleyDim'))) spApplyAlleyApron(true); else { const a=state.objects.find(o=>o.role==='proposedApron'); if(a){a.x+=dx;a.y+=db} } }catch(_){}
     try{ window.agbSyncProposedWallDims&&window.agbSyncProposedWallDims(g); }catch(_){}
   }
@@ -5708,11 +5715,10 @@ function agbFollowProposedGarage(){
 function agbLotBox(){ const lot=byRole('lotOutline'); if(!lot||lot.hidden) return null; const lp=lot.pxf||(window.agbPxOf?window.agbPxOf(lot):4);
   return {x:lot.x,y:lot.y,r:lot.x+(lot.visualWpx||lot.wf*lp),b:lot.y+(lot.visualHpx||lot.hf*lp),wf:lot.wf}; }
 function agbKeepGarageInLot(g){
-  const L0=agbLotBox(); if(L0&&!surveyData&&window.agbResizing){ if(+g.wf>L0.wf){g.wf=L0.wf;delete g.visualWpx} const lotL=(byRole('lotOutline')||{}).hf; if(lotL&&+g.hf>lotL){g.hf=lotL;delete g.visualHpx} }
   const L=agbLotBox(); const warn=agbLotWarn(g,L); if(!L||surveyData) return;
   const p=g.pxf||4, gw=(g.visualWpx||g.wf*p), gh=(g.visualHpx||g.hf*p);
   const a=state.objects.find(o=>o.role==='proposedApron'); const c=(typeof spCfg==='function')?spCfg():{};
-  const behind=Math.max(a?a.hf*p:0, (c.alley&&c.dist>0)?c.dist*p:0);
+  const behind=a?a.hf*(a.pxf||p):0;   // only the apron must stay inside the lot; TO ALLEY is recalculated
   const aw=a?a.wf*(a.pxf||p):0, aOff=a?(gw-aw)/2+(c.off||0)*p:0;   // apron left edge relative to garage
   let minX=L.x, maxX=L.r-gw; if(a){ minX=Math.max(minX,L.x-aOff); maxX=Math.min(maxX,L.r-aOff-aw); }
   if(!warn && maxX>=minX) g.x=Math.min(maxX,Math.max(minX,g.x)); else g.x=Math.max(L.x,Math.min(g.x,L.r-gw));
@@ -6242,6 +6248,8 @@ function attachDrivewayHandles(el,o){
 function attachBoxHandles(el, o){
   if(!el || !o) return;
   el.querySelectorAll('.corner-handle,.handle,.resize-handle').forEach(n=>n.remove());
+  // Proposed site-plan garage: size comes only from the wizard / panel width x depth, so it can only be moved.
+  if(o.role==='proposedGarage'||o.role==='lotOutline'){ el.querySelectorAll('.side-handle').forEach(n=>n.remove()); return; }
   if(el.querySelector('.side-handle')) return;
   const sides = ['line','arrow'].includes(o.kind) ? ['e','w'] : ['n','s','e','w'];
   sides.forEach(side=>{
@@ -6261,7 +6269,7 @@ function objectPointerDown(e){
   e.stopPropagation();
   try{ e.currentTarget.setPointerCapture?.(e.pointerId); }catch(_){}
   const el=e.currentTarget,o=getObj(el.dataset.id); if(!o)return;
-  if(o.locked && !e.target.dataset.handle && !e.target.dataset.rotate){
+  if(o.locked && !(o.role==='lotOutline'&&state.mode==='siteplan') && !e.target.dataset.handle && !e.target.dataset.rotate){
     state.selected=o.id; el.classList.add('selected'); attachBoxHandles(el,o); return;
   }
   if(state.selected!==o.id){
@@ -6294,6 +6302,20 @@ function objectPointerDown(e){
   window.addEventListener('pointerup',unlockPan);
   window.addEventListener('pointercancel',unlockPan);
   try {
+  // Lot outline (site plan): drag to move it, size never changes. The proposed garage moves with it,
+  // so the setbacks stay the same; apron, TO ALLEY, wall numbers and setback labels follow the garage.
+  if(o.role==='lotOutline' && state.mode==='siteplan'){
+    e.preventDefault(); e.stopPropagation();
+    const sx=e.clientX, sy=e.clientY, lx=o.x, ly=o.y, g=byRole('proposedGarage'), gx=g?g.x:0, gy=g?g.y:0;
+    const slop=(e.pointerType==='touch'||e.pointerType==='pen')?8:3; let started=false;
+    const mv=ev=>{ ev.preventDefault(); const dx=(ev.clientX-sx)/Math.max(.01,state.scale||1), dy=(ev.clientY-sy)/Math.max(.01,state.scale||1);
+      if(!started){ if(Math.hypot(ev.clientX-sx,ev.clientY-sy)<slop) return; started=true; snapshot(); }
+      o.x=lx+dx; o.y=ly+dy; if(g){ g.x=gx+dx; g.y=gy+dy; } renderObjects(); };
+    const up=()=>{ try{unlockCanvasPan()}catch(_){} window.removeEventListener('pointermove',mv); window.removeEventListener('pointerup',up); window.removeEventListener('pointercancel',up);
+      if(started) saveActiveSheetState(); };
+    window.addEventListener('pointermove',mv,{passive:false}); window.addEventListener('pointerup',up); window.addEventListener('pointercancel',up);
+    return;
+  }
   // Lot length: entire LOT LENGTH + number block slides up/down
   if(o.role==='lotLength'){
     e.preventDefault();
@@ -6350,8 +6372,7 @@ function objectPointerDown(e){
     return;
   }
   const resizing=e.target.dataset.handle==='1', rotating=e.target.dataset.rotate==='1', cutSizing=e.target.dataset.cutend==='1';
-  const sideHandle=e.target.dataset.side||null; // n,s,e,w
-  window.agbResizing=!!(resizing||sideHandle);
+  const sideHandle=(o&&o.role==='proposedGarage')?null:(e.target.dataset.side||null); // n,s,e,w
   activeSnap = null; // fresh drag — no sticky snap yet
   // UX: a tap/select no longer creates an undo step or nudges the shape; the drag
   // only starts after the pointer travels a few px (more on touch).
@@ -6599,7 +6620,6 @@ function objectPointerDown(e){
     if(!_mvRaf) _mvRaf=requestAnimationFrame(()=>{_mvRaf=0; if(_mvEv) moveInner(_mvEv);});
   };
   const up=()=>{
-    window.agbResizing=false;
     if(_mvRaf){cancelAnimationFrame(_mvRaf);_mvRaf=0; if(_mvEv) moveInner(_mvEv);}
     activeSnap = null;
     hideSnapPreview();

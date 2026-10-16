@@ -2419,11 +2419,9 @@ body.bg-zinc-950{
             const notes=(typeof CITY_CODE_NOTES==='object' && CITY_CODE_NOTES[city]) ? CITY_CODE_NOTES[city] : '';
             const esc=(t)=>String(t||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
             const v=(k, fallback='')=> esc(s && s[k] ? s[k] : fallback);
-            const w=window.open('','_blank','width=900,height=1100');
-            if(!w){ alert('Allow popups to print the city code sheet.'); return; }
             const title=city||'City';
             const kind=s?(s.kind||'VILLAGE'):'VILLAGE';
-            w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${esc(title)} Building Codes — Absolute Garage Builders</title>
+            const html=(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${esc(title)} Building Codes — Absolute Garage Builders</title>
 <style>
 @page{size:letter;margin:.45in}
 *{box-sizing:border-box}
@@ -2499,8 +2497,43 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
   <div class="foot">Absolute Garage Builders code reference • Confirm with the village before permitting. Source packet updated 7/20/2026.</div>
 </div>
 </body></html>`);
-            w.document.close();
-            setTimeout(()=>{ try{ w.focus(); w.print(); }catch(e){} }, 400);
+            openCityCodeModal(html, title);
+        }
+
+        // City codes: show in an in-page modal (no auto-print). Print only when the user taps Print.
+        function openCityCodeModal(html, title){
+            let m=document.getElementById('cityCodeModal');
+            if(!m){
+                m=document.createElement('div');
+                m.id='cityCodeModal';
+                m.setAttribute('role','dialog');
+                m.setAttribute('aria-modal','true');
+                m.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;padding:10px';
+                m.innerHTML='<div style="background:#18181b;border:1px solid #3f3f46;border-radius:16px;width:100%;max-width:900px;height:100%;max-height:94vh;display:flex;flex-direction:column;overflow:hidden">'
+                  +'<div style="display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid #3f3f46">'
+                  +'<div id="cityCodeModalTitle" style="flex:1;min-width:0;color:#fbbf24;font-weight:800;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>'
+                  +'<button type="button" id="cityCodeModalPrint" style="background:#fbbf24;color:#000;font-weight:800;font-size:13px;padding:8px 14px;border-radius:10px;border:0">Print</button>'
+                  +'<button type="button" id="cityCodeModalClose" aria-label="Close" style="background:#3f3f46;color:#fff;font-weight:800;font-size:13px;padding:8px 12px;border-radius:10px;border:0">Close</button>'
+                  +'</div>'
+                  +'<iframe id="cityCodeModalFrame" title="City building codes" style="flex:1;width:100%;border:0;background:#fff"></iframe>'
+                  +'</div>';
+                document.body.appendChild(m);
+                m.addEventListener('click',e=>{ if(e.target===m) closeCityCodeModal(); });
+                document.getElementById('cityCodeModalClose').onclick=closeCityCodeModal;
+                document.getElementById('cityCodeModalPrint').onclick=printCityCodeModal;
+                document.addEventListener('keydown',e=>{ if(e.key==='Escape' && m.style.display!=='none') closeCityCodeModal(); });
+            }
+            document.getElementById('cityCodeModalTitle').textContent=(title||'City')+' — Building Codes';
+            document.getElementById('cityCodeModalFrame').srcdoc=html;
+            m.style.display='flex';
+        }
+        function closeCityCodeModal(){
+            const m=document.getElementById('cityCodeModal');
+            if(m) m.style.display='none';
+        }
+        function printCityCodeModal(){
+            const f=document.getElementById('cityCodeModalFrame');
+            try{ f.contentWindow.focus(); f.contentWindow.print(); }catch(e){ window.print(); }
         }
 
         function applyCityCodeDefaults(){

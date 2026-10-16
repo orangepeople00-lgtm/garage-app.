@@ -258,6 +258,18 @@ button{border:0;border-radius:7px;padding:8px 10px;font-weight:800;cursor:pointe
     <div><label>Eaves / soffit</label><input id="eaves" value='6" fascia / 6" soffit'></div>
     <div><label>Vents</label><input id="vents" value="ridge / mushroom"></div>
   </div>
+  <div class="row2" id="extraOhRow">
+    <div><label>Extra overhang (in, beyond eaves)</label><input id="extraOH" type="number" min="0" step="1" value="0"></div>
+    <div id="ohWallsBox" style="display:none"><label>Overhang on walls (from alley)</label>
+      <div class="ohw-checks" style="display:flex;flex-wrap:wrap;gap:4px 10px;font-size:13px">
+        <label style="display:inline-flex;gap:4px;align-items:center;font-weight:600"><input type="checkbox" id="extraOHFront">Front</label>
+        <label style="display:inline-flex;gap:4px;align-items:center;font-weight:600"><input type="checkbox" id="extraOHBack">Back</label>
+        <label style="display:inline-flex;gap:4px;align-items:center;font-weight:600"><input type="checkbox" id="extraOHLeft">Left</label>
+        <label style="display:inline-flex;gap:4px;align-items:center;font-weight:600"><input type="checkbox" id="extraOHRight">Right</label>
+      </div>
+      <div id="ohWallsAsk" style="display:none;color:#b91c1c;font-size:12px;font-weight:700;margin-top:3px">Pick at least one wall for the overhang. Walls not picked get the eaves only.</div>
+    </div>
+  </div>
   <div class="row2">
     <div><label>Gutters</label><select id="gutters"><option>yes</option><option>none</option></select></div>
     <div><label>Gutter style</label><select id="gutterStyle" onchange="onGutterStyleChange()"><option value="seamless" selected>Seamless gutters (default)</option><option value="k">K-style</option><option value="half">Half-round</option><option value="sides">Sides only</option><option value="none">None</option></select></div>
@@ -1296,8 +1308,23 @@ function psSlabSpec(){ const c=code()||{}; const txt=String(val('slab')||'').toU
   return {thick:String(thick).trim(),mix:String(mix).trim(),reinf:String(reinf).trim(),base:String(base).trim(),vapor:String(vapor).trim(),foot:String(foot).trim()}; }
 function psBlank(v){ return v?String(v).toUpperCase():'________'; }
 // Overhang (inches) from the Eaves / soffit input; null when the input gives no size.
-/* one source of truth for the overhang: elevations and roof plan both use this (default 6" when the eaves field gives no inches) */
-function psOverhangFt(){ const i=psOverhangIn(); return (i!=null&&i>0?i:6)/12; }
+/* roof projection per wall = EAVES (trim, default 6") + EXTRA OVERHANG (default 0", only on the walls picked). Elevations + roof plan both use this. */
+const PS_WALLS=['front','back','left','right'];
+function psEaveIn(){ const i=psOverhangIn(); return i!=null&&i>0?i:6; }
+function psOverhangFt(){ return psEaveIn()/12; }
+function psExtraOhIn(){ const n=Number(val('extraOH')); return Number.isFinite(n)&&n>0?n:0; }
+function psOhWalls(){ return PS_WALLS.filter(w=>{const e=$('extraOH'+w[0].toUpperCase()+w.slice(1)); return e&&e.checked;}); }
+function psExtraOn(w){ return psExtraOhIn()>0 && psOhWalls().includes(w); }
+function psProjFt(w){ return (psEaveIn()+(psExtraOn(w)?psExtraOhIn():0))/12; }
+function psInLabel(i){ i=Math.round(i*100)/100; return i<12?(i+'"'):ftLabel(i/12); }
+function psProjLabel(w){ const e=psEaveIn(); if(!psExtraOn(w)) return psInLabel(e)+' EAVE'; const x=psExtraOhIn(); return psInLabel(e)+' EAVE + '+psInLabel(x)+' OVERHANG = '+psInLabel(e+x)+' TOTAL'; }
+function psProjNotes(){ const x=psExtraOhIn(), ws=psOhWalls();
+  if(!x) return ['ROOF PROJECTION: '+psInLabel(psEaveIn())+' EAVE ALL WALLS (NO EXTRA OVERHANG)'];
+  if(!ws.length) return ['ROOF PROJECTION: '+psInLabel(psEaveIn())+' EAVE ALL WALLS · EXTRA OVERHANG '+psInLabel(x)+': WALLS ________ (NOT PICKED)'];
+  return PS_WALLS.map(w=>w.toUpperCase()+': '+psProjLabel(w)); }
+function psOhUi(){ const box=$('ohWallsBox'); if(!box) return; const on=psExtraOhIn()>0; box.style.display=on?'':'none'; const ask=$('ohWallsAsk'); if(ask) ask.style.display=on&&!psOhWalls().length?'':'none'; }
+document.addEventListener('input',e=>{ if(e.target&&e.target.id==='extraOH') psOhUi(); });
+document.addEventListener('change',e=>{ if(e.target&&/^extraOH/.test(e.target.id||'')) psOhUi(); });
 function psOverhangIn(){ const e=String(val('eaves')||'');
   let m=e.match(/(\d+(?:\.\d+)?)\s*(?:"|in(?:ch(?:es)?)?\b)\s*(?:overhang|soffit|eave)/i); if(m) return Number(m[1]);
   m=e.match(/(\d+(?:\.\d+)?)\s*(?:'|ft|foot|feet)\s*(?:overhang|soffit|eave)/i); if(m) return Number(m[1])*12;
@@ -1552,7 +1579,7 @@ function sheetHead(title, sheetId, vbW, c, scaleLabel){
 function roofPlanSvg(){
   const W=Number(val('width'))||20, D=Number(val('depth'))||20, rt=val('roof')||'gable', P=pitchNum();
   const VBW=600, VBH=680, c=psCtx(8.2,VBW);
-  const ohIn=psOverhangIn(), oh=psOverhangFt();
+  const ohIn=psOverhangIn(), oF=psProjFt('front'), oB=psProjFt('back'), oL=psProjFt('left'), oR=psProjFt('right'), oh=Math.max(oF,oB,oL,oR);
   const gs=gutterStyle(), half=gs==='half';
   const eaveFace=f=>rt==='hip'||(rt==='gable'?(f==='left'||f==='right'):(f==='front'||f==='back'));
   const gutOn=f=>gs!=='none'&&eaveFace(f)&&(gs!=='sides'||f==='left'||f==='right');
@@ -1567,17 +1594,18 @@ function roofPlanSvg(){
     'ROOF SHEATHING: '+psBlank(sheath),
     'RAFTERS: '+String(rafterCallout()).toUpperCase(),
     'EAVES / SOFFIT: '+psBlank(val('eaves')),
+    ...psProjNotes(),
     'GUTTERS: '+gtxt+(gs==='none'?'':' · DISCHARGE AWAY FROM BUILDING'),
-    rt==='hip'?'HIPS @ 45° IN PLAN; RIDGE = |W − D|':(rt==='gable'?'GABLE ENDS FRONT & REAR — SEE FRONT / REAR ELEVATIONS':'GABLE ENDS LEFT & RIGHT — SEE SIDE ELEVATIONS')];
+    rt==='hip'?'HIPS @ 45° IN PLAN FROM EAVE CORNERS; RIDGE = LONG − SHORT ROOF EDGE':(rt==='gable'?'GABLE ENDS FRONT & REAR — SEE FRONT / REAR ELEVATIONS':'GABLE ENDS LEFT & RIGHT — SEE SIDE ELEVATIONS')];
   if(pat.on) nl.push('ROOFED PATIO '+ftLabel(pat.w)+' x '+ftLabel(pat.d)+' · ('+pat.posts+') '+pat.post+' POSTS · '+pat.wall.toUpperCase()+' WALL');
   const top=psHeadH(c)+6, bot=c.f(40);
   const ring=c.f(15), mS=c.f(12)+2*ring+c.f(8), mL=c.f(10), mT=c.f(20);
-  const ftW=W+2*oh+patExt('left')+patExt('right'), ftH=D+2*oh+patExt('back')+patExt('front');
+  const ftW=W+oL+oR+patExt('left')+patExt('right'), ftH=D+oB+oF+patExt('back')+patExt('front');
   const availW=VBW-mL-mS, availH=VBH-top-bot-mT-mS;
   const sc=psPickScale(c,ftW,ftH,availW,availH), sx=sc.sx;
-  const ox=mL+(patExt('left')+oh)*sx+(availW-ftW*sx)/2, oy=top+mT+(patExt('back')+oh)*sx+(availH-ftH*sx)/2;
+  const ox=mL+(patExt('left')+oL)*sx+(availW-ftW*sx)/2, oy=top+mT+(patExt('back')+oB)*sx+(availH-ftH*sx)/2;
   const X=f=>ox+f*sx, Y=f=>oy+f*sx, gw=W*sx, gd=D*sx;
-  const e={x0:X(-oh),y0:Y(-oh),x1:X(W+oh),y1:Y(D+oh)};
+  const e={x0:X(-oL),y0:Y(-oB),x1:X(W+oR),y1:Y(D+oF)};
   let g='';
   // patio roof (dashed) first
   if(pat.on){ const pw=pat.w*sx,pd=pat.d*sx; let px,py,plw=pw,plh=pd; if(pat.wall==='back'){px=ox+(gw-pw)/2;py=e.y0-pd;} else if(pat.wall==='front'){px=ox+(gw-pw)/2;py=e.y1;} else if(pat.wall==='left'){px=e.x0-pd;py=oy+(gd-pw)/2;plw=pd;plh=pw;} else {px=e.x1;py=oy+(gd-pw)/2;plw=pd;plh=pw;}
@@ -1589,8 +1617,8 @@ function roofPlanSvg(){
   const RW=c.f(2.6), HW=c.f(1.6); let ridgeTxt='', ridge=null, hips=[];
   if(rt==='gable'){ ridge=[X(W/2),e.y0,X(W/2),e.y1]; ridgeTxt="RIDGE (FRONT TO BACK — GABLE ENDS FRONT & REAR)"; }
   else if(rt==='revgable'){ ridge=[e.x0,Y(D/2),e.x1,Y(D/2)]; ridgeTxt="RIDGE (SIDE TO SIDE — GABLE ENDS LEFT & RIGHT)"; }
-  else { const m=Math.min(W,D)+2*oh; if(W>=D){ const ry=Y(D/2), rx0=e.x0+m/2*sx, rx1=e.x1-m/2*sx; ridge=W>D?[rx0,ry,rx1,ry]:null; hips=[[e.x0,e.y0,rx0,ry],[e.x0,e.y1,rx0,ry],[e.x1,e.y0,rx1,ry],[e.x1,e.y1,rx1,ry]]; }
-    else { const rx=X(W/2), ry0=e.y0+m/2*sx, ry1=e.y1-m/2*sx; ridge=[rx,ry0,rx,ry1]; hips=[[e.x0,e.y0,rx,ry0],[e.x1,e.y0,rx,ry0],[e.x0,e.y1,rx,ry1],[e.x1,e.y1,rx,ry1]]; }
+  else { const ew=e.x1-e.x0, eh=e.y1-e.y0, m=Math.min(ew,eh)/sx; if(ew>=eh){ const ry=(e.y0+e.y1)/2, rx0=e.x0+m/2*sx, rx1=e.x1-m/2*sx; ridge=ew>eh+0.01?[rx0,ry,rx1,ry]:null; hips=[[e.x0,e.y0,rx0,ry],[e.x0,e.y1,rx0,ry],[e.x1,e.y0,rx1,ry],[e.x1,e.y1,rx1,ry]]; }
+    else { const rx=(e.x0+e.x1)/2, ry0=e.y0+m/2*sx, ry1=e.y1-m/2*sx; ridge=[rx,ry0,rx,ry1]; hips=[[e.x0,e.y0,rx,ry0],[e.x1,e.y0,rx,ry0],[e.x0,e.y1,rx,ry1],[e.x1,e.y1,rx,ry1]]; }
     ridgeTxt=ridge?'RIDGE '+ftLabel(Math.abs(W-D)):'HIP PEAK (4 HIPS MEET)'; }
   hips.forEach(h=>g+=psL(h[0],h[1],h[2],h[3],HW,'#111',null,'round'));
   if(ridge) g+=psL(ridge[0],ridge[1],ridge[2],ridge[3],RW,'#111',null,'round');
@@ -1633,7 +1661,11 @@ function roofPlanSvg(){
   if(oh) dims+=psDimChain(c,'x',[e.x0,e.x1],yb+2*ring,e.y1+go,'#111',{sx,fs:fs.dim});
   dims+=psDimChain(c,'y',ptsY,xr+ring,e.x1+go,'#111',{sx,fs:fs.dim});
   if(oh) dims+=psDimChain(c,'y',[e.y0,e.y1],xr+2*ring,e.x1+go,'#111',{sx,fs:fs.dim});
-  g+=psT(ox+gw/2,e.y0-c.f(8)-(patExt('back')*sx),ohIn!=null?(ftLabel(oh).replace(/^0'-/,'')+' OVERHANG TYP. (EAVES INPUT: '+String(val('eaves')).toUpperCase()+')'):'6" OVERHANG TYP. (DEFAULT — EAVES INPUT GIVES NO SIZE)',{fs:fs.small,w:700});
+  g+=psT(ox+gw/2,e.y0-c.f(8)-(patExt('back')*sx),(psExtraOhIn()&&psOhWalls().length?'BACK: '+psProjLabel('back'):psInLabel(psEaveIn())+' EAVE TYP.'+(psExtraOhIn()?' — PICK OVERHANG WALLS':'')+(ohIn==null?' (DEFAULT — EAVES INPUT GIVES NO SIZE)':'')),{fs:fs.small,w:700});
+  if(psExtraOhIn()&&psOhWalls().length){ const lf={fs:fs.small,w:700};
+    g+=psT(ox+gw/2,e.y1+(patExt('front')*sx)+c.f(4)+fs.small*0.9+3*ring+c.f(4),'FRONT: '+psProjLabel('front'),lf);
+    g+=`<g transform="translate(${psN(e.x0-(patExt('left')*sx)-c.f(5))},${psN(oy+gd/2)}) rotate(-90)">`+psT(0,0,'LEFT: '+psProjLabel('left'),lf)+'</g>';
+    g+=`<g transform="translate(${psN(e.x1+(patExt('right')*sx)+3*ring+c.f(10))},${psN(oy+gd/2)}) rotate(90)">`+psT(0,0,'RIGHT: '+psProjLabel('right'),lf)+'</g>'; }
   // notes (Notes C) + legend (Legend A) + north/scale (Style A)
   window._rpInfo={notes:nl.map(l=>l.replace('@DS@',String(nDS))),gutters:gs!=='none',RW,HW,dsz};
   const sy=VBH-c.f(26);
@@ -1977,7 +2009,9 @@ function onGutterStyleChange(){
 }
 function elevLarge(view, title){
   const W=Number(val('width'))||22, D=Number(val('depth'))||24;
-  const H=Number(val('wallH'))||8, P=pitchNum()/12, OH=psOverhangFt();
+  const H=Number(val('wallH'))||8, P=pitchNum()/12;
+  const _ends={front:['left','right'],back:['right','left'],left:['front','back'],right:['back','front']}[view]||['left','right'];
+  const OHL=psProjFt(_ends[0]), OHR=psProjFt(_ends[1]), OH=Math.max(OHL,OHR);
   const roof=val('roof')||'gable';
   const L=(view==='front'||view==='back')?W:D;
   const fmt=f=>{let i=Math.round((Number(f)||0)*12);return Math.floor(i/12)+"'-"+String(i%12).padStart(2,'0')+'"'};
@@ -2012,16 +2046,16 @@ function elevLarge(view, title){
   // ---- drawing (Style D) ----
   const S=13, F=1.456, ink='#000', w1=1.08, w2=2.08, w3=4, font='Arial,Helvetica,sans-serif';
   const padL=Math.max(150, 7.5*F*.6*30+30), padR=165, padT=44, padB=122;
-  const vw=padL+(L+pl+pr+2*OH)*S+padR, vh=padT+(Hr+1.4)*S+padB;
-  const X=f=>padL+(f+OH+pl)*S, Y=f=>padT+(Hr+1.4-f)*S, gy=Y(0);
+  const vw=padL+(L+pl+pr+OHL+OHR)*S+padR, vh=padT+(Hr+1.4)*S+padB;
+  const X=f=>padL+(f+OHL+pl)*S, Y=f=>padT+(Hr+1.4-f)*S, gy=Y(0);
   const o=[], top=[], uid='ed'+view;
   const ln=(x1,y1,x2,y2,w,ex='',arr=o)=>arr.push(`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${ink}" stroke-width="${w}" ${ex}/>`);
   const tx=(x,y,t,sz,a='middle',wt=700,bg=false,arr=top)=>{const s=sz*F;if(bg){const tw=String(t).length*s*.6+6;const x0=a==='middle'?x-tw/2:a==='end'?x-tw+3:x-3;arr.push(`<rect x="${x0}" y="${y-s+1}" width="${tw}" height="${s+3}" fill="#fff"/>`)}arr.push(`<text x="${x}" y="${y}" font-size="${s}" text-anchor="${a}" font-weight="${wt}" font-family="${font}" fill="${ink}">${esc(String(t))}</text>`)};
   const rc=(x,y,w,h,f,sw,ex='')=>o.push(`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${f}" stroke="${ink}" stroke-width="${sw}" ${ex}/>`);
   const wallPath=rk==='gableEnd'?`M${X(0)} ${gy}V${Y(H)}L${X(L/2)} ${Y(Hr)}L${X(L)} ${Y(H)}V${gy}Z`:`M${X(0)} ${gy}V${Y(H)}H${X(L)}V${gy}Z`;
-  const hipPts=`${X(-OH)},${Y(H+.15)} ${X(L+OH)},${Y(H+.15)} ${X(L/2+topW/2)},${Y(Hr)} ${X(L/2-topW/2)},${Y(Hr)}`;
+  const hipPts=`${X(-OHL)},${Y(H+.15)} ${X(L+OHR)},${Y(H+.15)} ${X(L/2+topW/2)},${Y(Hr)} ${X(L/2-topW/2)},${Y(Hr)}`;
   o.push(`<defs><clipPath id="${uid}w"><path d="${wallPath}"/></clipPath><pattern id="${uid}g" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="8" stroke="#000" stroke-width=".7"/></pattern></defs>`);
-  const gx1=X(-OH-pl)-16, gx2=X(L+pr+OH)+16;
+  const gx1=X(-OHL-pl)-16, gx2=X(L+pr+OHR)+16;
   o.push(`<rect x="${gx1}" y="${gy}" width="${gx2-gx1}" height="10" fill="url(#${uid}g)"/>`);
   o.push(`<path d="${wallPath}" fill="#fff"/>`);
   // siding
@@ -2066,11 +2100,11 @@ function elevLarge(view, title){
   }
   // ---- roof (Style D: solid dark) ----
   const RF='#2b2b2b';
-  if(rk==='gableEnd'){ const e=.5;const pts=`${X(-OH)},${Y(H-OH*P)} ${X(L/2)},${Y(Hr)} ${X(L+OH)},${Y(H-OH*P)} ${X(L+OH)},${Y(H-OH*P-e)} ${X(L/2)},${Y(Hr-e)} ${X(-OH)},${Y(H-OH*P-e)}`;
+  if(rk==='gableEnd'){ const e=.5;const pts=`${X(-OHL)},${Y(H-OHL*P)} ${X(L/2)},${Y(Hr)} ${X(L+OHR)},${Y(H-OHR*P)} ${X(L+OHR)},${Y(H-OHR*P-e)} ${X(L/2)},${Y(Hr-e)} ${X(-OHL)},${Y(H-OHL*P-e)}`;
     o.push(`<polygon points="${pts}" fill="${RF}" stroke="#000" stroke-width="${w3}" stroke-linejoin="round"/>`);
-    ln(X(-OH)+2,Y(H-OH*P-e)+4,X(L/2),Y(Hr-e)+4,w1);ln(X(L/2),Y(Hr-e)+4,X(L+OH)-2,Y(H-OH*P-e)+4,w1);
+    ln(X(-OHL)+2,Y(H-OHL*P-e)+4,X(L/2),Y(Hr-e)+4,w1);ln(X(L/2),Y(Hr-e)+4,X(L+OHR)-2,Y(H-OHR*P-e)+4,w1);
     if(($('flagGableVent')&&$('flagGableVent').checked) || true) o.push(`<path d="M${X(L/2-1.2)} ${Y(Hr-2.4)}L${X(L/2)} ${Y(Hr-1.5)}L${X(L/2+1.2)} ${Y(Hr-2.4)}Z" fill="#fff" stroke="#000" stroke-width="${w1}"/>`);
-  } else { const y1=Y(H+.15),y2=Y(Hr),x1=X(-OH),x2=X(L+OH);
+  } else { const y1=Y(H+.15),y2=Y(Hr),x1=X(-OHL),x2=X(L+OHR);
     const shape=rk==='hip'?`<polygon points="${hipPts}"`:`<rect x="${x1}" y="${y2}" width="${x2-x1}" height="${y1-y2}"`;
     o.push(`${shape} fill="${RF}" stroke="#000" stroke-width="${w3}" stroke-linejoin="round"/>`);
     if(rk==='hip'){ ln(X(L/2-topW/2),y2-2,X(L/2+topW/2),y2-2,w3); if(topW>0){ ln(x1,y1,X(L/2-topW/2),y2,1,'stroke="#9ca3af"'); ln(x2,y1,X(L/2+topW/2),y2,1,'stroke="#9ca3af"'); } }
@@ -2097,11 +2131,11 @@ function elevLarge(view, title){
   const downspout=(x,yb)=>{ o.push(`<rect x="${x}" y="${yb}" width="${dsW}" height="${gy-yb-10}" ${half?`rx="${dsW/2}"`:''} fill="#fff" stroke="#000" stroke-width="${w1*1.3}"/>`);
     const left=x<X(L/2); o.push(`<path d="M${x} ${gy-10}l${left?-8:8} 7h${dsW}l${left?8:-8} -7" fill="#fff" stroke="#000" stroke-width="${w1*1.2}"/><rect x="${left?x-22:x+6}" y="${gy-3}" width="${18+dsW}" height="3" fill="#bbb" stroke="#000" stroke-width=".5"/>`); };
   let gutY=null;
-  if(gutRun){ const yT=Y(H+.15)+.5*S-2, hgt=half?.42*S:.48*S, x1=X(-OH)-2, x2=X(L+OH)+2;
+  if(gutRun){ const yT=Y(H+.15)+.5*S-2, hgt=half?.42*S:.48*S, x1=X(-OHL)-2, x2=X(L+OHR)+2;
     if(half){ o.push(`<path d="M${x1} ${yT}H${x2}A5 ${hgt} 0 0 1 ${x2-5} ${yT+hgt}H${x1+5}A5 ${hgt} 0 0 1 ${x1} ${yT}Z" fill="#fff" stroke="#000" stroke-width="${w2}"/>`); for(let x=x1+20;x<x2-10;x+=30) o.push(`<circle cx="${x}" cy="${yT+2}" r="1.4" fill="#000"/>`); }
     else { o.push(`<rect x="${x1}" y="${yT}" width="${x2-x1}" height="${hgt}" fill="#fff" stroke="#000" stroke-width="${w2}"/>`); ln(x1,yT+hgt*.38,x2,yT+hgt*.38,w1*.8); }
     gutY=yT+hgt/2; downspout(X(0)+3,yT+hgt); downspout(X(L)-3-dsW,yT+hgt); }
-  if(gutCaps){ const yT=Y(H-OH*P-.5)+2; [[X(-OH)-4,X(0)+3],[X(L+OH)-6,X(L)-3-dsW]].forEach(([xc,xd])=>{
+  if(gutCaps){ const yT=Y(H-OH*P-.5)+2; [[X(-OHL)-4,X(0)+3],[X(L+OHR)-6,X(L)-3-dsW]].forEach(([xc,xd])=>{
       o.push(half?`<path d="M${xc} ${yT}h10a5 5 0 0 1 -10 0z" fill="#fff" stroke="#000" stroke-width="${w2}"/>`:`<path d="M${xc} ${yT}h10v7h-8l-2-3z" fill="#fff" stroke="#000" stroke-width="${w2}"/>`); downspout(xd,yT+7); }); gutY=yT+3; }
   // ---- dimensions (slash ticks) ----
   const tick=(x,y)=>ln(x-4,y+4,x+4,y-4,w2,'',top);
@@ -2109,10 +2143,10 @@ function elevLarge(view, title){
   const E=[0,L]; ops.forEach(p=>E.push(p.x,p.x+p.w)); const Es=[...new Set(E.map(e=>+e.toFixed(2)))].sort((a,b)=>a-b);
   for(let i=0;i<Es.length-1;i++) if(Es[i+1]-Es[i]>.05) dimH(Es[i],Es[i+1],gy+28,fmt(Es[i+1]-Es[i]),7.6);
   dimH(0,L,gy+52,fmt(L)); if(pr) dimH(L,L+pr,gy+52,ftl(pd)+' PATIO'); if(pl) dimH(-pl,0,gy+52,ftl(pd)+' PATIO');
-  const xr=X(L+pr+OH);
+  const xr=X(L+pr+OHR);
   const dimV=(f1,f2,x,t,fromX)=>{const y1=Y(f1),y2=Y(f2);ln(fromX,y2,x+5,y2,w1*.6,'stroke-dasharray="3 3"',top);ln(x,y1,x,y2,w1,'',top);tick(x,y1);tick(x,y2);top.push(`<text transform="translate(${x-5} ${(y1+y2)/2}) rotate(-90)" font-size="${9*F}" text-anchor="middle" font-weight="700" font-family="${font}">${t}</text>`)};
   ln(X(L)+3,gy,xr+60,gy,w1*.6,'stroke-dasharray="3 3"',top);
-  dimV(0,H,xr+26,fmt(H),X(L)+3); dimV(0,Hr,xr+52,fmt(Hr),X(rk==='eave'?L+OH:L/2+topW/2));
+  dimV(0,H,xr+26,fmt(H),X(L)+3); dimV(0,Hr,xr+52,fmt(Hr),X(rk==='eave'?L+OHR:L/2+topW/2));
   const dat=(f,t)=>{const y=Y(f),x=xr+64;top.push(`<path d="M${x} ${y}l-5 -7h10z" fill="none" stroke="#000" stroke-width="${w1}"/>`);tx(x+8,y-2,t,8,'start')};
   dat(Hr,'T.O. RIDGE'); dat(H,'T.O. PLATE'); dat(0,'FIN. FLOOR');
   if(rk==='gableEnd'){ const px=X(L*.7),py=Y(H+(L*.3)*P)-14,k=22; top.push(`<path d="M${px} ${py}h${k}v${-k*P}" fill="none" stroke="#000" stroke-width="${w1}"/>`); tx(px+k/2,py+12,'12',8); tx(px+k+3,py-k*P/2+4,String(pitchNum()),8,'start'); }
@@ -2125,16 +2159,16 @@ function elevLarge(view, title){
   const sidingTxt=vert?'VERTICAL VINYL SIDING':'VINYL LAP SIDING 4" EXP.';
   if(rk==='gableEnd') labs.push([X(L*.26),Y(H+(L*.24)*P)-2,'ARCH. SHINGLES']);
   else labs.push([rk==='hip'?X(L*.3):X(.4),Y(H+rise*(rk==='hip'?.35:.55)),'ARCH. SHINGLES']);
-  if(rk!=='gableEnd') labs.push([X(-OH)+6,Y(H+.15)+3,showAlum?'ALUM. SOFFIT & FASCIA':'FASCIA']);
+  if(rk!=='gableEnd') labs.push([X(-OHL)+6,Y(H+.15)+3,showAlum?'ALUM. SOFFIT & FASCIA':'FASCIA']);
   labs.push([X(.6),Y(5.2),sidingTxt]);
-  if(gutRun){ labs.push([X(-OH)+14,gutY,half?'5" HALF-ROUND GUTTER':(val('gutterStyle')==='seamless'?'5" SEAMLESS GUTTER':'5" K-STYLE GUTTER')]); labs.push([X(0)+4,Y(3),(half?'3" RND.':'2x3')+' DOWNSPOUT + SPLASH BLOCK']); }
-  if(gutCaps) labs.push([X(-OH)-1,gutY,(half?'HALF-ROUND':(val('gutterStyle')==='seamless'?'SEAMLESS':'K-STYLE'))+' GUTTER (END)']);
+  if(gutRun){ labs.push([X(-OHL)+14,gutY,half?'5" HALF-ROUND GUTTER':(val('gutterStyle')==='seamless'?'5" SEAMLESS GUTTER':'5" K-STYLE GUTTER')]); labs.push([X(0)+4,Y(3),(half?'3" RND.':'2x3')+' DOWNSPOUT + SPLASH BLOCK']); }
+  if(gutCaps) labs.push([X(-OHL)-1,gutY,(half?'HALF-ROUND':(val('gutterStyle')==='seamless'?'SEAMLESS':'K-STYLE'))+' GUTTER (END)']);
   if(hurricaneRequired()) labs.push([X(0),Y(H),'HURRICANE TIES AT RAFTER-TO-WALL']);
   if(apronOn) labs.push([X(-.6),gy-2,'CONC. APRON '+ftl(apronFt)+' DEEP']);
   if(patioFront) labs.push([X(-.5),Y((PLo.ya+PLo.yb)/2),'ROOFED PATIO · 1/12 ROOF']);
   if(patioSide==='left') labs.push([X(-pd/2),Y(PLo.yb),'ROOFED PATIO · 1/12 ROOF']);
   if(rk==='gableEnd' && $('flagGableVent') && $('flagGableVent').checked) labs.push([X(L/2-.6),Y(Hr-2.1),'GABLE VENT (TYP.)']);
-  const colX=X(-OH-pl)-8, lh=8*F+5;
+  const colX=X(-OHL-pl)-8, lh=8*F+5;
   labs.sort((a,b)=>a[1]-b[1]); let lastY=-1e9;
   labs.forEach(([x,y,t])=>{ let ty=Math.max(y,lastY+lh); lastY=ty; ln(x,y,colX,ty-3,w1*.7,'',top); top.push(`<circle cx="${x}" cy="${y}" r="2" fill="#000"/>`); tx(colX-3,ty,t,7.5,'end'); });
   if(patioSide==='right'){ const cx=X(L+pd/2-.3); tx(cx,Y(3.2),'ROOFED PATIO',8,'middle',700,true); tx(cx,Y(3.2)+12*F,'1/12 ROOF · ('+patE.posts+') '+(patE.post||'4x4')+' POSTS',7,'middle',600,true); }
@@ -2143,6 +2177,7 @@ function elevLarge(view, title){
   if(val('ohWall')===view){ const r=doorReturns(); retBits.push((ohCount()>1?ohCount()+' DOORS · ':'')+'OH '+r.left+"' L / "+r.right+"' R"); }
   if(val('partyWall')===view){ const r=partyReturns(); retBits.push('PARTY '+r.left+"' / "+r.right+"'"); }
   if(val('svcWall')===view){ const r=svcReturns(); retBits.push('SVC '+r.left+"' / "+r.right+"' · "+svcSwingInfo().short); }
+  retBits.push('ROOF PROJ. — '+_ends[0].toUpperCase()+' END: '+psProjLabel(_ends[0])+' · '+_ends[1].toUpperCase()+' END: '+psProjLabel(_ends[1])+' · '+view.toUpperCase()+' WALL: '+psProjLabel(view));
   if(retBits.length) top.push(`<text class="edit-svg" x="${X(L/2)}" y="${gy+76}" text-anchor="middle" font-size="${7*F}" font-family="${font}">${esc(retBits.join('   ·   '))}</text>`);
   const inner=o.join('')+`<g class="elev-top">${top.join('')}</g>`;
   // ---- fit into the sheet frame ----
@@ -2771,6 +2806,7 @@ function gpResizeSel(f){
   pushHist();if(it.type==='txt'||it.type==='gfi')it.fs=Math.max(6,Math.min(48,(it.fs||(it.type==='gfi'?9:12))*f));if(it.type==='gfi')it.sz=Math.max(20,Math.min(90,(it.sz||42)*f));if(it.type==='box'||it.type==='line'){it.w=Math.max(2,(it.w||12)*f);if(it.type==='box')it.h=Math.max(2,(it.h||8)*f)}renderOverlay()}
 document.addEventListener('pointerdown',e=>{if(!e.target.closest||(!e.target.closest('.aic')&&!e.target.closest('.aic-tip')&&!e.target.closest('.toolbox'))){if(aiSel){aiSel=null;document.querySelectorAll('.aic.sel').forEach(n=>n.classList.remove('sel'))}}},true);
 function buildPlans(scrollTo){
+  try{ psOhUi(); }catch(e){}
   try{
     if(scrollTo){
       const errs=validatePlanInputs(); showPlanErrors(errs);
@@ -2920,6 +2956,7 @@ function snapshot(){
   return o;
 }
 function restore(o){
+  if(o&&typeof o==='object'&&!('extraOH' in o)){ if($('extraOH')) $('extraOH').value='0'; PS_WALLS.forEach(w=>{const e=$('extraOH'+w[0].toUpperCase()+w.slice(1)); if(e) e.checked=false;}); }
   Object.keys(o||{}).forEach(k=>{
     if(k==='_planItems'||k==='_planVis'||k==='_aiCallouts') return;
     const el=$(k); if(!el) return;
@@ -3171,7 +3208,9 @@ async function agbReadJobPrefill(sbc){
       if(data){ o.roof=o.roof||data.roof_type||''; o.wall=o.wall||data.wall_height||'';
         const st=data.calc||((data.estimate_snapshot||{}).calculator_state)||{};
         if(!o.size && st.width && st.depth) o.size=st.width+'x'+st.depth;
-        o.doors=agbDoorsFromState(st); } }catch(e){ console.warn('estimate prefill',e); }
+        o.doors=agbDoorsFromState(st);
+        { const yes=v=>v===true||/^(yes|true|1|on|y)$/i.test(String(v||'').trim()); const ev=st.eavesSize==='manual'?st.manualEavesSize:st.eavesSize; const en=parseFloat(ev); if(en>0) o.eaveIn=en;
+          if(yes(st.overhangEnabled)){ const on=parseFloat(st.overhangSize); if(on>0) o.ohIn=on; } } } }catch(e){ console.warn('estimate prefill',e); }
   }
   const m=String(o.size||'').match(/(\d+(?:\.\d+)?)\s*['’]?\s*[x×X*]\s*(\d+(?:\.\d+)?)/); if(m){ o.w=+m[1]; o.d=+m[2]; }
   const r=String(o.roof||''); o.roofKey=/rev/i.test(r)?'revgable':/gable/i.test(r)?'gable':/hip/i.test(r)?'hip':'';
@@ -3212,6 +3251,8 @@ async function gpApplyJobPrefill(){
   if(o.roofKey) set('roof',o.roofKey);
   if(o.wallFt) set('wallH',o.wallFt);
   if(o.doors && o.doors.length){ gpSetDoors(o.doors); }
+  if(o.eaveIn) set('eaves',o.eaveIn+'" fascia / '+o.eaveIn+'" soffit');
+  if(o.ohIn){ set('extraOH',o.ohIn); try{ psOhUi(); }catch(e){} }
   try{ snapshot&&snapshot(); }catch(e){}
   setStatus('Filled from job'+(o.customer?' — '+o.customer:'')+'. Check sizes, then Generate.', true);
 }

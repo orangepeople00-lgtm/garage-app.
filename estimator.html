@@ -1229,20 +1229,9 @@ body.bg-zinc-950{
                             </div>
                             <div>
                                 <label class="text-xs text-zinc-400 block mb-1">Excavation / Stone Quantity</label>
-                                <select id="excavation" onchange="calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm">
-                                    <option value="0" selected>0 Loads — $0</option>
-                                    <option value="1">1 Load — $500</option>
-                                    <option value="2">2 Loads — $1,000</option>
-                                    <option value="3">3 Loads — $1,500</option>
-                                    <option value="4">4 Loads — $2,000</option>
-                                    <option value="5">5 Loads — $2,500</option>
-                                    <option value="6">6 Loads — $3,000</option>
-                                    <option value="7">7 Loads — $3,500</option>
-                                    <option value="8">8 Loads — $4,000</option>
-                                    <option value="9">9 Loads — $4,500</option>
-                                    <option value="10">10 Loads — $5,000</option>
-                                </select>
-                                <div class="text-[10px] text-zinc-500 mt-0.5">Excavation / stone loads • default 0 • $500 per load</div>
+                                <input type="hidden" id="excavation" value="auto">
+                                <div id="excavationAuto" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm">$0</div>
+                                <div class="text-[10px] text-zinc-500 mt-0.5">Excavation / stone base • auto: garage sq ft (width × depth) × $1.50</div>
                             </div>
                         </div>
 
@@ -3205,17 +3194,15 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                 if(n<=4) return 0;
                 return (n-4)*1.5; // 5=+1.50, 6=+3.00, 7=+4.50
             }
-            // Existing slab: excavation / stone base is off (not charged). The dropdown keeps its value (disabled) so
-            // switching back to New slab restores the salesperson's choice.
-            const excavSel = document.getElementById('excavation');
-            if (excavSel) {
-                excavSel.disabled = existingSlabNoConcrete;
-                let exNote = document.getElementById('excavationExistingNote');
-                if (!exNote) { exNote = document.createElement('div'); exNote.id = 'excavationExistingNote'; exNote.className = 'text-[10px] text-amber-400 mt-0.5'; excavSel.insertAdjacentElement('afterend', exNote); }
-                exNote.textContent = existingSlabNoConcrete ? 'Off — Build On Existing Slab (no excavation / stone base charged)' : '';
-            }
-            const excavationQty = existingSlabNoConcrete ? 0 : Math.max(0, parseFloat(excavSel?.value) || 0);
-            const excavation = excavationQty * 500;
+            // Excavation / stone base = garage sq ft (width x depth) x $1.50. Existing slab: off (no garage concrete work).
+            const EXCAVATION_RATE_PER_SQFT = 1.5;
+            const excavationSqft = existingSlabNoConcrete ? 0 : Math.max(0, (Number(width) || 0) * (Number(depth) || 0));
+            const excavation = Math.round(excavationSqft * EXCAVATION_RATE_PER_SQFT * 100) / 100;
+            window._agbExcavation = { sqft: excavationSqft, cost: excavation };
+            const excavAuto = document.getElementById('excavationAuto');
+            if (excavAuto) excavAuto.textContent = existingSlabNoConcrete
+                ? 'Off — Build On Existing Slab (no excavation / stone base charged)'
+                : `${excavationSqft.toLocaleString()} sq ft × $1.50 = $${excavation.toLocaleString(undefined,{maximumFractionDigits:2})}`;
             
             // Two extra patios
             const patio1Length = parseInt(document.getElementById('extraPatio1Length').value) || 0;
@@ -9030,9 +9017,9 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             if (ctNote===5) notes.push('5" concrete thickness upgrade included.');
             if (ctNote===6) notes.push('6" concrete thickness upgrade included.');
             if (ctNote===7) notes.push('7" concrete thickness upgrade included.');
-            // excavation is a loads dropdown (not a checkbox)
-            const excavLoadsNote = existingSlabBuild ? 0 : Math.max(0, Number(val('excavation') || 0));
-            if (excavLoadsNote > 0) notes.push(`Excavation and stone base included (${excavLoadsNote} load${excavLoadsNote > 1 ? 's' : ''}).`);
+            // excavation is automatic: garage sq ft x $1.50 (off on existing slab)
+            const excavNote = existingSlabBuild ? 0 : Number((window._agbExcavation||{}).cost || 0);
+            if (excavNote > 0) notes.push('Excavation and stone base included.');
             if (frostProtectedFooting) notes.push('42" frost protected footing included.');
             if (checked('epaFee')) notes.push('EPA fee included.');
             const remDimsNote = parseDimsStrict(val('additionalRemovalDims'));
@@ -10599,7 +10586,7 @@ document.addEventListener('click', function(e){
             document.getElementById('apronDepth').value = '3';
             if(document.getElementById('apronManual')) document.getElementById('apronManual').value='';
             document.getElementById('concreteThickness').value = '4';
-            document.getElementById('excavation').value = '0';
+            document.getElementById('excavation').value = 'auto';
             
             // Patios
             document.getElementById('extraConcrete1Thickness').value = '4';

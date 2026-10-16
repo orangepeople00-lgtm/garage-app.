@@ -122,6 +122,52 @@ button{border:0;border-radius:7px;padding:8px 10px;font-weight:800;cursor:pointe
 .gp-dash-top{display:flex;align-items:center;justify-content:center;width:100%;min-height:44px;margin:0 0 10px;padding:10px 12px;font-size:14px;font-weight:800;letter-spacing:.02em;position:sticky;top:0;z-index:6;background:#0b1f3a;border:1px solid #2a4668;box-shadow:0 1px 0 #0b1f3a}
 @media print{.gp-dash-top{display:none!important}}
 .alleyOnly.off{display:none}
+/* 2026-10-16 plan-sheet styles: Border A · Title block A · Notes C · Schedule C · Legend A */
+.sheet{border:3px solid #111;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.sheet::before{content:"";position:absolute;inset:5px;border:.8px solid #111;pointer-events:none;z-index:0}
+.tblock.tb-a{left:14px;right:14px;bottom:10px;height:92px;border:1.6px solid #111;grid-template-columns:1.15fr 1.6fr 1fr 150px;font-size:11.5px;line-height:1.22;z-index:1}
+.tblock.tb-a>div{border-right:1px solid #111;padding:5px 8px;overflow:hidden}
+.tblock.tb-a>div:last-child{border-right:0}
+.tblock.tb-a .tb-k{display:block;font-size:10px;font-weight:800;letter-spacing:.08em;color:#444}
+.tblock.tb-a small{font-size:10px;font-weight:700;letter-spacing:.04em}
+.tblock.tb-a .jobtitle{font-size:12.5px;margin:0}
+.tblock.tb-a .tb-c4{text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3px 6px}
+.tblock.tb-a .ps-sheetid{font-size:30px;font-weight:800;line-height:1;letter-spacing:.02em}
+.tblock.tb-a .sheetno{font-size:11px;font-weight:700;margin-top:3px}
+.tblock.tb-a .tb-c4 b{font-size:11px;line-height:1.15;margin-top:2px}
+/* Notes C: black header bar, 01/02 numbers, ruled rows */
+.sheet .elecbox,.sheet .codedata,.sheet .detailgrid .notes-col{border:1.4px solid #111;padding:0;margin-top:10px;background:#fff}
+.sheet .elecbox h3,.sheet .codedata h3,.sheet .notes-col h3{background:#111;color:#fff;margin:0;padding:4px 8px;font-size:12.5px;letter-spacing:.06em}
+.sheet .elecbox ul,.sheet .codedata ul,.sheet .notes-col ul{list-style:none;margin:0!important;padding:0!important;counter-reset:psn}
+.sheet .elecbox li,.sheet .codedata li,.sheet .notes-col li{counter-increment:psn;position:relative;margin:0;padding:3px 8px 3px 34px;border-top:.6px solid #111;font-size:12px;line-height:1.3}
+.sheet .elecbox li:first-child,.sheet .codedata li:first-child,.sheet .notes-col li:first-child{border-top:0}
+.sheet .elecbox li::before,.sheet .codedata li::before,.sheet .notes-col li::before{content:counter(psn,decimal-leading-zero);position:absolute;left:8px;top:3px;font-family:'Courier New',monospace;font-weight:700}
+.sheet .codedata table{width:calc(100% - 16px);margin:6px 8px}
+.sheet .elecbox h3+ul{margin-top:0}
+.sheet .elecbox ul+h3{border-top:1.4px solid #111}
+/* Schedule C: black header bar, ruled rows, monospace */
+.sheet .sched.sched-c{border:1.4px solid #111;border-collapse:collapse;width:100%;margin-top:10px;font-family:'Courier New',monospace;font-size:12px}
+.sheet .sched.sched-c caption{caption-side:top;text-align:left;background:#111;color:#fff;font:700 12.5px Arial,Helvetica,sans-serif;letter-spacing:.06em;padding:4px 8px}
+.sheet .sched.sched-c th{background:#111;color:#fff;border:0;border-top:.6px solid #555;padding:3px 6px;font-size:11px;letter-spacing:.04em;text-align:left}
+.sheet .sched.sched-c td{border:0;border-top:.6px solid #111;padding:4px 6px;vertical-align:top}
+.sheet .sched.sched-c td:nth-child(3),.sheet .sched.sched-c td:nth-child(2){white-space:nowrap}
+.sheet .sched.sched-c .sc-tag{display:inline-block;font:700 11px Arial,sans-serif;color:#fff;background:#1e3a8a;border-radius:8px;padding:0 6px}
+/* Legend A: boxed */
+.sheet .legend-a{border:1.4px solid #111;margin-top:10px;padding:5px 8px 6px;background:#fff}
+.sheet .legend-a h3{margin:0 0 4px;font-size:12.5px;letter-spacing:.06em;text-decoration:underline}
+.sheet .legend-a .lg-row{display:flex;align-items:center;gap:8px;font-size:11.5px;line-height:1.2;padding:2px 0}
+/* floor + roof sheet layout: drawings at a fixed printed width so the written scale is true */
+.ps-floor-grid{display:grid;grid-template-columns:11in minmax(0,1fr);gap:14px;align-items:start}
+.ps-floor-grid .draw-host{width:11in}
+.ps-floor-side>*:first-child{margin-top:0}
+.ps-roof-grid{display:grid;grid-template-columns:minmax(0,1fr) 8.2in;gap:14px;align-items:start}
+.ps-roof-grid>.ps-roof-col{grid-column:2;grid-row:1}.ps-roof-grid>.ps-sect-col{grid-column:1;grid-row:1}
+.ps-roof-notes{display:grid;grid-template-columns:1.25fr 1fr;gap:10px;align-items:start}.ps-roof-notes>*{margin-top:6px!important}
+.ps-key{border:1.4px solid #111;padding:4px 6px;margin-bottom:10px}
+.ps-roof-col{width:8.2in}
+.ov.gfi.ps-gfi{height:auto;aspect-ratio:1/1;border:0;border-radius:0;background:transparent;padding:0;display:block;text-shadow:none}
+.ov.gfi.ps-gfi svg{display:block;overflow:visible}
+@media print{.sheet{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
 </style>
 <style id="pageSizeStyle">@media print{@page{size:17in 11in;margin:.35in}}</style>
 </head>
@@ -738,16 +784,6 @@ function scaleBar(x,y,pxPerFt){
   for(let i=0;i<=n;i++) g+=`<text x="${x+i*step*k}" y="${y+17}" text-anchor="middle" font-size="9">${i*step}'</text>`;
   return g+`<text x="${x}" y="${y-4}" font-size="9" font-weight="700">GRAPHIC SCALE (FEET)</text></g>`;
 }
-function tblock(name, num, of){
-  const cityRaw=(val('cityManual')||val('city')||'').trim();const village=cityRaw?( (code()&&code().kind)||'VILLAGE')+' of '+cityRaw.toUpperCase() : '';
-  return `<div class="tblock">
-    <div class="logo">ABSOLUTE GARAGE BUILDERS<small>ROOFING LIC. 104.016731 · 105.006803</small></div>
-    <div><div class="jobtitle">DETACHED GARAGE - ${esc(roofLabel())} ROOF</div>
-      ${esc([val('address'),village].filter(Boolean).join(', '))}<br>OWNER: ${esc(customerLabel())} · PIN: ${esc(val('pin')||'—')}</div>
-    <div>CONTRACTOR<br>ABSOLUTE GARAGE BUILDERS<br>3050 W. IRVING PARK RD.<br>CHICAGO, IL 60618<br>(773) 583-8800 · (847) 759-8877</div>
-    <div><b>${esc(name)}</b><br><span class="sheetno">SHEET ${num} OF ${of}</span><br>${esc(val('planDate')||'')} · REV ${esc(val('planRev')||'0')}<br><span style="font-size:10px">DRAWN: ${esc(val('rep')||'')}</span></div>
-  </div>`;
-}
 function noteLines(x,y,lines, size){
   size=size||12;
   return lines.map((t,i)=>`<text x="${x}" y="${y+i*(size+5)}" font-size="${size}" font-family="Arial">${esc(t)}</text>`).join('');
@@ -771,14 +807,6 @@ function carsWord(){
 function jobTitleLine(){
   const W=Number(val('width'))||22, D=Number(val('depth'))||24;
   return ftLabel(W)+' x '+ftLabel(D)+' DETACHED '+carsWord()+' GARAGE';
-}
-function sheetHead(title, sheetId, vbW){
-  const w=vbW||800;
-  return `<text x="16" y="18" font-size="14" font-weight="800" text-decoration="underline">${esc(title)}</text>
-    <text x="16" y="32" font-size="10" font-weight="700">${esc(jobTitleLine())}</text>
-    <text x="${w-16}" y="16" text-anchor="end" font-size="9">SHEET: ${esc(sheetId||'A-1')}</text>
-    <text x="${w-16}" y="28" text-anchor="end" font-size="9">SCALE: SEE GRAPHIC SCALE</text>
-    <line x1="16" y1="37" x2="${w-16}" y2="37" stroke="#111" stroke-width="1.4"/>`;
 }
 function carCount(){
   const W=Number(val('width'))||22;
@@ -1099,28 +1127,6 @@ function applyJobRules(){
 }
 function needsBraceDetail(){ return computeBraceRequired(); }
 function sheetTotal(){ return 9+(needsBraceDetail()?1:0)+(computeFirewallRequired()?1:0); }
-function doorScheduleHTML(){
-  const rows=[];
-  ohDoors().forEach((d,i)=>rows.push(['Overhead door'+(ohCount()>1?' '+(i+1):''), d.w+' x '+d.h, 'Raised panel steel', (val('ohWall')||'front')+' wall']));
-  if(val('partyWall') && val('partyWall')!=='none'){
-    const ps=val('partySize')||'6x7';
-    rows.push(['Party door', ps, 'Raised panel overhead', val('partyWall')+' wall']);
-  }
-  if(val('svcWall') && val('svcWall')!=='none'){
-    rows.push(['Service door', '36" x 80"', 'Steel swing '+((val('svcSwing')||'in')==='out'?'out':'in'), val('svcWall')+' wall · '+svcSwingInfo().label]);
-    if(hasLanding()){
-      const ld=landingDim();
-      rows.push(['Service pad', ld.w+'x'+ld.h, 'Concrete landing', 'At service door']);
-    }
-  }
-  if(val('winWall') && val('winWall')!=='none' && (typeof winQty==='function'?winQty():1)>0){
-    const q=typeof winQty==='function'?winQty():1;
-    const typ=val('winType')||'Single hung';
-    const wd=winDim();
-    rows.push(['Window'+(q>1?'s':'')+' ('+q+')', wd.w+'x'+wd.h, typ, val('winWall')+' wall']);
-  }
-  return `<table class="sched" contenteditable="true"><thead><tr><th>Item</th><th>Size</th><th>Type</th><th>Wall</th></tr></thead><tbody>${rows.map(r=>'<tr>'+r.map(c=>'<td>'+esc(c)+'</td>').join('')+'</tr>').join('')}</tbody></table>`;
-}
 function packetChecklistHTML(){
   const items=[
     ['Floor plan','yes'],
@@ -1201,274 +1207,441 @@ function withCite(label, kind){
   const c=cite(kind);
   return c? label+' ('+c+')' : label;
 }
+// ===== 2026-10-16 plan-sheet styles (owner picks from gp-styles): Floor D · Roof A · Title A · Notes C · Border A · North/Scale A · Legend A · Schedule C · Slab A =====
+// Floor/roof plans are drawn at a true architectural scale for the selected print size, and every text size is set in printed points.
+const PSC={wall:'#1e3a8a',wallFill:'#bccaeb',dim:'#b91c1c',tag:'#1e3a8a',ink:'#111'};
+function psPF(){ return isLetter()?0.6:0.92; } // matches the @media print zoom on .sheet
+const PS_SCALES=[[1/2,'1/2"'],[3/8,'3/8"'],[1/4,'1/4"'],[3/16,'3/16"'],[1/8,'1/8"'],[3/32,'3/32"'],[1/16,'1/16"']];
+function psCtx(svgIn,vbW){ const ptPerU=(svgIn/vbW)*72*psPF(); return {svgIn,vbW,ptPerU,uPerIn:vbW/(svgIn*psPF()),f:pt=>+(pt/ptPerU).toFixed(2)}; }
+function psPickScale(c,ftW,ftH,availW,availH){
+  for(const [s,l] of PS_SCALES){ const sx=c.uPerIn*s; if(ftW*sx<=availW && ftH*sx<=availH) return {sx,label:l+" = 1'-0\"",ok:true}; }
+  return {sx:Math.min(availW/ftW,availH/ftH),label:'NOT TO SCALE',ok:false};
+}
+function psSizeNote(){ return isLetter()?'(LETTER SHEET)':'(11x17 SHEET)'; }
+const psN=v=>(+v).toFixed(2);
+function psT(x,y,t,o){ o=o||{}; const r=o.rot!=null?` transform="rotate(${o.rot} ${psN(x)} ${psN(y)})"`:'';
+  return `<text x="${psN(x)}" y="${psN(y)}" font-size="${o.fs}" text-anchor="${o.a||'middle'}" font-weight="${o.w||400}"${o.c?` style="fill:${o.c}"`:''}${o.cls?` class="${o.cls}"`:''}${o.ls?` letter-spacing="${o.ls}"`:''}${r}>${esc(t)}</text>`; }
+function psL(x1,y1,x2,y2,w,c,dash,cap){ return `<line x1="${psN(x1)}" y1="${psN(y1)}" x2="${psN(x2)}" y2="${psN(y2)}" stroke="${c||PSC.ink}" stroke-width="${psN(w)}"${dash?` stroke-dasharray="${dash}"`:''}${cap?` stroke-linecap="${cap}"`:''}/>`; }
+function psR(x,y,w,h,fill,stroke,sw,extra){ return `<rect x="${psN(x)}" y="${psN(y)}" width="${psN(Math.max(0,w))}" height="${psN(Math.max(0,h))}" fill="${fill||'none'}" stroke="${stroke||'none'}" stroke-width="${psN(sw||0)}"${extra||''}/>`; }
+function psTW(t,fs,bold){ return String(t).length*fs*(bold?0.6:0.55); } // approx text width
+function psFmtDate(v){ const m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})$/); return m?m[2]+'-'+m[3]+'-'+m[1]:String(v||''); }
+// Pill tag (Floor D)
+function psPill(x,y,t,c,fs){ fs=fs||c.f(8); const w=psTW(t,fs,true)+fs*0.9, h=fs*1.45;
+  return `<g class="ps-tag">${psR(x-w/2,y-h/2,w,h,PSC.tag,PSC.tag,c.f(.4),` rx="${psN(h/2)}"`)}${psT(x,y+fs*0.36,t,{fs,w:700,c:'#fff'})}</g>`; }
+// Dimension strings (Floor D: red, slash ticks). pts = absolute coords along the axis; at = line position; obj = object edge for extension lines.
+function psDimChain(c,axis,pts,at,obj,col,o){ o=o||{}; col=col||PSC.dim; const fs=o.fs||c.f(8), lw=c.f(.5), ew=c.f(.35), tk=c.f(3.2), gap=c.f(3), over=c.f(3);
+  const sgn=at>obj?1:-1; let s='';
+  const P=[...new Set(pts.map(v=>+Number(v).toFixed(3)))].sort((a,b)=>a-b); if(P.length<2) return '';
+  const away=sgn<0?at-c.f(2.2):at+c.f(2.2)+fs*0.78, toward=sgn<0?at+c.f(2.2)+fs*0.78:at-c.f(2.2);
+  if(axis==='x'){ s+=psL(P[0],at,P[P.length-1],at,lw,col);
+    P.forEach(x=>{ s+=psL(x,obj+sgn*gap,x,at+sgn*over,ew,col); s+=psL(x-tk/2,at+tk/2,x+tk/2,at-tk/2,c.f(.9),col); }); }
+  else { s+=psL(at,P[0],at,P[P.length-1],lw,col);
+    P.forEach(y=>{ s+=psL(obj+sgn*gap,y,at+sgn*over,y,ew,col); s+=psL(at-tk/2,y+tk/2,at+tk/2,y-tk/2,c.f(.9),col); }); }
+  for(let i=0;i<P.length-1;i++){ const a=P[i],b=P[i+1],lab=ftLabel((b-a)/o.sx); const short=psTW(lab,fs,true)+c.f(4)>(b-a);
+    let m=(a+b)/2; if(short){ const prevShort=i>0&&psTW(ftLabel((P[i]-P[i-1])/o.sx),fs,true)+c.f(4)>(P[i]-P[i-1]); if(prevShort) m=b+psTW(lab,fs,true)/2+c.f(3); }
+    const pos=short?toward:away;
+    s+=axis==='x'?psT(m,pos,lab,{fs,w:700,c:col}):psT(pos,m,lab,{fs,w:700,c:col,rot:-90}); }
+  return s;
+}
+// North arrow (Style A: circled arrow)
+function psNorth(x,y,c){ const r=c.f(13);
+  return `<g class="ps-north">${`<circle cx="${psN(x)}" cy="${psN(y)}" r="${psN(r)}" fill="#fff" stroke="#111" stroke-width="${psN(c.f(.8))}"/>`}
+    <polygon points="${psN(x)},${psN(y-r+c.f(1.5))} ${psN(x+r*.42)},${psN(y+r*.72)} ${psN(x)},${psN(y+r*.38)} ${psN(x-r*.42)},${psN(y+r*.72)}" fill="#111"/>
+    ${psT(x,y-r-c.f(3),'N',{fs:c.f(11),w:800})}${psT(x,y+r+c.f(9),'PLAN NORTH',{fs:c.f(7)})}</g>`; }
+// Graphic scale (Style A: checker bar + written ratio)
+function psScale(x,y,c,sx,label){ const steps=[1,2,4,5,8,10,20]; const step=steps.find(v=>4*v*sx>=c.f(90))||20; const seg=step*sx;
+  let g='<g class="ps-scale">';
+  for(let i=0;i<4;i++) g+=psR(x+i*seg,y,seg,c.f(4.5),i%2?'#fff':'#111','#111',c.f(.6));
+  for(let i=0;i<=4;i++) g+=psT(x+i*seg,y+c.f(13),(i*step)+"'",{fs:c.f(7.5)});
+  g+=psT(x,y-c.f(4),(label&&label!=='NOT TO SCALE')?'SCALE: '+label+' '+psSizeNote():'GRAPHIC SCALE (FEET)',{fs:c.f(8),w:700,a:'start'});
+  return g+'</g>'; }
+// Openings in elevation coordinates (same placement rules as the Style D elevations), then mapped onto the plan.
+function psAlongOps(view){
+  const W=Number(val('width'))||22, D=Number(val('depth'))||24, L=(view==='front'||view==='back')?W:D; const ops=[];
+  if((val('ohWall')||'front')===view){ const r=doorReturns(); let x0=r.left; ohDoors().forEach((d,k)=>{ ops.push({kind:'oh',s:x0,w:d.w,h:d.h,k}); x0+=d.w+ohPostFt(); }); }
+  if(val('partyWall')===view){ const p=partyReturns(); ops.push({kind:'party',s:p.left,w:p.w,h:p.h}); }
+  if(val('svcWall')===view){ const s=svcReturns(); ops.push({kind:'svc',s:s.left,w:3,h:6.67}); }
+  if(val('winWall')===view && winQty()>0){ const q=winQty(), wd=winDim(); const ww=Math.max(1.5,wd.w);
+    const busy=ops.map(p=>[p.s-1,p.s+p.w+1]).sort((a,b)=>a[0]-b[0]); const free=[]; let cur=1;
+    busy.forEach(([a,b])=>{ if(a-cur>=ww+.2) free.push([cur,a]); cur=Math.max(cur,b); }); if(L-1-cur>=ww+.2) free.push([cur,L-1]);
+    const cnt=free.map(()=>0);
+    for(let i=0;i<q;i++){ let bi=-1,best=-1; free.forEach((f,j)=>{ const room=(f[1]-f[0])-(cnt[j]+1)*ww; const sc=room/(cnt[j]+2); if(room>=0&&sc>best){best=sc;bi=j;} }); if(bi<0) break; cnt[bi]++; }
+    free.forEach((f,j)=>{ const n=cnt[j]; if(!n) return; const gap=((f[1]-f[0])-n*ww)/(n+1); for(let k=0;k<n;k++) ops.push({kind:'win',s:f[0]+gap+k*(ww+gap),w:ww,h:wd.h}); }); }
+  return ops;
+}
+// Plan position along the wall (ft): front/back measured from plan-left, left/right from plan-top (back).
+// Elevation convention used by elevLarge: front L→R = plan L→R, back L = plan right, left-elev L = front, right-elev L = back.
+function psPlanOps(){ const W=Number(val('width'))||22, D=Number(val('depth'))||24; const out=[];
+  ['front','back','left','right'].forEach(wall=>psAlongOps(wall).forEach(o=>{ let a;
+    if(wall==='front') a=o.s; else if(wall==='back') a=W-o.s-o.w; else if(wall==='left') a=D-o.s-o.w; else a=o.s;
+    out.push(Object.assign({},o,{wall,a,b:a+o.w})); }));
+  return out; }
+// Opening type tags shared by plan + schedule: OH doors of the same size share a tag.
+function psTagList(){ const rows=[], tags={}; let dn=0;
+  const row=(key,o)=>{ let r=rows.find(x=>x.key===key); if(!r){ r=Object.assign({key,qty:0},o()); rows.push(r);} r.qty++; tags[key]=r.tag; return r; };
+  ohDoors().forEach(d=>row('oh'+d.w+'x'+d.h,()=>({tag:'D'+(++dn),size:ftLabel(d.w)+' x '+ftLabel(d.h),type:'RAISED PANEL STEEL OVERHEAD DOOR',loc:(val('ohWall')||'front').toUpperCase()+' WALL'})));
+  if(val('partyWall')&&val('partyWall')!=='none'){ const p=partyDim(); row('party',()=>({tag:'D'+(++dn),size:ftLabel(p.w)+' x '+ftLabel(p.h),type:'RAISED PANEL OVERHEAD (PARTY) DOOR',loc:val('partyWall').toUpperCase()+' WALL'})); }
+  if(val('svcWall')&&val('svcWall')!=='none'){ const si=svcSwingInfo(); row('svc',()=>({tag:'D'+(++dn),size:"3'-0\" x 6'-8\"",type:'STEEL SERVICE DOOR, SWING '+(si.swing==='out'?'OUT':'IN'),loc:val('svcWall').toUpperCase()+' WALL · HINGE TOWARD '+String(si.nearWall).toUpperCase()+' WALL'})); }
+  const placed=winQty()>0?psAlongOps(val('winWall')).filter(o=>o.kind==='win').length:0;
+  if(placed>0){ const wd=winDim(); const r=row('win',()=>({tag:'W1',size:ftLabel(wd.w)+' x '+ftLabel(wd.h),type:String(val('winType')||'SINGLE HUNG').toUpperCase()+' WINDOW',loc:val('winWall').toUpperCase()+' WALL'})); r.qty=placed; }
+  return {rows,tags}; }
+// Slab spec from the job's actual values only — anything not given stays blank.
+function psSlabSpec(){ const c=code()||{}; const txt=String(val('slab')||'').toUpperCase(); const all=(txt+' '+String(c.slab||'')+' '+String(c.thickness||'')).toUpperCase();
+  const thick=(txt.match(/(\d+(?:\.\d+)?)\s*(?:"|IN\b|INCH)/)||[])[1]?(txt.match(/(\d+(?:\.\d+)?)\s*(?:"|IN\b|INCH)/)[1]+'"'):(c.thickness||'');
+  const mix=(txt.match(/(\d+(?:\.\d+)?\s*BAG(?:\s*MIX)?|\d{4}\s*PSI)/)||[])[1]||(c.slab||'');
+  const reinf=(all.match(/(6\s*X\s*6[^,;/]*|WWF|WIRE MESH|FIBER(?:MESH)?|REBAR[^,;/]*)/)||[])[1]||'';
+  const base=(all.match(/(\d+"\s*(?:COMPACTED\s*)?(?:GRAVEL|GRANULAR|STONE|CA-?6)[^,;/]*|GRAVEL|GRANULAR(?: FILL)?|CA-?6)/)||[])[1]||'';
+  const vapor=(all.match(/(\d+\s*-?\s*MIL[^,;/]*|VAPOR (?:BARRIER|RETARDER))/)||[])[1]||'';
+  const foot=val('footing')||c.footings||'';
+  return {thick:String(thick).trim(),mix:String(mix).trim(),reinf:String(reinf).trim(),base:String(base).trim(),vapor:String(vapor).trim(),foot:String(foot).trim()}; }
+function psBlank(v){ return v?String(v).toUpperCase():'________'; }
+// Overhang (inches) from the Eaves / soffit input; null when the input gives no size.
+function psOverhangIn(){ const e=String(val('eaves')||'');
+  let m=e.match(/(\d+(?:\.\d+)?)\s*(?:"|in(?:ch(?:es)?)?\b)\s*(?:overhang|soffit|eave)/i); if(m) return Number(m[1]);
+  m=e.match(/(\d+(?:\.\d+)?)\s*(?:'|ft|foot|feet)\s*(?:overhang|soffit|eave)/i); if(m) return Number(m[1])*12;
+  m=e.match(/(?:overhang|soffit|eave)s?\s*[:=]?\s*(\d+(?:\.\d+)?)\s*(?:"|in)/i); if(m) return Number(m[1]);
+  return null; }
+// GFCI receptacles live on the movable overlay; keep them snapped to the inside face of a wall.
+function psSnapGfi(it){ const g=window._fpGeo; if(!g||!it) return it;
+  const sz=g.gfiU, cx=(Number(it.x)||0)/100*g.vbw+sz/2, cy=(Number(it.y)||0)/100*g.vbh+sz/2;
+  const inL=g.ox+g.t, inR=g.ox+g.gw-g.t, inT=g.oy+g.t, inB=g.oy+g.gd-g.t;
+  const d={left:Math.abs(cx-inL),right:Math.abs(cx-inR),back:Math.abs(cy-inT),front:Math.abs(cy-inB)};
+  let wall=Object.keys(d).sort((a,b)=>d[a]-d[b])[0];
+  let along=(wall==='left'||wall==='right')?cy:cx;
+  const lo=(wall==='left'||wall==='right')?inT+sz*.6:inL+sz*.6, hi=(wall==='left'||wall==='right')?inB-sz*.6:inR-sz*.6;
+  along=Math.max(lo,Math.min(hi,along));
+  // keep clear of openings on that wall
+  const ops=(g.ops||[]).filter(o=>o.wall===wall);
+  const bad=a=>ops.some(o=>a>o.p0-sz*.7&&a<o.p1+sz*.7);
+  if(bad(along)){ let best=null; for(let dd=2; dd<1200 && best==null; dd+=2){ [along-dd,along+dd].forEach(a=>{ if(best==null&&a>=lo&&a<=hi&&!bad(a)) best=a; }); } if(best!=null) along=best; }
+  let x,y; if(wall==='left'){x=inL+sz/2;y=along;} else if(wall==='right'){x=inR-sz/2;y=along;} else if(wall==='back'){x=along;y=inT+sz/2;} else {x=along;y=inB-sz/2;}
+  it.x=+((x-sz/2)/g.vbw*100).toFixed(2); it.y=+((y-sz/2)/g.vbh*100).toFixed(2); it.wall=wall; return it; }
+function psGfiSpots(n){ const g=window._fpGeo; if(!g) return []; const out=[]; const walls=['left','right','back','front'];
+  for(let i=0;i<n;i++){ const wall=walls[i%4], k=Math.floor(i/4); const vert=wall==='left'||wall==='right';
+    const len=vert?g.gd:g.gw, base=vert?g.oy:g.ox; const along=base+len*(k%2?0.3:0.65);
+    let x,y; if(wall==='left'){x=g.ox+g.t;y=along;} else if(wall==='right'){x=g.ox+g.gw-g.t;y=along;} else if(wall==='back'){x=along;y=g.oy+g.t;} else {x=along;y=g.oy+g.gd-g.t;}
+    const it={x:(x-g.gfiU/2)/g.vbw*100,y:(y-g.gfiU/2)/g.vbh*100}; psSnapGfi(it); out.push({x:it.x,y:it.y,wall:it.wall}); }
+  return out; }
+function psGfiHtml(it,sel){ const g=window._fpGeo; const wPct=g?(g.gfiU/g.vbw*100):3.4; const rot={back:0,right:90,front:180,left:270}[it.wall||'back']||0;
+  return `<div class="ov gfi ps-gfi${sel}" data-id="${it.id}" style="left:${it.x}%;top:${it.y}%;width:${wPct.toFixed(3)}%"><svg viewBox="0 0 40 40" width="100%" height="100%"><g transform="rotate(${rot} 20 20)"><line x1="15" y1="1" x2="15" y2="9" stroke="${PSC.wall}" stroke-width="2.4"/><line x1="25" y1="1" x2="25" y2="9" stroke="${PSC.wall}" stroke-width="2.4"/></g><circle cx="20" cy="20" r="12.5" fill="#fff" stroke="${PSC.wall}" stroke-width="2.4"/><text x="20" y="24.2" text-anchor="middle" font-size="11.5" font-weight="800" style="fill:${PSC.wall}">${esc(it.text||'GFI')}</text></svg></div>`; }
 function floorPlanSvg(){
   const W=Number(val('width'))||22, D=Number(val('depth'))||24;
-  const ohW1=Number(val('ohW'))||16, ohW=ohGroupW(), ohH=Number(val('ohH'))||7, ohN=ohCount();
-  const ohLbl=ohDoorsText().replace(/'/g,'')+' OH';
-  const ohWall=val('ohWall')||'front';
-  const ret=doorReturns();
-  const L=ret.left, R=ret.right;
-  // Fit building + outside items (patio, apron, service pad) between the sheet header and the title boxes.
-  const _pat0=patioDim(), _ld0=landingDim(), _svw=val('svcWall');
-  const _apPx=hasApron()?Math.max(28, Math.min(50,(Number(val('apronFt'))||3)*10)):0;
-  const _ext=(side,s)=>{ // outside extent in px at scale s
-    let e=0;
-    if(_pat0.on && _pat0.wall===side) e=Math.max(e,_pat0.d*s);
-    if(_ld0.on && _svw===side) e=Math.max(e,_ld0.h*s);
-    if(_apPx && ohWall===side) e=Math.max(e, side==='front'?40:_apPx);
-    return e;
+  const VBW=720, VBH=620, c=psCtx(11,VBW);
+  const T=0.375; // wall: 2x4 stud + 7/16" sheathing ≈ 4 1/2"
+  const ohWall=val('ohWall')||'front', svW=val('svcWall');
+  const pat=patioDim(), ld=landingDim();
+  const apFt=hasApron()?Math.min(Number(val('apronFt'))||0,5):0, apBreak=hasApron()&&(Number(val('apronFt'))||0)>5;
+  const extFt=side=>Math.max(0,(apFt&&ohWall===side)?apFt:0,(pat.on&&pat.wall===side)?pat.d:0,(ld.on&&svW===side)?ld.h:0);
+  const ops=psPlanOps(); const tl=psTagList();
+  const has=w=>ops.some(o=>o.wall===w);
+  // margins (units) per side for tags-free dims: chain (if openings) + overall
+  const ring=c.f(13), mSide=w=>c.f(8)+(has(w)?ring:0)+ring+c.f(6);
+  const top=psHeadH(c)+6, bot=c.f(8);
+  const availW=VBW-mSide('left')-mSide('right')-8, availH=VBH-top-bot-mSide('back')-mSide('front');
+  const ftW=W+extFt('left')+extFt('right'), ftH=D+extFt('back')+extFt('front');
+  const sc=psPickScale(c,ftW,ftH,availW,availH), sx=sc.sx;
+  const ox=mSide('left')+4+extFt('left')*sx+(availW-ftW*sx)/2;
+  const oy=top+mSide('back')+extFt('back')*sx+(availH-ftH*sx)/2;
+  const gw=W*sx, gd=D*sx, t=T*sx;
+  const X=f=>ox+f*sx, Y=f=>oy+f*sx;
+  const fs={dim:c.f(8),tag:c.f(8),lab:c.f(8.5),note:c.f(8),title:c.f(13),small:c.f(7.5)};
+  let walls='', cuts='', syms='', tags='', outside='', notes='';
+  // ---- walls (Floor D: blue poché, heavy navy faces) ----
+  walls+=`<path d="M${psN(ox)} ${psN(oy)}h${psN(gw)}v${psN(gd)}h${psN(-gw)}Z M${psN(ox+t)} ${psN(oy+t)}v${psN(gd-2*t)}h${psN(gw-2*t)}v${psN(-(gd-2*t))}Z" fill="${PSC.wallFill}" fill-rule="evenodd" stroke="${PSC.wall}" stroke-width="${psN(c.f(1.5))}"/>`;
+  // returns / braced panels beside the OH opening
+  if(showOnPlan('returns')){ const ohs=ops.filter(o=>o.kind==='oh'); if(ohs.length){ const a0=Math.min(...ohs.map(o=>o.a)), b0=Math.max(...ohs.map(o=>o.b)); const L=(ohWall==='left'||ohWall==='right')?D:W;
+    [[0,a0],[b0,L]].forEach(([p,q])=>{ if(q-p<=0.05) return; let r;
+      if(ohWall==='front') r=[X(p),Y(D)-t,(q-p)*sx,t]; else if(ohWall==='back') r=[X(p),oy,(q-p)*sx,t]; else if(ohWall==='left') r=[ox,Y(p),t,(q-p)*sx]; else r=[X(W)-t,Y(p),t,(q-p)*sx];
+      walls+=psR(r[0],r[1],r[2],r[3],'url(#psRet)','none',0); }); } }
+  const wallRect=(o,pad)=>{ pad=pad||0; if(o.wall==='front') return [X(o.a),Y(D)-t-pad,(o.b-o.a)*sx,t+2*pad]; if(o.wall==='back') return [X(o.a),oy-pad,(o.b-o.a)*sx,t+2*pad]; if(o.wall==='left') return [ox-pad,Y(o.a),t+2*pad,(o.b-o.a)*sx]; return [X(W)-t-pad,Y(o.a),t+2*pad,(o.b-o.a)*sx]; };
+  const inward={front:[0,-1],back:[0,1],left:[1,0],right:[-1,0]};
+  const geoOps=[];
+  ops.forEach(o=>{ const r=wallRect(o,c.f(1)); const vert=o.wall==='left'||o.wall==='right';
+    cuts+=psR(r[0],r[1],r[2],r[3],'#fff','none',0);
+    const jw=c.f(1.2); const r0=wallRect(o);
+    // jambs
+    if(vert){ cuts+=psL(r0[0],r0[1],r0[0]+r0[2],r0[1],jw,PSC.wall)+psL(r0[0],r0[1]+r0[3],r0[0]+r0[2],r0[1]+r0[3],jw,PSC.wall); }
+    else { cuts+=psL(r0[0],r0[1],r0[0],r0[1]+r0[3],jw,PSC.wall)+psL(r0[0]+r0[2],r0[1],r0[0]+r0[2],r0[1]+r0[3],jw,PSC.wall); }
+    const mid=(o.a+o.b)/2, [ix,iy]=inward[o.wall];
+    const inner={x: o.wall==='left'?ox+t:o.wall==='right'?X(W)-t:X(mid), y: o.wall==='back'?oy+t:o.wall==='front'?Y(D)-t:Y(mid)};
+    geoOps.push({wall:o.wall,p0:vert?Y(o.a):X(o.a),p1:vert?Y(o.b):X(o.b)});
+    let tag='';
+    if(o.kind==='win'){ // window: wall faces + double glass line
+      const lw=c.f(.6);
+      if(vert){ const xm=r0[0]+t/2; cuts+=psL(r0[0],r0[1],r0[0],r0[1]+r0[3],lw,PSC.wall)+psL(r0[0]+t,r0[1],r0[0]+t,r0[1]+r0[3],lw,PSC.wall)+psL(xm-c.f(.9),r0[1],xm-c.f(.9),r0[1]+r0[3],c.f(.7),PSC.wall)+psL(xm+c.f(.9),r0[1],xm+c.f(.9),r0[1]+r0[3],c.f(.7),PSC.wall); }
+      else { const ym=r0[1]+t/2; cuts+=psL(r0[0],r0[1],r0[0]+r0[2],r0[1],lw,PSC.wall)+psL(r0[0],r0[1]+t,r0[0]+r0[2],r0[1]+t,lw,PSC.wall)+psL(r0[0],ym-c.f(.9),r0[0]+r0[2],ym-c.f(.9),c.f(.7),PSC.wall)+psL(r0[0],ym+c.f(.9),r0[0]+r0[2],ym+c.f(.9),c.f(.7),PSC.wall); }
+      tag=tl.tags.win; }
+    if(o.kind==='svc'){ const si=svcSwingInfo(); const leaf=3*sx;
+      // hinge jamb: the end nearer the wall named by the schedule (nearWall)
+      const nw=si.nearWall; let hingeAtA;
+      if(vert) hingeAtA=(nw==='back'); else hingeAtA=(nw==='left');
+      const sIn=si.swing!=='out'; const dir=sIn?1:-1; // +1 = into the garage
+      const face=sIn?(o.wall==='left'?ox+t:o.wall==='right'?X(W)-t:o.wall==='back'?oy+t:Y(D)-t):(o.wall==='left'?ox:o.wall==='right'?X(W):o.wall==='back'?oy:Y(D));
+      let hx,hy,lx,ly,sxp,syp;
+      if(vert){ hy=hingeAtA?Y(o.a):Y(o.b); hx=face; lx=hx+ix*dir*leaf; ly=hy; sxp=hx; syp=hingeAtA?Y(o.b):Y(o.a); }
+      else { hx=hingeAtA?X(o.a):X(o.b); hy=face; lx=hx; ly=hy+iy*dir*leaf; sxp=hingeAtA?X(o.b):X(o.a); syp=hy; }
+      const cross=(lx-hx)*(syp-hy)-(ly-hy)*(sxp-hx); const sweep=cross>0?1:0;
+      syms+=psL(hx,hy,lx,ly,c.f(1.3),PSC.wall)+`<path d="M${psN(lx)} ${psN(ly)} A${psN(leaf)} ${psN(leaf)} 0 0 ${sweep} ${psN(sxp)} ${psN(syp)}" fill="none" stroke="${PSC.wall}" stroke-width="${psN(c.f(.5))}"/>`;
+      tag=tl.tags.svc; }
+    if(o.kind==='oh'||o.kind==='party'){ // dashed overhead door / track above
+      const depth=Math.min((o.h||7)+1, (vert?W:D)*0.6)*sx; const dl=`${psN(c.f(4))} ${psN(c.f(2.5))}`;
+      let rx,ry,rw,rh; if(o.wall==='front'){rx=X(o.a);ry=Y(D)-t-depth;rw=(o.b-o.a)*sx;rh=depth;} else if(o.wall==='back'){rx=X(o.a);ry=oy+t;rw=(o.b-o.a)*sx;rh=depth;} else if(o.wall==='left'){rx=ox+t;ry=Y(o.a);rw=depth;rh=(o.b-o.a)*sx;} else {rx=X(W)-t-depth;ry=Y(o.a);rw=depth;rh=(o.b-o.a)*sx;}
+      syms+=psR(rx,ry,rw,rh,'none',PSC.wall,c.f(.6),` stroke-dasharray="${dl}"`);
+      // door panel line in the opening
+      if(vert) syms+=psL(r0[0]+t/2,r0[1],r0[0]+t/2,r0[1]+r0[3],c.f(.9),PSC.wall); else syms+=psL(r0[0],r0[1]+t/2,r0[0]+r0[2],r0[1]+t/2,c.f(.9),PSC.wall);
+      const lab=(ftLabel(o.w)+' x '+ftLabel(o.h)+(o.kind==='party'?' PARTY DOOR':' OH DOOR')), lab2='(DASHED = DOOR / TRACK ABOVE)';
+      const cxm=rx+rw/2, cym=ry+rh/2; const along=vert?rh:rw; const k=Math.min(1,(along-c.f(6))/psTW(lab2,fs.small));
+      if(k>0.7){ const rot=vert?-90:null; const f1=fs.small*Math.max(0.88,Math.min(1,k));
+        syms+=`<g class="ps-ohlab">${psT(cxm,cym-(vert?0:f1*0.25),lab,{fs:f1,w:700,c:PSC.wall,rot})}${vert?'':psT(cxm,cym+f1*1.05,lab2,{fs:f1*0.95,c:PSC.wall})}</g>`; }
+      tag=o.kind==='oh'?tl.tags['oh'+o.w+'x'+o.h]:tl.tags.party; }
+    if(tag){ // tags sit inside the garage, clear of dims / apron / patio outside
+      let tx=inner.x+ix*c.f(11), ty=inner.y+iy*c.f(11);
+      if(o.kind==='oh'||o.kind==='party'){ tx=inner.x+ix*c.f(10); ty=inner.y+iy*c.f(10); if(vert) ty=Y(o.a)+c.f(10); else tx=X(o.a)+c.f(14); }
+      if(o.kind==='svc'){ const si=svcSwingInfo(); const hA=vert?(si.nearWall==='back'):(si.nearWall==='left');
+        const strike=hA?(vert?Y(o.b):X(o.b)):(vert?Y(o.a):X(o.a)); const along=strike+(hA?1:-1)*c.f(12);
+        if(vert) ty=along; else tx=along; }
+      tags+=psPill(tx,ty,tag,c,fs.tag); }
+  });
+  // ---- outside items: apron, patio, service pad ----
+  if(hasApron()){ const d=apFt*sx; let r; if(ohWall==='front') r=[ox,Y(D),gw,d]; else if(ohWall==='back') r=[ox,oy-d,gw,d]; else if(ohWall==='left') r=[ox-d,oy,d,gd]; else r=[X(W),oy,d,gd];
+    outside+=psR(r[0],r[1],r[2],r[3],'#f1f4fa',PSC.wall,c.f(.9),' class="fp-obst"');
+    const vert=ohWall==='left'||ohWall==='right'; const lab=apBreak?'NEW CONC. APRON — '+ftLabel(Number(val('apronFt')))+' (SEE SITE PLAN)':'NEW CONC. APRON';
+    outside+=psT(r[0]+r[2]/2,r[1]+r[3]/2+fs.lab*0.35,lab,{fs:fs.lab,w:700,c:PSC.wall,rot:vert?-90:null,cls:'fp-mv'}); }
+  if(pat.on){ const pw=pat.w*sx, pd=pat.d*sx; let px=ox,py=oy,plw=pw,plh=pd;
+    if(pat.wall==='back'){px=ox+(gw-pw)/2;py=oy-pd;} else if(pat.wall==='front'){px=ox+(gw-pw)/2;py=Y(D);} else if(pat.wall==='left'){px=ox-pd;py=oy+(gd-pw)/2;plw=pd;plh=pw;} else {px=X(W);py=oy+(gd-pw)/2;plw=pd;plh=pw;}
+    outside+=psR(px,py,plw,plh,'url(#psConc)',PSC.wall,c.f(.8),` stroke-dasharray="${psN(c.f(4))} ${psN(c.f(2.5))}"`);
+    const ps=Math.max(c.f(5),0.33*sx); patioPostT(pat.posts).forEach(al=>{ let cx,cy; if(pat.wall==='back'||pat.wall==='front'){cx=px+al*(plw-ps);cy=pat.wall==='back'?py:py+plh-ps;} else {cx=pat.wall==='left'?px:px+plw-ps;cy=py+al*(plh-ps);} outside+=psR(cx,cy,ps,ps,PSC.wall,PSC.wall,c.f(.5)); });
+    const vert=plh>plw*1.3; outside+=`<g class="fp-mv">${psT(px+plw/2,py+plh/2,'ROOFED PATIO '+ftLabel(pat.w)+' x '+ftLabel(pat.d),{fs:fs.lab,w:700,c:PSC.wall,rot:vert?-90:null})}${vert?'':psT(px+plw/2,py+plh/2+fs.lab*1.2,'CONC. SLAB · ('+pat.posts+') '+pat.post+' POSTS',{fs:fs.small})}</g>`; }
+  if(ld.on){ const sv=ops.find(o=>o.kind==='svc'); if(sv){ const along=Math.max(ld.w,3)*sx, out=ld.h*sx, m=(sv.a+sv.b)/2; let r;
+    if(sv.wall==='front') r=[X(m)-along/2,Y(D),along,out]; else if(sv.wall==='back') r=[X(m)-along/2,oy-out,along,out]; else if(sv.wall==='left') r=[ox-out,Y(m)-along/2,out,along]; else r=[X(W),Y(m)-along/2,out,along];
+    outside+=psR(r[0],r[1],r[2],r[3],'#f1f4fa',PSC.wall,c.f(.8),' class="fp-obst"');
+    outside+=psT(r[0]+r[2]/2,r[1]+r[3]/2+fs.small*0.35,ftLabel(ld.w)+' x '+ftLabel(ld.h)+' PAD',{fs:fs.small,w:700,rot:r[3]>r[2]?-90:null,cls:'fp-mv',c:PSC.wall}); } }
+  // ---- dimensions: chained opening locations (inner) + overall (outer), ft-in, to outside face of wall ----
+  let dims='';
+  const side=(w)=>{ const vert=w==='left'||w==='right'; const L=vert?D:W; const my=ops.filter(o=>o.wall===w).sort((a,b)=>a.a-b.a);
+    const ext=extFt(w)*sx; let pos=c.f(8)+ext; const base=vert?(w==='left'?ox:X(W)):(w==='back'?oy:Y(D)); const sgn=(w==='left'||w==='back')?-1:1;
+    const pts=[0]; my.forEach(o=>{pts.push(o.a,o.b)}); pts.push(L);
+    const toAbs=f=>vert?Y(f):X(f);
+    if(my.length){ pos+=ring; dims+=psDimChain(c,vert?'y':'x',pts.map(toAbs),base+sgn*pos,base+sgn*(ext?ext:0),PSC.dim,{sx,fs:fs.dim}); }
+    pos+=ring; dims+=psDimChain(c,vert?'y':'x',[toAbs(0),toAbs(L)],base+sgn*pos,base+sgn*(ext?ext:0),PSC.dim,{sx,fs:fs.dim});
   };
-  let sx=14, ox=90, oy=70;
-  for(;sx>5;sx-=0.5){
-    const eL=_ext('left',sx), eR=_ext('right',sx), eB=_ext('back',sx), eF=_ext('front',sx);
-    const needW=Math.max(70,eL+24)+W*sx+Math.max(96,eR+56);
-    const needH=Math.max(74,eB+74)+D*sx+Math.max(62,eF+40);
-    if(needW<=700 && needH<=700) break;
-  }
-  ox=Math.max(90, _ext('left',sx)+40);
-  oy=Math.max(70, _ext('back',sx)+74);
-  const gw=W*sx, gd=D*sx;
-  const eL=_ext('left',sx), eR=_ext('right',sx), eB=_ext('back',sx), eF=_ext('front',sx);
-  const fpReduced=sx<14;
-  let extra='';
-  // Overhead door opening + returns on the selected wall
-  let doorGap='', doorLab='', retHatch='', dimAlong='';
-  if(ohWall==='back'){
-    const doorX=ox+L*sx, doorW=ohW*sx;
-    doorGap=`<line x1="${doorX}" y1="${oy}" x2="${doorX+doorW}" y2="${oy}" stroke="#fff" stroke-width="8"/>
-      <line x1="${doorX+6}" y1="${oy+16}" x2="${doorX+doorW-6}" y2="${oy+16}" stroke="#111"/>
-      <line x1="${doorX+6}" y1="${oy+24}" x2="${doorX+doorW-6}" y2="${oy+24}" stroke="#111"/>`;
-    doorLab=`<text class="fp-mv" x="${doorX+doorW/2}" y="${oy+38}" text-anchor="middle" font-size="11">${ohLbl}</text>`;
-    if(showOnPlan('returns')){
-      retHatch=`<rect x="${ox}" y="${oy}" width="${L*sx}" height="12" fill="url(#hatchRet)" stroke="#111"/>
-        <rect x="${doorX+doorW}" y="${oy}" width="${R*sx}" height="12" fill="url(#hatchRet)" stroke="#111"/>`;
-    }
-    dimAlong=`<text x="${ox+L*sx/2}" y="${oy-28-eB}" text-anchor="middle" font-size="11">${L}' L</text>
-      <text x="${doorX+doorW+R*sx/2}" y="${oy-28-eB}" text-anchor="middle" font-size="11">${R}' R</text>`;
-  } else if(ohWall==='left'){
-    const doorY=oy+L*sx, doorH=ohW*sx;
-    doorGap=`<line x1="${ox}" y1="${doorY}" x2="${ox}" y2="${doorY+doorH}" stroke="#fff" stroke-width="8"/>
-      <line x1="${ox+16}" y1="${doorY+6}" x2="${ox+16}" y2="${doorY+doorH-6}" stroke="#111"/>
-      <line x1="${ox+24}" y1="${doorY+6}" x2="${ox+24}" y2="${doorY+doorH-6}" stroke="#111"/>`;
-    doorLab=`<text class="fp-mv" x="${ox+40}" y="${doorY+doorH/2}" text-anchor="middle" font-size="11" transform="rotate(-90 ${ox+40} ${doorY+doorH/2})">${ohLbl}</text>`;
-    if(showOnPlan('returns')){
-      retHatch=`<rect x="${ox}" y="${oy}" width="18" height="${L*sx}" fill="url(#hatchRet)" stroke="#111"/>
-        <rect x="${ox}" y="${doorY+doorH}" width="18" height="${R*sx}" fill="url(#hatchRet)" stroke="#111"/>`;
-    }
-    dimAlong=`<text x="${ox-8-eL}" y="${oy+L*sx/2}" text-anchor="end" font-size="11">${ftLabel(L)}</text>
-      <text x="${ox-8-eL}" y="${doorY+doorH+R*sx/2}" text-anchor="end" font-size="11">${ftLabel(R)}</text>`;
-  } else if(ohWall==='right'){
-    const doorY=oy+L*sx, doorH=ohW*sx;
-    doorGap=`<line x1="${ox+gw}" y1="${doorY}" x2="${ox+gw}" y2="${doorY+doorH}" stroke="#fff" stroke-width="8"/>
-      <line x1="${ox+gw-16}" y1="${doorY+6}" x2="${ox+gw-16}" y2="${doorY+doorH-6}" stroke="#111"/>
-      <line x1="${ox+gw-24}" y1="${doorY+6}" x2="${ox+gw-24}" y2="${doorY+doorH-6}" stroke="#111"/>`;
-    doorLab=`<text class="fp-mv" x="${ox+gw-40}" y="${doorY+doorH/2}" text-anchor="middle" font-size="11" transform="rotate(90 ${ox+gw-40} ${doorY+doorH/2})">${ohLbl}</text>`;
-    if(showOnPlan('returns')){
-      retHatch=`<rect x="${ox+gw-18}" y="${oy}" width="18" height="${L*sx}" fill="url(#hatchRet)" stroke="#111"/>
-        <rect x="${ox+gw-18}" y="${doorY+doorH}" width="18" height="${R*sx}" fill="url(#hatchRet)" stroke="#111"/>`;
-    }
-    dimAlong=`<text x="${ox+gw+8+eR}" y="${oy+L*sx/2}" font-size="11">${ftLabel(L)}</text>
-      <text x="${ox+gw+8+eR}" y="${doorY+doorH+R*sx/2}" font-size="11">${ftLabel(R)}</text>`;
-  } else {
-    // front (default) — bottom edge
-    const doorX=ox+L*sx, doorW=ohW*sx;
-    doorGap=`<line x1="${doorX}" y1="${oy+gd}" x2="${doorX+doorW}" y2="${oy+gd}" stroke="#fff" stroke-width="8"/>
-      <line x1="${doorX+6}" y1="${oy+gd-16}" x2="${doorX+doorW-6}" y2="${oy+gd-16}" stroke="#111"/>
-      <line x1="${doorX+6}" y1="${oy+gd-24}" x2="${doorX+doorW-6}" y2="${oy+gd-24}" stroke="#111"/>`;
-    doorLab=`<text class="fp-mv" x="${doorX+doorW/2}" y="${oy+gd-32}" text-anchor="middle" font-size="11">${ohLbl}</text>`;
-    if(showOnPlan('returns')){
-      retHatch=`<rect x="${ox}" y="${oy+gd-12}" width="${L*sx}" height="12" fill="url(#hatchRet)" stroke="#111"/>
-        <rect x="${doorX+doorW}" y="${oy+gd-12}" width="${R*sx}" height="12" fill="url(#hatchRet)" stroke="#111"/>`;
-    }
-    dimAlong=`<text x="${ox+L*sx/2}" y="${oy+gd+Math.max(54,eF+14)}" text-anchor="middle" font-size="11">${L}' L</text>
-      <text x="${doorX+doorW+R*sx/2}" y="${oy+gd+Math.max(54,eF+14)}" text-anchor="middle" font-size="11">${R}' R</text>`;
-  }
-  if(ohN>1){ const _ds=ohDoors(); let _acc=L; for(let k=1;k<ohN;k++){ _acc+=_ds[k-1].w; const a=_acc+(k-1)*ohPostFt(), pw=ohPostFt()*sx;
-      if(ohWall==='back') doorGap+=`<rect x="${ox+a*sx}" y="${oy-4}" width="${pw}" height="8" fill="#111"/>`;
-      else if(ohWall==='left') doorGap+=`<rect x="${ox-4}" y="${oy+a*sx}" width="8" height="${pw}" fill="#111"/>`;
-      else if(ohWall==='right') doorGap+=`<rect x="${ox+gw-4}" y="${oy+a*sx}" width="8" height="${pw}" fill="#111"/>`;
-      else doorGap+=`<rect x="${ox+a*sx}" y="${oy+gd-4}" width="${pw}" height="8" fill="#111"/>`; } }
-  // Service door
-  if(val('svcWall')!=='none'){
-    const sw=val('svcWall');
-    const sr=svcReturns();
-    const swi=svcSwingInfo();
-    const leaf=sr.w*sx;
-    let sdx,sdy,sdw=14,sdh=32, arc='';
-    if(sw==='left'){
-      sdx=ox-14; sdy=oy+sr.left*sx; sdh=leaf;
-      const hx=ox, hy=swi.hinge==='left'?sdy:sdy+sdh;
-      const sweep=swi.swing==='in'?1:0;
-      arc=`<path d="M${hx} ${hy} A${leaf} ${leaf} 0 0 ${swi.hinge==='left'?sweep:1-sweep} ${hx+(swi.swing==='in'?leaf:-leaf)} ${hy}" fill="none" stroke="#111" stroke-dasharray="3 2"/>`;
-    } else if(sw==='back'){
-      sdx=ox+sr.left*sx; sdy=oy-14; sdw=leaf; sdh=14;
-      const hx=swi.hinge==='left'?sdx:sdx+sdw, hy=oy;
-      arc=`<path d="M${hx} ${hy} A${leaf} ${leaf} 0 0 1 ${hx} ${hy+(swi.swing==='in'?leaf:-leaf)}" fill="none" stroke="#111" stroke-dasharray="3 2"/>`;
-    } else if(sw==='front'){
-      sdx=ox+sr.left*sx; sdy=oy+gd; sdw=leaf; sdh=14;
-      const hx=swi.hinge==='left'?sdx:sdx+sdw, hy=oy+gd;
-      arc=`<path d="M${hx} ${hy} A${leaf} ${leaf} 0 0 1 ${hx} ${hy+(swi.swing==='in'?-leaf:leaf)}" fill="none" stroke="#111" stroke-dasharray="3 2"/>`;
-    } else {
-      sdx=ox+gw; sdy=oy+sr.left*sx; sdh=leaf;
-      const hx=ox+gw, hy=swi.hinge==='left'?sdy:sdy+sdh;
-      arc=`<path d="M${hx} ${hy} A${leaf} ${leaf} 0 0 1 ${hx+(swi.swing==='in'?-leaf:leaf)} ${hy}" fill="none" stroke="#111" stroke-dasharray="3 2"/>`;
-    }
-    extra+=`<rect class="fp-obst" x="${sdx}" y="${sdy}" width="${sdw}" height="${sdh}" fill="#fff" stroke="#111"/>
-      ${arc}
-      ${(()=>{const t='36x80 '+esc(swi.short);
-        if(sw==='left') return `<text class="fp-mv" x="${ox+10}" y="${sdy-5}" font-size="8">${t}</text>`;
-        if(sw==='right') return `<text class="fp-mv" x="${ox+gw-10}" y="${sdy-5}" text-anchor="end" font-size="8">${t}</text>`;
-        if(sw==='back') return `<text class="fp-mv" x="${sdx+sdw+6}" y="${oy+22}" font-size="8">${t}</text>`;
-        return `<text class="fp-mv" x="${sdx+sdw+6}" y="${oy+gd-16}" font-size="8">${t}</text>`;})()}`;
-    const ld=landingDim();
-    if(ld.on){
-      const along=Math.max(ld.w, sr.w)*sx, out=ld.h*sx;
-      let lx=sdx, ly=sdy, lw=along, lh=out, lab=ld.w+'x'+ld.h+' PAD';
-      if(sw==='right'){ lx=ox+gw; ly=sdy+(leaf-along)/2; lw=out; lh=along; }
-      else if(sw==='left'){ lx=ox-out; ly=sdy+(leaf-along)/2; lw=out; lh=along; }
-      else if(sw==='back'){ lx=sdx+(leaf-along)/2; ly=oy-out; lw=along; lh=out; }
-      else { lx=sdx+(leaf-along)/2; ly=oy+gd; lw=along; lh=out; }
-      extra+=`<rect class="fp-obst" x="${lx}" y="${ly}" width="${lw}" height="${lh}" fill="#f3f3f3" stroke="#111"/>
-        <text class="fp-mv" data-fp-inpad="1" x="${lx+lw/2}" y="${ly+lh/2+3}" text-anchor="middle" font-size="${Math.max(5.5,Math.min(8,(Math.max(lw,lh)-4)/(lab.length*0.62)))}"${lh>lw?` transform="rotate(-90 ${lx+lw/2} ${ly+lh/2})"`:''}>${esc(lab)}</text>`;
-    }
-  }
-  // Party door on any wall (gap + label)
-  if(val('partyWall')!=='none'){
-    const pw=val('partyWall');
-    const pr=partyReturns();
-    const pd=partyDim();
-    let gap='';
-    if(pw==='back'){
-      const px=ox+pr.left*sx, pwdx=pd.w*sx;
-      gap=`<line x1="${px}" y1="${oy}" x2="${px+pwdx}" y2="${oy}" stroke="#fff" stroke-width="6"/>
-        <text class="fp-mv" x="${px+pwdx/2}" y="${oy+14}" text-anchor="middle" font-size="10">${esc(val('partySize')||'6x7')} PARTY</text>`;
-    } else if(pw==='front'){
-      const px=ox+pr.left*sx, pwdx=pd.w*sx;
-      gap=`<line x1="${px}" y1="${oy+gd}" x2="${px+pwdx}" y2="${oy+gd}" stroke="#fff" stroke-width="6"/>
-        <text class="fp-mv" x="${px+pwdx/2}" y="${oy+gd-8}" text-anchor="middle" font-size="10">${esc(val('partySize')||'6x7')} PARTY</text>`;
-    } else if(pw==='left'){
-      const py=oy+pr.left*sx, ph=pd.w*sx;
-      gap=`<line x1="${ox}" y1="${py}" x2="${ox}" y2="${py+ph}" stroke="#fff" stroke-width="6"/>
-        <text class="fp-mv" x="${ox+18}" y="${py+ph/2}" font-size="10">${esc(val('partySize')||'6x7')} PARTY</text>`;
-    } else {
-      const py=oy+pr.left*sx, ph=pd.w*sx;
-      gap=`<line x1="${ox+gw}" y1="${py}" x2="${ox+gw}" y2="${py+ph}" stroke="#fff" stroke-width="6"/>
-        <text class="fp-mv" x="${ox+gw-18}" y="${py+ph/2}" text-anchor="end" font-size="10">${esc(val('partySize')||'6x7')} PARTY</text>`;
-    }
-    extra+=gap;
-  }
-  // Windows as wall notches
-  if(val('winWall')!=='none' && winQty()>0){
-    const ww=val('winWall');
-    const q=winQty();
-    for(let i=0;i<q;i++){
-      const t=(i+1)/(q+1);
-      if(ww==='back'){
-        const wx=ox+gw*t-10;
-        extra+=`<rect x="${wx}" y="${oy-6}" width="20" height="6" fill="#fff" stroke="#111"/>`;
-      } else if(ww==='front'){
-        const wx=ox+gw*t-10;
-        extra+=`<rect x="${wx}" y="${oy+gd}" width="20" height="6" fill="#fff" stroke="#111"/>`;
-      } else if(ww==='left'){
-        const wy=oy+gd*t-10;
-        extra+=`<rect x="${ox-6}" y="${wy}" width="6" height="20" fill="#fff" stroke="#111"/>`;
-      } else {
-        const wy=oy+gd*t-10;
-        extra+=`<rect x="${ox+gw}" y="${wy}" width="6" height="20" fill="#fff" stroke="#111"/>`;
-      }
-    }
-  }
-  const pat=patioDim();
-  if(pat.on){
-    const pw=pat.w*sx, pd=pat.d*sx;
-    let px=ox, py=oy, plw=pw, plh=pd;
-    if(pat.wall==='back'){ px=ox+(gw-pw)/2; py=oy-pd; }
-    else if(pat.wall==='front'){ px=ox+(gw-pw)/2; py=oy+gd; }
-    else if(pat.wall==='left'){ px=ox-pd; py=oy+(gd-pw)/2; plw=pd; plh=pw; }
-    else { px=ox+gw; py=oy+(gd-pw)/2; plw=pd; plh=pw; }
-    extra+=`<defs><pattern id="patConc" width="8" height="8" patternUnits="userSpaceOnUse"><path d="M0 8 L8 0" stroke="#9a9a9a" stroke-width=".8"/></pattern></defs>
-      <rect x="${px}" y="${py}" width="${plw}" height="${plh}" fill="url(#patConc)" stroke="#111"/>
-      <rect x="${px}" y="${py}" width="${plw}" height="${plh}" fill="none" stroke="#111" stroke-dasharray="5 3"/>`;
-    const n=pat.posts, ps=8;
-    patioPostT(n).forEach(along=>{
-      let cx,cy;
-      if(pat.wall==='back'||pat.wall==='front'){
-        cx=px+along*(plw-ps);
-        cy=pat.wall==='back'?py:py+plh-ps;
-      } else {
-        cx=pat.wall==='left'?px:px+plw-ps;
-        cy=py+along*(plh-ps);
-      }
-      extra+=`<rect x="${cx}" y="${cy}" width="${ps}" height="${ps}" fill="#ddd" stroke="#111"/>`;
-    });
-    { const vert=plh>plw*1.3, span=(vert?plh:plw)-2*ps-6, l1='ROOFED PATIO '+pat.w+'x'+pat.d, l2='CONC. SLAB + ('+pat.posts+') '+pat.post+' POSTS';
-      const k=Math.max(0.6, Math.min(1, span/(l2.length*8*0.6), span/(l1.length*9*0.66)));
-      const cx=px+plw/2, cy=py+plh/2, rot=vert?` transform="rotate(-90 ${cx} ${cy})"`:'';
-      extra+=`<g class="fp-mv"><g${rot}><text x="${cx}" y="${cy-2*k}" text-anchor="middle" font-size="${(9*k).toFixed(2)}" font-weight="700">${esc(l1)}</text>
-      <text x="${cx}" y="${cy+9*k}" text-anchor="middle" font-size="${(8*k).toFixed(2)}">${esc(l2)}</text></g></g>`; }
-  }
-  let apr='';
-  if(hasApron()){
-    const aft=Number(val('apronFt'))||3;
-    const ah=Math.max(28, Math.min(50, aft*10));
-    if(ohWall==='back'){
-      apr=`<rect x="${ox}" y="${oy-ah}" width="${gw}" height="${ah}" fill="#fff" stroke="#111" stroke-width="1.8"/>
-        <text class="fp-mv" data-fp-axis="x" x="${ox+gw/2}" y="${oy-ah/2+4}" text-anchor="middle" font-size="11" font-weight="700">APRON</text>`;
-    } else if(ohWall==='left'){
-      apr=`<rect x="${ox-ah}" y="${oy}" width="${ah}" height="${gd}" fill="#fff" stroke="#111" stroke-width="1.8"/>
-        <text class="fp-mv" data-fp-axis="y" x="${ox-ah/2+4}" y="${oy+gd/2}" text-anchor="middle" font-size="11" font-weight="700" transform="rotate(-90 ${ox-ah/2+4} ${oy+gd/2})">NEW CONC. APRON</text>`;
-    } else if(ohWall==='right'){
-      apr=`<rect x="${ox+gw}" y="${oy}" width="${ah}" height="${gd}" fill="#fff" stroke="#111" stroke-width="1.8"/>
-        <text class="fp-mv" data-fp-axis="y" x="${ox+gw+ah/2-4}" y="${oy+gd/2}" text-anchor="middle" font-size="11" font-weight="700" transform="rotate(90 ${ox+gw+ah/2-4} ${oy+gd/2})">NEW CONC. APRON</text>`;
-    } else {
-      apr=`<rect x="${ox}" y="${oy+gd}" width="${gw}" height="40" fill="#fff" stroke="#111" stroke-width="1.8"/>
-         <text class="fp-mv" data-fp-axis="x" x="${ox+gw/2}" y="${oy+gd+26}" text-anchor="middle" font-size="11" font-weight="700">APRON</text>`;
-    }
-  }
-  const gfi=''; // 2026-10-15: GFI symbols come only from the GFI / outlets count (movable overlay), default 2
-  const north=`<g class="fp-mv"><g transform="translate(${Math.min(694,ox+gw+70+eR)} ${oy+18})">
-    <polygon points="0,-22 6,8 -6,8" fill="#111"/>
-    <line x1="0" y1="8" x2="0" y2="20" stroke="#111"/>
-    <text x="0" y="-26" text-anchor="middle" font-size="9" font-weight="800">N</text>
-  </g></g>`;
-  return `<svg viewBox="0 0 720 760" width="100%" style="max-height:9.4in">
-    <defs><pattern id="hatchRet" width="6" height="6" patternUnits="userSpaceOnUse"><path d="M0 6 L6 0" stroke="#444" stroke-width=".8"/></pattern></defs>
-    ${fpReduced?sheetHead('PROPOSED FLOOR PLAN','A-1',720):sheetHead('PROPOSED FLOOR PLAN','A-1',720)}
-    <rect x="${ox}" y="${oy}" width="${gw}" height="${gd}" fill="#fff" stroke="#111" stroke-width="2.4"/>
-    <rect x="${ox+7}" y="${oy+7}" width="${gw-14}" height="${gd-14}" fill="none" stroke="#111" stroke-width="1.1"/>
-    ${doorGap}${doorLab}${retHatch}
-    ${(()=>{ // centre title block — clear of a side O.H. door label and the GFI symbols, shrunk to fit narrow plans
-      const padL=ohWall==='left'?56:34, padR=ohWall==='right'?56:34;
-      const avail=Math.max(60, gw-padL-padR), cx=ox+padL+avail/2;
-      const l2=carsWord()+' · '+ftLabel(W)+' x '+ftLabel(D), l3='SLAB PITCH 1/8" / FT TOWARD O.H. DOOR';
-      const k=Math.max(0.5, Math.min(1, avail/(19*15*0.68), avail/(l2.length*11*0.6), avail/(l3.length*9*0.6)));
-      return `<g class="fp-mv" data-fp-prio="1"><text x="${cx}" y="${oy+gd/2-10*k}" text-anchor="middle" font-size="${(15*k).toFixed(2)}" font-weight="800">NEW DETACHED GARAGE</text>
-    <text x="${cx}" y="${oy+gd/2+8*k}" text-anchor="middle" font-size="${(11*k).toFixed(2)}">${esc(l2)}</text>
-    <text x="${cx}" y="${oy+gd/2+24*k}" text-anchor="middle" font-size="${(9*k).toFixed(2)}">${esc(l3)}</text></g>`; })()}
-    ${computeFirewallRequired()?`<text class="fp-mv" x="${ox+14}" y="${oy+24}" font-size="${Math.max(6,Math.min(10,(gw-28)/(24*10*0.62))).toFixed(2)}" font-weight="700">1-HR FIRE WALL THIS SIDE</text>`:''}
-    ${gfi}
-    ${north}
-    ${apr}
-    <line x1="${ox+gw+28+eR}" y1="${oy}" x2="${ox+gw+28+eR}" y2="${oy+gd}" stroke="#111"/>
-    <line x1="${ox+gw+24+eR}" y1="${oy}" x2="${ox+gw+32+eR}" y2="${oy}" stroke="#111"/>
-    <line x1="${ox+gw+24+eR}" y1="${oy+gd}" x2="${ox+gw+32+eR}" y2="${oy+gd}" stroke="#111"/>
-    <text class="fp-mv" data-fp-axis="y" x="${ox+gw+44+eR}" y="${oy+gd/2}" text-anchor="middle" font-size="13" font-weight="800" transform="rotate(-90 ${ox+gw+44+eR} ${oy+gd/2})">${ftLabel(D)}</text>
-    <line x1="${ox}" y1="${oy-22-eB}" x2="${ox+gw}" y2="${oy-22-eB}" stroke="#111"/>
-    <line x1="${ox}" y1="${oy-26-eB}" x2="${ox}" y2="${oy-18-eB}" stroke="#111"/>
-    <line x1="${ox+gw}" y1="${oy-26-eB}" x2="${ox+gw}" y2="${oy-18-eB}" stroke="#111"/>
-     <text class="fp-mv" data-fp-axis="x" x="${ox+gw/2}" y="${oy-30-eB}" text-anchor="middle" font-size="13" font-weight="800">${ftLabel(W)}</text>
-    ${dimAlong}
-    ${extra}
-    <rect x="16" y="708" width="230" height="40" fill="none" stroke="#111"/>
-    <text x="22" y="722" font-size="8">BUILDING: DETACHED GARAGE</text>
-    <text x="22" y="734" font-size="8">VIEW: PROPOSED FLOOR PLAN</text>
-    <text x="22" y="746" font-size="8">SCALE: SEE GRAPHIC SCALE</text>
-    ${scaleBar(270,724,sx)}
-    <rect x="504" y="708" width="200" height="40" fill="none" stroke="#111"/>
-    <text x="604" y="724" text-anchor="middle" font-size="9" font-weight="800">PERMIT DRAWING</text>
-    <text x="604" y="738" text-anchor="middle" font-size="9" font-weight="800">NOT FOR CONSTRUCTION</text>
+  ['back','front','left','right'].forEach(side);
+  // ---- room label + slab spec (Slab A: leader to full spec) ----
+  const cx=ox+gw/2, cy=oy+gd/2; const awayY=(ohWall==='front')?-1:(ohWall==='back')?1:-1;
+  const area=Math.round(W*D);
+  const title=`<g class="fp-mv" data-fp-prio="2">${psT(cx,cy-fs.title*0.2,'NEW DETACHED GARAGE',{fs:fs.title,w:800,c:PSC.wall})}${(()=>{const t2=carsWord()+' · '+area+' SF';const w2=psTW(t2,fs.lab,true)+fs.lab*1.2,h2=fs.lab*1.5;return psR(cx-w2/2,cy+fs.title*0.45,w2,h2,'#e0e7ff',PSC.wall,c.f(.5),` rx="${psN(h2/2)}"`)+psT(cx,cy+fs.title*0.45+h2*0.7,t2,{fs:fs.lab,w:700,c:PSC.wall});})()}</g>`;
+  const sp=psSlabSpec();
+  const slabLines=['SLAB: '+psBlank(sp.thick)+' CONCRETE · MIX '+psBlank(sp.mix),'REINF.: '+psBlank(sp.reinf)+' · BASE: '+psBlank(sp.base),'VAPOR BARRIER: '+psBlank(sp.vapor),'FOOTING / THICK. EDGE: '+psBlank(sp.foot),'SLOPE SLAB 1/8" PER FT TOWARD OH DOOR'];
+  const lh=fs.note*1.3, blockH=slabLines.length*lh, blockW=Math.max(...slabLines.map(l=>psTW(l,fs.note)));
+  let ny=cy+awayY*(fs.title*1.6+blockH*0.5+c.f(10))-blockH/2; ny=Math.max(oy+t+c.f(8),Math.min(oy+gd-t-blockH-c.f(4),ny));
+  const nx=cx-blockW/2+c.f(12);
+  const tipX=nx-c.f(16), tipY=ny+lh*0.6;
+  notes+=`<g class="fp-mv ps-slab" data-fp-prio="1"><circle cx="${psN(tipX)}" cy="${psN(tipY)}" r="${psN(c.f(1.4))}" fill="#111"/>${psL(tipX,tipY,nx-c.f(2),ny+lh*0.6-fs.note*0.3,c.f(.5))}${slabLines.map((l,i)=>psT(nx,ny+lh*(i+1)-lh*0.3,l,{fs:fs.note,a:'start',w:i===0?700:400})).join('')}</g>`;
+  if(computeFirewallRequired()) notes+=psT(ox+t+c.f(6),oy+t+fs.lab*1.4,'1-HR FIRE WALL THIS SIDE (SEE FIRE DETAIL)',{fs:fs.lab,w:700,a:'start',cls:'fp-mv'});
+  window._fpScale={sx,label:sc.label};
+  window._fpGeo={vbw:VBW,vbh:VBH,ox,oy,gw,gd,t,sx,ops:geoOps,gfiU:c.f(26)};
+  return `<svg viewBox="0 0 ${VBW} ${VBH}" width="100%" class="ps-floor-svg" style="display:block">
+    <defs><pattern id="psRet" width="${psN(c.f(4))}" height="${psN(c.f(4))}" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="${psN(c.f(4))}" stroke="${PSC.wall}" stroke-width="${psN(c.f(.9))}"/></pattern>
+      <pattern id="psConc" width="${psN(c.f(6))}" height="${psN(c.f(6))}" patternUnits="userSpaceOnUse"><circle cx="${psN(c.f(1.5))}" cy="${psN(c.f(1.5))}" r="${psN(c.f(.45))}" fill="#9aa4b5"/><circle cx="${psN(c.f(4.4))}" cy="${psN(c.f(4))}" r="${psN(c.f(.35))}" fill="#9aa4b5"/></pattern></defs>
+    ${sheetHead('PROPOSED FLOOR PLAN','A-1',VBW,c,sc.label)}
+    ${outside}${walls}${cuts}${syms}${dims}${tags}${title}${notes}
   </svg>`;
 }
+function tblock(name, num, of, scale){
+  const cityRaw=(val('cityManual')||val('city')||'').trim();const village=cityRaw?( (code()&&code().kind)||'VILLAGE')+' of '+cityRaw.toUpperCase() : '';
+  const repEl=$('rep'); const drawn=repEl&&repEl.selectedOptions&&repEl.selectedOptions[0]&&repEl.value?repEl.selectedOptions[0].textContent:(val('rep')||'');
+  return `<div class="tblock tb-a">
+    <div class="tb-c1"><span class="tb-k">CONTRACTOR</span><b>ABSOLUTE GARAGE BUILDERS</b><br>3050 W. IRVING PARK RD.<br>CHICAGO, IL 60618<br>(773) 583-8800 · (847) 759-8877<br><small>ROOFING LIC. 104.016731 · 105.006803</small></div>
+    <div class="tb-c2"><span class="tb-k">PROJECT</span><b class="jobtitle">DETACHED GARAGE — ${esc(roofLabel())} ROOF</b><br>${esc([val('address'),village].filter(Boolean).join(', ')||' ')}<br>OWNER: ${esc(customerLabel())}<br>PIN: ${esc(val('pin')||'')}</div>
+    <div class="tb-c3"><span class="tb-k">ISSUE</span>DATE: ${esc(psFmtDate(val('planDate')))}<br>REV: ${esc(val('planRev')||'0')}<br>DRAWN: ${esc(drawn)}<br>SCALE: ${esc(scale||'AS NOTED')}</div>
+    <div class="tb-c4"><span class="ps-sheetid">${esc(num)}</span><span class="sheetno">SHEET ${num} OF ${of}</span><b>${esc(name)}</b></div>
+  </div>`;
+}
+function doorScheduleHTML(){
+  const {rows}=psTagList();
+  const ld=landingDim();
+  const body=rows.map(r=>`<tr><td><span class="sc-tag">${esc(r.tag)}</span></td><td>${r.qty}</td><td>${esc(r.size)}</td><td>${esc(r.type)}</td><td>${esc(r.loc)}</td></tr>`).join('')
+    +(ld.on&&val('svcWall')!=='none'?`<tr><td>—</td><td>1</td><td>${esc(ftLabel(ld.w)+' x '+ftLabel(ld.h))}</td><td>CONCRETE LANDING PAD</td><td>AT SERVICE DOOR</td></tr>`:'');
+  return `<table class="sched sched-c" contenteditable="true"><caption>DOOR &amp; WINDOW SCHEDULE</caption><thead><tr><th>TAG</th><th>QTY</th><th>SIZE (W x H)</th><th>TYPE</th><th>LOCATION / NOTES</th></tr></thead><tbody>${body||'<tr><td colspan="5">NO OPENINGS ENTERED</td></tr>'}</tbody></table>`;
+}
+function floorKeyHTML(){ const k=window._fpScale; if(!k) return ''; const wIn=5.2, c=psCtx(11,720), VW=+(wIn*720/11).toFixed(2), VH=c.f(44);
+  const svg=`<svg viewBox="0 0 ${VW} ${psN(VH)}" style="width:${wIn}in;display:block">${psNorth(c.f(20),c.f(22),c)}${psScale(c.f(48),c.f(20),c,k.sx,k.label)}${psR(VW-c.f(128),c.f(6),c.f(124),c.f(30),'#fff','#111',c.f(.8))}${psT(VW-c.f(66),c.f(18),'PERMIT DRAWING',{fs:c.f(8.5),w:800})}${psT(VW-c.f(66),c.f(30),'NOT FOR CONSTRUCTION',{fs:c.f(8.5),w:800})}</svg>`;
+  return `<div class="ps-key">${svg}</div>`; }
+function psSw(inner){ return `<svg viewBox="0 0 34 14" width="34" height="14" style="flex:none">${inner}</svg>`; }
+function floorLegendHTML(){
+  const items=[
+    [psSw(`<rect x="1" y="4" width="32" height="6" fill="${PSC.wallFill}" stroke="${PSC.wall}" stroke-width="1.4"/>`),'NEW WALL — '+String(studCallout()).toUpperCase()+' + '+String(val('wallSheath')||'').toUpperCase()+' SHEATHING (≈4½")'],
+    [psSw(`<rect x="1" y="4" width="32" height="6" fill="#fff" stroke="${PSC.wall}" stroke-width=".8"/><line x1="1" y1="6.3" x2="33" y2="6.3" stroke="${PSC.wall}" stroke-width=".8"/><line x1="1" y1="7.7" x2="33" y2="7.7" stroke="${PSC.wall}" stroke-width=".8"/>`),'WINDOW IN WALL (SEE SCHEDULE)'],
+    [psSw(`<line x1="4" y1="13" x2="4" y2="1" stroke="${PSC.wall}" stroke-width="1.4"/><path d="M4 1 A12 12 0 0 1 16 13" fill="none" stroke="${PSC.wall}" stroke-width=".7"/>`),'SERVICE DOOR + SWING'],
+    [psSw(`<rect x="1" y="2" width="32" height="10" fill="none" stroke="${PSC.wall}" stroke-width=".8" stroke-dasharray="4 2.5"/>`),'OVERHEAD DOOR / TRACK ABOVE (DASHED)'],
+    [psSw(`<rect x="5" y="2" width="24" height="10" rx="5" fill="${PSC.tag}"/><text x="17" y="10" text-anchor="middle" font-size="7.5" font-weight="700" style="fill:#fff">D1</text>`),'OPENING TAG — KEYED TO SCHEDULE'],
+    [psSw(`<line x1="13" y1="1" x2="13" y2="4" stroke="${PSC.wall}" stroke-width="1.2"/><line x1="21" y1="1" x2="21" y2="4" stroke="${PSC.wall}" stroke-width="1.2"/><circle cx="17" cy="8.5" r="5" fill="#fff" stroke="${PSC.wall}" stroke-width="1.2"/>`),'GFCI RECEPTACLE ON WALL'],
+    [psSw(`<line x1="2" y1="7" x2="32" y2="7" stroke="${PSC.dim}" stroke-width=".8"/><line x1="0" y1="10" x2="5" y2="4" stroke="${PSC.dim}" stroke-width="1.3"/><line x1="29" y1="10" x2="34" y2="4" stroke="${PSC.dim}" stroke-width="1.3"/>`),'DIMENSION (FT-IN) TO FACE OF WALL / ROUGH OPENING']];
+  if(showOnPlan('returns')) items.push([psSw(`<rect x="1" y="4" width="32" height="6" fill="url(#psRet)" stroke="${PSC.wall}" stroke-width="1"/>`),'BRACED RETURN PANEL (SEE BRACE DETAIL)']);
+  return `<div class="legend-a"><h3>LEGEND</h3>${items.map(([s,t])=>`<div class="lg-row">${s}<span>${esc(t)}</span></div>`).join('')}</div>`;
+}
+function pageFloorSection(){
+  window._fpGeo=null; window._fpScale=null;
+  return `<section class="${sheetClass()}">
+    <div class="ps-floor-grid">
+      <div class="draw-host" id="floorHost">${aiOr('floor',()=>floorPlanSvg(),'Floor plan')}<div class="overlay" id="floorOverlay"></div></div>
+      <div class="ps-floor-side">${floorKeyHTML()}${conformCodesHTML()}${doorScheduleHTML()}${floorLegendHTML()}${val('electricNotes')?`<div class="elecbox notes-col"><h3>JOB ELECTRICAL NOTES</h3><ul>${val('electricNotes').split(/\n+/).filter(Boolean).map(t=>'<li>'+esc(t)+'</li>').join('')}</ul></div>`:''}</div>
+    </div>
+    ${tblock('PROPOSED FLOOR PLAN','1',String(sheetTotal()),'AS NOTED')}
+  </section>`;
+}
+function roofNotesHTML(){ const r=window._rpInfo; if(!r) return '';
+  const sw=i=>psSw(i);
+  const items=[[sw('<line x1="1" y1="7" x2="33" y2="7" stroke="#111" stroke-width="3"/>'),'RIDGE'],[sw('<line x1="1" y1="11" x2="33" y2="3" stroke="#111" stroke-width="1.8"/>'),'HIP'],
+    [sw('<line x1="1" y1="7" x2="33" y2="7" stroke="#111" stroke-width="1.6"/>'),'ROOF EDGE (EAVE / RAKE)'],[sw('<line x1="1" y1="7" x2="33" y2="7" stroke="#111" stroke-width=".8" stroke-dasharray="5 3"/>'),'WALL LINE BELOW (DASHED)'],
+    [sw('<line x1="1" y1="7" x2="26" y2="7" stroke="#111" stroke-width="1.1"/><polygon points="33,7 25,3.5 25,10.5" fill="#111"/>'),'PITCH / SLOPE ARROW (DOWNSLOPE)']];
+  if(r.gutters){ items.push([sw('<line x1="1" y1="7" x2="33" y2="7" stroke="#111" stroke-width="3.4"/>'),'GUTTER']); items.push([sw('<rect x="2" y="4" width="6" height="6" fill="#111"/><line x1="9" y1="7" x2="28" y2="7" stroke="#111" stroke-width=".8"/><polygon points="33,7 27,4.5 27,9.5" fill="#111"/>'),'DOWNSPOUT + DISCHARGE DIRECTION']); }
+  return `<div class="ps-roof-notes"><div class="elecbox notes-col"><h3>ROOF NOTES</h3><ul>${r.notes.map(t=>'<li>'+esc(t)+'</li>').join('')}</ul></div>
+    <div class="legend-a"><h3>ROOF PLAN LEGEND</h3>${items.map(([s,t])=>`<div class="lg-row">${s}<span>${esc(t)}</span></div>`).join('')}</div></div>`; }
+function pageSectionRoof(){
+  return `<section class="${sheetClass()}">
+    <div class="ps-roof-grid">
+      <div class="ps-roof-col">${(window._rpInfo=null,aiOr('roofplan',()=>roofPlanSvg(),'Roof plan'))}</div>
+      <div class="ps-sect-col">${buildingSectionSvg()}${roofNotesHTML()}</div>
+    </div>
+    ${tblock('BUILDING SECTION & ROOF PLAN', String(4), String(sheetTotal()),'AS NOTED')}
+  </section>`;
+}
+function renumberSheets(){
+  const secs=[...document.querySelectorAll('#pages .sheet')];
+  const n=secs.length; const rows=[]; const cover=secs[0]&&secs[0].dataset.sheet==='cover';
+  secs.forEach((s,i)=>{
+    const id=(cover&&i===0)?'G-1':'A-'+(cover?i:i+1);
+    const no=s.querySelector('.tblock .sheetno'); if(no) no.textContent='SHEET '+(i+1)+' OF '+n;
+    const sid=s.querySelector('.tblock .ps-sheetid'); if(sid) sid.textContent=id;
+    s.querySelectorAll('svg text').forEach(t=>{ if(/^SHEET:\s/.test(t.textContent||'')) t.textContent='SHEET: '+id; });
+    s.dataset.sheetId=id;
+    const nm=s.querySelector('.tblock > div:last-child b');
+    rows.push('<tr><td>'+esc(id)+'</td><td>'+(i+1)+'</td><td>'+esc(nm?nm.textContent:'SHEET')+'</td></tr>');
+  });
+  const ib=$('sheetIndexBody'); if(ib) ib.innerHTML=rows.join('');
+}
+
+function psHeadH(c){ return c? c.f(15)+c.f(12)+c.f(7): 37; }
+function sheetHead(title, sheetId, vbW, c, scaleLabel){
+  const w=vbW||800;
+  if(!c) return `<text x="16" y="18" font-size="14" font-weight="800" text-decoration="underline">${esc(title)}</text>
+    <text x="16" y="32" font-size="10" font-weight="700">${esc(jobTitleLine())}</text>
+    <text class="ps-sheettxt" x="${w-16}" y="16" text-anchor="end" font-size="9">SHEET: ${esc(sheetId||'A-1')}</text>
+    <text x="${w-16}" y="28" text-anchor="end" font-size="9">SCALE: ${esc(scaleLabel||'SEE GRAPHIC SCALE')}</text>
+    <line x1="16" y1="37" x2="${w-16}" y2="37" stroke="#111" stroke-width="1.4"/>`;
+  const y1=c.f(14), y2=c.f(15)+c.f(11), hb=psHeadH(c);
+  const scTxt='SCALE: '+(scaleLabel&&scaleLabel!=='NOT TO SCALE'?scaleLabel+' '+psSizeNote():'SEE GRAPHIC SCALE');
+  const sub=jobTitleLine(), sid='SHEET: '+(sheetId||'A-1');
+  if(16+String(sub).length*c.f(10)*0.62+c.f(10)+scTxt.length*c.f(9)*0.58>w-16){
+    // narrow sheet: sheet id + scale share the right side of line 1 so they never collide with the subtitle
+    return `<text x="16" y="${psN(y1)}" font-size="${c.f(14)}" font-weight="800" text-decoration="underline">${esc(title)}</text>
+    <text x="16" y="${psN(y2)}" font-size="${c.f(10)}" font-weight="700">${esc(sub)}</text>
+    <text class="ps-sheettxt" x="${w-16}" y="${psN(c.f(11))}" text-anchor="end" font-size="${c.f(9)}" font-weight="700">${esc(sid)}</text>
+    <text x="${w-16}" y="${psN(hb+c.f(9))}" text-anchor="end" font-size="${c.f(9)}">${esc(scTxt)}</text>
+    <line x1="16" y1="${psN(hb-c.f(2))}" x2="${w-16}" y2="${psN(hb-c.f(2))}" stroke="#111" stroke-width="${psN(c.f(1.4))}"/>`;
+  }
+  return `<text x="16" y="${psN(y1)}" font-size="${c.f(14)}" font-weight="800" text-decoration="underline">${esc(title)}</text>
+    <text x="16" y="${psN(y2)}" font-size="${c.f(10)}" font-weight="700">${esc(jobTitleLine())}</text>
+    <text class="ps-sheettxt" x="${w-16}" y="${psN(c.f(11))}" text-anchor="end" font-size="${c.f(9)}" font-weight="700">SHEET: ${esc(sheetId||'A-1')}</text>
+    <text x="${w-16}" y="${psN(c.f(11)*2+2)}" text-anchor="end" font-size="${c.f(9)}">SCALE: ${scaleLabel&&scaleLabel!=='NOT TO SCALE'?esc(scaleLabel)+' '+psSizeNote():'SEE GRAPHIC SCALE'}</text>
+    <line x1="16" y1="${psN(hb-c.f(2))}" x2="${w-16}" y2="${psN(hb-c.f(2))}" stroke="#111" stroke-width="${psN(c.f(1.4))}"/>`;
+}
+function roofPlanSvg(){
+  const W=Number(val('width'))||20, D=Number(val('depth'))||20, rt=val('roof')||'gable', P=pitchNum();
+  const VBW=600, VBH=680, c=psCtx(8.2,VBW);
+  const ohIn=psOverhangIn(), oh=ohIn!=null?ohIn/12:0;
+  const gs=gutterStyle(), half=gs==='half';
+  const eaveFace=f=>rt==='hip'||(rt==='gable'?(f==='left'||f==='right'):(f==='front'||f==='back'));
+  const gutOn=f=>gs!=='none'&&eaveFace(f)&&(gs!=='sides'||f==='left'||f==='right');
+  const pat=patioDim();
+  const patExt=s=>pat.on&&pat.wall===s?pat.d:0;
+  const fs={lab:c.f(8.5),note:c.f(8),small:c.f(7.5),dim:c.f(8)};
+  const rf=String(val('shingles')||'').toUpperCase(), sheath=String(cityStruct().roofSheath||val('roofSheath')||'').toUpperCase();
+  const gtxt=gs==='none'?'NONE ON THIS JOB':(half?'5" HALF-ROUND':gs==='k'?'5" K-STYLE':'5" SEAMLESS')+' GUTTER'+(gs==='sides'?' (SIDES ONLY)':'')+' w/ '+(half?'3" RND.':'2x3')+' DOWNSPOUTS (@DS@)';
+  const roofName=rt==='hip'?'HIP':rt==='revgable'?'REVERSE GABLE':'GABLE';
+  const nl=[roofName+' ROOF · PITCH '+P+'/12',
+    'ROOFING: '+psBlank(rf)+' OVER 15# FELT',
+    'ROOF SHEATHING: '+psBlank(sheath),
+    'RAFTERS: '+String(rafterCallout()).toUpperCase(),
+    'EAVES / SOFFIT: '+psBlank(val('eaves')),
+    'GUTTERS: '+gtxt+(gs==='none'?'':' · DISCHARGE AWAY FROM BUILDING'),
+    rt==='hip'?'HIPS @ 45° IN PLAN; RIDGE = |W − D|':(rt==='gable'?'GABLE ENDS FRONT & REAR — SEE FRONT / REAR ELEVATIONS':'GABLE ENDS LEFT & RIGHT — SEE SIDE ELEVATIONS')];
+  if(pat.on) nl.push('ROOFED PATIO '+ftLabel(pat.w)+' x '+ftLabel(pat.d)+' · ('+pat.posts+') '+pat.post+' POSTS · '+pat.wall.toUpperCase()+' WALL');
+  const top=psHeadH(c)+6, bot=c.f(40);
+  const ring=c.f(15), mS=c.f(12)+2*ring+c.f(8), mL=c.f(10), mT=c.f(20);
+  const ftW=W+2*oh+patExt('left')+patExt('right'), ftH=D+2*oh+patExt('back')+patExt('front');
+  const availW=VBW-mL-mS, availH=VBH-top-bot-mT-mS;
+  const sc=psPickScale(c,ftW,ftH,availW,availH), sx=sc.sx;
+  const ox=mL+(patExt('left')+oh)*sx+(availW-ftW*sx)/2, oy=top+mT+(patExt('back')+oh)*sx+(availH-ftH*sx)/2;
+  const X=f=>ox+f*sx, Y=f=>oy+f*sx, gw=W*sx, gd=D*sx;
+  const e={x0:X(-oh),y0:Y(-oh),x1:X(W+oh),y1:Y(D+oh)};
+  let g='';
+  // patio roof (dashed) first
+  if(pat.on){ const pw=pat.w*sx,pd=pat.d*sx; let px,py,plw=pw,plh=pd; if(pat.wall==='back'){px=ox+(gw-pw)/2;py=e.y0-pd;} else if(pat.wall==='front'){px=ox+(gw-pw)/2;py=e.y1;} else if(pat.wall==='left'){px=e.x0-pd;py=oy+(gd-pw)/2;plw=pd;plh=pw;} else {px=e.x1;py=oy+(gd-pw)/2;plw=pd;plh=pw;}
+    g+=psR(px,py,plw,plh,'#f4f4f4','#111',c.f(.8),` stroke-dasharray="${psN(c.f(4))} ${psN(c.f(2.5))}"`)+psT(px+plw/2,py+plh/2+fs.small*0.35,'PATIO ROOF '+ftLabel(pat.w)+' x '+ftLabel(pat.d),{fs:fs.small,w:700,rot:plh>plw*1.3?-90:null}); }
+  // roof edge (eave / rake) + wall line below (dashed)
+  g+=psR(e.x0,e.y0,e.x1-e.x0,e.y1-e.y0,'#fff','#111',c.f(1.4));
+  g+=psR(ox,oy,gw,gd,'none','#111',c.f(.6),` stroke-dasharray="${psN(c.f(5))} ${psN(c.f(3))}"`);
+  // ridge / hips
+  const RW=c.f(2.6), HW=c.f(1.6); let ridgeTxt='', ridge=null, hips=[];
+  if(rt==='gable'){ ridge=[X(W/2),e.y0,X(W/2),e.y1]; ridgeTxt="RIDGE (FRONT TO BACK — GABLE ENDS FRONT & REAR)"; }
+  else if(rt==='revgable'){ ridge=[e.x0,Y(D/2),e.x1,Y(D/2)]; ridgeTxt="RIDGE (SIDE TO SIDE — GABLE ENDS LEFT & RIGHT)"; }
+  else { const m=Math.min(W,D)+2*oh; if(W>=D){ const ry=Y(D/2), rx0=e.x0+m/2*sx, rx1=e.x1-m/2*sx; ridge=W>D?[rx0,ry,rx1,ry]:null; hips=[[e.x0,e.y0,rx0,ry],[e.x0,e.y1,rx0,ry],[e.x1,e.y0,rx1,ry],[e.x1,e.y1,rx1,ry]]; }
+    else { const rx=X(W/2), ry0=e.y0+m/2*sx, ry1=e.y1-m/2*sx; ridge=[rx,ry0,rx,ry1]; hips=[[e.x0,e.y0,rx,ry0],[e.x1,e.y0,rx,ry0],[e.x0,e.y1,rx,ry1],[e.x1,e.y1,rx,ry1]]; }
+    ridgeTxt=ridge?'RIDGE '+ftLabel(Math.abs(W-D)):'HIP PEAK (4 HIPS MEET)'; }
+  hips.forEach(h=>g+=psL(h[0],h[1],h[2],h[3],HW,'#111',null,'round'));
+  if(ridge) g+=psL(ridge[0],ridge[1],ridge[2],ridge[3],RW,'#111',null,'round');
+  // ridge label
+  if(ridge){ const vert=Math.abs(ridge[0]-ridge[2])<1; const mx=(ridge[0]+ridge[2])/2, my=(ridge[1]+ridge[3])/2;
+    const len=Math.hypot(ridge[2]-ridge[0],ridge[3]-ridge[1]); let lab=ridgeTxt; if(psTW(lab,fs.lab,true)>len*0.9) lab=rt==='hip'?'RIDGE':'RIDGE';
+    if(rt==='hip'&&psTW(lab,fs.lab,true)>len*0.9){ g+=psL(mx,my,mx+c.f(26),my-c.f(26),c.f(.5))+psT(mx+c.f(28),my-c.f(28),ridgeTxt,{fs:fs.lab,w:700,a:'start'}); }
+    else g+=vert?psT(mx-c.f(5),Math.min(my,(ridge[1]+ridge[3])/2),lab,{fs:fs.lab,w:700,rot:-90}):psT(mx,my-c.f(5),lab,{fs:fs.lab,w:700}); }
+  else g+=psL(X(W/2),Y(D/2),X(W/2)+c.f(26),Y(D/2)-c.f(26),c.f(.5))+psT(X(W/2)+c.f(28),Y(D/2)-c.f(28),ridgeTxt,{fs:fs.lab,w:700,a:'start'});
+  if(hips.length){ const h=hips[3]; const mx=(h[0]+h[2])/2,my=(h[1]+h[3])/2; g+=psT(mx+c.f(4),my-c.f(3),'HIP',{fs:fs.small,w:700,a:'start'}); }
+  // pitch arrows (Style A: solid arrow, "4/12"), pointing downslope to each eave
+  const arrow=(x1,y1,x2,y2)=>{ const a=Math.atan2(y2-y1,x2-x1), hl=c.f(6), hw=c.f(3);
+    const p1=[x2-hl*Math.cos(a)+hw*Math.sin(a), y2-hl*Math.sin(a)-hw*Math.cos(a)], p2=[x2-hl*Math.cos(a)-hw*Math.sin(a), y2-hl*Math.sin(a)+hw*Math.cos(a)];
+    const vert=Math.abs(x2-x1)<1; const tx=(x1+x2)/2+(vert?c.f(4):0), ty=(y1+y2)/2+(vert?fs.lab*0.35:-c.f(3));
+    return psL(x1,y1,x2-hl*0.6*Math.cos(a),y2-hl*0.6*Math.sin(a),c.f(.9))+`<polygon points="${psN(x2)},${psN(y2)} ${psN(p1[0])},${psN(p1[1])} ${psN(p2[0])},${psN(p2[1])}" fill="#111"/>`+psT(tx,ty,P+'/12',{fs:fs.lab,w:700,a:vert?'start':'middle'}); };
+  const L=c.f(42);
+  const planes=rt==='gable'?['left','right']:rt==='revgable'?['back','front']:['left','right','back','front'];
+  planes.forEach(p=>{ let cx,cy,dx,dy;
+    if(p==='left'){cx=(e.x0+X(W/2))/2;cy=Y(D/2)+(rt==='hip'?0:c.f(18));dx=-1;dy=0;} if(p==='right'){cx=(e.x1+X(W/2))/2;cy=Y(D/2)+(rt==='hip'?0:c.f(18));dx=1;dy=0;}
+    if(p==='back'){cx=X(W/2)+(rt==='hip'?0:c.f(40));cy=(e.y0+Y(D/2))/2;dx=0;dy=-1;} if(p==='front'){cx=X(W/2)+(rt==='hip'?0:c.f(40));cy=(e.y1+Y(D/2))/2;dx=0;dy=1;}
+    if(rt==='hip'){ if(p==='left'||p==='right') cx=p==='left'?e.x0+(Math.min(W,D)/2+oh)*sx*0.45:e.x1-(Math.min(W,D)/2+oh)*sx*0.45; else cy=p==='back'?e.y0+(Math.min(W,D)/2+oh)*sx*0.45:e.y1-(Math.min(W,D)/2+oh)*sx*0.45; }
+    g+=arrow(cx-dx*L/2,cy-dy*L/2,cx+dx*L/2,cy+dy*L/2); });
+  // gutters + downspouts (only when the job has gutters)
+  const go=c.f(3.2), dsz=c.f(5); const ds=new Set(); let gut='';
+  const runs={back:[e.x0,e.y0-go,e.x1,e.y0-go],front:[e.x0,e.y1+go,e.x1,e.y1+go],left:[e.x0-go,e.y0,e.x0-go,e.y1],right:[e.x1+go,e.y0,e.x1+go,e.y1]};
+  ['back','front','left','right'].forEach(f=>{ if(!gutOn(f)) return; const r=runs[f]; gut+=psL(r[0],r[1],r[2],r[3],c.f(2.6),'#111',null,'butt');
+    const ends=(f==='back'||f==='front')?[[r[0],r[1]],[r[2],r[3]]]:[[r[0],r[1]],[r[2],r[3]]]; ends.forEach(([x,y])=>{ const k=Math.round(x)+','+Math.round(y); ds.add(JSON.stringify([x,y,f])); }); });
+  const dsDone={}; [...ds].map(s=>JSON.parse(s)).forEach(([x,y,f])=>{ const key=(x<(e.x0+e.x1)/2?'L':'R')+(y<(e.y0+e.y1)/2?'T':'B'); if(dsDone[key]) return; dsDone[key]=1;
+    const cxp=x<(e.x0+e.x1)/2?e.x0-go:e.x1+go, cyp=y<(e.y0+e.y1)/2?e.y0-go:e.y1+go;
+    gut+=psR(cxp-dsz/2,cyp-dsz/2,dsz,dsz,'#111','#111',c.f(.5));
+    const sxn=cxp<(e.x0+e.x1)/2?-1:1, syn=cyp<(e.y0+e.y1)/2?-1:1; // discharge arrow away from building
+    gut+=psL(cxp+sxn*dsz*0.6,cyp+syn*dsz*0.6,cxp+sxn*c.f(13),cyp+syn*c.f(13),c.f(.6))+`<polygon points="${psN(cxp+sxn*c.f(15))},${psN(cyp+syn*c.f(15))} ${psN(cxp+sxn*c.f(10))},${psN(cyp+syn*c.f(13.5))} ${psN(cxp+sxn*c.f(13.5))},${psN(cyp+syn*c.f(10))}" fill="#111"/>`; });
+  g+=gut;
+  const nDS=Object.keys(dsDone).length;
+  // overall dims: building (inner) and roof overall incl. overhang (outer), ft-in
+  let dims='';
+  const yb=e.y1+(patExt('front')*sx)+c.f(12), xr=e.x1+(patExt('right')*sx)+c.f(12);
+  const ptsX=oh?[e.x0,ox,X(W),e.x1]:[ox,X(W)], ptsY=oh?[e.y0,oy,Y(D),e.y1]:[oy,Y(D)];
+  dims+=psDimChain(c,'x',ptsX,yb+ring,e.y1+go,'#111',{sx,fs:fs.dim});
+  if(oh) dims+=psDimChain(c,'x',[e.x0,e.x1],yb+2*ring,e.y1+go,'#111',{sx,fs:fs.dim});
+  dims+=psDimChain(c,'y',ptsY,xr+ring,e.x1+go,'#111',{sx,fs:fs.dim});
+  if(oh) dims+=psDimChain(c,'y',[e.y0,e.y1],xr+2*ring,e.x1+go,'#111',{sx,fs:fs.dim});
+  g+=psT(ox+gw/2,e.y0-c.f(8)-(patExt('back')*sx),ohIn!=null?(ftLabel(oh).replace(/^0'-/,'')+' OVERHANG TYP. (EAVES INPUT: '+String(val('eaves')).toUpperCase()+')'):'OVERHANG: ________ (NOT GIVEN IN EAVES INPUT)',{fs:fs.small,w:700});
+  // notes (Notes C) + legend (Legend A) + north/scale (Style A)
+  window._rpInfo={notes:nl.map(l=>l.replace('@DS@',String(nDS))),gutters:gs!=='none',RW,HW,dsz};
+  const sy=VBH-c.f(26);
+  const strip=psNorth(VBW-c.f(30),sy-c.f(6),c)+psScale(16,sy,c,sx,sc.label);
+  return `<svg viewBox="0 0 ${VBW} ${VBH}" width="100%" class="ps-roof-svg" style="display:block">
+    ${sheetHead('PROPOSED ROOF PLAN','A-4',VBW,c,sc.label)}
+    ${g}${dims}${strip}
+  </svg>`;
+}
+
 
 // Floor-plan label collision pass: nudges/shrinks movable labels (.fp-mv) so no text overlaps
 // other text (fixed dims, headers, title boxes, overlay GFI/notes). Runs on the live SVG so print/PDF inherit it.
@@ -1545,8 +1718,9 @@ function buildingSectionSvg(){
     (val('siding')||'VINYL')+' HORIZONTAL SIDING',
     '2x4 TREATED SILL + 1/2" ANCHORS @ 6\' O.C.'
   ].filter(Boolean);
-  const left=leftNotes.map((t,i)=>`<text x="22" y="${96+i*20}" font-size="11">${esc(t)}</text>`).join('')
-    + `<rect x="14" y="78" width="250" height="${leftNotes.length*20+16}" fill="none" stroke="#111"/>`;
+  const left=`<rect x="14" y="62" width="262" height="18" fill="#111"/><text x="22" y="75" font-size="11" font-weight="700" style="fill:#fff">SECTION NOTES</text>`
+    + leftNotes.map((t,i)=>`${i?`<line x1="14" y1="${80+i*20}" x2="276" y2="${80+i*20}" stroke="#111" stroke-width=".6"/>`:''}<text x="20" y="${94+i*20}" font-size="10.5" font-weight="700" font-family="'Courier New',monospace">${String(i+1).padStart(2,'0')}</text><text x="40" y="${94+i*20}" font-size="10.5">${esc(t)}</text>`).join('')
+    + `<rect x="14" y="62" width="262" height="${leftNotes.length*20+20}" fill="none" stroke="#111" stroke-width="1.2"/>`;
   const xtie = showOnPlan('crossTies') ? `<line x1="${wx+ww}" y1="${plate+10}" x2="${ridgeX-20}" y2="${plate+10}" stroke="#111" stroke-width="1.6"/>
     <text x="${wx+ww+16}" y="${plate+6}" font-size="11">${esc(tieCallout())}</text>` : '';
   return `<svg viewBox="0 0 720 540" width="100%" style="max-height:8.6in">
@@ -2035,15 +2209,6 @@ function braceDetailSvg(){
     <text x="40" y="484" font-size="12">Panel width shown = this job's return. ${esc(cite('brace'))}</text>
   </svg>`;
 }
-function pageFloorSection(){
-  return `<section class="${sheetClass()}">
-    <div class="split">
-      <div class="draw-host" id="floorHost">${aiOr('floor',()=>floorPlanSvg(),'Floor plan')}<div class="overlay" id="floorOverlay"></div></div>
-      <div>${conformCodesHTML()}${doorScheduleHTML()}${val('electricNotes')?`<div class="elecbox notes-col"><h3>JOB ELECTRICAL NOTES</h3><ul>${val('electricNotes').split(/\n+/).filter(Boolean).map(t=>'<li>'+esc(t)+'</li>').join('')}</ul></div>`:''}</div>
-    </div>
-    ${tblock('PROPOSED FLOOR PLAN','1',String(sheetTotal()))}
-  </section>`;
-}
 function foundationSvg(){
   const c=code()||{};
   const foot=val('footing')||c.footings||'12" W x 12" D THICKENED EDGE';
@@ -2063,19 +2228,19 @@ function foundationSvg(){
     <polygon points="90,350 70,400 490,400 470,350" fill="#d0d0d0" stroke="#111"/>
     <text x="280" y="382" text-anchor="middle" font-size="12" font-weight="700">THICKENED EDGE / FOOTING</text>
     <text x="82" y="434" font-size="11" font-weight="700">${esc(String(foot).slice(0,48))}</text>
-    <rect x="540" y="90" width="330" height="400" fill="none" stroke="#111"/>
-    <text x="556" y="118" font-size="13" font-weight="800">VILLAGE NOTES</text>
-    <text x="556" y="146" font-size="12">Slab: ${esc(String(slab).slice(0,46))}</text>
-    <text x="556" y="168" font-size="12">Footing: ${esc(String(foot).slice(0,46))}</text>
-    <text x="556" y="190" font-size="12">Driveway (if used): ${esc(String(drive))}</text>
-    <text x="556" y="212" font-size="12">Parkway: ${esc(c.parkway||'—')}</text>
-    <text x="556" y="234" font-size="12">Anchors 1/2" @ 6'-0" O.C.  IRC R403.1.6</text>
-    <text x="556" y="256" font-size="12">Treated sill  IRC R317</text>
-    <text x="556" y="278" font-size="12">6-mil vapor  IRC R506.2.3</text>
-    <text x="556" y="300" font-size="12">4" granular fill typical</text>
-    <text x="556" y="322" font-size="12">6x6-W2.1xW2.1 WWF or fiber</text>
-    <text x="556" y="354" font-size="12">Pitch slab 1/8" per ft to OH door</text>
-    <text x="556" y="386" font-size="12">Only items from the city panel.</text>
+    <rect x="540" y="96" width="330" height="22" fill="#111"/><text x="550" y="112" font-size="12.5" font-weight="800" style="fill:#fff">VILLAGE NOTES</text>
+    <rect x="540" y="96" width="330" height="300" fill="none" stroke="#111" stroke-width="1.2"/>
+    <text x="548" y="146" font-size="11" font-weight="700" font-family="'Courier New',monospace">01</text><text x="572" y="146" font-size="12">Slab: ${esc(String(slab).slice(0,46))}</text>
+    <line x1="540" y1="153" x2="870" y2="153" stroke="#111" stroke-width=".6"/><text x="548" y="168" font-size="11" font-weight="700" font-family="'Courier New',monospace">02</text><text x="572" y="168" font-size="12">Footing: ${esc(String(foot).slice(0,46))}</text>
+    <line x1="540" y1="175" x2="870" y2="175" stroke="#111" stroke-width=".6"/><text x="548" y="190" font-size="11" font-weight="700" font-family="'Courier New',monospace">03</text><text x="572" y="190" font-size="12">Driveway (if used): ${esc(String(drive))}</text>
+    <line x1="540" y1="197" x2="870" y2="197" stroke="#111" stroke-width=".6"/><text x="548" y="212" font-size="11" font-weight="700" font-family="'Courier New',monospace">04</text><text x="572" y="212" font-size="12">Parkway: ${esc(c.parkway||'—')}</text>
+    <line x1="540" y1="219" x2="870" y2="219" stroke="#111" stroke-width=".6"/><text x="548" y="234" font-size="11" font-weight="700" font-family="'Courier New',monospace">05</text><text x="572" y="234" font-size="12">Anchors 1/2" @ 6'-0" O.C.  IRC R403.1.6</text>
+    <line x1="540" y1="241" x2="870" y2="241" stroke="#111" stroke-width=".6"/><text x="548" y="256" font-size="11" font-weight="700" font-family="'Courier New',monospace">06</text><text x="572" y="256" font-size="12">Treated sill  IRC R317</text>
+    <line x1="540" y1="263" x2="870" y2="263" stroke="#111" stroke-width=".6"/><text x="548" y="278" font-size="11" font-weight="700" font-family="'Courier New',monospace">07</text><text x="572" y="278" font-size="12">6-mil vapor  IRC R506.2.3</text>
+    <line x1="540" y1="285" x2="870" y2="285" stroke="#111" stroke-width=".6"/><text x="548" y="300" font-size="11" font-weight="700" font-family="'Courier New',monospace">08</text><text x="572" y="300" font-size="12">4" granular fill typical</text>
+    <line x1="540" y1="307" x2="870" y2="307" stroke="#111" stroke-width=".6"/><text x="548" y="322" font-size="11" font-weight="700" font-family="'Courier New',monospace">09</text><text x="572" y="322" font-size="12">6x6-W2.1xW2.1 WWF or fiber</text>
+    <line x1="540" y1="339" x2="870" y2="339" stroke="#111" stroke-width=".6"/><text x="548" y="354" font-size="11" font-weight="700" font-family="'Courier New',monospace">10</text><text x="572" y="354" font-size="12">Pitch slab 1/8" per ft to OH door</text>
+    <line x1="540" y1="371" x2="870" y2="371" stroke="#111" stroke-width=".6"/><text x="548" y="386" font-size="11" font-weight="700" font-family="'Courier New',monospace">11</text><text x="572" y="386" font-size="12">Only items from the city panel.</text>
     <text x="70" y="520" font-size="12">ABSOLUTE GARAGE BUILDERS  ·  3050 W IRVING PARK RD</text>
     <text x="70" y="540" font-size="11">${esc((c.notes||'').slice(0,140))}</text>
   </svg>`;
@@ -2086,57 +2251,6 @@ function pageFoundation(){
   return `<section class="${sheetClass()}">
     ${body}
     ${tblock('FOUNDATION / SLAB / FOOTING','1A',String(sheetTotal()))}
-  </section>`;
-}
-function roofPlanSvg(){
-  const W=Number(val('width'))||20, D=Number(val('depth'))||20;
-  const t=val('roof');
-  const sx=Math.min(8, 340/Math.max(W,D,1)), ox=70, oy=70, gw=W*sx, gd=D*sx;
-  let hips='';
-  if(t==='hip'){
-    hips=`<line x1="${ox}" y1="${oy}" x2="${ox+gw/2}" y2="${oy+gd/2}" stroke="#111"/>
-      <line x1="${ox+gw}" y1="${oy}" x2="${ox+gw/2}" y2="${oy+gd/2}" stroke="#111"/>
-      <line x1="${ox}" y1="${oy+gd}" x2="${ox+gw/2}" y2="${oy+gd/2}" stroke="#111"/>
-      <line x1="${ox+gw}" y1="${oy+gd}" x2="${ox+gw/2}" y2="${oy+gd/2}" stroke="#111"/>`;
-  } else if(t==='revgable'){
-    hips=`<line x1="${ox+gw/2}" y1="${oy}" x2="${ox+gw/2}" y2="${oy+gd}" stroke="#111" stroke-width="2"/>`;
-  } else {
-    hips=`<line x1="${ox}" y1="${oy+gd/2}" x2="${ox+gw}" y2="${oy+gd/2}" stroke="#111" stroke-width="2"/>`;
-  }
-  const pat=patioDim();
-  let patio='';
-  if(pat.on){
-    const pw=pat.w*sx, pd=pat.d*sx;
-    let px=ox, py=oy, plw=pw, plh=pd;
-    if(pat.wall==='back'){ px=ox+(gw-pw)/2; py=oy-pd; }
-    else if(pat.wall==='front'){ px=ox+(gw-pw)/2; py=oy+gd; }
-    else if(pat.wall==='left'){ px=ox-pd; py=oy+(gd-pw)/2; plw=pd; plh=pw; }
-    else { px=ox+gw; py=oy+(gd-pw)/2; plw=pd; plh=pw; }
-    patio=`<rect x="${px}" y="${py}" width="${plw}" height="${plh}" fill="#f4f4f4" stroke="#111" stroke-dasharray="5 3"/>`;
-  }
-  const legendY=oy+gd+28;
-  const vbH=Math.max(520, legendY+70);
-  return `<svg viewBox="0 0 520 ${vbH}" width="100%" style="max-height:7.2in">
-    ${sheetHead('PROPOSED ROOF PLAN','A-4',520)}
-    ${scaleBar(300,legendY+6,sx)}
-    <rect x="${ox}" y="${oy}" width="${gw}" height="${gd}" fill="#fff" stroke="#111" stroke-width="1.8"/>
-    <rect x="${ox-8}" y="${oy-8}" width="${gw+16}" height="${gd+16}" fill="none" stroke="#888" stroke-dasharray="4 3"/>
-    ${hips}
-    ${patio}
-    <text x="${ox+gw/2}" y="${oy-18}" text-anchor="middle" font-size="10">6" OVERHANG TYP.</text>
-    <text x="16" y="${legendY}" font-size="11" font-weight="700">${esc((t==='hip'?'HIP':t==='revgable'?'REV. GABLE':'GABLE')+' ROOF')}</text>
-    <text x="16" y="${legendY+16}" font-size="11">RIDGE / HIP as shown · ${esc(rafterCallout())}</text>
-    <text x="16" y="${legendY+32}" font-size="11">PITCH ${pitchNum()}/12</text>
-    ${pat.on?`<text x="16" y="${legendY+48}" font-size="11">ROOFED PATIO ${pat.w}' x ${pat.d}' · (${pat.posts}) ${pat.post} POSTS</text><text x="16" y="${legendY+62}" font-size="11">${pat.wall.toUpperCase()} WALL</text>`:''}
-  </svg>`;
-}
-function pageSectionRoof(){
-  return `<section class="${sheetClass()}">
-    <div class="split">
-      <div>${buildingSectionSvg()}</div>
-      <div>${aiOr('roofplan',()=>roofPlanSvg(),'Roof plan')}</div>
-    </div>
-    ${tblock('BUILDING SECTION & ROOF PLAN', String(4), String(sheetTotal()))}
   </section>`;
 }
 function pageElevations(){
@@ -2230,7 +2344,7 @@ function seedPlanItems(){
   while(gfis.length<want){
     const i=gfis.length;
     const s=spots[i]||{x:30+(i%4)*12,y:40+Math.floor(i/4)*14};
-    gfis.push({id:itemId(),type:'gfi',x:s.x,y:s.y,w:6,h:7,text:'GFI'});
+    gfis.push({id:itemId(),type:'gfi',x:s.x,y:s.y,w:6,h:7,text:'GFI',fresh:1});
   }
   if(gfis.length>want) gfis=gfis.slice(0,want);
   planItems=others.concat(gfis);
@@ -2254,9 +2368,13 @@ function gpAddItem(it){pushHist();const v=gpTarget(it.type);it.view=v?v.key:'flo
 document.addEventListener('pointerdown',e=>{const sec=e.target.closest&&e.target.closest('#pages section');if(sec&&sec.dataset.view)gpSetActive(sec.dataset.view)},true);
 function renderOverlay(){
   const vs=gpViews(); if(!vs.length) return;
+  if(window._fpGeo){ const fl=planItems.filter(it=>it.type==='gfi'&&(it.view||'floor')==='floor'); const fresh=fl.filter(it=>it.fresh);
+    if(fresh.length){ const spots=psGfiSpots(fl.length); fl.forEach((it,i)=>{ if(it.fresh&&spots[i]){ it.x=spots[i].x; it.y=spots[i].y; it.wall=spots[i].wall; } delete it.fresh; }); }
+    fl.forEach(it=>psSnapGfi(it)); }
   vs.forEach(v=>{ const layer=v.layer; if(!layer) return;
   layer.innerHTML=planItems.filter(it=>(it.view||'floor')===v.key).map(it=>{
     const sel=selectedItem===it.id?' sel':'';
+    if(it.type==='gfi'&&v.key==='floor'&&window._fpGeo) return psGfiHtml(it,sel);
     if(it.type==='gfi') return `<div class="ov gfi${sel}" data-id="${it.id}" style="left:${it.x}%;top:${it.y}%;${it.sz?'width:'+it.sz+'px;height:'+it.sz+'px;':''}${it.fs?'font-size:'+it.fs+'px':''}">${esc(it.text||'GFI')}</div>`;
     if(it.type==='txt') return `<div class="ov txt${sel}" data-id="${it.id}" contenteditable="true" style="left:${it.x}%;top:${it.y}%;${it.fs?'font-size:'+it.fs+'px':''}">${esc(it.text||'TEXT')}</div>`;
     if(it.type==='box') return `<div class="ov box${sel}" data-id="${it.id}" style="left:${it.x}%;top:${it.y}%;width:${it.w||12}%;height:${it.h||8}%"></div>`;
@@ -2287,6 +2405,7 @@ function bindOverlay(){
         window.removeEventListener('pointermove',move);
         window.removeEventListener('pointerup',up);
         if(moved) pushHist();
+        if(moved && it.type==='gfi' && host.id==='floorOverlay' && window._fpGeo){ psSnapGfi(it); renderOverlay(); }
       };
       window.addEventListener('pointermove',move);
       window.addEventListener('pointerup',up);
@@ -2411,8 +2530,8 @@ function sitePlanSvg(){
         `<line x1="${right?ax+4:ax+aw-4}" y1="${ay+ah/2}" x2="${tx}" y2="${ty}" stroke="#111" stroke-width=".8"/><text x="${tx+(right?-2:2)}" y="${ty+3}" text-anchor="${right?'end':'start'}" font-size="8.5" font-weight="800">${esc(lab)}</text>`})():''}
     ${n.alley?(()=>{const dx=gx+gw*0.65,tx=right?lx-6:lx+lw+6,ty=ly+2;return dim(dx,ly,dx,gy,'',null)+`<line x1="${dx}" y1="${(ly+gy)/2}" x2="${tx}" y2="${ty}" stroke="#c00" stroke-width=".8"/><text x="${tx+(right?-2:2)}" y="${ty+3}" text-anchor="${right?'end':'start'}" font-size="10" font-weight="800" fill="#c00">${esc(ftLabel(n.rear)+' TO ALLEY')}</text>`})():dim(gx+gw*0.65,ly,gx+gw*0.65,gy, ftLabel(n.rear)+(n.guessRear?' MIN.':''), (ly+gy)/2+3)}
     ${n.house!=null?dim(gx+gw*0.35,gy+gd,gx+gw*0.35,hy, ftLabel(n.house)+' TO HOUSE',(gy+gd+hy)/2+3):''}
-    <g transform="translate(${VW-40},${top+30})"><polygon points="0,-18 7,6 0,1 -7,6" fill="#111"/><text x="0" y="-22" text-anchor="middle" font-size="10" font-weight="800">N</text></g>
-    ${scaleBar(VW-200,VH-26,k)}
+    ${psNorth(VW-40,top+34,{f:pt=>pt})}
+    ${psScale(VW-200,VH-24,{f:pt=>pt},k,null)}
     <text x="16" y="50" font-size="9">DISTANCES TO TWO LOT LINES SHOWN IN RED. VERIFY ALL LOT LINES WITH PLAT OF SURVEY.</text>
   </svg>`;
 }
@@ -2536,16 +2655,6 @@ function wallSectionSvg(){
 function pageWallSection(){
   return `<section class="${sheetClass()}" data-sheet="wallsection"><div class="elevpage">${wallSectionSvg()}</div>
     ${tblock('TYPICAL WALL SECTION','6',String(sheetTotal()))}</section>`;
-}
-function renumberSheets(){
-  const secs=[...document.querySelectorAll('#pages .sheet')];
-  const n=secs.length; const rows=[];
-  secs.forEach((s,i)=>{
-    const no=s.querySelector('.tblock .sheetno'); if(no) no.textContent='SHEET '+(i+1)+' OF '+n;
-    const nm=s.querySelector('.tblock > div:last-child b');
-    rows.push('<tr><td>'+(i+1)+'</td><td>'+esc(nm?nm.textContent:'SHEET')+'</td></tr>');
-  });
-  const ib=$('sheetIndexBody'); if(ib) ib.innerHTML=rows.join('');
 }
 // ===== 2026-10-15: AI sheet overlay — the AI image is picture-only; labels, dimensions and callouts are real text placed by the app =====
 window._planAiCallouts=window._planAiCallouts||{};

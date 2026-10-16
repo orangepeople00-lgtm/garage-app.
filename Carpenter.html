@@ -116,6 +116,7 @@ html,body{margin:0;min-height:100%;background:#e8edf3;color:var(--ink);font-fami
   .draw-page{page-break-before:always;break-before:page;page-break-inside:avoid;break-inside:avoid}
 }
 @page{size:letter;margin:.35in}
+@media print{.no-print{display:none!important}}
 @media screen and (max-width:900px){
   .shell{grid-template-columns:1fr;padding:8px;gap:10px}
   .panel{position:static;max-height:none}
@@ -1572,9 +1573,10 @@ function carpApplyScan(o){const R=carpScanMap(o);carpScan={o,R};
   R.extra.forEach((x,i)=>{const W=wallLengthFor(x.wall),w=2;const fx=x.elevX!=null?Math.max(0,Math.min(1-w/W,(x.elevX*W-w/2)/W)):null;extraDoors.push({id:'sw'+i,wall:x.wall,w:2,h:4,kind:x.kind,x:fx!=null?+fx.toFixed(3):freeSpot(x.wall,2),visW:null,visH:null})});
   set('notes',R.notes.join('\n'));try{fitNotes()}catch(e){}
   try{separateDoors()}catch(e){}try{renderDoorList()}catch(e){}persist();makePlans();carpScanBar()}
-function carpScanBar(){if($('carpScanBar'))return;const b=document.createElement('div');b.id='carpScanBar';b.style.cssText='position:sticky;top:0;z-index:60;background:#fef9c3;border-bottom:2px solid #eab308;padding:8px 10px;font:700 14px Arial;display:flex;flex-wrap:wrap;gap:8px;align-items:center';
-  b.innerHTML='<span style="flex:1;min-width:200px">Built from the contract scan — review every value and the door / window spots, then save.</span><button type="button" id="carpSavePdf" style="min-height:44px;padding:0 14px;background:#10203a;color:#fff;border:0;border-radius:8px;font-weight:800">Save PDF to job</button>';
-  document.body.prepend(b);$('carpSavePdf').onclick=carpSavePdf}
+function carpScanBar(){if($('carpScanBar'))return;const b=document.createElement('div');b.id='carpScanBar';b.style.cssText='position:static;background:#fef9c3;border-bottom:2px solid #eab308;padding:6px 10px;font:700 12px Arial';
+  b.textContent='Built from the contract scan — check the values and door/window spots, then tap Save PDF to job.';
+  const f=document.createElement('button');f.type='button';f.id='carpSavePdf';f.className='no-print';f.textContent='Save PDF to job';f.style.cssText='position:fixed;right:12px;bottom:calc(84px + env(safe-area-inset-bottom));z-index:60;min-height:44px;padding:0 16px;background:#10203a;color:#fff;border:2px solid #eab308;border-radius:22px;font:800 14px Arial;box-shadow:0 3px 10px rgba(0,0,0,.3)';
+  b.className='no-print';document.body.prepend(b);document.body.appendChild(f);$('carpSavePdf').onclick=carpSavePdf}
 async function carpLoadLib(src,test){if(test())return;await new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=()=>rej(new Error('Could not load '+src));document.head.appendChild(s)})}
 async function carpBuildPdf(){await carpLoadLib('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',()=>window.html2canvas);await carpLoadLib('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',()=>window.jspdf);
   const {jsPDF}=window.jspdf,pdf=new jsPDF({unit:'pt',format:'letter'}),PW=612,PH=792,M=24;let first=true;

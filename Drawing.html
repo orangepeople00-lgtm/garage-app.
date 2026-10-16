@@ -826,6 +826,7 @@ button.danger{color:#b42318}
 
 /* V17 layout/readability overrides */
 .obj.house .label,.obj.garage .label{font-weight:1000!important;line-height:1.05!important;background:rgba(255,255,255,.88)!important;padding:3px 5px!important}
+.obj.garage .label{background:transparent!important;padding:3px 14%!important} /* no white box over the side wall dimensions */
 .obj.service-pad{overflow:hidden!important;background:rgba(255,255,255,.9)!important}
 .obj.service-pad .label{display:flex!important;align-items:center!important;justify-content:center!important;text-align:center!important;white-space:pre-line!important;padding:2px!important}
 .obj.service-door .door-name{z-index:8!important;font-size:9px!important;padding:1px 2px!important;border-radius:2px!important}
@@ -4797,7 +4798,12 @@ function spApplyAlleyApron(skipRender){
       state.objects.push({id:uid++,kind:'apron',role:'proposedApron',x:g.x+((+g.wf)-aw)/2*sc+c.off*sc,y:g.y+g.hf*sc,wf:aw,hf:c.h,label:(c.h*sc<26?'NEW APRON':`NEW CONCRETE APRON\n${spFt(aw)} x ${spFt(c.h)}`),angle:0,pxf:sc})}
     {const ap=state.objects.find(o=>o.role==='proposedApron');if(ap)spRightEdge=Math.max(spRightEdge,ap.x+ap.wf*sc);}
     let spDimX=spRightEdge+6; try{ const L=(typeof agbLotBox==='function')?agbLotBox():null; if(L && spDimX+14>L.r){ const ap=state.objects.find(o=>o.role==='proposedApron'); const le=Math.min(g.x,ap?ap.x:g.x); spDimX=(le-20>=L.x)?le-20:L.r-16; } }catch(_){}
-    state.objects.push({id:uid++,kind:'dimension',role:'spAlleyDim',x:spDimX,y:g.y+g.hf*sc,wf:Math.max(c.dist,0.5),hf:1.1,label:`${spFt(c.dist)} TO ALLEY`,angle:90,pxf:sc});
+    { const lbl=`${spFt(c.dist)} TO ALLEY`, short=c.dist*sc < lbl.length*6+16;
+      state.objects.push({id:uid++,kind:'dimension',role:'spAlleyDim',x:spDimX,y:g.y+g.hf*sc,wf:Math.max(c.dist,0.5),hf:1.1,label:short?'':lbl,angle:90,pxf:sc});
+      if(short){ // span too short for a rotated label: horizontal label beside the dimension, never across the lot line
+        const wpx=lbl.length*6.6+10, hpx=16; let L=null; try{ L=(typeof agbLotBox==='function')?agbLotBox():null; }catch(_){}
+        let x=L?L.r+10:spDimX+10; // outside the lot, in the clear margin beside the alley gap
+        state.objects.push({id:uid++,kind:'text',role:'spAlleyLbl',x,y:g.y+g.hf*sc+c.dist*sc/2-hpx/2,wf:wpx/sc,hf:hpx/sc,label:lbl,angle:0,pxf:sc}); } }
   }
   if(!skipRender){try{saveActiveSheetState()}catch(e){}try{renderObjects()}catch(e){}}
 }
@@ -5954,12 +5960,13 @@ function renderObjectsNowInner(){
         // All other labeled shapes: keep text centered and scaled to the box
         const lines=String(lab.textContent||'').split('\n');
         const maxChars=Math.max(...lines.map(x=>x.length),1);
-        const fit=Math.max(9,Math.min(22,h/Math.max(2.4,lines.length*1.25),w/(maxChars*.55)));
+        const sideM=(o.role==='proposedGarage'&&state.objects.some(x=>/^garageWallDim/.test(x.role||''))&&w>=100)?Math.min(26,w*.2):0; // keep clear of the side wall numbers
+        const fit=Math.max(6,Math.min(22,(h-(sideM?36:0))/Math.max(2.4,lines.length*1.25),(w-2*sideM)/(maxChars*(sideM?.7:.55))));
         lab.style.position='absolute';
         lab.style.setProperty('left','50%','important');
         lab.style.setProperty('top','50%','important');
         lab.style.setProperty('transform','translate(-50%,-50%)','important');
-        lab.style.setProperty('width','92%','important');
+        lab.style.setProperty('width',sideM?`calc(100% - ${2*sideM}px)`:'92%','important');
         lab.style.setProperty('text-align','center','important');
         lab.style.setProperty('font-size',fit+'px','important');
         lab.style.setProperty('line-height','1.1','important');
@@ -8293,7 +8300,7 @@ function toggleMobilePanel(){
 #agbTitleBlock{position:absolute;right:14px;bottom:14px;z-index:72;background:#fff;border:2px solid #111;font:12px/1.3 Arial,Helvetica,sans-serif;color:#111;min-width:240px;max-width:330px}
 #agbTitleBlock .tb-head{background:#111;color:#fff;font-weight:800;padding:3px 8px;font-size:12px;letter-spacing:.3px}
 #agbTitleBlock .tb-row{display:flex;border-top:1px solid #111}
-#agbTitleBlock .tb-k{width:72px;flex:0 0 72px;padding:3px 6px;font-weight:800;border-right:1px solid #111;font-size:10px;text-transform:uppercase}
+#agbTitleBlock .tb-k{width:86px;flex:0 0 86px;padding:3px 6px;font-weight:800;border-right:1px solid #111;font-size:10px;text-transform:uppercase}
 #agbTitleBlock .tb-v{flex:1;padding:3px 6px;min-height:14px;outline:0;white-space:nowrap;overflow:hidden;min-width:0}
 #agbTitleBlock .tb-v:focus{background:#fef9c3}
 .sw-garage,#paper.siteplan .obj[data-cat="garage"]{border:3px solid #1e3a8a!important;background:rgba(219,234,254,.6)!important}
@@ -8354,16 +8361,24 @@ function placeLabels(labels){
   // simple collision nudge: estimated rects (no DOM reads -> no layout thrash while dragging)
   const placed=[];
   const blockers=state.objects.filter(o=>!o.hidden&&o.kind!=='eraser'&&(o.kind==='text'||o.kind==='dimension')).map(bbox);
+  try{ const lay=paper; const lr=lay.getBoundingClientRect(); const k=lay.offsetWidth?lr.width/lay.offsetWidth:1;
+    if(lr&&k>0) document.querySelectorAll('#agbSiteAnno text, #agbSiteAnno rect').forEach(t=>{ const r=t.getBoundingClientRect(); if(r.width) blockers.push({x:(r.left-lr.left)/k-3,y:(r.top-lr.top)/k-3,w:r.width/k+6,h:r.height/k+6}); }); }catch(_){}
+  // shape outlines (lot lines, garage/apron edges) block labels too, as thin strips
+  state.objects.filter(o=>!o.hidden&&(o.role==='lotOutline'||['garage','apron','pad','sidewalk','patio','driveway'].includes(o.kind))).forEach(o=>{ const b=bbox(o); blockers.push({x:b.x,y:b.y-1,w:b.r-b.x,h:2},{x:b.x,y:b.b-1,w:b.r-b.x,h:2},{x:b.x-1,y:b.y,w:2,h:b.b-b.y},{x:b.r-1,y:b.y,w:2,h:b.b-b.y}); });
   const hit=(a,b)=>!(a.x+a.w<=b.x||b.x+b.w<=a.x||a.y+a.h<=b.y||b.y+b.h<=a.y);
   labels.forEach(L=>{
     L.w=L.text.length*7.4+10;L.h=18;L.x=L.ax-L.w/2;L.y=L.ay-L.h/2;
     const step=L.nudge||'y';
-    for(let i=0;i<8;i++){
+    for(let i=0;i<16;i++){
       const r={x:L.x,y:L.y,w:L.w,h:L.h};
       if(!placed.some(p=>hit(r,p))&&!blockers.some(p=>hit(r,{x:p.x,y:p.y,w:p.w,h:p.h})))break;
       const d=(i%2?-1:1)*Math.ceil((i+1)/2)*(step==='y'?L.h+2:L.w/2+4);
       if(step==='y')L.y=L.ay-L.h/2+d;else L.x=L.ax-L.w/2+d;
     }
+    { const free=r=>!placed.some(p=>hit(r,p))&&!blockers.some(p=>hit(r,{x:p.x,y:p.y,w:p.w,h:p.h}));
+      if(!free({x:L.x,y:L.y,w:L.w,h:L.h})){ // no clear spot nearby: park it in the margin beside the lot
+        const lot=state.objects.find(o=>o.role==='lotOutline'&&!o.hidden); if(lot){ const lb=bbox(lot);
+          outer: for(const sx of [lb.r+8, lb.x-8-L.w]) for(let k=0;k<30;k++){ const y=L.ay-L.h/2+(k%2?-1:1)*Math.ceil(k/2)*(L.h+2); if(free({x:sx,y,w:L.w,h:L.h})){ L.x=sx; L.y=y; break outer; } } } } }
     placed.push({x:L.x,y:L.y,w:L.w,h:L.h});
   });
   return labels;
@@ -8381,7 +8396,9 @@ function renderAutoDims(){
     if(o.role==='house')return;
     const b=bbox(o),p=pxOf(o);
     const wf=Number.isFinite(o.visualWpx)&&o.visualWpx?o.visualWpx/p:o.wf, hf=Number.isFinite(o.visualHpx)&&o.visualHpx?o.visualHpx/p:o.hf;
-    labels.push({text:ftTxt(wf)+' × '+ftTxt(hf),ax:b.cx,ay:b.y-12,nudge:'y'});
+    const lotO=byRole('lotOutline'); const txt=ftTxt(wf)+' × '+ftTxt(hf);
+    if(o.role==='proposedApron'&&lotO&&!lotO.hidden){ const lb=bbox(lotO); labels.push({text:txt,ax:lb.x-(txt.length*7.4+10)/2-8,ay:b.cy,nudge:'y'}); } // outside the lot: no lot-line / alley-label collisions
+    else labels.push({text:txt,ax:b.cx,ay:b.y-12,nudge:'y'});
   });
   const g=mainGarage();
   if(g&&!g.hidden){
@@ -8390,8 +8407,9 @@ function renderAutoDims(){
     if(lot&&!lot.hidden){
       const lb=bbox(lot);
       const sides=[['L',lb.x,gb.x,gb.cy],['R',gb.r,lb.r,gb.cy]];
-      sides.forEach(([k,a,c,y])=>{if(c-a>1){lines.push({h:1,x:a,y,len:c-a});labels.push({text:ftTxt((c-a)/gp),ax:(a+c)/2,ay:y-11,cls:'sb',nudge:'y'})}});
-      [['T',lb.y,gb.y,gb.cx],['B',gb.b,lb.b,gb.cx]].forEach(([k,a,c,x])=>{if(c-a>1){lines.push({v:1,x,y:a,len:c-a});labels.push({text:ftTxt((c-a)/gp),ax:x+24,ay:(a+c)/2,cls:'sb',nudge:'x'})}});
+      sides.forEach(([k,a,c,y])=>{if(c-a>1){lines.push({h:1,x:a,y,len:c-a}); const t=ftTxt((c-a)/gp), w=t.length*7.4+10; const narrow=(c-a)<w+4; labels.push({text:t,ax:narrow?(k==='L'?lb.x-w/2-6:lb.r+w/2+6):(a+c)/2,ay:narrow?y:y-11,cls:'sb',nudge:'y'})}}); // narrow gap: label in the margin beside the lot line
+      const hasAlleyDim=state.objects.some(o=>o.role==='spAlleyDim'&&!o.hidden);
+      [['T',lb.y,gb.y,gb.cx],['B',gb.b,lb.b,gb.cx]].forEach(([k,a,c,x])=>{if(k==='B'&&hasAlleyDim)return; if(c-a>1){lines.push({v:1,x,y:a,len:c-a});labels.push({text:ftTxt((c-a)/gp),ax:x+24,ay:(a+c)/2,cls:'sb',nudge:'x'})}});
     }
     const house=state.objects.find(o=>o.role==='house'&&!o.hidden);
     if(house){

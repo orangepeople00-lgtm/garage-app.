@@ -65,6 +65,7 @@ button{border:0;border-radius:7px;padding:8px 10px;font-weight:800;cursor:pointe
 .elevpage{display:block;min-height:8.8in}
 .sheet.elev4{height:11in}
 .elev4-grid{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:6px;position:absolute;left:14px;right:14px;top:10px;bottom:108px}
+body.oh-unconf .elev4-grid{top:38px}
 .elev4-cell{border:1px solid #111;min-width:0;min-height:0;overflow:hidden;display:flex}
 .elev4-cell>*{flex:1;min-width:0;min-height:0}
 .elev4-svg,.elev4-svg>div{width:100%;height:100%}
@@ -176,15 +177,18 @@ button{border:0;border-radius:7px;padding:8px 10px;font-weight:800;cursor:pointe
 .fp-below{display:grid;grid-template-columns:1.4fr 1fr;gap:10px;margin-top:8px;align-items:start}.fp-below .codedata{margin:0 0 8px}
 .ps-roof-grid{display:grid;grid-template-columns:minmax(0,1fr) 8.2in;gap:14px;align-items:start}
 .ps-roof-grid>.ps-roof-col{grid-column:2;grid-row:1}.ps-roof-grid>.ps-sect-col{grid-column:1;grid-row:1}
-.ps-roof-grid.ps-roof-only{grid-template-columns:minmax(0,1fr) 11in}.ps-roof-only .ps-roof-col{width:11in}.ps-roof-only .ps-roof-notes{display:block}.ps-roof-only .legend-a h3{text-decoration:none!important;border-bottom:1px solid #111;display:inline-block;padding-bottom:1px}.ps-roof-only .ps-roof-notes>*{margin-top:0!important;margin-bottom:10px}
+.ps-roof-grid.ps-roof-only{grid-template-columns:minmax(0,1fr) 11in}.ps-roof-only .ps-roof-col{width:11in}.ps-roof-only .ps-roof-notes{display:block}.ps-roof-only .ps-roof-notes>*{margin-top:0!important;margin-bottom:10px}
 .ps-roof-notes{display:grid;grid-template-columns:1.25fr 1fr;gap:10px;align-items:start}.ps-roof-notes>*{margin-top:6px!important}
 .ps-key{border:1.4px solid #111;padding:4px 6px;margin-bottom:10px}
 .ps-roof-col{width:8.2in}
 .ov.gfi.ps-gfi{height:auto;aspect-ratio:1/1;border:0;border-radius:0;background:transparent;padding:0;display:block;text-shadow:none}
 .ov.gfi.ps-gfi svg{display:block;overflow:visible}
 @media print{.sheet{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
-body.oh-unconf #pages .sheet{position:relative}
-body.oh-unconf #pages .sheet::after{content:'⚠ OVERHANG WALLS NOT CONFIRMED — VERIFY BEFORE BUILDING';position:absolute;top:6px;left:50%;transform:translateX(-50%);background:#fef3c7;border:2px solid #b45309;color:#92400e;font:800 11px Arial;padding:2px 10px;z-index:5;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+body.oh-unconf .sheet{position:relative}
+.oh-banner{display:none}
+.legend-a h3,.legend h3{text-decoration:none!important;border-bottom:1px solid #111;display:inline-block;padding-bottom:1px} /* html2canvas draws underline through the next row */
+body.oh-unconf .sheet{padding-top:40px}
+body.oh-unconf .sheet .oh-banner{display:block;position:absolute;top:8px;left:16px;right:16px;height:24px;box-sizing:border-box;text-align:center;background:#fef3c7;border:2px solid #b45309;color:#92400e;font:800 12px/20px Arial;letter-spacing:.3px;z-index:5;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 </style>
 <style id="pageSizeStyle">@media print{@page{size:17in 11in;margin:.35in}}</style>
 </head>
@@ -1342,7 +1346,8 @@ function psDimChain(c,axis,pts,at,obj,col,o){ o=o||{}; col=col||PSC.dim; const f
     P.forEach(y=>{ s+=psL(obj+sgn*gap,y,at+sgn*over,y,ew,col); s+=psL(at-tk/2,y+tk/2,at+tk/2,y-tk/2,c.f(.9),col); }); }
   for(let i=0;i<P.length-1;i++){ const a=P[i],b=P[i+1],lab=ftLabel((b-a)/o.sx); const short=psTW(lab,fs,true)+c.f(4)>(b-a);
     let m=(a+b)/2; if(short){ const prevShort=i>0&&psTW(ftLabel((P[i]-P[i-1])/o.sx),fs,true)+c.f(4)>(P[i]-P[i-1]); if(prevShort) m=b+psTW(lab,fs,true)/2+c.f(3); }
-    const pos=short?toward:away;
+    let pos=short?toward:away;
+    if(short){ const tw=psTW(lab,fs,true); if(i===0){ m=a-tw/2-c.f(5); pos=away; } else if(i===P.length-2){ m=b+tw/2+c.f(5); pos=away; } }
     s+=axis==='x'?psT(m,pos,lab,{fs,w:700,c:col}):psT(pos,m,lab,{fs,w:700,c:col,rot:-90}); }
   return s;
 }
@@ -1546,7 +1551,7 @@ function floorPlanSvg(){
   if(ld.on){ const sv=ops.find(o=>o.kind==='svc'); if(sv){ const along=Math.max(ld.w,3)*sx, out=ld.h*sx, m=(sv.a+sv.b)/2; let r;
     if(sv.wall==='front') r=[X(m)-along/2,Y(D),along,out]; else if(sv.wall==='back') r=[X(m)-along/2,oy-out,along,out]; else if(sv.wall==='left') r=[ox-out,Y(m)-along/2,out,along]; else r=[X(W),Y(m)-along/2,out,along];
     outside+=psR(r[0],r[1],r[2],r[3],'#f1f4fa',PSC.wall,c.f(.8),' class="fp-obst"');
-    outside+=psT(r[0]+r[2]/2,r[1]+r[3]/2+fs.small*0.35,ftLabel(ld.w)+' x '+ftLabel(ld.h)+' PAD',{fs:fs.small,w:700,rot:r[3]>r[2]?-90:null,cls:'fp-mv',c:PSC.wall}); } }
+    outside+='<g class="fp-mv" data-fp-inpad="1">'+psT(r[0]+r[2]/2,r[1]+r[3]/2+fs.small*0.35,'PAD',{fs:fs.small,w:700,c:PSC.wall})+'</g>'; } }
   // ---- dimensions: chained opening locations (inner) + overall (outer), ft-in, to outside face of wall ----
   let dims='';
   const side=(w)=>{ const vert=w==='left'||w==='right'; const L=vert?D:W; const my=ops.filter(o=>o.wall===w).sort((a,b)=>a.a-b.a);
@@ -1638,7 +1643,7 @@ function pageSectionRoof(){
     ${tblock('ROOF PLAN', String(4), String(sheetTotal()),'AS NOTED')}
   </section>`;
 }
-function renumberSheets(){
+function renumberSheets(){ document.querySelectorAll('#pages section.sheet').forEach(sec=>{ if(!sec.querySelector(':scope > .oh-banner')){ const d=document.createElement('div'); d.className='oh-banner'; d.textContent='⚠ OVERHANG WALLS NOT CONFIRMED — VERIFY BEFORE BUILDING'; sec.prepend(d);} });
   const secs=[...document.querySelectorAll('#pages .sheet')];
   const n=secs.length; const rows=[]; const cover=secs[0]&&secs[0].dataset.sheet==='cover';
   secs.forEach((s,i)=>{
@@ -1800,11 +1805,22 @@ function declutterFloorPlan(){
   host.querySelectorAll('.ov.gfi,.ov.txt').forEach(o=>{ const r=o.getBoundingClientRect(); if(r.width) fixed.push(toSvg(r)); });
   const vb=svg.viewBox.baseVal, lim={x0:vb.x+2,y0:vb.y+28,x1:vb.x+vb.width-2,y1:vb.y+vb.height-2};
   const placed=fixed.slice();
+  // stroked drawing segments (walls, door/pad outlines, dims) as obstacles for movable labels
+  const sinv=svg.getScreenCTM().inverse(); const segs=[];
+  svg.querySelectorAll('line,rect,polyline,circle').forEach(g=>{ if(g.closest('defs,pattern,marker,clipPath,mask,.fp-mv'))return; const st=g.getAttribute('stroke'); if(!st||st==='none')return; const m0=g.getScreenCTM(); if(!m0)return; const m=sinv.multiply(m0);
+    const P=(x,y)=>({x:m.a*x+m.c*y+m.e,y:m.b*x+m.d*y+m.f}); const A=n=>+(g.getAttribute(n)||0); let q=[];
+    if(g.tagName==='line') q=[[A('x1'),A('y1')],[A('x2'),A('y2')]];
+    else if(g.tagName==='rect'){ const x=A('x'),y=A('y'),w=A('width'),h=A('height'); if(w<=0||h<=0)return; q=[[x,y],[x+w,y],[x+w,y+h],[x,y+h],[x,y]]; }
+    else if(g.tagName==='circle'){ const cx=A('cx'),cy=A('cy'),r=A('r'); for(let k=0;k<=12;k++){const t=k/12*2*Math.PI;q.push([cx+r*Math.cos(t),cy+r*Math.sin(t)]);} }
+    else q=(g.getAttribute('points')||'').trim().split(/[\s,]+/).map(Number).reduce((a,v,i,arr)=>(i%2?a:a.concat([[v,arr[i+1]]])),[]);
+    for(let k=1;k<q.length;k++) segs.push([P(...q[k-1]),P(...q[k])]); });
+  const segHit=(r)=>segs.some(([a,b])=>{ let t0=0,t1=1; const dx=b.x-a.x,dy=b.y-a.y; for(const [pp,qq] of [[-dx,a.x-r.x0],[dx,r.x1-a.x],[-dy,a.y-r.y0],[dy,r.y1-a.y]]){ if(Math.abs(pp)<1e-9){ if(qq<0)return false; } else { const t=qq/pp; if(pp<0){ if(t>t1)return false; if(t>t0)t0=t;} else { if(t<t0)return false; if(t<t1)t1=t; } } } return t1-t0>0; });
   let ignObst=false;
   const ok=(bs,dx,dy)=>bs.every(b=>{
     const s={x0:b.x0+dx,y0:b.y0+dy,x1:b.x1+dx,y1:b.y1+dy};
     if(s.x0<lim.x0||s.x1>lim.x1||s.y0<lim.y0||s.y1>lim.y1) return false;
-    return !placed.some(p=>!(ignObst&&p.obst) && hit(s,p,1));
+    if(placed.some(p=>!(ignObst&&p.obst) && hit(s,p,1))) return false;
+    return !segHit({x0:s.x0+1,y0:s.y0+1,x1:s.x1-1,y1:s.y1-1});
   });
   movers.forEach(el=>{
     const yOnly=el.dataset.fpAxis==='y', xOnly=el.dataset.fpAxis==='x';
@@ -1830,6 +1846,11 @@ function declutterFloorPlan(){
     }
     textBoxes(el).forEach(b=>placed.push(b));
   });
+  // keep GFI/text overlays clear of opening tags and labels (display only; stored position unchanged)
+  const tagBoxes=[...svg.querySelectorAll('text')].filter(t=>t.textContent.trim()).map(t=>{ const g=t.parentNode&&t.parentNode.tagName.toLowerCase()==='g'&&t.parentNode.querySelector('circle,rect')?t.parentNode:t; return g.getBoundingClientRect(); });
+  host.querySelectorAll('.ov.gfi').forEach(o=>{ const hr=host.getBoundingClientRect(); if(!hr.height) return; o.style.marginTop='';
+    const bad=dy=>{ const r=o.getBoundingClientRect(); const q={l:r.left,r:r.right,t:r.top+dy,b:r.bottom+dy}; return tagBoxes.some(b=>b.width&&q.l<b.right-1&&b.left<q.r-1&&q.t<b.bottom-1&&b.top<q.b-1); };
+    if(!bad(0)) return; for(let d=2; d<160; d+=2){ for(const dy of [-d,d]) if(!bad(dy)){ o.style.marginTop=dy+'px'; return; } } });
 }
 function tag(x,y,t, anchor){
   return `<text x="${x}" y="${y}" text-anchor="${anchor||'start'}" font-size="11" font-family="Arial">${esc(t)}</text>`;
@@ -2149,7 +2170,7 @@ function elevLarge(view, title){
   const X=f=>padL+(f+OHL+pl)*S, Y=f=>padT+(Hr+1.4-f)*S, gy=Y(0);
   const o=[], top=[], uid='ed'+view;
   const ln=(x1,y1,x2,y2,w,ex='',arr=o)=>arr.push(`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${ink}" stroke-width="${w}" ${ex}/>`);
-  const tx=(x,y,t,sz,a='middle',wt=700,bg=false,arr=top)=>{const s=sz*F;if(bg){const tw=String(t).length*s*.6+6;const x0=a==='middle'?x-tw/2:a==='end'?x-tw+3:x-3;arr.push(`<rect x="${x0}" y="${y-s+1}" width="${tw}" height="${s+3}" fill="#fff"/>`)}arr.push(`<text x="${x}" y="${y}" font-size="${s}" text-anchor="${a}" font-weight="${wt}" font-family="${font}" fill="${ink}">${esc(String(t))}</text>`)};
+  const tx=(x,y,t,sz,a='middle',wt=700,bg=false,arr=top)=>{const s=sz*F;if(bg){const tw=String(t).length*s*.68+10;const x0=a==='middle'?x-tw/2:a==='end'?x-tw+5:x-5;arr.push(`<rect class="lbl-bg" x="${x0}" y="${y-s-1}" width="${tw}" height="${s+5}" fill="#fff"/>`)}arr.push(`<text x="${x}" y="${y}" font-size="${s}" text-anchor="${a}" font-weight="${wt}" font-family="${font}" fill="${ink}">${esc(String(t))}</text>`)};
   const rc=(x,y,w,h,f,sw,ex='')=>o.push(`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${f}" stroke="${ink}" stroke-width="${sw}" ${ex}/>`);
   const wallPath=rk==='gableEnd'?`M${X(0)} ${gy}V${Y(H)}L${X(L/2)} ${Y(Hr)}L${X(L)} ${Y(H)}V${gy}Z`:`M${X(0)} ${gy}V${Y(H)}H${X(L)}V${gy}Z`;
   const hipPts=`${X(-OHL)},${Y(H+.15)} ${X(L+OHR)},${Y(H+.15)} ${X(L/2+topW/2)},${Y(Hr)} ${X(L/2-topW/2)},${Y(Hr)}`;
@@ -2248,7 +2269,7 @@ function elevLarge(view, title){
   dimV(0,H,xr+26,fmt(H),X(L)+3); dimV(0,Hr,xr+52,fmt(Hr),X(rk==='eave'?L+OHR:L/2+topW/2));
   const dat=(f,t)=>{const y=Y(f),x=xr+64;top.push(`<path d="M${x} ${y}l-5 -7h10z" fill="none" stroke="#000" stroke-width="${w1}"/>`);tx(x+8,y-2,t,8,'start')};
   dat(Hr,'T.O. RIDGE'); dat(H,'T.O. PLATE'); dat(0,'FIN. FLOOR');
-  if(rk==='gableEnd'){ const px=X(L*.7),py=Y(H+(L*.3)*P)-14,k=22; top.push(`<path d="M${px} ${py}h${k}v${-k*P}" fill="none" stroke="#000" stroke-width="${w1}"/>`); tx(px+k/2,py+12,'12',8); tx(px+k+3,py-k*P/2+4,String(pitchNum()),8,'start'); }
+  if(rk==='gableEnd'){ const px=X(L*.7),py=Y(H+(L*.3)*P)-14,k=30; top.push(`<path d="M${px} ${py}h${k}v${-k*P}" fill="none" stroke="#000" stroke-width="${w1}"/>`); tx(px+k/2-3,py-4,'12',8); tx(px+k+3,py-k*P/2+4,String(pitchNum()),8,'start'); }
   else tx(X(L/2),Y(Hr)-7,pitchNum()+'/12 PITCH',8);
   // opening tags (shift down when two tags collide)
   const placed=[]; tags.forEach(([x,y,t])=>{ const w=t.length*7.5*F*.6+6; let yy=y; while(placed.some(p=>Math.abs(p.x-x)<(p.w+w)/2 && Math.abs(p.y-yy)<7.5*F+3)) yy+=7.5*F+4; placed.push({x,y:yy,w}); tx(x,yy,t,7.5,'middle',700,true); });
@@ -2269,7 +2290,7 @@ function elevLarge(view, title){
   if(rk==='gableEnd' && $('flagGableVent') && $('flagGableVent').checked) labs.push([X(L/2-.6),Y(Hr-2.1),'GABLE VENT (TYP.)']);
   const colX=X(-OHL-pl)-8, lh=8*F+5;
   labs.sort((a,b)=>a[1]-b[1]); let lastY=-1e9;
-  labs.forEach(([x,y,t])=>{ let ty=Math.max(y,lastY+lh); lastY=ty; ln(x,y,colX,ty-3,w1*.7,'',top); top.push(`<circle cx="${x}" cy="${y}" r="2" fill="#000"/>`); tx(colX-3,ty,t,7.5,'end'); });
+  labs.forEach(([x,y,t])=>{ let ty=Math.max(y,lastY+lh); lastY=ty; ln(x,y,colX,ty-3,w1*.7,'',top); top.push(`<circle cx="${x}" cy="${y}" r="2" fill="#000"/>`); tx(colX-6,ty,t,7.5,'end'); });
   if(patioSide==='right'){ const cx=X(L+pd/2-.3); tx(cx,Y(3.2),'ROOFED PATIO',8,'middle',700,true); tx(cx,Y(3.2)+12*F,'1/12 ROOF · ('+patE.posts+') '+(patE.post||'4x4')+' POSTS',7,'middle',600,true); }
   // returns line (editable)
   const retBits=[];
@@ -2366,17 +2387,17 @@ function foundationSvg(){
     <text x="82" y="434" font-size="11" font-weight="700">${esc(String(foot).slice(0,48))}</text>
     <rect x="540" y="96" width="330" height="22" fill="#111"/><text x="550" y="112" font-size="12.5" font-weight="800" style="fill:#fff">VILLAGE NOTES</text>
     <rect x="540" y="96" width="330" height="300" fill="none" stroke="#111" stroke-width="1.2"/>
-    <text x="548" y="146" font-size="11" font-weight="700" font-family="'Courier New',monospace">01</text><text x="572" y="146" font-size="12">Slab: ${esc(String(slab).slice(0,46))}</text>
-    <line x1="540" y1="153" x2="870" y2="153" stroke="#111" stroke-width=".6"/><text x="548" y="168" font-size="11" font-weight="700" font-family="'Courier New',monospace">02</text><text x="572" y="168" font-size="12">Footing: ${esc(String(foot).slice(0,46))}</text>
-    <line x1="540" y1="175" x2="870" y2="175" stroke="#111" stroke-width=".6"/><text x="548" y="190" font-size="11" font-weight="700" font-family="'Courier New',monospace">03</text><text x="572" y="190" font-size="12">Driveway (if used): ${esc(String(drive))}</text>
-    <line x1="540" y1="197" x2="870" y2="197" stroke="#111" stroke-width=".6"/><text x="548" y="212" font-size="11" font-weight="700" font-family="'Courier New',monospace">04</text><text x="572" y="212" font-size="12">Parkway: ${esc(c.parkway||'—')}</text>
-    <line x1="540" y1="219" x2="870" y2="219" stroke="#111" stroke-width=".6"/><text x="548" y="234" font-size="11" font-weight="700" font-family="'Courier New',monospace">05</text><text x="572" y="234" font-size="12">Anchors 1/2" @ 6'-0" O.C.  IRC R403.1.6</text>
-    <line x1="540" y1="241" x2="870" y2="241" stroke="#111" stroke-width=".6"/><text x="548" y="256" font-size="11" font-weight="700" font-family="'Courier New',monospace">06</text><text x="572" y="256" font-size="12">Treated sill  IRC R317 (SEE A-5)</text>
-    <line x1="540" y1="263" x2="870" y2="263" stroke="#111" stroke-width=".6"/><text x="548" y="278" font-size="11" font-weight="700" font-family="'Courier New',monospace">07</text><text x="572" y="278" font-size="12">6-mil vapor  IRC R506.2.3</text>
-    <line x1="540" y1="285" x2="870" y2="285" stroke="#111" stroke-width=".6"/><text x="548" y="300" font-size="11" font-weight="700" font-family="'Courier New',monospace">08</text><text x="572" y="300" font-size="12">4" granular fill typical</text>
-    <line x1="540" y1="307" x2="870" y2="307" stroke="#111" stroke-width=".6"/><text x="548" y="322" font-size="11" font-weight="700" font-family="'Courier New',monospace">09</text><text x="572" y="322" font-size="12">6x6-W2.1xW2.1 WWF or fiber</text>
-    <line x1="540" y1="339" x2="870" y2="339" stroke="#111" stroke-width=".6"/><text x="548" y="354" font-size="11" font-weight="700" font-family="'Courier New',monospace">10</text><text x="572" y="354" font-size="12">Pitch slab 1/8" per ft to OH door</text>
-    <line x1="540" y1="371" x2="870" y2="371" stroke="#111" stroke-width=".6"/><text x="548" y="386" font-size="11" font-weight="700" font-family="'Courier New',monospace">11</text><text x="572" y="386" font-size="12">Only items from the city panel.</text>
+    <text x="548" y="146" font-size="11" font-weight="700" font-family="'Courier New',monospace">01</text><text class="vn-fit" x="572" y="146" font-size="12">Slab: ${esc(String(slab))}</text>
+    <line x1="540" y1="153" x2="870" y2="153" stroke="#111" stroke-width=".6"/><text x="548" y="168" font-size="11" font-weight="700" font-family="'Courier New',monospace">02</text><text class="vn-fit" x="572" y="168" font-size="12">Footing: ${esc(String(foot))}</text>
+    <line x1="540" y1="175" x2="870" y2="175" stroke="#111" stroke-width=".6"/><text x="548" y="190" font-size="11" font-weight="700" font-family="'Courier New',monospace">03</text><text class="vn-fit" x="572" y="190" font-size="12">Driveway (if used): ${esc(String(drive))}</text>
+    <line x1="540" y1="197" x2="870" y2="197" stroke="#111" stroke-width=".6"/><text x="548" y="212" font-size="11" font-weight="700" font-family="'Courier New',monospace">04</text><text class="vn-fit" x="572" y="212" font-size="12">Parkway: ${esc(c.parkway||'—')}</text>
+    <line x1="540" y1="219" x2="870" y2="219" stroke="#111" stroke-width=".6"/><text x="548" y="234" font-size="11" font-weight="700" font-family="'Courier New',monospace">05</text><text class="vn-fit" x="572" y="234" font-size="12">Anchors 1/2" @ 6'-0" O.C.  IRC R403.1.6</text>
+    <line x1="540" y1="241" x2="870" y2="241" stroke="#111" stroke-width=".6"/><text x="548" y="256" font-size="11" font-weight="700" font-family="'Courier New',monospace">06</text><text class="vn-fit" x="572" y="256" font-size="12">Treated sill  IRC R317 (SEE A-5)</text>
+    <line x1="540" y1="263" x2="870" y2="263" stroke="#111" stroke-width=".6"/><text x="548" y="278" font-size="11" font-weight="700" font-family="'Courier New',monospace">07</text><text class="vn-fit" x="572" y="278" font-size="12">6-mil vapor  IRC R506.2.3</text>
+    <line x1="540" y1="285" x2="870" y2="285" stroke="#111" stroke-width=".6"/><text x="548" y="300" font-size="11" font-weight="700" font-family="'Courier New',monospace">08</text><text class="vn-fit" x="572" y="300" font-size="12">4" granular fill typical</text>
+    <line x1="540" y1="307" x2="870" y2="307" stroke="#111" stroke-width=".6"/><text x="548" y="322" font-size="11" font-weight="700" font-family="'Courier New',monospace">09</text><text class="vn-fit" x="572" y="322" font-size="12">6x6-W2.1xW2.1 WWF or fiber</text>
+    <line x1="540" y1="339" x2="870" y2="339" stroke="#111" stroke-width=".6"/><text x="548" y="354" font-size="11" font-weight="700" font-family="'Courier New',monospace">10</text><text class="vn-fit" x="572" y="354" font-size="12">Pitch slab 1/8" per ft to OH door</text>
+    <line x1="540" y1="371" x2="870" y2="371" stroke="#111" stroke-width=".6"/><text x="548" y="386" font-size="11" font-weight="700" font-family="'Courier New',monospace">11</text><text class="vn-fit" x="572" y="386" font-size="12">Only items from the city panel.</text>
     <text x="70" y="520" font-size="12">ABSOLUTE GARAGE BUILDERS  ·  3050 W IRVING PARK RD</text>
     <text x="70" y="540" font-size="11">${esc((c.notes||'').slice(0,140))}</text>
   </svg>`;
@@ -2440,13 +2461,13 @@ function elev4Fit(){
 window.addEventListener('beforeprint',()=>{try{elev4Fit()}catch(e){}});
 
 // Fit each sheet's content into its 11x17 page (prevents spill-over blank pages). Measures by ratio to sheet width, so it works under screen scaling and print zoom; skipped when hidden.
-function sheetFit(){
+function sheetFit(){ document.querySelectorAll('#pages text.vn-fit, #pages .fdn-notes text').forEach(t=>{ t.removeAttribute('textLength'); t.removeAttribute('lengthAdjust'); try{ if(t.getComputedTextLength()>290){ t.setAttribute('textLength','290'); t.setAttribute('lengthAdjust','spacingAndGlyphs'); } }catch(e){} });
   document.querySelectorAll('#pages section.sheet').forEach(sec=>{
-    const r=sec.getBoundingClientRect(); if(!r.width) return; const px=r.width/1632; const avail=(1056-14-104-14)*px; // 14px clearance above the title block
-    const parts=sec.classList.contains('elev4')?[]:[...sec.children].filter(k=>!k.classList.contains('tblock')&&!k.classList.contains('overlay'));
+    const r=sec.getBoundingClientRect(); if(!r.width) return; const px=r.width/1632; const padT=document.body.classList.contains('oh-unconf')?40:14; const avail=(1056-padT-104-14)*px; // 14px clearance above the title block; banner gets its own top strip
+    const parts=sec.classList.contains('elev4')?[]:[...sec.children].filter(k=>!k.classList.contains('tblock')&&!k.classList.contains('overlay')&&!k.classList.contains('oh-banner'));
     sec.querySelectorAll('.ps-roof-notes').forEach(n=>{ n.classList.remove('fit-scaled'); n.style.transform=''; n.style.width=''; n.style.marginBottom=''; n.style.transformOrigin=''; });
     parts.forEach(k=>{ k.classList.remove('fit-scaled'); k.style.zoom=''; k.style.transform=''; k.style.transformOrigin=''; k.style.marginBottom=''; });
-    const top=r.top+14*px, bot=Math.max(0,...parts.map(k=>k.getBoundingClientRect().bottom));
+    const top=r.top+padT*px, bot=Math.max(0,...parts.map(k=>k.getBoundingClientRect().bottom));
     const used=bot-top; if(used<=avail+1) return;
     const z=Math.max(0.6,avail/used);
     // floor sheet: shrink the taller column only
@@ -2884,8 +2905,10 @@ function wallSectionSvg(){
     y+=Math.max(1,lines.length)*LH+(k==='HEADERS'?1:GAP);
   });
   // ---- section geometry (not to scale)
-  const xo=830, studT=30, plY=300, flY=712, ridgeX=1180, ohPx=70;
-  const sl=P/12, ridgeY=plY-(ridgeX-xo)*sl, eX=xo-ohPx, eY=plY+ohPx*sl, rT=20;
+  const xo=830, studT=30, plY=300, flY=712, ohPx=70;
+  const ridgeX=1180;
+  const sl=Math.min(P/12,.5), // typical detail (NTS): steeper roofs drawn at 6/12 so the ridge stays below the sheet header; labels show the true pitch
+    ridgeY=plY-(ridgeX-xo)*sl, eX=xo-ohPx, eY=plY+ohPx*sl, rT=20;
   const yAt=x=>plY-(x-xo)*sl;
   const g=[];
   const L=(x1,y1,x2,y2,w=1.4,ex='')=>g.push(`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#111" stroke-width="${w}"${ex}/>`);
@@ -2929,8 +2952,8 @@ function wallSectionSvg(){
   if(ties) g.push(`<rect x="${xo+studT-6}" y="${plY-26}" width="9" height="34" fill="none" stroke="#b91c1c" stroke-width="2"/>`);
   // pitch triangle
   const tx=eX+40, ty=yAt(tx)-120;
-  L(tx,ty,tx+96,ty,1.4); L(tx+96,ty,tx+96,ty-96*sl,1.4);
-  g.push(`<text x="${tx+48}" y="${ty+18}" text-anchor="middle" font-size="15" font-weight="700">12</text><text x="${tx+104}" y="${ty-48*sl+5}" font-size="15" font-weight="700">${P}</text>`);
+  const slT=P/12; L(tx,ty,tx+96,ty,1.4); L(tx+96,ty,tx+96,ty-96*slT,1.4);
+  g.push(`<text x="${tx+48}" y="${ty+18}" text-anchor="middle" font-size="15" font-weight="700">12</text><text x="${tx+104}" y="${ty-48*slT+5}" font-size="15" font-weight="700">${P}</text>`);
   // ---- callouts (auto-stacked per side so labels never collide)
   const wrap=(t,n)=>String(t).split('\n').flatMap(l=>{ const o=[]; let q=l; while(q.length>n){ let i=q.lastIndexOf(' ',n); if(i<8) i=n; o.push(q.slice(0,i)); q=q.slice(i).trim(); } o.push(q); return o; }).filter(Boolean);
   const side={L:[],R:[]};
@@ -2960,7 +2983,7 @@ function wallSectionSvg(){
   const addr=[val('address'),(val('cityManual')||val('city')||'')].filter(Boolean).join(', ');
   return `<svg viewBox="0 0 1600 930" width="100%" class="ws-b">
     ${sheetHead('TYPICAL WALL SECTION','A-6',1600)}
-    <text x="1180" y="66" text-anchor="middle" font-size="17" font-weight="800" font-style="italic" font-family="Georgia,serif">"All lumber SPF #2 or better unless otherwise noted"</text>
+    <text x="1180" y="880" text-anchor="middle" font-size="17" font-weight="800" font-style="italic" font-family="Georgia,serif">"All lumber SPF #2 or better unless otherwise noted"</text>
     <g font-family="${F}">${rows}</g>
     <g font-family="${F}">${g.join('')}${cl.join('')}</g>
     <text x="1180" y="912" text-anchor="middle" font-size="14" font-weight="700">ADDRESS: ${esc(addr.toUpperCase())}</text>

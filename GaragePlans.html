@@ -860,7 +860,7 @@ function conformCodesHTML(){
   const city=cityName();
   const year={
     'Oak Park':'2021','Riverside':'2006','Des Plaines':'2015','Mundelein':'2018',
-    'Evergreen Park':'2009','Addison':'2018','Wheaton':'2024','Schaumburg':'2018'
+    'Evergreen Park':'2009','Addison':'2018','Wheaton':'2024','Schaumburg':'2018','Brookfield':'2021'
   }[city]||'2018';
   const basis=codeBasisLines();
   const hasJobElec=!!val('electricNotes');
@@ -879,7 +879,7 @@ function conformCodesHTML(){
 }
 function codeYear(){
   return ({'Oak Park':'2021','Riverside':'2006','Des Plaines':'2015','Mundelein':'2018',
-    'Evergreen Park':'2009','Addison':'2018','Wheaton':'2024','Schaumburg':'2018'})[cityName()]||'2018';
+    'Evergreen Park':'2009','Addison':'2018','Wheaton':'2024','Schaumburg':'2018','Brookfield':'2021'})[cityName()]||'2018';
 }
 function isChicago(){ return /^chicago$/i.test(String(cityName()||'').trim()); }
 function codeBasisLines(){

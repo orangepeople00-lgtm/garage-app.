@@ -660,7 +660,7 @@ function loadPrefs(){
   try{
     const p=JSON.parse(localStorage.getItem(PREFS_KEY)||'null');
     if(!p || typeof p!=='object') return;
-    ['wallH','sheetSize','pitch'].forEach(k=>{
+    ['wallH','pitch'].forEach(k=>{ /* sheetSize not restored: plans default to 11x17 each session */
       if(p[k]!=null && String(p[k]).trim()!=='' && $(k)) $(k).value=p[k];
     });
   }catch(e){}
@@ -1296,6 +1296,8 @@ function psSlabSpec(){ const c=code()||{}; const txt=String(val('slab')||'').toU
   return {thick:String(thick).trim(),mix:String(mix).trim(),reinf:String(reinf).trim(),base:String(base).trim(),vapor:String(vapor).trim(),foot:String(foot).trim()}; }
 function psBlank(v){ return v?String(v).toUpperCase():'________'; }
 // Overhang (inches) from the Eaves / soffit input; null when the input gives no size.
+/* one source of truth for the overhang: elevations and roof plan both use this (default 6" when the eaves field gives no inches) */
+function psOverhangFt(){ const i=psOverhangIn(); return (i!=null&&i>0?i:6)/12; }
 function psOverhangIn(){ const e=String(val('eaves')||'');
   let m=e.match(/(\d+(?:\.\d+)?)\s*(?:"|in(?:ch(?:es)?)?\b)\s*(?:overhang|soffit|eave)/i); if(m) return Number(m[1]);
   m=e.match(/(\d+(?:\.\d+)?)\s*(?:'|ft|foot|feet)\s*(?:overhang|soffit|eave)/i); if(m) return Number(m[1])*12;
@@ -1550,7 +1552,7 @@ function sheetHead(title, sheetId, vbW, c, scaleLabel){
 function roofPlanSvg(){
   const W=Number(val('width'))||20, D=Number(val('depth'))||20, rt=val('roof')||'gable', P=pitchNum();
   const VBW=600, VBH=680, c=psCtx(8.2,VBW);
-  const ohIn=psOverhangIn(), oh=ohIn!=null?ohIn/12:0;
+  const ohIn=psOverhangIn(), oh=psOverhangFt();
   const gs=gutterStyle(), half=gs==='half';
   const eaveFace=f=>rt==='hip'||(rt==='gable'?(f==='left'||f==='right'):(f==='front'||f==='back'));
   const gutOn=f=>gs!=='none'&&eaveFace(f)&&(gs!=='sides'||f==='left'||f==='right');
@@ -1631,7 +1633,7 @@ function roofPlanSvg(){
   if(oh) dims+=psDimChain(c,'x',[e.x0,e.x1],yb+2*ring,e.y1+go,'#111',{sx,fs:fs.dim});
   dims+=psDimChain(c,'y',ptsY,xr+ring,e.x1+go,'#111',{sx,fs:fs.dim});
   if(oh) dims+=psDimChain(c,'y',[e.y0,e.y1],xr+2*ring,e.x1+go,'#111',{sx,fs:fs.dim});
-  g+=psT(ox+gw/2,e.y0-c.f(8)-(patExt('back')*sx),ohIn!=null?(ftLabel(oh).replace(/^0'-/,'')+' OVERHANG TYP. (EAVES INPUT: '+String(val('eaves')).toUpperCase()+')'):'OVERHANG: ________ (NOT GIVEN IN EAVES INPUT)',{fs:fs.small,w:700});
+  g+=psT(ox+gw/2,e.y0-c.f(8)-(patExt('back')*sx),ohIn!=null?(ftLabel(oh).replace(/^0'-/,'')+' OVERHANG TYP. (EAVES INPUT: '+String(val('eaves')).toUpperCase()+')'):'6" OVERHANG TYP. (DEFAULT — EAVES INPUT GIVES NO SIZE)',{fs:fs.small,w:700});
   // notes (Notes C) + legend (Legend A) + north/scale (Style A)
   window._rpInfo={notes:nl.map(l=>l.replace('@DS@',String(nDS))),gutters:gs!=='none',RW,HW,dsz};
   const sy=VBH-c.f(26);
@@ -1975,7 +1977,7 @@ function onGutterStyleChange(){
 }
 function elevLarge(view, title){
   const W=Number(val('width'))||22, D=Number(val('depth'))||24;
-  const H=Number(val('wallH'))||8, P=pitchNum()/12, OH=1;
+  const H=Number(val('wallH'))||8, P=pitchNum()/12, OH=psOverhangFt();
   const roof=val('roof')||'gable';
   const L=(view==='front'||view==='back')?W:D;
   const fmt=f=>{let i=Math.round((Number(f)||0)*12);return Math.floor(i/12)+"'-"+String(i%12).padStart(2,'0')+'"'};

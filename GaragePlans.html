@@ -2779,45 +2779,162 @@ function pageCover(){
     ${tblock('COVER / SITE PLAN / CODE DATA','1',String(sheetTotal()))}
   </section>`;
 }
-function wallSectionSvg(){
-  const wall=Number(val('wallH'))||8;
-  const x=300, top=90, wallPx=330, slabY=top+wallPx, studW=26;
+// ===== Wall section — spec-list + cross-section style (owner photo 2026-10-16). Values come only from job data; blank stays blank. =====
+function wsSpec(){
+  const c=code()||{}, cs=cityStruct(), U=v=>String(v==null?'':v).trim().toUpperCase();
+  const W=val('width'), D=val('depth');
   const ties=hurricaneRequired();
-  const callouts=[
-    [top-40,(val('shingles')||'ARCH. SHINGLES').toUpperCase()+' OVER 15# FELT'],
-    [top-24,'ROOF SHEATHING '+(cityStruct().roofSheath||val('roofSheath')||'7/16" OSB')],
-    [top-8,'RAFTERS '+rafterCallout()+(ties?' w/ HURRICANE TIES':'')],
-    [top+14,'DBL. 2x4 TOP PLATE'],
-    [top+34,(showOnPlan('gutters')?'ALUM. GUTTER, ':'')+(aluminumSoffitOn()?'ALUM. SOFFIT & FASCIA':'6" FASCIA / BOXED EAVE')],
-    [top+110,'STUDS '+studCallout()],
-    [top+136,'WALL SHEATHING '+(val('wallSheath')||'7/16" OSB')+' + HOUSEWRAP'],
-    [top+162,(val('siding')||'VINYL SIDING').toUpperCase()],
-    [slabY-22,'2x4 TREATED SILL PLATE'],
-    [slabY-6,'1/2" ANCHOR BOLTS @ 6\'-0" O.C., 12" FROM ENDS'],
-    [slabY+16,(val('slab')||'4" CONCRETE SLAB, 6 BAG MIX, WWF').toUpperCase()],
-    [slabY+34,'6-MIL VAPOR BARRIER ON 4" COMPACTED GRAVEL'],
-    [slabY+66,(val('footing')||'12" x 12" THICKENED EDGE FOOTING').toUpperCase()],
+  const blob=cityBlob();
+  const slab=psSlabSpec();
+  const ohOn=true;
+  const svcOn=val('svcWall')&&val('svcWall')!=='none';
+  const winOn=val('winWall')&&val('winWall')!=='none'&&Number(val('winCount'))>0;
+  const wd=winOn?winDim():null;
+  const floor=U(val('slab'))||U([slab.thick&&slab.thick+' CONCRETE',slab.mix].filter(Boolean).join(', '));
+  const eaves=U(val('eaves'));
+  const rows=[
+    ['GARAGE SIZE', W&&D?U(W+"' x "+D+"'"):''],
+    ['ROOF STYLE', val('roof')?roofLabel()+(val('pitch')?' · '+val('pitch')+' PITCH':''):''],
+    ['WALL SHEATHING', U(val('wallSheath')||cs.wallSheath)],
+    ['SWAY BRACES', needsBraceDetail()?U(braceMethod().title):''],
+    ['SIDING', U(val('siding'))+(val('siding')&&cs.housewrap?' W/ HOUSEWRAP':'')],
+    ['STUDS', val('wallH')?U(studCallout())+'\nSPF #2 OR BETTER':''],
+    ['TOP PLATE', 'DOUBLE 2X4'],
+    ['BOTTOM PLATE', 'TREATED 2X4'],
+    ['RAFTERS', U(c.rafters||'')+(c.rafters&&ties&&!/CLIP|STRAP|TIE/i.test(c.rafters)?' W/ HURRICANE STRAPS':'')],
+    ['RIDGE', ''],
+    ['CROSS TIES', U(c.wallTies||'')],
+    ['ROOFING', val('shingles')?'15# FELT UNDER'+(/ICE/i.test(blob)?'\nICE / WATER SHIELD':'')+'\n'+U(val('shingles'))+' SHINGLE':''],
+    ['SHEATHING', U(val('roofSheath')||cs.roofSheath)],
+    ['VENTS', U(val('vents'))],
+    ['EAVES', eaves+(eaves&&aluminumSoffitOn()&&!/ALUM/.test(eaves)?' · ALUMINUM':'')],
+    ['OVERHEAD DOOR', U(ohDoorsText())],
+    ['SERVICE DOOR', svcOn?U(ftLabel(svcDoorW())+' WIDE · '+val('svcWall')+' WALL'):''],
+    ['WINDOWS', winOn?U(val('winCount')+' × '+ftLabel(wd.w)+' x '+ftLabel(wd.h)+' '+(val('winType')||'')):''],
+    ['HEADERS', '—'],
+    ['O.H.D.', U(c.ohHeader||headerCallout())],
+    ['SERVICE/WINDOW', (svcOn||winOn)?U(c.windowHeader||''):''],
+    ['WALL HGT', val('wallH')?ftLabel(Number(val('wallH'))):''],
+    ['TOTAL HGT', (()=>{ const H=Number(val('wallH'))||0, Wd=Number(W)||0, Dd=Number(D)||0, r=val('roof'); if(!H||!Wd||!Dd) return ''; const span=r==='hip'?Math.min(Wd,Dd):(r==='revgable'?Dd:Wd); const i=Math.round((H+span/2*pitchNum()/12)*12); return Math.floor(i/12)+"'-"+String(i%12).padStart(2,'0')+'"'; })()],
+    ['GUTTERS', guttersRequired()?'YES — '+U(typeof gutterStyle==='function'?gutterStyle():'')+' ALUMINUM':''],
+    ['ANCHORS', '1/2" ANCHOR BOLTS @ 6\'-0" O.C., 12" FROM ENDS'],
+    ['FLOOR', floor],
+    ['APRON', hasApron()?U(ftLabel(Number(val('apronFt')))+' CONCRETE APRON'):''],
+    ['WATER LEDGE', waterLedgeRequired()?'REQUIRED':''],
+    ['FOOTINGS', U(val('footing')||c.footings||'')],
   ];
-  const lbl=callouts.map(([yy,t])=>`<line x1="${x+studW+40}" y1="${yy-3}" x2="${x+studW+70}" y2="${yy-3}" stroke="#111"/><text x="${x+studW+74}" y="${yy}" font-size="11">${esc(String(t).slice(0,60))}</text>`).join('');
-  return `<svg viewBox="0 0 900 600" width="100%" style="max-height:8.6in">
-    ${sheetHead('TYPICAL WALL SECTION','A-6',900)}
-    <polygon points="${x-60},${top+14} ${x+studW+40},${top+14} ${x+studW+40},${top+4} ${x-60},${top-60}" fill="#f2f2f2" stroke="#111" stroke-width="1.5"/>
-    <line x1="${x-60}" y1="${top-62}" x2="${x+studW+44}" y2="${top+2}" stroke="#111" stroke-width="3"/>
-    <rect x="${x-4}" y="${top+14}" width="${studW+8}" height="8" fill="#e6d3a8" stroke="#111"/>
-    <rect x="${x-4}" y="${top+22}" width="${studW+8}" height="8" fill="#e6d3a8" stroke="#111"/>
-    <rect x="${x}" y="${top+30}" width="${studW}" height="${wallPx-38}" fill="#f6ead0" stroke="#111"/>
-    <rect x="${x+studW}" y="${top+14}" width="5" height="${wallPx-14}" fill="#c9b27c" stroke="#111"/>
-    <rect x="${x+studW+5}" y="${top+20}" width="5" height="${wallPx-24}" fill="#fff" stroke="#111" stroke-dasharray="3 2"/>
-    <rect x="${x-4}" y="${slabY-8}" width="${studW+8}" height="8" fill="#b9d3a8" stroke="#111"/>
-    <line x1="${x+studW/2}" y1="${slabY-12}" x2="${x+studW/2}" y2="${slabY+24}" stroke="#111" stroke-width="2"/>
-    <rect x="${x-180}" y="${slabY}" width="${studW+200}" height="16" fill="#ddd" stroke="#111"/>
-    <polygon points="${x-20},${slabY+16} ${x-30},${slabY+70} ${x+studW+30},${slabY+70} ${x+studW+20},${slabY+16}" fill="#ccc" stroke="#111"/>
-    <line x1="${x-200}" y1="${slabY+24}" x2="${x+studW+60}" y2="${slabY+24}" stroke="#111" stroke-dasharray="2 2"/>
-    ${ties?`<rect x="${x+studW-4}" y="${top+6}" width="8" height="18" fill="none" stroke="#c00" stroke-width="1.5"/>`:''}
-    <line x1="${x-110}" y1="${top+30}" x2="${x-110}" y2="${slabY}" stroke="#111"/>
-    <text x="${x-116}" y="${(top+slabY)/2}" text-anchor="end" font-size="12" font-weight="700">${esc(ftLabel(wall))} PLATE HT.</text>
-    ${lbl}
-    <text x="16" y="586" font-size="10">TYPICAL DETAIL — NOT TO SCALE. MEMBER SIZES PER CODE DATA / VILLAGE REQUIREMENTS.</text>
+  // extra job items (only when present on this job)
+  const extra=[];
+  if(val('partyWall')&&val('partyWall')!=='none'){ const pd=partyDim(); extra.push(['PARTY DOOR', U(ftLabel(pd.w)+' x '+ftLabel(pd.h)+' · '+val('partyWall')+' WALL')]); }
+  if(val('patioWall')&&val('patioWall')!=='none') extra.push(['ROOFED PATIO', U((val('patioSize')?val('patioSize')+"' · ":'')+val('patioWall')+' WALL'+(val('patioPosts')?' · ('+val('patioPosts')+') '+(val('patioPostSize')||'')+' POSTS':''))]);
+  if(String(val('landing')||'').trim()) extra.push(['SERVICE PAD', U(val('landing'))]);
+  if(psExtraOhIn()>0 && psOhWalls().length) extra.push(['EXTRA OVERHANG', U(psExtraOhIn()+'" · '+psOhWalls().join(', '))]);
+  if(computeFirewallRequired()) extra.push(['FIRE WALL', 'REQUIRED — SEE FIRE WALL DETAIL']);
+  const el=[]; const gf=Number(val('gfiCount')), lc=Number(val('lightCount'));
+  if(gf>0) el.push(gf+' GFI RECEPT.'); if(lc>0) el.push(lc+' LIGHT'+(lc>1?'S':''));
+  const en=String(val('electricNotes')||'').trim(); if(en) el.push(en.length>48||/\n/.test(en)?'SEE ELECTRICAL NOTES ON FLOOR PLAN':U(en));
+  if(el.length) extra.push(['ELECTRICAL', el.join(' · ')]);
+  const all=rows.concat(extra).filter(([k,v])=>String(v||'').trim()!=='' || k==='HEADERS');
+  // HEADERS group label only when a header row follows
+  return all.filter(([k],i)=>k!=='HEADERS' || (all[i+1]&&['O.H.D.','SERVICE/WINDOW'].includes(all[i+1][0])));
+}
+function wallSectionSvg(){
+  const spec=wsSpec(), S=Object.fromEntries(spec.map(r=>[r[0],r[1]]));
+  const P=pitchNum(), eIn=psEaveIn(), ties=hurricaneRequired(), gut=guttersRequired();
+  const F='Arial,Helvetica,sans-serif';
+  // ---- left spec column
+  const nLines=spec.reduce((t,[k,v])=>t+Math.max(1,Math.ceil(String(v||'').split('\n').reduce((m,l)=>m+Math.max(1,Math.ceil(l.length/28)),0))),0);
+  const LH=Math.min(17,(800-spec.length*6)/Math.max(1,nLines)), GAP=nLines*17+spec.length*6>800?Math.max(2,(800-nLines*LH)/spec.length):6;
+  let y=96, rows='';
+  spec.forEach(([k,v])=>{
+    const lines=String(v||'').split('\n').flatMap(l=>{ const out=[]; let s=l; while(s.length>28){ let i=s.lastIndexOf(' ',28); if(i<10) i=28; out.push(s.slice(0,i)); s=s.slice(i).trim(); } out.push(s); return out; });
+    const sub=(k==='O.H.D.'||k==='SERVICE/WINDOW');
+    rows+=`<text x="270" y="${y}" text-anchor="end" font-size="${sub?14.5:15}" font-weight="800">${esc(k)}:</text>`;
+    lines.forEach((l,i)=>{ if(l) rows+=`<text x="282" y="${y+i*LH}" font-size="14.5"${/EXISTING/.test(String(v))?' style="fill:#b91c1c"':''}>${esc(l)}</text>`; });
+    y+=Math.max(1,lines.length)*LH+(k==='HEADERS'?1:GAP);
+  });
+  // ---- section geometry (not to scale)
+  const xo=830, studT=30, plY=300, flY=712, ridgeX=1180, ohPx=70;
+  const sl=P/12, ridgeY=plY-(ridgeX-xo)*sl, eX=xo-ohPx, eY=plY+ohPx*sl, rT=20;
+  const yAt=x=>plY-(x-xo)*sl;
+  const g=[];
+  const L=(x1,y1,x2,y2,w=1.4,ex='')=>g.push(`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#111" stroke-width="${w}"${ex}/>`);
+  // slab + footing
+  g.push(`<polygon points="${xo-50},${flY+12} ${xo+studT+60},${flY+12} ${xo+studT+40},${flY+92} ${xo-30},${flY+92}" fill="#e5e5e5" stroke="#111" stroke-width="1.4"/>`);
+  g.push(`<rect x="${xo-50}" y="${flY+12}" width="${ridgeX-xo+90}" height="30" fill="#e5e5e5" stroke="#111" stroke-width="1.4"/>`);
+  L(xo-50,flY+56,ridgeX+40,flY+56,1,' stroke-dasharray="14 5 3 5"');
+  // bottom plate, studs, top plates, header
+  g.push(`<rect x="${xo}" y="${flY}" width="${ridgeX-xo-20}" height="12" fill="#cfe3c0" stroke="#111"/>`);
+  for(let x=xo; x<ridgeX-40; x+=95) g.push(`<rect x="${x}" y="${plY+16}" width="${x===xo?studT:12}" height="${flY-plY-16}" fill="#f3e6c8" stroke="#111"/>`);
+  g.push(`<rect x="${xo}" y="${plY}" width="${ridgeX-xo-20}" height="8" fill="#e6d3a8" stroke="#111"/><rect x="${xo}" y="${plY+8}" width="${ridgeX-xo-20}" height="8" fill="#e6d3a8" stroke="#111"/>`);
+  g.push(`<rect x="${xo+studT}" y="${plY+16}" width="${ridgeX-xo-50}" height="44" fill="#d9d9d9" stroke="#111"/>`);
+  for(let x=xo+studT+12; x<ridgeX-30; x+=22) L(x,plY+18,x+16,plY+58,.6);
+  g.push(`<rect x="${xo+studT+95}" y="${plY+60}" width="12" height="${flY-plY-60}" fill="#ead7a8" stroke="#111"/>`);
+  // sheathing + siding
+  g.push(`<rect x="${xo-6}" y="${plY}" width="6" height="${flY-plY+12}" fill="#c9b27c" stroke="#111"/>`);
+  for(let yy=plY+6; yy<flY+8; yy+=12) L(xo-14,yy,xo-6,yy+4,1);
+  L(xo-14,plY+2,xo-14,flY+12,1.6);
+  // cross tie (ceiling) + collar tie
+  g.push(`<rect x="${xo}" y="${plY-10}" width="${ridgeX-xo}" height="10" fill="#f3e6c8" stroke="#111"/>`);
+  const cY=ridgeY+70, cX=xo+(plY-cY)/sl, collar=/COLLAR/i.test(cityBlob());
+  if(collar) g.push(`<rect x="${cX}" y="${cY}" width="${ridgeX-cX}" height="9" fill="#f3e6c8" stroke="#111"/>`);
+  // rafter + roof layers
+  g.push(`<polygon points="${eX},${eY} ${ridgeX},${ridgeY} ${ridgeX},${ridgeY-rT} ${eX},${eY-rT}" fill="#f3e6c8" stroke="#111" stroke-width="1.4"/>`);
+  g.push(`<polygon points="${eX},${eY-rT} ${ridgeX},${ridgeY-rT} ${ridgeX},${ridgeY-rT-6} ${eX},${eY-rT-6}" fill="#c9b27c" stroke="#111"/>`);
+  L(eX,eY-rT-9,ridgeX,ridgeY-rT-9,2.6);
+  g.push(`<rect x="${ridgeX}" y="${ridgeY-rT-14}" width="12" height="54" fill="#e6d3a8" stroke="#111" stroke-width="1.4"/>`);
+  for(let yy=ridgeY-rT-10; yy<ridgeY+40; yy+=8) L(ridgeX,yy,ridgeX+12,yy+6,.6);
+  // mushroom vents
+  const vX=ridgeX-120, vY=yAt(vX)-rT-9; const mush=/MUSH|ROOF VENT|BOX|LOUVER/i.test(S['VENTS']||''), ridgeV=/RIDGE/i.test(S['VENTS']||'');
+  if(ridgeV) g.push(`<path d="M${ridgeX-26},${ridgeY-rT-12} L${ridgeX+6},${ridgeY-rT-24} L${ridgeX+38},${ridgeY-rT-12}" fill="none" stroke="#111" stroke-width="3"/>`);
+  if(mush) g.push(`<rect x="${vX-14}" y="${vY-12}" width="28" height="12" fill="#fff" stroke="#111"/><path d="M${vX-24},${vY-12} Q${vX},${vY-34} ${vX+24},${vY-12} Z" fill="#fff" stroke="#111" stroke-width="1.4"/>`);
+  // fascia, soffit, gutter + downspout
+  g.push(`<rect x="${eX-4}" y="${eY-rT-6}" width="6" height="${rT+18}" fill="#fff" stroke="#111" stroke-width="1.4"/>`);
+  L(eX,eY+12,xo-14,eY+12,1.6);
+  if(gut){ g.push(`<path d="M${eX-6},${eY-rT+2} h-34 v26 q0,8 8,8 h18 q8,0 8,-8" fill="#fff" stroke="#111" stroke-width="1.6"/>`); g.push(`<rect x="${eX-32}" y="${eY+16}" width="12" height="${flY-eY-30}" fill="#fff" stroke="#111"/><path d="M${eX-32},${flY-14} h-18 v10 h30" fill="none" stroke="#111"/>`); }
+  // eave dim
+  const dY=eY+40; L(eX,dY,xo-14,dY,1); L(eX,dY-6,eX,dY+6,1); L(xo-14,dY-6,xo-14,dY+6,1);
+  g.push(`<text x="${(eX+xo-14)/2}" y="${dY+18}" text-anchor="middle" font-size="14" font-weight="700">${esc(eIn+'"')}</text>`);
+  // hurricane strap
+  if(ties) g.push(`<rect x="${xo+studT-6}" y="${plY-26}" width="9" height="34" fill="none" stroke="#b91c1c" stroke-width="2"/>`);
+  // pitch triangle
+  const tx=eX+40, ty=yAt(tx)-120;
+  L(tx,ty,tx+96,ty,1.4); L(tx+96,ty,tx+96,ty-96*sl,1.4);
+  g.push(`<text x="${tx+48}" y="${ty+18}" text-anchor="middle" font-size="15" font-weight="700">12</text><text x="${tx+104}" y="${ty-48*sl+5}" font-size="15" font-weight="700">${P}</text>`);
+  // ---- callouts (auto-stacked per side so labels never collide)
+  const wrap=(t,n)=>String(t).split('\n').flatMap(l=>{ const o=[]; let q=l; while(q.length>n){ let i=q.lastIndexOf(' ',n); if(i<8) i=n; o.push(q.slice(0,i)); q=q.slice(i).trim(); } o.push(q); return o; }).filter(Boolean);
+  const side={L:[],R:[]};
+  const C=(px,py,ty,t,sd)=>{ if(t) side[sd].push({px,py,ty,ls:wrap(t,sd==='L'?22:40)}); };
+  const rx=1215, lx=690, cl=[];
+  if(S['VENTS']) C(mush?vX:ridgeX+6,mush?vY-24:ridgeY-rT-22,ridgeY-60,'VENTS: '+S['VENTS'],'R');
+  C(ridgeX+12,ridgeY-10,ridgeY-20,'RIDGE BOARD'+(S['RIDGE']?' '+S['RIDGE']:''),'R');
+  C(ridgeX-60,yAt(ridgeX-60)-8,ridgeY+20,'RAFTERS'+(S['RAFTERS']?' '+S['RAFTERS']:''),'R');
+  if(collar) C(ridgeX-40,cY+5,cY+30,'COLLAR TIE','R');
+  C(ridgeX-60,plY-5,plY-40,'CROSS TIE'+(S['CROSS TIES']?' '+S['CROSS TIES']:''),'R');
+  C(ridgeX-60,plY+8,plY+5,'DOUBLE 2X4 TOP PLATE','R');
+  C(ridgeX-60,plY+38,plY+40,'HEADER '+S['O.H.D.'],'R');
+  C(xo+studT+101,plY+150,plY+150,'(2) JACK STUDS AT HEADER ENDS','R');
+  if(S['SERVICE/WINDOW']) C(xo+studT+40,plY+64,plY+95,'SERVICE / WINDOW HEADER '+S['SERVICE/WINDOW'],'R');
+  C(ridgeX-60,flY+6,flY-40,'TREATED 2X4 BOTTOM PLATE'+(S['ANCHORS']?'\n'+S['ANCHORS']:''),'R');
+  C(ridgeX-80,flY+28,flY+30,(/EXIST/.test(S['FLOOR']||'')?'':'FLOOR')+(S['FLOOR']?(/EXIST/.test(S['FLOOR'])?'':': ')+S['FLOOR']:''),'R');
+  if(S['FOOTINGS']||!/EXIST/.test(S['FLOOR']||'')) C(xo+10,flY+80,flY+80,'FOOTING'+(S['FOOTINGS']?': '+S['FOOTINGS']:''),'R');
+  const roofPtX=eX+150;
+  C(roofPtX,yAt(roofPtX)-rT-9,yAt(roofPtX)-rT-120,[S['ROOFING']||'ROOFING',S['SHEATHING']?S['SHEATHING']+' ROOF SHEATHING':''].filter(Boolean).join('\n'),'L');
+  if(ties) C(xo+studT-2,plY-22,plY-50,'HURRICANE STRAPS AT EACH RAFTER','L');
+  if(gut) C(eX-30,eY-rT+14,eY-rT+10,'GUTTER W/ DOWNSPOUTS','L');
+  C(eX+30,eY+12,eY+50,'EAVES: '+(S['EAVES']||''),'L');
+  C(xo-14,plY+190,plY+190,'SIDING: '+(S['SIDING']||''),'L');
+  C(xo-3,plY+290,plY+290,'WALL SHEATHING: '+(S['WALL SHEATHING']||''),'L');
+  ['L','R'].forEach(sd=>{ let last=70; side[sd].sort((a,b)=>a.ty-b.ty).forEach(o=>{ const ty=Math.max(o.ty,last+8); last=ty+(o.ls.length-1)*17+12; const tx=sd==='L'?lx:rx;
+    cl.push(`<line x1="${o.px}" y1="${o.py}" x2="${tx}" y2="${ty-4}" stroke="#111" stroke-width="1"/><circle cx="${o.px}" cy="${o.py}" r="2.6" fill="#111"/>`+o.ls.map((l,i)=>`<text x="${sd==='L'?tx-6:tx+6}" y="${ty+i*17}" text-anchor="${sd==='L'?'end':'start'}" font-size="14.5">${esc(l)}</text>`).join('')); }); });
+  const addr=[val('address'),(val('cityManual')||val('city')||'')].filter(Boolean).join(', ');
+  return `<svg viewBox="0 0 1600 930" width="100%" class="ws-b">
+    ${sheetHead('TYPICAL WALL SECTION','A-6',1600)}
+    <text x="1180" y="66" text-anchor="middle" font-size="17" font-weight="800" font-style="italic" font-family="Georgia,serif">"All lumber SPF #2 or better unless otherwise noted"</text>
+    <g font-family="${F}">${rows}</g>
+    <g font-family="${F}">${g.join('')}${cl.join('')}</g>
+    <text x="1180" y="912" text-anchor="middle" font-size="14" font-weight="700">ADDRESS: ${esc(addr.toUpperCase())}</text>
+    <text x="1590" y="912" text-anchor="end" font-size="11">TYPICAL DETAIL — NOT TO SCALE.</text>
   </svg>`;
 }
 function pageWallSection(){

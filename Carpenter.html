@@ -130,6 +130,66 @@ html,body{margin:0;min-height:100%;background:#e8edf3;color:var(--ink);font-fami
   .notes-row{grid-template-columns:1fr}
   .elev svg{height:220px}
 }
+
+/* ---- Carpenter info page (page 1) layout ---- */
+.cs-head{align-items:center;border-bottom:2px solid #10203a;padding-bottom:8px;margin-bottom:10px}
+.cs-title{font:800 18px/1 Arial,sans-serif;letter-spacing:.12em;color:#10203a}
+.cs-sec{margin:0 0 10px;break-inside:avoid;page-break-inside:avoid}
+.cs-sec>h4{margin:0 0 6px;padding:3px 8px;background:#10203a;color:#fff;font:800 11px/1.3 Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase;display:flex;align-items:center;gap:8px;print-color-adjust:exact;-webkit-print-color-adjust:exact}
+.cs-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 22px}
+.cs-grid3{grid-template-columns:1fr 1fr 1fr}
+.cf{display:grid;grid-template-columns:132px 1fr;align-items:end;gap:8px;min-height:24px}
+.cs-grid3 .cf{grid-template-columns:auto 1fr}
+.cf.wide{grid-column:1/-1}
+.cs-grid>*,.cf>*{min-width:0}.cv select{max-width:100%}
+.cl{font:800 11px/1.2 Arial,sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#334155;padding-bottom:3px}
+.cv{display:flex;align-items:flex-end;gap:8px;min-width:0;flex-wrap:wrap}
+.cv>input,.cv>select,.cv>textarea{flex:1;min-width:0;width:100%;border:0;border-bottom:1px solid #111;background:transparent;font:700 14px/1.25 "Times New Roman",Times,serif;color:#111;padding:1px 4px;outline:none}
+.cv input:focus,.cv select:focus{background:#fffbe6}
+.cv .choices{gap:14px;flex-wrap:wrap}
+.cv .cs-inl{flex:1 1 120px}
+.cs-sub{font:700 12px Times,serif;white-space:normal;overflow-wrap:anywhere}
+.cf.wide .cv>select{flex:0 1 220px}
+.cs-size{display:flex;align-items:flex-end;gap:8px}
+.cs-dim{display:flex;align-items:flex-end;gap:2px}
+.cs-dim select,.cs-dim input{width:80px;border:0;border-bottom:1px solid #111;background:transparent;font:700 14px Times,serif;text-align:center}
+.cs-x{font:800 14px Arial}
+.cs-back{border:1px solid #cbd5e1;background:#f8fafc;border-radius:6px;font-size:12px;padding:0 6px;cursor:pointer}
+.cs-dim.is-custom select{display:none}.cs-dim:not(.is-custom) input{display:none}.cs-dim:not(.is-custom) .cs-back{display:none}
+.cs-collect .cv input{font:800 22px/1.1 "Times New Roman",Times,serif;border-bottom:2px solid #111}
+.collect.cs-collect{display:block;text-align:left;min-width:0;font-size:inherit}
+.collect.cs-collect .crow{display:grid;justify-content:stretch}
+.collect.cs-collect .crow input{width:100%}
+.cs-sec .notes-row textarea{min-height:56px}
+.cs-sum{display:none}
+.cs-tools{display:none}
+@media screen and (max-width:700px){
+  .cs-grid,.cs-grid3{grid-template-columns:1fr}
+  .cf,.cs-grid3 .cf{grid-template-columns:1fr;gap:2px}
+  .cv>input,.cv>select,.cv>textarea,.cs-dim select,.cs-dim input{font-size:16px!important;min-height:44px}
+  .cs-dim select,.cs-dim input{width:96px}
+  .cs-back{min-height:44px;min-width:44px}
+  .cv .circ{min-height:44px;padding:0 4px;font-size:15px}
+  .cv .choices{gap:6px 16px}
+  .cs-sec>h4{min-height:44px;font-size:13px;cursor:pointer;user-select:none;border-radius:6px}
+  .cs-sec>h4::after{content:"▾";margin-left:auto;font-size:16px;transition:transform .15s}
+  .cs-sec.cs-closed>h4::after{transform:rotate(-90deg)}
+  .cs-sec.cs-closed>:not(h4){display:none!important}
+  .cs-sec.cs-closed .cs-sum{display:block!important;font:600 13px/1.3 Arial,sans-serif;color:#475569;padding:2px 8px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cs-tools{display:flex;gap:8px;margin:0 0 10px}.cs-tools button{flex:1;min-height:44px;font:800 14px Arial;border:1px solid #cbd5e1;border-radius:8px;background:#f8fafc}
+  .cs-head{flex-wrap:wrap}
+  .shell>*,.paper-wrap,.paper{min-width:0;max-width:100%}
+  .cv select{width:100%}
+}
+@media print{
+  .cs-sec.cs-closed>:not(h4){display:revert!important}.cs-sum,.cs-tools,.cs-back{display:none!important}
+  .cs-sec>h4::after{content:none!important}
+  .cs-sec{margin-bottom:6px}.cs-grid{gap:2px 18px}.cf{min-height:20px}
+  .cv>input,.cv>select{font-size:13px!important}
+  .cs-dim.is-custom select{display:none!important}.cs-dim:not(.is-custom) input{display:none!important}
+  .cv select{appearance:none;-webkit-appearance:none;background-image:none!important}
+  .cv input::placeholder{color:transparent!important}
+}
 .offline-note{max-width:440px;margin:12vh auto;background:#fff7ed;border:1px solid #fdba74;padding:24px;font-family:Arial,sans-serif}
 </style>
 </head>
@@ -162,7 +222,7 @@ html,body{margin:0;min-height:100%;background:#e8edf3;color:var(--ink);font-fami
           <span>x</span>
           <input id="promptH" type="number" step="0.5" min="6" style="width:64px;padding:4px"/>
         </div>
-        <button class="primary" type="button" style="margin-top:8px;width:100%" onclick="confirmAddDoor()">Place door</button>
+        <button class="primary" type="button" style="margin-top:8px;width:100%" onclick="confirmAddDoor()" id="placeBtn">Place door</button>
       </div>
     </div>
     <div class="add-wrap" style="position:relative">
@@ -222,8 +282,8 @@ html,body{margin:0;min-height:100%;background:#e8edf3;color:var(--ink);font-fami
       <input id="shingleColor" placeholder="Shingle color" oninput="touch()"/>
       <label>Header</label>
       <div class="opts" id="headerOpts">
-        <button type="button" data-v="2-2x12 w/ 1/2 Flitchplate" onclick="setChoice('header','2-2x12 w/ 1/2 Flitchplate',this)">2-2x12 w/ ½ Flitchplate</button>
         <button type="button" data-v="2 LVL" class="on" onclick="setChoice('header','2 LVL',this)">2 LVL</button>
+        <button type="button" data-v="2-2x12 w/ 1/2 Flitchplate" onclick="setChoice('header','2-2x12 w/ 1/2 Flitchplate',this)">2-2x12 w/ ½ Flitchplate</button>
       </div>
       <label>Door jamb</label>
       <div class="opts" id="jambOpts">
@@ -289,7 +349,7 @@ html,body{margin:0;min-height:100%;background:#e8edf3;color:var(--ink);font-fami
     <div>
       <div class="paper-wrap">
         <div class="paper" id="paper">
-          <div class="brandline">
+          <div class="brandline cs-head">
             <div class="logo-box">
               <svg class="logo-mark" viewBox="0 0 48 48" aria-hidden="true">
                 <rect x="1" y="1" width="46" height="46" fill="#fff" stroke="#10203a" stroke-width="2"/>
@@ -298,17 +358,13 @@ html,body{margin:0;min-height:100%;background:#e8edf3;color:var(--ink);font-fami
               </svg>
               <div><b>ABSOLUTE</b><span>GARAGE BUILDERS</span></div>
             </div>
-            <div class="collect">
-              <div class="crow"><span>COLLECT LUMBER</span><input class="f" id="collectLumber"/></div>
-              <div class="crow"><span>COLLECT CARPENTRY</span><input class="f" id="collectCarpentry"/></div>
-            </div>
+            <div class="cs-title">CARPENTER TICKET</div>
           </div>
 
-          <div class="row"><span class="k">JOB DATE:</span><input class="f" id="jobDate"/></div>
-          <div class="split">
-            <div class="row"><span class="k">CARPENTER</span><input class="f" id="carpenter"/></div>
-            <div class="row"><span class="k">REP</span>
-              <select class="f" id="rep" onchange="onRepChange()" style="flex:0 0 130px;border:0;border-bottom:1px solid #111;background:transparent;font:700 14px Times,serif">
+          <section class="cs-sec"><h4>Job / Customer</h4><div class="cs-grid">
+            <div class="cf"><span class="cl">Job date</span><span class="cv"><input class="f" id="jobDate"/></span></div>
+            <div class="cf"><span class="cl">Carpenter</span><span class="cv"><input class="f" id="carpenter"/></span></div>
+            <div class="cf wide"><span class="cl">Rep</span><span class="cv"><select class="f" id="rep" onchange="onRepChange()">
                 <option value="">Select</option>
                 <option value="Sam">Sam</option>
                 <option value="Ramsey">Ramsey</option>
@@ -316,15 +372,11 @@ html,body{margin:0;min-height:100%;background:#e8edf3;color:var(--ink);font-fami
                 <option value="Tomaz">Tomaz</option><option value="Tomas" hidden>Tomaz</option>
                 <option value="Tom">Tom Milan</option>
                 <option value="Luis">Luis</option>
-              </select>
-              <span id="repContact" style="font:700 12px Times,serif;white-space:nowrap"></span>
-            </div>
-            <div class="row"><span class="k">CUSTOMER</span><input class="f" id="customer"/></div>
-            <div class="row"><span class="k">PHONE</span><input class="f" id="phone"/></div>
-          </div>
-          <div class="row"><span class="k">JOB ADDRESS</span><input class="f" id="address"/></div>
-          <div class="row"><span class="k">CITY</span>
-            <select class="f" id="citySel" onchange="onCitySel()" style="flex:1;border:0;border-bottom:1px solid #111;background:transparent;font:700 14px Times,serif">
+              </select><span id="repContact" class="cs-sub"></span></span></div>
+            <div class="cf"><span class="cl">Customer</span><span class="cv"><input class="f" id="customer"/></span></div>
+            <div class="cf"><span class="cl">Phone</span><span class="cv"><input class="f" id="phone" inputmode="tel"/></span></div>
+            <div class="cf wide"><span class="cl">Job address</span><span class="cv"><input class="f" id="address"/></span></div>
+            <div class="cf"><span class="cl">City</span><span class="cv"><select class="f" id="citySel" onchange="onCitySel()">
               <option value="">Select city</option>
         <option value="Chicago">Chicago, IL</option>
         <option value="Addison">Addison, IL</option>
@@ -413,98 +465,66 @@ html,body{margin:0;min-height:100%;background:#e8edf3;color:var(--ink);font-fami
         <option value="Grayslake">Grayslake, IL</option>
         <option value="Gurnee">Gurnee, IL</option>
               <option value="__manual__">Type city…</option>
-            </select>
-            <input class="f" id="city" placeholder="Type city" style="display:none;flex:1"/>
-          </div>
-          <hr class="rule"/>
+            </select><input class="f" id="city" placeholder="Type city" style="display:none"/></span></div>
+          </div></section>
 
-          <div class="row">
-            <span class="k">GARAGE SIZE</span>
-            <select class="f" id="sizeWSel" style="flex:0 0 90px;border:0;border-bottom:1px solid #111;background:transparent;font:700 14px Times,serif">
+          <section class="cs-sec"><h4>Garage size &amp; walls</h4><div class="cs-grid">
+            <div class="cf"><span class="cl">Garage size</span><span class="cv"><span class="cs-size"><span class="cs-dim"><select class="f" id="sizeWSel">
               <option value="">W</option><option>20</option><option>22</option><option>24</option><option>26</option><option>28</option><option>30</option><option>32</option><option value="custom">Custom</option>
-            </select>
-            <input class="f" id="sizeW" placeholder="" style="flex:0 0 54px;text-align:center"/>
-            <span class="k">X</span>
-            <select class="f" id="sizeLSel" style="flex:0 0 90px;border:0;border-bottom:1px solid #111;background:transparent;font:700 14px Times,serif">
+            </select><input class="f" id="sizeW" inputmode="decimal" placeholder="W"/><button type="button" class="cs-back no-print" data-for="sizeW" title="Pick from list" aria-label="Pick width from list">▾</button></span><b class="cs-x">×</b><span class="cs-dim"><select class="f" id="sizeLSel">
               <option value="">L</option><option>20</option><option>22</option><option>24</option><option>26</option><option>28</option><option>30</option><option>32</option><option value="custom">Custom</option>
-            </select>
-            <input class="f" id="sizeL" placeholder="" style="flex:0 0 54px;text-align:center"/>
-            <span class="k">PITCH</span><input class="f" id="pitchLine" placeholder="" style="flex:0 0 70px;text-align:center"/>
-          </div>
-          <div class="choice-row">
-            <span class="k">ROOF</span>
-            <span class="choices" id="roofCircles">
-              <span class="circ" data-v="Gable" onclick="setChoice('roof','Gable')"><i></i> GABLE</span>
-              <span class="circ" data-v="Reverse Gable" onclick="setChoice('roof','Reverse Gable')"><i></i> REV GABLE</span>
-              <span class="circ on" data-v="Hip" onclick="setChoice('roof','Hip')"><i></i> HIP</span>
-            </span>
-          </div>
+            </select><input class="f" id="sizeL" inputmode="decimal" placeholder="L"/><button type="button" class="cs-back no-print" data-for="sizeL" title="Pick from list" aria-label="Pick length from list">▾</button></span></span></span></div>
+            <div class="cf"><span class="cl">Wall height</span><span class="cv"><input class="f" id="wallHeight"/></span></div>
+            <div class="cf"><span class="cl">Studs (wall centers)</span><span class="cv"><input class="f" id="wallCenters"/></span></div>
+            <div class="cf"><span class="cl">Wall sheathing</span><span class="cv"><input class="f" id="wallSheath"/></span></div>
+          </div></section>
 
-          <div class="split">
-            <div class="row"><span class="k">OH DOORS</span><input class="f" id="ohDoors"/></div>
-            <div class="row"><span class="k">WALL HEIGHT</span><input class="f" id="wallHeight"/></div>
-          </div>
-          <div class="row">
-            <span class="k">RAFTERS</span><input class="f" id="rafters"/>
-            <span class="k">WALLCENTERS</span><input class="f" id="wallCenters"/>
-            <span class="k">CROSSTIES</span><input class="f" id="crossties"/>
-          </div>
-          <div class="choice-row">
-            <span class="k">EAVES</span>
-            <span class="choices" id="eaveCircles">
-              <span class="circ on" data-v="Realwood" onclick="setChoice('eaves','Realwood')"><i></i> REALWOOD</span>
-              <span class="circ" data-v="Aluminum" onclick="setChoice('eaves','Aluminum')"><i></i> ALUM</span>
-            </span>
-            <span class="k">COLOR</span><input class="f" id="eaveColorLine" style="flex:1;border:0;border-bottom:1px solid #111;font:700 14px Times,serif"/>
-          </div>
-          <div class="choice-row">
-            <span class="k">DOOR JAMB</span>
-            <span class="choices" id="jambCircles">
-              <span class="circ" data-v="Aluminum" onclick="setChoice('jamb','Aluminum')"><i></i> ALUM</span>
-              <span class="circ" data-v="Realwood" onclick="setChoice('jamb','Realwood')"><i></i> REALWOOD</span>
-            </span>
-            <span class="k">COLOR</span><input class="f" id="doorJambColor" style="flex:1;border:0;border-bottom:1px solid #111;font:700 14px Times,serif"/>
-          </div>
-          <div class="row">
-            <span class="k">WINDOWS: SINGLE HUNG</span><input class="f" id="winHung" style="flex:0 0 70px"/>
-            <span class="k">SLIDER</span><input class="f" id="winSlider" style="flex:0 0 70px"/>
-            <span class="k">OTHER</span><input class="f" id="winOther"/>
-          </div>
-          <div class="choice-row">
-            <span class="k">SIDING</span>
-            <span class="choices" id="sidingCircles">
-              <span class="circ on" data-v="D4" onclick="setChoice('siding','D4')"><i></i> D4</span>
-              <span class="circ" data-v="Dutchlap" onclick="setChoice('siding','Dutchlap')"><i></i> DUTCHLAP</span>
-              <span class="circ" data-v="Other" onclick="setChoice('siding','Other')"><i></i> OTHER</span>
-            </span>
-            <input class="f" id="sidingOther" placeholder="other siding type" style="flex:1;min-width:120px;border:0;border-bottom:1px solid #111;font:700 14px Times,serif"/>
-          </div>
-          <div class="row"><span class="k">COLOR</span><input class="f" id="sidingColorLine"/><span class="k">CORNERS</span><input class="f" id="corners"/></div>
-          <div class="row"><span class="k">WALL SHEATHING</span><input class="f" id="wallSheath"/><span class="k">ROOF SHEATHING</span><input class="f" id="roofSheath"/></div>
-          <div class="choice-row">
-            <span class="k">SHINGLES</span>
-            <span class="choices" id="shingleCircles">
-              <span class="circ on" data-v="ARCH" onclick="setChoice('shingles','ARCH')"><i></i> ARCH</span>
-              <span class="circ" data-v="3 TAB" onclick="setChoice('shingles','3 TAB')"><i></i> 3 TAB</span>
-            </span>
-            <span class="k">COLOR</span><input class="f" id="shingleColorLine" style="flex:1;border:0;border-bottom:1px solid #111;font:700 14px Times,serif"/>
-          </div>
-          <div class="choice-row">
-            <span class="k">HEADER</span>
-            <span class="choices" id="headerCircles">
-              <span class="circ" data-v="2-2x12 w/ 1/2 Flitchplate" onclick="setChoice('header','2-2x12 w/ 1/2 Flitchplate')"><i></i> 2-2x12 W/ ½ FLITCHPLATE</span>
-              <span class="circ on" data-v="2 LVL" onclick="setChoice('header','2 LVL')"><i></i> 2 LVL</span>
-            </span>
-          </div>
-          <div class="row"><span class="k">PATIO ROOF</span><input class="f" id="patioRoof"/></div>
-          <div class="row"><span class="k">PATIO ROOFPOSTS</span><input class="f" id="patioPosts"/><span class="k">CEILING FINISH</span><input class="f" id="ceiling"/></div>
-          <div class="notes-row">
-            <div>
-              <div class="row"><span class="k">NOTES:</span></div>
-              <textarea class="f" id="notes"></textarea>
-            </div>
-            <div class="bluebox"></div>
-          </div>
+          <section class="cs-sec"><h4>Doors</h4><div class="cs-grid">
+            <div class="cf wide"><span class="cl">OH doors</span><span class="cv"><input class="f" id="ohDoors"/></span></div>
+            <div class="cf"><span class="cl">Door jamb</span><span class="cv"><span class="choices" id="jambCircles"><span class="circ" data-v="Aluminum" onclick="setChoice('jamb','Aluminum')"><i></i> ALUM</span><span class="circ" data-v="Realwood" onclick="setChoice('jamb','Realwood')"><i></i> REALWOOD</span></span></span></div>
+            <div class="cf"><span class="cl">Jamb color</span><span class="cv"><input class="f" id="doorJambColor"/></span></div>
+            <div class="cf wide"><span class="cl">Header</span><span class="cv"><span class="choices" id="headerCircles"><span class="circ on" data-v="2 LVL" onclick="setChoice('header','2 LVL')"><i></i> 2 LVL</span><span class="circ" data-v="2-2x12 w/ 1/2 Flitchplate" onclick="setChoice('header','2-2x12 w/ 1/2 Flitchplate')"><i></i> 2-2x12 W/ ½ FLITCHPLATE</span></span></span></div>
+          </div></section>
+
+          <section class="cs-sec"><h4>Windows</h4><div class="cs-grid cs-grid3">
+            <div class="cf"><span class="cl">Single hung</span><span class="cv"><input class="f" id="winHung" inputmode="numeric"/></span></div>
+            <div class="cf"><span class="cl">Slider</span><span class="cv"><input class="f" id="winSlider" inputmode="numeric"/></span></div>
+            <div class="cf"><span class="cl">Other</span><span class="cv"><input class="f" id="winOther"/></span></div>
+          </div></section>
+
+          <section class="cs-sec"><h4>Roof</h4><div class="cs-grid">
+            <div class="cf wide"><span class="cl">Roof</span><span class="cv"><span class="choices" id="roofCircles"><span class="circ" data-v="Gable" onclick="setChoice('roof','Gable')"><i></i> GABLE</span><span class="circ" data-v="Reverse Gable" onclick="setChoice('roof','Reverse Gable')"><i></i> REV GABLE</span><span class="circ on" data-v="Hip" onclick="setChoice('roof','Hip')"><i></i> HIP</span></span></span></div>
+            <div class="cf"><span class="cl">Pitch</span><span class="cv"><input class="f" id="pitchLine"/></span></div>
+            <div class="cf"><span class="cl">Rafters</span><span class="cv"><input class="f" id="rafters"/></span></div>
+            <div class="cf"><span class="cl">Cross ties</span><span class="cv"><input class="f" id="crossties"/></span></div>
+            <div class="cf"><span class="cl">Roof sheathing</span><span class="cv"><input class="f" id="roofSheath"/></span></div>
+            <div class="cf"><span class="cl">Shingles</span><span class="cv"><span class="choices" id="shingleCircles"><span class="circ on" data-v="ARCH" onclick="setChoice('shingles','ARCH')"><i></i> ARCH</span><span class="circ" data-v="3 TAB" onclick="setChoice('shingles','3 TAB')"><i></i> 3 TAB</span></span></span></div>
+            <div class="cf"><span class="cl">Shingle color</span><span class="cv"><input class="f" id="shingleColorLine"/></span></div>
+            <div class="cf"><span class="cl">Eaves</span><span class="cv"><span class="choices" id="eaveCircles"><span class="circ on" data-v="Realwood" onclick="setChoice('eaves','Realwood')"><i></i> REALWOOD</span><span class="circ" data-v="Aluminum" onclick="setChoice('eaves','Aluminum')"><i></i> ALUM</span></span></span></div>
+            <div class="cf"><span class="cl">Eave color</span><span class="cv"><input class="f" id="eaveColorLine"/></span></div>
+            <div class="cf"><span class="cl">Eave length</span><span class="cv"><input class="f" id="eaveLength" placeholder="6&quot;"/></span></div>
+          </div></section>
+
+          <section class="cs-sec"><h4>Siding &amp; trim</h4><div class="cs-grid">
+            <div class="cf wide"><span class="cl">Siding</span><span class="cv"><span class="choices" id="sidingCircles"><span class="circ on" data-v="D4" onclick="setChoice('siding','D4')"><i></i> D4</span><span class="circ" data-v="Dutchlap" onclick="setChoice('siding','Dutchlap')"><i></i> DUTCHLAP</span><span class="circ" data-v="Other" onclick="setChoice('siding','Other')"><i></i> OTHER</span></span><input class="f cs-inl" id="sidingOther" placeholder="other siding type"/></span></div>
+            <div class="cf"><span class="cl">Siding color</span><span class="cv"><input class="f" id="sidingColorLine"/></span></div>
+            <div class="cf"><span class="cl">Corners</span><span class="cv"><input class="f" id="corners"/></span></div>
+          </div></section>
+
+          <section class="cs-sec"><h4>Extras</h4><div class="cs-grid cs-grid3">
+            <div class="cf"><span class="cl">Patio roof</span><span class="cv"><input class="f" id="patioRoof"/></span></div>
+            <div class="cf"><span class="cl">Patio roof posts</span><span class="cv"><input class="f" id="patioPosts"/></span></div>
+            <div class="cf"><span class="cl">Ceiling finish</span><span class="cv"><input class="f" id="ceiling"/></span></div>
+          </div></section>
+
+          <section class="cs-sec"><h4>Notes</h4>
+            <div class="notes-row"><div><textarea class="f" id="notes" aria-label="Notes"></textarea></div><div class="bluebox"></div></div>
+          </section>
+
+          <section class="cs-sec cs-collect collect"><h4>Collect</h4><div class="cs-grid">
+            <div class="cf crow"><span class="cl">Collect lumber</span><span class="cv"><input class="f" id="collectLumber" inputmode="decimal"/></span></div>
+            <div class="cf crow"><span class="cl">Collect carpentry</span><span class="cv"><input class="f" id="collectCarpentry" inputmode="decimal"/></span></div>
+          </div></section>
         </div>
       </div>
 
@@ -525,7 +545,7 @@ const ALLOWED=['randy','sam','samer','ramsey'];
 const ALLOWED_ROLES=['owner','business_manager','admin'];
 const CITY_BUILD = {"Addison": {"rafters": "2X6 16\" or 24\" OC W/ H CLIPS", "header": "2 LVL", "ties": "2\" x 6\" 16\" OC", "slab": "4\"", "notes": "Shear wall required if returns are less than 48\" Gutters required min setback from house 5' NO FIRE WALL Zoning is enforcing a residential rear yard lot coverage limit of 30% of th"}, "Algonquin": {"rafters": "2X6 24\" OC", "header": "2 2x6", "ties": "2\" x 6\" 48\" OC", "slab": "4\"", "notes": ""}, "Alsip": {"rafters": "2X6 24\" OC", "header": "3 2X12", "ties": "2X6 48\"OC", "slab": "4\" 5\"", "notes": ""}, "Antioch": {"rafters": "2X6 16\"OC OR 24\" W/H CLIPS", "header": "3 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "Need Sheer wall for returns under 32\" Need 5/8\" plywood roof sheathing Need asbestos report - $150 cost Need separate app for demo ASBESTOS TESTING REQUIRED"}, "Arlington Heights": {"rafters": "2X6 16\" OC", "header": "3 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "Siding must be installed with no greater than 6\" exposure of concrete wall Homeowner must put up $200 bond due to backfill requirements Driveways sold must be 3' from lot line if f"}, "Aurora": {"rafters": "2X6 16\" OC", "header": "2 LVL", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "REBAR IN FOOTINGS REQUIRED METAL ROOF EDGE CRIPPLE ALL OPENINGS HANGER FROM RIDGE TO TIES ANCHOR BOLTS TO CODE Have to drop off App in person"}, "Bannockburn": {"rafters": "2X6 16\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "5\"", "notes": "MUST CHECK WITH VILLAGE FOR ADDITIONAL CODES Current 7/20/2026"}, "Barrington": {"rafters": "2X6 24\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": ""}, "Barrington Hills": {"rafters": "2X6 24\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "REQUIRED: Architectural stamp for square footage of house: COST $500 ICE/WATER SHIELD OVERWEIGHT PERMITS ARE REQUIRED AND IN MARCH UNTIL APRIL OR MAY (DEPENDING ON WEATHER - HOW WE"}, "Bartlett": {"rafters": "2X6 2 X 8 16\" OC", "header": "3 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "Overhead door less than 16' wide can use 2 2 x 12 headers 5/8 plywood roof required with H clips"}, "Batavia": {"rafters": "2X6 16\"OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "Need to call J.U.L.I.E. to stake out utilities berfore permit will be issued."}, "Beach Park": {"rafters": "2X6 24\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "Topo survey costs $700"}, "Bedford Park": {"rafters": "2X6 24\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "5\"", "notes": "Gutters Required"}, "Beecher": {"rafters": "2X6 16\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": ""}, "Bellwood": {"rafters": "2X6 16\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "5\"", "notes": "1/2\" Plywood roof required Check all jobs if in flood plain Need F.E.M.A. certificate Must be 3' away from easement's No new garages will be approved within the floodway"}, "Belvidere": {"rafters": "2X6 16\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": ""}, "Bensenville": {"rafters": "2X6 16\" OC", "header": "3 2X12", "ties": "2X6 48\"OC", "slab": "5\"", "notes": "Sell 3 x 3 landing if service door is on a side wall"}, "Berkeley": {"rafters": "2X6 16\" OC", "header": "3 2X12", "ties": "2X6 48\"OC", "slab": "5\"", "notes": "Electrician must call for trench inspection before backfill. Must be rigid pipe underground."}, "Berwyn": {"rafters": "2X6 16\" OVER 22' WIDE 2 X 8 16\" OC", "header": "3 2 X 12", "ties": "2\" x 6\" 48\" OC", "slab": "4\"", "notes": "If lot is 50' wide Maximum size is 768' on lots less than 40' wide linit to 528 s.f. - patio roofs count to the size limit (an 18x22 w/ a 6' dise patio is ok) Can't go into yard mo"}, "Big Rock": {"rafters": "2X6 16\" OVER 22' WIDE 2 X 8 16\" OC", "header": "3 2 X 12", "ties": "2\" x 6\" 48\" OC", "slab": "4\"", "notes": ""}, "Bloomingdale": {"rafters": "2X6 16\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "1/2\" PLYWOOD ROOF ONLY No more than 1 garage per lot 30% max lot cvg. (everything counts)"}, "Blue Island": {"rafters": "2X6 16\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "If width of alley is: 14' 5' apron 15' 4' apron 16' 3' apron 17' 2' apron 18' 1' apron PLYWOOD WALLS & ROOF MUST HAVE HOUSE WRAP"}, "Bolingbrook": {"rafters": "2X6 24\" OC 1/2\" PLYWOOD H CLIPS", "header": "3 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "1/2\" PLYWOOD FLITCH PLATE IN BETWEEN SERVICE DOOR AND WINDOW HEADERS SELL DRIP EDGE FOR ROOF SELL HURRICANE TIES SELL DRIVEWAYS 3' OFF LOT LINE OR NEED VARIANCE"}, "Bourbonnais": {"rafters": "2X6 16\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": ""}, "Bradley": {"rafters": "2X6 24\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": ""}, "Braidwood": {"rafters": "2X6 24\" OC WITH H CLIPS", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": ""}, "Bridgeview": {"rafters": "2X6 16\" OC", "header": "2 LVL", "ties": "2X6 48\"OC", "slab": "5\"", "notes": "MAX SIZE: CANNOT EXCEED 26' IN LEGNTH AND 34' IN WIDTH SELL 1/2\" PLYWOOD WALLS AND ROOF NEED COPY OF CONTRACT WITH APPLICATION CAN'T HAVE 2 SERVICE DOORS"}, "Broadview": {"rafters": "2X6 24'OC W/ 1/2\" PLYWOOD ONLY", "header": "3 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "1/2\" PLYWOOD ROOF ONLY Submit copy of contract with application ALLEY JOBS MUST HAVE ADDRESS NUMBERS"}, "Brookfield": {"rafters": "2X6 16\" OC", "header": "3 2X12", "ties": "2X6 32\"OC", "slab": "5\"", "notes": "1/2\" PLYWOOD ON ROOF MAXIMUM SIZE GARAGE 625 SF to 10% of lot UNDER 50' LOT 440' SF Approved plans must be on site for prepour Put these specs. On all appl: wall ties and collar ti"}, "Buffalo Grove": {"rafters": "2X6 24\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "Sell wheel in all jobs or $500 fine Driveway 8' minimum OK to mail"}, "Burbank": {"rafters": "2X6 24\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "MUST HAVE WATER LEDGE ON ALL 4 SIDES OWNER MUST EMPTY GARAGE FOR RODENT ABATEMENT CHECK BEFORE PERMIT CAN BE ISSUED SELL 1/2\" PLYWOOD WALLS AND ROOFS NEED EPA PERMIT TO APPLY VAPOR"}, "Burnham": {"rafters": "2X6 24\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": ""}, "Burr Ridge": {"rafters": "2X6 16\"OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "DRIVEWAY'S 9' MINIMUM $5,000 cash bond"}, "Calumet City": {"rafters": "2X6 24\" OC WITH 5/8\"", "header": "3 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "NEED GRADES SET BY ROBINSON ENGINEERING COST $300 ANY ADDRESS SOUTH OF RIVER OAKS DRIVE COULD BE A FLOOD PLAIN WHICH REQUIRES SPECIAL SPECS. OK TO MAIL"}, "Calumet Park": {"rafters": "2X6 24\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "OK to mail IF RAFTERS ARE 24\" ON CENTER, MUST USE H CLIPS ON ROOF SHEETING"}, "Carol Stream": {"rafters": "2X6 16\" OC", "header": "3 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "ANY GARAGE OVER 400 SF NEEDS 42\" FOUNDATION. GUTTERS REQUIRED CAN ONLY HAVE 1 DRIVEWAY"}, "Carpentersville": {"rafters": "2X6 16\" OC", "header": "3 2 X 12", "ties": "2X6 48\"OC", "slab": "5\"", "notes": "NEED DRIVEWAY FORM IF ADDING ANYTHING MORE THAN 3' APRON If lot size is less than 7000 sq ft. max size garage is 550 sq ft. If lot is 7000 sq. ft., max size garage 750 sq. ft. 2 Ca"}, "Cary": {"rafters": "2X6 16\" OC", "header": "3 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "Minimum driveway width 10'"}, "Chicago Heights": {"rafters": "2X6 24\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "Minimum driveway width 8' EPA required"}, "Chicago Ridge": {"rafters": "2X8 16\" OC", "header": "3 - 2x12", "ties": "2X10 48\"OC", "slab": "4\"", "notes": "Plywood Roof and Walls Plywood wind bracing Minimum 8\" eaves Minimum 2\" x 10\" hip and ridge"}, "Cicero": {"rafters": "2\" X 6\" 16\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "5\"", "notes": "PARTY DOORS MAX 6FT WIDE ONLY Submit copy of contract with application Driveway's minimum 1' off lot line PLYWOOD ROOF RAT ABATEMENT MUST BE COMPLETED ON ALL JOBS **Setback excepti"}, "Clarendon Hills": {"rafters": "2X6 16\" O.C.", "header": "3 - 2X12", "ties": "2X6 48\"OC", "slab": "5\"", "notes": "HOMEOWNER MUST PAY FOR PERMITS MUST ALSO APPLY TO FLAGCREEK RECLAMATION DISTRICT FOR REPORT COST IS $50 FOR LOCATION OF UNDERGROUND SEWER LINES COST RECOVERY FORM MUST BE SIGNED BY"}, "Coal City": {"rafters": "2X6 24\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "5\"", "notes": ""}, "Country Club Hills": {"rafters": "2X6 24\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "HOUSE TO GARAGE 20' IF IN NO HILL AREA"}, "Countryside": {"rafters": "2X6 16\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "DRIVEWAYS 9' MINIMUM WIDTH IRC 2006 $5,000 cash permit bond (owner to post) 720 max s.f. Limit of combined accessory buildings (Detached garage and shed), max 15' to peak"}, "Crest Hill": {"rafters": "2X6 24\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "MUST EXCAVATE TO REMOVE ALL BLACK DIRT AND VEGETATION TELL CUSTOMER FOOTING MAY VARY IN PRICE OR HAVE CONCRETE MAN CHECK JOB BEFORE QUOTING PRICE. SELL HURRICANE TIES DRIVEWAY MINI"}, "Crestwood": {"rafters": "2X6 24\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "MAXIMUM LEGNTH 25' OVERHEAD DOOR HEIGHT NOT TO EXCEED 8'"}, "Crete": {"rafters": "2X6 24\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": ""}, "Crystal Lake": {"rafters": "2X6 24\" OC", "header": "2 LVL", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "SUBMIT COPY OF CONTRACT WITH APPLICATION H-CLIPS OF 24\"OC RAFTERS Hurricane Ties Required"}, "Darien": {"rafters": "2X6 24\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "MINIMUM DRIVEWAY WIDTH IS 12' 3 2x12 OH DOOR HEADER"}, "Des Plaines": {"rafters": "2X6 16\" OC", "header": "3 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "OSB walls and 5/8\" Plywood Roof 2- #5 continuous rebar in footing Des Plaines\u2019 roof sheathing code is 5/8\u201d thickness. OSB is fine for roof & walls OUTLET ON 3 WALLS REQUIRED. NEED "}, "Dixmoor": {"rafters": "2X6 24\"", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "Grades - Robinson Engineering cost $250 Use separate app for demo"}, "DeKalb": {"rafters": "2X6 16\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "IRC 2003"}, "DeKalb County": {"rafters": "2X6 16\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "IRC 2006 SPECS INCLUDING BRACED SHORT WALLS ALL ZONING SETBACKS TBD OVER 800 REQUIRES 42\" TRENCHED FOUNDATION"}, "Dolton": {"rafters": "2X6 24\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "5\"", "notes": "SIDEWALKS MUST BE 3' WIDE PLYWOOD BETWEEN ALL HEADERS"}, "Deerfield": {"rafters": "2X6 16\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "POTENTIAL LARGE FEE IF REMOVAL OF TREES CREATE ROOT DAMAGE SPOT SURVEY AFTER SLAB"}, "Deer Park": {"rafters": "2X6 16\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "POTENTIAL LARGE FEE IF REMOVAL OF TREES CREATE ROOT DAMAGE SPOT SURVEY AFTER SLAB"}, "Downers Grove": {"rafters": "2X6 16\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "5\"", "notes": "IF NEW GARAGE IS GOING IN THE SAME LOCATION, TOPO MAY NOT BE REQUIRED CHECK WITH VILLAGE. NEED 4 X 4 LANDING AT SERVICE DOOR IF ON SIDE WALL MUST SUBMIT STORMWATER FORM WITH APPLIC"}, "East Dundee": {"rafters": "2X6 24\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "MINIMUM DRIVEWAY WIDTH 10' ICE AND WATER SHIELD REQUIRED 3X3 SERVICE DOOR PAD OF ON SIDE WALK COPY OF CONSUMER RIGHTS"}, "East Hazel Crest": {"rafters": "2X6 24\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "DRIVEWAY MINIMUM WIDTH 9'"}, "Elburn": {"rafters": "2X6 24\" OC", "header": "3 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "DRIVEWAY MINIMUM WIDTH 12'"}, "Elk Grove Village": {"rafters": "2X6 24\" UP TO 20' THEN 16\" OC", "header": "2 LVL", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "SUBMIT 2 SURVEYS 1 WITH PROPOSED GARAGE, 1 WITHOUT 10' MINIMUM DRIVEWAY WIDTH 5/8\" PLYWOOD ROOF SHEATHING REQUIRED"}, "Elgin": {"rafters": "2X6 16\"OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "MAXIMUM OVERHANG 18\" ALL GARAGES OVER 484 SF NEEDS 42\" FOUNDATION IF IN HISTORICAL DISTRICT ROOF PITCH MUST BE AT LEAST 6/12 DRIP EDGE ON ROOF REQUIRED MINIMUM DRIVEWAY WIDTH 9' MA"}, "Elmhurst": {"rafters": "2X6 16\" OC", "header": "3 2 X 12", "ties": "2 2X6 48\"OC", "slab": "5\"", "notes": "1/2\" PLYWOOD WALLS REQUIRED 5/8\" PLYWOOD ROOF REQUIRED #240 LB SHINGLES REQUIRED Topo with grading plan $900 Permit $500 to $1,500 depending on amout of job If near Salt Creek or i"}, "Elmwood Park": {"rafters": "2X6 16\" OC", "header": "2 LVL", "ties": "2 2X6 48\"OC", "slab": "4\"", "notes": "Submit Copy Of Contract With Application REQUIRES REBAR IN FOOTING COST $300 SELLING $600"}, "Elwood": {"rafters": "2X6", "header": "TOPO SURVEY", "ties": "EPA REVIEW", "slab": "4\" 5\"", "notes": "See Will County Codes"}, "Evanston": {"rafters": "2X6 16\" OC", "header": "3 2X12", "ties": "2 2X6 48\"OC", "slab": "4\"", "notes": "SELL MINIMUM 2' RETURN WALLS TO AVOID SHEER WALL OK to mail SEND 3 COPIES OF PLANS AND PLAT. MAKE SURE NAME AND ADDRESS ON ALL FORMS"}, "Evergreen Park": {"rafters": "2X6 24\" OC", "header": "2 2X12", "ties": "2 2X6 48\"OC", "slab": "4\"", "notes": "VAPOR BARRIER MINIMUM DRIVEWAY WIDTH 9' Need Certification from Pest Control Co that garage doesn\u2019t have rodents and if it does, needs to be baited. Certification is $55/Baiting is"}, "Flossmoor": {"rafters": "2X6 16\" OC", "header": "3 2X12", "ties": "2X8 48\"OC", "slab": "5\"", "notes": "CANT HAVE MORE THAN 1 DRIVEWAY"}, "Ford Heights": {"rafters": "2X6 16\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "MUST BE 3' AWAY FROM ANY EASEMENT 1/2\" PLYWOOD WALLS & ROOF REQUIRED"}, "Forest Park": {"rafters": "2X6 24\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "MINIMUM DRIVEWAY WIDTH 9' IRC2009 CODE BOOK WITH AMENDMENT REQUIRING A 20\" X 10\" DEEP PERIMETER GRADE BEAM FOOTING, 6\" ABOVE GRADE MIN. (INSTEAD OF THE 12X12 THE BOOK SAYS) 5/8\" RO"}, "Forest View": {"rafters": "2X6 16\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "5\"", "notes": ""}, "Fox Lake": {"rafters": "2X6 16\" OC OVER 22' 2X8 16\"OC", "header": "2 LVL", "ties": "2X8 48\"OC", "slab": "5\"", "notes": "MINIMUM DRIVEWAY WIDTH 10' OK To mail app"}, "Fox River Grove": {"rafters": "2X6 24\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": ""}, "Frankfort": {"rafters": "2X6 16\"", "header": "TOPO SURVEY NO", "ties": "EPA REVIEW NO", "slab": "4\"", "notes": ""}, "Franklin Park": {"rafters": "2X6 16\" OC", "header": "3 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "MINIMUM DRIVEWAY WIDTH 10' SPACE ROOF/WALL SHEATHING 1/8\" 3 - 2X4 CORNERS OK to mail app 9-7-12 1/2\" CDX PLYWOOD ROOF MINIMUM 7/16 osb WALL IS OK"}, "Geneva": {"rafters": "2X6 16\" OC", "header": "2 LVL", "ties": "2 X 8 16\"OC", "slab": "4\"", "notes": "3X3 LANDING REQUIRED OUTSIDE SERVICE DOOR TREE PRESERVATION PLAN AND TREE FENCING IS REQUIRED"}, "Glencoe": {"rafters": "2X6 24\" OC", "header": "3 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "NEED TREE FENCE PROTECTION"}, "Glendale Heights": {"rafters": "2X6 24\" OC", "header": "3 2 X 12", "ties": "2 X 6 48\"OC", "slab": "4\"", "notes": "CAN ONLY HAVE 1 GARAGE"}, "Glen Ellyn": {"rafters": "2X6 16\" OC", "header": "2 2 X 12", "ties": "2 X 6 48\"OC", "slab": "4\"", "notes": "NEED TREE PRESERVATION FORM. HOMEOWNER CAN DO OR NEED ARBORIST TO COMPLETE. MUST SHOW WHERE TREES ARE ON SURVEY WHEN YOU DO 3' SETBACK YOU MUST GET SPOT SURVEY 300 s.f. or more new"}, "Glenview": {"rafters": "2X6 16\" OC", "header": "3 2 X 12", "ties": "2 X 6 48\"OC", "slab": "4\"", "notes": "Silt fencing to be installed 6' chain link fencing to be installed 1/2\" plywood walls and roof OK to mail 24\" O.C. RAFTERS O.K. CROSSTIES NEED TO BE SAME AS RAFTERS. 24\" O.C."}, "Glenwood": {"rafters": "2X6 16\" OC", "header": "2 2X12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": ""}, "Golf": {"rafters": "2X6 16\" OC", "header": "2 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": ""}, "Grayslake": {"rafters": "2X6 24\" OC", "header": "3 2 X 12", "ties": "2X6 48\"OC", "slab": "4\"", "notes": "MUST HAUL DIRT AWAY"}, "Gurnee": {"rafters": "2X6 16\" OC", "header": "3 2 X 12", "ties": "EPA REVIEW NO", "slab": "4\"", "notes": "MINIMUM DRIVEWAY WIDTH 12' Over 400 SQ needs stamped to scale acrhitectural drawing. Must add 3 x 3 landing with service door OVER 400 SQ REQUIRED 42' FOUNDATION"}};
 
-const FIELDS=['collectLumber','collectCarpentry','jobDate','carpenter','rep','customer','phone','address','city','citySel','sizeW','sizeL','ohDoors','wallHeight','rafters','wallCenters','crossties','doorJamb','doorJambColor','jambColor','winHung','winSlider','winOther','sidingColor','sidingColorLine','sidingOther','sidingOtherPanel','sidingDir','corners','wallSheath','roofSheath','shingleColor','shingleColorLine','eaveColor','eaveColorLine','patioRoof','patioPosts','ceiling','notes','pitch','pitchLine','ohWall','ohWidth','ohLeftRet','ohRightRet','svcWall','svcPos','svcOffset'];
+const FIELDS=['collectLumber','collectCarpentry','jobDate','carpenter','rep','customer','phone','address','city','citySel','sizeW','sizeL','ohDoors','wallHeight','rafters','wallCenters','crossties','doorJamb','doorJambColor','jambColor','winHung','winSlider','winOther','sidingColor','sidingColorLine','sidingOther','sidingOtherPanel','sidingDir','corners','wallSheath','roofSheath','shingleColor','shingleColorLine','eaveColor','eaveColorLine','eaveLength','patioRoof','patioPosts','ceiling','notes','pitch','pitchLine','ohWall','ohWidth','ohLeftRet','ohRightRet','svcWall','svcPos','svcOffset'];
 let sb=null, profile=null;
 let extraDoors=[], selectedId=null, texts=[], planTexts=[], planLabels={}, undoStack=[];
 function lbl(side,key,fallback){
@@ -607,6 +627,7 @@ function addDoorKind(kind){
   pendingDoorKind=kind==='party'?'party':'oh';
   const isParty=pendingDoorKind==='party';
   if($('doorPromptTitle')) $('doorPromptTitle').textContent=(isParty?'Party door':'Overhead door')+' size  ·  '+selectedView;
+  if($('placeBtn')) $('placeBtn').textContent='Place door';
   if($('promptW')) $('promptW').value=isParty?'6':'16';
   if($('promptH')) $('promptH').value='7';
   if($('doorPrompt')) $('doorPrompt').style.display='block';
@@ -636,6 +657,7 @@ function addWindowKind(kind){
   pendingDoorKind=kind==='slider'?'slider':'hung';
   const slider=pendingDoorKind==='slider';
   if($('doorPromptTitle')) $('doorPromptTitle').textContent=(slider?'Sliding window':'Single hung window')+' size  ·  '+selectedView;
+  if($('placeBtn')) $('placeBtn').textContent='Place window';
   if($('promptW')) $('promptW').value=slider?'4':'2';
   if($('promptH')) $('promptH').value=slider?'3':'4';
   if($('doorPrompt')) $('doorPrompt').style.display='block';
@@ -1492,8 +1514,8 @@ const AGB_PULL_CFG={client:()=>sb,
   {k:'notes',label:'Notes (added to ticket notes)',multi:true,cur:()=>g('notes'),from:R=>{const t=st(R);const p=[];
     const ev=t.eavesSize==='manual'?t.manualEavesSize:t.eavesSize;if(ev)p.push('Eaves '+ev+'"');if(yes(t.overhangEnabled))p.push('Overhang '+(t.overhangSize||'')+'" '+(t.overhangMaterial==='aluminum'?'aluminum':'LP'));
     const n=(R.doors||[]).length;const oq=Number(t.openerQty)||0;const ex=Number(t.addlOpenersInput)||0;if(oq||ex)p.push('Openers: '+(oq+ex)+' × LiftMaster '+(t.openerType||'2200'));
-    if(t.overheadDoorStyle)p.push('OH style '+t.overheadDoorStyle+(yes(t.ohInsulated)?' insulated':''));if(n)p.push(n+' overhead door(s)');
-    if(yes(t.gutters))p.push('Gutters: seamless');const e=elec(R);if(e)p.push(e);if(t.firewallWalls&&t.firewallWalls!=='none')p.push('Firewall: '+t.firewallWalls);
+    if(t.overheadDoorStyle)p.push((/raised/i.test(t.overheadDoorStyle)?'Overhead door raised panel steel':'Overhead door '+t.overheadDoorStyle)+(yes(t.ohInsulated)?' insulated':''));if(n)p.push(n+' overhead door(s)');
+    if(yes(t.gutters))p.push('Gutters yes; seamless');const e=elec(R);if(e)p.push(e);{const fw=String(t.firewallWalls||'').trim();if(fw&&!/^(none|no|0+|zero|false)$/i.test(fw)&&!(Number.isFinite(+fw)&&+fw<=0))p.push('Firewall: '+fw);}
     if(t.doorType)p.push('Service door: '+t.doorType+(t.serviceDoorLocation?' ('+t.serviceDoorLocation+')':''));return p.join('\n')},
    set:v=>{const cur=g('notes');s('notes',cur&&!cur.includes(v)?cur+'\n'+v:v)}}
  ]})(),
@@ -1554,7 +1576,7 @@ function carpScanMap(o){const f=o.fields||{},g=k=>String(f[k]||'').trim(),R={set
   // notes: carpentry only
   const svd=g('service_doors');if(svd)R.notes.push('Service door: '+svd);
   const el=[g('electrical'),g('notes'),g('extras'),g('other')].join('; ');const cl=el.match(/(\d+)?\s*(?:\(\s*\d+\s*\)\s*)?coach\s*lights?/i);if(cl)R.notes.push('Coach lights'+(cl[1]?': '+cl[1]:'')+' (mount blocks)');
-  const gu=g('gutters');if(gu){if(/^no\b/i.test(gu)){R.gutters=false;R.notes.push('No gutters')}else{R.gutters=true;R.notes.push('Gutters: '+gu)}}
+  const gu=g('gutters');if(gu){if(/^no\b/i.test(gu)){R.gutters=false}else{R.gutters=true;R.notes.push('Gutters yes; seamless')}}
   // collect carpentry = the 'after built' / 'after carpentry' stage
   const st=(o.payment_schedule||[]).find(p=>/after\s*(built|carpentry|framing)|carpentry|framing/i.test(String(p.stage||''))&&p.amount!=null);if(st)R.set.collectCarpentry='$'+Number(st.amount).toLocaleString('en-US');
   return R}
@@ -1623,13 +1645,53 @@ async function carpSaveState(jobId){jobId=jobId||carpJobId();if(!sb||!jobId)retu
     const {error}=await sb.from('carpenter_sheets').upsert({job_id:jobId,state:st,updated_at:new Date().toISOString(),updated_by:user?user.id:null},{onConflict:'job_id'});
     if(error)return {error:error.message};window.carpStateSavedAt=Date.now();return {ok:true}}catch(e){return {error:String(e.message||e)}}}
 async function carpLoadState(jobId){if(!sb||!jobId)return null;try{const {data,error}=await sb.from('carpenter_sheets').select('state,updated_at').eq('job_id',jobId).maybeSingle();if(error||!data||!data.state)return null;return data}catch(e){return null}}
-function carpRestoreState(st){applySnap(st);try{fitNotes()}catch(e){}makePlans();persist()}
+function carpRestoreState(st){applySnap(st);fillIfEmpty('eaveLength','6"');try{fitNotes()}catch(e){}makePlans();persist()}
 /* order: contract-scan hand-off > saved sheet for this job > job prefill */
-function carpBoot(){const scan=carpScanPending();if(scan)return carpApplyScan(scan);
-  const jid=new URLSearchParams(location.search).get('jobId');const prefill=()=>carpApplyJobPrefill().then(ok=>{if(ok)makePlans()}).catch(e=>console.warn('carp prefill',e));
+/* New sheets only (not a restored saved sheet): fill blanks after estimate / scan / job prefill have run. */
+/* 3-car = the overhead-door wall is 30 ft or longer (no separate 3-car flag exists on jobs/estimates). */
+function carpIs3Car(){try{return wallLengthFor(val('ohWall')||'FRONT')>=30}catch(e){return (parseFloat(val('sizeW'))||0)>=30}}
+function carpNewSheetDefaults(){fillIfEmpty('rafters','2x6 16" O.C.');fillIfEmpty('crossties','2x6 48" O.C.');fillIfEmpty('wallCenters','2x4 16" O.C.');fillIfEmpty('eaveLength','6"');
+  if(!String(val('ohDoors')||'').trim()){const three=carpIs3Car();$('ohDoors').value=three?'16 x 7 + 8 x 7':'16 x 7';
+    if(three&&!extraDoors.some(d=>d.kind==='oh')){const wall=val('ohWall')||'FRONT';extraDoors.push({id:'oh3car',wall,w:8,h:7,kind:'oh',x:freeSpot(wall,8),visW:null,visH:null})}}
+  if(!String(val('wallHeight')||'').trim()){const m=String(val('ohDoors')||'').match(/\d+(?:\.\d+)?\s*[x×]\s*(\d+(?:\.\d+)?)/g)||[];const hs=m.map(x=>parseFloat(x.split(/[x×]/)[1])||0);const ohH=hs.length?Math.max(...hs):7;$('wallHeight').value=(ohH>=8?ohH+1:8)+"'"}
+  try{renderDoorList()}catch(e){}try{makePlans()}catch(e){}try{persist()}catch(e){}}
+function carpBoot(){const scan=carpScanPending();if(scan){const r=carpApplyScan(scan);Promise.resolve(r).then(carpNewSheetDefaults,carpNewSheetDefaults);return r}
+  const jid=new URLSearchParams(location.search).get('jobId');const prefill=()=>carpApplyJobPrefill().then(ok=>{if(ok)makePlans()}).catch(e=>console.warn('carp prefill',e)).then(carpNewSheetDefaults);
   if(!jid)return prefill();
   carpLoadState(jid).then(row=>{if(row){carpRestoreState(row.state);carpScanBar('Saved sheet for this job ('+new Date(row.updated_at).toLocaleString()+') — edit, then tap Save PDF to job.')}
     else{prefill();carpScanBar('Built from this job — fill it in, then tap Save PDF to job.')}})}
 (function(){const prev=applyChanges;applyChanges=function(){const r=prev.apply(this,arguments);if(carpJobId())carpSaveState().then(x=>{if(x.error)alert('Sheet not saved to the job: '+x.error)});return r}})();
+</script><script>
+/* Carpenter info page: show garage size once (custom if set, else the list size); mobile collapsible sections */
+(function(){
+  const pair=[['sizeWSel','sizeW'],['sizeLSel','sizeL']];
+  function sizeVis(){pair.forEach(([sid,iid])=>{const sel=document.getElementById(sid),inp=document.getElementById(iid);if(!sel||!inp)return;const box=sel.closest('.cs-dim');if(!box)return;
+    const v=String(inp.value||'').trim();const opt=[...sel.options].find(o=>o.value&&o.value!=='custom'&&o.value===v);
+    if(sel.value==='custom'||(v&&!opt)){box.classList.add('is-custom')}else{box.classList.remove('is-custom');if(opt&&sel.value!==opt.value)sel.value=opt.value}})}
+  function wire(){pair.forEach(([sid,iid])=>{const sel=document.getElementById(sid),inp=document.getElementById(iid);if(!sel||!inp||sel.dataset.csw)return;sel.dataset.csw=1;
+    sel.addEventListener('change',()=>{if(sel.value&&sel.value!=='custom'){inp.value=sel.value}sizeVis();if(sel.value==='custom')setTimeout(()=>inp.focus(),0);try{touch()}catch(e){}});
+    inp.addEventListener('input',sizeVis)});
+    document.querySelectorAll('.cs-back').forEach(b=>{if(b.dataset.csw)return;b.dataset.csw=1;b.addEventListener('click',()=>{const id=b.dataset.for,sel=document.getElementById(id+'Sel'),inp=document.getElementById(id);inp.value='';sel.value='';sel.closest('.cs-dim').classList.remove('is-custom');sel.focus()})})}
+  const KEY='agbCarpSecOpen';const st=(()=>{try{return JSON.parse(sessionStorage.getItem(KEY)||'{}')}catch(e){return {}}})();
+  const mob=()=>matchMedia('(max-width:700px)').matches;
+  function summary(sec){const parts=[];sec.querySelectorAll('.cf').forEach(cf=>{const l=(cf.querySelector('.cl')||{}).textContent||'';let v='';const on=cf.querySelector('.circ.on');if(on)v=on.textContent.trim();
+      const vals=[...cf.querySelectorAll('input,select,textarea')].filter(e=>e.offsetParent!==null||sec.classList.contains('cs-closed')).filter(e=>!(e.closest('.cs-dim')&&((e.tagName==='SELECT')===e.closest('.cs-dim').classList.contains('is-custom')))).map(e=>e.tagName==='SELECT'?(e.value&&e.value!=='custom'?e.options[e.selectedIndex].text:''):String(e.value||'').trim()).filter(Boolean);
+      if(vals.length)v=[v,vals.join(cf.querySelector('.cs-size')?' × ':' ')].filter(Boolean).join(' ');if(v)parts.push(l+': '+v)});
+    const ta=sec.querySelector('textarea');if(ta&&ta.value.trim())parts.push(ta.value.trim().split('\n')[0]);return parts.join(' · ')||'Nothing entered'}
+  function upd(sec){let s=sec.querySelector('.cs-sum');if(!s){s=document.createElement('div');s.className='cs-sum';sec.querySelector('h4').after(s)}s.textContent=summary(sec)}
+  function setup(){const secs=[...document.querySelectorAll('#paper .cs-sec')];if(!secs.length)return;
+    if(!document.querySelector('.cs-tools')){const t=document.createElement('div');t.className='cs-tools no-print';t.innerHTML='<button type="button" data-a="open">Expand all</button><button type="button" data-a="close">Collapse all</button>';document.querySelector('#paper .cs-head').after(t);
+      t.addEventListener('click',e=>{const a=e.target.dataset.a;if(!a)return;secs.forEach((sec,i)=>{sec.classList.toggle('cs-closed',a==='close');st[i]=a==='open';upd(sec)});try{sessionStorage.setItem(KEY,JSON.stringify(st))}catch(e){}})}
+    secs.forEach((sec,i)=>{const h=sec.querySelector('h4');h.setAttribute('role','button');h.tabIndex=0;
+      const toggle=()=>{if(!mob())return;sec.classList.toggle('cs-closed');st[i]=!sec.classList.contains('cs-closed');upd(sec);h.setAttribute('aria-expanded',String(st[i]));try{sessionStorage.setItem(KEY,JSON.stringify(st))}catch(e){}};
+      h.addEventListener('click',toggle);h.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();toggle()}});
+      const open=st[i]!=null?st[i]:i===0;if(mob())sec.classList.toggle('cs-closed',!open);h.setAttribute('aria-expanded',String(!sec.classList.contains('cs-closed')));upd(sec)});
+    document.addEventListener('input',e=>{const sec=e.target.closest&&e.target.closest('.cs-sec');if(sec)upd(sec)});
+    matchMedia('(max-width:700px)').addEventListener('change',()=>secs.forEach((sec,i)=>{sec.classList.toggle('cs-closed',mob()&&!(st[i]!=null?st[i]:i===0));upd(sec)}))}
+  function go(){wire();sizeVis();setup()}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',go);else go();
+  setInterval(()=>{sizeVis();if(mob())document.querySelectorAll('#paper .cs-sec.cs-closed').forEach(upd)},700);
+  addEventListener('beforeprint',sizeVis);
+})();
 </script></body>
 </html>

@@ -62,6 +62,16 @@ button{border:0;border-radius:7px;padding:8px 10px;font-weight:800;cursor:pointe
 .notes-col li{margin:0 0 4px}
 .split{display:grid;grid-template-columns:1.05fr .95fr;gap:10px;align-items:start}
 .elevpage{display:block;min-height:8.8in}
+.sheet.elev4{height:11in}
+.elev4-grid{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:6px;position:absolute;left:14px;right:14px;top:10px;bottom:108px}
+.elev4-cell{border:1px solid #111;min-width:0;min-height:0;overflow:hidden;display:flex}
+.elev4-cell>*{flex:1;min-width:0;min-height:0}
+.elev4-svg,.elev4-svg>div{width:100%;height:100%}
+.elev4-svg svg.elev-d{display:block;width:100%;height:100%}
+.elev4 .ai-elev{min-height:0;height:100%}.elev4 .ai-elev img{max-height:100%}
+.elev4 .elevpage{min-height:0}
+.elev4 svg.elev-d text[font-size="9"],.elev4 svg.elev-d text[font-size="10"]{font-size:11.5px}
+
 .ai-elev{display:flex;align-items:center;justify-content:center;background:#fff;min-height:8.4in;padding:8px}
 .ai-elev img{max-width:100%;max-height:8.3in;object-fit:contain;background:#fff}
 .sched{border:1.5px solid #111;width:100%;border-collapse:collapse;font-size:12px;margin-top:8px}
@@ -1212,13 +1222,12 @@ function applyJobRules(){
   return {r,brace,fire};
 }
 function needsBraceDetail(){ return computeBraceRequired(); }
-function sheetTotal(){ return 9+(needsBraceDetail()?1:0)+(computeFirewallRequired()?1:0); }
+function sheetTotal(){ return 6+(needsBraceDetail()?1:0)+(computeFirewallRequired()?1:0); }
 function packetChecklistHTML(){
   const items=[
     ['Floor plan','yes'],
     ['Roof plan','yes'],
-    ['Front / rear elevations','yes'],
-    ['Left / right elevations','yes'],
+    ['Exterior elevations — front / rear / left / right (one sheet, 2x2)','yes'],
     ['Building section','yes'],
     ['Foundation / footing / slab','yes — village concrete'],
     ['Brace / PFG sheet', needsBraceDetail()?'yes — this village + these returns':'no — not required on this job'],
@@ -2376,17 +2385,54 @@ function pageFoundation(){
   </section>`;
 }
 function pageElevations(){
-  const views=[['front','FRONT','2'],['back','REAR','3'],['left','LEFT','4'],['right','RIGHT','5']];
-  const photos=window._planAiPhotos||{};
-  return views.map(([view,title,num])=>{
-    const url=photos[view];
-    const body=aiOr(view,()=>`<div class="elevpage">${elevLarge(view,title)}</div>`,title+' elevation',true);
-    return `<section class="${sheetClass()}">
-    ${body}
-    ${tblock(title+' ELEVATION', num, String(sheetTotal()))}
-  </section>`;
+  // MOCKUP: all 4 elevations on one 11x17 sheet, 2x2 grid
+  const views=[['front','FRONT'],['back','REAR'],['left','LEFT'],['right','RIGHT']];
+  const cells=views.map(([view,title])=>{
+    const body=aiOr(view,()=>`<div class="elev4-svg">${elevLarge(view,title).replace('viewBox="0 0 900 640" width="100%" style="max-height:9.4in"','viewBox="8 4 884 630" preserveAspectRatio="xMidYMid meet" width="100%" height="100%"')}</div>`,title+' elevation',true);
+    return `<div class="elev4-cell">${body}</div>`;
   }).join('');
+  return `<section class="${sheetClass()} elev4">
+    <div class="elev4-grid">${cells}</div>
+    ${tblock('EXTERIOR ELEVATIONS — FRONT / REAR / LEFT / RIGHT','2',String(sheetTotal()))}
+  </section>`;
 }
+
+// 4-up elevation sheet: re-fit each elevation SVG to its 2x2 cell (tight drawing crop, cell aspect,
+// drop per-view boxes that duplicate the title block). Idempotent; if the sheet is hidden/off-screen
+// (no layout, getBBox empty) it uses the fixed 11x17 cell geometry and retries the crop later.
+const ELEV4_CELL_ASPECT=794/461; // fixed: 17in sheet, grid inset 14px, title gap 108px, 6px gutters
+function elev4Fit(){
+  document.querySelectorAll('section.elev4 .elev4-cell').forEach(cell=>{
+    const svg=cell.querySelector('svg.elev-d'); if(!svg || svg.dataset.fit==='1') return;
+    const cr=cell.getBoundingClientRect();
+    const asp=(cr.width>50&&cr.height>50)?cr.width/cr.height:ELEV4_CELL_ASPECT;
+    const inner=[...svg.children].find(e=>e.tagName==='svg');
+    let bb=null;
+    if(inner) [...inner.children].forEach(c=>{ try{ const b=c.getBBox(); if(!b.width&&!b.height) return; bb=bb?{x1:Math.min(bb.x1,b.x),y1:Math.min(bb.y1,b.y),x2:Math.max(bb.x2,b.x+b.width),y2:Math.max(bb.y2,b.y+b.height)}:{x1:b.x,y1:b.y,x2:b.x+b.width,y2:b.y+b.height}; }catch(e){} });
+    if(inner && !bb){ // no layout yet: aspect-only fallback (drawing keeps original size/scale bar stays true), retry later
+      if(!svg.dataset.vb0) svg.dataset.vb0=svg.getAttribute('viewBox');
+      svg.setAttribute('viewBox','8 4 884 630'); svg.dataset.fit='0'; return;
+    }
+    const H=622, W=Math.max(884, H*asp);
+    [...svg.children].forEach(el=>{ const y=Number(el.getAttribute('y')); if((el.tagName==='rect'||el.tagName==='text') && y>=584) el.remove(); });
+    [...svg.children].forEach(el=>{ if(el.tagName==='text' && el.getAttribute('x')==='884') el.setAttribute('x', String(W-16)); if(el.tagName==='line' && el.getAttribute('x2')==='884') el.setAttribute('x2', String(W-16)); });
+    let f=1;
+    if(inner){
+      const vb0=inner.viewBox.baseVal, s0=Number(inner.getAttribute('width'))/vb0.width;
+      const pd=6; inner.setAttribute('viewBox',[bb.x1-pd,bb.y1-pd,bb.x2-bb.x1+2*pd,bb.y2-bb.y1+2*pd].join(' '));
+      inner.setAttribute('x','16'); inner.setAttribute('y','48'); inner.setAttribute('width',String(W-32)); inner.setAttribute('height','532');
+      const vb1=inner.viewBox.baseVal; f=Math.min((W-32)/vb1.width,532/vb1.height)/s0;
+    }
+    const g=svg.querySelector('g.gscale');
+    if(g){ const r=g.querySelector('rect'), t=g.querySelectorAll('text'); const step=parseFloat(t[1]&&t[1].textContent)||1; const ppf=Number(r.getAttribute('width'))/step*f;
+      const tmp=document.createElementNS('http://www.w3.org/2000/svg','g'); tmp.innerHTML=scaleBar(0,596,ppf); const ng=tmp.firstElementChild; g.replaceWith(ng);
+      let bw=0; try{ bw=ng.getBBox().width; }catch(e){} if(!bw) bw=4*ppf*(parseFloat(ng.querySelectorAll('text')[1].textContent)||1);
+      ng.setAttribute('transform','translate('+(W/2-bw/2)+',0)'); }
+    svg.setAttribute('viewBox','8 4 '+(W-16)+' '+H);
+    svg.dataset.fit='1';
+  });
+}
+window.addEventListener('beforeprint',()=>{try{elev4Fit()}catch(e){}});
 function pageDetail(){
   if(!needsBraceDetail()) return '';
   const m=braceMethod();
@@ -2921,6 +2967,7 @@ function buildPlans(scrollTo){
       wrap.appendChild(s);
     });
     try{ renumberSheets(); }catch(e){ console.warn('renumber',e); }
+    try{ elev4Fit(); }catch(e){ console.warn('elev4',e); }
     renderOverlay();
     try{ aiRenderAll(); }catch(e){ console.warn('ai overlay',e); }
     makeSheetTextEditable();
@@ -2932,6 +2979,7 @@ function buildPlans(scrollTo){
     if($('packetCheck')) $('packetCheck').innerHTML=packetChecklistHTML();
     requestAnimationFrame(()=>fitSheetsToPanel());
     setTimeout(fitSheetsToPanel, 80);
+    setTimeout(()=>{try{elev4Fit()}catch(e){}}, 120);
     if(scrollTo){
       const nSheets=document.querySelectorAll('#pages .sheet').length;
       setStatus('Generated '+nSheets+' sheet'+(nSheets===1?'':'s')+' for '+customerLabel()+' · '+cityName()+' · '+W+'×'+D+' · OH on '+(val('ohWall')||'front'), true);
@@ -3064,6 +3112,7 @@ function planFileName(){
 async function downloadPlansPdf(){
   if(!(await gpInfoOk()))return;
   if(!document.querySelector('.sheet')) buildPlans(true);
+  try{ elev4Fit(); }catch(e){}
   const sheets=[...document.querySelectorAll('#pages .sheet')];
   if(!sheets.length){ alert('Generate plans first.'); return; }
   setStatus('Building PDF…', true);

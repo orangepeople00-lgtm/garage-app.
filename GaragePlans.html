@@ -38,6 +38,7 @@ button{border:0;border-radius:7px;padding:8px 10px;font-weight:800;cursor:pointe
 .sheet{width:17in;min-height:11in;background:#fff;color:#111;border:1.6px solid #111;box-shadow:0 8px 24px #0002;position:relative;padding:14px 16px 100px;page-break-after:always;transform-origin:top left}
 .sheet.letter{width:17in;min-height:11in}
 .cover-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:12px;align-items:start}
+.cover-grid.cover-nosite{grid-template-columns:1fr 1fr}
 .codedata{border:1.5px solid #111;padding:8px 10px;font-size:12px}
 .codedata h3{margin:0 0 6px;font-size:13px}
 .codedata table{width:100%;border-collapse:collapse}
@@ -112,6 +113,7 @@ button{border:0;border-radius:7px;padding:8px 10px;font-weight:800;cursor:pointe
   .sheet{box-shadow:none;margin:0 auto;page-break-after:always;transform:none!important;width:17in!important}
   .sheet.letter{width:17in!important;min-height:11in!important}
   .sheet{zoom:.92}
+  #pages .sheet{height:11in!important;min-height:0!important;overflow:hidden!important}
   .main,.sheet-wrap,.sheet-fit,#pages{background:#fff!important}
   body.print-letter .sheet{zoom:.6}
 }
@@ -170,6 +172,7 @@ button{border:0;border-radius:7px;padding:8px 10px;font-weight:800;cursor:pointe
 .ps-floor-grid{display:grid;grid-template-columns:11in minmax(0,1fr);gap:14px;align-items:start}
 .ps-floor-grid .draw-host{width:11in}
 .ps-floor-side>*:first-child{margin-top:0}
+.fp-below{display:grid;grid-template-columns:1.4fr 1fr;gap:10px;margin-top:8px;align-items:start}.fp-below .codedata{margin:0 0 8px}
 .ps-roof-grid{display:grid;grid-template-columns:minmax(0,1fr) 8.2in;gap:14px;align-items:start}
 .ps-roof-grid>.ps-roof-col{grid-column:2;grid-row:1}.ps-roof-grid>.ps-sect-col{grid-column:1;grid-row:1}
 .ps-roof-notes{display:grid;grid-template-columns:1.25fr 1fr;gap:10px;align-items:start}.ps-roof-notes>*{margin-top:6px!important}
@@ -359,6 +362,8 @@ body.oh-unconf #pages .sheet::after{content:'⚠ OVERHANG WALLS NOT CONFIRMED �
   <div class="row2"><div><label>House</label><input id="setHouse"></div><div><label>Side</label><input id="setSide"></div></div>
   <div class="row2"><div><label>Rear (alley)</label><input id="setRearA"></div><div><label>Rear (no alley)</label><input id="setRearN"></div></div>
   <div class="row2"><div><label>Corner</label><input id="setCorner"></div><div><label>Front</label><input id="setFront"></div></div>
+  <div class="small" style="margin:6px 0">Site plan is drawn in the Drawing App (Proposed Site Plan) with the plat.</div>
+  <div id="gpSiteLegacy" hidden>
   <label>Site plan (actual distances, ft)</label>
   <div class="row2"><div><label>Lot width</label><input id="lotW" type="number" min="0" placeholder="30"></div><div><label>Lot depth</label><input id="lotD" type="number" min="0" placeholder="125"></div></div>
   <div class="row2"><div><label>Garage to side lot line</label><input id="distSide" type="number" min="0" step="0.5" placeholder="3"></div><div><label>Which side</label><select id="sideRef"><option value="left">Left</option><option value="right">Right</option></select></div></div>
@@ -366,6 +371,7 @@ body.oh-unconf #pages .sheet::after{content:'⚠ OVERHANG WALLS NOT CONFIRMED �
   <div class="row2"><div><label>Alley at rear</label><select id="alley"><option value="yes">Yes</option><option value="no">No</option></select></div><div class="alleyOnly"><label>Garage to alley (ft)</label><input id="distAlley" type="number" min="0" step="0.5" value="3"></div></div>
   <div class="row2 alleyOnly"><div><label style="display:flex;gap:6px;align-items:center"><input id="siteApron" type="checkbox" checked style="width:20px;height:20px"> Concrete apron to alley</label></div><div><label>Apron length (ft)</label><input id="siteApronFt" type="number" min="0" step="0.5" value="3"></div></div>
   <div class="row2 alleyOnly"><div><label>Apron width (ft)</label><input id="siteApronW" type="number" min="0" step="0.5" placeholder="= garage width"></div><div><label>Apron offset (ft, − left / + right)</label><input id="siteApronOff" type="number" step="0.5" placeholder="0 = centered"></div></div>
+  </div>
   <label>Foundation</label>
   <div class="row2">
     <div><label>Footing</label><input id="footing" placeholder='12" x 12"'></div>
@@ -1222,7 +1228,7 @@ function applyJobRules(){
   return {r,brace,fire};
 }
 function needsBraceDetail(){ return computeBraceRequired(); }
-function sheetTotal(){ return 6+(needsBraceDetail()?1:0)+(computeFirewallRequired()?1:0); }
+function sheetTotal(){ return 5+(needsBraceDetail()?1:0)+(computeFirewallRequired()?1:0); }
 function packetChecklistHTML(){
   const items=[
     ['Floor plan','yes'],
@@ -1607,8 +1613,8 @@ function pageFloorSection(){
   window._fpGeo=null; window._fpScale=null;
   return `<section class="${sheetClass()}">
     <div class="ps-floor-grid">
-      <div class="draw-host" id="floorHost">${aiOr('floor',()=>floorPlanSvg(),'Floor plan')}<div class="overlay" id="floorOverlay"></div></div>
-      <div class="ps-floor-side">${floorKeyHTML()}${conformCodesHTML()}${doorScheduleHTML()}${floorLegendHTML()}${val('electricNotes')?`<div class="elecbox notes-col"><h3>JOB ELECTRICAL NOTES</h3><ul>${val('electricNotes').split(/\n+/).filter(Boolean).map(t=>'<li>'+esc(t)+'</li>').join('')}</ul></div>`:''}${(()=>{const r=elecReq();const st=elecStatus(true);return `<div class="elecbox notes-col"><h3>${r?esc(r.city.toUpperCase())+' ELECTRICAL REQUIREMENTS':'CITY ELECTRICAL REQUIREMENTS'}</h3><ul>${elecCityRows().map(t=>'<li>'+esc(t)+'</li>').join('')}${st.warn.map(w=>'<li style="color:#b45309;font-weight:800">⚠ '+esc(w.toUpperCase())+'</li>').join('')}</ul></div>`})()}</div>
+      <div class="fp-left"><div class="draw-host" id="floorHost">${aiOr('floor',()=>floorPlanSvg(),'Floor plan')}<div class="overlay" id="floorOverlay"></div></div></div>
+      <div class="ps-floor-side">${floorKeyHTML()}${conformCodesHTML()}${doorScheduleHTML()}${floorLegendHTML()}${codeDataHTML(true)}<div class="codedata"><h3>SHEET INDEX</h3><table class="sheetindex"><tbody id="sheetIndexBody"></tbody></table></div><div class="codedata fp-sitenote"><h3>SITE PLAN</h3><div style="padding:4px 8px">SEE PROPOSED SITE PLAN ON PLAT OF SURVEY (SUBMITTED SEPARATELY). CONTRACTOR TO VERIFY ALL DIMENSIONS AND LOT LINES IN FIELD.</div></div>${val('electricNotes')?`<div class="elecbox notes-col"><h3>JOB ELECTRICAL NOTES</h3><ul>${val('electricNotes').split(/\n+/).filter(Boolean).map(t=>'<li>'+esc(t)+'</li>').join('')}</ul></div>`:''}${(()=>{const r=elecReq();const st=elecStatus(true);return `<div class="elecbox notes-col"><h3>${r?esc(r.city.toUpperCase())+' ELECTRICAL REQUIREMENTS':'CITY ELECTRICAL REQUIREMENTS'}</h3><ul>${elecCityRows().map(t=>'<li>'+esc(t)+'</li>').join('')}${st.warn.map(w=>'<li style="color:#b45309;font-weight:800">⚠ '+esc(w.toUpperCase())+'</li>').join('')}</ul></div>`})()}</div>
     </div>
     ${tblock('PROPOSED FLOOR PLAN','1',String(sheetTotal()),'AS NOTED')}
   </section>`;
@@ -2433,6 +2439,31 @@ function elev4Fit(){
   });
 }
 window.addEventListener('beforeprint',()=>{try{elev4Fit()}catch(e){}});
+
+// Fit each sheet's content into its 11x17 page (prevents spill-over blank pages). Measures by ratio to sheet width, so it works under screen scaling and print zoom; skipped when hidden.
+function sheetFit(){
+  document.querySelectorAll('#pages section.sheet').forEach(sec=>{
+    const r=sec.getBoundingClientRect(); if(!r.width) return; const px=r.width/1632; const avail=(1056-14-104)*px;
+    const parts=sec.classList.contains('elev4')?[]:[...sec.children].filter(k=>!k.classList.contains('tblock')&&!k.classList.contains('overlay'));
+    sec.querySelectorAll('.ps-roof-notes').forEach(n=>{ n.classList.remove('fit-scaled'); n.style.transform=''; n.style.width=''; n.style.marginBottom=''; n.style.transformOrigin=''; });
+    parts.forEach(k=>{ k.classList.remove('fit-scaled'); k.style.zoom=''; k.style.transform=''; k.style.transformOrigin=''; k.style.marginBottom=''; });
+    const top=r.top+14*px, bot=Math.max(0,...parts.map(k=>k.getBoundingClientRect().bottom));
+    const used=bot-top; if(used<=avail+1) return;
+    const z=Math.max(0.6,avail/used);
+    // floor sheet: shrink the taller column only
+    const side=sec.querySelector('.ps-floor-side'), left=sec.querySelector('.fp-left');
+    if(side&&left){ side.classList.remove('fit-scaled'); side.style.transform=''; side.style.width=''; side.style.transformOrigin=''; side.style.marginBottom='';
+      // never scale the floor plan drawing (it is drawn to a stated scale); shrink only the side column. transform (not zoom) so html2canvas/Download PDF renders it correctly
+      const hs=(side.getBoundingClientRect().bottom-top); if(hs>avail+1){ const z=Math.max(0.6,avail/hs), w=side.getBoundingClientRect().width/px; side.classList.add('fit-scaled'); side.dataset.fitz=z.toFixed(4); side.style.transformOrigin='top left'; side.style.width=(w/z).toFixed(1)+'px'; side.style.transform='scale('+z.toFixed(4)+')'; const h2=side.getBoundingClientRect().height/px/z; side.style.marginBottom=(-(h2*(1-z))).toFixed(1)+'px'; }
+      return; }
+    const notes=sec.querySelector('.ps-roof-notes');
+    if(notes){ // roof plan is drawn to a stated scale: shrink only the roof notes block
+      const over=used-avail, hn=notes.getBoundingClientRect().height, w=notes.getBoundingClientRect().width/px; const z2=Math.max(0.6,(hn-over)/hn);
+      notes.classList.add('fit-scaled'); notes.dataset.fitz=z2.toFixed(4); notes.style.transformOrigin='top left'; notes.style.width=(w/z2).toFixed(1)+'px'; notes.style.transform='scale('+z2.toFixed(4)+')'; const h2=notes.getBoundingClientRect().height/px/z2; notes.style.marginBottom=(-(h2*(1-z2))).toFixed(1)+'px'; return; }
+    parts.forEach(k=>{ const h=k.getBoundingClientRect().height/px; k.classList.add('fit-scaled'); k.dataset.fitz=z.toFixed(4); k.style.transformOrigin='top center'; k.style.transform='scale('+z.toFixed(4)+')'; k.style.marginBottom=(-(h*(1-z))).toFixed(1)+'px'; });
+  });
+}
+window.addEventListener('beforeprint',()=>{try{sheetFit()}catch(e){}});
 function pageDetail(){
   if(!needsBraceDetail()) return '';
   const m=braceMethod();
@@ -2736,7 +2767,8 @@ function verifiedCodeRows(){
   if(!isChicago() && !/unincorporated|^cook county/.test(n)) R.push(['Electrical','GARAGE RECEPTACLES GFCI PROTECTED (NEC 210.8)']);
   return R;
 }
-function codeDataHTML(){
+function ridgeHLabel(){ const H=Number(val('wallH'))||8, W=Number(val('width'))||22, D=Number(val('depth'))||24, r=val('roof'); const span=r==='hip'?Math.min(W,D):(r==='revgable'?D:W); const i=Math.round((H+span/2*pitchNum()/12)*12); return Math.floor(i/12)+"'-"+String(i%12).padStart(2,'0')+'"'; }
+function codeDataHTML(compact){
   const c=code()||{};
   const n=siteNums();
   const area=(Number(val('width'))||0)*(Number(val('depth'))||0);
@@ -2744,19 +2776,19 @@ function codeDataHTML(){
   const cap=c.height?parseFt(c.height):null;
   const rows=[
     ['Jurisdiction', (isChicago()?'CITY OF CHICAGO':((c.kind||'VILLAGE')+' OF '+(cityName()||'—').toUpperCase()))+(val('county')?' · '+val('county').toUpperCase()+' CO.':'')],
-    ['Code basis', codeBasisLines().join('<br>')],
+    compact?null:['Code basis', codeBasisLines().join('<br>')],
     ['Occupancy / use','GROUP U — PRIVATE GARAGE (DETACHED ACCESSORY)'],
     ['Construction type','TYPE VB — WOOD FRAME, SLAB ON GRADE'],
     ['Floor area', area+' SF'+(max&&max<2000?' (MAX '+esc(c.maxSize)+' SF)':'')+(isChicago()?' · EXPRESS PERMIT ≤ 600 SF':'')],
-    ['Height to ridge', ftLabel(totalH())+(cap?' (MAX '+esc(c.height)+')':'')],
+    ['Height to ridge', ridgeHLabel()+(cap?' (MAX '+esc(c.height)+')':'')],
     ['Roof', roofLabel()+' · '+pitchNum()+'/12'],
     ['Setbacks required', 'SIDE '+esc(val('setSide')||'—')+' · REAR '+esc((n.alley?val('setRearA'):val('setRearN'))||'—')+' · HOUSE '+esc(val('setHouse')||'—')],
-    ['Setbacks proposed', 'SIDE '+ftLabel(n.side)+' · REAR '+ftLabel(n.rear)+(n.house!=null?' · HOUSE '+ftLabel(n.house):'')],
+    ['Setbacks proposed', 'SEE PROPOSED SITE PLAN (PLAT OF SURVEY)'],
     ['Owner / PIN', esc(customerLabel())+' · PIN '+esc(val('pin')||'—')],
   ];
   if(isChicago()) rows.push(['Chicago notes','WALLS ≥ 2\'-0" FROM LOT LINES · EAVES/GUTTERS ≥ 20" FROM SIDE LOT LINES · SLAB ON GRADE · NO LOFT, PLUMBING OR HVAC']);
   verifiedCodeRows().forEach(r=>rows.push(r));
-  return `<div class="codedata"><h3>CODE DATA</h3><table>${rows.map(r=>`<tr><td>${esc(r[0])}</td><td>${r[1]}</td></tr>`).join('')}</table></div>`;
+  return `<div class="codedata"><h3>CODE DATA</h3><table>${rows.filter(Boolean).map(r=>`<tr><td>${esc(r[0])}</td><td>${r[1]}</td></tr>`).join('')}</table></div>`;
 }
 function pageCover(){
   return `<section class="${sheetClass()}" data-sheet="cover">
@@ -2765,18 +2797,19 @@ function pageCover(){
       <div style="font-size:13px;font-weight:700">${esc(jobTitleLine())} · ${esc(roofLabel())} ROOF${val('address')?' · '+esc(val('address')):''}</div></div>
       <div style="text-align:right;font-size:12px"><b>ABSOLUTE GARAGE BUILDERS</b><br>3050 W. IRVING PARK RD., CHICAGO, IL 60618<br>(773) 583-8800</div>
     </div>
-    <div class="cover-grid">
-      <div>${sitePlanSvg()}</div>
-      <div>${codeDataHTML()}
-        <div class="codedata" style="margin-top:10px"><h3>SHEET INDEX</h3><table class="sheetindex"><tbody id="sheetIndexBody"></tbody></table></div>
+    <div class="cover-grid cover-nosite">
+      <div>${codeDataHTML()}</div>
+      <div>
+        <div class="codedata"><h3>SHEET INDEX</h3><table class="sheetindex"><tbody id="sheetIndexBody"></tbody></table></div>
         <div class="codedata" style="margin-top:10px"><h3>GENERAL NOTES</h3><ul style="margin:0;padding-left:16px">
           <li>CONTRACTOR TO VERIFY ALL DIMENSIONS AND LOT LINES IN FIELD.</li>
+          <li>SITE PLAN: SEE PROPOSED SITE PLAN ON PLAT OF SURVEY (SUBMITTED SEPARATELY).</li>
           <li>ALL WORK PER THE CODE BASIS LISTED ABOVE AND LOCAL AMENDMENTS.</li>
           <li>FLOOR SLOPED TO DRAIN TOWARD OVERHEAD DOOR.</li>
           <li>NO LIVING SPACE, PLUMBING OR HVAC IN GARAGE.</li></ul></div>
       </div>
     </div>
-    ${tblock('COVER / SITE PLAN / CODE DATA','1',String(sheetTotal()))}
+    ${tblock('COVER / CODE DATA / SHEET INDEX','1',String(sheetTotal()))}
   </section>`;
 }
 // ===== Wall section — spec-list + cross-section style (owner photo 2026-10-16). Values come only from job data; blank stays blank. =====
@@ -3072,7 +3105,7 @@ function buildPlans(scrollTo){
     seedPlanItems();
     const pages=$('pages'); if(!pages) return;
     const chunks=[];
-    [['cover',pageCover],['floor',pageFloorSection],['found',pageFoundation],['elev',pageElevations],['sect',pageSectionRoof],['wall',pageWallSection],['detail',pageDetail],['fire',pageFire]].forEach(([name,fn])=>{
+    [['floor',pageFloorSection],['found',pageFoundation],['elev',pageElevations],['sect',pageSectionRoof],['wall',pageWallSection],['detail',pageDetail],['fire',pageFire]].forEach(([name,fn])=>{
       try{ chunks.push(fn()); }
       catch(err){ chunks.push('<div class="sheet"><div class="caption">Sheet error ('+name+')</div><pre class="notes-col">'+esc(String(err&&err.message||err))+'</pre></div>'); }
     });
@@ -3096,7 +3129,7 @@ function buildPlans(scrollTo){
     if($('packetCheck')) $('packetCheck').innerHTML=packetChecklistHTML();
     requestAnimationFrame(()=>fitSheetsToPanel());
     setTimeout(fitSheetsToPanel, 80);
-    setTimeout(()=>{try{elev4Fit()}catch(e){}}, 120);
+    setTimeout(()=>{try{elev4Fit()}catch(e){} try{sheetFit()}catch(e){}}, 140);
     if(scrollTo){
       const nSheets=document.querySelectorAll('#pages .sheet').length;
       setStatus('Generated '+nSheets+' sheet'+(nSheets===1?'':'s')+' for '+customerLabel()+' · '+cityName()+' · '+W+'×'+D+' · OH on '+(val('ohWall')||'front'), true);
@@ -3230,6 +3263,7 @@ async function downloadPlansPdf(){
   if(!(await gpInfoOk()))return;
   if(!document.querySelector('.sheet')) buildPlans(true);
   try{ elev4Fit(); }catch(e){}
+  try{ sheetFit(); }catch(e){}
   const sheets=[...document.querySelectorAll('#pages .sheet')];
   if(!sheets.length){ alert('Generate plans first.'); return; }
   setStatus('Building PDF…', true);
@@ -3256,10 +3290,10 @@ async function downloadPlansPdf(){
       // html2canvas mis-scales svgs sized by width="100%": pin each svg to its real size.
       const k=(s.getBoundingClientRect().width||1632)/s.offsetWidth||1;
       const os=[...s.querySelectorAll('svg')], cs=[...c.querySelectorAll('svg')];
-      cs.forEach((sv,ix)=>{ const o=os[ix]; if(!o||o.parentElement.closest('svg')) return;
+      cs.forEach((sv,ix)=>{ const o=os[ix]; if(!o||o.parentElement.closest('svg')) return; const fz=Number((o.closest('.fit-scaled')||{dataset:{}}).dataset.fitz)||1; // undo the fit scale so the clone keeps its own size
         const r=o.getBoundingClientRect(); if(!r.width) return;
-        sv.setAttribute('width',(r.width/k).toFixed(1)); sv.setAttribute('height',(r.height/k).toFixed(1));
-        sv.style.width=(r.width/k).toFixed(1)+'px'; sv.style.height=(r.height/k).toFixed(1)+'px'; sv.style.maxHeight='none'; });
+        sv.setAttribute('width',(r.width/k/fz).toFixed(1)); sv.setAttribute('height',(r.height/k/fz).toFixed(1));
+        sv.style.width=(r.width/k/fz).toFixed(1)+'px'; sv.style.height=(r.height/k/fz).toFixed(1)+'px'; sv.style.maxHeight='none'; });
       c.querySelectorAll('.vis-handle,.no-print').forEach(el=>el.remove());
       host.appendChild(c);
       return c;
@@ -3765,7 +3799,7 @@ async function generateAiPlanPictures(){
     for(let i=0;i<N;i++){const [v,t]=AI_SHEETS[i];
       setLoad(true,'AI '+t+' ('+(i+1)+'/'+N+') — keep this tab open…');setStatus('Drawing '+t+' ('+(i+1)+'/'+N+')…');
       window._planAiPhotos[v]=await callPlanPhoto(aiPromptFor(v));buildPlans(false);}
-    setStatus('AI pictures ready on all '+N+' sheets for '+customerLabel()+'. Elevations/foundation show AI; floor & roof plan stay exact (toggle per sheet); site plan is always the measured drawing.', true);
+    setStatus('AI pictures ready on all '+N+' sheets for '+customerLabel()+'. Elevations/foundation show AI; floor & roof plan stay exact (toggle per sheet).', true);
   }catch(err){setStatus('AI pictures stopped: '+(err&&err.message||err)+'. Sheets without a picture show the exact drawing.');}
   finally{setLoad(false);}
 }

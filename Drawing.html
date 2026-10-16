@@ -2630,6 +2630,12 @@ button.danger{color:#b42318}
 <div class="field"><label>Existing sidewalk size</label><input class="combo-dim" id="spExistingWalkCombo" placeholder="3 x 35"/></div>
 <input class="hidden-dim-source" id="spExistingWalkW"/><input class="hidden-dim-source" id="spExistingWalkH"/>
 <div class="field"><label>Rear setback (ft)</label><input id="spRearSetback" step=".5" type="number" value="5"/></div>
+<div style="border:2px solid #0f274b;border-radius:10px;padding:10px;margin-top:8px" id="spAnnoBox">
+  <div style="font-size:11px;font-weight:900;color:#0f274b;margin-bottom:6px;text-transform:uppercase">Permit site plan notes</div>
+  <div class="row"><div class="field"><label>Garage to house (ft, blank = not shown)</label><input id="spHouseDist" step=".5" type="number" placeholder="blank"/></div>
+  <div class="field"><label>North arrow</label><select id="spNorth"><option value="">Not shown</option><option value="0">Up</option><option value="180">Down</option><option value="270">Left</option><option value="90">Right</option></select></div></div>
+  <label style="display:flex;gap:6px;align-items:center;font-size:13px"><input id="spAnnoOn" type="checkbox" checked style="width:20px;height:20px"/> Street / alley labels, lot size, graphic scale, verify note</label>
+</div>
 <div style="border:2px solid #0f274b;border-radius:10px;padding:10px;margin-top:8px" id="spAlleyBox">
   <div style="font-size:11px;font-weight:900;color:#0f274b;margin-bottom:6px;text-transform:uppercase">Alley &amp; new apron</div>
   <div class="row"><div class="field"><label>Alley at rear</label><select id="spAlley"><option value="yes">Yes</option><option value="no">No</option></select></div>
@@ -8280,6 +8286,7 @@ function toggleMobilePanel(){
 #autoDimLayer .ad-lab.sb{color:#7c2d12;border-color:rgba(124,45,18,.35)}
 #autoDimLayer .ad-line{position:absolute;background:#7c2d12;opacity:.85}
 #autoDimLayer .ad-line.h{height:1.5px}#autoDimLayer .ad-line.v{width:1.5px}
+#agbSiteAnno{position:absolute;left:0;top:0;z-index:71;pointer-events:none;font-family:Arial,Helvetica,sans-serif;overflow:visible}
 #agbLegend{position:absolute;left:14px;bottom:14px;z-index:72;background:#fff;border:1.5px solid #111;padding:6px 8px;font:700 11px/1.25 Arial,Helvetica,sans-serif;color:#111;pointer-events:none}
 #agbLegend .lg{display:flex;align-items:center;gap:6px;margin:2px 0}
 #agbLegend .sw{width:26px;height:12px;display:inline-block}
@@ -8450,6 +8457,54 @@ function renderTitleBlock(){
   tb.querySelectorAll('.tb-v').forEach(el=>{if(document.activeElement!==el){const v=tbValue(el.dataset.k);if(el.textContent!==v){el.textContent=v;el._fitDone=false}}
     if(!el._fitDone && el.isConnected){let fs=12;el.style.fontSize=fs+'px';while(fs>7&&el.scrollWidth>el.clientWidth+1){fs-=.5;el.style.fontSize=fs+'px'}el._fitDone=true}});
 }
+// ===== 2026-10-16: permit site plan annotations (ported from GaragePlans site plan). Read-only overlay; never touches objects, plat, whiteout. =====
+function spAnnoScale(){ const lot=byRole('lotOutline'); if(lot&&lot.pxf) return lot.pxf; const g=byRole('proposedGarage'); if(g&&g.pxf) return g.pxf; const f=Number((document.getElementById('spScaleFeet')||{}).value); return f>0?72/f:0; }
+function renderSiteAnno(){
+  let L=document.getElementById('agbSiteAnno');
+  const lot=byRole('lotOutline'), g=byRole('proposedGarage');
+  spAnnoLoad();
+  const on=state.mode==='siteplan' && spAnnoCfg().on!==false;
+  if(!on || (!lot && !g)){ if(L) L.remove(); return; }
+  if(!L||L.parentNode!==paper){ if(L) L.remove(); L=document.createElementNS('http://www.w3.org/2000/svg','svg'); L.id='agbSiteAnno'; paper.appendChild(L); }
+  const t=currentTemplate(); L.setAttribute('width',t.w); L.setAttribute('height',t.h); L.setAttribute('viewBox','0 0 '+t.w+' '+t.h);
+  const k=spAnnoScale(), E=x=>String(x).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const ft=v=>{ const i=Math.round(v*12); return Math.floor(i/12)+"'-"+(i%12)+'"'; };
+  const T=(x,y,txt,o={})=>`<text x="${x}" y="${y}" text-anchor="${o.a||'middle'}" font-size="${o.fs||11}" font-weight="${o.w||700}"${o.c?` fill="${o.c}"`:''}${o.rot!=null?` transform="rotate(${o.rot} ${x} ${y})"`:''}>${E(txt)}</text>`;
+  let h='<defs><marker id="saArw" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto-start-reverse"><path d="M0,0 L6,3 L0,6 z" fill="#c00"/></marker></defs>';
+  const alley=(document.getElementById('spAlley')||{}).value!=='no';
+  if(lot){ const b=bbox(lot), W=lot.wf, D=lot.hf;
+    h+=T(b.cx,b.y-8,'FRONT LOT LINE / STREET',{fs:10});
+    if(alley){ h+=`<rect x="${b.x}" y="${b.b+18}" width="${b.w}" height="16" fill="#f1f1f1" stroke="#111" stroke-dasharray="5 3"/>`+T(b.cx,b.b+30,'PUBLIC ALLEY',{fs:10,w:800}); }
+    else h+=T(b.cx,b.b+14,'REAR LOT LINE',{fs:10});
+    if(W>0) h+=T(b.cx,b.b+(alley?48:28),'LOT WIDTH '+ft(W),{fs:10,w:600});
+    if(D>0) h+=T(b.x-10,b.cy,'LOT DEPTH '+ft(D),{fs:10,w:600,rot:-90});
+  }
+  const cfg=spAnnoCfg(); const hd=Number(cfg.house);
+  if(g && k && cfg.house!=='' && cfg.house!=null && hd>=0){ const gb=bbox(g), lb=lot?bbox(lot):null;
+    const hy=gb.y-hd*k, hx1=lb?lb.x+Math.max(3*k,lb.w*0.12):gb.x-10, hx2=lb?lb.r-Math.max(3*k,lb.w*0.12):gb.r+10, top=lb?Math.max(lb.y+6,hy-28*k):hy-28*k;
+    h+=`<rect x="${hx1}" y="${top}" width="${hx2-hx1}" height="${hy-top}" fill="#fff" fill-opacity=".85" stroke="#111" stroke-dasharray="4 3"/>`+T((hx1+hx2)/2,(top+hy)/2+4,'EXISTING HOUSE',{fs:11});
+    const dx=gb.x+gb.w*0.35; h+=`<line x1="${dx}" y1="${gb.y}" x2="${dx}" y2="${hy}" stroke="#c00" stroke-width="1.3" marker-start="url(#saArw)" marker-end="url(#saArw)"/>`+T(dx+6,(gb.y+hy)/2+4,ft(hd)+' TO HOUSE',{fs:11,w:800,c:'#c00',a:'start'});
+  }
+  const nr=cfg.north;
+  if(nr!==''&&nr!=null){ const cx=t.w-48, cy=110; h+=`<g transform="rotate(${Number(nr)} ${cx} ${cy})"><circle cx="${cx}" cy="${cy}" r="20" fill="#fff" stroke="#111"/><path d="M${cx},${cy-18} L${cx+8},${cy+10} L${cx},${cy+4} L${cx-8},${cy+10} Z" fill="#111"/></g>`+T(cx,cy-26,'N',{fs:13,w:900}); }
+  if(k){ const C=[5,10,20,25,50]; const step=C.find(v=>4*v*k>=120&&4*v*k<=260)||C.filter(v=>4*v*k<=260).pop()||5; const x0=24, y0=t.h-128;
+    for(let i=0;i<4;i++) h+=`<rect x="${x0+i*step*k}" y="${y0}" width="${step*k}" height="6" fill="${i%2?'#fff':'#111'}" stroke="#111" stroke-width=".8"/>`;
+    for(let i=0;i<=4;i++) h+=T(x0+i*step*k,y0+18,(i*step)+"'",{fs:9,w:600});
+    h+=T(x0,y0-5,'GRAPHIC SCALE (FEET)',{fs:9,w:800,a:'start'});
+  }
+  h+=T(24,t.h-166,'DISTANCES TO LOT LINES SHOWN IN RED.',{fs:10,w:700,a:'start'})+T(24,t.h-153,'VERIFY ALL LOT LINES WITH PLAT OF SURVEY.',{fs:10,w:700,a:'start'});
+  if(L._h!==h){ L._h=h; L.innerHTML=h; }
+}
+// settings live on the proposed garage (or lot outline) object, so every existing save path (local backup, job save, sheet states) keeps them with the job
+function spAnnoHost(){ return byRole('proposedGarage')||byRole('lotOutline')||null; }
+function spAnnoCfg(){ const h=spAnnoHost(); return (h&&h.spAnno)||{house:'',north:'',on:true}; }
+function spAnnoLoad(){ const c=spAnnoCfg(), ae=document.activeElement; const set=(id,v)=>{const e=document.getElementById(id); if(e&&e!==ae&&e.value!==String(v==null?'':v)) e.value=v==null?'':v;};
+  set('spHouseDist',c.house); set('spNorth',c.north); const on=document.getElementById('spAnnoOn'); if(on&&on!==ae) on.checked=c.on!==false; }
+function spAnnoSave(){ const h=spAnnoHost(); const v=id=>(document.getElementById(id)||{}).value; const cfg={house:v('spHouseDist')??'',north:v('spNorth')??'',on:(document.getElementById('spAnnoOn')||{checked:true}).checked!==false};
+  if(h){ h.spAnno=cfg; try{saveActiveSheetState()}catch(_){} try{ if(typeof saveLocal==='function') saveLocal(); }catch(_){} } try{renderSiteAnno()}catch(_){} }
+window.agbRenderSiteAnno=renderSiteAnno; window.agbSpAnnoCfg=spAnnoCfg;
+['spHouseDist','spNorth','spAnnoOn'].forEach(id=>{const e=document.getElementById(id);if(e){e.addEventListener('input',spAnnoSave);e.addEventListener('change',spAnnoSave)}});
+{const e=document.getElementById('spAlley'); if(e) e.addEventListener('change',()=>{try{renderSiteAnno()}catch(_){}});}
 function tagCategories(){
   if(state.mode!=='siteplan')return;
   drawLayer.querySelectorAll(':scope > .obj').forEach(el=>{const o=getObj(isNaN(+el.dataset.id)?el.dataset.id:+el.dataset.id)||getObj(el.dataset.id);const c=o?catOf(o):'';if((el.dataset.cat||'')!==c){if(c)el.dataset.cat=c;else delete el.dataset.cat}if(o&&o.role==='lotOutline'){el.style.background='transparent';el.style.border='2px dashed #111';}});
@@ -8468,7 +8523,7 @@ function placeCorners(){
   put(lg,lg?(lg.offsetWidth||130):0,lg?(lg.offsetHeight||78):0);
 }
 let _cornerT=0;
-function afterRender(){try{const ph=document.getElementById('sitePlanPlaceholder');if(ph&&ph.style.display!=='none'&&state.mode==='siteplan'&&window.agbSitePlanHasContent())ph.style.display='none'}catch(_){}try{tagCategories()}catch(e){console.warn(e)}try{renderAutoDims()}catch(e){console.warn(e)}try{renderLegend();renderTitleBlock()}catch(e){console.warn(e)}
+function afterRender(){try{const ph=document.getElementById('sitePlanPlaceholder');if(ph&&ph.style.display!=='none'&&state.mode==='siteplan'&&window.agbSitePlanHasContent())ph.style.display='none'}catch(_){}try{tagCategories()}catch(e){console.warn(e)}try{renderAutoDims()}catch(e){console.warn(e)}try{renderLegend();renderTitleBlock()}catch(e){console.warn(e)}try{renderSiteAnno()}catch(e){console.warn(e)}
   // corner placement reads element sizes, so do it after the gesture, not every drag frame
   clearTimeout(_cornerT);_cornerT=setTimeout(()=>{try{placeCorners()}catch(e){console.warn(e)}},window._shapeInteract?250:0);}
 window.agbAfterRender=afterRender;

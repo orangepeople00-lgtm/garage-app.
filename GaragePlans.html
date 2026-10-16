@@ -168,6 +168,8 @@ button{border:0;border-radius:7px;padding:8px 10px;font-weight:800;cursor:pointe
 .ov.gfi.ps-gfi{height:auto;aspect-ratio:1/1;border:0;border-radius:0;background:transparent;padding:0;display:block;text-shadow:none}
 .ov.gfi.ps-gfi svg{display:block;overflow:visible}
 @media print{.sheet{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+body.oh-unconf #pages .sheet{position:relative}
+body.oh-unconf #pages .sheet::after{content:'⚠ OVERHANG WALLS NOT CONFIRMED — VERIFY BEFORE BUILDING';position:absolute;top:6px;left:50%;transform:translateX(-50%);background:#fef3c7;border:2px solid #b45309;color:#92400e;font:800 11px Arial;padding:2px 10px;z-index:5;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 </style>
 <style id="pageSizeStyle">@media print{@page{size:17in 11in;margin:.35in}}</style>
 </head>
@@ -267,7 +269,14 @@ button{border:0;border-radius:7px;padding:8px 10px;font-weight:800;cursor:pointe
         <label style="display:inline-flex;gap:4px;align-items:center;font-weight:600"><input type="checkbox" id="extraOHLeft">Left</label>
         <label style="display:inline-flex;gap:4px;align-items:center;font-weight:600"><input type="checkbox" id="extraOHRight">Right</label>
       </div>
+      <input type="hidden" id="extraOHConfirmed">
       <div id="ohWallsAsk" style="display:none;color:#b91c1c;font-size:12px;font-weight:700;margin-top:3px">Pick at least one wall for the overhang. Walls not picked get the eaves only.</div>
+      <div id="ohConfirmBox" style="display:none;margin-top:4px;padding:5px 6px;border:1px solid #f59e0b;background:#fffbeb;border-radius:6px;font-size:12px">
+        <div id="ohConfirmMsg" style="font-weight:700;color:#92400e">Overhang on which walls? All 4 checked — confirm or change.</div>
+        <button type="button" id="ohConfirmBtn" class="btn-ghost" style="margin-top:4px" onclick="psOhConfirm()">Confirm walls</button>
+        <div style="color:#b45309;font-weight:800;margin-top:3px">⚠ Walls not confirmed</div>
+      </div>
+      <div id="ohConfirmedNote" style="display:none;color:#166534;font-size:12px;font-weight:700;margin-top:3px">✓ Overhang walls confirmed</div>
     </div>
   </div>
   <div class="row2">
@@ -333,6 +342,7 @@ button{border:0;border-radius:7px;padding:8px 10px;font-weight:800;cursor:pointe
   </div>
   <div class="row2">
     <div><label>GFI / outlets shown</label><div style="display:flex;gap:6px"><input id="gfiCount" type="number" min="0" max="8" value="2" style="flex:1"><button type="button" class="btn-ghost gp-addout" onclick="gpAddOutlet()" title="Add an outlet">+ outlet</button></div></div>
+    <input type="hidden" id="gfiUserSet"><input type="hidden" id="elecAppliedFor"><div id="elecReqBox" style="grid-column:1/-1;font-size:12px;line-height:1.35;margin-top:4px"></div>
     <div><label>Lights noted</label><input id="lightCount" type="number" min="0" max="8" value="2"></div>
   </div>
   <label>Setbacks (auto from village)</label>
@@ -352,7 +362,7 @@ button{border:0;border-radius:7px;padding:8px 10px;font-weight:800;cursor:pointe
     <div><label>Slab</label><input id="slab" placeholder='4" / 6 BAG / WWF'></div>
   </div>
   <label>Electrical notes</label>
-  <textarea id="electricNotes">CIRCUITS: (1) 20 AMP. #12 GA. (1) 15 AMP. #14 GA.
+  <textarea id="electricNotes">CIRCUITS: (1) 15 AMP #14 GA, (1) 20 AMP #12 GA
 CONTAINED IN 1/2" RIGID STEEL CONDUIT
 BURIAL DEPTH: 8 INCHES
 WIRING: SEPARATE CIRCUITS TO ELECTRICAL PANEL
@@ -837,7 +847,7 @@ function conformCodesHTML(){
     <ul>${basis.map(t=>'<li>'+esc(t)+'</li>').join('')}</ul>
     ${hasJobElec?'':`<h3>ELECTRICAL DETAILS</h3>
     <ul>
-      <li>CIRCUITS: (1) 20 AMP #12 GA, (1) 15 AMP #14 GA</li>
+      <li>CIRCUITS: (1) 15 AMP #14 GA, (1) 20 AMP #12 GA</li>
       <li>CONTAINED IN 3/4" RIGID STEEL CONDUIT</li>
       <li>BURIAL DEPTH: 8 INCHES${/DES PLAINES/i.test(city)?' , 18" IF UNDER DRIVEWAY':''}</li>
       <li>WIRING: SEPARATE CIRCUITS TO SERVICE PANEL</li>
@@ -916,6 +926,70 @@ function partyReturns(){
   L=Math.max(0, Math.min(leftover, L));
   return {span,w:pd.w,h:pd.h,left:L,right:+(leftover-L).toFixed(2)};
 }
+
+/* ===== Per-city electrical requirements (2026-10-16) =====
+   Built ONLY from data already in this repo: CITY_CODE_SHEETS notes, the per-city requirement lists (permit requirement lists above),
+   and the estimator / code-book JSON (workspace new-city-codes.json). Nothing is inferred; cities not listed have no electrical data on file. */
+const ELEC_DEFAULTS={outlets:2,circuits:[{a:15,ga:14},{a:20,ga:12}]};
+const ELEC_RULES={
+ 'Arlington Heights':{circuits:[{a:15,ga:14}],conduit:'1/2" STEEL RIGID METAL CONDUIT',burialIn:18,separate:true,other:['2 LIGHT FIXTURES INSIDE GARAGE, 3-WAY SWITCHING','EXTERIOR LIGHT WITH 1 SWITCH AT HOME','ELECTRICIAN LICENSE SUBMITTED WITH APPLICATION'],src:'City code sheet notes ("ADD ELECTRICAL NOTE TO PLANS: 15 AMP, #14 GAUGE WIRE, BURIAL DEPTH 1/2" STEEL RIGID METAL CONDUIT, 18" DEEP, WIRING SEPARATE CIRCUIT TO SERVICE PANEL")'},
+ 'Berkeley':{conduit:'RIGID PIPE UNDERGROUND',other:['ELECTRICIAN TO CALL FOR TRENCH INSPECTION BEFORE BACKFILL'],src:'City code sheet notes'},
+ 'Berwyn':{other:['ELECTRICAL INSPECTION BEFORE FINAL'],src:'City code sheet notes'},
+ 'Carpentersville':{disconnect:'ELECTRICAL DISCONNECT REQUIRED (SNAP SWITCH OK)',src:'City code sheet notes (10/24/12)'},
+ 'Des Plaines':{outletWalls:3,src:'City code sheet notes ("OUTLET ON 3 WALLS REQUIRED")'},
+ 'Elk Grove Village':{gfci:true,tr:true,other:['ELECTRICAL PLAN REQUIRED WITH PERMIT'],src:'Permit requirement list ("GFCI tamper-resistant receptacles shown")'},
+ 'Mundelein':{other:['ELECTRICAL TRENCH INSPECTION'],src:'Permit requirement list'},
+ 'Schaumburg':{other:['ONE LIGHT OVER EACH BAY','LIGHT AND SWITCH BY SERVICE DOOR','LIGHT BY OVERHEAD DOOR'],src:'Code book (new-city-codes.json)'},
+ 'Westchester':{circuits:[{a:20,ga:12}],src:'Code book ("ELECTRIC MUST BE 20 AMP WITH 12 GAUGE WIRE")'},
+ 'Villa Park':{other:['NO ELECTRICAL BY HOMEOWNER (LICENSED ELECTRICIAN)'],src:'Code book'},
+ 'Waukegan':{other:['SUBMIT COPY OF ELECTRICAL CONTRACT'],src:'Code book'},
+ 'Palatine':{other:['SHOW OVERHEAD ELECTRICAL LINES ON PLAT OF SURVEY'],src:'Code book'},
+ 'Wheaton':{other:['SHOW ELECTRICAL LINE (OVERHEAD OR UNDERGROUND) ON SURVEY'],src:'Code book'}
+};
+function elecReq(){ const n=String(cityName()||'').trim(); if(!n||n==='Village'||n==='Other') return null;
+  const k=Object.keys(ELEC_RULES).find(x=>x.toLowerCase()===n.toLowerCase()); return k?Object.assign({city:k},ELEC_RULES[k]):null; }
+function elecMinOutlets(r){ return r&&r.outletWalls?r.outletWalls:(r&&r.minOutlets)||0; }
+function elecCircTxt(c){ return '(1) '+c.a+' AMP #'+c.ga+' GA'; }
+/* apply city minimums once per city (raises only; never lowers). Returns messages. */
+function elecApply(){ const r=elecReq(), city=r?r.city:String(cityName()||''); const msgs=[];
+  if(!r){ window._elecMsgs=[]; return msgs; }
+  if(val('elecAppliedFor')!==r.city) window._elecMsgs=[];
+  const min=elecMinOutlets(r); const cur=gfiQty();
+  if(min && cur<min && !val('gfiUserSet')){ $('gfiCount').value=String(min); msgs.push('Raised to '+min+' outlets: '+r.city+' requires outlet on '+min+' walls'); }
+  if(val('elecAppliedFor')!==r.city){ let t=val('electricNotes'); const lines=t.split('\n'); const ci=lines.findIndex(l=>/^\s*CIRCUITS?:/i.test(l));
+    (r.circuits||[]).forEach(c=>{ const re=new RegExp('\\b'+c.a+'\\s*AMP\\.?\\s*#?'+c.ga+'\\b','i'); const L=ci>=0?lines[ci]:''; if(!re.test(L)){ if(ci>=0) lines[ci]=L.replace(/\s*$/,'')+', '+elecCircTxt(c); else lines.unshift('CIRCUITS: '+elecCircTxt(c)); msgs.push('Added circuit '+elecCircTxt(c)+': '+r.city+' requires it'); } });
+    if(r.burialIn){ const bi=lines.findIndex(l=>/BURIAL DEPTH/i.test(l)); const have=bi>=0?parseFloat((lines[bi].match(/(\d+(?:\.\d+)?)/)||[])[1]):NaN;
+      if(!(have>=r.burialIn)){ const nl='BURIAL DEPTH: '+r.burialIn+' INCHES ('+r.city.toUpperCase()+')'; if(bi>=0) lines[bi]=nl; else lines.push(nl); msgs.push('Burial depth raised to '+r.burialIn+'": '+r.city+' requires it'); } }
+    if(r.conduit){ const ki=lines.findIndex(l=>/CONDUIT|RIGID/i.test(l)); const nl='CONTAINED IN '+r.conduit+' ('+r.city.toUpperCase()+')'; if(ki<0||!lines[ki].toUpperCase().includes(r.conduit.replace(/^CONTAINED IN /,''))){ if(ki>=0) lines[ki]=nl; else lines.push(nl); msgs.push('Conduit set to '+r.conduit+': '+r.city+' requires it'); } }
+    if(r.separate && !lines.some(l=>/SEPARATE CIRCUIT/i.test(l))) lines.push('WIRING: SEPARATE CIRCUIT TO SERVICE PANEL');
+    if(r.disconnect && !lines.some(l=>/DISCONNECT/i.test(l))) lines.push(r.disconnect);
+    if(r.gfci && !lines.some(l=>/GFC?I/i.test(l))) lines.push('ALL RECEPTACLES GFCI PROTECTED');
+    if(r.tr && !lines.some(l=>/TAMPER/i.test(l))) lines.push('ALL RECEPTACLES TAMPER-RESISTANT');
+    $('electricNotes').value=lines.join('\n'); $('elecAppliedFor').value=r.city; }
+  window._elecMsgs=(window._elecMsgs||[]).concat(msgs.filter(m=>!(window._elecMsgs||[]).includes(m)));
+  return msgs; }
+function elecWallsUsed(){ return [...new Set(planItems.filter(i=>i.type==='gfi').map(i=>i.wall).filter(Boolean))]; }
+function elecStatus(forPlan){ const r=elecReq(); const out={r,lines:[],warn:[]};
+  if(!r){ out.lines.push('No city-specific electrical data on file — defaults used: '+ELEC_DEFAULTS.outlets+' outlets; '+ELEC_DEFAULTS.circuits.map(elecCircTxt).join(', ')+'.'); return out; }
+  const min=elecMinOutlets(r);
+  if(min){ if(gfiQty()<min) out.warn.push('Below '+r.city+' minimum: '+r.city+' requires outlet on '+min+' walls (now '+gfiQty()+').');
+    else if(!forPlan){ const w=elecWallsUsed(); if(w.length && w.length<min) out.warn.push('Outlets are on '+w.length+' wall(s); '+r.city+' requires outlets on '+min+' walls.'); } }
+  (window._elecMsgs||[]).forEach(m=>out.lines.push(m));
+  if(r.circuits) r.circuits.forEach(c=>{ const re=new RegExp('\\b'+c.a+'\\s*AMP\\.?\\s*#?'+c.ga+'\\b','i'); if(!re.test(val('electricNotes'))) out.warn.push(r.city+' requires '+elecCircTxt(c)+' — not in electrical notes.'); });
+  if(r.burialIn){ const m=val('electricNotes').match(/BURIAL DEPTH[^\d]*(\d+(?:\.\d+)?)/i); if(!m||+m[1]<r.burialIn) out.warn.push(r.city+' requires '+r.burialIn+'" burial depth.'); }
+  return out; }
+function elecCityRows(){ const r=elecReq(); if(!r) return ['NO CITY-SPECIFIC ELECTRICAL DATA ON FILE — DEFAULTS USED'];
+  const a=[]; const min=elecMinOutlets(r); if(min) a.push('OUTLET ON '+min+' WALLS REQUIRED');
+  (r.circuits||[]).forEach(c=>a.push('CIRCUIT '+elecCircTxt(c)+' REQUIRED')); if(r.conduit) a.push(r.conduit); if(r.burialIn) a.push('BURIAL DEPTH '+r.burialIn+'"');
+  if(r.separate) a.push('SEPARATE CIRCUIT TO SERVICE PANEL'); if(r.disconnect) a.push(r.disconnect); if(r.gfci) a.push('GFCI RECEPTACLES'); if(r.tr) a.push('TAMPER-RESISTANT RECEPTACLES');
+  (r.other||[]).forEach(x=>a.push(x)); return a; }
+function elecUi(){ const b=$('elecReqBox'); if(!b) return; const st=elecStatus();
+  b.innerHTML=(st.r?'<b>'+esc(st.r.city)+' electrical:</b> '+esc(elecCityRows().join(' · '))+'<br><span style="color:#555">Source: '+esc(st.r.src)+'</span>':'<span style="color:#555">'+esc(st.lines[0])+'</span>')
+   +(st.r?st.lines.map(l=>'<div style="color:#1e3a8a;font-weight:700">'+esc(l)+'</div>').join(''):'')
+   +st.warn.map(w=>'<div style="color:#b45309;font-weight:700">⚠ '+esc(w)+'</div>').join(''); }
+document.addEventListener('input',e=>{ if(e.target&&e.target.id==='gfiCount'){ const r=elecReq(), min=elecMinOutlets(r); $('gfiUserSet').value=(min&&gfiQty()<min)?'1':''; } });
+document.addEventListener('change',e=>{ if(e.target&&(e.target.id==='city'||e.target.id==='cityManual')){ $('gfiUserSet').value=''; } });
+
 function cityStruct(){
   const name=cityName();
   const N=String(((code()||{}).notes)||'').toUpperCase();
@@ -1318,13 +1392,24 @@ function psExtraOn(w){ return psExtraOhIn()>0 && psOhWalls().includes(w); }
 function psProjFt(w){ return (psEaveIn()+(psExtraOn(w)?psExtraOhIn():0))/12; }
 function psInLabel(i){ i=Math.round(i*100)/100; return i<12?(i+'"'):ftLabel(i/12); }
 function psProjLabel(w){ const e=psEaveIn(); if(!psExtraOn(w)) return psInLabel(e)+' EAVE'; const x=psExtraOhIn(); return psInLabel(e)+' EAVE + '+psInLabel(x)+' OVERHANG = '+psInLabel(e+x)+' TOTAL'; }
-function psProjNotes(){ const x=psExtraOhIn(), ws=psOhWalls();
+function psProjNotes(){ const r=psProjNotes0(); return psOhConfirmed()?r:['⚠ OVERHANG WALLS NOT CONFIRMED — VERIFY BEFORE BUILDING'].concat(r); }
+function psProjNotes0(){ const x=psExtraOhIn(), ws=psOhWalls();
   if(!x) return ['ROOF PROJECTION: '+psInLabel(psEaveIn())+' EAVE ALL WALLS (NO EXTRA OVERHANG)'];
   if(!ws.length) return ['ROOF PROJECTION: '+psInLabel(psEaveIn())+' EAVE ALL WALLS · EXTRA OVERHANG '+psInLabel(x)+': WALLS ________ (NOT PICKED)'];
   return PS_WALLS.map(w=>w.toUpperCase()+': '+psProjLabel(w)); }
-function psOhUi(){ const box=$('ohWallsBox'); if(!box) return; const on=psExtraOhIn()>0; box.style.display=on?'':'none'; const ask=$('ohWallsAsk'); if(ask) ask.style.display=on&&!psOhWalls().length?'':'none'; }
-document.addEventListener('input',e=>{ if(e.target&&e.target.id==='extraOH') psOhUi(); });
-document.addEventListener('change',e=>{ if(e.target&&/^extraOH/.test(e.target.id||'')) psOhUi(); });
+function psOhConfirmed(){ return psExtraOhIn()<=0 || (val('extraOHConfirmed')==='1' && psOhWalls().length>0); }
+function psOhAllWalls(){ PS_WALLS.forEach(w=>{const e=$('extraOH'+w[0].toUpperCase()+w.slice(1)); if(e) e.checked=true;}); if($('extraOHConfirmed')) $('extraOHConfirmed').value=''; }
+function psOhConfirm(){ if(!psOhWalls().length){ psOhUi(); return; } $('extraOHConfirmed').value='1'; psOhUi(); try{ buildPlans(); savePrefs(); }catch(e){} }
+function psOhUi(){ const box=$('ohWallsBox'); if(!box) return; const on=psExtraOhIn()>0, ws=psOhWalls(); box.style.display=on?'':'none';
+  const ask=$('ohWallsAsk'); if(ask) ask.style.display=on&&!ws.length?'':'none';
+  const conf=psOhConfirmed(); const cb=$('ohConfirmBox'); if(cb) cb.style.display=on&&!conf?'':'none';
+  const m=$('ohConfirmMsg'); if(m) m.textContent='Overhang on which walls? '+(ws.length===4?'All 4 checked':ws.length?ws.map(w=>w[0].toUpperCase()+w.slice(1)).join(', ')+' checked':'None checked')+' — confirm or change.';
+  const btn=$('ohConfirmBtn'); if(btn) btn.disabled=!ws.length;
+  const ok=$('ohConfirmedNote'); if(ok) ok.style.display=on&&conf?'':'none';
+  document.body.classList.toggle('oh-unconf', on&&!conf); }
+window._psPrevExtra=0;
+document.addEventListener('input',e=>{ if(e.target&&e.target.id==='extraOH'){ const n=psExtraOhIn(); if(n>0 && !(window._psPrevExtra>0)){ if(!psOhWalls().length) psOhAllWalls(); $('extraOHConfirmed').value=''; } window._psPrevExtra=n; psOhUi(); } },true);
+document.addEventListener('change',e=>{ if(e.target&&/^extraOH(Front|Back|Left|Right)$/.test(e.target.id||'')){ $('extraOHConfirmed').value=''; } if(e.target&&/^extraOH/.test(e.target.id||'')) psOhUi(); },true);
 function psOverhangIn(){ const e=String(val('eaves')||'');
   let m=e.match(/(\d+(?:\.\d+)?)\s*(?:"|in(?:ch(?:es)?)?\b)\s*(?:overhang|soffit|eave)/i); if(m) return Number(m[1]);
   m=e.match(/(\d+(?:\.\d+)?)\s*(?:'|ft|foot|feet)\s*(?:overhang|soffit|eave)/i); if(m) return Number(m[1])*12;
@@ -1345,7 +1430,7 @@ function psSnapGfi(it){ const g=window._fpGeo; if(!g||!it) return it;
   if(bad(along)){ let best=null; for(let dd=2; dd<1200 && best==null; dd+=2){ [along-dd,along+dd].forEach(a=>{ if(best==null&&a>=lo&&a<=hi&&!bad(a)) best=a; }); } if(best!=null) along=best; }
   let x,y; if(wall==='left'){x=inL+sz/2;y=along;} else if(wall==='right'){x=inR-sz/2;y=along;} else if(wall==='back'){x=along;y=inT+sz/2;} else {x=along;y=inB-sz/2;}
   it.x=+((x-sz/2)/g.vbw*100).toFixed(2); it.y=+((y-sz/2)/g.vbh*100).toFixed(2); it.wall=wall; return it; }
-function psGfiSpots(n){ const g=window._fpGeo; if(!g) return []; const out=[]; const walls=['left','right','back','front'];
+function psGfiSpots(n){ const g=window._fpGeo; if(!g) return []; const out=[]; const ohw=val('ohWall')||'front'; const walls=['left','right','back','front'].filter(w=>w!==ohw).concat([ohw]);
   for(let i=0;i<n;i++){ const wall=walls[i%4], k=Math.floor(i/4); const vert=wall==='left'||wall==='right';
     const len=vert?g.gd:g.gw, base=vert?g.oy:g.ox; const along=base+len*(k%2?0.3:0.65);
     let x,y; if(wall==='left'){x=g.ox+g.t;y=along;} else if(wall==='right'){x=g.ox+g.gw-g.t;y=along;} else if(wall==='back'){x=along;y=g.oy+g.t;} else {x=along;y=g.oy+g.gd-g.t;}
@@ -1514,7 +1599,7 @@ function pageFloorSection(){
   return `<section class="${sheetClass()}">
     <div class="ps-floor-grid">
       <div class="draw-host" id="floorHost">${aiOr('floor',()=>floorPlanSvg(),'Floor plan')}<div class="overlay" id="floorOverlay"></div></div>
-      <div class="ps-floor-side">${floorKeyHTML()}${conformCodesHTML()}${doorScheduleHTML()}${floorLegendHTML()}${val('electricNotes')?`<div class="elecbox notes-col"><h3>JOB ELECTRICAL NOTES</h3><ul>${val('electricNotes').split(/\n+/).filter(Boolean).map(t=>'<li>'+esc(t)+'</li>').join('')}</ul></div>`:''}</div>
+      <div class="ps-floor-side">${floorKeyHTML()}${conformCodesHTML()}${doorScheduleHTML()}${floorLegendHTML()}${val('electricNotes')?`<div class="elecbox notes-col"><h3>JOB ELECTRICAL NOTES</h3><ul>${val('electricNotes').split(/\n+/).filter(Boolean).map(t=>'<li>'+esc(t)+'</li>').join('')}</ul></div>`:''}${(()=>{const r=elecReq();const st=elecStatus(true);return `<div class="elecbox notes-col"><h3>${r?esc(r.city.toUpperCase())+' ELECTRICAL REQUIREMENTS':'CITY ELECTRICAL REQUIREMENTS'}</h3><ul>${elecCityRows().map(t=>'<li>'+esc(t)+'</li>').join('')}${st.warn.map(w=>'<li style="color:#b45309;font-weight:800">⚠ '+esc(w.toUpperCase())+'</li>').join('')}</ul></div>`})()}</div>
     </div>
     ${tblock('PROPOSED FLOOR PLAN','1',String(sheetTotal()),'AS NOTED')}
   </section>`;
@@ -2177,7 +2262,7 @@ function elevLarge(view, title){
   if(val('ohWall')===view){ const r=doorReturns(); retBits.push((ohCount()>1?ohCount()+' DOORS · ':'')+'OH '+r.left+"' L / "+r.right+"' R"); }
   if(val('partyWall')===view){ const r=partyReturns(); retBits.push('PARTY '+r.left+"' / "+r.right+"'"); }
   if(val('svcWall')===view){ const r=svcReturns(); retBits.push('SVC '+r.left+"' / "+r.right+"' · "+svcSwingInfo().short); }
-  retBits.push('ROOF PROJ. — '+_ends[0].toUpperCase()+' END: '+psProjLabel(_ends[0])+' · '+_ends[1].toUpperCase()+' END: '+psProjLabel(_ends[1])+' · '+view.toUpperCase()+' WALL: '+psProjLabel(view));
+  retBits.push((psOhConfirmed()?'':'⚠ OVERHANG WALLS NOT CONFIRMED · ')+'ROOF PROJ. — '+_ends[0].toUpperCase()+' END: '+psProjLabel(_ends[0])+' · '+_ends[1].toUpperCase()+' END: '+psProjLabel(_ends[1])+' · '+view.toUpperCase()+' WALL: '+psProjLabel(view));
   if(retBits.length) top.push(`<text class="edit-svg" x="${X(L/2)}" y="${gy+76}" text-anchor="middle" font-size="${7*F}" font-family="${font}">${esc(retBits.join('   ·   '))}</text>`);
   const inner=o.join('')+`<g class="elev-top">${top.join('')}</g>`;
   // ---- fit into the sheet frame ----
@@ -2403,7 +2488,7 @@ function gpSetActive(key){gpActiveView=key;gpMarkActive()}
 function gpMarkActive(){const vs=gpViews();vs.forEach(v=>v.sec.classList.toggle('gp-active',v.key===gpActiveView));const lb=$('gpAddTo');if(lb){const v=vs.find(x=>x.key===gpActiveView);lb.textContent=v?'Adding to: '+v.name:'Adding to: tap a drawing (GFI → Floor plan, others → visible sheet)'}}
 function gpAddItem(it){pushHist();const v=gpTarget(it.type);it.view=v?v.key:'floor';const w=it.type==='gfi'?6:(it.w||(it.type==='txt'?8:0));const h=it.type==='gfi'?7:(it.h||(it.type==='txt'?3:0));it.x=Math.max(0,50-w/2);it.y=Math.max(0,50-h/2);planItems.push(it);selectedItem=it.id;renderOverlay();if(v&&!gpActiveView)gpSetActive(v.key);setStatus('Added to '+(v?v.name:'floor plan')+' — drag to place.',true)}
 document.addEventListener('pointerdown',e=>{const sec=e.target.closest&&e.target.closest('#pages section');if(sec&&sec.dataset.view)gpSetActive(sec.dataset.view)},true);
-function renderOverlay(){
+function renderOverlay(){ setTimeout(()=>{ try{ elecUi(); }catch(e){} },0);
   const vs=gpViews(); if(!vs.length) return;
   if(window._fpGeo){ const fl=planItems.filter(it=>it.type==='gfi'&&(it.view||'floor')==='floor'); const fresh=fl.filter(it=>it.fresh);
     if(fresh.length){ const spots=psGfiSpots(fl.length); fl.forEach((it,i)=>{ if(it.fresh&&spots[i]){ it.x=spots[i].x; it.y=spots[i].y; it.wall=spots[i].wall; } delete it.fresh; }); }
@@ -2807,6 +2892,7 @@ function gpResizeSel(f){
 document.addEventListener('pointerdown',e=>{if(!e.target.closest||(!e.target.closest('.aic')&&!e.target.closest('.aic-tip')&&!e.target.closest('.toolbox'))){if(aiSel){aiSel=null;document.querySelectorAll('.aic.sel').forEach(n=>n.classList.remove('sel'))}}},true);
 function buildPlans(scrollTo){
   try{ psOhUi(); }catch(e){}
+  try{ elecApply(); }catch(e){ console.warn('elec',e); }
   try{
     if(scrollTo){
       const errs=validatePlanInputs(); showPlanErrors(errs);
@@ -2956,12 +3042,14 @@ function snapshot(){
   return o;
 }
 function restore(o){
+  if(o&&typeof o==='object'&&('extraOH' in o)&&!('extraOHConfirmed' in o)) o=Object.assign({},o,{extraOHConfirmed:'1'});
   if(o&&typeof o==='object'&&!('extraOH' in o)){ if($('extraOH')) $('extraOH').value='0'; PS_WALLS.forEach(w=>{const e=$('extraOH'+w[0].toUpperCase()+w.slice(1)); if(e) e.checked=false;}); }
   Object.keys(o||{}).forEach(k=>{
     if(k==='_planItems'||k==='_planVis'||k==='_aiCallouts') return;
     const el=$(k); if(!el) return;
     if(el.type==='checkbox') el.checked=!!o[k]; else el.value=o[k];
   });
+  window._psPrevExtra=psExtraOhIn();
   if(Array.isArray(o._planItems)) planItems=o._planItems;
   if(o._aiCallouts&&typeof o._aiCallouts==='object') window._planAiCallouts=o._aiCallouts;
   if(o._planVis && typeof o._planVis==='object') planVis=o._planVis;
@@ -3252,7 +3340,7 @@ async function gpApplyJobPrefill(){
   if(o.wallFt) set('wallH',o.wallFt);
   if(o.doors && o.doors.length){ gpSetDoors(o.doors); }
   if(o.eaveIn) set('eaves',o.eaveIn+'" fascia / '+o.eaveIn+'" soffit');
-  if(o.ohIn){ set('extraOH',o.ohIn); try{ psOhUi(); }catch(e){} }
+  if(o.ohIn){ set('extraOH',o.ohIn); window._psPrevExtra=Number(o.ohIn)||0; if(!psOhWalls().length) psOhAllWalls(); $('extraOHConfirmed').value=''; try{ psOhUi(); }catch(e){} }
   try{ snapshot&&snapshot(); }catch(e){}
   setStatus('Filled from job'+(o.customer?' — '+o.customer:'')+'. Check sizes, then Generate.', true);
 }
@@ -3320,7 +3408,7 @@ document.addEventListener('DOMContentLoaded',()=>{
       if(el.id==='partyWall' && el.value!=='none' && !val('partySize')) $('partySize').value='6x7';
       if(el.id==='patioWall' && el.value!=='none' && !val('patioSize')) $('patioSize').value='8';
       if(el.id==='svcWall' && el.value==='none') $('landing').value='';
-      if(el.id==='city') applyVillage();
+      if(el.id==='city'){ applyVillage(); if(!code()) buildPlans(); }
       else buildPlans();
       savePrefs();
     });

@@ -176,6 +176,7 @@ button{border:0;border-radius:7px;padding:8px 10px;font-weight:800;cursor:pointe
 .fp-below{display:grid;grid-template-columns:1.4fr 1fr;gap:10px;margin-top:8px;align-items:start}.fp-below .codedata{margin:0 0 8px}
 .ps-roof-grid{display:grid;grid-template-columns:minmax(0,1fr) 8.2in;gap:14px;align-items:start}
 .ps-roof-grid>.ps-roof-col{grid-column:2;grid-row:1}.ps-roof-grid>.ps-sect-col{grid-column:1;grid-row:1}
+.ps-roof-grid.ps-roof-only{grid-template-columns:minmax(0,1fr) 11in}.ps-roof-only .ps-roof-col{width:11in}.ps-roof-only .ps-roof-notes{display:block}.ps-roof-only .legend-a h3{text-decoration:none!important;border-bottom:1px solid #111;display:inline-block;padding-bottom:1px}.ps-roof-only .ps-roof-notes>*{margin-top:0!important;margin-bottom:10px}
 .ps-roof-notes{display:grid;grid-template-columns:1.25fr 1fr;gap:10px;align-items:start}.ps-roof-notes>*{margin-top:6px!important}
 .ps-key{border:1.4px solid #111;padding:4px 6px;margin-bottom:10px}
 .ps-roof-col{width:8.2in}
@@ -528,7 +529,7 @@ function packetForCity(){
   const generic=[
     'Dimensioned floor plan: overall size, door and window sizes, headers, GFI outlets, lights, switches',
     'Four exterior elevations with plate height, peak height, roof pitch, siding and openings labeled',
-    'Building / wall section: footing size and depth, slab, sill plate, studs, rafters, sheathing, roofing',
+    'Building / wall section: footing size and depth, slab, sill plate, studs, rafters, sheathing, roofing (A-5 WALL SECTION)',
     'Foundation / slab notes and concrete thickness',
     'Plat of survey submitted separately (this app does not print the site plan) with garage drawn to scale and setbacks to lot lines and the house',
     'Materials and sizes called out (headers, rafters, sheathing, siding, shingles)',
@@ -539,9 +540,9 @@ function packetForCity(){
     'Addison':['Detached garage in rear yard; 10\' from house, 5\' from lot lines, off easements','Max 17\' / one story and not taller than the house','Paved driveway required; driveway 5" thick','Gutters required; shear wall if returns under 48"','Plat plus construction methods, materials and sizes'],
     'Arlington Heights':['Single compiled scaled construction plan PDF','Plat showing structure dimensions and distances to two intersecting lot lines','Contractor proposal with cost','Hurricane ties; 5/8" roof and 1/2" wall sheathing min.','Electrical: 15A #14, 1/2" rigid, 18" bury; 2 interior lights; 3-way switching','EPA review typically required'],
     'Elk Grove Village':['No dimension over 25\'; peak height 15\' max; 600 SF max','Foundation plan + framing plan + electrical plan','GFCI tamper-resistant receptacles shown','Plat with easements, existing hard surface, proposed footprint and driveway'],
-    'Crete':['Floor plan, building section, four elevations, brace-wall detail','Headers, rafters, sill anchors, slab and electrical called out','Plat of survey submitted with the village application'],
-    'Schaumburg':['Floor plan with openings and electrical','Section through footing/wall/roof','Four elevations','Plat with proposed work drawn to scale (photos rejected)'],
-    'Wheaton':['Plan view with framing sizes and electrical','Cross section with footing depth and materials','All elevations with overall height from grade','Type 1 grading plan may be required'],
+    'Crete':['Floor plan, building section, four elevations, brace-wall detail (A-5 WALL SECTION)','Headers, rafters, sill anchors, slab and electrical called out','Plat of survey submitted with the village application'],
+    'Schaumburg':['Floor plan with openings and electrical','Section through footing/wall/roof (A-5 WALL SECTION)','Four elevations','Plat with proposed work drawn to scale (photos rejected)'],
+    'Wheaton':['Plan view with framing sizes and electrical','Cross section with footing depth and materials (A-5 WALL SECTION)','All elevations with overall height from grade','Type 1 grading plan may be required'],
     'Hoffman Estates':['1/4"=1\'-0" plans; framing, wall section, doors, windows, electrical','Plat with garage and driveway dimensions','600 SF or less: 12" thickened-edge footing; over 600 SF: 42" frost footing','Min 2\' wall each side of openings; structural sheathing including gables'],
     'Libertyville':['Plat locating garage and driveway','Foundation/framing plans and elevations','Wall section with height from grade to roof and foundation depth','Frost footing 42" typical except ≤600 SF trench option'],
     'Westmont':['Garage spec sheet + plat + site plan with setbacks','Max 576 SF and 28\' length; height 15\' mean','10\' from house; not in easements'],
@@ -1235,7 +1236,7 @@ function packetChecklistHTML(){
     ['Floor plan','yes'],
     ['Roof plan','yes'],
     ['Exterior elevations — front / rear / left / right (one sheet, 2x2)','yes'],
-    ['Building section','yes'],
+    ['Building / wall section','yes — A-5 typical wall section'],
     ['Foundation / footing / slab','yes — village concrete'],
     ['Brace / PFG sheet', needsBraceDetail()?'yes — this village + these returns':'no — not required on this job'],
     ['Fire wall sheet', computeFirewallRequired()?'yes — setback / village':'no — not required on this job']
@@ -1561,7 +1562,7 @@ function floorPlanSvg(){
   const area=Math.round(W*D);
   const title=`<g class="fp-mv" data-fp-prio="2">${psT(cx,cy-fs.title*0.2,'NEW DETACHED GARAGE',{fs:fs.title,w:800,c:PSC.wall})}${(()=>{const t2=carsWord()+' · '+area+' SF';const w2=psTW(t2,fs.lab,true)+fs.lab*1.2,h2=fs.lab*1.5;return psR(cx-w2/2,cy+fs.title*0.45,w2,h2,'#e0e7ff',PSC.wall,c.f(.5),` rx="${psN(h2/2)}"`)+psT(cx,cy+fs.title*0.45+h2*0.7,t2,{fs:fs.lab,w:700,c:PSC.wall});})()}</g>`;
   const sp=psSlabSpec();
-  const slabLines=['SLAB: '+psBlank(sp.thick)+' CONCRETE · MIX '+psBlank(sp.mix),'REINF.: '+psBlank(sp.reinf)+' · BASE: '+psBlank(sp.base),'VAPOR BARRIER: '+psBlank(sp.vapor),'FOOTING / THICK. EDGE: '+psBlank(sp.foot),'SLOPE SLAB 1/8" PER FT TOWARD OH DOOR'];
+  const slabLines=['SLAB / FOOTING: SEE FOUNDATION A-2'];
   const lh=fs.note*1.3, blockH=slabLines.length*lh, blockW=Math.max(...slabLines.map(l=>psTW(l,fs.note)));
   let ny=cy+awayY*(fs.title*1.6+blockH*0.5+c.f(10))-blockH/2; ny=Math.max(oy+t+c.f(8),Math.min(oy+gd-t-blockH-c.f(4),ny));
   const nx=cx-blockW/2+c.f(12);
@@ -1600,7 +1601,7 @@ function floorKeyHTML(){ const k=window._fpScale; if(!k) return ''; const wIn=5.
 function psSw(inner){ return `<svg viewBox="0 0 34 14" width="34" height="14" style="flex:none">${inner}</svg>`; }
 function floorLegendHTML(){
   const items=[
-    [psSw(`<rect x="1" y="4" width="32" height="6" fill="${PSC.wallFill}" stroke="${PSC.wall}" stroke-width="1.4"/>`),'NEW WALL — '+String(studCallout()).toUpperCase()+' + '+String(val('wallSheath')||'').toUpperCase()+' SHEATHING (≈4½")'],
+    [psSw(`<rect x="1" y="4" width="32" height="6" fill="${PSC.wallFill}" stroke="${PSC.wall}" stroke-width="1.4"/>`),'NEW WALL (≈4½") — FRAMING & SHEATHING: SEE WALL SECTION A-5'],
     [psSw(`<rect x="1" y="4" width="32" height="6" fill="#fff" stroke="${PSC.wall}" stroke-width=".8"/><line x1="1" y1="6.3" x2="33" y2="6.3" stroke="${PSC.wall}" stroke-width=".8"/><line x1="1" y1="7.7" x2="33" y2="7.7" stroke="${PSC.wall}" stroke-width=".8"/>`),'WINDOW IN WALL (SEE SCHEDULE)'],
     [psSw(`<line x1="4" y1="13" x2="4" y2="1" stroke="${PSC.wall}" stroke-width="1.4"/><path d="M4 1 A12 12 0 0 1 16 13" fill="none" stroke="${PSC.wall}" stroke-width=".7"/>`),'SERVICE DOOR + SWING'],
     [psSw(`<rect x="1" y="2" width="32" height="10" fill="none" stroke="${PSC.wall}" stroke-width=".8" stroke-dasharray="4 2.5"/>`),'OVERHEAD DOOR / TRACK ABOVE (DASHED)'],
@@ -1630,11 +1631,11 @@ function roofNotesHTML(){ const r=window._rpInfo; if(!r) return '';
     <div class="legend-a"><h3>ROOF PLAN LEGEND</h3>${items.map(([s,t])=>`<div class="lg-row">${s}<span>${esc(t)}</span></div>`).join('')}</div></div>`; }
 function pageSectionRoof(){
   return `<section class="${sheetClass()}">
-    <div class="ps-roof-grid">
-      <div class="ps-roof-col">${(window._rpInfo=null,aiOr('roofplan',()=>roofPlanSvg(),'Roof plan'))}</div>
-      <div class="ps-sect-col">${buildingSectionSvg()}${roofNotesHTML()}</div>
+    <div class="ps-roof-grid ps-roof-only">
+      <div class="ps-roof-col">${(window._rpInfo=null,aiOr('roofplan',()=>roofPlanSvg(11,9.3),'Roof plan'))}</div>
+      <div class="ps-sect-col">${roofNotesHTML()}</div>
     </div>
-    ${tblock('BUILDING SECTION & ROOF PLAN', String(4), String(sheetTotal()),'AS NOTED')}
+    ${tblock('ROOF PLAN', String(4), String(sheetTotal()),'AS NOTED')}
   </section>`;
 }
 function renumberSheets(){
@@ -1677,9 +1678,9 @@ function sheetHead(title, sheetId, vbW, c, scaleLabel){
     <text x="${w-16}" y="${psN(c.f(11)*2+2)}" text-anchor="end" font-size="${c.f(9)}">SCALE: ${scaleLabel&&scaleLabel!=='NOT TO SCALE'?esc(scaleLabel)+' '+psSizeNote():'SEE GRAPHIC SCALE'}</text>
     <line x1="16" y1="${psN(hb-c.f(2))}" x2="${w-16}" y2="${psN(hb-c.f(2))}" stroke="#111" stroke-width="${psN(c.f(1.4))}"/>`;
 }
-function roofPlanSvg(){
+function roofPlanSvg(wIn,hIn){ wIn=wIn||8.2; hIn=hIn||9.29;
   const W=Number(val('width'))||20, D=Number(val('depth'))||20, rt=val('roof')||'gable', P=pitchNum();
-  const VBW=600, VBH=680, c=psCtx(8.2,VBW);
+  const VBW=Math.round(600*wIn/8.2), VBH=Math.round(VBW*hIn/wIn), c=psCtx(wIn,VBW);
   const ohIn=psOverhangIn(), oF=psProjFt('front'), oB=psProjFt('back'), oL=psProjFt('left'), oR=psProjFt('right'), oh=Math.max(oF,oB,oL,oR);
   const gs=gutterStyle(), half=gs==='half';
   const eaveFace=f=>rt==='hip'||(rt==='gable'?(f==='left'||f==='right'):(f==='front'||f==='back'));
@@ -1691,11 +1692,8 @@ function roofPlanSvg(){
   const gtxt=gs==='none'?'NONE ON THIS JOB':(half?'5" HALF-ROUND':gs==='k'?'5" K-STYLE':'5" SEAMLESS')+' GUTTER'+(gs==='sides'?' (SIDES ONLY)':'')+' w/ '+(half?'3" RND.':'2x3')+' DOWNSPOUTS (@DS@)';
   const roofName=rt==='hip'?'HIP':rt==='revgable'?'REVERSE GABLE':'GABLE';
   const nl=[roofName+' ROOF · PITCH '+P+'/12',
-    'ROOFING: '+psBlank(rf)+' OVER 15# FELT',
-    'ROOF SHEATHING: '+psBlank(sheath),
-    'RAFTERS: '+String(rafterCallout()).toUpperCase(),
-    'EAVES / SOFFIT: '+psBlank(val('eaves')),
-    ...psProjNotes(),
+    'ROOFING, ROOF SHEATHING, RAFTERS, TIES, EAVES: SEE WALL SECTION A-5',
+    ...(psOhConfirmed()?[]:['⚠ OVERHANG WALLS NOT CONFIRMED — VERIFY BEFORE BUILDING']),'EAVE / RAKE PROJECTIONS: AS DIMENSIONED ON PLAN',
     'GUTTERS: '+gtxt+(gs==='none'?'':' · DISCHARGE AWAY FROM BUILDING'),
     rt==='hip'?'HIPS @ 45° IN PLAN FROM EAVE CORNERS; RIDGE = LONG − SHORT ROOF EDGE':(rt==='gable'?'GABLE ENDS FRONT & REAR — SEE FRONT / REAR ELEVATIONS':'GABLE ENDS LEFT & RIGHT — SEE SIDE ELEVATIONS')];
   if(pat.on) nl.push('ROOFED PATIO '+ftLabel(pat.w)+' x '+ftLabel(pat.d)+' · ('+pat.posts+') '+pat.post+' POSTS · '+pat.wall.toUpperCase()+' WALL');
@@ -2373,7 +2371,7 @@ function foundationSvg(){
     <line x1="540" y1="175" x2="870" y2="175" stroke="#111" stroke-width=".6"/><text x="548" y="190" font-size="11" font-weight="700" font-family="'Courier New',monospace">03</text><text x="572" y="190" font-size="12">Driveway (if used): ${esc(String(drive))}</text>
     <line x1="540" y1="197" x2="870" y2="197" stroke="#111" stroke-width=".6"/><text x="548" y="212" font-size="11" font-weight="700" font-family="'Courier New',monospace">04</text><text x="572" y="212" font-size="12">Parkway: ${esc(c.parkway||'—')}</text>
     <line x1="540" y1="219" x2="870" y2="219" stroke="#111" stroke-width=".6"/><text x="548" y="234" font-size="11" font-weight="700" font-family="'Courier New',monospace">05</text><text x="572" y="234" font-size="12">Anchors 1/2" @ 6'-0" O.C.  IRC R403.1.6</text>
-    <line x1="540" y1="241" x2="870" y2="241" stroke="#111" stroke-width=".6"/><text x="548" y="256" font-size="11" font-weight="700" font-family="'Courier New',monospace">06</text><text x="572" y="256" font-size="12">Treated sill  IRC R317</text>
+    <line x1="540" y1="241" x2="870" y2="241" stroke="#111" stroke-width=".6"/><text x="548" y="256" font-size="11" font-weight="700" font-family="'Courier New',monospace">06</text><text x="572" y="256" font-size="12">Treated sill  IRC R317 (SEE A-5)</text>
     <line x1="540" y1="263" x2="870" y2="263" stroke="#111" stroke-width=".6"/><text x="548" y="278" font-size="11" font-weight="700" font-family="'Courier New',monospace">07</text><text x="572" y="278" font-size="12">6-mil vapor  IRC R506.2.3</text>
     <line x1="540" y1="285" x2="870" y2="285" stroke="#111" stroke-width=".6"/><text x="548" y="300" font-size="11" font-weight="700" font-family="'Courier New',monospace">08</text><text x="572" y="300" font-size="12">4" granular fill typical</text>
     <line x1="540" y1="307" x2="870" y2="307" stroke="#111" stroke-width=".6"/><text x="548" y="322" font-size="11" font-weight="700" font-family="'Courier New',monospace">09</text><text x="572" y="322" font-size="12">6x6-W2.1xW2.1 WWF or fiber</text>
@@ -2479,7 +2477,7 @@ function pageDetail(){
         <ul>
           <li>Village: ${esc(cityName()||'—')}</li>
           <li>Returns: ${r.left}' left / ${r.right}' right (cutoff ${braceCutoffFt()}')</li>
-          <li>Header through return: ${esc(headerCallout())}</li>
+          <li>Header through return: SEE WALL SECTION A-5</li>
           <li>Sheathing: 7/16" OSB / WSP continuous sill to header</li>
           <li>Hold-down + 1/2" anchors each end of panel (IRC R403.1.6)</li>
           <li>1000 lb strap header to post each side</li>
@@ -2502,7 +2500,7 @@ function fireDetailSvg(){
     <line x1="270" y1="340" x2="370" y2="340" stroke="#111" stroke-dasharray="4 3"/>
     <text x="352" y="160" font-size="12">5/8" TYPE X GYP. (INT.)</text>
     <text x="180" y="160" text-anchor="end" font-size="12">OSB + SIDING</text>
-    <text x="352" y="210" font-size="12">${esc(studCallout())}</text>
+    <text x="352" y="210" font-size="12">STUDS — SEE A-5</text>
     <text x="352" y="336" font-size="12">TREATED SILL + FIRESTOP</text>
     <text x="40" y="380" font-size="12">1-hour rating at wall facing house / close lot line</text>
     <text x="40" y="398" font-size="12">Joints taped · fire caulk at sill, top plate, and penetrations</text>
@@ -2522,8 +2520,7 @@ function pageFire(){
         <ul>
           <li>Village: ${esc(cityName()||'—')}</li>
           <li>5/8" Type X gypsum on interior face of the close wall</li>
-          <li>${esc(studCallout())}</li>
-          <li>OSB wall sheathing + siding outboard</li>
+          <li>Studs, wall sheathing, siding: SEE WALL SECTION A-5</li>
           <li>Firestop at sill, top plate, and all penetrations</li>
           <li>House setback ${esc(val('setHouse')||'—')} · side ${esc(val('setSide')||'—')}</li>
           <li>${esc(cite('fire'))}</li>
@@ -2831,8 +2828,8 @@ function wsSpec(){
     ['ROOF STYLE', val('roof')?roofLabel()+(val('pitch')?' · '+val('pitch')+' PITCH':''):''],
     ['WALL SHEATHING', U(val('wallSheath')||cs.wallSheath)],
     ['SWAY BRACES', needsBraceDetail()?U(braceMethod().title):''],
-    ['SIDING', U(val('siding'))+(val('siding')&&cs.housewrap?' W/ HOUSEWRAP':'')],
-    ['STUDS', val('wallH')?U(studCallout())+'\nSPF #2 OR BETTER':''],
+    ['SIDING', U(val('siding'))+(val('siding')?' HORIZONTAL W/ HOUSEWRAP':'')],
+    ['STUDS', val('wallH')?U(studCallout())+' · (2) AT CORNERS':''],
     ['TOP PLATE', 'DOUBLE 2X4'],
     ['BOTTOM PLATE', 'TREATED 2X4'],
     ['RAFTERS', U(c.rafters||'')+(c.rafters&&ties&&!/CLIP|STRAP|TIE/i.test(c.rafters)?' W/ HURRICANE STRAPS':'')],
@@ -2841,7 +2838,7 @@ function wsSpec(){
     ['ROOFING', val('shingles')?'15# FELT UNDER'+(/ICE/i.test(blob)?'\nICE / WATER SHIELD':'')+'\n'+U(val('shingles'))+' SHINGLE':''],
     ['SHEATHING', U(val('roofSheath')||cs.roofSheath)],
     ['VENTS', U(val('vents'))],
-    ['EAVES', eaves+(eaves&&aluminumSoffitOn()&&!/ALUM/.test(eaves)?' · ALUMINUM':'')],
+    ['EAVES', (eaves&&!guttersRequired()&&!aluminumSoffitOn()?'BOXED EAVES SEALED · ':'')+eaves+(eaves&&aluminumSoffitOn()&&!/ALUM/.test(eaves)?' · ALUMINUM':'')],
     ['OVERHEAD DOOR', U(ohDoorsText())],
     ['SERVICE DOOR', svcOn?U(ftLabel(svcDoorW())+' WIDE · '+val('svcWall')+' WALL'):''],
     ['WINDOWS', winOn?U(val('winCount')+' × '+ftLabel(wd.w)+' x '+ftLabel(wd.h)+' '+(val('winType')||'')):''],
@@ -2850,12 +2847,12 @@ function wsSpec(){
     ['SERVICE/WINDOW', (svcOn||winOn)?U(c.windowHeader||''):''],
     ['WALL HGT', val('wallH')?ftLabel(Number(val('wallH'))):''],
     ['TOTAL HGT', (()=>{ const H=Number(val('wallH'))||0, Wd=Number(W)||0, Dd=Number(D)||0, r=val('roof'); if(!H||!Wd||!Dd) return ''; const span=r==='hip'?Math.min(Wd,Dd):(r==='revgable'?Dd:Wd); const i=Math.round((H+span/2*pitchNum()/12)*12); return Math.floor(i/12)+"'-"+String(i%12).padStart(2,'0')+'"'; })()],
-    ['GUTTERS', guttersRequired()?'YES — '+U(typeof gutterStyle==='function'?gutterStyle():'')+' ALUMINUM':''],
-    ['ANCHORS', '1/2" ANCHOR BOLTS @ 6\'-0" O.C., 12" FROM ENDS'],
-    ['FLOOR', floor],
+    ['GUTTERS', guttersRequired()?'YES — '+U(typeof gutterStyle==='function'?gutterStyle():'')+' ALUMINUM (LAYOUT: ROOF PLAN A-4)':''],
+    ['ANCHORS', 'SEE FOUNDATION A-2'],
+    ['FLOOR', /EXIST/.test(floor)?floor:(floor?'SEE FOUNDATION A-2':'')],
     ['APRON', hasApron()?U(ftLabel(Number(val('apronFt')))+' CONCRETE APRON'):''],
     ['WATER LEDGE', waterLedgeRequired()?'REQUIRED':''],
-    ['FOOTINGS', U(val('footing')||c.footings||'')],
+    ['FOOTINGS', (val('footing')||c.footings)?'SEE FOUNDATION A-2':''],
   ];
   // extra job items (only when present on this job)
   const extra=[];
@@ -2867,7 +2864,6 @@ function wsSpec(){
   const el=[]; const gf=Number(val('gfiCount')), lc=Number(val('lightCount'));
   if(gf>0) el.push(gf+' GFI RECEPT.'); if(lc>0) el.push(lc+' LIGHT'+(lc>1?'S':''));
   const en=String(val('electricNotes')||'').trim(); if(en) el.push(en.length>48||/\n/.test(en)?'SEE ELECTRICAL NOTES ON FLOOR PLAN':U(en));
-  if(el.length) extra.push(['ELECTRICAL', el.join(' · ')]);
   const all=rows.concat(extra).filter(([k,v])=>String(v||'').trim()!=='' || k==='HEADERS');
   // HEADERS group label only when a header row follows
   return all.filter(([k],i)=>k!=='HEADERS' || (all[i+1]&&['O.H.D.','SERVICE/WINDOW'].includes(all[i+1][0])));
@@ -2940,25 +2936,25 @@ function wallSectionSvg(){
   const side={L:[],R:[]};
   const C=(px,py,ty,t,sd)=>{ if(t) side[sd].push({px,py,ty,ls:wrap(t,sd==='L'?22:40)}); };
   const rx=1215, lx=690, cl=[];
-  if(S['VENTS']) C(mush?vX:ridgeX+6,mush?vY-24:ridgeY-rT-22,ridgeY-60,'VENTS: '+S['VENTS'],'R');
+  if(S['VENTS']) C(mush?vX:ridgeX+6,mush?vY-24:ridgeY-rT-22,ridgeY-60,'VENTS','R');
   C(ridgeX+12,ridgeY-10,ridgeY-20,'RIDGE BOARD'+(S['RIDGE']?' '+S['RIDGE']:''),'R');
-  C(ridgeX-60,yAt(ridgeX-60)-8,ridgeY+20,'RAFTERS'+(S['RAFTERS']?' '+S['RAFTERS']:''),'R');
+  C(ridgeX-60,yAt(ridgeX-60)-8,ridgeY+20,'RAFTERS','R');
   if(collar) C(ridgeX-40,cY+5,cY+30,'COLLAR TIE','R');
-  C(ridgeX-60,plY-5,plY-40,'CROSS TIE'+(S['CROSS TIES']?' '+S['CROSS TIES']:''),'R');
-  C(ridgeX-60,plY+8,plY+5,'DOUBLE 2X4 TOP PLATE','R');
-  C(ridgeX-60,plY+38,plY+40,'HEADER '+S['O.H.D.'],'R');
+  C(ridgeX-60,plY-5,plY-40,'CROSS TIE','R');
+  C(ridgeX-60,plY+8,plY+5,'TOP PLATE','R');
+  C(ridgeX-60,plY+38,plY+40,'O.H.D. HEADER','R');
   C(xo+studT+101,plY+150,plY+150,'(2) JACK STUDS AT HEADER ENDS','R');
-  if(S['SERVICE/WINDOW']) C(xo+studT+40,plY+64,plY+95,'SERVICE / WINDOW HEADER '+S['SERVICE/WINDOW'],'R');
-  C(ridgeX-60,flY+6,flY-40,'TREATED 2X4 BOTTOM PLATE'+(S['ANCHORS']?'\n'+S['ANCHORS']:''),'R');
-  C(ridgeX-80,flY+28,flY+30,(/EXIST/.test(S['FLOOR']||'')?'':'FLOOR')+(S['FLOOR']?(/EXIST/.test(S['FLOOR'])?'':': ')+S['FLOOR']:''),'R');
-  if(S['FOOTINGS']||!/EXIST/.test(S['FLOOR']||'')) C(xo+10,flY+80,flY+80,'FOOTING'+(S['FOOTINGS']?': '+S['FOOTINGS']:''),'R');
+  if(S['SERVICE/WINDOW']) C(xo+studT+40,plY+64,plY+95,'SERVICE / WINDOW HEADER','R');
+  C(ridgeX-60,flY+6,flY-40,'TREATED BOTTOM PLATE + ANCHORS','R');
+  C(ridgeX-80,flY+28,flY+30,(/EXIST/.test(S['FLOOR']||'')?'EXISTING SLAB':'CONCRETE SLAB'),'R');
+  if(S['FOOTINGS']||!/EXIST/.test(S['FLOOR']||'')) C(xo+10,flY+80,flY+80,'FOOTING','R');
   const roofPtX=eX+150;
-  C(roofPtX,yAt(roofPtX)-rT-9,yAt(roofPtX)-rT-120,[S['ROOFING']||'ROOFING',S['SHEATHING']?S['SHEATHING']+' ROOF SHEATHING':''].filter(Boolean).join('\n'),'L');
-  if(ties) C(xo+studT-2,plY-22,plY-50,'HURRICANE STRAPS AT EACH RAFTER','L');
+  C(roofPtX,yAt(roofPtX)-rT-9,yAt(roofPtX)-rT-120,'SHINGLES / FELT /\nROOF SHEATHING','L');
+  if(ties) C(xo+studT-2,plY-22,plY-50,'HURRICANE STRAP','L');
   if(gut) C(eX-30,eY-rT+14,eY-rT+10,'GUTTER W/ DOWNSPOUTS','L');
-  C(eX+30,eY+12,eY+50,'EAVES: '+(S['EAVES']||''),'L');
-  C(xo-14,plY+190,plY+190,'SIDING: '+(S['SIDING']||''),'L');
-  C(xo-3,plY+290,plY+290,'WALL SHEATHING: '+(S['WALL SHEATHING']||''),'L');
+  C(eX+30,eY+12,eY+50,'EAVES / SOFFIT','L');
+  C(xo-14,plY+190,plY+190,'SIDING + HOUSEWRAP','L');
+  C(xo-3,plY+290,plY+290,'WALL SHEATHING','L');
   ['L','R'].forEach(sd=>{ let last=70; side[sd].sort((a,b)=>a.ty-b.ty).forEach(o=>{ const ty=Math.max(o.ty,last+8); last=ty+(o.ls.length-1)*17+12; const tx=sd==='L'?lx:rx;
     cl.push(`<line x1="${o.px}" y1="${o.py}" x2="${tx}" y2="${ty-4}" stroke="#111" stroke-width="1"/><circle cx="${o.px}" cy="${o.py}" r="2.6" fill="#111"/>`+o.ls.map((l,i)=>`<text x="${sd==='L'?tx-6:tx+6}" y="${ty+i*17}" text-anchor="${sd==='L'?'end':'start'}" font-size="14.5">${esc(l)}</text>`).join('')); }); });
   const addr=[val('address'),(val('cityManual')||val('city')||'')].filter(Boolean).join(', ');

@@ -1,8 +1,8 @@
 /** AGB new-job alert. Google Apps Script web app (Execute as: Me, Access: Anyone).
- *  The dashboard POSTs JSON here after a NEW job is saved. Edit the lists below to add Randy/Sam later. */
+ *  The send-alert Supabase edge function POSTs JSON here (after a signed-in user saves a new job, or Sam/Randy/Ramsey press Send test alert). */
 var EMAIL_TO = ['orangepeople00@gmail.com'];          // full email alert
 var SMS_TO   = ['7086630197@tmomail.net'];            // carrier gateways, short text (T-Mobile = @tmomail.net)
-var TOKEN    = 'SET-THE-SAME-TOKEN-HERE';             // must match ALERT_TOKEN in index.html (not real security: the dashboard is public)
+var TOKEN    = 'SET-THE-SAME-TOKEN-HERE';             // must match the ALERT_TOKEN secret on the Supabase send-alert function (never put it in a page)
 
 function doPost(e) {
   var d = {};

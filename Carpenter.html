@@ -281,7 +281,7 @@ html,body{margin:0;min-height:100%;background:#e8edf3;color:var(--ink);font-fami
         <select id="fontBold" onchange="applyTextStyle()"><option value="700">Bold</option><option value="400">Regular</option></select>
         <input id="fontColor" type="color" value="#111111" onchange="applyTextStyle()" title="Text color"/>
       </div>
-      <input type="hidden" id="svcOffset" value="0"/>
+      <!-- svcOffset is FEET from the left end of the service-door wall; extraDoors[].x is a 0..1 fraction of the wall --><input type="hidden" id="svcOffset" value=""/>
       <div id="extraDoorList" style="margin-top:10px;font-size:11px"></div>
     </aside>
 
@@ -1496,6 +1496,115 @@ const AGB_PULL_CFG={client:()=>sb,
  ]})(),
  after:()=>{try{persist()}catch(e){}try{makePlans()}catch(e){}}};
 
+</script>
+<script>
+/* ===== 2026-10-15: Carpenter sheet built from an approved contract scan ("Create Carpenter Sheet" in the dashboard's Fill from document).
+   Data comes from localStorage 'agb_carp_prefill' (no rescan). Carpentry items only: no electric, no slab/apron/extra slab, no payments
+   except COLLECT CARPENTRY (= the 'after built' / 'after carpentry' stage), no phone / email / dates / salesman.
+   Coordinates: extraDoors[].x is a 0..1 fraction of the wall (left edge, as seen from outside that wall); svcOffset is FEET from the left end of its wall.
+   Walls are named as viewed standing in the ALLEY facing the garage: FRONT = alley wall, BACK = house wall, LEFT / RIGHT = side walls. ===== */
+let carpScan=null;
+/* 'left side near alley' = LEFT; 'alley side, left of center' = FRONT; 'rear (alley side)' = FRONT (alley/house beat front/rear) */
+function carpScanWall(t){t=String(t||'').toLowerCase();const at=re=>{const m=t.match(re);return m?m.index:1e9};const lr=Math.min(at(/\bleft\b/),at(/\bright\b/)),ah=Math.min(at(/alley/),at(/house/));
+  if(lr<ah)return at(/\bleft\b/)<at(/\bright\b/)?'LEFT':'RIGHT';if(ah<1e9)return at(/alley/)<at(/house/)?'FRONT':'BACK';if(/\b(rear|back)\b/.test(t))return 'BACK';if(/\bfront\b/.test(t))return 'FRONT';return ''}
+function carpScanMap(o){const f=o.fields||{},g=k=>String(f[k]||'').trim(),R={set:{},choice:{},extra:[],notes:[],gutters:null};
+  const sz=g('garage_size').match(/(\d+(?:\.\d+)?)\s*['’]?\s*[x×]\s*(\d+(?:\.\d+)?)/);if(sz){R.set.sizeW=sz[1];R.set.sizeL=sz[2]}
+  R.set.customer=g('customer');R.set.address=g('address');R.city=g('city');
+  // overhead door
+  const dr=g('doors'),dm=dr.match(/(\d+(?:\.\d+)?)\s*['’]?\s*[x×]\s*(\d+(?:\.\d+)?)/);let ohH=null;
+  if(dm){const cnt=(dr.match(/^\s*(\d+)\s*(?:-|pcs?\b|\))/)||[])[1];const rest=dr.replace(dm[0],'').replace(/^\s*\d+\s*(?:-|pcs?\b|\))\s*/,'').replace(/^[\s,;-]+/,'').trim();R.set.ohDoors=(cnt||'1')+' - '+dm[1]+'x'+dm[2]+(rest?' '+rest:'');R.set.ohWidth=dm[1];ohH=parseFloat(dm[2])}
+  else if(dr)R.set.ohDoors=dr;
+  const ohWall=carpScanWall(g('party_door_wall'))||'';if(ohWall)R.set.ohWall=ohWall;
+  // wall height: as stated, else 8'; an 8' tall overhead door needs a 9' wall (door + 1)
+  const wh=g('wall_height').match(/(\d+(?:\.\d+)?)/);if(wh)R.set.wallHeight=wh[1]+"'";else R.set.wallHeight=(ohH&&ohH>=8?(ohH+1):8)+"'";
+  // framing defaults
+  const oc=t=>{t=String(t||'');const ft=t.match(/(\d+)\s*['’]\s*(?:o\.?\s*c)/i);if(ft)return String(Number(ft[1])*12);const m=t.match(/(\d+)\s*(?:"|”|in\b|inch)?\s*(?:o\.?\s*c)/i)||t.match(/^\s*(\d+)\s*(?:"|”)?\s*$/);return m?m[1]:''};
+  R.set.wallCenters='2x4 studs @ '+(oc(g('studs'))||'16')+'" O.C.';R.set.rafters='2x6 @ '+(oc(g('rafters'))||'16')+'" O.C.';
+  const ct=g('cross_ties');if(ct){const c=oc(ct);R.set.crossties=c?'2x6 @ '+c+'" O.C.':ct}
+  // roof
+  const rf=g('roof');const rs=(rf.match(/\b(reverse gable|hip|gable)\b/i)||[])[1];if(rs)R.choice.roof=rs.toLowerCase()==='hip'?'Hip':rs.toLowerCase()==='gable'?'Gable':'Reverse Gable';
+  const pt=(rf.match(/(\d+)\s*\/\s*12/)||[])[1];if(pt){R.set.pitch=pt+'/12';R.set.pitchLine=pt+'/12'}
+  // siding: 'D 4 inch' / 'D 4' / '4 inch' / D4 => D4 vinyl; vinyl with no type => D4
+  const sd=g('siding'),sl=sd.toLowerCase();
+  if(sd){if(/dutch/.test(sl))R.choice.siding='Dutchlap';else if(/\bd\s*-?\s*4\b|\b4\s*(?:"|inch|in\b)|\bd4\b/.test(sl)||/vinyl/.test(sl))R.choice.siding='D4';else{R.choice.siding='Other';R.set.sidingOther=sd;R.set.sidingOtherPanel=sd}
+    const col=sd.split(/\s*[,;]\s*/).map(x=>x.trim()).filter(x=>x&&!/^(vinyl|siding|d\s*-?\s*4.*|4\s*(?:"|inch).*|dutch\s*lap|d\s*4\s*inch)$/i.test(x)).join(', ');if(col&&R.choice.siding!=='Other'){R.set.sidingColor=col;R.set.sidingColorLine=col}}
+  // shingles
+  const sh=g('shingles');if(sh){if(/3\s*-?\s*tab/i.test(sh))R.choice.shingles='3 TAB';else if(/arch/i.test(sh))R.choice.shingles='ARCH';const col=sh.split(/\s*[,;]\s*/).filter(x=>!/arch|3\s*-?\s*tab|shingle|235|seal/i.test(x)).join(', ').trim();if(col){R.set.shingleColor=col;R.set.shingleColorLine=col}}
+  // header / eaves
+  const hd=g('header');if(hd){if(/lvl/i.test(hd))R.choice.header='2 LVL';else if(/flitch/i.test(hd))R.choice.header='2-2x12 w/ 1/2 Flitchplate';else R.notes.push('Header: '+hd)}
+  const tr=g('trim');if(tr){const a=tr.search(/alum/i),w=tr.search(/real\s*wood/i);if(a>=0&&(w<0||a<w))R.choice.eaves='Aluminum';else if(w>=0)R.choice.eaves='Realwood';const col=tr.split(/\s*[,;]\s*/).filter(x=>!/alum|real\s*wood|boxed|eave|soffit|fascia/i.test(x)).join(', ').trim();if(col){R.set.eaveColor=col;R.set.eaveColorLine=col}}
+  const shv=g('sheathing');if(shv){R.set.wallSheath=shv;R.set.roofSheath=shv}
+  // windows: number in the blank next to SINGLE HUNG / SLIDER = quantity (default 1)
+  const wn=g('windows').toLowerCase();const q=re=>{const m=wn.match(re);return m?(m[1]||m[2]||'1'):null};
+  const hung=/single\s*hung|\bhung\b/.test(wn)?(q(/(?:(\d+)\s*(?:x\s*)?single\s*hung|single\s*hung\s*[:=x-]?\s*(\d+)(?!\s*["'x×\/]))/)||'1'):null;
+  const slid=/slider|sliding/.test(wn)?(q(/(?:(\d+)\s*(?:x\s*)?slid(?:er|ing)|slid(?:er|ing)\s*[:=x-]?\s*(\d+)(?!\s*["'x×\/]))/)||'1'):null;
+  if(hung)R.set.winHung=hung;if(slid)R.set.winSlider=slid;
+  // service door: wall from the scan; never on a corner — centered unless the sketch shows a spot (then at least 1' off the corner)
+  const svWall=carpScanWall(g('service_door_wall'));if(svWall)R.set.svcWall=svWall;
+  const ops=o.openings||[],WN={alley:'FRONT',house:'BACK',left:'LEFT',right:'RIGHT'};
+  const svo=ops.find(x=>x.kind==='service_door'&&WN[x.wall]&&(!svWall||WN[x.wall]===svWall)&&x.elevX!=null);
+  R.svc={wall:svWall||(svo?WN[svo.wall]:''),elevX:svo?svo.elevX:null};
+  // windows on the elevations per the sketch (else spread on the scanned walls is NOT guessed: placed by the user)
+  ops.filter(x=>x.kind==='window'&&WN[x.wall]).forEach(x=>R.extra.push({wall:WN[x.wall],kind:'hung',elevX:x.elevX}));
+  // overhead door spot from the sketch (centered by default)
+  const oho=ops.find(x=>x.kind==='overhead_door'&&WN[x.wall]&&(!ohWall||WN[x.wall]===ohWall)&&x.elevX!=null);R.oh={elevX:oho?oho.elevX:null};
+  // notes: carpentry only
+  const svd=g('service_doors');if(svd)R.notes.push('Service door: '+svd);
+  const el=[g('electrical'),g('notes'),g('extras'),g('other')].join('; ');const cl=el.match(/(\d+)?\s*(?:\(\s*\d+\s*\)\s*)?coach\s*lights?/i);if(cl)R.notes.push('Coach lights'+(cl[1]?': '+cl[1]:'')+' (mount blocks)');
+  const gu=g('gutters');if(gu){if(/^no\b/i.test(gu)){R.gutters=false;R.notes.push('No gutters')}else{R.gutters=true;R.notes.push('Gutters: '+gu)}}
+  // collect carpentry = the 'after built' / 'after carpentry' stage
+  const st=(o.payment_schedule||[]).find(p=>/after\s*(built|carpentry|framing)|carpentry|framing/i.test(String(p.stage||''))&&p.amount!=null);if(st)R.set.collectCarpentry='$'+Number(st.amount).toLocaleString('en-US');
+  return R}
+function carpApplyScan(o){const R=carpScanMap(o);carpScan={o,R};
+  // fresh ticket: clear anything left from another job
+  extraDoors=[];planLabels={};document.querySelectorAll('.free-text').forEach(n=>n.remove());texts=[];
+  FIELDS.forEach(id=>{const e=$(id);if(e&&e.tagName!=='SELECT')e.value=''});['rep','phone','jobDate','repContact'].forEach(id=>{const e=$(id);if(e&&'value' in e)e.value=''});
+  const set=(id,v)=>{const e=$(id);if(e&&v!=null&&v!=='')e.value=String(v)};
+  Object.entries(R.set).forEach(([k,v])=>{if(k==='sizeW'||k==='sizeL'){const sel=$(k+'Sel');const opt=sel&&[...sel.options].find(x=>x.value===String(v));if(sel)sel.value=opt?opt.value:'custom'}set(k,v)});
+  if(R.city&&$('citySel')){const c=R.city.replace(/^(village|city|town) of\s+/i,'').trim().toLowerCase();const opt=[...$('citySel').options].find(x=>String(x.value||'').toLowerCase()===c);if(opt){$('citySel').value=opt.value;$('city').value=opt.value;$('city').style.display='none'}else{$('citySel').value='__manual__';$('city').style.display='block';$('city').value=R.city}}
+  Object.entries(R.choice).forEach(([k,v])=>setChoiceSilent(k,v));if(R.gutters!=null)choices.gutters=R.gutters;
+  if($('svcWall')&&R.svc.wall)$('svcWall').value=R.svc.wall;
+  const wallFt=wallLengthFor(val('svcWall')||'RIGHT'),svw=svcWidthFt();let off;
+  if(R.svc.elevX!=null){off=R.svc.elevX*wallFt-svw/2;off=Math.max(1,Math.min(wallFt-svw-1,off))}else off=(wallFt-svw)/2; // centered by default; never on a corner
+  $('svcOffset').value=String(+off.toFixed(1));if($('svcPos'))$('svcPos').value=R.svc.elevX==null?'center':(off+svw/2<wallFt/3?'left':off+svw/2>wallFt*2/3?'right':'center');
+  if(R.oh.elevX!=null&&$('ohWidth')){const W=wallLengthFor(val('ohWall')||'FRONT'),d=ohWidthFt();let l=Math.max(0,Math.min(W-d,R.oh.elevX*W-d/2));if(Math.abs(l-(W-d)/2)>1)writeReturns(+l.toFixed(1),+(W-d-l).toFixed(1));else writeReturns(+((W-d)/2).toFixed(1),+((W-d)/2).toFixed(1))}
+  else try{recalcReturns('width')}catch(e){}
+  R.extra.forEach((x,i)=>{const W=wallLengthFor(x.wall),w=2;const fx=x.elevX!=null?Math.max(0,Math.min(1-w/W,(x.elevX*W-w/2)/W)):null;extraDoors.push({id:'sw'+i,wall:x.wall,w:2,h:4,kind:x.kind,x:fx!=null?+fx.toFixed(3):freeSpot(x.wall,2),visW:null,visH:null})});
+  set('notes',R.notes.join('\n'));try{fitNotes()}catch(e){}
+  try{separateDoors()}catch(e){}try{renderDoorList()}catch(e){}persist();makePlans();carpScanBar()}
+function carpScanBar(){if($('carpScanBar'))return;const b=document.createElement('div');b.id='carpScanBar';b.style.cssText='position:sticky;top:0;z-index:60;background:#fef9c3;border-bottom:2px solid #eab308;padding:8px 10px;font:700 14px Arial;display:flex;flex-wrap:wrap;gap:8px;align-items:center';
+  b.innerHTML='<span style="flex:1;min-width:200px">Built from the contract scan — review every value and the door / window spots, then save.</span><button type="button" id="carpSavePdf" style="min-height:44px;padding:0 14px;background:#10203a;color:#fff;border:0;border-radius:8px;font-weight:800">Save PDF to job</button>';
+  document.body.prepend(b);$('carpSavePdf').onclick=carpSavePdf}
+async function carpLoadLib(src,test){if(test())return;await new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=()=>rej(new Error('Could not load '+src));document.head.appendChild(s)})}
+async function carpBuildPdf(){await carpLoadLib('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',()=>window.html2canvas);await carpLoadLib('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',()=>window.jspdf);
+  const {jsPDF}=window.jspdf,pdf=new jsPDF({unit:'pt',format:'letter'}),PW=612,PH=792,M=24;let first=true;
+  const add=async el=>{const c=await html2canvas(el,{scale:2,backgroundColor:'#fff',useCORS:true});const k=Math.min((PW-2*M)/c.width,(PH-2*M)/c.height);if(!first)pdf.addPage();first=false;pdf.addImage(c.toDataURL('image/jpeg',0.92),'JPEG',M,M,c.width*k,c.height*k)};
+  const bar=$('carpScanBar');if(bar)bar.style.display='none';document.body.classList.add('carp-pdf');
+  if(!$('carpPdfCss')){const st=document.createElement('style');st.id='carpPdfCss';st.textContent='.carp-pdf .circ.on i{box-shadow:none!important;background:#111!important;border-color:#111!important}';document.head.appendChild(st)}
+  /* html2canvas drops textarea line breaks: show notes as a div while capturing */
+  const phs=[...document.querySelectorAll('#paper input[placeholder]')].filter(i=>!i.value).map(i=>{const v=i.getAttribute('placeholder');i.setAttribute('placeholder','');return [i,v]});
+  const swaps=[...document.querySelectorAll('#paper textarea')].map(t=>{const d=document.createElement('div');const cs=getComputedStyle(t);d.style.cssText=`white-space:pre-wrap;font:${cs.font};min-height:${t.offsetHeight}px;width:${t.offsetWidth}px;padding:${cs.padding};box-sizing:border-box`;d.textContent=t.value;t.style.display='none';t.after(d);return [t,d]});
+  try{await add($('paper'));const els=[...document.querySelectorAll('#elevs .elev')];const hd=document.querySelector('#drawPage h2'),meta=$('planMeta');
+    for(let i=0;i<els.length;i+=2){const w=document.createElement('div');w.style.cssText='background:#fff;padding:10px;width:760px;position:absolute;left:-9999px;top:0';if(i===0){w.appendChild(hd.cloneNode(true));w.appendChild(meta.cloneNode(true))}els.slice(i,i+2).forEach(e=>{const c=e.cloneNode(true);c.classList.remove('picked');c.style.marginBottom='12px';w.appendChild(c)});document.body.appendChild(w);try{await add(w)}finally{w.remove()}}}
+  finally{phs.forEach(([i,v])=>i.setAttribute('placeholder',v));swaps.forEach(([t,d])=>{d.remove();t.style.display=''});if(bar)bar.style.display='flex';document.body.classList.remove('carp-pdf')}
+  return pdf}
+async function carpSavePdf(){const btn=$('carpSavePdf');const jobId=carpScan&&carpScan.o&&carpScan.o.jobId;
+  if(!sb){alert('Not signed in — connect to the internet and reload.');return}
+  if(!jobId){alert('This scan is not attached to a saved job yet. Save the job on the dashboard first, then press Create Carpenter Sheet again.');return}
+  if(!confirm('Save this Carpenter Sheet as a PDF to the job?'))return;
+  btn.disabled=true;btn.textContent='Saving…';
+  try{const {data:{user}}=await sb.auth.getUser();if(!user)throw new Error('Sign in required');
+    const pdf=await carpBuildPdf();const blob=pdf.output('blob');const name=('Carpenter-Sheet-'+(val('customer')||'job')).replace(/[^a-zA-Z0-9._-]/g,'_')+'.pdf';
+    const path=`${user.id}/jobs/${jobId}/${Date.now()}-${name}`;
+    let r=await sb.storage.from('job-documents').upload(path,blob,{contentType:'application/pdf',upsert:false});if(r.error)throw r.error;
+    r=await sb.from('job_documents').insert({job_id:jobId,uploaded_by:user.id,file_name:name,storage_path:path,document_type:'Carpenter Sheet'});if(r.error){await sb.storage.from('job-documents').remove([path]);throw r.error}
+    try{localStorage.removeItem('agb_carp_prefill')}catch(e){}
+    btn.textContent='✔ Saved to job';window.carpSavedPath=path;alert('Carpenter Sheet saved to the job (Photos & Paperwork).')}
+  catch(e){btn.disabled=false;btn.textContent='Save PDF to job';alert('Not saved: '+(e.message||e))}}
+function carpScanPending(){if(!/[?&]prefill=1\b/.test(location.search))return null;try{const o=JSON.parse(localStorage.getItem('agb_carp_prefill')||'null');return o&&o.v===1?o:null}catch(e){return null}}
+(function(){const o0=loadLocal;loadLocal=function(){const o=carpScanPending();if(!o)return o0.apply(this,arguments);makePlans();carpApplyScan(o)}})();
+/* offline sign-in path runs loadLocal before this script loads */
+if($('app')&&$('app').style.display==='block'&&!carpScan){const o=carpScanPending();if(o)carpApplyScan(o)}
 </script>
 </body>
 </html>

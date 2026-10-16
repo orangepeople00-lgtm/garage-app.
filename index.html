@@ -2861,7 +2861,7 @@ function jfDrawingSaved(j){try{const raw=localStorage.getItem('agb_drawing_job_'
 async function jfCarpSaved(id){try{const {data}=await sb.from('carpenter_sheets').select('updated_at').eq('job_id',id).maybeSingle();const el=$('jfCarpInfo');if(el&&data&&data.updated_at)el.textContent='Saved '+new Date(data.updated_at).toLocaleDateString()}catch(e){}}
 function jfRow(title,info,buttons){return `<div class="rowbox jf-row"><div class="jf-info"><strong>${title}</strong><div class="sub">${info}</div></div><div class="jf-btns">${buttons}</div></div>`}
 function jfBtn(label,js,primary){return `<button type="button" class="btn ${primary?'primary':'light'} sm" onclick="${js}">${label}</button>`}
-function jfScroll(sel){const el=document.querySelector('#drawerContent '+sel);if(el)el.scrollIntoView({behavior:'smooth',block:'start'})}
+function jfScroll(sel){const el=document.querySelector('#drawerContent '+sel);const hd=document.querySelector('#drawerContent .drawerhead');if(hd)document.getElementById('drawerContent').style.setProperty('--dh',(hd.offsetHeight+8)+'px');if(el)el.scrollIntoView({behavior:'smooth',block:'start'})}
 function jobFolderHtml(j,docs){
   const id=j.id,none='<span class="jf-none">none yet</span>';
   const ests=estimatesForJob(j),plans=plansForJob(j);
@@ -2972,9 +2972,14 @@ function paySet(h,i,k,v){const s=PAY[h];if(!s)return;const r=s.rows[i];if(!r)ret
 function payMove(h,i,d){const r=PAY[h].rows,j=i+d;if(j<0||j>=r.length)return;[r[i],r[j]]=[r[j],r[i]];payRender(h)}
 function payRemove(h,i){PAY[h].rows.splice(i,1);payRender(h)}
 function payAdd(h,name){if(name==='__custom'){name=(prompt('Stage name')||'').trim();if(!name)return}if(!name)return;PAY[h].rows.push({stage:name,amount:'',percent:'',due:'',paid:false,paid_date:'',method:''});payRender(h)}
-function paySummaryHtml(h){const s=PAY[h],price=payPrice(h),tot=paySum(s.rows),paid=paySum(s.rows,true),any=s.rows.some(r=>r.amount!==''&&r.amount!=null);
-  const mism=price&&any&&Math.abs(tot-price)>0.005;
-  return `<div class="pay-sum"><span>Schedule total <b>${any?money(tot):'—'}</b></span><span>Sold price <b>${price?money(price):'—'}</b></span><span>Paid <b>${money(paid)}</b></span><span>Remaining <b>${price?money(price-paid):any?money(tot-paid):'—'}</b></span></div>${mism?`<div class="pay-warn">⚠ Schedule total ${money(tot)} does not match the sold price ${money(price)} (${tot>price?'over':'short'} by ${money(Math.abs(tot-price))}).</div>`:''}`}
+/* Summary. "Filled out" = every stage row has a dollar amount (a percent alone doesn't count toward the total).
+   The mismatch warning only appears once the schedule is filled out. */
+const payAmt=r=>r.amount!==''&&r.amount!=null&&Number.isFinite(Number(r.amount));
+const pay$=n=>{n=Number(n)||0;const c=Math.round(n*100)%100!==0;return new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',minimumFractionDigits:c?2:0,maximumFractionDigits:2}).format(n)};
+function paySummaryHtml(h){const s=PAY[h],price=payPrice(h),tot=paySum(s.rows),paid=paySum(s.rows,true),n=s.rows.length,have=s.rows.filter(payAmt).length,any=have>0,full=n>0&&have===n;
+  const mism=full&&price&&Math.abs(tot-price)>0.005;
+  const status=!n?'No stages yet':full?(price?(mism?'':'✔ Schedule matches the sold price'):'All stages have amounts'):`${have} of ${n} stages have amounts`;
+  return `<div class="pay-sum"><span>Sold price <b>${price?pay$(price):'—'}</b></span><span>Schedule total <b>${any?pay$(tot):'—'}</b></span><span>Collected <b>${pay$(paid)}</b></span><span>Balance due <b>${price?pay$(price-paid):any?pay$(tot-paid):'—'}</b></span></div>${status?`<div class="muted small pay-status">${status}</div>`:''}${mism?`<div class="pay-warn">⚠ Schedule total ${pay$(tot)} does not match the sold price ${pay$(price)} (${tot>price?'over':'short'} by ${pay$(Math.abs(tot-price))}).</div>`:''}`}
 function payRender(h,sumOnly){const box=$(h);const s=PAY[h];if(!box||!s)return;
   if(sumOnly&&box.querySelector('.pay-sumwrap')){box.querySelector('.pay-sumwrap').innerHTML=paySummaryHtml(h);s.rows.forEach((r,i)=>{const hint=box.querySelector(`[data-pct-hint="${i}"]`);if(hint)hint.textContent=pctHint(h,r)});return}
   const ed=s.canEdit!==false,cp=!!s.canPaid,used=new Set(s.rows.map(r=>r.stage));
@@ -3008,7 +3013,7 @@ async function payScannedDeposit(id){try{const {data,error}=await sb.from('job_c
   const f=data.find(r=>r&&String(r.field||'').toLowerCase()==='deposit');const a=f?payDepNum(f.value):null;if(a!=null)return a;
   for(const r of data){let ps=r&&r.payment_schedule;if(typeof ps==='string'){try{ps=JSON.parse(ps)}catch(e){ps=null}}if(Array.isArray(ps)){const d=ps.find(p=>p&&/^\s*deposit\s*$/i.test(String(p.stage||'')));const n=d?payDepNum(d.amount):null;if(n!=null)return n}}
   return null}catch(e){return null}}
-(function(){const o=openDrawer;window.openDrawer=openDrawer=async function(id){const r=await o.apply(this,arguments);try{if(!PAY.payDrawerHost)return r;const j=jobs.find(x=>x.id===id);if(!j)return r;
+(function(){const o=openDrawer;window.openDrawer=openDrawer=async function(id){const r=await o.apply(this,arguments);try{const hd=document.querySelector('#drawerContent .drawerhead'),dc=$('drawerContent');if(hd&&dc)dc.style.setProperty('--dh',(hd.offsetHeight+8)+'px')}catch(e){}try{if(!PAY.payDrawerHost)return r;const j=jobs.find(x=>x.id===id);if(!j)return r;
   const dep=PAY.payDrawerHost.rows.find(x=>x.stage==='Deposit');if(!dep||!(dep.amount===''||dep.amount==null))return r;
   const sc=await payScannedDeposit(id);if(openJobId!==id||!PAY.payDrawerHost)return r;const d2=PAY.payDrawerHost.rows.find(x=>x.stage==='Deposit');if(!d2||!(d2.amount===''||d2.amount==null))return r;
   const v=sc!=null?sc:payDepNum(j.deposit);if(v!=null){d2.amount=String(v);payRender('payDrawerHost')}}catch(e){console.warn('pay deposit',e)}return r}})();
@@ -3028,7 +3033,7 @@ function payApplyFromDoc(h,docRows){const s=PAY[h];if(!s||!Array.isArray(docRows
 .pay-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:6px}.pay-grid label{display:flex;flex-direction:column;font-size:11px;font-weight:700;color:#475569;gap:2px}.pay-grid input,.pay-grid select{font-size:16px;padding:8px;border:1px solid #cbd5e1;border-radius:8px;min-height:42px;width:100%;box-sizing:border-box}.pay-grid small{color:#64748b;font-weight:600}
 .pay-grid label.pay-paid{flex-direction:row;align-items:center;gap:8px;font-size:15px;color:#15803d}.pay-paid input{width:26px;height:26px;min-height:0}.pay-paidro{grid-column:1/-1;color:#15803d;font-weight:800}
 .pay-add select{font-size:16px;min-height:44px;padding:8px;border-radius:8px;border:1px dashed #64748b;width:100%;max-width:320px}
-.pay-sum{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:8px;font-size:14px}.pay-warn{margin-top:6px;background:#fff7ed;color:#c2410c;border:1px solid #fdba74;border-radius:8px;padding:8px;font-weight:800}
+.pay-sum{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:6px 16px;margin-top:8px;font-size:14px}.pay-status{margin-top:4px}#drawerContent [id],#drawerContent .card{scroll-margin-top:var(--dh,140px)}.pay-warn{margin-top:6px;background:#fff7ed;color:#c2410c;border:1px solid #fdba74;border-radius:8px;padding:8px;font-weight:800}
 @media(max-width:600px){.pay-grid{grid-template-columns:1fr 1fr}.pay-grid .pay-due{grid-column:1/-1}}
 </style>
 <script>

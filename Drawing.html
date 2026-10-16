@@ -363,7 +363,10 @@ button.danger{color:#b42318}
   .mobile-bottom-bar button.primary{background:#2563eb; border-color:#2563eb}
   .mobile-bottom-bar button.danger{background:#b91c1c; border-color:#b91c1c}
   /* Give drawing area room above the bottom bar */
-  .main{padding-bottom:62px}
+  /* Second row for rotate / undo so they are always on screen (not scrolled off the bottom bar) */
+  .mobile-bottom-bar.mobile-edit-bar{bottom:calc(62px + env(safe-area-inset-bottom));padding:6px 8px;overflow-x:visible;box-shadow:none;border-top:1px solid #1e293b}
+  .mobile-edit-bar button{flex:1 1 0;min-width:0;padding:10px 4px;min-height:44px;font-size:14px}
+  .main{padding-bottom:118px}
   .viewport{min-height:0}
   /* Hide some less-critical topbar buttons on very small screens - still in bottom bar / panel */
   .topbar .hide-on-mobile{display:none !important}
@@ -2689,16 +2692,18 @@ button.danger{color:#b42318}
 <button id="emailPdfBtn" type="button" class="primary" title="Email PDF via Gmail / Mail app">✉ Email</button>
 </div>
 <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
-<div class="mobile-bottom-bar" id="mobileBottomBar">
-  <button type="button" class="primary" id="mobileToolsBtn">☰ Tools</button>
-  <button type="button" id="mobileAddGarageBtn" style="background:#1d4ed8;color:#fff;border-color:#1d4ed8;font-weight:900">+ Garage</button>
-  <button type="button" id="mobileAddApronBtn" style="background:#0f766e;color:#fff;border-color:#0f766e;font-weight:900">+ Apron</button>
-  <button type="button" id="mobileAddRectBtn">+ Box</button>
+<div class="mobile-bottom-bar mobile-edit-bar" id="mobileEditBar">
   <button type="button" id="mobileRotateLeftBtn" title="Rotate -15°">↺</button>
   <button type="button" id="mobileRotateRightBtn" title="Rotate +15°">↻</button>
   <button type="button" id="mobileRotate90Btn" title="Rotate 90°">90°</button>
   <button type="button" id="mobileUndoBtn">↶ Undo</button>
   <button type="button" id="mobileRedoBtn">↷ Redo</button>
+</div>
+<div class="mobile-bottom-bar" id="mobileBottomBar">
+  <button type="button" class="primary" id="mobileToolsBtn">☰ Tools</button>
+  <button type="button" id="mobileAddGarageBtn" style="background:#1d4ed8;color:#fff;border-color:#1d4ed8;font-weight:900">+ Garage</button>
+  <button type="button" id="mobileAddApronBtn" style="background:#0f766e;color:#fff;border-color:#0f766e;font-weight:900">+ Apron</button>
+  <button type="button" id="mobileAddRectBtn">+ Box</button>
   <button type="button" id="mobileDupBtn">Duplicate</button>
   <button type="button" id="mobileLockBtn">Lock</button>
   <button type="button" id="mobileHideBtn">Hide</button>

@@ -153,9 +153,10 @@ button{border:0;border-radius:7px;padding:8px 10px;font-weight:800;cursor:pointe
 .sheet .elecbox ul,.sheet .codedata ul,.sheet .notes-col ul{list-style:none;margin:0!important;padding:0!important;counter-reset:psn}
 .sheet .elecbox li,.sheet .codedata li,.sheet .notes-col li{counter-increment:psn;position:relative;margin:0;padding:3px 8px 3px 34px;border-top:.6px solid #111;font-size:12px;line-height:1.3}
 .sheet .elecbox li:first-child,.sheet .codedata li:first-child,.sheet .notes-col li:first-child{border-top:0}
-.sheet .elecbox li::before,.sheet .codedata li::before,.sheet .notes-col li::before{content:counter(psn,decimal-leading-zero);position:absolute;left:8px;top:3px;font-family:'Courier New',monospace;font-weight:700}
+.sheet .elecbox li::before,.sheet .codedata li::before,.sheet .notes-col li::before{content:counter(psn,decimal-leading-zero);position:absolute;left:8px;top:3px;width:22px;white-space:nowrap;overflow:visible;font-family:'Courier New',monospace;font-weight:700}
 .sheet .codedata table{width:calc(100% - 16px);margin:6px 8px}
 .sheet .elecbox h3+ul{margin-top:0}
+.sheet li.psn-x::before{content:none!important}.sheet li .psn-t{position:absolute;left:8px;top:3px;width:22px;white-space:nowrap;font-family:'Courier New',monospace;font-weight:700}
 .sheet .elecbox ul+h3{border-top:1.4px solid #111}
 /* Schedule C: black header bar, ruled rows, monospace */
 .sheet .sched.sched-c{border:1.4px solid #111;border-collapse:collapse;width:100%;margin-top:10px;font-family:'Courier New',monospace;font-size:12px}
@@ -2443,7 +2444,7 @@ window.addEventListener('beforeprint',()=>{try{elev4Fit()}catch(e){}});
 // Fit each sheet's content into its 11x17 page (prevents spill-over blank pages). Measures by ratio to sheet width, so it works under screen scaling and print zoom; skipped when hidden.
 function sheetFit(){
   document.querySelectorAll('#pages section.sheet').forEach(sec=>{
-    const r=sec.getBoundingClientRect(); if(!r.width) return; const px=r.width/1632; const avail=(1056-14-104)*px;
+    const r=sec.getBoundingClientRect(); if(!r.width) return; const px=r.width/1632; const avail=(1056-14-104-14)*px; // 14px clearance above the title block
     const parts=sec.classList.contains('elev4')?[]:[...sec.children].filter(k=>!k.classList.contains('tblock')&&!k.classList.contains('overlay'));
     sec.querySelectorAll('.ps-roof-notes').forEach(n=>{ n.classList.remove('fit-scaled'); n.style.transform=''; n.style.width=''; n.style.marginBottom=''; n.style.transformOrigin=''; });
     parts.forEach(k=>{ k.classList.remove('fit-scaled'); k.style.zoom=''; k.style.transform=''; k.style.transformOrigin=''; k.style.marginBottom=''; });
@@ -3295,6 +3296,8 @@ async function downloadPlansPdf(){
         sv.setAttribute('width',(r.width/k/fz).toFixed(1)); sv.setAttribute('height',(r.height/k/fz).toFixed(1));
         sv.style.width=(r.width/k/fz).toFixed(1)+'px'; sv.style.height=(r.height/k/fz).toFixed(1)+'px'; sv.style.maxHeight='none'; });
       c.querySelectorAll('.vis-handle,.no-print').forEach(el=>el.remove());
+      // html2canvas mis-renders CSS list counters (e.g. "010"): write the note numbers as real text in the clone
+      c.querySelectorAll('.elecbox ul, .codedata ul, .notes-col ul').forEach(ul=>{ let n=0; [...ul.children].forEach(li=>{ if(li.tagName!=='LI') return; n++; li.classList.add('psn-x'); const sp=document.createElement('span'); sp.className='psn-t'; sp.textContent=String(n).padStart(2,'0'); li.insertBefore(sp,li.firstChild); }); });
       host.appendChild(c);
       return c;
     });

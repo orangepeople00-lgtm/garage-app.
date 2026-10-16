@@ -577,7 +577,7 @@ function setChoiceSilent(key,value){
   choices[key]=value;
   document.querySelectorAll('#'+(OPTS_IDS[key]||(key+'Opts'))+' button').forEach(b=>b.classList.toggle('on', b.dataset.v===value));
   const map={roof:'roofCircles',eaves:'eaveCircles',siding:'sidingCircles',shingles:'shingleCircles',header:'headerCircles',jamb:'jambCircles'};
-  document.querySelectorAll('#'+(map[key]||'')+' .circ').forEach(c=>c.classList.toggle('on', c.dataset.v===value));
+  if(map[key]) document.querySelectorAll('#'+map[key]+' .circ').forEach(c=>c.classList.toggle('on', c.dataset.v===value));
 }
 
 function undoTicket(){
@@ -1355,7 +1355,9 @@ async function carpApplyJobPrefill(){
 function loadLocal(){
   // Start blank. Nothing is typed until Apply Changes — except a ticket opened from a dashboard job is filled from that job.
   makePlans();
-  carpApplyJobPrefill().then(ok=>{ if(ok) makePlans(); }).catch(e=>console.warn('carp prefill',e));
+  // the scan / saved-sheet loaders live in later script blocks: run once the whole page is parsed
+  const go=()=>{ if(window.carpBoot) return carpBoot(); carpApplyJobPrefill().then(ok=>{ if(ok) makePlans(); }).catch(e=>console.warn('carp prefill',e)); };
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',go,{once:true}); else setTimeout(go,0);
 }
 
 document.addEventListener('focusin', e=>{ if(e.target.classList?.contains('f')) pushUndo(); });
@@ -1573,8 +1575,8 @@ function carpApplyScan(o){const R=carpScanMap(o);carpScan={o,R};
   R.extra.forEach((x,i)=>{const W=wallLengthFor(x.wall),w=2;const fx=x.elevX!=null?Math.max(0,Math.min(1-w/W,(x.elevX*W-w/2)/W)):null;extraDoors.push({id:'sw'+i,wall:x.wall,w:2,h:4,kind:x.kind,x:fx!=null?+fx.toFixed(3):freeSpot(x.wall,2),visW:null,visH:null})});
   set('notes',R.notes.join('\n'));try{fitNotes()}catch(e){}
   try{separateDoors()}catch(e){}try{renderDoorList()}catch(e){}persist();makePlans();carpScanBar()}
-function carpScanBar(){if($('carpScanBar'))return;const b=document.createElement('div');b.id='carpScanBar';b.style.cssText='position:static;background:#fef9c3;border-bottom:2px solid #eab308;padding:6px 10px;font:700 12px Arial';
-  b.textContent='Built from the contract scan — check the values and door/window spots, then tap Save PDF to job.';
+function carpScanBar(msg){if($('carpScanBar'))return;const b=document.createElement('div');b.id='carpScanBar';b.style.cssText='position:static;background:#fef9c3;border-bottom:2px solid #eab308;padding:6px 10px;font:700 12px Arial';
+  b.textContent=msg||'Built from the contract scan — check the values and door/window spots, then tap Save PDF to job.';
   const f=document.createElement('button');f.type='button';f.id='carpSavePdf';f.className='no-print';f.textContent='Save PDF to job';f.style.cssText='position:fixed;right:12px;bottom:calc(84px + env(safe-area-inset-bottom));z-index:60;min-height:44px;padding:0 16px;background:#10203a;color:#fff;border:2px solid #eab308;border-radius:22px;font:800 14px Arial;box-shadow:0 3px 10px rgba(0,0,0,.3)';
   b.className='no-print';document.body.prepend(b);document.body.appendChild(f);$('carpSavePdf').onclick=carpSavePdf}
 async function carpLoadLib(src,test){if(test())return;await new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=()=>rej(new Error('Could not load '+src));document.head.appendChild(s)})}
@@ -1594,7 +1596,7 @@ async function carpBuildPdf(){await carpLoadLib('https://cdnjs.cloudflare.com/aj
       for(const e of els.slice(i,i+2)){const svg=e.querySelector('svg');const t=(e.querySelector('h3')||{}).textContent||e.dataset.side||'';pdf.setFontSize(11);pdf.text(t,M,y+10);pdf.rect(M,y,PW-2*M,slot-8);if(svg){try{const g=await svgImg(svg);const aw=PW-2*M-12,ah=slot-30;const k=Math.min(aw/g.w,ah/g.h);pdf.addImage(g.url,'JPEG',M+6+(aw-g.w*k)/2,y+16,g.w*k,g.h*k)}catch(err){console.warn(err)}}y+=slot}}}
   finally{phs.forEach(([i,v])=>i.setAttribute('placeholder',v));swaps.forEach(([t,d])=>{d.remove();t.style.display=''});if(bar)bar.style.display='';document.body.classList.remove('carp-pdf')}
   return pdf}
-async function carpSavePdf(){const btn=$('carpSavePdf');const jobId=carpScan&&carpScan.o&&carpScan.o.jobId;
+async function carpSavePdf(){const btn=$('carpSavePdf');const jobId=carpJobId();
   if(!sb){alert('Not signed in — connect to the internet and reload.');return}
   if(!jobId){alert('This scan is not attached to a saved job yet. Save the job on the dashboard first, then press Create Carpenter Sheet again.');return}
   if(!confirm('Save this Carpenter Sheet as a PDF to the job?'))return;
@@ -1605,12 +1607,29 @@ async function carpSavePdf(){const btn=$('carpSavePdf');const jobId=carpScan&&ca
     let r=await sb.storage.from('job-documents').upload(path,blob,{contentType:'application/pdf',upsert:false});if(r.error)throw r.error;
     r=await sb.from('job_documents').insert({job_id:jobId,uploaded_by:user.id,file_name:name,storage_path:path,document_type:'Carpenter Sheet'});if(r.error){await sb.storage.from('job-documents').remove([path]);throw r.error}
     try{localStorage.removeItem('agb_carp_prefill')}catch(e){}
+    const sv=await carpSaveState(jobId);if(sv.error)throw new Error('PDF saved, but the editable sheet was not: '+sv.error);
     btn.textContent='✔ Saved to job';window.carpSavedPath=path;alert('Carpenter Sheet saved to the job (Photos & Paperwork).')}
   catch(e){btn.disabled=false;btn.textContent='Save PDF to job';alert('Not saved: '+(e.message||e))}}
 function carpScanPending(){if(!/[?&]prefill=1\b/.test(location.search))return null;try{const o=JSON.parse(localStorage.getItem('agb_carp_prefill')||'null');return o&&o.v===1?o:null}catch(e){return null}}
-(function(){const o0=loadLocal;loadLocal=function(){const o=carpScanPending();if(!o)return o0.apply(this,arguments);makePlans();carpApplyScan(o)}})();
-/* offline sign-in path runs loadLocal before this script loads */
-if($('app')&&$('app').style.display==='block'&&!carpScan){const o=carpScanPending();if(o)carpApplyScan(o)}
+
 </script>
-</body>
+<script>
+/* ===== 2026-10-15: the FULL editable sheet (snapshot() = every FIELDS value incl. svcOffset/ohWall/svcWall, choices, extraDoors, planLabels, texts, planTexts)
+   is stored per job in Supabase table carpenter_sheets (job_id unique, state jsonb). Saved on Save PDF to job and on Apply Changes.
+   Opening a job's sheet restores the latest saved state first; only when none is saved does it fall back to the job prefill. ===== */
+function carpJobId(){const q=new URLSearchParams(location.search).get('jobId');return q||(carpScan&&carpScan.o&&carpScan.o.jobId)||null}
+async function carpSaveState(jobId){jobId=jobId||carpJobId();if(!sb||!jobId)return {skipped:true};
+  try{const {data:{user}}=await sb.auth.getUser();const st=snapshot();
+    const {error}=await sb.from('carpenter_sheets').upsert({job_id:jobId,state:st,updated_at:new Date().toISOString(),updated_by:user?user.id:null},{onConflict:'job_id'});
+    if(error)return {error:error.message};window.carpStateSavedAt=Date.now();return {ok:true}}catch(e){return {error:String(e.message||e)}}}
+async function carpLoadState(jobId){if(!sb||!jobId)return null;try{const {data,error}=await sb.from('carpenter_sheets').select('state,updated_at').eq('job_id',jobId).maybeSingle();if(error||!data||!data.state)return null;return data}catch(e){return null}}
+function carpRestoreState(st){applySnap(st);try{fitNotes()}catch(e){}makePlans();persist()}
+/* order: contract-scan hand-off > saved sheet for this job > job prefill */
+function carpBoot(){const scan=carpScanPending();if(scan)return carpApplyScan(scan);
+  const jid=new URLSearchParams(location.search).get('jobId');const prefill=()=>carpApplyJobPrefill().then(ok=>{if(ok)makePlans()}).catch(e=>console.warn('carp prefill',e));
+  if(!jid)return prefill();
+  carpLoadState(jid).then(row=>{if(row){carpRestoreState(row.state);carpScanBar('Saved sheet for this job ('+new Date(row.updated_at).toLocaleString()+') — edit, then tap Save PDF to job.')}
+    else{prefill();carpScanBar('Built from this job — fill it in, then tap Save PDF to job.')}})}
+(function(){const prev=applyChanges;applyChanges=function(){const r=prev.apply(this,arguments);if(carpJobId())carpSaveState().then(x=>{if(x.error)alert('Sheet not saved to the job: '+x.error)});return r}})();
+</script></body>
 </html>

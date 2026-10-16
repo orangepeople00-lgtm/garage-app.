@@ -2858,6 +2858,8 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&profile)r
 /* ===== 2026-10-15: Job Folder (one-tap) + Crew Schedule week view. Uses only existing job / estimate_history (light list) / job_documents data. ===== */
 const JF_PHOTO_TYPES=['Photo','Land/Site'];
 function jfDrawingSaved(j){try{const raw=localStorage.getItem('agb_drawing_job_'+j.id);if(!raw)return null;const d=JSON.parse(raw);return d&&d.savedAt?d.savedAt:'saved'}catch(e){return null}}
+/* saved editable Carpenter sheet (table carpenter_sheets) — Open restores it */
+async function jfCarpSaved(id){try{const {data}=await sb.from('carpenter_sheets').select('updated_at').eq('job_id',id).maybeSingle();const el=$('jfCarpInfo');if(el&&data&&data.updated_at)el.textContent='Saved '+new Date(data.updated_at).toLocaleDateString()}catch(e){}}
 function jfRow(title,info,buttons){return `<div class="rowbox jf-row"><div class="jf-info"><strong>${title}</strong><div class="sub">${info}</div></div><div class="jf-btns">${buttons}</div></div>`}
 function jfBtn(label,js,primary){return `<button type="button" class="btn ${primary?'primary':'light'} sm" onclick="${js}">${label}</button>`}
 function jfScroll(sel){const el=document.querySelector('#drawerContent '+sel);if(el)el.scrollIntoView({behavior:'smooth',block:'start'})}
@@ -2873,7 +2875,8 @@ function jobFolderHtml(j,docs){
   out.push(jfRow('Drawing',ds?('Saved on this device'+(ds!=='saved'?' • '+new Date(ds).toLocaleDateString():'')):none+' <span class="muted small">(drawings are saved per device)</span>',jfBtn(ds?'Open':'+ Create',`openJobDrawing('${id}')`,1)));
   out.push(plans.length?plans.map(p=>jfRow('Garage Plans',`Plan set • ${dt(p)}`,jfBtn('Open',`window.location.href='GaragePlans.html?planId='+encodeURIComponent('${esc(p.id)}')+'&jobId=${id}&v='+Date.now()`,1))).join('')
     :jfRow('Garage Plans',none,jfBtn('+ Create',`window.location.href='GaragePlans.html?'+jobQs(jobs.find(x=>x.id==='${id}'))`,1)));
-  out.push(jfRow('Carpenter Sheet','Built from this job'+(ests.length?' + linked estimate':''),jfBtn('Open',`openJobCarpenter('${id}')`,1)));
+  out.push(jfRow('Carpenter Sheet',`<span id="jfCarpInfo">${'Built from this job'+(ests.length?' + linked estimate':'')}</span>`,jfBtn('Open',`openJobCarpenter('${id}')`,1)));
+  setTimeout(()=>jfCarpSaved(id),0);
   out.push(jfRow('Job Photos',photos.length?`${photos.length} photo${photos.length===1?'':'s'}`:none,photos.length?jfBtn('Open',`jfScroll('.ph-card')`,1)+jfBtn('+ Add',`phOpen('${id}')`):jfBtn('+ Add photos',`phOpen('${id}')`,1)));
   out.push(jfRow('Paperwork',paper.length?esc([...new Set(paper.map(d=>d.document_type||'Document'))].join(', '))+` (${paper.length})`:none,paper.length?jfBtn('Open',`jfScroll('.scan-paperwork-box')`,1):jfBtn('+ Add paperwork',`jfScroll('.scan-paperwork-box')`,1)));
   return `<div class="card full jf-card" id="jobFolder"><h4 style="margin:0 0 8px">📁 Job Folder</h4><div class="list">${out.join('')}</div></div>`;

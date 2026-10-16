@@ -1231,7 +1231,7 @@ body.bg-zinc-950{
                                 <label class="text-xs text-zinc-400 block mb-1">Excavation / Stone Quantity</label>
                                 <input type="hidden" id="excavation" value="auto">
                                 <div id="excavationAuto" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm">$0</div>
-                                <div class="text-[10px] text-zinc-500 mt-0.5">Excavation / stone base • auto: garage sq ft (width × depth) × $1.50</div>
+                                <div class="text-[10px] text-zinc-500 mt-0.5">Excavation / stone base • auto: garage sq ft (width × depth) × $1.50 • only when no demo</div>
                             </div>
                         </div>
 
@@ -3196,12 +3196,15 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             }
             // Excavation / stone base = garage sq ft (width x depth) x $1.50. Existing slab: off (no garage concrete work).
             const EXCAVATION_RATE_PER_SQFT = 1.5;
-            const excavationSqft = existingSlabNoConcrete ? 0 : Math.max(0, (Number(width) || 0) * (Number(depth) || 0));
+            // Charged only when there is NO demolition (demo on => excavation $0).
+            const excavDemoOn = !!document.getElementById('demoExisting')?.checked;
+            const excavationSqft = (existingSlabNoConcrete || excavDemoOn) ? 0 : Math.max(0, (Number(width) || 0) * (Number(depth) || 0));
             const excavation = Math.round(excavationSqft * EXCAVATION_RATE_PER_SQFT * 100) / 100;
             window._agbExcavation = { sqft: excavationSqft, cost: excavation };
             const excavAuto = document.getElementById('excavationAuto');
             if (excavAuto) excavAuto.textContent = existingSlabNoConcrete
                 ? 'Off — Build On Existing Slab (no excavation / stone base charged)'
+                : excavDemoOn ? 'Off — demo included'
                 : `${excavationSqft.toLocaleString()} sq ft × $1.50 = $${excavation.toLocaleString(undefined,{maximumFractionDigits:2})}`;
             
             // Two extra patios

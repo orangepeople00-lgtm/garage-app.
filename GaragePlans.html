@@ -352,12 +352,12 @@ body.oh-unconf .sheet .oh-banner{display:block;position:absolute;top:8px;left:16
   <label>Slide party door (left return)</label>
   <input id="partySlide" type="range" min="0" max="10" step="0.5" value="2" style="width:100%">
   <div class="row2">
-    <div><label>Window wall</label><select id="winWall"><option value="none" selected>None</option><option value="back">Back</option><option value="left">Left</option><option value="right">Right</option><option value="front">Front</option></select></div>
+    <div><label>Window wall</label><select id="winWall"><option value="none">None</option><option value="back" selected>Back</option><option value="left">Left</option><option value="right">Right</option><option value="front">Front</option></select></div>
     <div><label>Window type</label><select id="winType"><option>Single hung</option><option>Slider</option><option>vinyl</option></select></div>
   </div>
   <div class="row2">
     <div><label>Window size (any)</label><input id="winSize" value="2x3" placeholder="2x3 or 24x36"></div>
-    <div><label># of windows</label><input id="winCount" type="number" min="0" max="6" value="0"></div>
+    <div><label># of windows</label><input id="winCount" type="number" min="0" max="6" value="1"><input type="hidden" id="winUserSet" value=""></div>
   </div>
   <div class="row2">
     <div><label>GFI / outlets shown</label><div style="display:flex;gap:6px"><input id="gfiCount" type="number" min="0" max="8" value="2" style="flex:1"><button type="button" class="btn-ghost gp-addout" onclick="gpAddOutlet()" title="Add an outlet">+ outlet</button></div></div>
@@ -1389,9 +1389,9 @@ function psTagList(){ const rows=[], tags={}; let dn=0;
   const row=(key,o)=>{ let r=rows.find(x=>x.key===key); if(!r){ r=Object.assign({key,qty:0},o()); rows.push(r);} r.qty++; tags[key]=r.tag; return r; };
   ohDoors().forEach(d=>row('oh'+d.w+'x'+d.h,()=>({tag:'D'+(++dn),size:ftLabel(d.w)+' x '+ftLabel(d.h),type:'RAISED PANEL STEEL OVERHEAD DOOR',loc:(val('ohWall')||'front').toUpperCase()+' WALL'})));
   if(val('partyWall')&&val('partyWall')!=='none'){ const p=partyDim(); row('party',()=>({tag:'D'+(++dn),size:ftLabel(p.w)+' x '+ftLabel(p.h),type:'RAISED PANEL OVERHEAD (PARTY) DOOR',loc:val('partyWall').toUpperCase()+' WALL'})); }
-  if(val('svcWall')&&val('svcWall')!=='none'){ const si=svcSwingInfo(); row('svc',()=>({tag:'D'+(++dn),size:"3'-0\" x 6'-8\"",type:'STEEL SERVICE DOOR, SWING '+(si.swing==='out'?'OUT':'IN'),loc:val('svcWall').toUpperCase()+' WALL · HINGE TOWARD '+String(si.nearWall).toUpperCase()+' WALL'})); }
+  if(val('svcWall')&&val('svcWall')!=='none'){ const si=svcSwingInfo(); row('svc',()=>({tag:'D'+(++dn),size:"3'-0\" x 6'-8\"",type:'STEEL SERVICE DOOR, SWING '+(si.swing==='out'?'OUT':'IN'),loc:val('svcWall').toUpperCase()+' WALL · HINGE TOWARD '+String(si.nearWall).toUpperCase()+' WALL · HDR: '+String(windowHeaderCallout()).toUpperCase()})); }
   const placed=winQty()>0?psAlongOps(val('winWall')).filter(o=>o.kind==='win').length:0;
-  if(placed>0){ const wd=winDim(); const r=row('win',()=>({tag:'W1',size:ftLabel(wd.w)+' x '+ftLabel(wd.h),type:String(val('winType')||'SINGLE HUNG').toUpperCase()+' WINDOW',loc:val('winWall').toUpperCase()+' WALL'})); r.qty=placed; }
+  if(placed>0){ const wd=winDim(); const r=row('win',()=>({tag:'W1',size:ftLabel(wd.w)+' x '+ftLabel(wd.h),type:String(val('winType')||'SINGLE HUNG').toUpperCase()+' WINDOW',loc:val('winWall').toUpperCase()+' WALL · HDR: '+String(windowHeaderCallout()).toUpperCase()})); r.qty=placed; }
   return {rows,tags}; }
 // Slab spec from the job's actual values only — anything not given stays blank.
 function psSlabSpec(){ const c=code()||{}; const txt=String(val('slab')||'').toUpperCase(); const all=(txt+' '+String(c.slab||'')+' '+String(c.thickness||'')).toUpperCase();
@@ -2865,7 +2865,7 @@ function wsSpec(){
     ['WINDOWS', winOn?U(val('winCount')+' × '+ftLabel(wd.w)+' x '+ftLabel(wd.h)+' '+(val('winType')||'')):''],
     ['HEADERS', '—'],
     ['O.H.D.', U(c.ohHeader||headerCallout())],
-    ['SERVICE/WINDOW', (svcOn||winOn)?U(c.windowHeader||''):''],
+    ['SERVICE/WINDOW', (svcOn||winOn)?U(windowHeaderCallout()):''],
     ['WALL HGT', val('wallH')?ftLabel(Number(val('wallH'))):''],
     ['TOTAL HGT', (()=>{ const H=Number(val('wallH'))||0, Wd=Number(W)||0, Dd=Number(D)||0, r=val('roof'); if(!H||!Wd||!Dd) return ''; const span=r==='hip'?Math.min(Wd,Dd):(r==='revgable'?Dd:Wd); const i=Math.round((H+span/2*pitchNum()/12)*12); return Math.floor(i/12)+"'-"+String(i%12).padStart(2,'0')+'"'; })()],
     ['GUTTERS', guttersRequired()?'YES — '+U(typeof gutterStyle==='function'?gutterStyle():'')+' ALUMINUM (LAYOUT: ROOF PLAN A-4)':''],
@@ -3262,6 +3262,8 @@ function snapshot(){
 function restore(o){
   if(o&&typeof o==='object'&&('extraOH' in o)&&!('extraOHConfirmed' in o)) o=Object.assign({},o,{extraOHConfirmed:'1'});
   if(o&&typeof o==='object'&&!('extraOH' in o)){ if($('extraOH')) $('extraOH').value='0'; PS_WALLS.forEach(w=>{const e=$('extraOH'+w[0].toUpperCase()+w.slice(1)); if(e) e.checked=false;}); }
+  if($('winUserSet')) $('winUserSet').value=(o&&o.winUserSet)||'';
+  if(o&&typeof o==='object'&&o.winUserSet!=='1'){ const ww=o.winWall, wc=Number(o.winCount); if(!ww||ww==='none'||!(wc>0)){ o=Object.assign({},o,{winWall:(ww&&ww!=='none')?ww:'back',winCount:(wc>0)?String(wc):'1'}); if(!o.winSize) o.winSize='2x3'; } }
   Object.keys(o||{}).forEach(k=>{
     if(k==='_planItems'||k==='_planVis'||k==='_aiCallouts') return;
     const el=$(k); if(!el) return;
@@ -3614,6 +3616,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   if(planId) try{ loadPlanFromId(planId); }catch(e){}
   document.querySelectorAll('.sidebar input,.sidebar select,.sidebar textarea').forEach(el=>{
     el.addEventListener('change',()=>{
+      if(el.id==='winWall'||el.id==='winCount') $('winUserSet').value='1'; // explicit window choice (kept on reload, incl. 0 windows)
       if(el.id==='winWall' && el.value!=='none' && Number(val('winCount'))===0) $('winCount').value='1';
       if(el.id==='winWall' && el.value==='none') $('winCount').value='0';
       if(el.id==='winType'){
@@ -3896,7 +3899,7 @@ const AGB_PULL_CFG={client:()=>garageSb,
  {k:'carType',label:"27'+ garage type",cur:()=>g('carType'),opts:()=>[['3car','3-car'],['over2','Oversized 2-car']],from:R=>(Number(R.w)||0)>=27?(String(st(R).carCapacity||'')==='3'?'3car':'over2'):'',set:v=>s('carType',v)},
  {k:'doors',label:'Overhead doors (W x H, + between doors)',cur:()=>ohDoorsText(),from:R=>(R.doors||[]).filter(d=>!d.extra).slice(0,3).map(d=>d.w+'x'+d.h).join(' + '),set:v=>gpSetDoors(gpParseDoors(v))},
  {k:'svcWall',label:'Service door wall',cur:()=>g('svcWall'),opts:so('svcWall'),from:R=>st(R).serviceDoorLocation||'',set:v=>s('svcWall',v)},
- {k:'winCount',label:'Windows',cur:()=>g('winCount'),from:R=>st(R).windowType&&st(R).windowType!=='none'?(st(R).windowQty||''):'',set:v=>s('winCount',v)},
+ {k:'winCount',label:'Windows',cur:()=>g('winCount'),from:R=>st(R).windowType==='none'?'0':(st(R).windowType?(st(R).windowQty||''):''),set:v=>{s('winCount',v); if(!(Number(v)>0)) s('winWall','none'); else if(g('winWall')==='none') s('winWall','back'); s('winUserSet','1');}},
  {k:'gfi',label:'GFI / outlets',cur:()=>g('gfiCount'),from:R=>R.kind==='est'&&st(R).electricIncluded!==false?2+(Number(st(R).extraOutlets)||0):'',set:v=>s('gfiCount',v)}
  ]})(),
  after:()=>{try{seedPlanItems()}catch(e){}try{gpaSum()}catch(e){}try{snapshot&&snapshot()}catch(e){}try{buildPlans()}catch(e){}}};

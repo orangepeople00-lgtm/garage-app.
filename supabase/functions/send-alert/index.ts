@@ -1,8 +1,8 @@
 // send-alert: forwards AGB alerts to the Apps Script web app. URL + token live in Supabase secrets.
-// kind "new_job": any active signed-in staff user. kind "test": only sam, randy, ramsey.
+// kind "new_job": any active signed-in staff user. kind "test" (or any source containing "test"): only ramsey.
 const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type" };
 const json = (b: unknown, s = 200) => new Response(JSON.stringify(b), { status: s, headers: { ...cors, "Content-Type": "application/json" } });
-const TESTERS = ["sam", "randy", "ramsey"];
+const TESTERS = ["ramsey"];
 const clip = (v: unknown, n = 200) => String(v ?? "").replace(/[\r\n]+/g, " ").slice(0, n);
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
@@ -23,7 +23,7 @@ Deno.serve(async (req) => {
   if (!p || !p.active) return json({ error: "Not allowed" }, 403);
   let d: Record<string, unknown> = {};
   try { d = await req.json(); } catch { return json({ error: "bad json" }, 400); }
-  const kind = d.kind === "test" ? "test" : "new_job";
+  const kind = (d.kind === "test" || /test/i.test(String(d.source ?? ""))) ? "test" : "new_job";
   const uname = String(p.username || "").toLowerCase();
   if (kind === "test" && !TESTERS.includes(uname)) return json({ error: "Not allowed" }, 403);
   const payload: Record<string, unknown> = {

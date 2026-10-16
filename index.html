@@ -2627,7 +2627,7 @@ function jaStageKey(j){const st=status(j);if(/Completed/.test(st))return 'close'
 function jaInit(id){jaBuild();if($('f_deposit_mirror'))$('f_deposit_mirror').value=Number($('f_deposit').value)?$('f_deposit').value:'';jaDepHint();window.__jaUser=0;jaAll(false,true);const m=jaSess();if(m)Object.entries(m).forEach(([k,v])=>jaOpen(k,v,1));jaSummaries()}
 // 2026-10-15: free new-job alerts via a Google Apps Script web app (see new-job-alert.gs). Empty = off. Fire-and-forget; never blocks a save.
 const ALERT_URL='send-alert'; // alerts go through the send-alert edge function; the Apps Script URL and token are server-side secrets
-const canTestAlert=()=>!!(profile&&profile.active!==false&&['sam','randy','ramsey'].includes(String(profile.username||'').toLowerCase()));
+const canTestAlert=()=>!!(profile&&profile.active!==false&&String(profile.username||'').toLowerCase()==='ramsey'); // test alerts: Ramsey only
 async function agbSendAlert(payload){try{const {data}=await sb.auth.getSession();if(!data||!data.session){console.log('AGB alert skipped: not signed in');return false}
  const {data:r,error}=await sb.functions.invoke('send-alert',{body:payload});if(error){console.log('AGB alert failed',error);return false}
  console.log('AGB alert sent',payload.source,payload.customer);return !!(r&&r.ok)}catch(e){console.log('AGB alert error',e);return false}}

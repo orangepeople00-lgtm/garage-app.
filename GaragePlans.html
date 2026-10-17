@@ -4292,6 +4292,7 @@ async function gpResolveDoorPrice(ctx){
   ctx.priceHint=!pc.length?ests.filter(e=>Number(e.estimate_price)>0).map(e=>'$'+Number(e.estimate_price).toLocaleString('en-US')+' ('+e._why+', not confirmed sold)'):[];
   // phone / zip: job file -> scanned contract
   const pick=(...c)=>c.find(x=>x&&String(x.v||'').trim())||null;
+  ctx.email=String(cd.email||'').trim();
   ctx.phone=pick({v:j.phone,src:'job file'},{v:cd.phone,src:'scanned contract'});
   ctx.zip=pick({v:j.zip,src:'job file'},{v:cd.zip,src:'scanned contract'},{v:(String(cd.state_zip||'').match(/\b\d{5}\b/)||[''])[0],src:'scanned contract'});
 }
@@ -4299,6 +4300,7 @@ async function gpResolveDoorPrice(ctx){
   const D=gpPermitData; gpPermitData=function(){ const d=D(), c=window._gpPermitCtx||{};
     d.doorW=c.door?c.door.w:''; d.doorH=c.door?c.door.h:''; // never default 16x7
     d.price=c.price?c.price.v.toLocaleString('en-US',{maximumFractionDigits:0}):'';
+    d.ownerState=d.city?'IL':''; const em=String((c.job||{}).email||(c.email||'')).trim(); d.ownerEmail=/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(em)?em:''; // email fields: customer email only, never a street address
     if(c.phone) d.phone=String(c.phone.v); if(c.zip&&!d.zip){ d.zip=String(c.zip.v); d.addressCity=[d.address,[d.city,'IL'].filter(Boolean).join(', ')+' '+d.zip].filter(Boolean).join(', '); } return d; };
   const G=gpChecklistHtml; gpChecklistHtml=function(city,ctx){ let h=G(city,ctx); if(!city) return h;
     const fl='<ul class="pc-list pc-flags">'+(ctx.door?'<li class="pc-ok"><span class="pc-tag">Door</span><span class="pc-txt">Overhead door '+_pe(ctx.door.w+"' x "+ctx.door.h+"'")+' <small>from '+_pe(ctx.door.src)+'</small></span></li>':'<li class="pc-missing"><span class="pc-tag">Missing</span><span class="pc-txt">Door size blank — fill in</span></li>')

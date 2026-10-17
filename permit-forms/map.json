@@ -1,7 +1,7 @@
 {
  "Chicago": {
   "form_type": "detached_garage",
-  "form_name": "Express Permit Program \u2013 Detached Frame Garage (online worktype, Dynamic Portal)",
+  "form_name": "Express Permit Program – Detached Frame Garage (online worktype, Dynamic Portal)",
   "template": null,
   "fields": null,
   "portal_url": "https://www.chicago.gov/city/en/depts/bldgs/provdrs/e_plan/svcs/dynamicportal.html",
@@ -13,7 +13,7 @@
  },
  "Oak Park": {
   "form_type": "general_covers_garage",
-  "form_name": "Building permit \u2013 online application via VillageView (CityView) portal; Garage/Coach House guidelines PDF",
+  "form_name": "Building permit – online application via VillageView (CityView) portal; Garage/Coach House guidelines PDF",
   "template": null,
   "fields": null,
   "portal_url": "https://villageview.oak-park.us/CityViewPortal/",
@@ -25,7 +25,7 @@
  },
  "Zion": {
   "form_type": "general_covers_garage",
-  "form_name": "Application for Building Permit \u2013 City of Zion (2024); has GARAGE attached/detached size section. Separate 'Detached Garage (2019)' requirements sheet.",
+  "form_name": "Application for Building Permit – City of Zion (2024); has GARAGE attached/detached size section. Separate 'Detached Garage (2019)' requirements sheet.",
   "template": "permit-forms/Zion.pdf",
   "fields": [
    {
@@ -73,6 +73,54 @@
     "src": "phone"
    },
    {
+    "name": "owner_zip",
+    "src": "zip",
+    "page": 0,
+    "rect": [
+     531,
+     159,
+     576,
+     170
+    ],
+    "note": "owner mailing address = job address (user rule 2026-10-17)"
+   },
+   {
+    "name": "owner_state",
+    "src": "ownerState",
+    "page": 0,
+    "rect": [
+     478,
+     159,
+     505,
+     170
+    ],
+    "note": "owner mailing address = job address (user rule 2026-10-17)"
+   },
+   {
+    "name": "owner_city",
+    "src": "city",
+    "page": 0,
+    "rect": [
+     345,
+     159,
+     438,
+     170
+    ],
+    "note": "owner mailing address = job address (user rule 2026-10-17)"
+   },
+   {
+    "name": "owner_address",
+    "src": "address",
+    "page": 0,
+    "rect": [
+     119,
+     159,
+     296,
+     170
+    ],
+    "note": "owner mailing address = job address (user rule 2026-10-17)"
+   },
+   {
     "name": "gc_name",
     "page": 0,
     "rect": [
@@ -100,7 +148,7 @@
     "rect": [
      119,
      186,
-     323,
+     296,
      197
     ],
     "src": "contractorStreet"
@@ -203,7 +251,7 @@
  },
  "Evanston": {
   "form_type": "detached_garage",
-  "form_name": "City of Evanston Garage Application Form \u2013 Site Plan (2/23/2023), for typical one-story detached garages",
+  "form_name": "City of Evanston Garage Application Form – Site Plan (2/23/2023), for typical one-story detached garages",
   "template": "permit-forms/Evanston.pdf",
   "fields": [
    {
@@ -315,7 +363,7 @@
  },
  "Cicero": {
   "form_type": "general_covers_garage",
-  "form_name": "Town of Cicero Building Permit Application + 'Permitting Procedures \u2013 Garage' (detached garage) sheet",
+  "form_name": "Town of Cicero Building Permit Application + 'Permitting Procedures – Garage' (detached garage) sheet",
   "template": null,
   "fields": null,
   "portal_url": null,
@@ -362,6 +410,18 @@
      275
     ],
     "src": "phone"
+   },
+   {
+    "name": "owner_email",
+    "src": "ownerEmail",
+    "page": 0,
+    "rect": [
+     158,
+     276,
+     358,
+     287
+    ],
+    "note": "customer email only if on file; never an address"
    },
    {
     "name": "construction_address",
@@ -550,7 +610,7 @@
  },
  "Des Plaines": {
   "form_type": "detached_garage",
-  "form_name": "Online permit type 'Detached Garage (Residential)' \u2013 Customer Self Service portal; Permit Guide \u2013 Residential Accessory Structures",
+  "form_name": "Online permit type 'Detached Garage (Residential)' – Customer Self Service portal; Permit Guide – Residential Accessory Structures",
   "template": null,
   "fields": null,
   "portal_url": "https://www.desplainesil.gov/Departments/Community-and-Economic-Development/Building-and-Permits",
@@ -598,7 +658,7 @@
  },
  "Arlington Heights": {
   "form_type": "detached_garage",
-  "form_name": "Permit type 'Garage \u2013 Detached Residential' (Civic Access Portal) + Detached Garage \u2013 Residential packet",
+  "form_name": "Permit type 'Garage – Detached Residential' (Civic Access Portal) + Detached Garage – Residential packet",
   "template": null,
   "fields": null,
   "portal_url": "https://vah.com/government/permits___licenses_/index.php",

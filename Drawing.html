@@ -9193,5 +9193,223 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{ agbLotLineUi()
 #agbLotLineBanner button{flex:0 0 auto;border:0;background:transparent;color:#b91c1c;font-weight:900;font-size:14px;line-height:1;padding:2px 4px;cursor:pointer;min-height:0}
 @media print{#agbLotLineBanner,.agb-ll-toggle{display:none!important}}
 </style>
+<div id="agbPdBox" style="border:2px solid #0f274b;border-radius:10px;padding:10px;margin-top:8px">
+  <div style="font-size:11px;font-weight:900;color:#0f274b;margin-bottom:6px;text-transform:uppercase">Editable plat drawing</div>
+  <div class="field"><label>Street name</label><input id="pdStreet" placeholder="blank = from job address"/></div>
+  <div class="field"><label>Legal description</label><input id="pdLegal" placeholder="LOT __ IN BLOCK __ ..."/></div>
+  <div class="row"><div class="field"><label>Alley width (ft)</label><input id="pdAlleyW" type="number" step=".5" value="16"/></div>
+  <div class="field"><label>House label</label><input id="pdHouseLbl" value="2 STORY BRICK RES."/></div></div>
+  <button type="button" id="pdBuild" style="width:100%;min-height:40px;font-weight:800">Build editable plat (from fields)</button>
+  <button type="button" id="pdOff" style="width:100%;min-height:36px;margin-top:6px">Turn off editable plat</button>
+  <div class="mode-note" style="font-size:12px;margin-top:4px">Tap any line or text to select. Drag to move, drag a dot to resize, double-tap text (or Edit) to change it, Delete to remove.</div>
+</div>
+<script>
+/* ===== 2026-10-17: Editable plat drawing. Every line and label is its own item (select / move / resize / edit / delete,
+   phone + desktop). Items are stored on the proposed garage (or lot) object as .platDoc, so undo/redo, sheet save and
+   job save carry them. Alley runs edge to edge; new apron runs from the OH door face to the alley edge. No building line, no fences. ===== */
+(function(){
+const $i=id=>document.getElementById(id), NS='http://www.w3.org/2000/svg';
+{const box=$i('agbPdBox'),ref=$i('spPermitBox'); if(box&&ref&&ref.parentNode) ref.parentNode.insertBefore(box,ref.nextSibling);}
+const gv=id=>{const e=$i(id);if(!e)return '';return e.type==='checkbox'?(e.checked?'1':''):String(e.value==null?'':e.value).trim()};
+const num=(id,d)=>{const s=gv(id);if(s==='')return d;const v=+s;return Number.isFinite(v)?v:d};
+const ft=v=>{const i=Math.round(v*12);return Math.floor(i/12)+"'-"+(i%12)+'"'};
+const f2=v=>(+v).toFixed(2)+"'";
+const E=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const host=()=>{try{return byRole('proposedGarage')||byRole('lotOutline')||null}catch(_){return null}};
+const doc=()=>{const h=host();return h&&h.platDoc&&h.platDoc.on?h.platDoc:null};
+function active(){try{return state.mode==='siteplan'&&!!doc()}catch(_){return false}}
+let sel=null, uid=1;
+// ---------- build from fields ----------
+function build(){
+  const h=host(); if(!h){alert('Place the proposed garage first (or start a blank site plan).');return}
+  const t=currentTemplate(), PW=t.w, PH=t.h;
+  const lot=byRole('lotOutline'), g=byRole('proposedGarage');
+  const W=lot?+lot.wf:num('spLotWidth',50), D=lot?+lot.hf:num('spLotLength',125);
+  const gw=g?+g.wf:num('spGarageW',20), gd=g?+g.hf:num('spGarageH',22);
+  const alley=gv('spAlley')!=='no', AW=num('pdAlleyW',16);
+  let left=num('spLeftSetback',null), right=num('spRightSetback',null);
+  if(gv('spPlacement')==='bottom-right'&&right!=null) left=W-gw-right; if(left==null) left=right!=null?W-gw-right:3; right=W-gw-left;
+  const rear=alley?num('spAlleyDist',3):num('spRearSetback',3);
+  // title block keep-out
+  const tb=$i('agbTitleBlock'); const TBy=tb&&tb.offsetHeight?tb.offsetTop:PH-150;
+  const TOP=136, bottomLimit=TBy-10;
+  const Smax=Math.min((bottomLimit-TOP)/(D+(alley?AW:0)), (PW-260)/W);
+  const FPI=[4,5,8,10,16,20,30,40,50,60].find(f=>96/f<=Smax)||80; const S=96/FPI;
+  const L=Math.round((PW-W*S)/2), T=TOP, R=L+W*S, B=T+D*S;
+  const items=[]; const add=o=>{o.id=uid++;items.push(o);return o};
+  const tx=(x,y,text,fs=9,fw=700,anchor='middle',rot=0)=>add({t:'text',x,y,text,fs,fw,anchor,rot});
+  const ln=(x1,y1,x2,y2,sw=1,dash='')=>add({t:'line',x1,y1,x2,y2,sw,dash});
+  const rc=(x,y,w,hh,sw=2,fill='none')=>add({t:'rect',x,y,w,h:hh,sw,fill});
+  const dim=(x1,y1,x2,y2)=>add({t:'dim',x1,y1,x2,y2,sw:1});
+  const addr=gv('jobAddress'); const street=gv('pdStreet')||(addr.replace(/^\s*\d+\s*/,'').replace(/,.*$/,'').toUpperCase()||'STREET');
+  const hn=(addr.match(/^\s*(\d+)/)||[])[1];
+  tx(PW/2,40,'PLAT OF SURVEY',14,800);
+  tx(PW/2,56,gv('pdLegal')||'LOT __ IN BLOCK __ IN ______ SUBDIVISION, COOK COUNTY, ILLINOIS',7.5,600);
+  tx(PW/2,69,'SCALE: 1" = '+FPI+"'",7.5,600);
+  ln(L-100,82,R+100,82,1); ln(L-100,122,R+100,122,1); tx((L+R)/2,106,street,10,600);
+  ln(L,T,R,T,2); ln(L,B,R,B,2); ln(L,T,L,B,2); ln(R,T,R,B,2);
+  tx((L+R)/2,T+12,f2(W),7.5,600); tx(L-10,(T+B)/2,f2(D),7.5,600,'middle',-90); tx(R+10,(T+B)/2,f2(D),7.5,600,'middle',-90);
+  // house
+  const hw=Math.min(24,W-16), hd=Math.min(50,D*0.4), hf=Math.min(25,D*0.2), hl=num('spHouseLeft',8);
+  const hs=gv('spHouseSize').match(/([\d.]+)\s*[x×]\s*([\d.]+)/); const HW=hs?+hs[1]:hw, HD=hs?+hs[2]:hd, HF=num('spHouseFront',hf);
+  const hx=L+hl*S, hy=T+HF*S; rc(hx,hy,HW*S,HD*S,2);
+  const hl2=(gv('pdHouseLbl')||'EXISTING HOUSE').toUpperCase(); const parts=hl2.length>12&&hl2.includes(' ')?[hl2.slice(0,hl2.indexOf(' ',Math.floor(hl2.length/2)-3)>0?hl2.indexOf(' ',Math.floor(hl2.length/2)-3):hl2.indexOf(' ')),hl2.slice((hl2.indexOf(' ',Math.floor(hl2.length/2)-3)>0?hl2.indexOf(' ',Math.floor(hl2.length/2)-3):hl2.indexOf(' '))+1)]:[hl2];
+  parts.forEach((p,i)=>tx(hx+HW*S/2,hy+HD*S/2-6+i*13-(parts.length-1)*6,p,9.5,600));
+  if(hn) tx(hx+HW*S/2,hy+HD*S/2+(parts.length>1?20:12),'#'+hn,7.5,600);
+  // garage
+  const GL=L+left*S, GR=GL+gw*S, GB=alley?B-rear*S:B-rear*S, GT=GB-gd*S;
+  // walk from house to garage side (kept clear of the garage footprint)
+  const wa=Math.max(hl+1,Math.min(hl+HW-4,left-4)), wy0=hy+HD*S, wy1=GT-4*S;
+  if(wy1-wy0>6*S){ rc(L+wa*S,wy0,3*S,wy1-wy0,1); tx(L+(wa+3)*S+5,(wy0+wy1)/2+3,'CONC. WALK',7,600,'start'); }
+  rc(GL,GT,gw*S,gd*S,3.5);
+  tx((GL+GR)/2,GT+gd*S*0.42,'PROPOSED GARAGE',8,800); tx((GL+GR)/2,GT+gd*S*0.42+11,ft(gw)+' x '+ft(gd),6.5,700);
+  const oh=num('spOhDoors',16)||16, ohW=Math.min(oh,gw-2); const oa=GL+(gw-ohW)/2*S, ob=oa+ohW*S;
+  add({t:'line',x1:oa,y1:GB,x2:ob,y2:GB,sw:1.6,dash:'5 3',mask:1}); tx((oa+ob)/2,GB-6,ohW+"' OH DOOR",6.5,800);
+  if(gv('spSvcDoor')!=='none'){ const dy=GB-6*S; add({t:'door',x1:GL,y1:dy,x2:GL,y2:dy-3*S,sw:2.5,side:1}); tx(GL+4*S,dy-1.5*S+2,"3' SVC DOOR",6.5,800,'start'); }
+  // apron: OH door face -> alley edge (flush, no gap)
+  if(alley&&rear>0){ rc(GL,GB,gw*S,rear*S,1.3,'hatch'); tx((GL+GR)/2,GB+rear*S/2+2.5,'NEW CONC. APRON',Math.min(7.5,rear*S*0.55),800);
+    dim(R+8,GB,R+8,B); tx(R+14,(GB+B)/2+2.5,'NEW APRON '+ft(gw)+' x '+ft(rear)+' (DOOR TO ALLEY)',7,800,'start'); }
+  // setback dims
+  const ym=GT+gd*S*0.25; if(left>0){ dim(L,ym,GL,ym); tx((L+GL)/2,ym-4,ft(left),7.5,800); }
+  if(right>0){ dim(GR,GT+gd*S*0.6,R,GT+gd*S*0.6); tx(R+5,GT+gd*S*0.6+3,ft(right),7.5,800,'start'); }
+  // alley edge to edge
+  if(alley){ ln(0,B,PW,B,1.2); ln(0,B+AW*S,PW,B+AW*S,1.2); tx(PW/2,B+AW*S/2+4,AW+"' PUBLIC ALLEY",10,600); tx((L+R)/2,B+11,f2(W),7.5,600); }
+  else tx((L+R)/2,B-5,f2(W),7.5,600);
+  try{snapshot()}catch(_){}
+  h.platDoc={on:1,items,v:2}; sel=null; try{saveActiveSheetState()}catch(_){} render();
+}
+function off(){ const h=host(); if(h&&h.platDoc){ try{snapshot()}catch(_){} h.platDoc.on=0; sel=null; try{saveActiveSheetState()}catch(_){} render(); try{renderObjects()}catch(_){} } }
+// ---------- render ----------
+let svg=null, scr=1;
+function itemSVG(o){
+  const hit=Math.max(10,16/scr);
+  if(o.t==='line'||o.t==='dim'){ let s=''; if(o.mask) s+=`<line x1="${o.x1}" y1="${o.y1}" x2="${o.x2}" y2="${o.y2}" stroke="#fff" stroke-width="4.5"/>`;
+    s+=`<line x1="${o.x1}" y1="${o.y1}" x2="${o.x2}" y2="${o.y2}" stroke="#000" stroke-width="${o.sw}"${o.dash?` stroke-dasharray="${o.dash}"`:''}/>`;
+    if(o.t==='dim') [[o.x1,o.y1],[o.x2,o.y2]].forEach(([x,y])=>s+=`<line x1="${x-3}" y1="${y+3}" x2="${x+3}" y2="${y-3}" stroke="#000" stroke-width="1.3"/>`);
+    return s+`<line class="pd-hit" x1="${o.x1}" y1="${o.y1}" x2="${o.x2}" y2="${o.y2}" stroke="transparent" stroke-width="${hit}"/>`; }
+  if(o.t==='rect'){ const x=Math.min(o.x,o.x+o.w),y=Math.min(o.y,o.y+o.h),w=Math.abs(o.w),h=Math.abs(o.h);
+    return `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${o.fill==='hatch'?'url(#pdHatch)':'#fff'}" fill-opacity="${o.fill==='hatch'?1:0}" stroke="#000" stroke-width="${o.sw}"/>`+
+      `<rect class="pd-hit" x="${x}" y="${y}" width="${w}" height="${h}" fill="none" stroke="transparent" stroke-width="${hit}"/>`+(o.fill==='hatch'?`<rect class="pd-hit" x="${x}" y="${y}" width="${w}" height="${h}" fill="transparent"/>`:''); }
+  if(o.t==='door'){ const dx=o.x2-o.x1,dy=o.y2-o.y1,len=Math.hypot(dx,dy)||1; const nx=-dy/len*o.side,ny=dx/len*o.side; const q=[o.x1+nx*len,o.y1+ny*len];
+    const sw=((q[0]-o.x1)*(o.y2-o.y1)-(q[1]-o.y1)*(o.x2-o.x1))<0?1:0;
+    return `<line x1="${o.x1}" y1="${o.y1}" x2="${o.x2}" y2="${o.y2}" stroke="#fff" stroke-width="5"/><line x1="${o.x1}" y1="${o.y1}" x2="${q[0]}" y2="${q[1]}" stroke="#000" stroke-width="${o.sw}"/>`+
+      `<path d="M${q[0]} ${q[1]} A ${len} ${len} 0 0 ${sw} ${o.x2} ${o.y2}" fill="none" stroke="#000" stroke-width="1.1"/>`+
+      `<path class="pd-hit" d="M${o.x1} ${o.y1} L${q[0]} ${q[1]} L${o.x2} ${o.y2} Z" fill="transparent" stroke="transparent" stroke-width="${hit}"/>`; }
+  if(o.t==='text') return `<text x="${o.x}" y="${o.y}" font-size="${o.fs}" font-weight="${o.fw}" text-anchor="${o.anchor}" fill="#000" stroke="#fff" stroke-width="2.5" paint-order="stroke" stroke-linejoin="round"${o.rot?` transform="rotate(${o.rot} ${o.x} ${o.y})"`:''}>${E(o.text)}</text>`;
+  return '';
+}
+function render(){
+  const paper=$i('paper'); const on=active(); paper.classList.toggle('agb-platdoc',on); document.body.classList.toggle('agb-platdoc-on',on);
+  if(on){ try{ if(state.selected!=null){ state.selected=null; try{updateInspector()}catch(_){} } }catch(_){} }
+  if(!on){ if(svg){svg.remove();svg=null} hideTools(); return }
+  if(!svg||svg.parentNode!==paper){ svg=document.createElementNS(NS,'svg'); svg.id='agbPlatDoc'; paper.appendChild(svg); bind(svg); }
+  const t=currentTemplate(); svg.setAttribute('width',t.w); svg.setAttribute('height',t.h); svg.setAttribute('viewBox',`0 0 ${t.w} ${t.h}`);
+  try{ const m=svg.getScreenCTM(); scr=m?Math.hypot(m.a,m.b):1 }catch(_){scr=1}
+  const d=doc(); if(sel&&!d.items.find(o=>o.id===sel)) sel=null;
+  let h='<defs><pattern id="pdHatch" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)"><rect width="6" height="6" fill="#fff"/><line x1="0" y1="0" x2="0" y2="6" stroke="#000" stroke-width="0.5"/></pattern></defs>';
+  // rects first (so text/lines sit on top), then lines, then text
+  const ord={rect:0,line:1,dim:1,door:2,text:3};
+  d.items.slice().sort((a,b)=>ord[a.t]-ord[b.t]).forEach(o=>h+=`<g class="pd-it" data-id="${o.id}">${itemSVG(o)}</g>`);
+  h+='<g id="pdSel"></g>'; svg.innerHTML=h; drawSel(); 
+}
+function bboxOf(o){ const g=svg&&svg.querySelector(`.pd-it[data-id="${o.id}"]`); if(!g)return null;
+  if(o.t==='text'){ const te=g.querySelector('text'); const b=te.getBBox(); if(!o.rot) return b; return {x:o.x-b.height/2-2,y:o.y-b.width/2,width:b.height+2,height:b.width}; }
+  if(o.t==='rect') return {x:Math.min(o.x,o.x+o.w),y:Math.min(o.y,o.y+o.h),width:Math.abs(o.w),height:Math.abs(o.h)};
+  return {x:Math.min(o.x1,o.x2),y:Math.min(o.y1,o.y2),width:Math.abs(o.x2-o.x1),height:Math.abs(o.y2-o.y1)}; }
+function handles(o){ if(o.t==='line'||o.t==='dim'||o.t==='door') return [['p1',o.x1,o.y1],['p2',o.x2,o.y2]];
+  if(o.t==='rect'){ const b=bboxOf(o); return [['nw',b.x,b.y],['ne',b.x+b.width,b.y],['sw',b.x,b.y+b.height],['se',b.x+b.width,b.y+b.height]]; }
+  if(o.t==='text'){ const b=bboxOf(o); return b?[['fs',b.x+b.width+2,b.y+b.height+2]]:[]; } return []; }
+function drawSel(){ const G=svg&&svg.querySelector('#pdSel'); if(!G)return; const d=doc(); const o=sel&&d&&d.items.find(i=>i.id===sel);
+  if(!o){G.innerHTML='';hideTools();return}
+  const b=bboxOf(o), r=Math.max(4,10/scr), p=3/scr; let s='';
+  if(b) s+=`<rect x="${b.x-p}" y="${b.y-p}" width="${b.width+2*p}" height="${b.height+2*p}" fill="rgba(37,99,235,.06)" stroke="#2563eb" stroke-width="${1.5/scr}" stroke-dasharray="${4/scr} ${3/scr}" pointer-events="none"/>`;
+  handles(o).forEach(([k,x,y])=>s+=`<circle class="pd-h" data-h="${k}" cx="${x}" cy="${y}" r="${r}" fill="#2563eb" stroke="#fff" stroke-width="${2/scr}"/>`);
+  G.innerHTML=s; showTools(o); }
+// ---------- toolbar + text editor ----------
+let bar=null, ed=null;
+function showTools(o){
+  if(!bar){ bar=document.createElement('div'); bar.id='pdBar';
+    bar.innerHTML='<button data-a="edit">✎ Edit text</button><button data-a="del">🗑 Delete</button><button data-a="done">✓ Done</button>';
+    document.body.appendChild(bar);
+    ['pointerdown','touchstart','mousedown'].forEach(ev=>bar.addEventListener(ev,e=>e.stopPropagation()));
+    bar.addEventListener('click',e=>{const a=e.target.closest('button')?.dataset.a; const d=doc(); const it=sel&&d&&d.items.find(i=>i.id===sel); if(!it)return;
+      if(a==='edit') editText(it); else if(a==='del'){ try{snapshot()}catch(_){} d.items=d.items.filter(i=>i!==it); sel=null; try{saveActiveSheetState()}catch(_){} render(); } else { sel=null; render(); } }); }
+  bar.querySelector('[data-a=edit]').style.display=o.t==='text'?'':'none';
+  bar.style.display='flex';
+  const g=svg.querySelector(`.pd-it[data-id="${o.id}"]`); const rr=g.getBoundingClientRect(); const bw=bar.offsetWidth, bh=bar.offsetHeight;
+  let x=rr.left+rr.width/2-bw/2, y=rr.top-bh-14; if(y<70) y=rr.bottom+14; x=Math.max(6,Math.min(innerWidth-bw-6,x)); y=Math.max(6,Math.min(innerHeight-bh-6,y));
+  bar.style.left=x+'px'; bar.style.top=y+'px';
+}
+function hideTools(){ if(bar) bar.style.display='none'; }
+function editText(o){
+  if(ed) ed.remove(); const te=svg.querySelector(`.pd-it[data-id="${o.id}"] text`); if(!te)return; const rr=te.getBoundingClientRect();
+  ed=document.createElement('input'); ed.id='pdEdit'; ed.value=o.text; ed.style.cssText=`position:fixed;z-index:3001;left:${Math.max(4,Math.min(innerWidth-224,rr.left+rr.width/2-110))}px;top:${Math.max(4,rr.top+rr.height/2-20)}px;width:220px;height:40px;font:700 16px Arial;border:2px solid #2563eb;border-radius:8px;padding:0 8px;background:#fff;box-shadow:0 6px 18px rgba(0,0,0,.2)`;
+  document.body.appendChild(ed); ['pointerdown','touchstart','mousedown'].forEach(ev=>ed.addEventListener(ev,e=>e.stopPropagation()));
+  ed.addEventListener('input',()=>{ te.textContent=ed.value; });
+  let done=false; const fin=ok=>{ if(done)return; done=true; const v=ed.value; ed.remove(); ed=null; if(ok&&v!==o.text){ try{snapshot()}catch(_){} o.text=v; if(!v.trim()){const d=doc(); d.items=d.items.filter(i=>i!==o); sel=null;} try{saveActiveSheetState()}catch(_){} } render(); };
+  ed.addEventListener('keydown',e=>{ if(e.key==='Enter') fin(true); else if(e.key==='Escape') fin(false); });
+  ed.addEventListener('blur',()=>fin(true)); ed.focus(); ed.select();
+}
+// ---------- pointer interaction ----------
+function pt(e){ const m=svg.getScreenCTM().inverse(); const p=svg.createSVGPoint(); p.x=e.clientX; p.y=e.clientY; const q=p.matrixTransform(m); return [q.x,q.y]; }
+let drag=null, lastTap={id:0,t:0};
+function bind(s){
+  const stop=e=>{ if(e.target.closest&&(e.target.closest('.pd-hit')||e.target.closest('.pd-h')||e.target.closest('.pd-it text'))) e.stopPropagation(); };
+  s.addEventListener('touchstart',stop,{passive:true}); s.addEventListener('mousedown',stop);
+  s.addEventListener('pointerdown',e=>{
+    const hEl=e.target.closest('.pd-h'), itEl=e.target.closest('.pd-it'); if(!hEl&&!itEl) return;
+    if(e.pointerType==='touch'&&!e.isPrimary) return;
+    e.stopPropagation(); e.preventDefault(); const d=doc(); if(!d)return;
+    const id=hEl?sel:+itEl.dataset.id; const o=d.items.find(i=>i.id===id); if(!o)return;
+    const now=Date.now(); const dbl=!hEl&&lastTap.id===id&&now-lastTap.t<400; lastTap={id,t:now};
+    if(dbl&&o.t==='text'){ editText(o); return; }
+    if(sel!==id){ sel=id; drawSel(); }
+    const b=o.t==='text'?bboxOf(o):null;
+    drag={o,h:hEl?hEl.dataset.h:null,p0:pt(e),orig:JSON.parse(JSON.stringify(o)),b,moved:false,pid:e.pointerId};
+    try{s.setPointerCapture(e.pointerId)}catch(_){}
+  });
+  s.addEventListener('pointermove',e=>{ if(!drag||e.pointerId!==drag.pid)return; e.stopPropagation(); e.preventDefault();
+    const [x,y]=pt(e), dx=x-drag.p0[0], dy=y-drag.p0[1];
+    if(!drag.moved){ if(Math.hypot(dx,dy)*scr<3) return; drag.moved=true; try{const o=drag.o, cur=JSON.stringify(o); Object.assign(o,drag.orig); snapshot(); Object.assign(o,JSON.parse(cur));}catch(_){} }
+    const o=drag.o, q=drag.orig, h=drag.h;
+    if(!h){ if('x1' in q){o.x1=q.x1+dx;o.y1=q.y1+dy;o.x2=q.x2+dx;o.y2=q.y2+dy} else {o.x=q.x+dx;o.y=q.y+dy} }
+    else if(h==='p1'){o.x1=q.x1+dx;o.y1=q.y1+dy} else if(h==='p2'){o.x2=q.x2+dx;o.y2=q.y2+dy}
+    else if(o.t==='rect'){ const x0=Math.min(q.x,q.x+q.w),y0=Math.min(q.y,q.y+q.h),x1=x0+Math.abs(q.w),y1=y0+Math.abs(q.h);
+      let a=x0,b=y0,c=x1,d2=y1; if(h.includes('w'))a+=dx; else c+=dx; if(h.includes('n'))b+=dy; else d2+=dy;
+      o.x=Math.min(a,c);o.y=Math.min(b,d2);o.w=Math.max(2,Math.abs(c-a));o.h=Math.max(2,Math.abs(d2-b)); }
+    else if(h==='fs'&&drag.b){ const k=Math.max(.3,(drag.b.width+dx)/Math.max(1,drag.b.width)); o.fs=Math.max(4,Math.min(48,+(q.fs*k).toFixed(2))); }
+    render();
+  });
+  const end=e=>{ if(!drag||e.pointerId!==drag.pid)return; e.stopPropagation(); const m=drag.moved; drag=null; if(m){ try{saveActiveSheetState()}catch(_){} } render(); };
+  s.addEventListener('pointerup',end); s.addEventListener('pointercancel',end);
+}
+document.addEventListener('pointerdown',e=>{ if(!sel||!svg)return; if(e.target.closest&&(e.target.closest('#agbPlatDoc .pd-it')||e.target.closest('#agbPlatDoc .pd-h')||e.target.closest('#pdBar')||e.target.closest('#pdEdit')))return; sel=null; drawSel(); },true);
+document.addEventListener('keydown',e=>{ if(!sel||ed||/INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName||'')||document.activeElement?.isContentEditable)return;
+  if(e.key==='Delete'||e.key==='Backspace'){ const d=doc(); if(!d)return; try{snapshot()}catch(_){} d.items=d.items.filter(i=>i.id!==sel); sel=null; try{saveActiveSheetState()}catch(_){} render(); e.preventDefault(); } });
+window.agbPlatDocBuild=build; window.agbPlatDocOff=off; window.agbPlatDocRender=render;
+window.agbPlatDocSelect=id=>{sel=id;render()}; window.agbPlatDocEdit=id=>{const d=doc();const o=d&&d.items.find(i=>i.id===id);if(o){sel=id;render();editText(o)}};
+$i('pdBuild')&&$i('pdBuild').addEventListener('click',build); $i('pdOff')&&$i('pdOff').addEventListener('click',off);
+const _rn=window.renderObjectsNow;
+if(_rn){ window.renderObjectsNow=function(){ const r=_rn.apply(this,arguments); try{const d=doc(); if(d) uid=Math.max(uid,...d.items.map(i=>i.id+1)); render()}catch(e){console.warn('plat doc',e)} return r; }; try{renderObjectsNow=window.renderObjectsNow}catch(_){} }
+window.addEventListener('beforeprint',()=>{sel=null;try{render()}catch(_){}});
+let _vt=0; const reScale=()=>{ if(!svg||!active())return; cancelAnimationFrame(_vt); _vt=requestAnimationFrame(()=>{ const m=svg.getScreenCTM(); const s2=m?Math.hypot(m.a,m.b):1; if(Math.abs(s2-scr)/scr>.05&&!drag) render(); else if(sel) drawSel(); }); };
+new MutationObserver(reScale).observe($i('paper'),{attributes:true,attributeFilter:['style']}); addEventListener('resize',reScale);
+setTimeout(()=>{try{render()}catch(_){}},0);
+})();
+</script>
+<style>
+#agbPlatDoc{position:absolute;left:0;top:0;z-index:60;pointer-events:none;font-family:Arial,Helvetica,sans-serif;overflow:visible}
+#agbPlatDoc .pd-it,#agbPlatDoc .pd-h{pointer-events:auto;cursor:move;touch-action:none}
+#agbPlatDoc .pd-hit{pointer-events:all}
+#agbPlatDoc .pd-it text{pointer-events:all;user-select:none;-webkit-user-select:none}
+#agbPlatDoc .pd-h{cursor:crosshair}
+#paper.agb-platdoc #templateImg,#paper.agb-platdoc #drawLayer > .obj,#paper.agb-platdoc #autoDimLayer,#paper.agb-platdoc #agbSiteAnno,#paper.agb-platdoc #agbLegend,#paper.agb-platdoc #sitePlanPlaceholder,#paper.agb-platdoc #agbPermitPlan,#paper.agb-platdoc #agbPlatPlan{visibility:hidden!important}
+body.agb-platdoc-on #selQuickBar{display:none!important}
+#pdBar{position:fixed;z-index:3000;display:none;gap:6px;background:#0f172a;padding:6px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.3)}
+#pdBar button{min-height:40px;min-width:44px;padding:0 12px;border-radius:9px;border:0;font:800 14px Arial;background:#fff;color:#0f172a;white-space:nowrap}
+#pdBar button[data-a=del]{background:#fee2e2;color:#991b1b}
+@media print{#pdBar,#pdEdit,#pdSel{display:none!important}}
+</style>
+
 </body>
 </html>

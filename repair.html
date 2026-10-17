@@ -412,7 +412,7 @@ const ITEMS=[
   scope:f=>{const s=[];if(n(f.sheets))s.push('Remove existing sheathing on '+f.wall+' and replace with OSB');if(n(f.tp))s.push('Remove double top plate along '+f.wall+' and replace');if(n(f.studs))s.push('Sister 2 x 4 studs as necessary');return s;}},
  {id:'roof_framing',g:0,ic:'roofframe',cat:'Roof framing repairs',f:[{k:'sag',l:'Roof sag repair',t:'sel',o:['yes','no'],v:'yes'},{k:'rafters',l:'Rafters to sister',v:2},{k:'ties',l:'New cross ties',v:3}],
   cost:f=>[['Roof straighten',f.sag==='yes'?1:0,'roof_straighten'],['Rafters',n(f.rafters),'rafter'],['Cross ties',n(f.ties),'cross_tie']],
-  scope:(f,c)=>{const s=[];if(f.sag==='yes')s.push('Repair existing '+c.roof.toLowerCase()+' (roof sagging)');if(n(f.rafters))s.push('Sister 2 x 6 rafters as necessary');if(n(f.ties))s.push('Install '+n(f.ties)+' new 2 x 6 cross ties to secure wall');return s;}},
+  scope:(f,c)=>{const s=[];if(f.sag==='yes')s.push('Repair existing '+c.roof.toLowerCase()+' (roof sagging)');if(n(f.rafters))s.push('Sister 2 x 6 rafters as necessary');if(n(f.ties))s.push('Install '+n(f.ties)+' new 2 x 8 cross ties to secure wall');return s;}},
  {id:'raise',g:0,ic:'raise',cat:'Garage raising / leveling',f:[{k:'qty',l:'Jobs (1 = whole garage)',v:1}],
   cost:f=>[['Raise/level',n(f.qty),'raise_flat']], scope:()=>['Raise and level existing garage on existing slab','Shim and re-secure walls to foundation']},
  {id:'curb',g:0,ic:'curb',cat:'Concrete curb / knee wall',f:[{k:'lf',l:'Lin ft',v:72},{k:'h',l:'Height (in)',v:12}],

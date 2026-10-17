@@ -404,6 +404,7 @@ body.estimator-mode .estimator-exit{display:block}
    <div class="field"><label>Hold Reason</label><select id="f_hold_reason"><option value=""></option><option>Waiting on Customer</option><option>Permit Issue</option><option>Weather</option><option>Concrete Issue</option><option>Material Delay</option><option>Payment Issue</option><option>Other</option></select></div>
    <div class="field"><label>Hold Notes / Other Reason</label><input id="f_hold_notes" placeholder="Type reason if not in list"></div>
   </div></div>
+  <div id="agbArchJob"></div>
   <div class="formsec"><h4>Deposit, Permit & Demo</h4><div class="grid">
    <div class="field"><label>Deposit Status</label><select id="f_deposit_status"><option>Pending</option><option>Received</option></select></div><div class="field"><label>Deposit Date</label><input id="f_deposit_date" type="date"></div>
    <div class="field"><label>Permit Status</label><select id="f_permit_status"><option>Not Submitted</option><option>Applied/Submitted</option><option>Corrections Needed</option><option>Approved</option><option>N/A</option></select></div><div class="field"><label>Permit Approved</label><input id="f_permit_date" type="date"></div>
@@ -3412,4 +3413,24 @@ async function jcEstAnswer(id,estId,yes){if(!commissionAdmin())return;const st=d
 .est-ask-btns{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.est-ask-btns .btn{min-height:44px;padding:0 18px}
 @media(max-width:599px){.est-ask-btns .btn{flex:1}}
 </style>
+<script>
+/* 2026-10-17 ARCHITECT STAMP REQUIRED (user request). Sources: Chicago Ridge permit info sheet item 7; Barrington Hills + Gurnee code-sheet notes; Chicago lot line (CHI lot-line rule); Evanston permit checklist (conditional). */
+window.AGB_ARCH_STAMP={
+ "Chicago Ridge":{why:"All plans must bear the seal and signature of a Licensed Architect in the State of Illinois (new construction/additions).",src:"chicagoridge.org permit application information sheet, item 7"},
+ "Barrington Hills":{why:"Architectural stamp required (code sheet: 'REQUIRED: Architectural stamp', cost $500).",src:"Barrington Hills code sheet notes"},
+ "Gurnee":{why:"Garages over 400 SF need a stamped, to-scale architectural drawing.",src:"Gurnee code sheet notes",minSF:400},
+ "Chicago":{why:"Building on the lot line requires an architect (plus fire-retardant siding, metal studs, double wall, expediter).",src:"Chicago lot-line rule (CHI_LOTLINE_MSG)",lotLine:true},
+ "Evanston":{why:"Architect-designed construction drawings IF multi-story, habitable space or non-typical design.",src:"Evanston permit checklist (requirements.json)",cond:"multi-story, habitable space or non-typical design"}
+};
+function agbArchStamp(city,o){o=o||{};const k=Object.keys(AGB_ARCH_STAMP).find(x=>x.toLowerCase()===String(city||'').trim().toLowerCase().replace(/,?\s*il(linois)?$/,''));if(!k)return null;const r=AGB_ARCH_STAMP[k];
+ if(r.minSF){if(o.sf&&o.sf<=r.minSF)return null;}
+ if(r.lotLine){let ll=o.lotLine;if(ll===undefined){try{const j=o.jobId||new URLSearchParams(location.search).get('jobId');ll=!!(j&&localStorage.getItem('agb_lotline_'+j)==='1')}catch(e){ll=false}}if(!ll)return null;}
+ return Object.assign({city:k,conditional:!!r.cond||(!!r.minSF&&!o.sf)},r);}
+function agbArchHtml(a){if(!a)return '';return '<div class="agb-arch" role="alert"><div class="agb-arch-t">⚠ ARCHITECT STAMP REQUIRED</div><div class="agb-arch-m">'+a.city+': '+a.why+(a.minSF&&a.conditional?' (size not entered)':'')+'</div><div class="agb-arch-s">Source: '+a.src+'</div></div>';}
+(function(){const st=document.createElement('style');st.textContent='.agb-arch{box-sizing:border-box;max-width:100%;margin:8px 0;padding:10px 12px;border:3px solid #b91c1c;border-radius:8px;background:#fee2e2;color:#7f1d1d;font-family:system-ui,Arial,sans-serif;overflow-wrap:anywhere;position:relative;z-index:1}.agb-arch-t{font-size:22px;font-weight:900;color:#b91c1c;letter-spacing:.5px;line-height:1.15}.agb-arch-m{font-size:14px;font-weight:700;margin-top:4px;line-height:1.3}.agb-arch-s{font-size:11px;margin-top:3px;color:#991b1b}@media print{.agb-arch.noprint{display:none}}';document.head.appendChild(st);})();
+</script>
+<script>
+(function(){function run(){const b=document.getElementById('agbArchJob');if(!b)return;const c=(document.getElementById('f_city')||{}).value||'';let a=null;try{a=agbArchStamp(c,{jobId:(typeof openJobId!=='undefined'&&openJobId)?openJobId:''});}catch(e){}const h=agbArchHtml(a);if(b._h!==h){b.innerHTML=h;b._h=h;}}
+setInterval(run,1500);document.addEventListener('input',run);document.addEventListener('change',run);})();
+</script>
 </body></html>

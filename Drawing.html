@@ -8528,7 +8528,7 @@ function renderSiteAnno(){
     for(let i=0;i<=4;i++) h+=T(x0+i*step*k,y0+18,(i*step)+"'",{fs:9,w:600});
     h+=T(x0,y0-5,'GRAPHIC SCALE (FEET)',{fs:9,w:800,a:'start'});
   }
-  h+=T(24,t.h-166,'DISTANCES TO LOT LINES SHOWN IN RED.',{fs:10,w:700,a:'start'})+T(24,t.h-153,'VERIFY ALL LOT LINES WITH PLAT OF SURVEY.',{fs:10,w:700,a:'start'});
+  h+=T(24,t.h-166,'DISTANCES TO LOT LINES SHOWN IN RED.',{fs:10,w:700,a:'start'})+T(24,t.h-153,'VERIFY ALL LOT LINES WITH PROPOSED SITE PLAN.',{fs:10,w:700,a:'start'});
   if(L._h!==h){ L._h=h; L.innerHTML=h; }
 }
 // settings live on the proposed garage (or lot outline) object, so every existing save path (local backup, job save, sheet states) keeps them with the job
@@ -9217,6 +9217,8 @@ const num=(id,d)=>{const s=gv(id);if(s==='')return d;const v=+s;return Number.is
 const ft=v=>{const i=Math.round(v*12);return Math.floor(i/12)+"'-"+(i%12)+'"'};
 const f2=v=>(+v).toFixed(2)+"'";
 const E=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+// Older saved plats titled 'Plat of Survey' display as 'Proposed Site Plan' (display only; saved text untouched until edited).
+const DISP=t=>{const m=String(t).trim(); if(/^plat of survey$/i.test(m)) return m===m.toUpperCase()?'PROPOSED SITE PLAN':(m===m.toLowerCase()?'proposed site plan':'Proposed Site Plan'); return t;};
 const host=()=>{try{return byRole('proposedGarage')||byRole('lotOutline')||null}catch(_){return null}};
 const doc=()=>{const h=host();return h&&h.platDoc&&h.platDoc.on?h.platDoc:null};
 function active(){try{return state.mode==='siteplan'&&!!doc()}catch(_){return false}}
@@ -9245,7 +9247,7 @@ function build(auto){
   const dim=(x1,y1,x2,y2)=>add({t:'dim',x1,y1,x2,y2,sw:1});
   const addr=gv('jobAddress'); const street=gv('pdStreet')||(addr.replace(/^\s*\d+\s*/,'').replace(/,.*$/,'').toUpperCase()||'STREET');
   const hn=(addr.match(/^\s*(\d+)/)||[])[1];
-  tx(PW/2,40,'PLAT OF SURVEY',14,800);
+  tx(PW/2,40,'PROPOSED SITE PLAN',14,800);
   tx(PW/2,56,gv('pdLegal')||'LOT __ IN BLOCK __ IN ______ SUBDIVISION, COOK COUNTY, ILLINOIS',7.5,600);
   tx(PW/2,69,'SCALE: 1" = '+FPI+"'",7.5,600);
   ln(L-100,82,R+100,82,1); ln(L-100,122,R+100,122,1); tx((L+R)/2,106,street,10,600);
@@ -9299,7 +9301,7 @@ function itemSVG(o){
     return `<line x1="${o.x1}" y1="${o.y1}" x2="${o.x2}" y2="${o.y2}" stroke="#fff" stroke-width="5"/><line x1="${o.x1}" y1="${o.y1}" x2="${q[0]}" y2="${q[1]}" stroke="#000" stroke-width="${o.sw}"/>`+
       `<path d="M${q[0]} ${q[1]} A ${len} ${len} 0 0 ${sw} ${o.x2} ${o.y2}" fill="none" stroke="#000" stroke-width="1.1"/>`+
       `<path class="pd-hit" d="M${o.x1} ${o.y1} L${q[0]} ${q[1]} L${o.x2} ${o.y2} Z" fill="transparent" stroke="transparent" stroke-width="${hit}"/>`; }
-  if(o.t==='text') return `<text x="${o.x}" y="${o.y}" font-size="${o.fs}" font-weight="${o.fw}" text-anchor="${o.anchor}" fill="#000" stroke="#fff" stroke-width="2.5" paint-order="stroke" stroke-linejoin="round"${o.rot?` transform="rotate(${o.rot} ${o.x} ${o.y})"`:''}>${E(o.text)}</text>`;
+  if(o.t==='text') return `<text x="${o.x}" y="${o.y}" font-size="${o.fs}" font-weight="${o.fw}" text-anchor="${o.anchor}" fill="#000" stroke="#fff" stroke-width="2.5" paint-order="stroke" stroke-linejoin="round"${o.rot?` transform="rotate(${o.rot} ${o.x} ${o.y})"`:''}>${E(DISP(o.text))}</text>`;
   return '';
 }
 function render(){
@@ -9347,10 +9349,10 @@ function showTools(o){
 function hideTools(){ if(bar) bar.style.display='none'; }
 function editText(o){
   if(ed) ed.remove(); const te=svg.querySelector(`.pd-it[data-id="${o.id}"] text`); if(!te)return; const rr=te.getBoundingClientRect();
-  ed=document.createElement('input'); ed.id='pdEdit'; ed.value=o.text; ed.style.cssText=`position:fixed;z-index:3001;left:${Math.max(4,Math.min(innerWidth-224,rr.left+rr.width/2-110))}px;top:${Math.max(4,rr.top+rr.height/2-20)}px;width:220px;height:40px;font:700 16px Arial;border:2px solid #2563eb;border-radius:8px;padding:0 8px;background:#fff;box-shadow:0 6px 18px rgba(0,0,0,.2)`;
+  ed=document.createElement('input'); ed.id='pdEdit'; ed.value=DISP(o.text); ed.style.cssText=`position:fixed;z-index:3001;left:${Math.max(4,Math.min(innerWidth-224,rr.left+rr.width/2-110))}px;top:${Math.max(4,rr.top+rr.height/2-20)}px;width:220px;height:40px;font:700 16px Arial;border:2px solid #2563eb;border-radius:8px;padding:0 8px;background:#fff;box-shadow:0 6px 18px rgba(0,0,0,.2)`;
   document.body.appendChild(ed); ['pointerdown','touchstart','mousedown'].forEach(ev=>ed.addEventListener(ev,e=>e.stopPropagation()));
   ed.addEventListener('input',()=>{ te.textContent=ed.value; });
-  let done=false; const fin=ok=>{ if(done)return; done=true; const v=ed.value; ed.remove(); ed=null; if(ok&&v!==o.text){ try{snapshot()}catch(_){} o.text=v; if(!v.trim()){const d=doc(); d.items=d.items.filter(i=>i!==o); sel=null;} try{saveActiveSheetState()}catch(_){} } render(); };
+  let done=false; const fin=ok=>{ if(done)return; done=true; const v=ed.value; ed.remove(); ed=null; if(ok&&v!==DISP(o.text)){ try{snapshot()}catch(_){} o.text=v; if(!v.trim()){const d=doc(); d.items=d.items.filter(i=>i!==o); sel=null;} try{saveActiveSheetState()}catch(_){} } render(); };
   ed.addEventListener('keydown',e=>{ if(e.key==='Enter') fin(true); else if(e.key==='Escape') fin(false); });
   ed.addEventListener('blur',()=>fin(true)); ed.focus(); ed.select();
 }

@@ -3563,4 +3563,58 @@ async function pcRenderFormCard(){ const host=$('f_city'); if(!host) return; let
 #pcFormCard .pc-missing .pc-tag{background:#fee2e2;color:#b91c1c}#pcFormCard .pc-missing .pc-txt{color:#b91c1c}
 #pcFormCard .pc-na .pc-tag{background:#e2e8f0;color:#334155}
 #pcFormCard .pc-cond{color:#9ca3af}#pcFormCard .pc-cond .pc-tag{background:#f1f5f9;color:#9ca3af;font-style:italic}</style>
+<script>
+/* 2026-10-17 Tappable permit checklist (every city with a checklist). Tap an item = green "Done"; tap again = un-check.
+   Per job:  [AGB-PERMITCHK:+k1,-k2] in jobs.notes  (+ = done, - = manual un-check that overrides an auto "On file").
+   Per city (company items: registered / licensed / bonded / insured): [AGB-PERMITCO:<city>|<ts>|+k1,-k2] in the notes of the job
+   where it was tapped; the newest tag for that city across ALL loaded jobs wins, so it carries to every job in that city on any device.
+   No schema change. k = short hash of the item text. */
+const PCHK_RE=/\n*\[AGB-PERMITCHK:([^\]]*)\]/, PCO_RE=/\n*\[AGB-PERMITCO:([^|\]]*)\|(\d+)\|([^\]]*)\]/g;
+function pchkKey(t){let h=5381;t=String(t).toLowerCase().replace(/\s+/g,' ').trim();for(let i=0;i<t.length;i++)h=((h<<5)+h+t.charCodeAt(i))>>>0;return h.toString(36)}
+function pchkCompany(t){t=String(t).toLowerCase();return /licens|bond|insur|regist/.test(t)&&!/\bsubs?\b|subcontract|fee|electric|plumb/.test(t)}
+function pchkParse(s){const o={};String(s||'').split(',').forEach(x=>{if(/^[+-]\w+$/.test(x))o[x.slice(1)]=x[0]==='+'});return o}
+function pchkSer(o){return Object.keys(o).map(k=>(o[k]?'+':'-')+k).join(',')}
+function pchkRaw(j){const f=(typeof jobs!=='undefined'&&j&&j.id)?jobs.find(x=>x.id===j.id):null;return String((f||j||{}).notes||'')}
+function pchkJob(j){const m=pchkRaw(j).match(PCHK_RE);return pchkParse(m&&m[1])}
+function pchkCity(city){const c=pcNormCity(city);let best=null;(typeof jobs!=='undefined'?jobs:[]).forEach(x=>{String(x.notes||'').replace(PCO_RE,(_,cc,ts,ks)=>{if(pcNormCity(decodeURIComponent(cc))===c&&(!best||+ts>best.ts))best={ts:+ts,o:pchkParse(ks)};return _})});
+  let loc=null;try{loc=JSON.parse(localStorage.getItem('agb_permitco_'+c)||'null')}catch(e){} if(loc&&(!best||loc.ts>best.ts))best=loc; return best?best.o:{}}
+const _pcChkOrig=pcChecklistHtml;
+pcChecklistHtml=function(j,docs){const h=_pcChkOrig(j,docs),I=pcInfo(j);if(!I.r)return h;const city=I.r.key,jo=pchkJob(j),co=pchkCity(city),ctx=j._unsaved?'':j.id;
+  const d=document.createElement('div');d.innerHTML=h;
+  d.querySelectorAll('.pc-list li:not(.pc-cond)').forEach(li=>{const tx=li.querySelector('.pc-txt').textContent,k=pchkKey(tx),comp=pchkCompany(tx),auto=li.classList.contains('pc-ok');
+    const man=comp?co[k]:jo[k],done=man===undefined?auto:man,tag=li.querySelector('.pc-tag');
+    li.className=(done?'pc-ok':'pc-missing')+' pc-tap';li.setAttribute('role','checkbox');li.setAttribute('aria-checked',done);li.tabIndex=0;
+    li.setAttribute('onclick',"event.stopPropagation();pchkTap(this,'"+ctx+"','"+k+"',"+comp+","+done+")");
+    li.setAttribute('onkeydown',"if(event.key===' '||event.key==='Enter'){event.preventDefault();this.click()}");
+    tag.innerHTML='<span class="pc-box">'+(done?'✓':'')+'</span>'+(done?(auto&&man===undefined?'On file <i class="pc-auto">auto</i>':'Done'):'Needed');
+    if(comp){const s=document.createElement('span');s.className='pc-scope';s.textContent=done&&man!==undefined?'Company · all '+city+' jobs':'Company · applies to all '+city+' jobs';li.querySelector('.pc-txt').appendChild(s)}});
+  const l=d.querySelector('.pc-list');if(l){const n=document.createElement('div');n.className='pc-hint';n.textContent=j._unsaved?'Save the job first to check items off.':'Tap an item to mark it done (green); tap again to un-check.';l.before(n)}
+  return d.innerHTML};
+async function pchkTap(li,id,k,comp,done){if(!id){alert('Save the job first, then check items off.');return}
+  const j=jobs.find(x=>x.id===id);if(!j)return;const city=pcInfo(j).r.key,raw=String(j.notes||'');let notes;
+  if(comp){const o=pchkCity(city);o[k]=!done;const ts=Date.now(),c=pcNormCity(city);try{localStorage.setItem('agb_permitco_'+c,JSON.stringify({ts,o}))}catch(e){}
+    const strip=raw.replace(PCO_RE,(m,cc)=>pcNormCity(decodeURIComponent(cc))===c?'':m);notes=(strip.replace(/\s+$/,'')?strip.replace(/\s+$/,'')+'\n\n':'')+'[AGB-PERMITCO:'+encodeURIComponent(city)+'|'+ts+'|'+pchkSer(o)+']'}
+  else{const o=pchkJob(j);o[k]=!done;const b=raw.replace(PCHK_RE,'').replace(/\s+$/,''),s=pchkSer(o);notes=s?(b?b+'\n\n':'')+'[AGB-PERMITCHK:'+s+']':b}
+  li.style.opacity=.6;const {error}=await sb.from('jobs').update({notes}).eq('id',id);li.style.opacity='';
+  if(error){alert('Could not save: '+error.message);return} j.notes=notes;
+  if($('permitCard')&&openJobId===id){const b=$('permitBody');if(b&&b.querySelector('.pc-list')){let docs=[];try{const r=await sb.from('job_documents').select('document_type,file_name').eq('job_id',id);docs=r.data||[]}catch(e){}renderPermitCard(j,docs)}}
+  if($('pcFormBody')){$('pcFormBody')._h='';pcRenderFormCard()}}
+/* keep the hidden tags out of the Notes box but preserve them when the job form is saved */
+(function(){const strip=s=>String(s||'').replace(PCHK_RE,'').replace(PCO_RE,'');
+  const o=window.openJobForm;if(typeof o==='function'){window.openJobForm=openJobForm=function(){const r=o.apply(this,arguments);const n=$('f_notes');if(n)n.value=strip(n.value).replace(/\s+$/,'');return r}}
+  const s=window.saveJob;if(typeof s==='function'){window.saveJob=saveJob=async function(e){const n=$('f_notes'),id=$('f_id')&&$('f_id').value,oj=id&&jobs.find(x=>x.id===id),orig=n?n.value:'';
+    if(n&&oj){const tags=(String(oj.notes||'').match(PCHK_RE)||[''])[0]+(String(oj.notes||'').match(PCO_RE)||[]).join('');if(tags)n.value=strip(orig).replace(/\s+$/,'')+(tags.startsWith('\n')?'':'\n\n')+tags}
+    try{return await s.apply(this,arguments)}finally{if(n)n.value=orig}}}})();
+</script>
+<style>
+#permitCard li.pc-tap,#pcFormCard li.pc-tap{cursor:pointer;min-height:36px;align-items:center;padding:6px 4px;border-radius:6px;-webkit-tap-highlight-color:transparent}
+#permitCard li.pc-tap:hover,#pcFormCard li.pc-tap:hover{background:#f8fafc}
+#permitCard li.pc-ok.pc-tap,#pcFormCard li.pc-ok.pc-tap{background:#f0fdf4}
+#permitCard .pc-tap .pc-tag,#pcFormCard .pc-tap .pc-tag{display:inline-flex;align-items:center;gap:5px;min-width:86px;padding:3px 8px}
+.pc-box{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border:2px solid currentColor;border-radius:4px;font-size:12px;line-height:1;flex:0 0 auto}
+#permitCard .pc-ok .pc-box,#pcFormCard .pc-ok .pc-box{background:#16a34a;border-color:#16a34a;color:#fff}
+.pc-auto{font-style:normal;font-weight:700;font-size:9px;background:#fff;color:#15803d;border:1px solid #86efac;border-radius:6px;padding:0 4px}
+.pc-scope{display:block;font-size:11px;color:#64748b;margin-top:2px}.pc-ok .pc-scope{color:#15803d}
+.pc-hint{font-size:12px;color:#64748b;margin:2px 0 4px}
+</style>
 </body></html>

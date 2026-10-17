@@ -9227,19 +9227,543 @@
  "Crest Hill": {
   "form_type": "link_only",
   "form_name": "Residential Building Permit Application",
-  "template": null,
-  "fields": null,
+  "template": "permit-forms/Crest-Hill.pdf",
+  "fields": [
+   {
+    "name": "agb_p0_1",
+    "page": 0,
+    "rect": [
+     370.1,
+     191.9,
+     524.1,
+     204.4
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_2",
+    "page": 0,
+    "rect": [
+     135.4,
+     240.1,
+     557.0,
+     252.6
+    ],
+    "src": "address",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_3",
+    "page": 0,
+    "rect": [
+     153.3,
+     276.2,
+     557.1,
+     288.8
+    ],
+    "src": "description",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_4",
+    "page": 0,
+    "rect": [
+     153.3,
+     306.6,
+     300.6,
+     319.1
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_5",
+    "page": 0,
+    "rect": [
+     392.0,
+     306.6,
+     557.0,
+     319.1
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_6",
+    "page": 0,
+    "rect": [
+     175.9,
+     331.3,
+     300.6,
+     343.8
+    ],
+    "src": "price",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_7",
+    "page": 0,
+    "rect": [
+     392.0,
+     331.3,
+     557.0,
+     343.8
+    ],
+    "src": "sqft",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_8",
+    "page": 0,
+    "rect": [
+     120.5,
+     385.5,
+     380,
+     398.0
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_9",
+    "page": 0,
+    "rect": [
+     446.6,
+     385.5,
+     556.5,
+     398.0
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_10",
+    "page": 0,
+    "rect": [
+     120.5,
+     423.1,
+     313.8,
+     435.6
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_11",
+    "page": 0,
+    "rect": [
+     446.6,
+     423.1,
+     556.5,
+     435.6
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_12",
+    "page": 0,
+    "rect": [
+     446.6,
+     460.7,
+     556.5,
+     473.2
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_13",
+    "page": 0,
+    "rect": [
+     120.5,
+     527.8,
+     380,
+     540.3
+    ],
+    "src": "customer",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_14",
+    "page": 0,
+    "rect": [
+     446.6,
+     527.8,
+     556.5,
+     540.3
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_15",
+    "page": 0,
+    "rect": [
+     120.5,
+     565.3,
+     313.8,
+     577.8
+    ],
+    "src": "address",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_16",
+    "page": 0,
+    "rect": [
+     446.6,
+     565.3,
+     556.5,
+     577.8
+    ],
+    "src": "phone",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_17",
+    "page": 0,
+    "rect": [
+     446.6,
+     602.9,
+     556.5,
+     615.4
+    ],
+    "src": "ownerEmail",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_18",
+    "page": 1,
+    "rect": [
+     153.3,
+     269.9,
+     557.1,
+     282.4
+    ],
+    "src": "contractor",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_19",
+    "page": 1,
+    "rect": [
+     153.3,
+     292.3,
+     557.1,
+     304.8
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_20",
+    "page": 1,
+    "rect": [
+     153.3,
+     314.8,
+     557.1,
+     327.3
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_21",
+    "page": 1,
+    "rect": [
+     153.3,
+     337.2,
+     557.1,
+     349.7
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_22",
+    "page": 1,
+    "rect": [
+     153.3,
+     359.6,
+     557.1,
+     372.1
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_23",
+    "page": 1,
+    "rect": [
+     153.3,
+     382.1,
+     557.1,
+     394.6
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_24",
+    "page": 1,
+    "rect": [
+     153.3,
+     404.5,
+     557.1,
+     417.0
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_25",
+    "page": 1,
+    "rect": [
+     153.3,
+     427.0,
+     557.1,
+     439.5
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_26",
+    "page": 1,
+    "rect": [
+     153.3,
+     449.4,
+     557.1,
+     461.9
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_27",
+    "page": 1,
+    "rect": [
+     153.3,
+     471.9,
+     557.1,
+     484.4
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_28",
+    "page": 1,
+    "rect": [
+     153.3,
+     494.3,
+     557.1,
+     506.8
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_29",
+    "page": 1,
+    "rect": [
+     153.3,
+     516.8,
+     557.1,
+     529.2
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_30",
+    "page": 1,
+    "rect": [
+     153.3,
+     539.2,
+     557.1,
+     551.7
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_31",
+    "page": 1,
+    "rect": [
+     153.3,
+     561.6,
+     557.1,
+     574.1
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_32",
+    "page": 1,
+    "rect": [
+     153.3,
+     584.1,
+     557.1,
+     596.6
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_33",
+    "page": 1,
+    "rect": [
+     153.3,
+     606.5,
+     557.1,
+     619.0
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_34",
+    "page": 1,
+    "rect": [
+     153.3,
+     629.0,
+     557.1,
+     641.5
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p2_35",
+    "page": 2,
+    "rect": [
+     130.9,
+     557.8,
+     395.2,
+     570.3
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p2_36",
+    "page": 2,
+    "rect": [
+     130.9,
+     606.3,
+     354.6,
+     618.8
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p2_37",
+    "page": 2,
+    "rect": [
+     423.6,
+     606.3,
+     557.0,
+     618.8
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p2_38",
+    "page": 2,
+    "rect": [
+     130.9,
+     711.8,
+     395.3,
+     724.3
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p2_39",
+    "page": 2,
+    "rect": [
+     446.0,
+     711.8,
+     557.1,
+     724.3
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_residential_x",
+    "page": 0,
+    "rect": [
+     55,
+     178,
+     65,
+     189
+    ],
+    "src": "X",
+    "size": 9
+   },
+   {
+    "name": "agb_app_csz",
+    "page": 0,
+    "rect": [
+     119,
+     461,
+     383,
+     472
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_owner_csz",
+    "page": 0,
+    "rect": [
+     119,
+     604,
+     383,
+     615
+    ],
+    "src": "cityStateZip",
+    "size": 9
+   },
+   {
+    "name": "agb_sig_date",
+    "page": 2,
+    "rect": [
+     448,
+     560,
+     558,
+     570
+    ],
+    "src": "blank",
+    "size": 9
+   }
+  ],
   "portal_url": null,
   "info_url": null,
-  "pdf_url": "https://www.cityofcresthill.com/DocumentCenter/View/361/Residential-Building-Permit-Application-PDF",
+  "pdf_url": "https://cresthill.gov/DocumentCenter/View/361/Building-Permit-Application---Residential--Commercial-PDF",
   "checklist_url": null,
   "submittal": null,
   "info_sheet": false,
-  "link_url": "https://www.cityofcresthill.com/DocumentCenter/View/361/Residential-Building-Permit-Application-PDF",
+  "link_url": "https://cresthill.gov/DocumentCenter/View/361/Building-Permit-Application---Residential--Commercial-PDF",
   "link_type": "pdf",
   "link_note": "Residential Building Permit Application",
   "link_checked": "2026-10-17",
-  "download_note": "city site timed out from automated fetch (2026-10-17); plain link kept"
+  "auto_mapped": {
+   "mode": "overlay",
+   "scanned": false,
+   "source_fields": 0,
+   "added_fields": 43,
+   "prefill_fields": 11,
+   "reviewed": true
+  }
  },
  "Crestwood": {
   "form_type": "link_only",

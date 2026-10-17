@@ -4158,5 +4158,175 @@ async function gpPermitOpen(){
 async function gpPermitGo(kind){ const e=window._gpPermitEntry; try{ setStatus('Building permit PDF…',true); const bytes=kind==='tpl'?await gpPermitBuildTemplate(e):await gpPermitBuildInfo(e); gpPermitSave(bytes,gpPermitFile(e,kind==='tpl'?'permit-application':'permit-info')); setStatus('Permit PDF downloaded — fields stay editable.',true); }catch(err){ console.error(err); alert('Could not build permit PDF: '+err.message); } }
 document.addEventListener('DOMContentLoaded',()=>{ gpPermitShowBtn(); try{ garageSb&&garageSb.auth.onAuthStateChange(()=>gpPermitShowBtn()); }catch(e){} });
 </script>
+<script>
+// 2026-10-17: Per-city permit checklist next to Permit Application button + attachments appended to permit PDF.
+// Data embedded from permit-forms/requirements.json (checklist [{item,conditional,page}]).
+const GP_PERMIT_REQ={"Evanston": [{"item": "Online building permit application (Citizens Portal)", "conditional": null, "page": "checklist"}, {"item": "Electrical Worksheet", "conditional": null, "page": "checklist"}, {"item": "Mechanical/Plumbing worksheets", "conditional": "mechanical or plumbing in scope", "page": "checklist"}, {"item": "Garage Application Form with completed site plan (or construction drawings)", "conditional": null, "page": "form p1-2"}, {"item": "Architect-designed construction drawings", "conditional": "multi-story, habitable space or non-typical design", "page": "checklist"}, {"item": "Plat of survey (current; garage location, setbacks, electric service)", "conditional": null, "page": "form p2"}, {"item": "Signed contract with construction cost", "conditional": null, "page": "checklist"}, {"item": "Tree Preservation Plan and Drawing", "conditional": null, "page": "checklist"}, {"item": "Finish grade set by City Civil Engineer before excavation", "conditional": "unimproved alley", "page": "form p2"}, {"item": "Right of Way (ROW) permit", "conditional": "new/replacement apron or sidewalk in ROW", "page": "checklist"}, {"item": "Separate Demolition permit application + Cook County demolition permit copy + cubic footage", "conditional": "demolition", "page": "form p2"}], "Zion": [{"item": "Application for Building Permit (signed)", "conditional": null, "page": "app p1"}, {"item": "Electrical permit application", "conditional": null, "page": "req p4"}, {"item": "Plat of survey x2 (garage, driveway dims, gas line)", "conditional": null, "page": "req p4"}, {"item": "Construction drawings x2 incl. slab detail", "conditional": null, "page": "req p4"}, {"item": "Driveway contractor + driveway proposal", "conditional": null, "page": "req p4"}, {"item": "Contractor registration + insurance with City of Zion", "conditional": "contractor", "page": "req p4"}, {"item": "Homeowner liability insurance copy ($300,000 min)", "conditional": "homeowner builds", "page": "req p4"}, {"item": "Demolition section filled on application", "conditional": "demolition", "page": "app p1"}], "Calumet City": [{"item": "Building Permit Application (signed, both sides)", "conditional": null, "page": "p1"}, {"item": "Plans – one set to Building & Zoning, one set to B&F Construction/Farnsworth", "conditional": null, "page": "p1"}, {"item": "Plat of survey (garage vs. property lines/main building)", "conditional": null, "page": "p2"}, {"item": "Grade setting from city engineer", "conditional": null, "page": "p2"}, {"item": "Subcontractor list (all registered with city)", "conditional": null, "page": "p2"}, {"item": "Trade permit applications (except painting/floor sanding)", "conditional": null, "page": "p2"}, {"item": "Homeowner ID showing permit address", "conditional": "homeowner permit", "page": "p2"}], "Cicero": [{"item": "Completed permit application with estimated cost", "conditional": null, "page": "p1"}, {"item": "Plat of survey x2", "conditional": null, "page": "p1"}, {"item": "Detailed framing plan x2 / drawings with materials", "conditional": null, "page": "p1"}, {"item": "Licensed/bonded/insured contractor with Cicero", "conditional": "contractor builds", "page": "p1"}, {"item": "Licensed & bonded Cicero electrical contractor", "conditional": null, "page": "p1"}, {"item": "Stake out garage location", "conditional": null, "page": "p1"}, {"item": "HOA letter of permission", "conditional": "HOA member", "page": "p1"}, {"item": "Cook County demolition permit + rodent control inspection application", "conditional": "replacing existing garage", "page": "p1"}, {"item": "Curb Cut Request", "conditional": "corner lot without curb", "page": "p2"}], "Elmwood Park": [{"item": "Building Permit Application for Sundry Construction (signed)", "conditional": null, "page": "p1"}, {"item": "Plans", "conditional": null, "page": "p1"}, {"item": "Plat of survey", "conditional": null, "page": "p1"}, {"item": "Contractor info + Village license/insurance for each contractor", "conditional": null, "page": "p1"}, {"item": "Separate permits by each contractor", "conditional": null, "page": "p1"}, {"item": "'Home Repair: Know Your Consumer Rights' copy to homeowner", "conditional": null, "page": "p1"}, {"item": "Demolition contractor / dumpster company info", "conditional": "demolition / dumpster", "page": "p1"}], "Evergreen Park": [{"item": "Garage permit application (filled by GC, signed)", "conditional": null, "page": "p4"}, {"item": "Two sets of drawings", "conditional": null, "page": "p1"}, {"item": "Plat of survey with garage highlighted", "conditional": null, "page": "p1"}, {"item": "Electrical permit application", "conditional": null, "page": "p1"}, {"item": "PIN on application", "conditional": null, "page": "p1"}, {"item": "Village-licensed contractors listed", "conditional": null, "page": "p1"}, {"item": "$500 permit bond", "conditional": null, "page": "p1"}, {"item": "Cook County EPA demolition permit", "conditional": "demolition", "page": "p1"}, {"item": "Rodent Control Certification", "conditional": "demolition", "page": "p1"}], "Arlington Heights": [{"item": "Online permit application – 'Garage – Detached Residential'", "conditional": null, "page": "p1"}, {"item": "Contractor's Proposal with cost", "conditional": null, "page": "p2"}, {"item": "Dimensioned/scaled construction plans (single file)", "conditional": null, "page": "p2"}, {"item": "Plat of survey", "conditional": null, "page": "p2"}, {"item": "Signed Construction Fence/Silt Fence Acknowledgment", "conditional": null, "page": "p2-4"}, {"item": "Contractor + owner portal accounts and contractor licenses", "conditional": null, "page": "p1"}], "Oak Park": [], "Skokie": [{"item": "Online permit application (skokiepermits.com)", "conditional": null, "page": "p1"}, {"item": "Current plat of survey (≤18 months)", "conditional": null, "page": "p1"}, {"item": "Site plan (overhead electric lines, setbacks)", "conditional": null, "page": "p1"}, {"item": "Construction drawings: floor plan, wall section, elevations, inspection list", "conditional": null, "page": "p1"}, {"item": "Zoning Information Worksheet", "conditional": null, "page": "p1"}, {"item": "Drainage plan (gutters/dry well)", "conditional": "floor area > 400 sq ft", "page": "p1"}]};
+window._gpPermitCtx=null;
+function gpReqEntry(city){ const k=Object.keys(GP_PERMIT_REQ).find(x=>x.toLowerCase()===String(city||'').toLowerCase()); return k&&GP_PERMIT_REQ[k].length?{key:k,list:GP_PERMIT_REQ[k]}:null; }
+function gpJobId(){ return new URLSearchParams(location.search).get('jobId')||((window._gpJob||{}).id)||''; }
+function gpSitePlanLocal(jobId){ if(!jobId) return null; try{ const d=JSON.parse(localStorage.getItem('agb_drawing_job_'+jobId)||'null'); const o=d&&d.sheets&&d.sheets.siteplan&&d.sheets.siteplan.objects; return (o&&o.length)?d:null; }catch(e){ return null; } }
+async function gpPermitCtx(force){
+  const jobId=gpJobId(); const c=window._gpPermitCtx;
+  if(c&&!force&&c.jobId===jobId&&Date.now()-c.t<30000) return c;
+  const ctx={jobId,t:Date.now(),job:window._gpJob||null,docs:[],demo:false,demoKnown:false,sitePlan:gpSitePlanLocal(jobId),planSaved:!!(new URLSearchParams(location.search).get('planId')||window._lastPlanHistoryId)};
+  try{ if(garageSb&&jobId){ // reads only
+    if(!ctx.job||ctx.job.demolition_required===undefined){ const {data}=await garageSb.from('jobs').select('*').eq('id',jobId).maybeSingle(); if(data){ ctx.job=data; window._gpJob=window._gpJob||data; } }
+    const {data:docs}=await garageSb.from('job_documents').select('*').eq('job_id',jobId).order('created_at',{ascending:false}); ctx.docs=docs||[];
+  } }catch(e){ console.warn('permit ctx',e); }
+  const j=ctx.job||{};
+  if(j.demolition_required===true){ ctx.demo=true; ctx.demoKnown=true; } else if(j.demolition_required===false) ctx.demoKnown=true;
+  try{ const estId=new URLSearchParams(location.search).get('estId'); if(!ctx.demo&&garageSb&&estId){ const {data}=await garageSb.from('estimate_history').select('calc:estimate_snapshot->calculator_state').eq('id',estId).maybeSingle(); const v=data&&data.calc&&data.calc.demoExisting; if(v===true||v==='true'||v==='on'){ctx.demo=true;ctx.demoKnown=true;} } }catch(e){}
+  ctx.plats=ctx.docs.filter(x=>/plat|survey/i.test(x.document_type||'')||/plat|survey/i.test(x.file_name||''));
+  ctx.demoDocs=ctx.docs.filter(x=>x.document_type==='Demolition Sheet');
+  ctx.otherDocs=ctx.docs.filter(x=>x.document_type==='Other');
+  ctx.contract=ctx.docs.some(x=>x.document_type==='Contract');
+  window._gpPermitCtx=ctx; return ctx;
+}
+// conditional -> true (applies), false/null (greyed "if ...")
+function gpCondApplies(cond,ctx){ const c=String(cond||'').toLowerCase();
+  if(/demoli|replacing existing/.test(c)) return ctx.demo;
+  if(/^contractor/.test(c)) return true; // Absolute Garage Builders is the contractor on every job
+  if(/homeowner/.test(c)) return false;
+  const m=c.match(/floor area\s*>\s*(\d+)/); if(m){ const w=parseFloat(val('width'))||0,d=parseFloat(val('depth'))||0; return (w&&d)?w*d>+m[1]:null; }
+  return null; }
+// returns 'ok' | 'missing' | '' (not checkable by the app)
+function gpItemStatus(item,ctx,hasTpl){ const s=item.toLowerCase();
+  if(/plat of survey/.test(s)) return ctx.plats.length?'ok':'missing';
+  if(/site plan/.test(s)) return ctx.sitePlan?'ok':'missing';
+  if(/signed contract/.test(s)) return ctx.contract?'ok':'missing';
+  if(/^(construction drawings|plans|two sets of drawings|dimensioned|detailed framing plan)/.test(s)) return ctx.planSaved?'ok':'missing';
+  if(/demolition sheet|demolition section/.test(s)) return hasTpl?'ok':'';
+  if(hasTpl&&/application/.test(s)&&!/electrical|online|trade|separate|demolition/.test(s)) return 'ok';
+  return ''; }
+function gpChecklistHtml(city,ctx){
+  const r=gpReqEntry(city); const map=_gpPermitMap||{}; const e=gpPermitEntry(map,city); const hasTpl=!!(e&&e.template);
+  if(!city) return '';
+  if(!r) return '<div class="pc-head">Permit checklist — '+_pe(city)+'</div><div class="pc-none">No checklist on file</div>';
+  let h='<div class="pc-head">Permit checklist — '+_pe(r.key)+'</div><ul class="pc-list">';
+  r.list.forEach(it=>{ const ap=it.conditional?gpCondApplies(it.conditional,ctx):true;
+    if(!ap){ h+='<li class="pc-cond"><span class="pc-tag">if '+_pe(it.conditional)+'</span><span class="pc-txt">'+_pe(it.item)+'</span></li>'; return; }
+    const st=gpItemStatus(it.item,ctx,hasTpl);
+    h+='<li class="pc-'+(st||'na')+'"><span class="pc-tag">'+(st==='ok'?'✓ On file':st==='missing'?'Missing':'Check')+'</span><span class="pc-txt">'+_pe(it.item)+(it.conditional?' <i>('+_pe(it.conditional)+')</i>':'')+' <small>'+_pe(it.page||'')+'</small></span></li>'; });
+  h+='</ul>'; if(!ctx.jobId) h+='<div class="pc-note">Open from a dashboard job to check site plan / plat of survey.</div>'; else if(!ctx.demoKnown) h+='<div class="pc-note">Demolition not marked on job/estimate.</div>';
+  return h; }
+async function gpRenderChecklist(force){
+  const b=document.getElementById('permitAppBtn'); if(!b||b.style.display==='none') return;
+  let box=document.getElementById('permitChecklist'); if(!box){ box=document.createElement('div'); box.id='permitChecklist'; b.insertAdjacentElement('afterend',box); }
+  const city=gpPermitCity(); try{ await gpPermitMap(); }catch(e){}
+  const ctx=await gpPermitCtx(force); const html=gpChecklistHtml(city,ctx);
+  if(box._h!==html){ box.innerHTML=html; box._h=html; } box.style.display=html?'block':'none';
+}
+setInterval(()=>gpRenderChecklist(false),1500);
+// ---- attachments ----
+function gpSitePlanImage(jobId){ return new Promise((ok,no)=>{
+  const f=document.createElement('iframe'); f.style.cssText='position:fixed;left:-20000px;top:0;width:1280px;height:1000px;border:0';
+  f.src='Drawing.html?jobId='+encodeURIComponent(jobId)+'&agbPermitExport=1&v='+Date.now();
+  const done=(err,v)=>{ clearTimeout(to); setTimeout(()=>f.remove(),100); err?no(err):ok(v); };
+  const to=setTimeout(()=>done(new Error('site plan render timed out')),25000);
+  f.onload=()=>setTimeout(async()=>{ try{ const w=f.contentWindow, d=w.document, m=d.getElementById('mode');
+      m.value='siteplan'; if(m.onchange) m.onchange(); m.dispatchEvent(new w.Event('change'));
+      await new Promise(r=>setTimeout(r,1500)); const ex=await w.buildDrawingExport(); done(null,new Uint8Array(await ex.jpegBlob.arrayBuffer())); }catch(e){ done(e); } },2500);
+  document.body.appendChild(f); }); }
+async function gpAddCover(pdf,L,title,lines,at){ const f=await pdf.embedFont(L.StandardFonts.HelveticaBold), r=await pdf.embedFont(L.StandardFonts.Helvetica); const p=pdf.insertPage(at,[612,792]);
+  p.drawText(title,{x:40,y:740,size:18,font:f}); let y=712; lines.forEach(t=>{ p.drawText(String(t).slice(0,105),{x:40,y,size:10,font:r,color:/^MISSING/.test(t)?L.rgb(.75,.1,.1):L.rgb(0,0,0)}); y-=16; }); }
+async function gpAddImagePage(pdf,L,bytes,isPng,label){ const im=isPng?await pdf.embedPng(bytes):await pdf.embedJpg(bytes); const land=im.width>im.height; const W=land?792:612,H=land?612:792; const p=pdf.addPage([W,H]);
+  const s=Math.min((W-48)/im.width,(H-64)/im.height); p.drawImage(im,{x:(W-im.width*s)/2,y:24+(H-64-im.height*s)/2,width:im.width*s,height:im.height*s});
+  const f=await pdf.embedFont(L.StandardFonts.Helvetica); p.drawText(label.slice(0,110),{x:24,y:H-24,size:9,font:f}); }
+async function gpAppendAttachments(bytes){
+  const L=await gpPermitLib(), ctx=await gpPermitCtx(true), pdf=await L.PDFDocument.load(bytes), log=[], miss=[], base=pdf.getPageCount();
+  const city=gpPermitCity(), r=gpReqEntry(city);
+  if(r){ r.list.forEach(it=>{ const ap=it.conditional?gpCondApplies(it.conditional,ctx):true; if(ap&&gpItemStatus(it.item,ctx,false)==='missing') miss.push('MISSING: '+it.item); }); }
+  if(!ctx.door) miss.push('MISSING: Door size blank — fill in'); if(!ctx.price) miss.push('MISSING: Sold price not found — value/cost fields left blank');
+  if(ctx.sitePlan){ try{ const jpg=await gpSitePlanImage(ctx.jobId); await gpAddImagePage(pdf,L,jpg,false,'Site plan — Drawing App (saved '+(ctx.sitePlan.savedAt||'').slice(0,10)+')'); log.push('Site plan (Drawing App)'); }catch(e){ console.warn(e); miss.push('MISSING: site plan could not be rendered ('+e.message+')'); } }
+  const files=[...ctx.plats,...(ctx.demo?ctx.demoDocs:[]),...ctx.otherDocs];
+  for(const d of files){ try{ const {data,error}=await garageSb.storage.from('job-documents').download(d.storage_path); if(error) throw error;
+      const b=new Uint8Array(await data.arrayBuffer()), n=(d.file_name||'').toLowerCase(), lab=(d.document_type||'Document')+': '+(d.file_name||'');
+      if(b[0]===0x25&&b[1]===0x50){ const src=await L.PDFDocument.load(b,{ignoreEncryption:true}); (await pdf.copyPages(src,src.getPageIndices())).forEach(p=>pdf.addPage(p)); }
+      else if(b[0]===0x89&&b[1]===0x50) await gpAddImagePage(pdf,L,b,true,lab);
+      else if(b[0]===0xFF&&b[1]===0xD8) await gpAddImagePage(pdf,L,b,false,lab);
+      else { miss.push('NOT ATTACHED (unsupported file type): '+lab); continue; }
+      log.push(lab); }catch(e){ miss.push('NOT ATTACHED (download failed): '+(d.file_name||'')); } }
+  if(log.length||miss.length) await gpAddCover(pdf,L,'Attachments',[...(log.length?log.map(x=>'Attached: '+x):['No attachments on file for this job.']),'',...miss],base);
+  return pdf.save();
+}
+
+// --- door size + sold price sources (user rules 2026-10-17) ---
+let _gpOhTouched=false; document.addEventListener('change',ev=>{ if(ev.target&&ev.target.id==='oh1Size') _gpOhTouched=true; },true);
+function gpParseDoor(v){ const m=String(v||'').match(/(\d+(?:\.\d+)?)\s*(?:'|ft|feet)?\s*[x×X]\s*(\d+(?:\.\d+)?)/); return m?{w:m[1],h:m[2]}:null; }
+function gpNormAddr(a){ const W={street:'st',avenue:'ave',av:'ave',road:'rd',drive:'dr',lane:'ln',court:'ct',place:'pl',boulevard:'blvd',north:'n',south:'s',east:'e',west:'w',parkway:'pkwy',terrace:'ter'};
+  return String(a||'').toLowerCase().split(',')[0].replace(/[^a-z0-9 ]+/g,' ').trim().split(/\s+/).filter(Boolean).map(w=>W[w]||w).join(' '); }
+function gpNormName(n){ return String(n||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim().split(/\s+/).filter(w=>w&&!['mr','mrs','ms','and'].includes(w)).sort().join(' '); }
+async function gpResolveDoorPrice(ctx){
+  const q=new URLSearchParams(location.search), j=ctx.job||{}; const ests=[];
+  const estSel='id,customer,address,estimate_price,created_at,job_id,calc:estimate_snapshot->calculator_state';
+  try{ const estId=q.get('estId'); if(garageSb&&estId){ const {data}=await garageSb.from('estimate_history').select(estSel).eq('id',estId).maybeSingle(); if(data) ests.push({...data,_why:'linked estimate'}); } }catch(e){}
+  const addr=j.address||val('address'), na=gpNormAddr(addr), nm=gpNormName(j.customer||val('customer')), num=(na.match(/^\d+/)||[''])[0];
+  if(garageSb&&num){ try{ // read-only: estimates tied to this job id, or to this address (name+address first, then address alone)
+    const {data}=await garageSb.from('estimate_history').select(estSel).ilike('address',num+'%').order('created_at',{ascending:false}).limit(50);
+    (data||[]).filter(e=>!ests.some(x=>x.id===e.id)).forEach(e=>{ const sa=gpNormAddr(e.address)===na; if(String(e.job_id||'')===String(ctx.jobId)&&ctx.jobId) ests.push({...e,_why:'estimate linked to job'}); else if(sa&&gpNormName(e.customer)===nm) ests.push({...e,_why:'estimate (name + address match)'}); else if(sa) ests.push({...e,_why:'estimate (address match)'}); });
+    const rank={'linked estimate':0,'estimate linked to job':1,'estimate (name + address match)':2,'estimate (address match)':3}; ests.sort((x,y)=>rank[x._why]-rank[y._why]);
+  }catch(e){} }
+  let cd={}; if(garageSb&&ctx.jobId){ try{ const {data}=await garageSb.from('job_contract_details').select('field,value').eq('job_id',ctx.jobId); (data||[]).forEach(r=>cd[r.field]=r.value); }catch(e){} }
+  let carp=null; if(garageSb&&ctx.jobId){ try{ const {data}=await garageSb.from('carpenter_sheets').select('state').eq('job_id',ctx.jobId).maybeSingle(); carp=data&&data.state; }catch(e){} }
+  // door: plan -> job file -> estimator -> scanned contract -> carpenter sheet. Never default.
+  const dc=[];
+  if(q.get('planId')||window._lastPlanHistoryId||_gpOhTouched){ const p=gpParseDoor(val('oh1Size')); if(p) dc.push({...p,src:'Garage Plans plan'}); }
+  { const p=gpParseDoor(j.overhead_door_size||j.door_size||j.overhead_doors||''); if(p) dc.push({...p,src:'job file'}); }
+  ests.forEach(e=>{ const c=e.calc||{}; if(c.overheadDoorWidth&&c.overheadDoorHeight) dc.push({w:String(c.overheadDoorWidth),h:String(c.overheadDoorHeight),src:e._why}); });
+  { const p=gpParseDoor(cd.doors); if(p) dc.push({...p,src:'scanned contract'}); }
+  { const p=carp&&gpParseDoor(carp.ohDoors||(carp.fields||{}).ohDoors); if(p) dc.push({...p,src:'carpenter sheet'}); }
+  ctx.door=dc[0]||null; ctx.doorConflict=[...new Set(dc.map(x=>x.w+'x'+x.h))].length>1?dc.map(x=>x.w+"'x"+x.h+"' ("+x.src+')'):null;
+  // price: SOLD price only — job file price, else linked/sold estimate quote (linked to this job). Never internal cost.
+  const pc=[]; if(Number(j.price)>0) pc.push({v:Number(j.price),src:'job file sold price'});
+  ests.filter(e=>/linked/.test(e._why)&&Number(e.estimate_price)>0).forEach(e=>pc.push({v:Number(e.estimate_price),src:e._why+' quote'}));
+  ctx.price=pc[0]||null; ctx.priceConflict=[...new Set(pc.map(x=>x.v))].length>1?pc.map(x=>'$'+x.v.toLocaleString('en-US')+' ('+x.src+')'):null;
+  ctx.priceHint=!pc.length?ests.filter(e=>Number(e.estimate_price)>0).map(e=>'$'+Number(e.estimate_price).toLocaleString('en-US')+' ('+e._why+', not confirmed sold)'):[];
+  // phone / zip: job file -> scanned contract
+  const pick=(...c)=>c.find(x=>x&&String(x.v||'').trim())||null;
+  ctx.phone=pick({v:j.phone,src:'job file'},{v:cd.phone,src:'scanned contract'});
+  ctx.zip=pick({v:j.zip,src:'job file'},{v:cd.zip,src:'scanned contract'},{v:(String(cd.state_zip||'').match(/\b\d{5}\b/)||[''])[0],src:'scanned contract'});
+}
+(function(){ const C=gpPermitCtx; gpPermitCtx=async f=>{ const c=await C(f); if(!('door' in c)) await gpResolveDoorPrice(c); return c; };
+  const D=gpPermitData; gpPermitData=function(){ const d=D(), c=window._gpPermitCtx||{};
+    d.doorW=c.door?c.door.w:''; d.doorH=c.door?c.door.h:''; // never default 16x7
+    d.price=c.price?c.price.v.toLocaleString('en-US',{maximumFractionDigits:0}):'';
+    if(c.phone) d.phone=String(c.phone.v); if(c.zip&&!d.zip){ d.zip=String(c.zip.v); d.addressCity=[d.address,[d.city,'IL'].filter(Boolean).join(', ')+' '+d.zip].filter(Boolean).join(', '); } return d; };
+  const G=gpChecklistHtml; gpChecklistHtml=function(city,ctx){ let h=G(city,ctx); if(!city) return h;
+    const fl='<ul class="pc-list pc-flags">'+(ctx.door?'<li class="pc-ok"><span class="pc-tag">Door</span><span class="pc-txt">Overhead door '+_pe(ctx.door.w+"' x "+ctx.door.h+"'")+' <small>from '+_pe(ctx.door.src)+'</small></span></li>':'<li class="pc-missing"><span class="pc-tag">Missing</span><span class="pc-txt">Door size blank — fill in</span></li>')
+      +(ctx.price?'<li class="pc-ok"><span class="pc-tag">Price</span><span class="pc-txt">$'+_pe(ctx.price.v.toLocaleString('en-US'))+' <small>from '+_pe(ctx.price.src)+'</small></span></li>':'<li class="pc-missing"><span class="pc-tag">Missing</span><span class="pc-txt">Sold price not found — value/cost fields left blank</span></li>')+(ctx.doorConflict?'<li class="pc-missing"><span class="pc-tag">Differs</span><span class="pc-txt">Door sizes disagree: '+_pe(ctx.doorConflict.join('; '))+'</span></li>':'')
+      +(ctx.priceConflict?'<li class="pc-missing"><span class="pc-tag">Differs</span><span class="pc-txt">Prices disagree: '+_pe(ctx.priceConflict.join('; '))+'</span></li>':'')
+      +(ctx.priceHint&&ctx.priceHint.length?'<li class="pc-na"><span class="pc-tag">Note</span><span class="pc-txt">Not used: '+_pe(ctx.priceHint.slice(0,3).join('; '))+'</span></li>':'')
+      +(ctx.phone?'':'<li class="pc-missing"><span class="pc-tag">Missing</span><span class="pc-txt">Owner phone blank — fill in</span></li>')+'</ul>';
+    return h+fl; };
+  const O=gpPermitOpen; gpPermitOpen=async function(){ const c=await gpPermitCtx(true); await O(); const m=document.querySelector('#permitModal > div'); if(m){ const n=document.createElement('p'); n.style.cssText='font-size:12px;margin:4px 0;font-weight:700;color:'+(c.door?'#166534':'#b91c1c'); n.textContent=c.door?('Overhead door '+c.door.w+"' x "+c.door.h+"' (from "+c.door.src+')'):'Door size blank — fill in'; m.insertBefore(n,m.lastElementChild);
+      if(!c.price){ const p=document.createElement('p'); p.style.cssText='font-size:12px;margin:4px 0;font-weight:700;color:#b91c1c'; p.textContent='Sold price not found — value/cost fields left blank'; m.insertBefore(p,m.lastElementChild);} } };
+})();
+// wrap the existing build functions so the generated permit PDF carries the job's attachments
+(function(){ const T=gpPermitBuildTemplate, I=gpPermitBuildInfo;
+  gpPermitBuildTemplate=async e=>gpAppendAttachments(await T(e));
+  gpPermitBuildInfo=async e=>gpAppendAttachments(await I(e)); })();
+</script>
+<style>
+#permitChecklist{margin:0 0 8px;border:1px solid #cbd5e1;border-radius:8px;padding:8px 10px;background:#f8fafc;font:12px/1.35 system-ui,sans-serif;color:#111;overflow-wrap:anywhere}
+#permitChecklist .pc-head{font-weight:800;margin-bottom:4px}
+#permitChecklist .pc-none{color:#64748b;font-style:italic}
+#permitChecklist .pc-list{list-style:none;margin:0;padding:0}
+#permitChecklist li{display:flex;gap:6px;align-items:flex-start;padding:3px 0;border-top:1px solid #e2e8f0}
+#permitChecklist li:first-child{border-top:0}
+#permitChecklist .pc-tag{flex:0 0 auto;font-size:10px;font-weight:800;padding:1px 6px;border-radius:8px;max-width:42%;white-space:normal;overflow-wrap:anywhere}
+#permitChecklist .pc-txt{flex:1 1 auto;min-width:0}
+#permitChecklist small{color:#64748b}
+#permitChecklist .pc-ok .pc-tag{background:#dcfce7;color:#166534}
+#permitChecklist .pc-ok .pc-txt{color:#166534}
+#permitChecklist .pc-missing .pc-tag{background:#fee2e2;color:#b91c1c}
+#permitChecklist .pc-missing .pc-txt{color:#b91c1c}
+#permitChecklist .pc-na .pc-tag{background:#e2e8f0;color:#334155}
+#permitChecklist .pc-cond{color:#9ca3af}
+#permitChecklist .pc-cond .pc-tag{background:#f1f5f9;color:#9ca3af;font-style:italic}
+#permitChecklist .pc-flags{margin-top:6px;border-top:1px solid #cbd5e1;padding-top:4px}
+#permitChecklist .pc-note{margin-top:4px;color:#64748b;font-size:11px}
+@media print{#permitChecklist{display:none!important}}
+</style>
 </body>
 </html>

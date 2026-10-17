@@ -787,6 +787,7 @@ function onCitySel(){
   const manual=val('citySel')==='__manual__';
   if($('city')) $('city').style.display=manual?'block':'none';
   if(!manual && val('citySel')) $('city').value=val('citySel');
+  try{['roof','wall'].forEach(k=>{const cc=sheathCodeFor(selectedCity(),k);if(cc)$(k+'Sheath').value=sheathCodeDefault(cc)})}catch(e){}
   persist();
 }
 function selectedCity(){
@@ -1740,6 +1741,28 @@ function sheathCombo(id){const el=document.getElementById(id);if(!el||el._sc)ret
   el.addEventListener('change',e=>{if(P.get.call(el)==='__other'){e.stopImmediatePropagation();box.value=(el.querySelector('option[value="'+CSS.escape(last)+'"]')||{}).dataset?.custom?last:'';box.style.display='block';box.focus();return}last=P.get.call(el)},true);
   box.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();commit()}if(e.key==='Escape'){box.value='';commit()}});box.addEventListener('blur',commit)}
 </script><style>select.sheath-sel{max-width:100%}@media print{select.sheath-sel{-webkit-appearance:none;appearance:none;border:0;background:none;padding:0}}.carp-pdf select.sheath-sel{-webkit-appearance:none;appearance:none;background:none}</style>
-<script>['wallSheath','roofSheath'].forEach(sheathCombo);</script>
+<script>
+/* 2026-10-17 city-code sheathing. Values transcribed from CITY_CODE_SHEETS notes only (no guessing): t=thickness, m=material, min=minimum, def=dropdown default.
+   Cities whose notes say nothing about sheathing are absent -> no default change, no warning. */
+const SHEATH_CODE=(()=>{const P12={t:'1/2"',m:'plywood'},P58={t:'5/8"',m:'plywood'},PLY={m:'plywood'};return {
+ 'Antioch':{roof:P58},'Arlington Heights':{roof:{t:'5/8"',min:1},wall:{t:'1/2"',min:1}},'Bartlett':{roof:P58},'Bellwood':{roof:P12},
+ 'Berwyn':{roof:P12,wall:P12},'Bloomingdale':{roof:P12},'Blue Island':{roof:PLY,wall:PLY},'Bridgeview':{roof:P12,wall:P12},'Broadview':{roof:P12},
+ 'Brookfield':{roof:P12},'Burbank':{roof:P12,wall:P12},'Chicago Ridge':{roof:PLY,wall:PLY},'Cicero':{roof:P12},'Clarendon Hills':{roof:PLY},
+ 'Des Plaines':{roof:{t:'5/8"',text:'5/8" (plywood; OSB OK)',def:'5/8" CDX plywood'}},'Elk Grove Village':{roof:P58},'Elgin':{roof:P58},
+ 'Elmhurst':{roof:P58,wall:P12},'Ford Heights':{roof:P12,wall:P12},'Forest Park':{roof:{t:'5/8"',text:'5/8" (OSB or plywood)'}},
+ 'Franklin Park':{roof:{t:'1/2"',m:'plywood',min:1,text:'1/2" CDX plywood min.'}},'Glenview':{roof:P12,wall:P12}}})();
+function sheathCodeFor(city,kind){const c=SHEATH_CODE[String(city||'').trim()];return c&&c[kind]||null}
+function sheathCodeText(c){return c.text||[c.t?c.t+(c.min?' min.':''):'',c.m||''].filter(Boolean).join(' ')}
+function sheathCodeDefault(c){return c.def||(c.t&&c.m?c.t+' CDX plywood':c.t?c.t+' OSB':'Plywood')}
+function sheathThick(s){const m=String(s).match(/(\d+)\s*\/\s*(\d+)/);return m?(+m[1])/(+m[2]):null}
+function sheathMeetsCode(sel,c){sel=String(sel||'').trim();if(!sel||/^none$/i.test(sel))return false;const th=sheathThick(sel);
+  if(c.t){const ct=sheathThick(c.t);if(th==null)return false;if(c.min?th<ct-0.035:Math.abs(th-ct)>0.035)return false}
+  if(c.m==='plywood'&&!/plywood|cdx|t1-11/i.test(sel))return false;return true}
+function sheathWarn(el,city,kind,valueOverride){if(!el)return;const c=sheathCodeFor(city,kind);const v=valueOverride!=null?valueOverride:el.value;
+  let w=el.parentNode.querySelector(':scope > .sheath-warn');const msg=c&&!sheathMeetsCode(v,c)?'Differs from '+city+' code: '+sheathCodeText(c):'';
+  if(!msg){if(w)w.remove();return}if(!w){w=document.createElement('div');w.className='sheath-warn no-print';w.setAttribute('role','note');w.style.cssText='margin-top:3px;padding:2px 6px;border-radius:5px;background:#fef3c7;border:1px solid #d97706;color:#92400e;font:700 11px/1.3 Arial,sans-serif';el.parentNode.appendChild(w)}
+  if(w.textContent!==msg)w.textContent='⚠ '+msg}
+</script><style>@media print{.sheath-warn{display:none!important}}.carp-pdf .sheath-warn{display:none!important}</style>
+<script>['wallSheath','roofSheath'].forEach(sheathCombo);setInterval(()=>{const city=selectedCity();['roof','wall'].forEach(k=>{const e=$(k+'Sheath');if(e&&e.value)sheathWarn(e,city,k);else if(e)sheathWarn(e,'',k)})},800);</script>
 </body>
 </html>

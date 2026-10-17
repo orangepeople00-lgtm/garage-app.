@@ -2818,21 +2818,17 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             return '';
         }
         function applyCitySheathing(city){
-            const notes=String((typeof CITY_CODE_NOTES==='object' && CITY_CODE_NOTES[city])||'')+' '+String((CITY_CODE_SHEETS[city]&&CITY_CODE_SHEETS[city].notes)||'');
-            let wallSize='7/16"', roofSize='7/16"', wallType='OSB', roofType='OSB';
-            if(/5\/8[^.]{0,40}roof|roof[^.]{0,40}5\/8/i.test(notes)) roofSize='5/8"';
-            if(/1\/2[^.]{0,40}roof|roof[^.]{0,40}1\/2/i.test(notes)) roofSize='1/2"';
-            if(/5\/8[^.]{0,40}wall|wall[^.]{0,40}5\/8/i.test(notes)) wallSize='5/8"';
-            if(/1\/2[^.]{0,40}wall|wall[^.]{0,40}1\/2/i.test(notes)) wallSize='1/2"';
-            if(/plywood[^.]{0,30}roof|roof[^.]{0,30}plywood/i.test(notes)) roofType='Plywood';
-            if(/plywood[^.]{0,30}wall|wall[^.]{0,30}plywood|plywood walls/i.test(notes)) wallType='Plywood';
-            if(/osb[^.]{0,20}wall|wall[^.]{0,20}osb/i.test(notes)) wallType='OSB';
-            if(/osb[^.]{0,20}roof|roof[^.]{0,20}osb/i.test(notes)) roofType='OSB';
             const setSel=(id,val)=>{ const el=document.getElementById(id); if(!el || cityFieldTouched(id)) return; if([...el.options].some(o=>o.value===val)) el.value=val; };
-            setSel('wallSheathSize', wallSize);
-            setSel('roofSheathSize', roofSize);
-            setSel('wallSheathType', wallType);
-            setSel('roofSheathType', roofType);
+            ['wall','roof'].forEach(k=>{
+                const c=(typeof sheathCodeFor==='function')?sheathCodeFor(city,k):null;
+                let size='7/16"', type='OSB', custom=null;
+                if(c){ const d=sheathCodeDefault(c); const t=(d.match(/^(\d+\/\d+")/)||[])[1];
+                    if(t && /CDX plywood$/.test(d)){ size=t; type='CDX Plywood'; } else if(t && /OSB$/.test(d)){ size=t; type='OSB'; } else { type='Other'; custom=d; } }
+                if(cityFieldTouched(k+'SheathType')) return;
+                setSel(k+'SheathSize', size); setSel(k+'SheathType', type);
+                const ce=document.getElementById(k+'SheathCustom'); if(ce && custom!=null) ce.value=custom;
+                try{ sheathingSheetText(k); }catch(e){}
+            });
         }
         function handleEPALogic() {
             const epaCheckbox = document.getElementById('epaFee');
@@ -3071,6 +3067,9 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                 : (document.getElementById('wallSheathType')?.value||'OSB'));
             const cust=document.getElementById(kind==='roof'?'roofSheathCustom':'wallSheathCustom');
             if(cust) cust.classList.toggle('hidden', type!=='Other');
+            try{ const cityEl=document.getElementById('city'); const sel=document.getElementById(kind==='roof'?'roofSheathType':'wallSheathType');
+                const txt=type==='None'?'None':type==='Other'?String((cust&&cust.value.trim())||''):String(size)+' '+String(type);
+                if(typeof sheathWarn==='function' && sel) sheathWarn(sel.parentNode.parentNode, cityEl?cityEl.value:'', kind, txt); }catch(e){}
             if(type==='None') return 'None';
             if(type==='Other') return String((cust&&cust.value.trim())||'Other');
             return String(size)+' '+String(type);
@@ -11671,5 +11670,28 @@ window.agbUpdatePhotoSourceRow=updateRow;
 @media (max-width:600px){.pl-grid,.rl-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:8px}.pl-card img,.rl-card img{height:120px;min-height:120px;aspect-ratio:auto}.pl-tags,.rl-tags{font-size:10px;line-height:1.3;word-break:break-word}}
 
 </style>
+<script>
+/* 2026-10-17 city-code sheathing. Values transcribed from CITY_CODE_SHEETS notes only (no guessing): t=thickness, m=material, min=minimum, def=dropdown default.
+   Cities whose notes say nothing about sheathing are absent -> no default change, no warning. */
+const SHEATH_CODE=(()=>{const P12={t:'1/2"',m:'plywood'},P58={t:'5/8"',m:'plywood'},PLY={m:'plywood'};return {
+ 'Antioch':{roof:P58},'Arlington Heights':{roof:{t:'5/8"',min:1},wall:{t:'1/2"',min:1}},'Bartlett':{roof:P58},'Bellwood':{roof:P12},
+ 'Berwyn':{roof:P12,wall:P12},'Bloomingdale':{roof:P12},'Blue Island':{roof:PLY,wall:PLY},'Bridgeview':{roof:P12,wall:P12},'Broadview':{roof:P12},
+ 'Brookfield':{roof:P12},'Burbank':{roof:P12,wall:P12},'Chicago Ridge':{roof:PLY,wall:PLY},'Cicero':{roof:P12},'Clarendon Hills':{roof:PLY},
+ 'Des Plaines':{roof:{t:'5/8"',text:'5/8" (plywood; OSB OK)',def:'5/8" CDX plywood'}},'Elk Grove Village':{roof:P58},'Elgin':{roof:P58},
+ 'Elmhurst':{roof:P58,wall:P12},'Ford Heights':{roof:P12,wall:P12},'Forest Park':{roof:{t:'5/8"',text:'5/8" (OSB or plywood)'}},
+ 'Franklin Park':{roof:{t:'1/2"',m:'plywood',min:1,text:'1/2" CDX plywood min.'}},'Glenview':{roof:P12,wall:P12}}})();
+function sheathCodeFor(city,kind){const c=SHEATH_CODE[String(city||'').trim()];return c&&c[kind]||null}
+function sheathCodeText(c){return c.text||[c.t?c.t+(c.min?' min.':''):'',c.m||''].filter(Boolean).join(' ')}
+function sheathCodeDefault(c){return c.def||(c.t&&c.m?c.t+' CDX plywood':c.t?c.t+' OSB':'Plywood')}
+function sheathThick(s){const m=String(s).match(/(\d+)\s*\/\s*(\d+)/);return m?(+m[1])/(+m[2]):null}
+function sheathMeetsCode(sel,c){sel=String(sel||'').trim();if(!sel||/^none$/i.test(sel))return false;const th=sheathThick(sel);
+  if(c.t){const ct=sheathThick(c.t);if(th==null)return false;if(c.min?th<ct-0.035:Math.abs(th-ct)>0.035)return false}
+  if(c.m==='plywood'&&!/plywood|cdx|t1-11/i.test(sel))return false;return true}
+function sheathWarn(el,city,kind,valueOverride){if(!el)return;const c=sheathCodeFor(city,kind);const v=valueOverride!=null?valueOverride:el.value;
+  let w=el.parentNode.querySelector(':scope > .sheath-warn');const msg=c&&!sheathMeetsCode(v,c)?'Differs from '+city+' code: '+sheathCodeText(c):'';
+  if(!msg){if(w)w.remove();return}if(!w){w=document.createElement('div');w.className='sheath-warn no-print';w.setAttribute('role','note');w.style.cssText='margin-top:3px;padding:2px 6px;border-radius:5px;background:#fef3c7;border:1px solid #d97706;color:#92400e;font:700 11px/1.3 Arial,sans-serif';el.parentNode.appendChild(w)}
+  if(w.textContent!==msg)w.textContent='⚠ '+msg}
+</script><style>@media print{.sheath-warn{display:none!important}}.carp-pdf .sheath-warn{display:none!important}</style>
+<script>setInterval(()=>{try{sheathingSheetText('wall');sheathingSheetText('roof')}catch(e){}},1000);</script>
 </body>
 </html>

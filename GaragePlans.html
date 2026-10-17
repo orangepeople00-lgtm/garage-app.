@@ -4120,6 +4120,7 @@ function gpPermitLib(){ if(window.PDFLib) return Promise.resolve(window.PDFLib);
 async function gpPermitMap(){ if(_gpPermitMap) return _gpPermitMap; const r=await fetch('permit-forms/map.json?v='+Date.now()); _gpPermitMap=await r.json(); return _gpPermitMap; }
 function gpNormCity(c){ return String(c||'').replace(/\u00a0/g,' ').replace(/\b\d{5}(-\d{4})?\b/g,' ').replace(/,?\s*\b(il|ill|illinois)\b\.?/ig,' ').replace(/^\s*(the\s+)?(village|city|town)\s+of\s+/i,'').replace(/[.,;]+/g,' ').replace(/\s+/g,' ').trim().toLowerCase(); }
 function gpPermitEntry(map,city){ const k=Object.keys(map).find(x=>gpNormCity(x)===gpNormCity(city)&&gpNormCity(city)); return k?{key:k,...map[k]}:null; }
+function agbAddChecks(L,pages,form,checks){ (checks||[]).forEach(c=>{ try{ const pg=pages[c.page||0]; if(!pg) return; const H=pg.getHeight(), bx=pg.getMediaBox(), [x0,y0,x1,y1]=c.rect; const cb=form.createCheckBox(c.name); cb.addToPage(pg,{x:bx.x+x0,y:bx.y+H-y1,width:x1-x0,height:y1-y0,borderWidth:0,textColor:L.rgb(0,0,0)}); cb.acroField.getWidgets().forEach(w=>{ const mk=w.getAppearanceCharacteristics(); if(mk){ mk.dict.delete(L.PDFName.of('BG')); mk.dict.delete(L.PDFName.of('BC')); } }); if(c.on) cb.check(); else cb.uncheck(); }catch(e){ console.warn('checkbox',c.name,e.message); } }); }
 function agbKeepEditable(L,pdf,form,font){ /* output must stay a fillable PDF: no read-only fields, viewers (incl. iPhone Files/Markup) redraw values */
   form.getFields().forEach(f=>{ try{ f.disableReadOnly(); }catch(e){} });
   try{ form.acroForm.dict.set(L.PDFName.of('NeedAppearances'),L.PDFBool.True); }catch(e){}
@@ -4151,7 +4152,7 @@ async function gpPermitBuildTemplate(e){
   (e.fields||[]).forEach(f=>{ try{ const pg=pages[f.page||0]; if(!pg) return; const H=pg.getHeight(), bx=pg.getMediaBox(); const [x0,y0,x1,y1]=f.rect;
     const tf=form.createTextField(f.name);
     tf.addToPage(pg,{x:bx.x+x0,y:bx.y+H-y1,width:x1-x0,height:y1-y0,borderWidth:0.5,borderColor:L.rgb(0.55,0.7,0.9),backgroundColor:L.rgb(0.9,0.95,1),font}); tf.setFontSize(f.size||9); const v=d[f.src]; if(v) tf.setText(String(v)); }catch(err){ console.warn('field',f.name,err.message); } });
-  agbFillExisting(L,form,e.fill,d); agbKeepEditable(L,pdf,form,font);
+  agbFillExisting(L,form,e.fill,d); agbAddChecks(L,pages,form,e.checks); agbKeepEditable(L,pdf,form,font);
   return agbSavePdf(pdf);
 }
 async function gpPermitBuildInfo(e){

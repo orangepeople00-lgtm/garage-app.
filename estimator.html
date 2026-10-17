@@ -3928,6 +3928,8 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             // Keep an old print only as a fallback until View Sheet rebuilds this option
             if(prev.sheet_html) estimateComparison[slot]._old_sheet_html=prev.sheet_html;
             activeComparisonSlot=slot;
+            window._pendingOptionSlot=slot;
+            try{ loadSheetPresentationSession(); }catch(e){}
             persistMultiEstimates();
             renderEstimateComparison();
             const badge=document.getElementById('activeOptionBadge');
@@ -3950,6 +3952,8 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                 try{ if(typeof calculateEstimate==='function') calculateEstimate(); }catch(e){}
             }
             activeComparisonSlot=slot;
+            window._pendingOptionSlot=slot;
+            try{ loadSheetPresentationSession(); }catch(e){}
             persistMultiEstimates();
             renderEstimateComparison();
             const badge=document.getElementById('activeOptionBadge');
@@ -4070,9 +4074,9 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                 if(window._lastPrintedOptionKey && window._lastPrintedOptionKey!==slot+':'+key){
                     window._lastAiGaragePhotoUrl=null;
                     try{ sessionStorage.removeItem('agb_last_ai_garage_photo'); }catch(_){}
-                    window._sheetPresentation={};
                 }
                 window._pendingOptionSlot=slot;
+                try{ loadSheetPresentationSession(); }catch(_){}
             }catch(_){}
 
             if(!estimateWindow || estimateWindow.closed){
@@ -6738,7 +6742,15 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             return msg;
         }
 
-        function getSheetPresentation(){
+        // Each Option A/B/C keeps its own sheet edits (text/price overrides). A sheet popup passes its slot.
+        function agbCurSlot(){ return window._pendingOptionSlot||(typeof activeComparisonSlot!=='undefined'?activeComparisonSlot:null)||null; }
+        function getSheetPresentation(slot){
+            if(slot && slot!==agbCurSlot() && typeof estimateComparison==='object' && estimateComparison && estimateComparison[slot]){
+                const o=estimateComparison[slot];
+                if(!o.sheet_presentation || typeof o.sheet_presentation!=='object') o.sheet_presentation={};
+                const keep=window._sheetPresentation; window._sheetPresentation=o.sheet_presentation;
+                try{ return getSheetPresentation(); } finally { o.sheet_presentation=window._sheetPresentation; window._sheetPresentation=keep; }
+            }
             if(!window._sheetPresentation || typeof window._sheetPresentation!=='object'){
                 window._sheetPresentation={
                     orientation:'portrait', // portrait | landscape
@@ -6775,13 +6787,24 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             }
             return window._sheetPresentation;
         }
-        function saveSheetPresentationSession(){
-            try{ sessionStorage.setItem('agb_sheet_presentation', JSON.stringify(getSheetPresentation())); }catch(e){}
+        function agbPresKey(slot){ return 'agb_sheet_presentation'+(slot?'_'+slot:''); }
+        function saveSheetPresentationSession(slot){
+            slot=slot||agbCurSlot();
+            const pres=getSheetPresentation(slot);
+            try{ sessionStorage.setItem(agbPresKey(slot), JSON.stringify(pres)); }catch(e){}
+            try{ if(slot && estimateComparison && estimateComparison[slot]) estimateComparison[slot].sheet_presentation=JSON.parse(JSON.stringify(pres)); }catch(e){}
         }
         function loadSheetPresentationSession(){
             try{
-                const raw=sessionStorage.getItem('agb_sheet_presentation');
+                const slot=agbCurSlot();
+                const raw=sessionStorage.getItem(agbPresKey(slot));
                 if(raw) window._sheetPresentation=Object.assign(getSheetPresentation(), JSON.parse(raw));
+                else if(slot){
+                    // Never carry another option's edits onto this option's sheet
+                    const own=estimateComparison&&estimateComparison[slot]&&estimateComparison[slot].sheet_presentation;
+                    window._sheetPresentation=own&&typeof own==='object'?JSON.parse(JSON.stringify(own)):null;
+                    getSheetPresentation();
+                }
             }catch(e){}
         }
         function resetSheetPresentationFresh(){
@@ -9964,7 +9987,7 @@ function saveSheetInlineEdit(el){
   if(!el || !window.opener || window.opener.closed) return;
   try{
     const p = (typeof window.opener.getSheetPresentation==='function')
-      ? window.opener.getSheetPresentation()
+      ? window.opener.getSheetPresentation(window.ESTIMATE_OPTION_SLOT||null)
       : (window.opener._sheetPresentation = window.opener._sheetPresentation || {});
     if(!p.itemDetailOverrides) p.itemDetailOverrides = {};
     if(!p.itemLabelOverrides) p.itemLabelOverrides = {};
@@ -9995,7 +10018,7 @@ function saveSheetInlineEdit(el){
       if(!p.textOverrides || typeof p.textOverrides!=='object') p.textOverrides = {};
       p.textOverrides[field] = text;
     }
-    if(typeof window.opener.saveSheetPresentationSession==='function') window.opener.saveSheetPresentationSession();
+    if(typeof window.opener.saveSheetPresentationSession==='function') window.opener.saveSheetPresentationSession(window.ESTIMATE_OPTION_SLOT||null);
     const st=document.getElementById('popupChangeStatus');
     if(st) st.textContent='Saved manual edit (keeps with AI rebuilds).';
   }catch(err){ console.warn('saveSheetInlineEdit', err); }
@@ -10206,7 +10229,7 @@ function undoSheetEdit(){
 function getSheetPresFromOpener(){
   if(!window.opener || window.opener.closed) return null;
   return (typeof window.opener.getSheetPresentation==='function')
-    ? window.opener.getSheetPresentation()
+    ? window.opener.getSheetPresentation(window.ESTIMATE_OPTION_SLOT||null)
     : (window.opener._sheetPresentation = window.opener._sheetPresentation || {});
 }
 function removeSheetRow(btn){
@@ -10221,7 +10244,7 @@ function removeSheetRow(btn){
       if(Array.isArray(p.extraItems)){
         p.extraItems = p.extraItems.filter(ex=>String((ex&&ex.key)||(ex&&ex.item)||'').toLowerCase()!==key);
       }
-      if(typeof window.opener.saveSheetPresentationSession==='function') window.opener.saveSheetPresentationSession();
+      if(typeof window.opener.saveSheetPresentationSession==='function') window.opener.saveSheetPresentationSession(window.ESTIMATE_OPTION_SLOT||null);
     }
     const tr=btn.closest('tr');
     if(tr){
@@ -10233,7 +10256,7 @@ function removeSheetRow(btn){
         const p2=getSheetPresFromOpener();
         if(p2 && Array.isArray(p2.removedItems)){
           p2.removedItems=p2.removedItems.filter(k=>String(k).toLowerCase()!==keySnap);
-          if(typeof window.opener.saveSheetPresentationSession==='function') window.opener.saveSheetPresentationSession();
+          if(typeof window.opener.saveSheetPresentationSession==='function') window.opener.saveSheetPresentationSession(window.ESTIMATE_OPTION_SLOT||null);
         }
         const wrap=document.createElement('tbody');
         wrap.innerHTML=htmlSnap;
@@ -10263,7 +10286,7 @@ function addSheetRow(afterTr){
       if(!p.itemDetailOverrides) p.itemDetailOverrides={};
       p.itemLabelOverrides[key]='New Item';
       p.itemDetailOverrides[key]='';
-      if(typeof window.opener.saveSheetPresentationSession==='function') window.opener.saveSheetPresentationSession();
+      if(typeof window.opener.saveSheetPresentationSession==='function') window.opener.saveSheetPresentationSession(window.ESTIMATE_OPTION_SLOT||null);
     }
     const tr=document.createElement('tr');
     tr.setAttribute('data-item-key', key);
@@ -10289,7 +10312,7 @@ function addSheetRow(afterTr){
       const p2=getSheetPresFromOpener();
       if(p2 && Array.isArray(p2.extraItems)){
         p2.extraItems=p2.extraItems.filter(ex=>String((ex&&ex.key)||'')!==key);
-        if(typeof window.opener.saveSheetPresentationSession==='function') window.opener.saveSheetPresentationSession();
+        if(typeof window.opener.saveSheetPresentationSession==='function') window.opener.saveSheetPresentationSession(window.ESTIMATE_OPTION_SLOT||null);
       }
     });
     const st=document.getElementById('popupChangeStatus');

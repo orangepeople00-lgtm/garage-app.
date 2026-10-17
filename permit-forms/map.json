@@ -1,0 +1,647 @@
+{
+ "Chicago": {
+  "form_type": "detached_garage",
+  "form_name": "Express Permit Program \u2013 Detached Frame Garage (online worktype, Dynamic Portal)",
+  "template": null,
+  "fields": null,
+  "portal_url": "https://www.chicago.gov/city/en/depts/bldgs/provdrs/e_plan/svcs/dynamicportal.html",
+  "info_url": "https://www.chicago.gov/city/en/sites/guide-to-building-permits/home/instructions/EPP/GARAGE.html",
+  "pdf_url": null,
+  "checklist_url": null,
+  "submittal": "online only",
+  "info_sheet": true
+ },
+ "Oak Park": {
+  "form_type": "general_covers_garage",
+  "form_name": "Building permit \u2013 online application via VillageView (CityView) portal; Garage/Coach House guidelines PDF",
+  "template": null,
+  "fields": null,
+  "portal_url": "https://villageview.oak-park.us/CityViewPortal/",
+  "info_url": "https://villageview.oak-park.us/cityviewportal/content/oak%20park/Garage-Coachouse%20guidelines%20(10-2020).pdf",
+  "pdf_url": null,
+  "checklist_url": null,
+  "submittal": "online only",
+  "info_sheet": true
+ },
+ "Zion": {
+  "form_type": "general_covers_garage",
+  "form_name": "Application for Building Permit \u2013 City of Zion (2024); has GARAGE attached/detached size section. Separate 'Detached Garage (2019)' requirements sheet.",
+  "template": "permit-forms/Zion.pdf",
+  "fields": [
+   {
+    "name": "job_address",
+    "page": 0,
+    "rect": [
+     268,
+     84,
+     567,
+     97
+    ],
+    "src": "address"
+   },
+   {
+    "name": "pin",
+    "page": 0,
+    "rect": [
+     110,
+     98,
+     242,
+     109
+    ],
+    "src": "pin"
+   },
+   {
+    "name": "owner_name",
+    "page": 0,
+    "rect": [
+     137,
+     145,
+     387,
+     156
+    ],
+    "src": "customer"
+   },
+   {
+    "name": "owner_phone",
+    "page": 0,
+    "rect": [
+     425,
+     145,
+     576,
+     156
+    ],
+    "src": "phone"
+   },
+   {
+    "name": "gc_name",
+    "page": 0,
+    "rect": [
+     165,
+     172,
+     387,
+     183
+    ],
+    "src": "contractor"
+   },
+   {
+    "name": "gc_phone",
+    "page": 0,
+    "rect": [
+     425,
+     172,
+     576,
+     183
+    ],
+    "src": "contractorPhone"
+   },
+   {
+    "name": "gc_address",
+    "page": 0,
+    "rect": [
+     119,
+     186,
+     323,
+     197
+    ],
+    "src": "contractorStreet"
+   },
+   {
+    "name": "gc_city",
+    "page": 0,
+    "rect": [
+     345,
+     186,
+     438,
+     197
+    ],
+    "src": "contractorCity"
+   },
+   {
+    "name": "gc_state",
+    "page": 0,
+    "rect": [
+     478,
+     186,
+     505,
+     197
+    ],
+    "src": "contractorState"
+   },
+   {
+    "name": "gc_zip",
+    "page": 0,
+    "rect": [
+     531,
+     186,
+     576,
+     197
+    ],
+    "src": "contractorZip"
+   },
+   {
+    "name": "garage_type",
+    "page": 0,
+    "rect": [
+     150,
+     459,
+     280,
+     471
+    ],
+    "src": "detachedWord"
+   },
+   {
+    "name": "garage_width",
+    "page": 0,
+    "rect": [
+     191,
+     471,
+     224,
+     483
+    ],
+    "src": "width"
+   },
+   {
+    "name": "garage_length",
+    "page": 0,
+    "rect": [
+     242,
+     471,
+     280,
+     483
+    ],
+    "src": "depth"
+   },
+   {
+    "name": "garage_sqft",
+    "page": 0,
+    "rect": [
+     165,
+     484,
+     280,
+     496
+    ],
+    "src": "sqft"
+   },
+   {
+    "name": "est_value",
+    "page": 0,
+    "rect": [
+     368,
+     549,
+     472,
+     561
+    ],
+    "src": "price"
+   }
+  ],
+  "portal_url": null,
+  "info_url": "https://www.cityofzion.com/forms-apps-permits/",
+  "pdf_url": "https://www.cityofzion.com/forms/building/other-information/Building-Permit-2024.pdf",
+  "checklist_url": "https://www.cityofzion.com/forms/building/building_information/2019/2019_detached_garage_req.pdf",
+  "submittal": "paper (in person, 2828 Sheridan Rd); email not confirmed",
+  "info_sheet": false
+ },
+ "Evanston": {
+  "form_type": "detached_garage",
+  "form_name": "City of Evanston Garage Application Form \u2013 Site Plan (2/23/2023), for typical one-story detached garages",
+  "template": "permit-forms/Evanston.pdf",
+  "fields": [
+   {
+    "name": "owner_name",
+    "page": 0,
+    "rect": [
+     301,
+     13,
+     482,
+     28
+    ],
+    "src": "customer"
+   },
+   {
+    "name": "job_address",
+    "page": 0,
+    "rect": [
+     268,
+     37,
+     484,
+     52
+    ],
+    "src": "addressCity"
+   },
+   {
+    "name": "date",
+    "page": 0,
+    "rect": [
+     518,
+     13,
+     578,
+     28
+    ],
+    "src": "blank"
+   },
+   {
+    "name": "zoning",
+    "page": 0,
+    "rect": [
+     537,
+     37,
+     580,
+     52
+    ],
+    "src": "blank"
+   },
+   {
+    "name": "garage_height_ft",
+    "page": 0,
+    "rect": [
+     488,
+     204,
+     553,
+     217
+    ],
+    "src": "blank"
+   },
+   {
+    "name": "door_height_ft",
+    "page": 0,
+    "rect": [
+     462,
+     224,
+     553,
+     236
+    ],
+    "src": "doorH"
+   },
+   {
+    "name": "door_width_ft",
+    "page": 0,
+    "rect": [
+     460,
+     243,
+     553,
+     255
+    ],
+    "src": "doorW"
+   },
+   {
+    "name": "garage_width_ft",
+    "page": 0,
+    "rect": [
+     469,
+     262,
+     553,
+     274
+    ],
+    "src": "width"
+   },
+   {
+    "name": "garage_length_ft",
+    "page": 0,
+    "rect": [
+     469,
+     281,
+     553,
+     293
+    ],
+    "src": "depth"
+   }
+  ],
+  "portal_url": "https://aca-prod.accela.com/EVANSTON/Default.aspx",
+  "info_url": "https://www.cityofevanston.org/departments/community_development/building_development_services/building_permits/index.php",
+  "pdf_url": "https://www.cityofevanston.org/Documents/Departments/Community%20Development/Building%20and%20Development%20Services/Building%20Permits/Permit%20Documents/Worksheets/Garage%20Application%20Form.pdf",
+  "checklist_url": "https://www.cityofevanston.org/Documents/Departments/Community%20Development/Building%20and%20Development%20Services/Building%20Permits/Permit%20Documents/Residential%20Projects/Residential%20Checklists/Garage%20Checklist.pdf",
+  "submittal": "online only (Citizen Portal); garage form uploaded",
+  "info_sheet": false
+ },
+ "Cicero": {
+  "form_type": "general_covers_garage",
+  "form_name": "Town of Cicero Building Permit Application + 'Permitting Procedures \u2013 Garage' (detached garage) sheet",
+  "template": null,
+  "fields": null,
+  "portal_url": null,
+  "info_url": "https://thetownofcicero.com/government/building-department/building-department-forms/",
+  "pdf_url": null,
+  "checklist_url": "https://toc.flywheelsites.com/wp-content/uploads/2015/09/Permitting-Procedures-Garage-1.pdf",
+  "submittal": "paper (Town Hall)",
+  "info_sheet": false
+ },
+ "Calumet City": {
+  "form_type": "general_covers_garage",
+  "form_name": "2026 Building Permit Application (Type of building: Garage checkbox)",
+  "template": "permit-forms/Calumet-City.pdf",
+  "fields": [
+   {
+    "name": "pin",
+    "page": 0,
+    "rect": [
+     138,
+     200,
+     339,
+     213
+    ],
+    "src": "pin"
+   },
+   {
+    "name": "owner_name",
+    "page": 0,
+    "rect": [
+     101,
+     262,
+     298,
+     275
+    ],
+    "src": "customer"
+   },
+   {
+    "name": "owner_phone",
+    "page": 0,
+    "rect": [
+     335,
+     262,
+     474,
+     275
+    ],
+    "src": "phone"
+   },
+   {
+    "name": "construction_address",
+    "page": 0,
+    "rect": [
+     120,
+     286,
+     475,
+     298
+    ],
+    "src": "address"
+   },
+   {
+    "name": "type_garage",
+    "page": 0,
+    "rect": [
+     410,
+     334,
+     430,
+     345
+    ],
+    "src": "X"
+   },
+   {
+    "name": "const_frame",
+    "page": 0,
+    "rect": [
+     361,
+     345,
+     381,
+     356
+    ],
+    "src": "X"
+   },
+   {
+    "name": "width",
+    "page": 0,
+    "rect": [
+     171,
+     376,
+     191,
+     387
+    ],
+    "src": "width"
+   },
+   {
+    "name": "length",
+    "page": 0,
+    "rect": [
+     215,
+     376,
+     235,
+     387
+    ],
+    "src": "depth"
+   },
+   {
+    "name": "height",
+    "page": 0,
+    "rect": [
+     262,
+     376,
+     280,
+     387
+    ],
+    "src": "blank"
+   },
+   {
+    "name": "description",
+    "page": 0,
+    "rect": [
+     36,
+     513,
+     574,
+     526
+    ],
+    "src": "description"
+   },
+   {
+    "name": "construction_cost",
+    "page": 0,
+    "rect": [
+     105,
+     581,
+     209,
+     594
+    ],
+    "src": "price"
+   },
+   {
+    "name": "contractor",
+    "page": 0,
+    "rect": [
+     80,
+     601,
+     246,
+     613
+    ],
+    "src": "contractor"
+   },
+   {
+    "name": "contractor_phone",
+    "page": 0,
+    "rect": [
+     282,
+     601,
+     475,
+     613
+    ],
+    "src": "contractorPhone"
+   },
+   {
+    "name": "contractor_address",
+    "page": 0,
+    "rect": [
+     70,
+     621,
+     191,
+     633
+    ],
+    "src": "contractorStreet"
+   },
+   {
+    "name": "contractor_city",
+    "page": 0,
+    "rect": [
+     211,
+     621,
+     292,
+     633
+    ],
+    "src": "contractorCity"
+   },
+   {
+    "name": "contractor_state",
+    "page": 0,
+    "rect": [
+     317,
+     621,
+     385,
+     633
+    ],
+    "src": "contractorState"
+   },
+   {
+    "name": "contractor_zip",
+    "page": 0,
+    "rect": [
+     402,
+     621,
+     474,
+     633
+    ],
+    "src": "contractorZip"
+   },
+   {
+    "name": "contractor_email",
+    "page": 0,
+    "rect": [
+     93,
+     641,
+     299,
+     654
+    ],
+    "src": "blank"
+   }
+  ],
+  "portal_url": null,
+  "info_url": "https://calumetcity.org/dept-direct/building-and-zoning/",
+  "pdf_url": "https://calumetcity.org/wp-content/uploads/2026/04/2026-Building-Permit-Application.pdf",
+  "checklist_url": "https://calumetcity.org/wp-content/uploads/2026/04/Permit-Steps.pdf",
+  "submittal": "in person or by mail",
+  "info_sheet": false
+ },
+ "Elmwood Park": {
+  "form_type": "general_covers_garage",
+  "form_name": "Building Permit Application for Sundry Construction (has Garage Size/Frame/Roof fields) + Garage Requirements sheet",
+  "template": null,
+  "fields": null,
+  "portal_url": "https://www.elmwoodpark.org/FormCenter/Code-Department-12",
+  "info_url": "https://www.elmwoodpark.org/294/Code-Building-Administration-Forms",
+  "pdf_url": "https://elmwoodpark.org/DocumentCenter/View/488/Building-Permit-Application-For-Sundry-Construction-PDF",
+  "checklist_url": "https://elmwoodpark.org/DocumentCenter/View/491/Garage-Requirements-PDF",
+  "submittal": "paper; online 'fillable' FormCenter version exists",
+  "info_sheet": true
+ },
+ "Des Plaines": {
+  "form_type": "detached_garage",
+  "form_name": "Online permit type 'Detached Garage (Residential)' \u2013 Customer Self Service portal; Permit Guide \u2013 Residential Accessory Structures",
+  "template": null,
+  "fields": null,
+  "portal_url": "https://www.desplainesil.gov/Departments/Community-and-Economic-Development/Building-and-Permits",
+  "info_url": null,
+  "pdf_url": null,
+  "checklist_url": "https://www.desplainesil.gov/files/assets/city/v/1/ced/licenses-and-permits/05012026_permit-guide_r_accessory-structures.pdf",
+  "submittal": "online only",
+  "info_sheet": true
+ },
+ "South Holland": {
+  "form_type": "unknown",
+  "form_name": "Online Building Permits & Contractor Registration system",
+  "template": null,
+  "fields": null,
+  "portal_url": "https://cms5.revize.com/revize/southholland/departments/community_development/permits_and_contractor_information.php",
+  "info_url": null,
+  "pdf_url": null,
+  "checklist_url": null,
+  "submittal": "online only",
+  "info_sheet": true
+ },
+ "Midlothian": {
+  "form_type": "unknown",
+  "form_name": "unknown",
+  "template": null,
+  "fields": null,
+  "portal_url": null,
+  "info_url": null,
+  "pdf_url": null,
+  "checklist_url": null,
+  "submittal": "unknown",
+  "info_sheet": false
+ },
+ "Lyons": {
+  "form_type": "unknown",
+  "form_name": "unknown",
+  "template": null,
+  "fields": null,
+  "portal_url": null,
+  "info_url": null,
+  "pdf_url": null,
+  "checklist_url": null,
+  "submittal": "unknown",
+  "info_sheet": false
+ },
+ "Arlington Heights": {
+  "form_type": "detached_garage",
+  "form_name": "Permit type 'Garage \u2013 Detached Residential' (Civic Access Portal) + Detached Garage \u2013 Residential packet",
+  "template": null,
+  "fields": null,
+  "portal_url": "https://vah.com/government/permits___licenses_/index.php",
+  "info_url": null,
+  "pdf_url": null,
+  "checklist_url": "https://cms2.revize.com/revize/arlington/Detached%20Garage%20-%20Residential.pdf",
+  "submittal": "online only",
+  "info_sheet": true
+ },
+ "Evergreen Park": {
+  "form_type": "detached_garage",
+  "form_name": "Garage Permit Package (Garage Permit Application)",
+  "template": null,
+  "fields": null,
+  "portal_url": null,
+  "info_url": "https://www.evergreenpark-ill.com/135/Building-Contractor-Permits",
+  "pdf_url": "https://www.evergreenpark-ill.com/DocumentCenter/View/2382/Garage-Permit-Package-PDF",
+  "checklist_url": null,
+  "submittal": "unknown",
+  "info_sheet": false
+ },
+ "Skokie": {
+  "form_type": "detached_garage",
+  "form_name": "Online permit type 'Detached Garage' at skokiepermits.com; Accessory Structure Permit Application (now online interactive); Detached Garage Permit Guidelines",
+  "template": null,
+  "fields": null,
+  "portal_url": "https://www.skokiepermits.com",
+  "info_url": null,
+  "pdf_url": null,
+  "checklist_url": "https://www.skokie.org/DocumentCenter/View/8577/Detached-Garage-Requirements",
+  "submittal": "online only",
+  "info_sheet": true
+ },
+ "Joliet": {
+  "form_type": "detached_garage",
+  "form_name": "Garage/Carport Permit Application + Residential Accessory Structures Review Form",
+  "template": null,
+  "fields": null,
+  "portal_url": null,
+  "info_url": null,
+  "pdf_url": "https://www.joliet.gov/government/departments/community-development/building-inspectional-services-division/building-permit-forms",
+  "checklist_url": null,
+  "submittal": "email to permitapplication@joliet.gov or City Hall drop box",
+  "info_sheet": false
+ }
+}

@@ -2484,7 +2484,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
       <div class="row"><span>House</span><span>${v('setHouse','—')}</span></div>
       <div class="row"><span>Rear w/ alley</span><span>${v('setRearAlley','—')}</span></div>
       <div class="row"><span>Rear no alley</span><span>${v('setRearNoAlley','—')}</span></div>
-      <div class="row"><span>Side</span><span>${v('setSide','—')}</span></div>
+      <div class="row"><span>Side</span><span>${city==='Chicago'?"2' ONE SIDE + 3' OTHER; 3' + 3' IF ALLEY/REAR LOT LINE TO BACK OF GARAGE ≥ 30'":v('setSide','—')}</span></div>
       <div class="row"><span>Corner</span><span>${v('setCorner','—')}</span></div>
       <div class="row"><span>Front</span><span>${v('setFront','—')}</span></div>
       ${s&&s.setbackNotes?`<div class="row"><span>Setback notes</span><span>${esc(s.setbackNotes)}</span></div>`:''}
@@ -11752,7 +11752,7 @@ function pcLiteCityFlags(city,s){
   const F=[];const add=(t,m)=>F.push({type:t,msg:m});
   city=String(city||'').trim();
   if(!city||city==='Other'){add('MISSING','No city selected — generic defaults only.');return F}
-  if(/^chicago$/i.test(city)){add('VERIFY','Chicago has no code sheet on file: rafters, ties, headers, slab and footing are generic defaults; Chicago requires 42" frost footings (≤ 600 SF slab-on-grade exception) — verify.');return F}
+  if(/^chicago$/i.test(city)){add('VERIFY',"Chicago side setback: 2' one side + 3' other, or 3' + 3' when alley/rear lot line to back of garage is 30' or more — confirm the rear distance.");add('VERIFY','Chicago has no code sheet on file: rafters, ties, headers, slab and footing are generic defaults; Chicago requires 42" frost footings (≤ 600 SF slab-on-grade exception) — verify.');return F}
   if(!s){add('FALLBACK','No code sheet on file for '+city+' — everything is generic.');return F}
   [['maxSize','Max size'],['height','Max height'],['rafters','Rafters'],['wallTies','Wall ties'],['ohHeader','Overhead door header'],['windowHeader','Window header'],['thickness','Slab thickness'],['footings','Footings'],['setSide','Side setback'],['setHouse','Distance to house'],['setRearNoAlley','Rear setback']].forEach(([k,l])=>{const v=String(s[k]||'').trim();if(!v||/^(SEE NOTE|SPECIAL NOTES|WIDTH:\s*DEPTH:)$/i.test(v))add('MISSING',l+': not on file')});
   const yrs=[];String(s.notes||'').replace(/(?:IRC\s*(\d{4}))|(?:(\d{4})\s*(?:INTERNATIONAL RESIDENTIAL|IRC))/gi,(m,a,b)=>{yrs.push(+(a||b))});

@@ -917,6 +917,11 @@ function heightBasisLabel(c){const b=heightBasis(c);return b==='mean'?'(MEAN HEI
 function maxHeightText(c){c=c||code()||{};return c.height?'MAX HEIGHT '+String(c.height).toUpperCase()+' '+heightBasisLabel(c):''}
 function eaveH(){return Number(val('wallH'))||8}
 function meanRoofH(){return Math.round(((eaveH()+totalH())/2)*2)/2}
+/* 2026-10-17 Chicago side setback (user-supplied rule): 2' one side + 3' other side, unless alley (or rear lot line if no alley) to back of garage is >= 30', then 3' + 3'. */
+const CHICAGO_SIDE_RULE="2' ONE SIDE + 3' OTHER SIDE; 3' + 3' IF REAR (ALLEY OR REAR LOT LINE) TO BACK OF GARAGE IS 30' OR MORE";
+function chiSide(){const alley=val('alley')!=='no';const raw=alley?(val('distAlley')!==''?val('distAlley'):val('distRear')):val('distRear');const rear=raw!==''&&!isNaN(Number(raw))?Number(raw):null;
+  const req=rear==null?null:(rear>=30?[3,3]:[2,3]);const W=Number(val('width'))||20;const s1=val('distSide')!==''?Number(val('distSide')):null;const lw=Number(val('lotW'))||0;const s2=(s1!=null&&lw)?+(lw-W-s1).toFixed(2):null;
+  return {alley,rear,req,s1,s2,label:req?(req[0]===3?"3' + 3' (REAR "+rear+"' ≥ 30')":"2' ONE SIDE + 3' OTHER (REAR "+rear+"' < 30')"):"2' + 3' (3' + 3' IF REAR ≥ 30') — REAR DISTANCE NOT GIVEN"}}
 function isChicago(){ return /^chicago$/i.test(String(cityName()||'').trim()); }
 function codeBasisLines(){
   const city=(cityName()||'VILLAGE').toUpperCase();
@@ -2837,7 +2842,7 @@ function codeDataHTML(compact){
     ['Floor area', area+' SF'+(pa?' + ROOFED PATIO '+pa+' SF = '+tot+' SF TOTAL':'')+(max?' (MAX '+max+' SF)':(ms.note?' (MAX SIZE: '+esc(ms.note.toUpperCase())+')':''))+(isChicago()?(tot>600?' · OVER 600 SF — NOT EXPRESS PERMIT':' · EXPRESS PERMIT ≤ 600 SF'):'')],
     ['Height to ridge', ridgeHLabel()+(heightBasis(c)==='mean'?' · MEAN '+meanRoofH()+"'":'')+(c.height?' ('+esc(maxHeightText(c))+')':'')],
     ['Roof', roofLabel()+' · '+pitchNum()+'/12'],
-    ['Setbacks required', 'SIDE '+esc(val('setSide')||'—')+' · REAR '+esc((n.alley?val('setRearA'):val('setRearN'))||'—')+' · HOUSE '+esc(val('setHouse')||'—')],
+    ['Setbacks required', 'SIDE '+esc(isChicago()?chiSide().label:(val('setSide')||'—'))+' · REAR '+esc((n.alley?val('setRearA'):val('setRearN'))||'—')+' · HOUSE '+esc(val('setHouse')||'—')],
     (c.setbackNotes?['Setback notes', esc(String(c.setbackNotes).toUpperCase())]:null),
     ['Setbacks proposed', 'SEE PROPOSED SITE PLAN (PLAT OF SURVEY)'],
     ['Owner / PIN', esc(customerLabel())+' · PIN '+esc(val('pin')||'—')],
@@ -4029,7 +4034,14 @@ function precheckFlags(){
   fb.forEach(([k,l,d])=>{if(!String(cc[k]||'').trim()) add('fb_'+k,'FALLBACK',l+': no city value',l+' not on file for '+city+(d.charAt(0)==='('?' — nothing prints '+d+'.':' — prints generic default '+d+'.'),k==='footings'?'footing':k==='slab'||k==='thickness'?'slab':null)});
   if(chi) add('chifrost','VERIFY','Chicago footing vs 42" frost','A-2 prints the generic 12"x12" thickened edge / 4" slab, while the A-1 Chicago row says 42" frost footing (14B-18-1809) with a slab-on-grade exception ≤ 600 SF. Confirm the footing/slab Chicago wants and enter it in Footing / Slab.','footing');
   // required with no city value (setbacks / limits)
-  [['setSide','Side setback'],['setHouse','Distance to house'],[(siteNums().alley?'setRearA':'setRearN'),'Rear setback']].forEach(([id,l])=>{if(!val(id)) add('miss_'+id,'MISSING',l+' blank',l+' has no city value and is blank — prints "—" on A-1.',id)});
+  if(chi){const k=chiSide();
+    if(k.rear==null) add('chiside_rear','VERIFY','Chicago side setback: rear distance unknown','Side setback is 2\' + 3\', or 3\' + 3\' when the '+(k.alley?'alley':'rear lot line')+' to back of garage is 30\' or more. Enter the rear distance so A-1 prints the right pair.',k.alley?'distAlley':'distRear');
+    else{const sides=[k.s1,k.s2].filter(x=>x!=null).sort((a,b)=>a-b);let bad='';
+      if(sides.length===2){if(sides[0]<k.req[0]||sides[1]<k.req[1])bad='Drawn sides '+sides.join("' / ")+"' — required "+k.req.join("' + ")+"'."}
+      else if(sides.length===1&&sides[0]<k.req[0])bad='Drawn side '+sides[0]+"' — required at least "+k.req[0]+"' (other side "+k.req[1]+"').";
+      if(bad) add('chiside_bad|'+sides.join(','),'CONFLICT','Chicago side setback too small',bad+' Rule: '+CHICAGO_SIDE_RULE+'.','distSide');
+      else if(sides.length<2) add('chiside_other|'+k.req.join(','),'VERIFY','Chicago side setback: check both sides','Required '+k.req.join("' + ")+"'. Only "+(sides.length?'one side':'no side')+' distance is drawn (enter lot width + side distance to check both).','distSide')}}
+  [[chi?'':'setSide','Side setback'],['setHouse','Distance to house'],[(siteNums().alley?'setRearA':'setRearN'),'Rear setback']].forEach(([id,l])=>{if(id&&!val(id)) add('miss_'+id,'MISSING',l+' blank',l+' has no city value and is blank — prints "—" on A-1.',id)});
   agbSizeMsgs(sqft(),patioSqft(),city,chi?'':cc.maxSize).forEach(m=>add('size_'+m.k+'|'+totalSqft(),m.type,m.k==='frost'?'Over 600 SF — frost footing?':m.k==='max'?'Over city max size':'Max size is not a number',m.msg,m.k==='frost'?'footing':m.k==='max'?'width':null));
   if(!chi&&!String(cc.maxSize||'').trim()) add('miss_max','MISSING','Max garage size not on file','No max size for '+city+' — A-1 prints no limit; check zoning.',null);
   if(!chi&&!String(cc.height||'').trim()) add('miss_h','MISSING','Max height not on file','No max height for '+city+' — A-1 prints no limit.',null);

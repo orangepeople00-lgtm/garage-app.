@@ -1827,6 +1827,7 @@ function pcLiteBanner(title,flags){
 /* 2026-10-17 Carpenter one-click Save to Job: city flags in a non-blocking banner; blocks only on a real code contradiction (sheathing vs city code), with one Accept. */
 function carpPcFlags(){const city=selectedCity();const F=[];const C=[];
   if(!city){F.push({type:'MISSING',msg:'No city selected — generic defaults only.'});return {F,C}}
+  if(/^chicago$/i.test(city)) F.push({type:'VERIFY',msg:"Chicago side setback: 2' one side + 3' other, or 3' + 3' when alley/rear lot line to back of garage is 30' or more."});
   if(/^chicago$/i.test(city)) F.push({type:'VERIFY',msg:'Chicago: no city build data on file (rafters, ties, headers, slab generic); Chicago requires 42" frost footings (≤ 600 SF slab exception) — verify.'});
   else{const cb=(typeof CITY_BUILD==='object'&&CITY_BUILD[city])||null;
     if(!cb) F.push({type:'FALLBACK',msg:'No city build data for '+city+' — generic defaults.'});

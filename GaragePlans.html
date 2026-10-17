@@ -4471,7 +4471,7 @@ window.gpChkTap=async function(li,k,cp,done){ const ctx=window._gpPermitCtx||{},
 <script>
 /* same tappable checklist inside the Permit Application window */
 (function(){ const O=gpPermitOpen; window.gpChkModal=async function(){ const m=document.querySelector('#permitModal > div'); if(!m) return; let x=document.getElementById('permitChecklistM');
-  if(!x){ x=document.createElement('div'); x.id='permitChecklistM'; m.insertBefore(x,m.lastElementChild); } const ctx=await gpPermitCtx(false); x.innerHTML=gpChecklistHtml(gpPermitCity(),ctx); };
+  if(!x){ x=document.createElement('div'); x.id='permitChecklistM'; m.insertBefore(x,m.lastElementChild); } const ctx=await gpPermitCtx(false); x.innerHTML=gpChecklistHtml(gpPermitCity(),ctx); x.querySelectorAll('ul.pc-flags').forEach(u=>u.remove()); /* door/price notes already shown in the window */ };
   gpPermitOpen=async function(){ const r=await O.apply(this,arguments); try{ await gpChkModal(); }catch(e){} return r; };
   const T=window.gpChkTap; window.gpChkTap=async function(){ await T.apply(this,arguments); try{ if(document.getElementById('permitChecklistM')) await gpChkModal(); }catch(e){} }; })();
 </script>

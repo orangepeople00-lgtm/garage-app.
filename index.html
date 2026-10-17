@@ -3463,7 +3463,10 @@ function pcBtnHtml(j,ctxId){ const I=pcInfo(j); const lab=I.kind==='none'?'Permi
 async function pcPermitClick(ctxId){ await pcLoad(); const j=ctxId==='form'?pcFormJob():jobs.find(x=>x.id===ctxId); if(!j) return; const I=pcInfo(j);
   const note=$(ctxId==='form'?'pcFormMsg':'pcMsg');
   if(I.kind==='none'){ if(note) note.textContent='Permit application link not found for '+(I.city||'this job — no city entered')+'.'; return; }
-  if(I.kind==='portal'){ window.open(I.m.v.portal_url,'_blank','noopener'); return; }
+  if(I.kind==='portal'){ let u=I.m.v.portal_url;
+    if(I.m.v.jotform_prefill){ const sz=String(j.garage_size||'').match(/(\d+(?:\.\d+)?)\s*[x×X]\s*(\d+(?:\.\d+)?)/); u=agbJotUrl(u,{customer:j.customer,address:j.address,city:I.m.key,zip:j.zip,phone:j.phone,price:Number(j.price)>0?j.price:'',sqft:sz?String(Math.round(sz[1]*sz[2])):'',description:sz?("New detached frame garage "+sz[1]+"' x "+sz[2]+"' ("+Math.round(sz[1]*sz[2])+' sq ft)'):''});
+      if(note) note.textContent='Opened '+I.m.key+'\'s online application with the job info prefilled — review, attach files and submit there.'; }
+    window.open(u,'_blank','noopener'); return; }
   if(I.kind==='link'){ window.open(I.m.v.link_url||I.m.v.pdf_url||I.m.v.info_url,'_blank','noopener'); if(note) note.textContent='Opened the official '+I.m.key+' permit '+((I.m.v.link_type||(I.m.v.pdf_url?'pdf':'page'))==='pdf'?'form (PDF) — not prefilled yet.':'page — application is listed there; not prefilled yet.'); return; }
   try{ if(note) note.textContent='Filling the '+I.m.key+' permit form…'; const res=await pcBuildForm(j,I); const how=await pcSave(res.bytes,(I.m.key+'-permit-application'+(j.customer?'-'+j.customer:'')).replace(/[^A-Za-z0-9]+/g,'-')+'.pdf');
     if(note) note.innerHTML=(how==='shared'?'Shared':'Downloaded')+' the '+esc(I.m.key)+' form — fillable PDF, every field stays editable.'+(agbIsIOS()?'<br><span class="muted small">iPhone: open it from Files (or Share → Markup) to type in the fields; Safari\'s quick preview can\'t edit.</span>':'')+(res.notes.length?'<br><span class="pc-warn">'+res.notes.map(esc).join('<br>')+'</span>':''); }
@@ -3479,6 +3482,16 @@ function agbIsIOS(){ return /iP(hone|ad|od)/.test(navigator.userAgent)||(navigat
 async function agbDeliverPdf(bytes,name){ const b=new Blob([bytes],{type:'application/pdf'});
   if(agbIsIOS()&&navigator.canShare){ try{ const f=new File([b],name,{type:'application/pdf'}); if(navigator.canShare({files:[f]})){ await navigator.share({files:[f],title:name}); return 'shared'; } }catch(e){ if(e&&e.name==='AbortError') return 'cancelled'; } }
   const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=name; a.rel='noopener'; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},60000); return 'downloaded'; }
+/* JotForm city portals (Algonquin): prefill via URL params (field unique names). Blank job data stays blank; GC license never filled; never submitted. */
+function agbJotUrl(base,d){ const p=new URLSearchParams(), s=(k,v)=>{ if(v!=null&&String(v).trim()!=='') p.set(k,String(v).trim()); };
+  const nm=String(d.customer||'').trim().split(/\s+/).filter(Boolean); if(nm.length){ s('name[first]',nm.length>1?nm.slice(0,-1).join(' '):nm[0]); if(nm.length>1) s('name[last]',nm[nm.length-1]); }
+  s('phoneNumber[full]',d.phone);
+  if(d.address){ s('projectconstructionAddress[addr_line1]',d.address); s('projectconstructionAddress[city]',d.city); s('projectconstructionAddress[state]',d.city?'IL':''); s('projectconstructionAddress[postal]',d.zip);
+    s('address[addr_line1]',d.address); s('address[city]',d.city); s('address[state]',d.city?'IL':''); s('address[postal]',d.zip); }
+  s('estimatedCost',String(d.price||'').replace(/[^0-9.]/g,'')); s('describeWorkproject',d.description); s('totalSquare',d.sqft);
+  s('generalContractor207','Absolute Garage Builders'); s('phoneNumber208[full]','(773) 583-8800');
+  s('generalContractor211[addr_line1]','3050 W. Irving Park Rd.'); s('generalContractor211[city]','Chicago'); s('generalContractor211[state]','IL'); s('generalContractor211[postal]','60618');
+  return base+(base.includes('?')?'&':'?')+p.toString().replace(/\+/g,'%20'); }
 function pcSave(bytes,name){ return agbDeliverPdf(bytes,name); }
 function pcLib(){ if(window.PDFLib) return Promise.resolve(window.PDFLib); return new Promise((ok,no)=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js';s.onload=()=>ok(window.PDFLib);s.onerror=()=>no(new Error('pdf-lib failed to load'));document.head.appendChild(s)}); }
 function pcDoor(v){ const m=String(v||'').match(/(\d+(?:\.\d+)?)\s*(?:'|ft|feet)?\s*[x×X]\s*(\d+(?:\.\d+)?)/); return m?{w:m[1],h:m[2]}:null; }
@@ -3500,7 +3513,7 @@ async function pcBuildForm(j,I){ const L=await pcLib(), S=await pcSources(j), no
   const D={customer:j.customer||'',address:j.address||'',city,zip,addressCity:[j.address,[city,'IL'].filter(Boolean).join(', ')+(zip?' '+zip:'')].filter(Boolean).join(', '),phone:j.phone||S.cd.phone||'',pin:'',
     width:w,depth:d,sqft:(w&&d)?String(Math.round(w*d)):'',doorW:S.door?S.door.w:'',doorH:S.door?S.door.h:'',price:S.price?S.price.toLocaleString('en-US',{maximumFractionDigits:0}):'',
     description:(w&&d)?("New detached frame garage "+w+"' x "+d+"' ("+Math.round(w*d)+' sq ft)'):'',contractor:'Absolute Garage Builders',contractorStreet:'3050 W. Irving Park Rd.',contractorCity:'Chicago',contractorState:'IL',contractorZip:'60618',contractorPhone:'(773) 583-8800',
-    detachedWord:'Detached',X:'X',blank:'',ownerState:city?'IL':'',cityStateZip:city?(city+', IL'+(zip?' '+zip:'')):'',contractorCSZ:'Chicago, IL 60618',ownerEmail:/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(email)?email:''};
+    detachedWord:'Detached',X:'X',blank:'',ownerState:city?'IL':'',cityStateZip:city?(city+', IL'+(zip?' '+zip:'')):'',contractorCSZ:'Chicago, IL 60618',contractorFull:'3050 W. Irving Park Rd., Chicago, IL 60618',ownerEmail:/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(email)?email:''};
   if(!S.door) notes.push('Door size blank — fill in'); else notes.push('Door size from '+S.doorSrc);
   if(!S.price) notes.push('Sold price not found — value/cost left blank'); if(!D.phone) notes.push('Owner phone blank — fill in'); notes.push('GC license # left blank');
   const pdf=await L.PDFDocument.load(await (await fetch(I.m.v.template+'?v='+Date.now(),{cache:'no-store'})).arrayBuffer(),{ignoreEncryption:true}); const form=pdf.getForm(), font=await pdf.embedFont(L.StandardFonts.Helvetica), pages=pdf.getPages(), base=pdf.getPageCount();

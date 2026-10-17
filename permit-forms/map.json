@@ -2671,8 +2671,8 @@
  "Joliet": {
   "form_type": "detached_garage",
   "form_name": "Garage/Carport Permit Application + Residential Accessory Structures Review Form",
-  "template": null,
-  "fields": null,
+  "template": "permit-forms/Joliet.pdf",
+  "fields": [],
   "portal_url": null,
   "info_url": null,
   "pdf_url": "https://www.joliet.gov/government/departments/community-development/building-inspectional-services-division/building-permit-forms",
@@ -2681,7 +2681,73 @@
   "info_sheet": false,
   "link_url": "https://www.joliet.gov/government/departments/community-development/building-inspectional-services-division/building-permit-forms",
   "link_type": "pdf",
-  "link_checked": "2026-10-17"
+  "link_checked": "2026-10-17",
+  "fill": [
+   {
+    "name": "Address",
+    "src": "address"
+   },
+   {
+    "name": "Length",
+    "src": "depth"
+   },
+   {
+    "name": "Width",
+    "src": "width"
+   },
+   {
+    "name": "Description of Work",
+    "src": "description"
+   },
+   {
+    "name": "Total Cost",
+    "src": "price"
+   },
+   {
+    "name": "Homeowners Name",
+    "src": "customer"
+   },
+   {
+    "name": "Address_2",
+    "src": "address"
+   },
+   {
+    "name": "Phone",
+    "src": "phone"
+   },
+   {
+    "name": "Email",
+    "src": "ownerEmail"
+   },
+   {
+    "name": "General Contractors Name",
+    "src": "contractor"
+   },
+   {
+    "name": "Address_3",
+    "src": "contractorStreet"
+   },
+   {
+    "name": "Phone_2",
+    "src": "contractorPhone"
+   },
+   {
+    "name": "Address_10",
+    "src": "address"
+   },
+   {
+    "name": "Address_10",
+    "src": "address"
+   }
+  ],
+  "auto_mapped": {
+   "mode": "fill",
+   "scanned": false,
+   "source_fields": 86,
+   "added_fields": 0,
+   "prefill_fields": 14,
+   "reviewed": true
+  }
  },
  "Lansing": {
   "form_type": "portal",
@@ -2719,16 +2785,17 @@
   "form_name": "Detached Garage Permit Application Checklist (links Residential Building Permit Application Form); email permits@algonquin.org",
   "template": null,
   "fields": null,
-  "portal_url": null,
-  "info_url": null,
-  "pdf_url": "https://www.algonquin.org/egov/apps/document/center.egov?id=8640&view=item",
-  "checklist_url": null,
+  "portal_url": "https://form.jotform.com/71985982818174",
+  "info_url": "permit-forms/Algonquin-checklist.pdf",
+  "pdf_url": null,
+  "checklist_url": "permit-forms/Algonquin-checklist.pdf",
   "submittal": null,
   "info_sheet": false,
-  "link_url": "https://www.algonquin.org/egov/apps/document/center.egov?id=8640&view=item",
-  "link_type": "pdf",
+  "link_url": "https://form.jotform.com/71985982818174",
+  "link_type": "portal",
   "link_note": "Detached Garage Permit Application Checklist (links Residential Building Permit Application Form); email permits@algonquin.org",
-  "link_checked": "2026-10-17"
+  "link_checked": "2026-10-17",
+  "jotform_prefill": true
  },
  "Alsip": {
   "form_type": "link_only",
@@ -3265,8 +3332,621 @@
  "Aurora": {
   "form_type": "link_only",
   "form_name": "Residential Garage application (2026); submit via eTRAKiT https://auro-trk.aspgov.com/eTRAKiT/",
-  "template": null,
-  "fields": null,
+  "template": "permit-forms/Aurora.pdf",
+  "fields": [
+   {
+    "name": "agb_p0_1",
+    "page": 0,
+    "rect": [
+     109.5,
+     88.5,
+     251.0,
+     101.0
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_2",
+    "page": 0,
+    "rect": [
+     72.9,
+     108.9,
+     251.0,
+     121.4
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_3",
+    "page": 0,
+    "rect": [
+     341.1,
+     108.9,
+     463.3,
+     121.4
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_4",
+    "page": 0,
+    "rect": [
+     119.3,
+     141.6,
+     431.0,
+     154.1
+    ],
+    "src": "address",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_5",
+    "page": 0,
+    "rect": [
+     527.4,
+     141.6,
+     575.0,
+     154.1
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_6",
+    "page": 0,
+    "rect": [
+     64.5,
+     172.2,
+     287.0,
+     184.7
+    ],
+    "src": "customer",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_7",
+    "page": 0,
+    "rect": [
+     334.5,
+     172.2,
+     575.0,
+     184.7
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_8",
+    "page": 0,
+    "rect": [
+     73.1,
+     190.5,
+     287.0,
+     203.0
+    ],
+    "src": "address",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_9",
+    "page": 0,
+    "rect": [
+     343.1,
+     190.5,
+     575.0,
+     203.0
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_10",
+    "page": 0,
+    "rect": [
+     66.3,
+     208.9,
+     287.0,
+     221.4
+    ],
+    "src": "phone",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_11",
+    "page": 0,
+    "rect": [
+     336.3,
+     208.9,
+     575.0,
+     221.4
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_12",
+    "page": 0,
+    "rect": [
+     62.7,
+     227.1,
+     287.0,
+     239.6
+    ],
+    "src": "ownerEmail",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_13",
+    "page": 0,
+    "rect": [
+     332.7,
+     227.1,
+     575.0,
+     239.6
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_14",
+    "page": 0,
+    "rect": [
+     374.2,
+     348.6,
+     521.0,
+     358.1
+    ],
+    "src": "blank",
+    "size": 7.9
+   },
+   {
+    "name": "agb_p0_15",
+    "page": 0,
+    "rect": [
+     64.5,
+     369.9,
+     305.0,
+     382.4
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_16",
+    "page": 0,
+    "rect": [
+     367.4,
+     369.9,
+     575.0,
+     382.4
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_17",
+    "page": 0,
+    "rect": [
+     433.0,
+     471.9,
+     566.0,
+     484.4
+    ],
+    "src": "sqft",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_18",
+    "page": 0,
+    "rect": [
+     469.0,
+     755.2,
+     575.0,
+     767.7
+    ],
+    "src": "price",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_19",
+    "page": 1,
+    "rect": [
+     117.4,
+     109.2,
+     170.0,
+     121.7
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_20",
+    "page": 1,
+    "rect": [
+     270.6,
+     109.2,
+     323.0,
+     121.7
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_21",
+    "page": 1,
+    "rect": [
+     419.8,
+     109.2,
+     485.0,
+     121.7
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_22",
+    "page": 1,
+    "rect": [
+     505.0,
+     109.2,
+     575.0,
+     121.7
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_23",
+    "page": 1,
+    "rect": [
+     446.4,
+     121.9,
+     485.0,
+     134.4
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_24",
+    "page": 1,
+    "rect": [
+     76.5,
+     166.8,
+     116.0,
+     179.3
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_25",
+    "page": 1,
+    "rect": [
+     228.9,
+     182.3,
+     296.0,
+     191.9
+    ],
+    "src": "blank",
+    "size": 8.0
+   },
+   {
+    "name": "agb_p1_26",
+    "page": 1,
+    "rect": [
+     357.3,
+     182.3,
+     422.0,
+     191.9
+    ],
+    "src": "blank",
+    "size": 8.0
+   },
+   {
+    "name": "agb_p1_27",
+    "page": 1,
+    "rect": [
+     145.6,
+     226.2,
+     287.0,
+     238.7
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_28",
+    "page": 1,
+    "rect": [
+     95.9,
+     242.7,
+     287.0,
+     255.2
+    ],
+    "src": "contractor",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_29",
+    "page": 1,
+    "rect": [
+     496.0,
+     242.7,
+     539.0,
+     255.2
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_30",
+    "page": 1,
+    "rect": [
+     92.7,
+     259.2,
+     287.0,
+     271.7
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_31",
+    "page": 1,
+    "rect": [
+     69.5,
+     275.6,
+     287.0,
+     288.1
+    ],
+    "src": "contractorStreet",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_32",
+    "page": 1,
+    "rect": [
+     93.4,
+     292.2,
+     287.0,
+     304.7
+    ],
+    "src": "contractorCSZ",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_33",
+    "page": 1,
+    "rect": [
+     416.4,
+     292.2,
+     485.0,
+     304.7
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_34",
+    "page": 1,
+    "rect": [
+     63.3,
+     308.6,
+     287.0,
+     321.1
+    ],
+    "src": "contractorPhone",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_35",
+    "page": 1,
+    "rect": [
+     437.0,
+     308.6,
+     485.0,
+     321.1
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_36",
+    "page": 1,
+    "rect": [
+     60.0,
+     325.0,
+     287.0,
+     337.5
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_37",
+    "page": 1,
+    "rect": [
+     401.2,
+     325.0,
+     485.0,
+     337.5
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_38",
+    "page": 1,
+    "rect": [
+     145.6,
+     359.0,
+     287.0,
+     368.5
+    ],
+    "src": "blank",
+    "size": 8.0
+   },
+   {
+    "name": "agb_p1_39",
+    "page": 1,
+    "rect": [
+     95.9,
+     372.4,
+     287.0,
+     384.9
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_40",
+    "page": 1,
+    "rect": [
+     92.7,
+     389.0,
+     287.0,
+     401.5
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_41",
+    "page": 1,
+    "rect": [
+     422.2,
+     389.0,
+     503.0,
+     401.5
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_42",
+    "page": 1,
+    "rect": [
+     69.5,
+     405.4,
+     287.0,
+     417.9
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_43",
+    "page": 1,
+    "rect": [
+     323.7,
+     405.4,
+     503.0,
+     417.9
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_44",
+    "page": 1,
+    "rect": [
+     93.4,
+     421.9,
+     287.0,
+     434.4
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_45",
+    "page": 1,
+    "rect": [
+     352.6,
+     421.9,
+     502.8,
+     434.4
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_46",
+    "page": 1,
+    "rect": [
+     63.3,
+     438.4,
+     287.0,
+     450.9
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_47",
+    "page": 1,
+    "rect": [
+     378.4,
+     438.4,
+     502.6,
+     450.9
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_48",
+    "page": 1,
+    "rect": [
+     60.0,
+     454.9,
+     287.0,
+     467.4
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_desc1",
+    "page": 0,
+    "rect": [
+     33,
+     376,
+     536,
+     388
+    ],
+    "src": "description",
+    "size": 9
+   },
+   {
+    "name": "agb_desc2",
+    "page": 0,
+    "rect": [
+     33,
+     391,
+     536,
+     402
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_desc3",
+    "page": 0,
+    "rect": [
+     33,
+     405,
+     536,
+     416
+    ],
+    "src": "blank",
+    "size": 9
+   }
+  ],
   "portal_url": null,
   "info_url": null,
   "pdf_url": "https://www.aurora.il.us/files/sharedassets/mainsite/v/1/development-services/documents/permits/residential/2026-app-updates/residential-garage.pdf",
@@ -3276,7 +3956,15 @@
   "link_url": "https://www.aurora.il.us/files/sharedassets/mainsite/v/1/development-services/documents/permits/residential/2026-app-updates/residential-garage.pdf",
   "link_type": "pdf",
   "link_note": "Residential Garage application (2026); submit via eTRAKiT https://auro-trk.aspgov.com/eTRAKiT/",
-  "link_checked": "2026-10-17"
+  "link_checked": "2026-10-17",
+  "auto_mapped": {
+   "mode": "overlay",
+   "scanned": false,
+   "source_fields": 0,
+   "added_fields": 51,
+   "prefill_fields": 12,
+   "reviewed": true
+  }
  },
  "Bannockburn": {
   "form_type": "link_only",
@@ -4173,8 +4861,8 @@
  "Beach Park": {
   "form_type": "link_only",
   "form_name": "Application for Construction Permit; also Accela online",
-  "template": null,
-  "fields": null,
+  "template": "permit-forms/Beach-Park.pdf",
+  "fields": [],
   "portal_url": null,
   "info_url": null,
   "pdf_url": "https://villageofbeachpark.com/sitemedia/documents/permits_forms/Construction_Permit_-_New.pdf",
@@ -4184,7 +4872,57 @@
   "link_url": "https://villageofbeachpark.com/sitemedia/documents/permits_forms/Construction_Permit_-_New.pdf",
   "link_type": "pdf",
   "link_note": "Application for Construction Permit; also Accela online",
-  "link_checked": "2026-10-17"
+  "link_checked": "2026-10-17",
+  "fill": [
+   {
+    "name": "Cost of Construction",
+    "src": "price"
+   },
+   {
+    "name": "Provide email address below for more efficient communication",
+    "src": "ownerEmail"
+   },
+   {
+    "name": "Property Owner",
+    "src": "customer"
+   },
+   {
+    "name": "fill_12",
+    "src": "addressCity"
+   },
+   {
+    "name": "3KRQH",
+    "src": "phone"
+   },
+   {
+    "name": "PDLO",
+    "src": "ownerEmail"
+   },
+   {
+    "name": "General Contractor",
+    "src": "contractor"
+   },
+   {
+    "name": "fill_22",
+    "src": "contractorFull"
+   },
+   {
+    "name": "3KRQH_3",
+    "src": "contractorPhone"
+   },
+   {
+    "name": "Site Address",
+    "src": "address"
+   }
+  ],
+  "auto_mapped": {
+   "mode": "fill",
+   "scanned": false,
+   "source_fields": 64,
+   "added_fields": 0,
+   "prefill_fields": 10,
+   "reviewed": true
+  }
  },
  "Bedford Park": {
   "form_type": "link_only",
@@ -8500,7 +9238,8 @@
   "link_url": "https://www.cityofcresthill.com/DocumentCenter/View/361/Residential-Building-Permit-Application-PDF",
   "link_type": "pdf",
   "link_note": "Residential Building Permit Application",
-  "link_checked": "2026-10-17"
+  "link_checked": "2026-10-17",
+  "download_note": "city site timed out from automated fetch (2026-10-17); plain link kept"
  },
  "Crestwood": {
   "form_type": "link_only",
@@ -12142,7 +12881,7 @@
      263.9,
      144.9
     ],
-    "src": "address",
+    "src": "blank",
     "size": 9
    },
    {
@@ -12262,7 +13001,7 @@
      261.5,
      253.9
     ],
-    "src": "price",
+    "src": "blank",
     "size": 9
    },
    {
@@ -12346,7 +13085,7 @@
      161.2,
      481.2
     ],
-    "src": "customer",
+    "src": "blank",
     "size": 9
    },
    {
@@ -12406,7 +13145,7 @@
      229.8,
      553.6
     ],
-    "src": "blank",
+    "src": "contractor",
     "size": 9
    },
    {
@@ -12466,7 +13205,7 @@
      134.8,
      737.4
     ],
-    "src": "customer",
+    "src": "blank",
     "size": 9
    },
    {
@@ -12533,7 +13272,8 @@
    "scanned": false,
    "source_fields": 0,
    "added_fields": 40,
-   "prefill_fields": 11
+   "prefill_fields": 8,
+   "reviewed": true
   }
  },
  "Glenview": {
@@ -13283,7 +14023,7 @@
      412.6,
      167.9
     ],
-    "src": "address",
+    "src": "blank",
     "size": 6
    },
    {
@@ -13319,7 +14059,7 @@
      568.3,
      263.5
     ],
-    "src": "blank",
+    "src": "price",
     "size": 9
    },
    {
@@ -13331,7 +14071,7 @@
      567.6,
      284.3
     ],
-    "src": "blank",
+    "src": "description",
     "size": 9
    },
    {
@@ -13379,7 +14119,7 @@
      291.9,
      413.6
     ],
-    "src": "blank",
+    "src": "customer",
     "size": 9
    },
    {
@@ -13403,7 +14143,7 @@
      178.0,
      433.8
     ],
-    "src": "blank",
+    "src": "phone",
     "size": 9
    },
    {
@@ -13439,7 +14179,7 @@
      573.5,
      488.5
     ],
-    "src": "contractor",
+    "src": "blank",
     "size": 9
    },
    {
@@ -13463,7 +14203,7 @@
      573.7,
      509.3
     ],
-    "src": "contractorStreet",
+    "src": "blank",
     "size": 9
    },
    {
@@ -13475,7 +14215,7 @@
      183.3,
      529.6
     ],
-    "src": "contractorPhone",
+    "src": "blank",
     "size": 9
    },
    {
@@ -13523,7 +14263,7 @@
      574.9,
      641.1
     ],
-    "src": "contractor",
+    "src": "blank",
     "size": 9
    },
    {
@@ -13818,7 +14558,8 @@
    "scanned": false,
    "source_fields": 0,
    "added_fields": 45,
-   "prefill_fields": 8
+   "prefill_fields": 7,
+   "reviewed": true
   }
  },
  "Northbrook": {

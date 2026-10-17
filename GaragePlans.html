@@ -4131,13 +4131,23 @@ function agbIsIOS(){ return /iP(hone|ad|od)/.test(navigator.userAgent)||(navigat
 async function agbDeliverPdf(bytes,name){ const b=new Blob([bytes],{type:'application/pdf'});
   if(agbIsIOS()&&navigator.canShare){ try{ const f=new File([b],name,{type:'application/pdf'}); if(navigator.canShare({files:[f]})){ await navigator.share({files:[f],title:name}); return 'shared'; } }catch(e){ if(e&&e.name==='AbortError') return 'cancelled'; } }
   const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=name; a.rel='noopener'; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},60000); return 'downloaded'; }
+/* JotForm city portals (Algonquin): prefill via URL params (field unique names). Blank job data stays blank; GC license never filled; never submitted. */
+function agbJotUrl(base,d){ const p=new URLSearchParams(), s=(k,v)=>{ if(v!=null&&String(v).trim()!=='') p.set(k,String(v).trim()); };
+  const nm=String(d.customer||'').trim().split(/\s+/).filter(Boolean); if(nm.length){ s('name[first]',nm.length>1?nm.slice(0,-1).join(' '):nm[0]); if(nm.length>1) s('name[last]',nm[nm.length-1]); }
+  s('phoneNumber[full]',d.phone);
+  if(d.address){ s('projectconstructionAddress[addr_line1]',d.address); s('projectconstructionAddress[city]',d.city); s('projectconstructionAddress[state]',d.city?'IL':''); s('projectconstructionAddress[postal]',d.zip);
+    s('address[addr_line1]',d.address); s('address[city]',d.city); s('address[state]',d.city?'IL':''); s('address[postal]',d.zip); }
+  s('estimatedCost',String(d.price||'').replace(/[^0-9.]/g,'')); s('describeWorkproject',d.description); s('totalSquare',d.sqft);
+  s('generalContractor207','Absolute Garage Builders'); s('phoneNumber208[full]','(773) 583-8800');
+  s('generalContractor211[addr_line1]','3050 W. Irving Park Rd.'); s('generalContractor211[city]','Chicago'); s('generalContractor211[state]','IL'); s('generalContractor211[postal]','60618');
+  return base+(base.includes('?')?'&':'?')+p.toString().replace(/\+/g,'%20'); }
 function gpPermitSave(bytes,name){ return agbDeliverPdf(bytes,name); }
 function gpPermitFile(e,suffix){ const d=gpPermitData(); return (String(e?e.key:(gpPermitCity()||'Permit')).replace(/\s+/g,'-')+'-'+suffix+(d.customer?'-'+d.customer.replace(/[^A-Za-z0-9]+/g,'-'):'')+'.pdf'); }
 async function gpPermitBuildTemplate(e){
   const L=await gpPermitLib(), d=gpPermitData();
   const bytes=await (await fetch(e.template+'?v='+Date.now())).arrayBuffer();
   const pdf=await L.PDFDocument.load(bytes,{ignoreEncryption:true}), form=pdf.getForm(), font=await pdf.embedFont(L.StandardFonts.Helvetica), pages=pdf.getPages();
-  d.ownerState=d.city?'IL':''; d.cityStateZip=d.city?(d.city+', IL'+(d.zip?' '+d.zip:'')):''; d.contractorCSZ=GP_PERMIT_CO.city+', '+GP_PERMIT_CO.state+' '+GP_PERMIT_CO.zip;
+  d.ownerState=d.city?'IL':''; d.cityStateZip=d.city?(d.city+', IL'+(d.zip?' '+d.zip:'')):''; d.contractorCSZ=GP_PERMIT_CO.city+', '+GP_PERMIT_CO.state+' '+GP_PERMIT_CO.zip; d.contractorFull=GP_PERMIT_CO.street+', '+d.contractorCSZ;
   (e.fields||[]).forEach(f=>{ try{ const pg=pages[f.page||0]; if(!pg) return; const H=pg.getHeight(), bx=pg.getMediaBox(); const [x0,y0,x1,y1]=f.rect;
     const tf=form.createTextField(f.name);
     tf.addToPage(pg,{x:bx.x+x0,y:bx.y+H-y1,width:x1-x0,height:y1-y0,borderWidth:0.5,borderColor:L.rgb(0.55,0.7,0.9),backgroundColor:L.rgb(0.9,0.95,1),font}); tf.setFontSize(f.size||9); const v=d[f.src]; if(v) tf.setText(String(v)); }catch(err){ console.warn('field',f.name,err.message); } });
@@ -4167,6 +4177,7 @@ async function gpPermitOpen(){
   if(!city){ gpPermitModal('<b>Permit Application</b><p>Pick the job\'s village / city first.</p>'); return; }
   let h='<b>Permit Application — '+_pe(e?e.key:city)+'</b>';
   if(e&&e.template){ h+='<p style="margin:6px 0">'+_pe(e.form_name)+'</p><button type="button" style="'+B+'" onclick="gpPermitGo(\'tpl\')">Download prefilled form (editable PDF)</button>'; }
+  else if(e&&e.jotform_prefill&&e.portal_url){ const d=gpPermitData(); h+='<p style="margin:6px 0">'+_pe(e.key)+' takes this permit as an online form. The job info is prefilled; review, attach files and submit there.</p><a href="'+_pe(agbJotUrl(e.portal_url,{...d,city:e.key}))+'" target="_blank" rel="noopener" style="'+B+';text-align:center;text-decoration:none">Open prefilled online application</a>'+(e.checklist_url?'<p style="font-size:12px;margin:4px 0"><a href="'+_pe(e.checklist_url)+'" target="_blank" rel="noopener">City garage checklist / requirements</a></p>':''); }
   else if(e&&e.info_sheet){ h+='<p style="margin:6px 0">'+_pe(e.key)+' takes this permit online: '+_pe(e.form_name)+'</p><a href="'+_pe(e.portal_url)+'" target="_blank" rel="noopener" style="'+B+';text-align:center;text-decoration:none">Open city permit portal</a><button type="button" style="'+B+';background:#fff;color:#1d4ed8" onclick="gpPermitGo(\'info\')">Download job info sheet (PDF to copy into portal)</button>'; }
   else { h+='<p style="margin:6px 0"><b>Permit application link not found for '+_pe(e?e.key:city)+'.</b></p>'; const u=e&&(e.link_url||e.pdf_url||e.portal_url||e.info_url); if(u) h+='<p><a href="'+_pe(u)+'" target="_blank" rel="noopener">Official permit page</a></p>'; }
   if(e&&e.checklist_url&&(e.template||e.info_sheet)) h+='<p style="font-size:12px;margin:4px 0"><a href="'+_pe(e.checklist_url)+'" target="_blank" rel="noopener">City garage checklist / requirements</a></p>';

@@ -8528,7 +8528,7 @@ function renderSiteAnno(){
     for(let i=0;i<=4;i++) h+=T(x0+i*step*k,y0+18,(i*step)+"'",{fs:9,w:600});
     h+=T(x0,y0-5,'GRAPHIC SCALE (FEET)',{fs:9,w:800,a:'start'});
   }
-  h+=T(24,t.h-166,'DISTANCES TO LOT LINES SHOWN IN RED.',{fs:10,w:700,a:'start'})+T(24,t.h-153,'VERIFY ALL LOT LINES WITH PROPOSED SITE PLAN.',{fs:10,w:700,a:'start'});
+  h+=T(24,t.h-166,'DISTANCES TO LOT LINES SHOWN IN RED.',{fs:10,w:700,a:'start'});
   if(L._h!==h){ L._h=h; L.innerHTML=h; }
 }
 // settings live on the proposed garage (or lot outline) object, so every existing save path (local backup, job save, sheet states) keeps them with the job

@@ -693,7 +693,7 @@ function agbMissingInfoConfirm(missing){missing=(missing||[]).filter(Boolean);if
 function agbMissingList(name,addr){const m=[];if(!String(name||'').trim())m.push('Customer name');if(!String(addr||'').trim())m.push('Address');return m}
 function gpInfoOk(){return agbMissingInfoConfirm(agbMissingList(val('customer'),val('address')))}
 async function gpGenerate(){if(await gpInfoOk())buildPlans(true)}
-async function gpPrint(){if(await gpInfoOk())window.print()}
+async function gpPrint(){if(await gpInfoOk() && await precheckGate())window.print()}
 function customerLabel(){ return val('customer')||''; }
 const PREFS_KEY='agb_garageplans_prefs_v1';
 function savePrefs(){
@@ -3289,6 +3289,7 @@ function planFileName(){
 }
 async function downloadPlansPdf(){
   if(!(await gpInfoOk()))return;
+  if(!(await precheckGate()))return;
   if(!document.querySelector('.sheet')) buildPlans(true);
   try{ elev4Fit(); }catch(e){}
   try{ sheetFit(); }catch(e){}
@@ -3945,5 +3946,96 @@ function sheathWarn(el,city,kind,valueOverride){if(!el)return;const c=sheathCode
   if(w.textContent!==msg)w.textContent='⚠ '+msg}
 </script><style>@media print{.sheath-warn{display:none!important}}.carp-pdf .sheath-warn{display:none!important}</style>
 <script>['wallSheath','roofSheath'].forEach(sheathCombo);setInterval(()=>{const city=val('cityManual')||val('city');['roof','wall'].forEach(k=>sheathWarn($(k+'Sheath'),city,k))},800);(function(){const r=$('roofSheath');if(r)r.addEventListener('change',e=>{$('roofSheathUser').value='1'})})();</script>
+<style>
+#pcBg{position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:100001;display:flex;align-items:center;justify-content:center;padding:10px;box-sizing:border-box}
+#pcBox{background:#fff;color:#111;border-radius:12px;width:min(760px,100%);max-height:92vh;display:flex;flex-direction:column;font:14px/1.35 Arial,sans-serif;box-shadow:0 10px 40px rgba(0,0,0,.35)}
+#pcBox h2{margin:0;padding:12px 14px;font-size:17px;border-bottom:1px solid #ddd}
+#pcBox .pc-sub{padding:6px 14px;color:#444;font-size:12.5px;border-bottom:1px solid #eee}
+#pcList{overflow:auto;padding:6px 10px;flex:1}
+.pc-item{display:grid;grid-template-columns:1fr auto;gap:6px 10px;align-items:center;border:1px solid #e5e7eb;border-left:5px solid #d97706;border-radius:8px;padding:8px 10px;margin:6px 0}
+.pc-item.pc-contra{border-left-color:#dc2626}.pc-item.pc-ok{opacity:.55}
+.pc-tag{display:inline-block;font:700 10.5px Arial;letter-spacing:.04em;padding:1px 6px;border-radius:9px;background:#fef3c7;color:#92400e;margin-right:6px}
+.pc-contra .pc-tag{background:#fee2e2;color:#991b1b}
+.pc-msg{font-size:13px}.pc-msg b{display:block;font-size:13.5px}
+.pc-act{display:flex;gap:8px;align-items:center;white-space:nowrap}
+.pc-act button{border:1px solid #111;background:#fff;border-radius:7px;padding:6px 10px;font-weight:700;min-height:34px}
+.pc-act label{display:flex;gap:4px;align-items:center;font-weight:700;font-size:13px;min-height:34px}
+.pc-act input{width:20px;height:20px}
+#pcFoot{display:flex;gap:8px;justify-content:flex-end;align-items:center;padding:10px 14px;border-top:1px solid #ddd;flex-wrap:wrap}
+#pcFoot button{border:0;border-radius:8px;padding:10px 16px;font-weight:800;min-height:42px}
+#pcGo{background:#c9a227;color:#111}#pcGo:disabled{background:#e5e7eb;color:#888}
+#pcCount{margin-right:auto;font-size:12.5px;color:#444}
+.pc-fixhl{outline:3px solid #d97706!important;outline-offset:2px}
+@media (max-width:520px){.pc-item{grid-template-columns:1fr}.pc-act{justify-content:flex-end}#pcBox h2{font-size:15.5px}#pcFoot button{flex:1}}
+@media print{#pcBg{display:none!important}}
+</style>
+<script>
+/* 2026-10-17 pre-print checklist. Flags every city-driven field before Print / Download PDF.
+   Types: MISSING (city has no value), FALLBACK (generic default prints), CONFLICT (spec contradicts city code),
+   VERIFY (code edition old / unknown, or known data conflict), OVERRIDE (user changed the city default).
+   Accepted flags are stored in hidden #precheckAccepted (inside the sidebar, so snapshot()/saveJob keep it). */
+(function(){const sb=document.querySelector('.sidebar');if(sb&&!$('precheckAccepted')){const h=document.createElement('input');h.type='hidden';h.id='precheckAccepted';sb.appendChild(h)}})();
+function pcNorm(s){return String(s==null?'':s).toUpperCase().replace(/[\s.]+/g,' ').replace(/[“”″]/g,'"').trim()}
+function pcIrcYears(t){const out=[];String(t||'').replace(/(?:IRC\s*(\d{4}))|(?:(\d{4})\s*(?:INTERNATIONAL RESIDENTIAL|IRC))/gi,(m,a,b)=>{out.push(+(a||b))});return out}
+function precheckFlags(){
+  const F=[];const city=cityName();const chi=isChicago();const c=code();const add=(id,type,title,msg,field)=>F.push({id,type,title,msg,field,sig:pcNorm(msg)});
+  if(!city||city==='Village'||city==='Other'){add('city','MISSING','No city selected','Every city-driven field will use generic defaults.','city');return F}
+  if(!c&&!chi) add('nosheet','FALLBACK','No code sheet for '+city,'No stored city code data — all setbacks, footing, slab, rafters, ties and headers print generic defaults.','city');
+  const cc=c||{};
+  // code edition
+  const tableYear=codeYear(); const noteYears=pcIrcYears(cc.notes);
+  if(chi){ /* Chicago uses its own municipal code list */ }
+  else{
+    const inTable=['Oak Park','Riverside','Des Plaines','Mundelein','Evergreen Park','Addison','Wheaton','Schaumburg','Brookfield'].includes(city);
+    if(!inTable) add('ircdefault','FALLBACK','IRC edition not on file','Code basis prints the generic '+tableYear+' IRC; '+city+' adopted edition is not recorded.',null);
+    if(+tableYear<2018) add('ircold','VERIFY','Old code edition','Code basis prints '+tableYear+' IRC (older than 2018) — verify '+city+' currently adopted edition.',null);
+    noteYears.filter(y=>y&&y!==+tableYear).forEach(y=>add('ircnote'+y,'VERIFY','Code year conflict','City notes mention IRC '+y+(y<2018?' (older than 2018)':'')+' but plans print '+tableYear+' IRC — verify.',null));
+  }
+  // structural fields with generic fallback
+  const fb=[['rafters','Rafters',chi?'(row omitted on A-5)':'2x6 16" O.C.'],['wallTies','Cross / wall ties',chi?'(row omitted on A-5)':'2x6 TIES 48" O.C.'],['ohHeader','Overhead door header',headerCallout()],['windowHeader','Window / service door header','2-2x6 HEADER'],['thickness','Slab thickness','4"'],['slab','Concrete mix','6 BAG MIX'],['footings','Footing','12" W x 12" D THICKENED EDGE']];
+  fb.forEach(([k,l,d])=>{if(!String(cc[k]||'').trim()) add('fb_'+k,'FALLBACK',l+': no city value',l+' not on file for '+city+(d.charAt(0)==='('?' — nothing prints '+d+'.':' — prints generic default '+d+'.'),k==='footings'?'footing':k==='slab'||k==='thickness'?'slab':null)});
+  if(chi) add('chifrost','VERIFY','Chicago footing vs 42" frost','A-2 prints the generic 12"x12" thickened edge / 4" slab, while the A-1 Chicago row says 42" frost footing (14B-18-1809) with a slab-on-grade exception ≤ 600 SF. Confirm the footing/slab Chicago wants and enter it in Footing / Slab.','footing');
+  // required with no city value (setbacks / limits)
+  [['setSide','Side setback'],['setHouse','Distance to house'],[(siteNums().alley?'setRearA':'setRearN'),'Rear setback']].forEach(([id,l])=>{if(!val(id)) add('miss_'+id,'MISSING',l+' blank',l+' has no city value and is blank — prints "—" on A-1.',id)});
+  if(!chi&&!String(cc.maxSize||'').trim()) add('miss_max','MISSING','Max garage size not on file','No max size for '+city+' — A-1 prints no limit; check zoning.',null);
+  if(!chi&&!String(cc.height||'').trim()) add('miss_h','MISSING','Max height not on file','No max height for '+city+' — A-1 prints no limit.',null);
+  // contradictions
+  ['roof','wall'].forEach(k=>{const sc=sheathCodeFor(val('cityManual')||val('city'),k);const v=val(k+'Sheath');if(sc&&!sheathMeetsCode(v,sc)) add('sh_'+k+'|'+v,'CONFLICT',(k==='roof'?'Roof':'Wall')+' sheathing differs from code','Selected '+v+' — '+city+' code: '+sheathCodeText(sc)+'.',k+'Sheath')});
+  jobWarnings().forEach((w,i)=>{if(/village max|village height/i.test(w)) add('jw_'+w,'CONFLICT','Over city limit',w,'width')});
+  if(cityStruct().noGutters&&guttersRequired()) add('gut_no','CONFLICT','Gutters on, city says no gutters',city+' code data says no gutters. Gutters are checked on.','flagGutters');
+  if(cityFirewallDefault()&&$('flagFirewall')&&!$('flagFirewall').checked) add('fire_off','CONFLICT','Fire wall turned off','City setbacks require a fire wall/drywall but the fire wall flag is off.','flagFirewall');
+  // overrides of city default
+  if(c){
+    const sl=((cc.thickness||'')+' CONCRETE - '+(cc.slab||'')+' ON 4" GRANULAR FILL WITH 6x6 / 10x10 WWF').replace(/^ CONCRETE - /,'');
+    [['setHouse','setHouse','Distance to house'],['setSide','setSide','Side setback'],['setRearA','setRearAlley','Rear (alley)'],['setRearN','setRearNoAlley','Rear (no alley)'],['footing','footings','Footing']].forEach(([id,k,l])=>{const v=val(id),d=String(cc[k]||'').trim();if(v&&d&&pcNorm(v)!==pcNorm(d)) add('ov_'+id+'|'+v,'OVERRIDE',l+' changed','You entered "'+v+'"; city code sheet says "'+d+'".',id)});
+    if(val('slab')&&pcNorm(val('slab'))!==pcNorm(sl)) add('ov_slab|'+val('slab'),'OVERRIDE','Slab changed','You entered "'+val('slab')+'"; city default "'+sl+'".','slab');
+    if(!cityStruct().noGutters&&$('flagGutters')&&$('flagGutters').checked!==!!(cityGuttersDefault()||notesWantGutters(cc.notes))) add('ov_gut','OVERRIDE','Gutters changed from city default','Gutters are '+($('flagGutters').checked?'ON':'OFF')+' (city default '+(cityGuttersDefault()||notesWantGutters(cc.notes)?'ON':'OFF')+').','flagGutters');
+  }
+  return F;
+}
+function pcAccepted(){try{return JSON.parse(val('precheckAccepted')||'{}')||{}}catch(e){return {}}}
+function pcSetAccepted(o){if($('precheckAccepted'))$('precheckAccepted').value=JSON.stringify(o);try{saveJob(true)}catch(e){}}
+function pcKey(f){return cityName()+'::'+f.id}
+function precheckGate(){
+  return new Promise(res=>{
+    const flags=precheckFlags();const acc=pcAccepted();
+    const open=flags.filter(f=>acc[pcKey(f)]!==f.sig);
+    if(!open.length){res(true);return}
+    let bg=$('pcBg');if(bg)bg.remove();bg=document.createElement('div');bg.id='pcBg';bg.setAttribute('role','dialog');bg.setAttribute('aria-modal','true');
+    bg.innerHTML='<div id="pcBox"><h2>Pre-print check — '+esc(cityName())+'</h2><div class="pc-sub">Fix each item or tick Accept. Print unlocks when every item is handled. Accepted items are saved with this job.</div><div id="pcList"></div><div id="pcFoot"><span id="pcCount"></span><button type="button" id="pcCancel" style="background:#f1f5f9">Cancel</button><button type="button" id="pcGo" disabled>Continue</button></div></div>';
+    document.body.appendChild(bg);
+    const L=$('pcList');
+    flags.forEach((f,i)=>{const d=document.createElement('div');d.className='pc-item'+(f.type==='CONFLICT'?' pc-contra':'');const isAcc=acc[pcKey(f)]===f.sig;
+      d.innerHTML='<div class="pc-msg"><b><span class="pc-tag">'+f.type+'</span>'+esc(f.title)+'</b>'+esc(f.msg)+'</div><div class="pc-act">'+(f.field&&$(f.field)?'<button type="button" data-fix="'+i+'">Fix</button>':'')+'<label><input type="checkbox" data-acc="'+i+'"'+(isAcc?' checked':'')+'>Accept</label></div>';
+      if(isAcc)d.classList.add('pc-ok');L.appendChild(d)});
+    const upd=()=>{const boxes=[...L.querySelectorAll('[data-acc]')];const left=boxes.filter(b=>!b.checked).length;$('pcCount').textContent=left?left+' of '+boxes.length+' left':'All '+boxes.length+' handled';$('pcGo').disabled=!!left};
+    L.addEventListener('change',e=>{const i=e.target.dataset.acc;if(i==null)return;const f=flags[+i];const a=pcAccepted();if(e.target.checked)a[pcKey(f)]=f.sig;else delete a[pcKey(f)];pcSetAccepted(a);e.target.closest('.pc-item').classList.toggle('pc-ok',e.target.checked);upd()});
+    L.addEventListener('click',e=>{const i=e.target.dataset.fix;if(i==null)return;const f=flags[+i];bg.remove();res(false);const el=$(f.field);if(!el)return;try{const det=el.closest('details');if(det)det.open=true}catch(_){}el.scrollIntoView({block:'center',behavior:'smooth'});el.classList.add('pc-fixhl');setTimeout(()=>{try{el.focus()}catch(_){}},300);setTimeout(()=>el.classList.remove('pc-fixhl'),4000);setStatus&&setStatus('Fix: '+f.title+' — then press Print again.',true)});
+    $('pcCancel').onclick=()=>{bg.remove();res(false)};
+    $('pcGo').onclick=()=>{bg.remove();res(true)};
+    upd();
+  });
+}
+</script>
 </body>
 </html>

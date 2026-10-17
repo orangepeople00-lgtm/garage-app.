@@ -1764,5 +1764,77 @@ function sheathWarn(el,city,kind,valueOverride){if(!el)return;const c=sheathCode
   if(w.textContent!==msg)w.textContent='⚠ '+msg}
 </script><style>@media print{.sheath-warn{display:none!important}}.carp-pdf .sheath-warn{display:none!important}</style>
 <script>['wallSheath','roofSheath'].forEach(sheathCombo);setInterval(()=>{const city=selectedCity();['roof','wall'].forEach(k=>{const e=$(k+'Sheath');if(e&&e.value)sheathWarn(e,city,k);else if(e)sheathWarn(e,'',k)})},800);</script>
+<style>
+#pcLiteBg{position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:100001;display:flex;align-items:center;justify-content:center;padding:10px;box-sizing:border-box}
+#pcLiteBox{background:#fff;color:#111;border-radius:12px;width:min(620px,100%);max-height:90vh;display:flex;flex-direction:column;font:14px/1.35 Arial,sans-serif}
+#pcLiteBox h2{margin:0;padding:12px 14px;font-size:16px;border-bottom:1px solid #ddd}
+#pcLiteBox ul{margin:0;padding:8px 14px 8px 30px;overflow:auto;flex:1}
+#pcLiteBox li{margin:5px 0;font-size:13px}
+.pcl-tag{font:700 10.5px Arial;padding:1px 6px;border-radius:9px;background:#fef3c7;color:#92400e;margin-right:5px}
+.pcl-tag.c{background:#fee2e2;color:#991b1b}
+#pcLiteFoot{display:flex;gap:8px;align-items:center;justify-content:flex-end;padding:10px 14px;border-top:1px solid #ddd;flex-wrap:wrap}
+#pcLiteFoot label{margin-right:auto;display:flex;gap:6px;align-items:center;font-weight:700;font-size:13px;min-height:40px}
+#pcLiteFoot label input{width:20px;height:20px}
+#pcLiteFoot button{border:0;border-radius:8px;padding:10px 16px;font-weight:800;min-height:42px}
+#pcLiteGo{background:#fbbf24;color:#111}#pcLiteGo:disabled{background:#e5e7eb;color:#888}
+#pcLiteBanner{position:fixed;left:8px;right:8px;bottom:8px;z-index:100000;background:#fffbeb;border:1px solid #d97706;color:#78350f;border-radius:10px;padding:8px 36px 8px 12px;font:13px/1.35 Arial,sans-serif;max-height:40vh;overflow:auto;box-shadow:0 4px 18px rgba(0,0,0,.2)}
+#pcLiteBanner button{position:absolute;right:6px;top:4px;border:0;background:none;font-size:20px;line-height:1;min-width:32px;min-height:32px}
+@media (max-width:520px){#pcLiteFoot button{flex:1}}
+@media print{#pcLiteBg,#pcLiteBanner{display:none!important}}
+</style>
+<script>
+/* 2026-10-17 lighter pre-print check (same rules as GaragePlans pre-print checklist, data-level only). */
+function pcLiteEsc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function pcLiteCityFlags(city,s){
+  const F=[];const add=(t,m)=>F.push({type:t,msg:m});
+  city=String(city||'').trim();
+  if(!city||city==='Other'){add('MISSING','No city selected — generic defaults only.');return F}
+  if(/^chicago$/i.test(city)){add('VERIFY','Chicago has no code sheet on file: rafters, ties, headers, slab and footing are generic defaults; Chicago requires 42" frost footings (≤ 600 SF slab-on-grade exception) — verify.');return F}
+  if(!s){add('FALLBACK','No code sheet on file for '+city+' — everything is generic.');return F}
+  [['maxSize','Max size'],['height','Max height'],['rafters','Rafters'],['wallTies','Wall ties'],['ohHeader','Overhead door header'],['windowHeader','Window header'],['thickness','Slab thickness'],['footings','Footings'],['setSide','Side setback'],['setHouse','Distance to house'],['setRearNoAlley','Rear setback']].forEach(([k,l])=>{const v=String(s[k]||'').trim();if(!v||/^(SEE NOTE|SPECIAL NOTES|WIDTH:\s*DEPTH:)$/i.test(v))add('MISSING',l+': not on file')});
+  const yrs=[];String(s.notes||'').replace(/(?:IRC\s*(\d{4}))|(?:(\d{4})\s*(?:INTERNATIONAL RESIDENTIAL|IRC))/gi,(m,a,b)=>{yrs.push(+(a||b))});
+  if(!yrs.length) add('FALLBACK','IRC edition not on file (plans default to 2018 IRC).');
+  yrs.filter(y=>y<2018).forEach(y=>add('VERIFY','Code sheet cites IRC '+y+' (older than 2018) — verify current adopted edition.'));
+  return F;
+}
+function pcLiteModal(title,flags){
+  return new Promise(res=>{
+    if(!flags.length){res(true);return}
+    let bg=document.getElementById('pcLiteBg');if(bg)bg.remove();bg=document.createElement('div');bg.id='pcLiteBg';bg.setAttribute('role','dialog');bg.setAttribute('aria-modal','true');
+    bg.innerHTML='<div id="pcLiteBox"><h2>'+pcLiteEsc(title)+'</h2><ul>'+flags.map(f=>'<li><span class="pcl-tag'+(f.type==='CONFLICT'?' c':'')+'">'+f.type+'</span>'+pcLiteEsc(f.msg)+'</li>').join('')+'</ul><div id="pcLiteFoot"><label><input type="checkbox" id="pcLiteAck">I reviewed these</label><button type="button" id="pcLiteNo" style="background:#f1f5f9">Cancel</button><button type="button" id="pcLiteGo" disabled>Continue</button></div></div>';
+    document.body.appendChild(bg);
+    const ack=document.getElementById('pcLiteAck'),go=document.getElementById('pcLiteGo');
+    ack.onchange=()=>{go.disabled=!ack.checked};
+    document.getElementById('pcLiteNo').onclick=()=>{bg.remove();res(false)};
+    go.onclick=()=>{bg.remove();res(true)};
+  });
+}
+function pcLiteBanner(title,flags){
+  let b=document.getElementById('pcLiteBanner');if(b)b.remove();if(!flags.length)return;
+  b=document.createElement('div');b.id='pcLiteBanner';b.setAttribute('role','status');
+  b.innerHTML='<button type="button" aria-label="Dismiss">×</button><b>'+pcLiteEsc(title)+'</b><br>'+flags.map(f=>'<span class="pcl-tag'+(f.type==='CONFLICT'?' c':'')+'">'+f.type+'</span>'+pcLiteEsc(f.msg)).join('<br>');
+  b.querySelector('button').onclick=()=>b.remove();document.body.appendChild(b);
+}
+</script>
+<script>
+/* 2026-10-17 Carpenter one-click Save to Job: city flags in a non-blocking banner; blocks only on a real code contradiction (sheathing vs city code), with one Accept. */
+function carpPcFlags(){const city=selectedCity();const F=[];const C=[];
+  if(!city){F.push({type:'MISSING',msg:'No city selected — generic defaults only.'});return {F,C}}
+  if(/^chicago$/i.test(city)) F.push({type:'VERIFY',msg:'Chicago: no city build data on file (rafters, ties, headers, slab generic); Chicago requires 42" frost footings (≤ 600 SF slab exception) — verify.'});
+  else{const cb=(typeof CITY_BUILD==='object'&&CITY_BUILD[city])||null;
+    if(!cb) F.push({type:'FALLBACK',msg:'No city build data for '+city+' — generic defaults.'});
+    else [['rafters','Rafters'],['ties','Cross ties'],['slab','Slab thickness']].forEach(([k,l])=>{if(!String(cb[k]||'').trim())F.push({type:'MISSING',msg:l+': not on file for '+city+' — default used.'})});
+    if(cb){const y=[];String(cb.notes||'').replace(/(?:IRC\s*(\d{4}))|(?:(\d{4})\s*IRC)/gi,(m,a,b)=>{y.push(+(a||b))});y.filter(v=>v<2018).forEach(v=>F.push({type:'VERIFY',msg:city+' notes cite IRC '+v+' (older than 2018) — verify.'}))}}
+  ['roof','wall'].forEach(k=>{const sc=sheathCodeFor(city,k);const el=document.getElementById(k+'Sheath');if(sc&&el&&!sheathMeetsCode(el.value,sc))C.push({type:'CONFLICT',msg:(k==='roof'?'Roof':'Wall')+' sheathing '+el.value+' differs from '+city+' code: '+sheathCodeText(sc)+'.',sig:city+'|'+k+'|'+el.value})});
+  return {F,C}}
+(function(){if(typeof carpSavePdf!=='function')return;const orig=carpSavePdf;
+  carpSavePdf=async function(){const {F,C}=carpPcFlags();
+    pcLiteBanner('Code check — '+(selectedCity()||'no city'),F.concat(C));
+    const key='agb_carp_pc_acc_'+(typeof carpJobId==='function'?(carpJobId()||'nojob'):'nojob');let acc={};try{acc=JSON.parse(localStorage.getItem(key)||'{}')}catch(e){}
+    const open=C.filter(c=>!acc[c.sig]);
+    if(open.length){const ok=await pcLiteModal('Code contradiction — accept to save',open);if(!ok)return;open.forEach(c=>acc[c.sig]=1);try{localStorage.setItem(key,JSON.stringify(acc))}catch(e){}}
+    return orig.apply(this,arguments)};
+  window.carpSavePdf=carpSavePdf})();
+</script>
 </body>
 </html>

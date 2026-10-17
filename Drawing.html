@@ -9199,8 +9199,10 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{ agbLotLineUi()
   <div class="field"><label>Legal description</label><input id="pdLegal" placeholder="LOT __ IN BLOCK __ ..."/></div>
   <div class="row"><div class="field"><label>Alley width (ft)</label><input id="pdAlleyW" type="number" step=".5" value="16"/></div>
   <div class="field"><label>House label</label><input id="pdHouseLbl" value="2 STORY BRICK RES."/></div></div>
-  <button type="button" id="pdBuild" style="width:100%;min-height:40px;font-weight:800">Build editable plat (from fields)</button>
-  <button type="button" id="pdOff" style="width:100%;min-height:36px;margin-top:6px">Turn off editable plat</button>
+  <button type="button" id="pdStart" style="width:100%;min-height:40px;font-weight:800;display:none">Start editable plat</button>
+  <button type="button" id="pdOff" style="width:100%;min-height:36px;margin-top:6px;display:none">Hide editable plat</button>
+  <button type="button" id="pdReset" style="width:100%;min-height:36px;margin-top:6px;display:none;color:#991b1b">Reset plat from fields</button>
+  <div class="mode-note" style="font-size:12px;margin-top:4px">The editable plat is drawn once from these fields the first time. After that, changing fields never redraws it; edit it by hand.</div>
   <div class="mode-note" style="font-size:12px;margin-top:4px">Tap any line or text to select. Drag to move, drag a dot to resize, double-tap text (or Edit) to change it, Delete to remove.</div>
 </div>
 <script>
@@ -9220,8 +9222,8 @@ const doc=()=>{const h=host();return h&&h.platDoc&&h.platDoc.on?h.platDoc:null};
 function active(){try{return state.mode==='siteplan'&&!!doc()}catch(_){return false}}
 let sel=null, uid=1;
 // ---------- build from fields ----------
-function build(){
-  const h=host(); if(!h){alert('Place the proposed garage first (or start a blank site plan).');return}
+function build(auto){
+  const h=host(); if(h&&h.platDoc) return; if(!h){if(auto)return;alert('Place the proposed garage first (or start a blank site plan).');return}
   const t=currentTemplate(), PW=t.w, PH=t.h;
   const lot=byRole('lotOutline'), g=byRole('proposedGarage');
   const W=lot?+lot.wf:num('spLotWidth',50), D=lot?+lot.hf:num('spLotLength',125);
@@ -9275,10 +9277,12 @@ function build(){
   // alley edge to edge
   if(alley){ ln(0,B,PW,B,1.2); ln(0,B+AW*S,PW,B+AW*S,1.2); tx(PW/2,B+AW*S/2+4,AW+"' PUBLIC ALLEY",10,600); tx((L+R)/2,B+11,f2(W),7.5,600); }
   else tx((L+R)/2,B-5,f2(W),7.5,600);
-  try{snapshot()}catch(_){}
+  if(!auto){try{snapshot()}catch(_){}}
   h.platDoc={on:1,items,v:2}; sel=null; try{saveActiveSheetState()}catch(_){} render();
 }
-function off(){ const h=host(); if(h&&h.platDoc){ try{snapshot()}catch(_){} h.platDoc.on=0; sel=null; try{saveActiveSheetState()}catch(_){} render(); try{renderObjects()}catch(_){} } }
+function off(){ const h=host(); if(h&&h.platDoc){ h.platDoc.on=h.platDoc.on?0:1; sel=null; try{saveActiveSheetState()}catch(_){} render(); try{renderObjects()}catch(_){} } } // hide/show only; items are never deleted
+function syncBtns(){ const h=host(), st=$i('pdStart'), of=$i('pdOff'); if(st) st.style.display=(h&&!h.platDoc)?'':'none'; {const rs=$i('pdReset'); if(rs) rs.style.display=(h&&h.platDoc)?'':'none';} if(of){ of.style.display=(h&&h.platDoc)?'':'none'; of.textContent=(h&&h.platDoc&&!h.platDoc.on)?'Show editable plat':'Hide editable plat'; } }
+let _autoTry=0; function autoOnce(){ try{ if(state.mode!=='siteplan')return; const h=host(); if(!h||h.platDoc||!byRole('proposedGarage'))return; clearTimeout(_autoTry); _autoTry=setTimeout(()=>{ const h2=host(); if(h2&&!h2.platDoc&&state.mode==='siteplan'){ build(true); syncBtns(); } },600); }catch(_){} }
 // ---------- render ----------
 let svg=null, scr=1;
 function itemSVG(o){
@@ -9386,11 +9390,13 @@ function bind(s){
 document.addEventListener('pointerdown',e=>{ if(!sel||!svg)return; if(e.target.closest&&(e.target.closest('#agbPlatDoc .pd-it')||e.target.closest('#agbPlatDoc .pd-h')||e.target.closest('#pdBar')||e.target.closest('#pdEdit')))return; sel=null; drawSel(); },true);
 document.addEventListener('keydown',e=>{ if(!sel||ed||/INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName||'')||document.activeElement?.isContentEditable)return;
   if(e.key==='Delete'||e.key==='Backspace'){ const d=doc(); if(!d)return; try{snapshot()}catch(_){} d.items=d.items.filter(i=>i.id!==sel); sel=null; try{saveActiveSheetState()}catch(_){} render(); e.preventDefault(); } });
-window.agbPlatDocBuild=build; window.agbPlatDocOff=off; window.agbPlatDocRender=render;
+window.agbPlatDocStart=()=>build(false); window.agbPlatDocOff=off; window.agbPlatDocRender=render;
 window.agbPlatDocSelect=id=>{sel=id;render()}; window.agbPlatDocEdit=id=>{const d=doc();const o=d&&d.items.find(i=>i.id===id);if(o){sel=id;render();editText(o)}};
-$i('pdBuild')&&$i('pdBuild').addEventListener('click',build); $i('pdOff')&&$i('pdOff').addEventListener('click',off);
+$i('pdReset')&&$i('pdReset').addEventListener('click',()=>{ const h=host(); if(!h||!h.platDoc)return; if(!confirm('This replaces your hand edits. Continue?'))return; try{snapshot()}catch(_){} delete h.platDoc; build(true); syncBtns(); });
+window.agbPlatDocReset=()=>$i('pdReset').click();
+$i('pdStart')&&$i('pdStart').addEventListener('click',()=>{build(false);syncBtns()}); $i('pdOff')&&$i('pdOff').addEventListener('click',off);
 const _rn=window.renderObjectsNow;
-if(_rn){ window.renderObjectsNow=function(){ const r=_rn.apply(this,arguments); try{const d=doc(); if(d) uid=Math.max(uid,...d.items.map(i=>i.id+1)); render()}catch(e){console.warn('plat doc',e)} return r; }; try{renderObjectsNow=window.renderObjectsNow}catch(_){} }
+if(_rn){ window.renderObjectsNow=function(){ const r=_rn.apply(this,arguments); try{const d=doc(); if(d) uid=Math.max(uid,...d.items.map(i=>i.id+1)); render(); syncBtns(); autoOnce()}catch(e){console.warn('plat doc',e)} return r; }; try{renderObjectsNow=window.renderObjectsNow}catch(_){} }
 window.addEventListener('beforeprint',()=>{sel=null;try{render()}catch(_){}});
 let _vt=0; const reScale=()=>{ if(!svg||!active())return; cancelAnimationFrame(_vt); _vt=requestAnimationFrame(()=>{ const m=svg.getScreenCTM(); const s2=m?Math.hypot(m.a,m.b):1; if(Math.abs(s2-scr)/scr>.05&&!drag) render(); else if(sel) drawSel(); }); };
 new MutationObserver(reScale).observe($i('paper'),{attributes:true,attributeFilter:['style']}); addEventListener('resize',reScale);

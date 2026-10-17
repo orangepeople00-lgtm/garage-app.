@@ -9093,5 +9093,68 @@ setTimeout(()=>{try{render()}catch(_){}},0);
 #agbPermitPlan{position:absolute;left:0;top:0;pointer-events:none;z-index:2;font-family:Arial,Helvetica,sans-serif}
 #paper.agb-permit #autoDimLayer,#paper.agb-permit #agbSiteAnno,#paper.agb-permit #agbLegend,#paper.agb-permit #sitePlanPlaceholder{display:none!important}
 </style>
+<script>
+/* 2026-10-17: job drawings also saved to the job in Supabase so any device can open them / attach the site plan to the permit PDF.
+   Stored in the job's existing paperwork storage (bucket job-documents + a job_documents row, document_type 'Site Plan Drawing'),
+   same pattern as Carpenter Sheet PDFs. The file is a real PNG render (site plan when it has items); the editable drawing JSON rides
+   inside the PNG as a tEXt chunk 'agbDrawing' (base64 UTF-8). Local save stays as fallback; on open, the newest of local vs server wins
+   and a local copy that loses is kept as agb_drawing_job_<id>_backup_<time> (never overwritten). */
+const AGB_DRAW_DOC='Site Plan Drawing';
+const _agbCrcT=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
+function agbCrc(b){let c=0xFFFFFFFF;for(let i=0;i<b.length;i++)c=_agbCrcT[(c^b[i])&255]^(c>>>8);return (c^0xFFFFFFFF)>>>0}
+function agbPngAddText(png,key,text){ const kb=new TextEncoder().encode(key), tb=new TextEncoder().encode(text); const data=new Uint8Array(kb.length+1+tb.length); data.set(kb,0); data[kb.length]=0; data.set(tb,kb.length+1);
+  const typ=new TextEncoder().encode('tEXt'), ch=new Uint8Array(12+data.length), dv=new DataView(ch.buffer); dv.setUint32(0,data.length); ch.set(typ,4); ch.set(data,8);
+  const ci=new Uint8Array(4+data.length); ci.set(typ,0); ci.set(data,4); dv.setUint32(8+data.length,agbCrc(ci));
+  const iend=png.length-12, out=new Uint8Array(png.length+ch.length); out.set(png.subarray(0,iend),0); out.set(ch,iend); out.set(png.subarray(iend),iend+ch.length); return out; }
+function agbPngGetText(png,key){ const dv=new DataView(png.buffer,png.byteOffset,png.byteLength); let p=8; while(p+8<=png.length){ const len=dv.getUint32(p), typ=String.fromCharCode(...png.subarray(p+4,p+8));
+    if(typ==='tEXt'){ const d=png.subarray(p+8,p+8+len), z=d.indexOf(0); if(new TextDecoder().decode(d.subarray(0,z))===key) return new TextDecoder().decode(d.subarray(z+1)); } if(typ==='IEND') break; p+=12+len; } return null; }
+window.agbPngGetText=agbPngGetText;
+function agbB64(str){ const b=new TextEncoder().encode(str); let s=''; for(let i=0;i<b.length;i+=0x8000) s+=String.fromCharCode.apply(null,b.subarray(i,i+0x8000)); return btoa(s); }
+function agbUnB64(s){ const bin=atob(s), b=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) b[i]=bin.charCodeAt(i); return new TextDecoder().decode(b); }
+function agbDrawStatus(msg,bad){ let el=document.getElementById('agbDrawSync'); const btn=document.getElementById('saveDrawingBtn'); if(!el&&btn){ el=document.createElement('div'); el.id='agbDrawSync'; el.style.cssText='font-size:12px;margin-top:4px;line-height:1.3;overflow-wrap:anywhere'; btn.insertAdjacentElement('afterend',el); } if(el){ el.textContent=msg; el.style.color=bad?'#b91c1c':'#166534'; } }
+async function agbRenderPng(){ const ex=await buildDrawingExport(); const url=URL.createObjectURL(ex.jpegBlob); try{ const im=new Image(); await new Promise((ok,no)=>{im.onload=ok;im.onerror=no;im.src=url;});
+  const c=document.createElement('canvas'); c.width=im.width; c.height=im.height; c.getContext('2d').drawImage(im,0,0); const b=await new Promise(r=>c.toBlob(r,'image/png')); return new Uint8Array(await b.arrayBuffer()); }finally{ URL.revokeObjectURL(url); } }
+async function agbSaveDrawingToJob(){
+  const jobId=new URLSearchParams(location.search).get('jobId'); if(!jobId) return;
+  const sb=getDrawingSupabase(); if(!sb){ agbDrawStatus('Saved on this device only (no connection).',true); return; }
+  try{ const {data:{user}}=await sb.auth.getUser(); if(!user){ agbDrawStatus('Saved on this device only — sign in on the dashboard to save to the job.',true); return; }
+    const raw=localStorage.getItem('agb_drawing_job_'+jobId); if(!raw) return; const d=JSON.parse(raw);
+    const slim={...d,sheets:{}}; Object.keys(d.sheets||{}).forEach(k=>{ slim.sheets[k]={objects:(d.sheets[k]||{}).objects||[],history:[],future:[]}; });
+    const hasSite=((slim.sheets.siteplan||{}).objects||[]).length>0;
+    agbDrawStatus('Saving to job…');
+    let png; const prev=state.mode;
+    if(hasSite&&prev!=='siteplan'){ $('mode').value='siteplan'; $('mode').onchange(); await new Promise(r=>setTimeout(r,600)); }
+    try{ png=await agbRenderPng(); } finally { if(hasSite&&prev!=='siteplan'){ $('mode').value=prev; $('mode').onchange(); } }
+    slim.imageMode=hasSite?'siteplan':prev;
+    const file=agbPngAddText(png,'agbDrawing',agbB64(JSON.stringify(slim)));
+    const name=(hasSite?'siteplan':'drawing')+'_'+String(d.savedAt||'').replace(/[^0-9]/g,'').slice(0,14)+'.png';
+    const path=user.id+'/jobs/'+jobId+'/'+Date.now()+'-'+name;
+    let r=await sb.storage.from('job-documents').upload(path,new Blob([file],{type:'image/png'}),{upsert:false,contentType:'image/png'}); if(r.error) throw r.error;
+    r=await sb.from('job_documents').insert({job_id:jobId,uploaded_by:user.id,file_name:name,storage_path:path,document_type:AGB_DRAW_DOC}); if(r.error) throw r.error;
+    agbDrawStatus('Saved to job — opens on any device'+(hasSite?' (site plan attaches to permit PDF).':'.'));
+  }catch(e){ console.warn('drawing job save',e); agbDrawStatus('Saved on this device only — job save failed: '+(e.message||e),true); }
+}
+async function agbFetchServerDrawing(sb,jobId){ const {data,error}=await sb.from('job_documents').select('*').eq('job_id',jobId).eq('document_type',AGB_DRAW_DOC).order('created_at',{ascending:false}).limit(1); if(error||!data||!data.length) return null;
+  const doc=data[0]; const dl=await sb.storage.from('job-documents').download(doc.storage_path); if(dl.error) return null; const png=new Uint8Array(await dl.data.arrayBuffer()); const t=agbPngGetText(png,'agbDrawing'); return t?{doc,png,data:JSON.parse(agbUnB64(t))}:null; }
+window.agbFetchServerDrawing=agbFetchServerDrawing;
+async function agbLoadServerDrawing(){
+  const jobId=new URLSearchParams(location.search).get('jobId'); if(!jobId||window.agbPermitExport) return;
+  const sb=getDrawingSupabase(); if(!sb) return;
+  try{ const srv=await agbFetchServerDrawing(sb,jobId); if(!srv) return;
+    const key='agb_drawing_job_'+jobId, localRaw=_agbLocalAtLoad; let local=null; try{ local=localRaw?JSON.parse(localRaw):null; }catch(e){}
+    const hasObjs=x=>!!x&&Object.values(x.sheets||{}).some(v=>((v||{}).objects||[]).length);
+    if(local&&!hasObjs(local)) local=null; // an empty local draft never beats a saved job drawing
+    const st=Date.parse(srv.data.savedAt||srv.doc.created_at)||0, lt=local?(Date.parse(local.savedAt)||0):0;
+    if(local&&lt>=st) return; // local is newest
+    if(local) localStorage.setItem(key+'_backup_'+Date.now(),localRaw); // never lose a local drawing
+    localStorage.setItem(key,JSON.stringify(srv.data));
+    loadDrawingDraft('scoped'); loadSheetState(state.mode); renderSheet(); try{fitWhole()}catch(e){}
+    agbDrawStatus('Opened the newer copy saved on the job ('+new Date(st).toLocaleString()+').');
+  }catch(e){ console.warn('server drawing load',e); }
+}
+const _agbLocalAtLoad=(()=>{ const j=new URLSearchParams(location.search).get('jobId'); return j?localStorage.getItem('agb_drawing_job_'+j):null; })();
+window.agbPermitExport=new URLSearchParams(location.search).get('agbPermitExport')==='1';
+document.addEventListener('DOMContentLoaded',()=>{ const b=document.getElementById('saveDrawingBtn'); if(b) b.addEventListener('click',()=>setTimeout(agbSaveDrawingToJob,50)); setTimeout(agbLoadServerDrawing,1200); });
+</script>
 </body>
 </html>

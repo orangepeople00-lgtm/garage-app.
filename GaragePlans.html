@@ -4181,6 +4181,8 @@ async function gpPermitCtx(force){
   ctx.demoDocs=ctx.docs.filter(x=>x.document_type==='Demolition Sheet');
   ctx.otherDocs=ctx.docs.filter(x=>x.document_type==='Other');
   ctx.contract=ctx.docs.some(x=>x.document_type==='Contract');
+  ctx.serverSite=ctx.docs.filter(x=>x.document_type==='Site Plan Drawing'&&/^siteplan_/.test(x.file_name||'')).sort((a,b)=>String(b.created_at).localeCompare(String(a.created_at)))[0]||null;
+  if(ctx.serverSite&&ctx.sitePlan&&(Date.parse(ctx.serverSite.created_at)||0)>(Date.parse(ctx.sitePlan.savedAt)||0)) ctx.sitePlan=null; // server copy is newer -> use it
   window._gpPermitCtx=ctx; return ctx;
 }
 // conditional -> true (applies), false/null (greyed "if ...")
@@ -4193,7 +4195,7 @@ function gpCondApplies(cond,ctx){ const c=String(cond||'').toLowerCase();
 // returns 'ok' | 'missing' | '' (not checkable by the app)
 function gpItemStatus(item,ctx,hasTpl){ const s=item.toLowerCase();
   if(/plat of survey/.test(s)) return ctx.plats.length?'ok':'missing';
-  if(/site plan/.test(s)) return ctx.sitePlan?'ok':'missing';
+  if(/site plan/.test(s)) return (ctx.sitePlan||ctx.serverSite)?'ok':'missing';
   if(/signed contract/.test(s)) return ctx.contract?'ok':'missing';
   if(/^(construction drawings|plans|two sets of drawings|dimensioned|detailed framing plan)/.test(s)) return ctx.planSaved?'ok':'missing';
   if(/demolition sheet|demolition section/.test(s)) return hasTpl?'ok':'';
@@ -4239,6 +4241,7 @@ async function gpAppendAttachments(bytes){
   if(r){ r.list.forEach(it=>{ const ap=it.conditional?gpCondApplies(it.conditional,ctx):true; if(ap&&gpItemStatus(it.item,ctx,false)==='missing') miss.push('MISSING: '+it.item); }); }
   if(!ctx.door) miss.push('MISSING: Door size blank — fill in'); if(!ctx.price) miss.push('MISSING: Sold price not found — value/cost fields left blank');
   if(ctx.sitePlan){ try{ const jpg=await gpSitePlanImage(ctx.jobId); await gpAddImagePage(pdf,L,jpg,false,'Site plan — Drawing App (saved '+(ctx.sitePlan.savedAt||'').slice(0,10)+')'); log.push('Site plan (Drawing App)'); }catch(e){ console.warn(e); miss.push('MISSING: site plan could not be rendered ('+e.message+')'); } }
+  else if(ctx.serverSite){ try{ const {data,error}=await garageSb.storage.from('job-documents').download(ctx.serverSite.storage_path); if(error) throw error; await gpAddImagePage(pdf,L,new Uint8Array(await data.arrayBuffer()),true,'Site plan — Drawing App (saved to job '+String(ctx.serverSite.created_at||'').slice(0,10)+')'); log.push('Site plan (Drawing App, saved to job)'); }catch(e){ miss.push('MISSING: site plan saved to job could not be downloaded'); } }
   const files=[...ctx.plats,...(ctx.demo?ctx.demoDocs:[]),...ctx.otherDocs];
   for(const d of files){ try{ const {data,error}=await garageSb.storage.from('job-documents').download(d.storage_path); if(error) throw error;
       const b=new Uint8Array(await data.arrayBuffer()), n=(d.file_name||'').toLowerCase(), lab=(d.document_type||'Document')+': '+(d.file_name||'');
@@ -4267,7 +4270,7 @@ async function gpResolveDoorPrice(ctx){
     (data||[]).filter(e=>!ests.some(x=>x.id===e.id)).forEach(e=>{ const sa=gpNormAddr(e.address)===na; if(String(e.job_id||'')===String(ctx.jobId)&&ctx.jobId) ests.push({...e,_why:'estimate linked to job'}); else if(sa&&gpNormName(e.customer)===nm) ests.push({...e,_why:'estimate (name + address match)'}); else if(sa) ests.push({...e,_why:'estimate (address match)'}); });
     const rank={'linked estimate':0,'estimate linked to job':1,'estimate (name + address match)':2,'estimate (address match)':3}; ests.sort((x,y)=>rank[x._why]-rank[y._why]);
   }catch(e){} }
-  let cd={}; if(garageSb&&ctx.jobId){ try{ const {data}=await garageSb.from('job_contract_details').select('field,value').eq('job_id',ctx.jobId); (data||[]).forEach(r=>cd[r.field]=r.value); }catch(e){} }
+  let cd={}, cdw={}; if(garageSb&&ctx.jobId){ try{ const {data}=await garageSb.from('job_contract_details').select('field,value,door_width,door_height').eq('job_id',ctx.jobId); (data||[]).forEach(r=>{ if(r.field) cd[r.field]=r.value; if(r.door_width&&r.door_height&&!cdw.w){ cdw.w=r.door_width; cdw.h=r.door_height; } }); }catch(e){} }
   let carp=null; if(garageSb&&ctx.jobId){ try{ const {data}=await garageSb.from('carpenter_sheets').select('state').eq('job_id',ctx.jobId).maybeSingle(); carp=data&&data.state; }catch(e){} }
   // door: plan -> job file -> estimator -> scanned contract -> carpenter sheet. Never default.
   const dc=[];
@@ -4275,6 +4278,7 @@ async function gpResolveDoorPrice(ctx){
   { const p=gpParseDoor(j.overhead_door_size||j.door_size||j.overhead_doors||''); if(p) dc.push({...p,src:'job file'}); }
   ests.forEach(e=>{ const c=e.calc||{}; if(c.overheadDoorWidth&&c.overheadDoorHeight) dc.push({w:String(c.overheadDoorWidth),h:String(c.overheadDoorHeight),src:e._why}); });
   { const p=gpParseDoor(cd.doors); if(p) dc.push({...p,src:'scanned contract'}); }
+  if(!dc.some(x=>x.src==='scanned contract')&&cdw.w&&cdw.h) dc.push({w:String(cdw.w).replace(/[^0-9.]/g,''),h:String(cdw.h).replace(/[^0-9.]/g,''),src:'scanned contract'});
   { const p=carp&&gpParseDoor(carp.ohDoors||(carp.fields||{}).ohDoors); if(p) dc.push({...p,src:'carpenter sheet'}); }
   ctx.door=dc[0]||null; ctx.doorConflict=[...new Set(dc.map(x=>x.w+'x'+x.h))].length>1?dc.map(x=>x.w+"'x"+x.h+"' ("+x.src+')'):null;
   // price: SOLD price only — job file price, else linked/sold estimate quote (linked to this job). Never internal cost.

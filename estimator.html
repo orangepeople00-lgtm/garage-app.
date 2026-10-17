@@ -2416,6 +2416,10 @@ body.bg-zinc-950{
             const notes=(typeof CITY_CODE_NOTES==='object' && CITY_CODE_NOTES[city]) ? CITY_CODE_NOTES[city] : '';
             const esc=(t)=>String(t||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
             const v=(k, fallback='')=> esc(s && s[k] ? s[k] : fallback);
+            /* display-only: YES/NO -> REQUIRED / NOT REQUIRED (stored values unchanged) */
+            const rq=(k)=>{const t=String(s&&s[k]||'').trim();if(!t)return '<i style="font-weight:400;color:#777">not on file</i>';
+                if(/^yes\b/i.test(t)){const r=t.replace(/^yes\s*/i,'');return '<span style="color:#b91c1c">REQUIRED'+(r?(/^(if|when)\b/i.test(r)?' '+esc(r.toUpperCase()):' ('+esc(r)+')'):'')+'</span>';}
+                if(/^no$/i.test(t))return 'NOT REQUIRED'; return esc(t);};
             const title=city||'City';
             const kind=s?(s.kind||'VILLAGE'):'VILLAGE';
             const html=(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${esc(title)} Building Codes — Absolute Garage Builders</title>
@@ -2476,10 +2480,10 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
     </div>
     <div>
       <h2>ENGINEERING</h2>
-      <div class="row"><span>Grades</span><span>${v('grades','—')}</span></div>
-      <div class="row"><span>Topo survey</span><span>${v('topo','—')}</span></div>
-      <div class="row"><span>Spot survey</span><span>${v('spot','—')}</span></div>
-      <div class="row"><span>EPA review</span><span>${v('epa','—')}</span></div>
+      <div class="row"><span>GRADES (set by city/engineer)</span><span>${rq('grades')}</span></div>
+      <div class="row"><span>TOPOGRAPHICAL SURVEY (shoot grades)</span><span>${rq('topo')}</span></div>
+      <div class="row"><span>SPOT SURVEY</span><span>${rq('spot')}</span></div>
+      <div class="row"><span>EPA REVIEW (demolition)</span><span>${rq('epa')}</span></div>
       <h2>SETBACKS</h2>
       <div class="row"><span>House</span><span>${v('setHouse','—')}</span></div>
       <div class="row"><span>Rear w/ alley</span><span>${v('setRearAlley','—')}</span></div>

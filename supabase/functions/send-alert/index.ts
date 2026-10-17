@@ -8,7 +8,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   if (req.method !== "POST") return json({ error: "POST only" }, 405);
   const SB = Deno.env.get("SUPABASE_URL"), AK = Deno.env.get("SUPABASE_ANON_KEY");
-  const URL_ = Deno.env.get("ALERT_URL"), TOK = Deno.env.get("ALERT_TOKEN"), OLD = Deno.env.get("ALERT_TOKEN_OLD");
+  const URL_ = Deno.env.get("ALERT_URL"), TOK = Deno.env.get("ALERT_TOKEN");
   if (!SB || !AK || !URL_ || !TOK) return json({ error: "Alerts not configured" }, 500);
   const authz = req.headers.get("Authorization") || "";
   if (!/^Bearer\s+\S+/i.test(authz)) return json({ error: "Sign in required" }, 401);
@@ -35,8 +35,7 @@ Deno.serve(async (req) => {
     const r = await fetch(URL_, { method: "POST", headers: { "Content-Type": "text/plain" }, body: JSON.stringify({ ...payload, token: t }), redirect: "follow" }).catch(() => null);
     return r ? (await r.text().catch(() => "")).trim() : "network error";
   };
-  let res = await send(TOK);
-  if (/bad token/i.test(res) && OLD) res = await send(OLD); // lets the token be rotated in Apps Script without downtime
+  const res = await send(TOK);
   const ok = !/bad token|bad json|network error/i.test(res);
   return json({ ok, result: res.slice(0, 80) }, ok ? 200 : 502);
 });

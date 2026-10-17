@@ -9124,7 +9124,7 @@ async function agbSaveDrawingToJob(){
     agbDrawStatus('Saving to job…');
     let png; const prev=state.mode;
     if(hasSite&&prev!=='siteplan'){ $('mode').value='siteplan'; $('mode').onchange(); await new Promise(r=>setTimeout(r,600)); }
-    try{ png=await agbRenderPng(); } finally { if(hasSite&&prev!=='siteplan'){ $('mode').value=prev; $('mode').onchange(); } }
+    try{ try{ clearDrawingSelection(); }catch(_){ state.selected=null; try{renderObjects()}catch(__){} } await new Promise(r=>setTimeout(r,80)); png=await agbRenderPng(); } finally { if(hasSite&&prev!=='siteplan'){ $('mode').value=prev; $('mode').onchange(); } }
     slim.imageMode=hasSite?'siteplan':prev;
     const file=agbPngAddText(png,'agbDrawing',agbB64(JSON.stringify(slim)));
     const name=(hasSite?'siteplan':'drawing')+'_'+String(d.savedAt||'').replace(/[^0-9]/g,'').slice(0,14)+'.png';
@@ -9156,5 +9156,42 @@ const _agbLocalAtLoad=(()=>{ const j=new URLSearchParams(location.search).get('j
 window.agbPermitExport=new URLSearchParams(location.search).get('agbPermitExport')==='1';
 document.addEventListener('DOMContentLoaded',()=>{ const b=document.getElementById('saveDrawingBtn'); if(b) b.addEventListener('click',()=>setTimeout(agbSaveDrawingToJob,50)); setTimeout(agbLoadServerDrawing,1200); });
 </script>
+<script>
+/* 2026-10-17 Chicago lot-line banner: Chicago job + garage on a side lot line (left/right setback 0 on the active sheet, or the
+   'Build on lot line' toggle) -> compact red banner above the drawing (in the layout flow, never over it), dismissible, not printed.
+   Lot width (25' lots called out) does not decide lot-line placement. */
+const AGB_LOTLINE_MSG='Building on the lot line requires fire-retardant siding (e.g. Hardie board), metal studs, a double wall, an architect and an expediter.';
+function agbIsChicagoCity(){ const v=String(($('city')&&$('city').value)||new URLSearchParams(location.search).get('city')||'').trim().replace(/^city of\s+/i,'').replace(/,?\s*il(linois)?\s*$/i,''); return /^chicago$/i.test(v); }
+function agbLotPrefix(){ return ({concrete:'c',obstruction:'o',siteplan:'sp'})[state.mode]||'c'; }
+function agbLotLineKey(){ const j=new URLSearchParams(location.search).get('jobId'); return j?'agb_lotline_'+j:'agb_lotline_draft'; }
+function agbOnLotLine(){ const p=agbLotPrefix(); const z=id=>{const e=$(id); return !!e&&String(e.value).trim()!==''&&Number(e.value)===0;};
+  return z(p+'LeftSetback')||z(p+'RightSetback')||(($('agbLotLineToggle')||{}).checked===true); }
+let _agbLLDismissed='';
+function agbLotLineUi(){
+  const btn=$('saveDrawingBtn'); if(btn&&!$('agbLotLineToggle')){ const l=document.createElement('label'); l.className='agb-ll-toggle'; l.style.cssText='display:flex;gap:6px;align-items:center;font-size:13px;margin-top:6px;font-weight:700';
+    l.innerHTML='<input type="checkbox" id="agbLotLineToggle" style="width:18px;height:18px;margin:0"> Build on lot line'; (($('agbDrawSync')||btn)).insertAdjacentElement('afterend',l);
+    const t=$('agbLotLineToggle'); try{ t.checked=localStorage.getItem(agbLotLineKey())==='1'; }catch(e){}
+    t.addEventListener('change',()=>{ try{ localStorage.setItem(agbLotLineKey(),t.checked?'1':'0'); }catch(e){} agbLotLineUi(); }); }
+  const vp=$('viewport'); if(!vp) return; let b=$('agbLotLineBanner');
+  const on=agbIsChicagoCity()&&agbOnLotLine(); const lw=Number(($(agbLotPrefix()+'LotWidth')||{}).value)||0;
+  const sig=[on,lw===25,state.mode].join('|');
+  if(!on||_agbLLDismissed===sig){ if(b) b.style.display='none'; return; }
+  if(!b){ b=document.createElement('div'); b.id='agbLotLineBanner'; b.className='agb-noprint';
+    b.innerHTML='<span class="t"></span><button type="button" aria-label="Dismiss" title="Dismiss">✕</button>';
+    b.querySelector('button').onclick=()=>{ _agbLLDismissed=b.dataset.sig; b.style.display='none'; try{ requestAnimationFrame(()=>{renderSheet();fitWhole()}); }catch(e){} };
+    vp.parentNode.insertBefore(b,vp); }
+  b.dataset.sig=sig; b.title=AGB_LOTLINE_MSG; b.querySelector('.t').onclick=()=>{ b.classList.toggle('open'); try{ requestAnimationFrame(()=>{renderSheet();fitWhole()}); }catch(e){} }; b.querySelector('.t').textContent='⚠ Chicago lot line'+(lw===25?" (25' lot)":'')+': '+AGB_LOTLINE_MSG;
+  if(b.style.display!=='flex'){ b.style.display='flex'; try{ requestAnimationFrame(()=>{renderSheet();fitWhole()}); }catch(e){} }
+}
+document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{ agbLotLineUi(); setInterval(agbLotLineUi,700); },300));
+</script>
+<style>
+#agbLotLineBanner{flex:0 0 auto;display:none;align-items:flex-start;gap:8px;padding:4px 8px;background:#fef2f2;border-bottom:1px solid #fecaca;color:#b91c1c;font:700 12px/1.3 system-ui,Arial,sans-serif;max-height:3.2em;overflow:hidden}
+#agbLotLineBanner .t{flex:1 1 auto;min-width:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+#agbLotLineBanner.open{max-height:none}#agbLotLineBanner.open .t{display:block}
+#agbLotLineBanner .t{cursor:pointer}
+#agbLotLineBanner button{flex:0 0 auto;border:0;background:transparent;color:#b91c1c;font-weight:900;font-size:14px;line-height:1;padding:2px 4px;cursor:pointer;min-height:0}
+@media print{#agbLotLineBanner,.agb-ll-toggle{display:none!important}}
+</style>
 </body>
 </html>

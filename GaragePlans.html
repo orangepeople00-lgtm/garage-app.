@@ -922,6 +922,9 @@ function maxHeightText(c){c=c||code()||{};return c.height?'MAX HEIGHT '+String(c
 function eaveH(){return Number(val('wallH'))||8}
 function meanRoofH(){return Math.round(((eaveH()+totalH())/2)*2)/2}
 /* 2026-10-17 Chicago side setback (user-supplied rule): 2' one side + 3' other side, unless alley (or rear lot line if no alley) to back of garage is >= 30', then 3' + 3'. */
+const CHI_LOTLINE_MSG='Building on the lot line requires fire-retardant siding (e.g. Hardie board), metal studs, a double wall, an architect and an expediter.';
+/* lot line = a drawn side distance of 0, or 'Build on lot line' toggled for this job in the Drawing App. Lot width does not decide it. */
+function chiLotLine(k){k=k||chiSide();if(k.s1===0||k.s2===0)return true;try{const j=new URLSearchParams(location.search).get('jobId');return !!(j&&localStorage.getItem('agb_lotline_'+j)==='1')}catch(e){return false}}
 const CHICAGO_SIDE_RULE="2' ONE SIDE + 3' OTHER SIDE; 3' + 3' IF REAR (ALLEY OR REAR LOT LINE) TO BACK OF GARAGE IS 30' OR MORE";
 function chiSide(){const alley=val('alley')!=='no';const raw=alley?(val('distAlley')!==''?val('distAlley'):val('distRear')):val('distRear');const rear=raw!==''&&!isNaN(Number(raw))?Number(raw):null;
   const req=rear==null?null:(rear>=30?[3,3]:[2,3]);const W=Number(val('width'))||20;const s1=val('distSide')!==''?Number(val('distSide')):null;const lw=Number(val('lotW'))||0;const s2=(s1!=null&&lw)?+(lw-W-s1).toFixed(2):null;
@@ -4040,6 +4043,7 @@ function precheckFlags(){
   if(chi) add('chifrost','VERIFY','Chicago footing vs 42" frost','A-2 prints the generic 12"x12" thickened edge / 4" slab, while the A-1 Chicago row says 42" frost footing (14B-18-1809) with a slab-on-grade exception ≤ 600 SF. Confirm the footing/slab Chicago wants and enter it in Footing / Slab.','footing');
   // required with no city value (setbacks / limits)
   if(chi){const k=chiSide();
+    if(chiLotLine(k)) add('chi_lotline','VERIFY','Chicago: building on the lot line',CHI_LOTLINE_MSG+(Number(val('lotW'))===25?" (25' lot.)":''),'distSide');
     if(k.rear==null) add('chiside_rear','VERIFY','Chicago side setback: rear distance unknown','Side setback is 2\' + 3\', or 3\' + 3\' when the '+(k.alley?'alley':'rear lot line')+' to back of garage is 30\' or more. Enter the rear distance so A-1 prints the right pair.',k.alley?'distAlley':'distRear');
     else{const sides=[k.s1,k.s2].filter(x=>x!=null).sort((a,b)=>a-b);let bad='';
       if(sides.length===2){if(sides[0]<k.req[0]||sides[1]<k.req[1])bad='Drawn sides '+sides.join("' / ")+"' — required "+k.req.join("' + ")+"'."}

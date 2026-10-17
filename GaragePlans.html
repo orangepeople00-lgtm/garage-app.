@@ -4418,5 +4418,97 @@ sb.addEventListener('focusin',()=>{ if(mob()&&!document.body.classList.contains(
 })();
 </script>
 
+<script>
+/* 2026-10-17 Tappable permit checklist — same tags / keys as the dashboard (index.html), so a tap in either app shows in the other.
+   Per job: [AGB-PERMITCHK:+k,-k] in jobs.notes. Per city (company: registered/licensed/bonded/insured): [AGB-PERMITCO:<city>|<ts>|+k]
+   newest tag for THAT city wins (never shared across cities). k = hash of the item text (identical item text -> same key -> same state). */
+(function(){
+const PCHK_RE=/\n*\[AGB-PERMITCHK:([^\]]*)\]/, PCO_RE=/\n*\[AGB-PERMITCO:([^|\]]*)\|(\d+)\|([^\]]*)\]/g;
+const nc=c=>String(c||'').replace(/\u00a0/g,' ').replace(/\b\d{5}(-\d{4})?\b/g,' ').replace(/,?\s*\b(il|ill|illinois)\b\.?/ig,' ').replace(/^\s*(the\s+)?(village|city|town)\s+of\s+/i,'').replace(/[.,;]+/g,' ').replace(/\s+/g,' ').trim().toLowerCase();
+const key=t=>{let h=5381;t=String(t).toLowerCase().replace(/\s+/g,' ').trim();for(let i=0;i<t.length;i++)h=((h<<5)+h+t.charCodeAt(i))>>>0;return h.toString(36)};
+const comp=t=>{t=String(t).toLowerCase();return /licens|bond|insur|regist/.test(t)&&!/\bsubs?\b|subcontract|fee|electric|plumb/.test(t)};
+const parse=s=>{const o={};String(s||'').split(',').forEach(x=>{if(/^[+-]\w+$/.test(x))o[x.slice(1)]=x[0]==='+'});return o};
+const ser=o=>Object.keys(o).map(k=>(o[k]?'+':'-')+k).join(',');
+function coFrom(rows,city){const c=nc(city);let best=null;(rows||[]).forEach(x=>String(x.notes||'').replace(PCO_RE,(m,cc,ts,ks)=>{if(nc(decodeURIComponent(cc))===c&&(!best||+ts>best.ts))best={ts:+ts,o:parse(ks)};return m}));
+  let loc=null;try{loc=JSON.parse(localStorage.getItem('agb_permitco_'+c)||'null')}catch(e){} if(loc&&(!best||loc.ts>best.ts))best=loc; return best?best.o:{}}
+async function coLoad(city){ if(!garageSb||!city) return {}; try{const {data}=await garageSb.from('jobs').select('id,notes').ilike('notes','%AGB-PERMITCO:%'); return coFrom(data,city);}catch(e){return coFrom([],city)} }
+const P=gpPermitCtx; gpPermitCtx=async function(force){ const c=await P(force); const r=gpReqEntry(gpPermitCity()); if(r&&(force||!c._co||c._coCity!==r.key)){ c._co=await coLoad(r.key); c._coCity=r.key; } return c; };
+const G=gpChecklistHtml; gpChecklistHtml=function(city,ctx){ const h=G(city,ctx), r=gpReqEntry(city); if(!r) return h;
+  const jo=parse(((String((ctx.job||{}).notes||'')).match(PCHK_RE)||[])[1]), co=(ctx._coCity===r.key&&ctx._co)||{}, d=document.createElement('div'); d.innerHTML=h;
+  const ul=d.querySelector('ul.pc-list:not(.pc-flags)'); if(!ul) return h; const lis=ul.querySelectorAll(':scope > li');
+  r.list.forEach((it,i)=>{ const li=lis[i]; if(!li||li.classList.contains('pc-cond')) return; const k=key(it.item), cp=comp(it.item), auto=li.classList.contains('pc-ok'), man=cp?co[k]:jo[k], done=man===undefined?auto:man, tag=li.querySelector('.pc-tag');
+    li.className=(done?'pc-ok':'pc-missing')+' pc-tap'; li.setAttribute('role','checkbox'); li.setAttribute('aria-checked',done); li.tabIndex=0;
+    li.setAttribute('onclick',"event.stopPropagation();gpChkTap(this,'"+k+"',"+cp+","+done+")"); li.setAttribute('onkeydown',"if(event.key===' '||event.key==='Enter'){event.preventDefault();this.click()}");
+    tag.innerHTML='<span class="pc-box">'+(done?'✓':'')+'</span>'+(done?(auto&&man===undefined?'On file <i class="pc-auto">auto</i>':'Done'):'Needed');
+    if(cp){ const s=document.createElement('span'); s.className='pc-scope'; s.textContent='Company · '+(done&&man!==undefined?'all ':'applies to all ')+r.key+' jobs'; li.querySelector('.pc-txt').appendChild(s); } });
+  const n=document.createElement('div'); n.className='pc-hint'; n.textContent=ctx.jobId?'Tap an item to mark it done (green); tap again to un-check. Syncs with the dashboard job file.':'Open from a dashboard job to check items off.'; ul.before(n);
+  return d.innerHTML; };
+window.gpChkTap=async function(li,k,cp,done){ const ctx=window._gpPermitCtx||{}, id=ctx.jobId, r=gpReqEntry(gpPermitCity()); if(!id||!garageSb||!r){ alert('Open this from a dashboard job to check items off.'); return; }
+  li.style.opacity=.6; let raw='';
+  try{ const {data}=await garageSb.from('jobs').select('notes').eq('id',id).maybeSingle(); raw=String((data&&data.notes)||(ctx.job||{}).notes||''); }catch(e){ raw=String((ctx.job||{}).notes||''); }
+  let notes;
+  if(cp){ const o=await coLoad(r.key); o[k]=!done; const ts=Date.now(), c=nc(r.key); try{localStorage.setItem('agb_permitco_'+c,JSON.stringify({ts,o}))}catch(e){}
+    const st=raw.replace(PCO_RE,(m,cc)=>nc(decodeURIComponent(cc))===c?'':m).replace(/\s+$/,''); notes=(st?st+'\n\n':'')+'[AGB-PERMITCO:'+encodeURIComponent(r.key)+'|'+ts+'|'+ser(o)+']'; ctx._co=o; }
+  else{ const m=raw.match(PCHK_RE), o=parse(m&&m[1]); o[k]=!done; const b=raw.replace(PCHK_RE,'').replace(/\s+$/,''), s=ser(o); notes=s?(b?b+'\n\n':'')+'[AGB-PERMITCHK:'+s+']':b; }
+  const {error}=await garageSb.from('jobs').update({notes}).eq('id',id); li.style.opacity='';
+  if(error){ alert('Could not save: '+error.message); return; }
+  ctx.job=Object.assign(ctx.job||{},{notes}); if(window._gpJob) window._gpJob.notes=notes;
+  const box=document.getElementById('permitChecklist'); if(box) box._h=''; gpRenderChecklist(false); };
+})();
+</script>
+<style>
+#permitChecklist li.pc-tap{cursor:pointer;min-height:34px;align-items:center;padding:5px 4px;border-radius:6px;-webkit-tap-highlight-color:transparent}
+#permitChecklist li.pc-tap:hover{background:#eef2f7}#permitChecklist li.pc-ok.pc-tap{background:#f0fdf4}
+#permitChecklist .pc-tap .pc-tag{display:inline-flex;align-items:center;gap:5px;min-width:80px;padding:3px 8px}
+#permitChecklist .pc-ok .pc-tag{background:#dcfce7;color:#166534}#permitChecklist .pc-ok .pc-txt{color:#166534}
+#permitChecklist .pc-missing .pc-tag{background:#fee2e2;color:#b91c1c}#permitChecklist .pc-missing .pc-txt{color:#b91c1c}
+#permitChecklist .pc-box{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border:2px solid currentColor;border-radius:4px;font-size:11px;line-height:1;flex:0 0 auto}
+#permitChecklist .pc-ok .pc-box{background:#16a34a;border-color:#16a34a;color:#fff}
+#permitChecklist .pc-auto{font-style:normal;font-weight:700;font-size:9px;background:#fff;color:#15803d;border:1px solid #86efac;border-radius:6px;padding:0 4px}
+#permitChecklist .pc-scope{display:block;font-size:11px;color:#64748b;margin-top:2px}#permitChecklist .pc-ok .pc-scope{color:#15803d}
+#permitChecklist .pc-hint{font-size:11px;color:#64748b;margin:2px 0 4px}
+</style>
+<script>
+/* same tappable checklist inside the Permit Application window */
+(function(){ const O=gpPermitOpen; window.gpChkModal=async function(){ const m=document.querySelector('#permitModal > div'); if(!m) return; let x=document.getElementById('permitChecklistM');
+  if(!x){ x=document.createElement('div'); x.id='permitChecklistM'; m.insertBefore(x,m.lastElementChild); } const ctx=await gpPermitCtx(false); x.innerHTML=gpChecklistHtml(gpPermitCity(),ctx); };
+  gpPermitOpen=async function(){ const r=await O.apply(this,arguments); try{ await gpChkModal(); }catch(e){} return r; };
+  const T=window.gpChkTap; window.gpChkTap=async function(){ await T.apply(this,arguments); try{ if(document.getElementById('permitChecklistM')) await gpChkModal(); }catch(e){} }; })();
+</script>
+<style>
+#permitChecklistM{margin:0 0 8px;border:1px solid #cbd5e1;border-radius:8px;padding:8px 10px;background:#f8fafc;font:12px/1.35 system-ui,sans-serif;color:#111;overflow-wrap:anywhere}
+#permitChecklistM .pc-head{font-weight:800;margin-bottom:4px}
+#permitChecklistM .pc-none{color:#64748b;font-style:italic}
+#permitChecklistM .pc-list{list-style:none;margin:0;padding:0}
+#permitChecklistM li{display:flex;gap:6px;align-items:flex-start;padding:3px 0;border-top:1px solid #e2e8f0}
+#permitChecklistM li:first-child{border-top:0}
+#permitChecklistM .pc-tag{flex:0 0 auto;font-size:10px;font-weight:800;padding:1px 6px;border-radius:8px;max-width:42%;white-space:normal;overflow-wrap:anywhere}
+#permitChecklistM .pc-txt{flex:1 1 auto;min-width:0}
+#permitChecklistM small{color:#64748b}
+#permitChecklistM .pc-ok .pc-tag{background:#dcfce7;color:#166534}
+#permitChecklistM .pc-ok .pc-txt{color:#166534}
+#permitChecklistM .pc-missing .pc-tag{background:#fee2e2;color:#b91c1c}
+#permitChecklistM .pc-missing .pc-txt{color:#b91c1c}
+#permitChecklistM .pc-na .pc-tag{background:#e2e8f0;color:#334155}
+#permitChecklistM .pc-cond{color:#9ca3af}
+#permitChecklistM .pc-cond .pc-tag{background:#f1f5f9;color:#9ca3af;font-style:italic}
+#permitChecklistM .pc-flags{margin-top:6px;border-top:1px solid #cbd5e1;padding-top:4px}
+#permitChecklistM .pc-note{margin-top:4px;color:#64748b;font-size:11px}
+#permitChecklistM li.pc-tap{cursor:pointer;min-height:34px;align-items:center;padding:5px 4px;border-radius:6px;-webkit-tap-highlight-color:transparent}
+#permitChecklistM li.pc-tap:hover{background:#eef2f7}
+#permitChecklistM li.pc-ok.pc-tap{background:#f0fdf4}
+#permitChecklistM .pc-tap .pc-tag{display:inline-flex;align-items:center;gap:5px;min-width:80px;padding:3px 8px}
+#permitChecklistM .pc-ok .pc-tag{background:#dcfce7;color:#166534}
+#permitChecklistM .pc-ok .pc-txt{color:#166534}
+#permitChecklistM .pc-missing .pc-tag{background:#fee2e2;color:#b91c1c}
+#permitChecklistM .pc-missing .pc-txt{color:#b91c1c}
+#permitChecklistM .pc-box{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border:2px solid currentColor;border-radius:4px;font-size:11px;line-height:1;flex:0 0 auto}
+#permitChecklistM .pc-ok .pc-box{background:#16a34a;border-color:#16a34a;color:#fff}
+#permitChecklistM .pc-auto{font-style:normal;font-weight:700;font-size:9px;background:#fff;color:#15803d;border:1px solid #86efac;border-radius:6px;padding:0 4px}
+#permitChecklistM .pc-scope{display:block;font-size:11px;color:#64748b;margin-top:2px}
+#permitChecklistM .pc-ok .pc-scope{color:#15803d}
+#permitChecklistM .pc-hint{font-size:11px;color:#64748b;margin:2px 0 4px}
+#permitChecklistM{max-height:45vh;overflow:auto;margin:8px 0;text-align:left}
+</style>
 </body>
 </html>

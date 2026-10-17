@@ -3591,7 +3591,8 @@ pcChecklistHtml=function(j,docs){const h=_pcChkOrig(j,docs),I=pcInfo(j);if(!I.r)
   const l=d.querySelector('.pc-list');if(l){const n=document.createElement('div');n.className='pc-hint';n.textContent=j._unsaved?'Save the job first to check items off.':'Tap an item to mark it done (green); tap again to un-check.';l.before(n)}
   return d.innerHTML};
 async function pchkTap(li,id,k,comp,done){if(!id){alert('Save the job first, then check items off.');return}
-  const j=jobs.find(x=>x.id===id);if(!j)return;const city=pcInfo(j).r.key,raw=String(j.notes||'');let notes;
+  const j=jobs.find(x=>x.id===id);if(!j)return;const city=pcInfo(j).r.key;try{const f=await sb.from('jobs').select('notes').eq('id',id).maybeSingle();if(f&&f.data&&typeof f.data.notes==='string')j.notes=f.data.notes}catch(e){} /* fresh notes: Garage Plans may have changed them */
+  const raw=String(j.notes||'');let notes;
   if(comp){const o=pchkCity(city);o[k]=!done;const ts=Date.now(),c=pcNormCity(city);try{localStorage.setItem('agb_permitco_'+c,JSON.stringify({ts,o}))}catch(e){}
     const strip=raw.replace(PCO_RE,(m,cc)=>pcNormCity(decodeURIComponent(cc))===c?'':m);notes=(strip.replace(/\s+$/,'')?strip.replace(/\s+$/,'')+'\n\n':'')+'[AGB-PERMITCO:'+encodeURIComponent(city)+'|'+ts+'|'+pchkSer(o)+']'}
   else{const o=pchkJob(j);o[k]=!done;const b=raw.replace(PCHK_RE,'').replace(/\s+$/,''),s=pchkSer(o);notes=s?(b?b+'\n\n':'')+'[AGB-PERMITCHK:'+s+']':b}

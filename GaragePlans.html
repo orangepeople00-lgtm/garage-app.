@@ -4120,7 +4120,7 @@ function gpPermitLib(){ if(window.PDFLib) return Promise.resolve(window.PDFLib);
 async function gpPermitMap(){ if(_gpPermitMap) return _gpPermitMap; const r=await fetch('permit-forms/map.json?v='+Date.now()); _gpPermitMap=await r.json(); return _gpPermitMap; }
 function gpPermitEntry(map,city){ const k=Object.keys(map).find(x=>x.toLowerCase()===String(city||'').toLowerCase()); return k?{key:k,...map[k]}:null; }
 function gpPermitSave(bytes,name){ const b=new Blob([bytes],{type:'application/pdf'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=name; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},4000); }
-function gpPermitFile(e,suffix){ const d=gpPermitData(); return (e.key.replace(/\s+/g,'-')+'-'+suffix+(d.customer?'-'+d.customer.replace(/[^A-Za-z0-9]+/g,'-'):'')+'.pdf'); }
+function gpPermitFile(e,suffix){ const d=gpPermitData(); return (String(e?e.key:(gpPermitCity()||'Permit')).replace(/\s+/g,'-')+'-'+suffix+(d.customer?'-'+d.customer.replace(/[^A-Za-z0-9]+/g,'-'):'')+'.pdf'); }
 async function gpPermitBuildTemplate(e){
   const L=await gpPermitLib(), d=gpPermitData();
   const bytes=await (await fetch(e.template+'?v='+Date.now())).arrayBuffer();
@@ -4155,13 +4155,13 @@ async function gpPermitOpen(){
   let h='<b>Permit Application — '+_pe(e?e.key:city)+'</b>';
   if(e&&e.template){ h+='<p style="margin:6px 0">'+_pe(e.form_name)+'</p><button type="button" style="'+B+'" onclick="gpPermitGo(\'tpl\')">Download prefilled form (editable PDF)</button>'; }
   else if(e&&e.info_sheet){ h+='<p style="margin:6px 0">'+_pe(e.key)+' takes this permit online: '+_pe(e.form_name)+'</p><a href="'+_pe(e.portal_url)+'" target="_blank" rel="noopener" style="'+B+';text-align:center;text-decoration:none">Open city permit portal</a><button type="button" style="'+B+';background:#fff;color:#1d4ed8" onclick="gpPermitGo(\'info\')">Download job info sheet (PDF to copy into portal)</button>'; }
-  else { h+='<p style="margin:6px 0">Permit form not available for '+_pe(e?e.key:city)+' yet.</p>'; const u=e&&(e.pdf_url||e.info_url||e.checklist_url); if(u) h+='<p><a href="'+_pe(u)+'" target="_blank" rel="noopener">Official permit page</a></p>'; }
+  else { h+='<p style="margin:6px 0"><b>No form on file</b> for '+_pe(e?e.key:city)+'. Download the job info sheet below and use the city\'s own form.</p><button type="button" style="'+B+';background:#fff;color:#1d4ed8" onclick="gpPermitGo(\'info\')">Download job info sheet (PDF)</button>'; const u=e&&(e.pdf_url||e.info_url||e.checklist_url); if(u) h+='<p><a href="'+_pe(u)+'" target="_blank" rel="noopener">Official permit page</a></p>'; }
   if(e&&e.checklist_url&&(e.template||e.info_sheet)) h+='<p style="font-size:12px;margin:4px 0"><a href="'+_pe(e.checklist_url)+'" target="_blank" rel="noopener">City garage checklist / requirements</a></p>';
   if(e&&e.submittal) h+='<p style="font-size:12px;color:#555;margin:4px 0">Submit: '+_pe(e.submittal)+'. Contractor license # is left blank — fill in before submitting.</p>';
   gpPermitModal(h); window._gpPermitEntry=e;
 }
 async function gpPermitGo(kind){ const e=window._gpPermitEntry; try{ setStatus('Building permit PDF…',true); const bytes=kind==='tpl'?await gpPermitBuildTemplate(e):await gpPermitBuildInfo(e); gpPermitSave(bytes,gpPermitFile(e,kind==='tpl'?'permit-application':'permit-info')); setStatus('Permit PDF downloaded — fields stay editable.',true); }catch(err){ console.error(err); alert('Could not build permit PDF: '+err.message); } }
-document.addEventListener('DOMContentLoaded',()=>{ gpPermitShowBtn(); try{ garageSb&&garageSb.auth.onAuthStateChange(()=>gpPermitShowBtn()); }catch(e){} });
+document.addEventListener('DOMContentLoaded',()=>{ if(new URLSearchParams(location.search).get('permit')==='1') setTimeout(async()=>{ const b=document.getElementById('permitAppBtn'); if(b) b.style.display='block'; try{ b&&b.scrollIntoView({block:'center'}); await gpRenderChecklist(true); gpPermitOpen(); }catch(e){} },2500); gpPermitShowBtn(); try{ garageSb&&garageSb.auth.onAuthStateChange(()=>gpPermitShowBtn()); }catch(e){} });
 </script>
 <script>
 // 2026-10-17: Per-city permit checklist next to Permit Application button + attachments appended to permit PDF.

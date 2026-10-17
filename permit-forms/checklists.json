@@ -1,0 +1,334 @@
+{
+ "Evanston": [
+  {
+   "item": "Online building permit application (Citizens Portal)",
+   "conditional": null,
+   "page": "checklist"
+  },
+  {
+   "item": "Electrical Worksheet",
+   "conditional": null,
+   "page": "checklist"
+  },
+  {
+   "item": "Mechanical/Plumbing worksheets",
+   "conditional": "mechanical or plumbing in scope",
+   "page": "checklist"
+  },
+  {
+   "item": "Garage Application Form with completed site plan (or construction drawings)",
+   "conditional": null,
+   "page": "form p1-2"
+  },
+  {
+   "item": "Architect-designed construction drawings",
+   "conditional": "multi-story, habitable space or non-typical design",
+   "page": "checklist"
+  },
+  {
+   "item": "Plat of survey (current; garage location, setbacks, electric service)",
+   "conditional": null,
+   "page": "form p2"
+  },
+  {
+   "item": "Signed contract with construction cost",
+   "conditional": null,
+   "page": "checklist"
+  },
+  {
+   "item": "Tree Preservation Plan and Drawing",
+   "conditional": null,
+   "page": "checklist"
+  },
+  {
+   "item": "Finish grade set by City Civil Engineer before excavation",
+   "conditional": "unimproved alley",
+   "page": "form p2"
+  },
+  {
+   "item": "Right of Way (ROW) permit",
+   "conditional": "new/replacement apron or sidewalk in ROW",
+   "page": "checklist"
+  },
+  {
+   "item": "Separate Demolition permit application + Cook County demolition permit copy + cubic footage",
+   "conditional": "demolition",
+   "page": "form p2"
+  }
+ ],
+ "Zion": [
+  {
+   "item": "Application for Building Permit (signed)",
+   "conditional": null,
+   "page": "app p1"
+  },
+  {
+   "item": "Electrical permit application",
+   "conditional": null,
+   "page": "req p4"
+  },
+  {
+   "item": "Plat of survey x2 (garage, driveway dims, gas line)",
+   "conditional": null,
+   "page": "req p4"
+  },
+  {
+   "item": "Construction drawings x2 incl. slab detail",
+   "conditional": null,
+   "page": "req p4"
+  },
+  {
+   "item": "Driveway contractor + driveway proposal",
+   "conditional": null,
+   "page": "req p4"
+  },
+  {
+   "item": "Contractor registration + insurance with City of Zion",
+   "conditional": "contractor",
+   "page": "req p4"
+  },
+  {
+   "item": "Homeowner liability insurance copy ($300,000 min)",
+   "conditional": "homeowner builds",
+   "page": "req p4"
+  },
+  {
+   "item": "Demolition section filled on application",
+   "conditional": "demolition",
+   "page": "app p1"
+  }
+ ],
+ "Calumet City": [
+  {
+   "item": "Building Permit Application (signed, both sides)",
+   "conditional": null,
+   "page": "p1"
+  },
+  {
+   "item": "Plans – one set to Building & Zoning, one set to B&F Construction/Farnsworth",
+   "conditional": null,
+   "page": "p1"
+  },
+  {
+   "item": "Plat of survey (garage vs. property lines/main building)",
+   "conditional": null,
+   "page": "p2"
+  },
+  {
+   "item": "Grade setting from city engineer",
+   "conditional": null,
+   "page": "p2"
+  },
+  {
+   "item": "Subcontractor list (all registered with city)",
+   "conditional": null,
+   "page": "p2"
+  },
+  {
+   "item": "Trade permit applications (except painting/floor sanding)",
+   "conditional": null,
+   "page": "p2"
+  },
+  {
+   "item": "Homeowner ID showing permit address",
+   "conditional": "homeowner permit",
+   "page": "p2"
+  }
+ ],
+ "Cicero": [
+  {
+   "item": "Completed permit application with estimated cost",
+   "conditional": null,
+   "page": "p1"
+  },
+  {
+   "item": "Plat of survey x2",
+   "conditional": null,
+   "page": "p1"
+  },
+  {
+   "item": "Detailed framing plan x2 / drawings with materials",
+   "conditional": null,
+   "page": "p1"
+  },
+  {
+   "item": "Licensed/bonded/insured contractor with Cicero",
+   "conditional": "contractor builds",
+   "page": "p1"
+  },
+  {
+   "item": "Licensed & bonded Cicero electrical contractor",
+   "conditional": null,
+   "page": "p1"
+  },
+  {
+   "item": "Stake out garage location",
+   "conditional": null,
+   "page": "p1"
+  },
+  {
+   "item": "HOA letter of permission",
+   "conditional": "HOA member",
+   "page": "p1"
+  },
+  {
+   "item": "Cook County demolition permit + rodent control inspection application",
+   "conditional": "replacing existing garage",
+   "page": "p1"
+  },
+  {
+   "item": "Curb Cut Request",
+   "conditional": "corner lot without curb",
+   "page": "p2"
+  }
+ ],
+ "Elmwood Park": [
+  {
+   "item": "Building Permit Application for Sundry Construction (signed)",
+   "conditional": null,
+   "page": "p1"
+  },
+  {
+   "item": "Plans",
+   "conditional": null,
+   "page": "p1"
+  },
+  {
+   "item": "Plat of survey",
+   "conditional": null,
+   "page": "p1"
+  },
+  {
+   "item": "Contractor info + Village license/insurance for each contractor",
+   "conditional": null,
+   "page": "p1"
+  },
+  {
+   "item": "Separate permits by each contractor",
+   "conditional": null,
+   "page": "p1"
+  },
+  {
+   "item": "'Home Repair: Know Your Consumer Rights' copy to homeowner",
+   "conditional": null,
+   "page": "p1"
+  },
+  {
+   "item": "Demolition contractor / dumpster company info",
+   "conditional": "demolition / dumpster",
+   "page": "p1"
+  }
+ ],
+ "Evergreen Park": [
+  {
+   "item": "Garage permit application (filled by GC, signed)",
+   "conditional": null,
+   "page": "p4"
+  },
+  {
+   "item": "Two sets of drawings",
+   "conditional": null,
+   "page": "p1"
+  },
+  {
+   "item": "Plat of survey with garage highlighted",
+   "conditional": null,
+   "page": "p1"
+  },
+  {
+   "item": "Electrical permit application",
+   "conditional": null,
+   "page": "p1"
+  },
+  {
+   "item": "PIN on application",
+   "conditional": null,
+   "page": "p1"
+  },
+  {
+   "item": "Village-licensed contractors listed",
+   "conditional": null,
+   "page": "p1"
+  },
+  {
+   "item": "$500 permit bond",
+   "conditional": null,
+   "page": "p1"
+  },
+  {
+   "item": "Cook County EPA demolition permit",
+   "conditional": "demolition",
+   "page": "p1"
+  },
+  {
+   "item": "Rodent Control Certification",
+   "conditional": "demolition",
+   "page": "p1"
+  }
+ ],
+ "Arlington Heights": [
+  {
+   "item": "Online permit application – 'Garage – Detached Residential'",
+   "conditional": null,
+   "page": "p1"
+  },
+  {
+   "item": "Contractor's Proposal with cost",
+   "conditional": null,
+   "page": "p2"
+  },
+  {
+   "item": "Dimensioned/scaled construction plans (single file)",
+   "conditional": null,
+   "page": "p2"
+  },
+  {
+   "item": "Plat of survey",
+   "conditional": null,
+   "page": "p2"
+  },
+  {
+   "item": "Signed Construction Fence/Silt Fence Acknowledgment",
+   "conditional": null,
+   "page": "p2-4"
+  },
+  {
+   "item": "Contractor + owner portal accounts and contractor licenses",
+   "conditional": null,
+   "page": "p1"
+  }
+ ],
+ "Oak Park": [],
+ "Skokie": [
+  {
+   "item": "Online permit application (skokiepermits.com)",
+   "conditional": null,
+   "page": "p1"
+  },
+  {
+   "item": "Current plat of survey (≤18 months)",
+   "conditional": null,
+   "page": "p1"
+  },
+  {
+   "item": "Site plan (overhead electric lines, setbacks)",
+   "conditional": null,
+   "page": "p1"
+  },
+  {
+   "item": "Construction drawings: floor plan, wall section, elevations, inspection list",
+   "conditional": null,
+   "page": "p1"
+  },
+  {
+   "item": "Zoning Information Worksheet",
+   "conditional": null,
+   "page": "p1"
+  },
+  {
+   "item": "Drainage plan (gutters/dry well)",
+   "conditional": "floor area > 400 sq ft",
+   "page": "p1"
+  }
+ ]
+}

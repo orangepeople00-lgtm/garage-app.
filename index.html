@@ -3465,10 +3465,21 @@ async function pcPermitClick(ctxId){ await pcLoad(); const j=ctxId==='form'?pcFo
   if(I.kind==='none'){ if(note) note.textContent='Permit application link not found for '+(I.city||'this job — no city entered')+'.'; return; }
   if(I.kind==='portal'){ window.open(I.m.v.portal_url,'_blank','noopener'); return; }
   if(I.kind==='link'){ window.open(I.m.v.link_url||I.m.v.pdf_url||I.m.v.info_url,'_blank','noopener'); if(note) note.textContent='Opened the official '+I.m.key+' permit '+((I.m.v.link_type||(I.m.v.pdf_url?'pdf':'page'))==='pdf'?'form (PDF) — not prefilled yet.':'page — application is listed there; not prefilled yet.'); return; }
-  try{ if(note) note.textContent='Filling the '+I.m.key+' permit form…'; const res=await pcBuildForm(j,I); pcSave(res.bytes,(I.m.key+'-permit-application'+(j.customer?'-'+j.customer:'')).replace(/[^A-Za-z0-9]+/g,'-')+'.pdf');
-    if(note) note.innerHTML='Downloaded the '+esc(I.m.key)+' form (fields stay editable).'+(res.notes.length?'<br><span class="pc-warn">'+res.notes.map(esc).join('<br>')+'</span>':''); }
+  try{ if(note) note.textContent='Filling the '+I.m.key+' permit form…'; const res=await pcBuildForm(j,I); const how=await pcSave(res.bytes,(I.m.key+'-permit-application'+(j.customer?'-'+j.customer:'')).replace(/[^A-Za-z0-9]+/g,'-')+'.pdf');
+    if(note) note.innerHTML=(how==='shared'?'Shared':'Downloaded')+' the '+esc(I.m.key)+' form — fillable PDF, every field stays editable.'+(agbIsIOS()?'<br><span class="muted small">iPhone: open it from Files (or Share → Markup) to type in the fields; Safari\'s quick preview can\'t edit.</span>':'')+(res.notes.length?'<br><span class="pc-warn">'+res.notes.map(esc).join('<br>')+'</span>':''); }
   catch(e){ console.error(e); if(note) note.textContent='Could not build the permit form: '+(e.message||e); } }
-function pcSave(bytes,name){ const b=new Blob([bytes],{type:'application/pdf'}),a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=name; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000); }
+function agbKeepEditable(L,pdf,form,font){ /* output must stay a fillable PDF: no read-only fields, viewers (incl. iPhone Files/Markup) redraw values */
+  form.getFields().forEach(f=>{ try{ f.disableReadOnly(); }catch(e){} });
+  try{ form.acroForm.dict.set(L.PDFName.of('NeedAppearances'),L.PDFBool.True); }catch(e){}
+  try{ form.updateFieldAppearances(font); }catch(e){ console.warn('appearances',e); } }
+async function agbSavePdf(pdf){ try{ return await pdf.save(); }catch(e){ console.warn('save w/o appearance refresh',e); return pdf.save({updateFieldAppearances:false}); } }
+function agbFillExisting(L,form,fill,D){ (fill||[]).forEach(f=>{ const v=D[f.src]; if(!v) return; try{ const fl=form.getField(f.name); if(fl instanceof L.PDFTextField){ const mx=fl.getMaxLength(); fl.setText(mx?String(v).slice(0,mx):String(v)); } }catch(e){ console.warn('fill',f.name,e.message); } }); }
+function agbIsIOS(){ return /iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1); }
+/* iPhone: share sheet (Save to Files / Markup = typeable). Elsewhere (or if sharing is refused): normal download with a filename. Never opens a blob tab (iOS blob viewer can't type into fields). */
+async function agbDeliverPdf(bytes,name){ const b=new Blob([bytes],{type:'application/pdf'});
+  if(agbIsIOS()&&navigator.canShare){ try{ const f=new File([b],name,{type:'application/pdf'}); if(navigator.canShare({files:[f]})){ await navigator.share({files:[f],title:name}); return 'shared'; } }catch(e){ if(e&&e.name==='AbortError') return 'cancelled'; } }
+  const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=name; a.rel='noopener'; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},60000); return 'downloaded'; }
+function pcSave(bytes,name){ return agbDeliverPdf(bytes,name); }
 function pcLib(){ if(window.PDFLib) return Promise.resolve(window.PDFLib); return new Promise((ok,no)=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js';s.onload=()=>ok(window.PDFLib);s.onerror=()=>no(new Error('pdf-lib failed to load'));document.head.appendChild(s)}); }
 function pcDoor(v){ const m=String(v||'').match(/(\d+(?:\.\d+)?)\s*(?:'|ft|feet)?\s*[x×X]\s*(\d+(?:\.\d+)?)/); return m?{w:m[1],h:m[2]}:null; }
 function pcFindKey(o,key,d){ if(!o||typeof o!=='object'||d>6) return undefined; if(key in o) return o[key]; for(const k in o){ const r=pcFindKey(o[k],key,(d||0)+1); if(r!==undefined) return r; } }
@@ -3489,12 +3500,12 @@ async function pcBuildForm(j,I){ const L=await pcLib(), S=await pcSources(j), no
   const D={customer:j.customer||'',address:j.address||'',city,zip,addressCity:[j.address,[city,'IL'].filter(Boolean).join(', ')+(zip?' '+zip:'')].filter(Boolean).join(', '),phone:j.phone||S.cd.phone||'',pin:'',
     width:w,depth:d,sqft:(w&&d)?String(Math.round(w*d)):'',doorW:S.door?S.door.w:'',doorH:S.door?S.door.h:'',price:S.price?S.price.toLocaleString('en-US',{maximumFractionDigits:0}):'',
     description:(w&&d)?("New detached frame garage "+w+"' x "+d+"' ("+Math.round(w*d)+' sq ft)'):'',contractor:'Absolute Garage Builders',contractorStreet:'3050 W. Irving Park Rd.',contractorCity:'Chicago',contractorState:'IL',contractorZip:'60618',contractorPhone:'(773) 583-8800',
-    detachedWord:'Detached',X:'X',blank:'',ownerState:city?'IL':'',ownerEmail:/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(email)?email:''};
+    detachedWord:'Detached',X:'X',blank:'',ownerState:city?'IL':'',cityStateZip:city?(city+', IL'+(zip?' '+zip:'')):'',contractorCSZ:'Chicago, IL 60618',ownerEmail:/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(email)?email:''};
   if(!S.door) notes.push('Door size blank — fill in'); else notes.push('Door size from '+S.doorSrc);
   if(!S.price) notes.push('Sold price not found — value/cost left blank'); if(!D.phone) notes.push('Owner phone blank — fill in'); notes.push('GC license # left blank');
-  const pdf=await L.PDFDocument.load(await (await fetch(I.m.v.template+'?v='+Date.now(),{cache:'no-store'})).arrayBuffer()); const form=pdf.getForm(), font=await pdf.embedFont(L.StandardFonts.Helvetica), pages=pdf.getPages(), base=pdf.getPageCount();
-  (I.m.v.fields||[]).forEach(f=>{ const pg=pages[f.page||0], H=pg.getHeight(), [x0,y0,x1,y1]=f.rect; const tf=form.createTextField(f.name); tf.addToPage(pg,{x:x0,y:H-y1,width:x1-x0,height:y1-y0,borderWidth:0,backgroundColor:L.rgb(0.9,0.95,1),font}); tf.setFontSize(f.size||9); const v=D[f.src]; if(v) tf.setText(String(v)); });
-  form.updateFieldAppearances(font);
+  const pdf=await L.PDFDocument.load(await (await fetch(I.m.v.template+'?v='+Date.now(),{cache:'no-store'})).arrayBuffer(),{ignoreEncryption:true}); const form=pdf.getForm(), font=await pdf.embedFont(L.StandardFonts.Helvetica), pages=pdf.getPages(), base=pdf.getPageCount();
+  (I.m.v.fields||[]).forEach(f=>{ try{ const pg=pages[f.page||0]; if(!pg) return; const H=pg.getHeight(), bx=pg.getMediaBox(), [x0,y0,x1,y1]=f.rect; const tf=form.createTextField(f.name); tf.addToPage(pg,{x:bx.x+x0,y:bx.y+H-y1,width:x1-x0,height:y1-y0,borderWidth:0.5,borderColor:L.rgb(0.55,0.7,0.9),backgroundColor:L.rgb(0.9,0.95,1),font}); tf.setFontSize(f.size||9); const v=D[f.src]; if(v) tf.setText(String(v)); }catch(e){ console.warn('field',f.name,e.message); } });
+  agbFillExisting(L,form,I.m.v.fill,D); agbKeepEditable(L,pdf,form,font);
   // attachments: site plan saved to the job (Drawing App) + plat of survey / demolition sheet / other uploads
   const att=[], miss=[]; const site=S.docs.find(x=>x.document_type==='Site Plan Drawing'&&/^siteplan_/.test(x.file_name||''));
   const files=[...(site?[site]:[]),...S.docs.filter(x=>/plat|survey/i.test((x.document_type||'')+' '+(x.file_name||''))),...(j.demolition_required?S.docs.filter(x=>x.document_type==='Demolition Sheet'):[]),...S.docs.filter(x=>x.document_type==='Other')];
@@ -3507,7 +3518,7 @@ async function pcBuildForm(j,I){ const L=await pcLib(), S=await pcSources(j), no
       att.push(lab); }catch(e){ miss.push('NOT ATTACHED (download failed): '+(doc.file_name||'')); } }
   const fb=await pdf.embedFont(L.StandardFonts.HelveticaBold), cp=pdf.insertPage(base,[612,792]); cp.drawText('Attachments',{x:40,y:740,size:18,font:fb}); let y=712;
   [...(att.length?att.map(x=>'Attached: '+x):['No attachments on file for this job.']),'',...miss,...notes.filter(n=>/blank|not found/.test(n)).map(n=>'MISSING: '+n)].forEach(t=>{ cp.drawText(String(t).slice(0,105),{x:40,y,size:10,font,color:/^(MISSING|NOT)/.test(t)?L.rgb(.75,.1,.1):L.rgb(0,0,0)}); y-=16; });
-  return {bytes:await pdf.save(),notes}; }
+  return {bytes:await agbSavePdf(pdf),notes}; }
 function pcChecklistHtml(j,docs){ const I=pcInfo(j), list=I.r&&I.r.v&&I.r.v.length?I.r.v:null;
   let siteLocal=false; try{ const d=j.id&&JSON.parse(localStorage.getItem('agb_drawing_job_'+j.id)||'null'); siteLocal=!!(d&&d.sheets&&d.sheets.siteplan&&(d.sheets.siteplan.objects||[]).length); }catch(e){}
   const has={plat:docs.some(x=>/plat|survey/i.test((x.document_type||'')+' '+(x.file_name||''))),site:siteLocal||docs.some(x=>x.document_type==='Site Plan Drawing'&&/^siteplan_/.test(x.file_name||'')),contract:docs.some(x=>x.document_type==='Contract'),plans:!!(j.id&&plansForJob(j).length)};

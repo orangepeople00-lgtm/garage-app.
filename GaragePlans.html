@@ -4120,17 +4120,29 @@ function gpPermitLib(){ if(window.PDFLib) return Promise.resolve(window.PDFLib);
 async function gpPermitMap(){ if(_gpPermitMap) return _gpPermitMap; const r=await fetch('permit-forms/map.json?v='+Date.now()); _gpPermitMap=await r.json(); return _gpPermitMap; }
 function gpNormCity(c){ return String(c||'').replace(/\u00a0/g,' ').replace(/\b\d{5}(-\d{4})?\b/g,' ').replace(/,?\s*\b(il|ill|illinois)\b\.?/ig,' ').replace(/^\s*(the\s+)?(village|city|town)\s+of\s+/i,'').replace(/[.,;]+/g,' ').replace(/\s+/g,' ').trim().toLowerCase(); }
 function gpPermitEntry(map,city){ const k=Object.keys(map).find(x=>gpNormCity(x)===gpNormCity(city)&&gpNormCity(city)); return k?{key:k,...map[k]}:null; }
-function gpPermitSave(bytes,name){ const b=new Blob([bytes],{type:'application/pdf'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=name; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},4000); }
+function agbKeepEditable(L,pdf,form,font){ /* output must stay a fillable PDF: no read-only fields, viewers (incl. iPhone Files/Markup) redraw values */
+  form.getFields().forEach(f=>{ try{ f.disableReadOnly(); }catch(e){} });
+  try{ form.acroForm.dict.set(L.PDFName.of('NeedAppearances'),L.PDFBool.True); }catch(e){}
+  try{ form.updateFieldAppearances(font); }catch(e){ console.warn('appearances',e); } }
+async function agbSavePdf(pdf){ try{ return await pdf.save(); }catch(e){ console.warn('save w/o appearance refresh',e); return pdf.save({updateFieldAppearances:false}); } }
+function agbFillExisting(L,form,fill,D){ (fill||[]).forEach(f=>{ const v=D[f.src]; if(!v) return; try{ const fl=form.getField(f.name); if(fl instanceof L.PDFTextField){ const mx=fl.getMaxLength(); fl.setText(mx?String(v).slice(0,mx):String(v)); } }catch(e){ console.warn('fill',f.name,e.message); } }); }
+function agbIsIOS(){ return /iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1); }
+/* iPhone: share sheet (Save to Files / Markup = typeable). Elsewhere (or if sharing is refused): normal download with a filename. Never opens a blob tab (iOS blob viewer can't type into fields). */
+async function agbDeliverPdf(bytes,name){ const b=new Blob([bytes],{type:'application/pdf'});
+  if(agbIsIOS()&&navigator.canShare){ try{ const f=new File([b],name,{type:'application/pdf'}); if(navigator.canShare({files:[f]})){ await navigator.share({files:[f],title:name}); return 'shared'; } }catch(e){ if(e&&e.name==='AbortError') return 'cancelled'; } }
+  const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=name; a.rel='noopener'; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},60000); return 'downloaded'; }
+function gpPermitSave(bytes,name){ return agbDeliverPdf(bytes,name); }
 function gpPermitFile(e,suffix){ const d=gpPermitData(); return (String(e?e.key:(gpPermitCity()||'Permit')).replace(/\s+/g,'-')+'-'+suffix+(d.customer?'-'+d.customer.replace(/[^A-Za-z0-9]+/g,'-'):'')+'.pdf'); }
 async function gpPermitBuildTemplate(e){
   const L=await gpPermitLib(), d=gpPermitData();
   const bytes=await (await fetch(e.template+'?v='+Date.now())).arrayBuffer();
-  const pdf=await L.PDFDocument.load(bytes), form=pdf.getForm(), font=await pdf.embedFont(L.StandardFonts.Helvetica), pages=pdf.getPages();
-  (e.fields||[]).forEach(f=>{ const pg=pages[f.page||0]; const H=pg.getHeight(); const [x0,y0,x1,y1]=f.rect;
+  const pdf=await L.PDFDocument.load(bytes,{ignoreEncryption:true}), form=pdf.getForm(), font=await pdf.embedFont(L.StandardFonts.Helvetica), pages=pdf.getPages();
+  d.ownerState=d.city?'IL':''; d.cityStateZip=d.city?(d.city+', IL'+(d.zip?' '+d.zip:'')):''; d.contractorCSZ=GP_PERMIT_CO.city+', '+GP_PERMIT_CO.state+' '+GP_PERMIT_CO.zip;
+  (e.fields||[]).forEach(f=>{ try{ const pg=pages[f.page||0]; if(!pg) return; const H=pg.getHeight(), bx=pg.getMediaBox(); const [x0,y0,x1,y1]=f.rect;
     const tf=form.createTextField(f.name);
-    tf.addToPage(pg,{x:x0,y:H-y1,width:x1-x0,height:y1-y0,borderWidth:0,backgroundColor:L.rgb(0.9,0.95,1),font}); tf.setFontSize(f.size||9); const v=d[f.src]; if(v) tf.setText(String(v)); });
-  form.updateFieldAppearances(font);
-  return pdf.save();
+    tf.addToPage(pg,{x:bx.x+x0,y:bx.y+H-y1,width:x1-x0,height:y1-y0,borderWidth:0.5,borderColor:L.rgb(0.55,0.7,0.9),backgroundColor:L.rgb(0.9,0.95,1),font}); tf.setFontSize(f.size||9); const v=d[f.src]; if(v) tf.setText(String(v)); }catch(err){ console.warn('field',f.name,err.message); } });
+  agbFillExisting(L,form,e.fill,d); agbKeepEditable(L,pdf,form,font);
+  return agbSavePdf(pdf);
 }
 async function gpPermitBuildInfo(e){
   const L=await gpPermitLib(), d=gpPermitData(), pdf=await L.PDFDocument.create(), pg=pdf.addPage([612,792]), form=pdf.getForm();
@@ -4144,7 +4156,7 @@ async function gpPermitBuildInfo(e){
     tf.addToPage(pg,{x:200,y:y,width:372,height:18,borderWidth:0.5,borderColor:L.rgb(0.6,0.6,0.6),backgroundColor:L.rgb(0.94,0.97,1),font:f}); tf.setFontSize(10); if(d[k]) tf.setText(String(d[k])); y-=28; });
   if(e&&e.form_name) pg.drawText(('Official form: '+e.form_name).slice(0,120),{x:40,y:y-6,size:8,font:f});
   if(e&&e.checklist_url) pg.drawText(('Checklist: '+e.checklist_url).slice(0,130),{x:40,y:y-18,size:7,font:f});
-  form.updateFieldAppearances(f); return pdf.save();
+  agbKeepEditable(L,pdf,form,f); return agbSavePdf(pdf);
 }
 function gpPermitModal(html){ let m=document.getElementById('permitModal'); if(!m){ m=document.createElement('div'); m.id='permitModal'; m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:99999;display:flex;align-items:center;justify-content:center;padding:14px'; m.onclick=ev=>{if(ev.target===m)m.remove();}; document.body.appendChild(m);} 
   m.innerHTML='<div style="background:#fff;color:#111;max-width:440px;width:100%;border-radius:12px;padding:16px 18px;font:14px/1.45 system-ui,sans-serif;box-shadow:0 10px 30px rgba(0,0,0,.3)">'+html+'<div style="text-align:right;margin-top:12px"><button type="button" onclick="document.getElementById(\'permitModal\').remove()" style="padding:7px 14px;border-radius:8px;border:1px solid #999;background:#f3f3f3">Close</button></div></div>'; }
@@ -4258,7 +4270,8 @@ async function gpAppendAttachments(bytes){
       else { miss.push('NOT ATTACHED (unsupported file type): '+lab); continue; }
       log.push(lab); }catch(e){ miss.push('NOT ATTACHED (download failed): '+(d.file_name||'')); } }
   if(log.length||miss.length) await gpAddCover(pdf,L,'Attachments',[...(log.length?log.map(x=>'Attached: '+x):['No attachments on file for this job.']),'',...miss],base);
-  return pdf.save();
+  try{ agbKeepEditable(L,pdf,pdf.getForm(),await pdf.embedFont(L.StandardFonts.Helvetica)); }catch(e){}
+  return agbSavePdf(pdf);
 }
 
 // --- door size + sold price sources (user rules 2026-10-17) ---

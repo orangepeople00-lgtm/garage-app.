@@ -330,5 +330,37 @@
    "conditional": "floor area > 400 sq ft",
    "page": "p1"
   }
+ ],
+ "Lansing": [
+  {
+   "item": "Online Building Permit Application (OpenGov portal) with project and property details",
+   "conditional": null,
+   "page": "applications"
+  },
+  {
+   "item": "Plans / supporting documents uploaded to portal (drawings reviewed by Building Dept)",
+   "conditional": null,
+   "page": "permits"
+  },
+  {
+   "item": "Contractor licensed and bonded with Village of Lansing (Contractors Application) or proof of State license",
+   "conditional": "contractor",
+   "page": "applications"
+  },
+  {
+   "item": "Proof of contractor liability insurance, workers comp and surety bond",
+   "conditional": "contractor",
+   "page": "permits"
+  },
+  {
+   "item": "All contractors listed on the permit licensed and bonded (subs included)",
+   "conditional": "contractor",
+   "page": "applications"
+  },
+  {
+   "item": "Permit fees paid online after approval",
+   "conditional": null,
+   "page": "applications"
+  }
  ]
 }

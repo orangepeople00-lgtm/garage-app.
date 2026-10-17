@@ -3457,13 +3457,14 @@ function pcFind(o,city){ const c=pcNormCity(city); if(!c) return null; const k=O
 /* city used for permits: the job's city field; if blank, a known city written after a comma in the address ("12 Main St, Evanston IL") */
 function pcCityOf(j){ const c=String(j.city||'').trim(); if(c) return c; const parts=String(j.address||'').split(','); for(let i=parts.length-1;i>0;i--){ const m=pcFind(_pcMap,parts[i])||pcFind(_pcReq,parts[i]); if(m) return m.key; } return ''; }
 function pcFormJob(){ const g=id=>(($(id)||{}).value||'').trim(); const id=g('f_id'); const base=id?(jobs.find(x=>x.id===id)||{}):{}; return {...base,id:id||'',customer:g('f_customer'),address:g('f_address'),city:g('f_city'),zip:g('f_zip'),phone:g('f_phone'),garage_size:g('f_garage_size'),price:g('f_price'),demolition_required:g('f_demolition_required')==='true',salesman_username:g('f_salesman_username'),_unsaved:!id}; }
-function pcInfo(j){ const city=pcCityOf(j), m=pcFind(_pcMap,city), r=pcFind(_pcReq,city); const kind=m&&m.v.template?'form':(m&&m.v.portal_url?'portal':'none'); return {city,m,r,kind}; }
+function pcInfo(j){ const city=pcCityOf(j), m=pcFind(_pcMap,city), r=pcFind(_pcReq,city); const lk=m&&(m.v.link_url||m.v.pdf_url||m.v.info_url); const kind=m&&m.v.template?'form':(m&&m.v.portal_url?'portal':(lk?'link':'none')); return {city,m,r,kind}; }
 function pcBtnHtml(j,ctxId){ const I=pcInfo(j); const lab=I.kind==='none'?'Permit application link not found for '+(I.city||'this job (no city)'):'Permit Application';
   return '<button type="button" class="btn '+(I.kind==='none'?'light pc-nolink':'primary')+' pc-btn" '+(I.kind==='none'?'aria-disabled="true"':'')+' onclick="event.stopPropagation();pcPermitClick(\''+ctxId+'\')">'+esc(lab)+'</button>'; }
 async function pcPermitClick(ctxId){ await pcLoad(); const j=ctxId==='form'?pcFormJob():jobs.find(x=>x.id===ctxId); if(!j) return; const I=pcInfo(j);
   const note=$(ctxId==='form'?'pcFormMsg':'pcMsg');
   if(I.kind==='none'){ if(note) note.textContent='Permit application link not found for '+(I.city||'this job — no city entered')+'.'; return; }
   if(I.kind==='portal'){ window.open(I.m.v.portal_url,'_blank','noopener'); return; }
+  if(I.kind==='link'){ window.open(I.m.v.link_url||I.m.v.pdf_url||I.m.v.info_url,'_blank','noopener'); if(note) note.textContent='Opened the official '+I.m.key+' permit '+((I.m.v.link_type||(I.m.v.pdf_url?'pdf':'page'))==='pdf'?'form (PDF) — not prefilled yet.':'page — application is listed there; not prefilled yet.'); return; }
   try{ if(note) note.textContent='Filling the '+I.m.key+' permit form…'; const res=await pcBuildForm(j,I); pcSave(res.bytes,(I.m.key+'-permit-application'+(j.customer?'-'+j.customer:'')).replace(/[^A-Za-z0-9]+/g,'-')+'.pdf');
     if(note) note.innerHTML='Downloaded the '+esc(I.m.key)+' form (fields stay editable).'+(res.notes.length?'<br><span class="pc-warn">'+res.notes.map(esc).join('<br>')+'</span>':''); }
   catch(e){ console.error(e); if(note) note.textContent='Could not build the permit form: '+(e.message||e); } }
@@ -3513,7 +3514,7 @@ function pcChecklistHtml(j,docs){ const I=pcInfo(j), list=I.r&&I.r.v&&I.r.v.leng
   const demo=j.demolition_required===true;
   const cond=c=>{c=String(c||'').toLowerCase(); if(/demoli|replacing existing/.test(c)) return demo; if(/^contractor/.test(c)) return true; if(/homeowner/.test(c)) return false; return null;};
   const st=it=>{const s=it.toLowerCase(); if(/plat of survey/.test(s)) return has.plat; if(/site plan/.test(s)) return has.site; if(/signed contract/.test(s)) return has.contract; if(/^(construction drawings|plans|two sets of drawings|dimensioned|detailed framing plan)/.test(s)) return has.plans; if(I.kind==='form'&&/application/.test(s)&&!/electrical|online|trade|separate|demolition/.test(s)) return true; return null;};
-  let h='<div class="pc-msg">'+(!I.city?'No city on this job — enter the city.':I.kind==='form'?esc(I.m.key)+': fills the official city form (editable PDF) with the site plan and plat of survey attached.':I.kind==='portal'?esc(I.m.key)+' takes permits online — the button opens the city portal.':'Permit application link not found for '+esc(I.city)+'.')+'</div>';
+  let h='<div class="pc-msg">'+(!I.city?'No city on this job — enter the city.':I.kind==='form'?esc(I.m.key)+': fills the official city form (editable PDF) with the site plan and plat of survey attached.':I.kind==='portal'?esc(I.m.key)+' takes permits online — the button opens the city portal.':I.kind==='link'?esc(I.m.key)+': the button opens the official city permit '+((I.m.v.link_type||'pdf')==='pdf'?'form (PDF)':'page')+' (not prefilled yet).':'Permit application link not found for '+esc(I.city)+'.')+'</div>';
   h+='<div class="pc-head">Checklist'+(I.r?' — '+esc(I.r.key):'')+'</div>';
   if(!list) h+='<div class="pc-none">No checklist on file</div>';
   else h+='<ul class="pc-list">'+list.map(it=>{ const ap=it.conditional?cond(it.conditional):true;

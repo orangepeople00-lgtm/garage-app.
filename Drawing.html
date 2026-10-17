@@ -6156,99 +6156,60 @@ function updateInspector(){
 }
 
 // ===== Snapping System (corner / edge / center) — sticky hysteresis to stop mobile shake =====
-const SNAP_IN = 14;   // distance to start a snap
-const SNAP_OUT = 34;  // must pull farther than this to break an active snap (stops oscillation)
-let snapPreviewEl = null;
-let activeSnap = null; // sticky snap for current drag: {dx, dy, target, key}
-
-function getSnapPoints(o){
-  const [w,h] = objPixels(o);
-  return {
-    corners: [
-      {x:o.x, y:o.y}, {x:o.x+w, y:o.y},
-      {x:o.x, y:o.y+h}, {x:o.x+w, y:o.y+h}
-    ],
-    edges: [
-      {x:o.x+w/2, y:o.y}, {x:o.x+w/2, y:o.y+h},
-      {x:o.x, y:o.y+h/2}, {x:o.x+w, y:o.y+h/2}
-    ],
-    center: {x:o.x+w/2, y:o.y+h/2}
-  };
+/* 2026-10-17 Snap rewrite. Old version: point-to-point only (both x AND y had to be within 14 px, so edges lying flush
+   but offset along each other never snapped), radius in paper px (6 screen px at 45% phone zoom, too small to hit),
+   unrotated boxes, measured from the already-moved position plus the full drag delta (so it doubled the offset and the snap
+   jumped around / missed), sticky logic that let a far target win, dot-only preview, no guide. New: per-axis edge/center
+   alignment in SCREEN px (10 mouse / 16 touch), rotated bounding boxes, lot/property lines as targets, sticky per axis,
+   full-length guide lines. Grid applies per axis when that axis has no object snap. */
+const SNAP_SCREEN = {mouse:10, touch:16};
+let activeSnap = null; // {sx:{v,key}|null, sy:{v,key}|null} for the current drag
+function snapBox(o, dx=0, dy=0){
+  const [w,h]=objPixels(o); const a=((o.angle||0)%360)*Math.PI/180, c=Math.abs(Math.cos(a)), s=Math.abs(Math.sin(a));
+  const W=w*c+h*s, H=w*s+h*c, cx=o.x+w/2+dx, cy=o.y+h/2+dy;
+  return {l:cx-W/2, r:cx+W/2, t:cy-H/2, b:cy+H/2, cx, cy};
 }
-
-function findSnap(moving, excludeId, dx, dy){
-  const [mw,mh] = objPixels(moving);
-  const candidates = [];
-  const mx = moving.x + dx, my = moving.y + dy;
-  const mPoints = [
-    {x:mx, y:my, type:'corner'}, {x:mx+mw, y:my, type:'corner'},
-    {x:mx, y:my+mh, type:'corner'}, {x:mx+mw, y:my+mh, type:'corner'},
-    {x:mx+mw/2, y:my, type:'edge'}, {x:mx+mw/2, y:my+mh, type:'edge'},
-    {x:mx, y:my+mh/2, type:'edge'}, {x:mx+mw, y:my+mh/2, type:'edge'},
-    {x:mx+mw/2, y:my+mh/2, type:'center'}
-  ];
+function snapTargets(moving){
+  const out=[]; const skipG=['apron','servicePad','frontLeft','frontMiddle','frontRight','rearLeft','rearMiddle','rearRight','patio','serviceDoor','partyDoor','partyReturnA','partyReturnB'];
   for(const other of state.objects){
-    if(other.id===excludeId || other.hidden) continue;
-    // 2026-10-13: never snap to whiteout patches/dots (they made the garage "stick"
-    // on a whited-out plat) or to pieces that ride along with the moving garage.
-    if(other.kind==='eraser') continue;
-    if(moving.role==='garage' && ['apron','servicePad','frontLeft','frontMiddle','frontRight','rearLeft','rearMiddle','rearRight','patio','serviceDoor','partyDoor','partyReturnA','partyReturnB'].includes(other.role)) continue;
-    const pts = getSnapPoints(other);
-    const all = [
-      ...pts.corners.map(p=>({...p,type:'corner'})),
-      ...pts.edges.map(p=>({...p,type:'edge'})),
-      {...pts.center, type:'center'}
-    ];
-    for(const mp of mPoints){
-      for(const tp of all){
-        const dist = Math.hypot(mp.x - tp.x, mp.y - tp.y);
-        // Use larger capture radius while sticky is active
-        const limit = activeSnap ? SNAP_OUT : SNAP_IN;
-        if(dist < limit){
-          const snapDx = tp.x - (mp.x - dx);
-          const snapDy = tp.y - (mp.y - dy);
-          candidates.push({
-            dist,
-            dx: snapDx,
-            dy: snapDy,
-            type: mp.type + '-to-' + tp.type,
-            target: tp,
-            key: other.id + ':' + Math.round(tp.x) + ',' + Math.round(tp.y) + ':' + mp.type
-          });
-        }
-      }
-    }
+    if(other.id===moving.id || other.hidden || other.kind==='eraser' || /^(wo|surveyErase)/.test(other.role||'')) continue;
+    if(moving.role==='garage' && skipG.includes(other.role)) continue;
+    if(other.kind==='text' || other.kind==='dimension') continue;
+    out.push(Object.assign(snapBox(other),{lg:other.role==='lotOutline'?1:0}));
   }
-  if(!candidates.length) return null;
-  candidates.sort((a,b)=>a.dist-b.dist);
-
-  // Prefer keeping the same active snap to prevent rapid switching / shake
-  if(activeSnap){
-    const same = candidates.find(c => c.key === activeSnap.key);
-    if(same && same.dist < SNAP_OUT) return same;
-    // If finger pulled far from active snap target, clear sticky
-    if(candidates[0].dist > SNAP_IN * 0.85){
-      // allow switch only to a clearly better close target
-      if(candidates[0].dist < SNAP_IN * 0.55) return candidates[0];
-      return null;
-    }
-  }
-  return candidates[0];
+  return out;
 }
-
-function showSnapPreview(pt){
-  if(!snapPreviewEl){
-    snapPreviewEl = document.createElement('div');
-    snapPreviewEl.style.cssText = 'position:absolute;width:14px;height:14px;border:2px solid #eab308;border-radius:50%;background:rgba(234,179,8,.35);pointer-events:none;z-index:200;transform:translate(-50%,-50%);box-shadow:0 0 0 4px rgba(234,179,8,.2)';
-    drawLayer.appendChild(snapPreviewEl);
-  }
-  snapPreviewEl.style.left = pt.x + 'px';
-  snapPreviewEl.style.top = pt.y + 'px';
-  snapPreviewEl.style.display = 'block';
+function findSnap(moving, excludeId, dx, dy, pointerType){
+  const thr=Math.min((pointerType==='touch'||pointerType==='pen'?SNAP_SCREEN.touch:SNAP_SCREEN.mouse)/(state.scale||1), Math.max(6,1.5*(moving.pxf||DRAW_PXF)));
+  const keep=thr*1.8, near=thr*6;
+  const m=snapBox(moving,dx,dy), T=snapTargets(moving);
+  const mx=[['l',m.l],['c',m.cx],['r',m.r]], my=[['t',m.t],['c',m.cy],['b',m.b]];
+  let bx=null, by=null;
+  T.forEach((o,i)=>{
+    const yNear = m.b>=o.t-near && m.t<=o.b+near, xNear = m.r>=o.l-near && m.l<=o.r+near;
+    if(yNear) for(const [k,v] of mx) for(const [k2,tv] of [['l',o.l],['r',o.r],['c',o.cx]]){ if((k==='c')!==(k2==='c')) continue;
+      const d=tv-v, key=i+k+k2, lim=(activeSnap&&activeSnap.sx&&activeSnap.sx.key===key)?keep:thr;
+      const wd=Math.abs(d)*(o.lg?0.5:1); if(Math.abs(d)<lim && (!bx || wd<bx.wd || key===(activeSnap&&activeSnap.sx&&activeSnap.sx.key))) bx={d,wd,v:tv,key,y0:Math.min(m.t,o.t),y1:Math.max(m.b,o.b)}; }
+    if(xNear) for(const [k,v] of my) for(const [k2,tv] of [['t',o.t],['b',o.b],['c',o.cy]]){ if((k==='c')!==(k2==='c')) continue;
+      const d=tv-v, key=i+k+k2, lim=(activeSnap&&activeSnap.sy&&activeSnap.sy.key===key)?keep:thr;
+      const wd=Math.abs(d)*(o.lg?0.5:1); if(Math.abs(d)<lim && (!by || wd<by.wd || key===(activeSnap&&activeSnap.sy&&activeSnap.sy.key))) by={d,wd,v:tv,key,x0:Math.min(m.l,o.l),x1:Math.max(m.r,o.r)}; }
+  });
+  if(!bx && !by) return null;
+  return {dx:dx+(bx?bx.d:0), dy:dy+(by?by.d:0), sx:bx, sy:by};
 }
-function hideSnapPreview(){
-  if(snapPreviewEl) snapPreviewEl.style.display = 'none';
+let snapGuideEl=null;
+function showSnapPreview(sn){
+  if(!sn||(!sn.sx&&!sn.sy)) return hideSnapPreview();
+  if(!snapGuideEl||snapGuideEl.parentNode!==paper){ snapGuideEl=document.createElementNS('http://www.w3.org/2000/svg','svg'); snapGuideEl.id='snapGuides';
+    snapGuideEl.style.cssText='position:absolute;left:0;top:0;overflow:visible;pointer-events:none;z-index:250'; paper.appendChild(snapGuideEl); }
+  const t=currentTemplate(), k=1/(state.scale||1); snapGuideEl.setAttribute('width',t.w); snapGuideEl.setAttribute('height',t.h);
+  let h=''; const st=`stroke="#db2777" stroke-width="${(1.5*k).toFixed(2)}" stroke-dasharray="${(6*k).toFixed(1)} ${(4*k).toFixed(1)}"`;
+  if(sn.sx) h+=`<line x1="${sn.sx.v}" y1="${sn.sx.y0-20*k}" x2="${sn.sx.v}" y2="${sn.sx.y1+20*k}" ${st}/>`;
+  if(sn.sy) h+=`<line x1="${sn.sy.x0-20*k}" y1="${sn.sy.v}" x2="${sn.sy.x1+20*k}" y2="${sn.sy.v}" ${st}/>`;
+  snapGuideEl.innerHTML=h; snapGuideEl.style.display='block';
 }
+function hideSnapPreview(){ if(snapGuideEl) snapGuideEl.style.display='none'; }
+window.agbFindSnap=findSnap; window.agbShowSnapGuides=showSnapPreview; window.agbHideSnapGuides=hideSnapPreview;
 
 function ensureDrivewayPath(o){
   if(!o || o.kind!=='driveway') return;
@@ -6622,12 +6583,12 @@ function objectPointerDown(e){
       // Snapping (skip when off, locked, or panel-only roles)
       // Sticky hysteresis prevents the rapid shake on mobile touch drag
       if(window.snapEnabled !== false && !o.locked && !['serviceDoor','partyDoor'].includes(o.role)){
-        const snap = findSnap(o, o.id, dx, dy);
+        const snap = findSnap(Object.assign({},o,{x:ox,y:oy}), o.id, dx, dy, ev.pointerType); // measure from the drag START position (old code added the full delta to the already-moved shape)
         if(snap){
-          activeSnap = { key: snap.key, dx: snap.dx, dy: snap.dy, target: snap.target };
+          activeSnap = snap;
           finalDx = snap.dx;
           finalDy = snap.dy;
-          showSnapPreview(snap.target);
+          showSnapPreview(snap);
         } else {
           activeSnap = null;
           hideSnapPreview();
@@ -6638,8 +6599,8 @@ function objectPointerDown(e){
       }
       // 2026-10-13: 1 ft grid — move in whole-foot steps from the start position unless an
       // object snap is active (object snap wins) or Shift is held / Grid is OFF.
-      if(window.gridSnap!==false && !activeSnap && !ev.shiftKey && !(state.mode==='concrete' && ['garage','apron'].includes(o.role))){
-        const gp=o.pxf||DRAW_PXF; if(gp>=2){ finalDx=Math.round(finalDx/gp)*gp; finalDy=Math.round(finalDy/gp)*gp; }
+      if(window.gridSnap!==false && !ev.shiftKey && !(state.mode==='concrete' && ['garage','apron'].includes(o.role))){
+        const gp=o.pxf||DRAW_PXF; if(gp>=2){ if(!(activeSnap&&activeSnap.sx)) finalDx=Math.round(finalDx/gp)*gp; if(!(activeSnap&&activeSnap.sy)) finalDy=Math.round(finalDy/gp)*gp; }
       }
       o.x=Math.max(-bw/2,Math.min(t.w-bw/2,ox+finalDx));
       o.y=Math.max(-bh/2,Math.min(t.h-bh/2,oy+finalDy));
@@ -9280,7 +9241,7 @@ function build(auto){
   if(alley){ ln(0,B,PW,B,1.2); ln(0,B+AW*S,PW,B+AW*S,1.2); tx(PW/2,B+AW*S/2+4,AW+"' PUBLIC ALLEY",10,600); tx((L+R)/2,B+11,f2(W),7.5,600); }
   else tx((L+R)/2,B-5,f2(W),7.5,600);
   if(!auto){try{snapshot()}catch(_){}}
-  h.platDoc={on:1,items,v:2}; sel=null; try{saveActiveSheetState()}catch(_){} render();
+  h.platDoc={on:1,items,v:2,S}; sel=null; try{saveActiveSheetState()}catch(_){} render();
 }
 function off(){ const h=host(); if(h&&h.platDoc){ h.platDoc.on=h.platDoc.on?0:1; sel=null; try{saveActiveSheetState()}catch(_){} render(); try{renderObjects()}catch(_){} } } // hide/show only; items are never deleted
 function syncBtns(){ const h=host(), st=$i('pdStart'), of=$i('pdOff'); if(st) st.style.display=(h&&!h.platDoc)?'':'none'; {const rs=$i('pdReset'); if(rs) rs.style.display=(h&&h.platDoc)?'':'none';} if(of){ of.style.display=(h&&h.platDoc)?'':'none'; of.textContent=(h&&h.platDoc&&!h.platDoc.on)?'Show editable plat':'Hide editable plat'; } }
@@ -9330,7 +9291,7 @@ function drawSel(){ const G=svg&&svg.querySelector('#pdSel'); if(!G)return; cons
   const b=bboxOf(o), r=Math.max(4,10/scr), p=3/scr; let s='';
   if(b) s+=`<rect x="${b.x-p}" y="${b.y-p}" width="${b.width+2*p}" height="${b.height+2*p}" fill="rgba(37,99,235,.06)" stroke="#2563eb" stroke-width="${1.5/scr}" stroke-dasharray="${4/scr} ${3/scr}" pointer-events="none"/>`;
   handles(o).forEach(([k,x,y])=>s+=`<circle class="pd-h" data-h="${k}" cx="${x}" cy="${y}" r="${r}" fill="#2563eb" stroke="#fff" stroke-width="${2/scr}"/>`);
-  G.innerHTML=s; showTools(o); }
+  G.innerHTML=s+(drag&&drag.moved?guideSVG():''); showTools(o); }
 // ---------- toolbar + text editor ----------
 let bar=null, ed=null;
 function showTools(o){
@@ -9371,27 +9332,100 @@ function bind(s){
     if(dbl&&o.t==='text'){ editText(o); return; }
     if(sel!==id){ sel=id; drawSel(); }
     const b=o.t==='text'?bboxOf(o):null;
-    drag={o,h:hEl?hEl.dataset.h:null,p0:pt(e),orig:JSON.parse(JSON.stringify(o)),b,moved:false,pid:e.pointerId};
+    drag={o,h:hEl?hEl.dataset.h:null,p0:pt(e),orig:JSON.parse(JSON.stringify(o)),b,bb0:(()=>{const q=bboxOf(o);return q&&{x:q.x,y:q.y,width:q.width,height:q.height}})(),moved:false,pid:e.pointerId,ptype:e.pointerType};
     try{s.setPointerCapture(e.pointerId)}catch(_){}
   });
   s.addEventListener('pointermove',e=>{ if(!drag||e.pointerId!==drag.pid)return; e.stopPropagation(); e.preventDefault();
-    const [x,y]=pt(e), dx=x-drag.p0[0], dy=y-drag.p0[1];
-    if(!drag.moved){ if(Math.hypot(dx,dy)*scr<3) return; drag.moved=true; try{const o=drag.o, cur=JSON.stringify(o); Object.assign(o,drag.orig); snapshot(); Object.assign(o,JSON.parse(cur));}catch(_){} }
-    const o=drag.o, q=drag.orig, h=drag.h;
-    if(!h){ if('x1' in q){o.x1=q.x1+dx;o.y1=q.y1+dy;o.x2=q.x2+dx;o.y2=q.y2+dy} else {o.x=q.x+dx;o.y=q.y+dy} }
-    else if(h==='p1'){o.x1=q.x1+dx;o.y1=q.y1+dy} else if(h==='p2'){o.x2=q.x2+dx;o.y2=q.y2+dy}
+    const [x,y]=pt(e), dx0=x-drag.p0[0], dy0=y-drag.p0[1];
+    if(!drag.moved){ if(Math.hypot(dx0,dy0)*scr<3) return; drag.moved=true; try{const o=drag.o, cur=JSON.stringify(o); Object.assign(o,drag.orig); snapshot(); Object.assign(o,JSON.parse(cur));}catch(_){} }
+    const o=drag.o, q=drag.orig, h=drag.h, P=drag.ptype; let dx=dx0, dy=dy0;
+    if(!h){ const r=pdSnapMove(o.id,drag.bb0,dx,dy,P); let sx=r[2], sy=r[3]; dx=r[0]; dy=r[1];
+      if(window.gridSnap!==false&&!e.shiftKey&&o.t!=='text'){ const G=docS(); if(!sx) dx=Math.round(dx/G)*G; if(!sy) dy=Math.round(dy/G)*G; }
+      if('x1' in q){o.x1=q.x1+dx;o.y1=q.y1+dy;o.x2=q.x2+dx;o.y2=q.y2+dy} else {o.x=q.x+dx;o.y=q.y+dy} }
+    else if(h==='p1'){ [o.x1,o.y1]=pdSnapPt(o.id,q.x1+dx,q.y1+dy,P); } else if(h==='p2'){ [o.x2,o.y2]=pdSnapPt(o.id,q.x2+dx,q.y2+dy,P); }
     else if(o.t==='rect'){ const x0=Math.min(q.x,q.x+q.w),y0=Math.min(q.y,q.y+q.h),x1=x0+Math.abs(q.w),y1=y0+Math.abs(q.h);
-      let a=x0,b=y0,c=x1,d2=y1; if(h.includes('w'))a+=dx; else c+=dx; if(h.includes('n'))b+=dy; else d2+=dy;
+      let a=x0,b=y0,c=x1,d2=y1; const cx0=h.includes('w')?x0:x1, cy0=h.includes('n')?y0:y1; const [sx2,sy2]=pdSnapPt(o.id,cx0+dx,cy0+dy,P);
+      if(h.includes('w'))a=sx2; else c=sx2; if(h.includes('n'))b=sy2; else d2=sy2;
       o.x=Math.min(a,c);o.y=Math.min(b,d2);o.w=Math.max(2,Math.abs(c-a));o.h=Math.max(2,Math.abs(d2-b)); }
     else if(h==='fs'&&drag.b){ const k=Math.max(.3,(drag.b.width+dx)/Math.max(1,drag.b.width)); o.fs=Math.max(4,Math.min(48,+(q.fs*k).toFixed(2))); }
     render();
   });
-  const end=e=>{ if(!drag||e.pointerId!==drag.pid)return; e.stopPropagation(); const m=drag.moved; drag=null; if(m){ try{saveActiveSheetState()}catch(_){} } render(); };
+  const end=e=>{ if(!drag||e.pointerId!==drag.pid)return; e.stopPropagation(); const m=drag.moved; drag=null; guide=null; if(m){ try{saveActiveSheetState()}catch(_){} } render(); };
   s.addEventListener('pointerup',end); s.addEventListener('pointercancel',end);
 }
 document.addEventListener('pointerdown',e=>{ if(!sel||!svg)return; if(e.target.closest&&(e.target.closest('#agbPlatDoc .pd-it')||e.target.closest('#agbPlatDoc .pd-h')||e.target.closest('#pdBar')||e.target.closest('#pdEdit')))return; sel=null; drawSel(); },true);
 document.addEventListener('keydown',e=>{ if(!sel||ed||/INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName||'')||document.activeElement?.isContentEditable)return;
   if(e.key==='Delete'||e.key==='Backspace'){ const d=doc(); if(!d)return; try{snapshot()}catch(_){} d.items=d.items.filter(i=>i.id!==sel); sel=null; try{saveActiveSheetState()}catch(_){} render(); e.preventDefault(); } });
+// ---------- snap (plat items) ----------
+let guide=null;
+const docS=()=>{const d=doc(); return (d&&d.S)||4.8};
+function snapThr(pt){ return Math.min((pt==='touch'||pt==='pen'?16:10)/(scr||1), Math.max(6,1.5*docS())); } // screen px, capped at ~1.5 ft when zoomed far out
+function pdTargets(exId){ const d=doc(); const X=[],Y=[]; if(!d) return {X,Y};
+  d.items.forEach(o=>{ if(o.id===exId||o.t==='text') return;
+    if(o.t==='rect'){ const l=Math.min(o.x,o.x+o.w),r=l+Math.abs(o.w),t=Math.min(o.y,o.y+o.h),b=t+Math.abs(o.h);
+      X.push({v:l,a:t,b},{v:r,a:t,b}); Y.push({v:t,a:l,b:r},{v:b,a:l,b:r}); X.push({v:(l+r)/2,a:t,b,c:1}); Y.push({v:(t+b)/2,a:l,b:r,c:1}); }
+    else { const vert=Math.abs(o.x1-o.x2)<.5, hor=Math.abs(o.y1-o.y2)<.5;
+      const lg=Math.hypot(o.x2-o.x1,o.y2-o.y1)>150?1:0; if(vert) X.push({v:o.x1,a:Math.min(o.y1,o.y2),b:Math.max(o.y1,o.y2),lg}); if(hor) Y.push({v:o.y1,a:Math.min(o.x1,o.x2),b:Math.max(o.x1,o.x2),lg});
+      [[o.x1,o.y1],[o.x2,o.y2]].forEach(([x,y])=>{ X.push({v:x,a:y,b:y}); Y.push({v:y,a:x,b:x}); }); } });
+  return {X,Y}; }
+function best(list,vals,lo,hi,thr,near){ let r=null; list.forEach(t=>{ if(hi<t.a-near||lo>t.b+near) return; vals.forEach(([v,c])=>{ if(!!c!==!!t.c) return; const d=t.v-v, wd=Math.abs(d)*(t.lg?0.5:1); if(Math.abs(d)<thr&&(!r||wd<r.wd)) r={d,wd,v:t.v,a:Math.min(lo,t.a),b:Math.max(hi,t.b)}; }); }); return r; }
+function pdSnapMove(id,bb,dx,dy,pt){ guide=null; if(window.snapEnabled===false||!bb) return [dx,dy];
+  const thr=snapThr(pt), near=thr*6, {X,Y}=pdTargets(id); const l=bb.x+dx,r=l+bb.width,t=bb.y+dy,b=t+bb.height;
+  const sx=best(X,[[l],[r],[(l+r)/2,1]],t,b,thr,near), sy=best(Y,[[t],[b],[(t+b)/2,1]],l,r,thr,near);
+  guide={sx,sy}; return [dx+(sx?sx.d:0), dy+(sy?sy.d:0), !!sx, !!sy]; }
+function pdSnapPt(id,x,y,pt){ guide=null; if(window.snapEnabled===false) return [x,y];
+  const thr=snapThr(pt), {X,Y}=pdTargets(id); const sx=best(X,[[x]],y,y,thr,thr), sy=best(Y,[[y]],x,x,thr,thr); guide={sx,sy};
+  return [x+(sx?sx.d:0), y+(sy?sy.d:0)]; }
+function guideSVG(){ if(!guide) return ''; const k=1/(scr||1), st=`stroke="#db2777" stroke-width="${(1.5*k).toFixed(2)}" stroke-dasharray="${(6*k).toFixed(1)} ${(4*k).toFixed(1)}" pointer-events="none"`; let s='';
+  if(guide.sx) s+=`<line class="pd-guide" x1="${guide.sx.v}" y1="${guide.sx.a-20*k}" x2="${guide.sx.v}" y2="${guide.sx.b+20*k}" ${st}/>`;
+  if(guide.sy) s+=`<line class="pd-guide" x1="${guide.sy.a-20*k}" y1="${guide.sy.v}" x2="${guide.sy.b+20*k}" y2="${guide.sy.v}" ${st}/>`; return s; }
+// ---------- Tidy ----------
+const clampThr=S=>Math.max(2,Math.min(6,0.5*S)); // ~0.5 ft at the drawing scale, never under 2 px or over 6 px
+function tidyBoxes(B,anchors,thr,lines){ // B: [{l,r,t,b,mov,setB(l,r,t,b)}]; returns count of nudges
+  let n=0;
+  for(let pass=0;pass<2;pass++) B.forEach(m=>{ if(!m.mov) return;
+    const oth=B.filter(o=>o!==m).concat(anchors);
+    const ov=(a0,a1,b0,b1)=>a1>=b0-thr&&a0<=b1+thr;
+    const E=ax=>{ const res=[]; oth.forEach(o=>{ if(ax==='x'){ if(!ov(m.t,m.b,o.t,o.b))return; res.push(o.l,o.r);} else { if(!ov(m.l,m.r,o.l,o.r))return; res.push(o.t,o.b);} });
+      (lines||[]).forEach(L=>{ if(ax==='x'&&L.vert&&ov(m.t,m.b,L.a,L.b)) res.push(L.v); if(ax==='y'&&!L.vert&&ov(m.l,m.r,L.a,L.b)) res.push(L.v); }); return res; };
+    const pick=(v,es)=>{ let r=null; es.forEach(e=>{ const d=e-v; if(Math.abs(d)>0.05&&Math.abs(d)<=thr&&(!r||Math.abs(d)<Math.abs(r))) r=d; }); return r; };
+    ['x','y'].forEach(ax=>{ const es=E(ax), lo=ax==='x'?'l':'t', hi=ax==='x'?'r':'b'; const dl=pick(m[lo],es), dh=pick(m[hi],es);
+      if(dl==null&&dh==null) return; n++;
+      if(dl!=null&&dh!=null&&m.resizable){ m[lo]+=dl; m[hi]+=dh; } else { const d=dl!=null?dl:dh; m[lo]+=d; m[hi]+=d; } });
+  });
+  return n; }
+function tidyPlat(){ const d=doc(); if(!d) return null; const S=docS(), thr=clampThr(S); const it=JSON.parse(JSON.stringify(d.items));
+  const B=[], anchors=[], lines=[];
+  it.forEach(o=>{ if(o.t==='rect'){ const l=Math.min(o.x,o.x+o.w),t=Math.min(o.y,o.y+o.h); const bx={o,l,r:l+Math.abs(o.w),t,b:t+Math.abs(o.h),mov:o.sw<3,resizable:true}; (bx.mov?B:anchors).push(bx); if(!bx.mov) B.push(Object.assign({},bx,{mov:false})); }
+    else if(o.t==='line'||o.t==='dim'){ if(Math.abs(o.x1-o.x2)<.5) lines.push({vert:1,v:o.x1,a:Math.min(o.y1,o.y2),b:Math.max(o.y1,o.y2)}); else if(Math.abs(o.y1-o.y2)<.5) lines.push({vert:0,v:o.y1,a:Math.min(o.x1,o.x2),b:Math.max(o.x1,o.x2)}); } });
+  let n=tidyBoxes(B,[],thr,lines);
+  B.forEach(b=>{ if(!b.mov) return; const o=b.o; o.x=b.l; o.y=b.t; o.w=b.r-b.l; o.h=b.b-b.t; });
+  // line / dimension endpoints that stop just short of (or just past) a perpendicular edge or line: meet it
+  const edges=[]; it.forEach(o=>{ if(o.t==='rect'){ const l=Math.min(o.x,o.x+o.w),t=Math.min(o.y,o.y+o.h),r=l+Math.abs(o.w),b=t+Math.abs(o.h); edges.push({vert:1,v:l,a:t,b},{vert:1,v:r,a:t,b},{vert:0,v:t,a:l,b:r},{vert:0,v:b,a:l,b:r}); } else if(o.t==='line'||o.t==='dim'){ if(Math.abs(o.x1-o.x2)<.5) edges.push({vert:1,v:o.x1,a:Math.min(o.y1,o.y2),b:Math.max(o.y1,o.y2),id:o.id}); else if(Math.abs(o.y1-o.y2)<.5) edges.push({vert:0,v:o.y1,a:Math.min(o.x1,o.x2),b:Math.max(o.x1,o.x2),id:o.id}); } });
+  it.forEach(o=>{ if(o.t!=='line'&&o.t!=='dim') return; const vert=Math.abs(o.x1-o.x2)<.5, hor=Math.abs(o.y1-o.y2)<.5; if(!vert&&!hor) return;
+    ['1','2'].forEach(k=>{ const x=o['x'+k], y=o['y'+k]; let r=null;
+      edges.forEach(e=>{ if(e.id===o.id) return; if(vert&&!e.vert&&x>=e.a-thr&&x<=e.b+thr){ const d=e.v-y; if(Math.abs(d)>0.05&&Math.abs(d)<=thr&&(!r||Math.abs(d)<Math.abs(r.d))) r={d,ax:'y'}; }
+        if(hor&&e.vert&&y>=e.a-thr&&y<=e.b+thr){ const d=e.v-x; if(Math.abs(d)>0.05&&Math.abs(d)<=thr&&(!r||Math.abs(d)<Math.abs(r.d))) r={d,ax:'x'}; } });
+      if(r){ o[r.ax+k]+=r.d; n++; } }); });
+  // labels stacked in a column whose centers are off by a hair: line them up
+  const tx=it.filter(o=>o.t==='text'&&!o.rot&&o.anchor==='middle');
+  tx.forEach(a=>tx.forEach(b=>{ if(a.id>=b.id) return; const dx=b.x-a.x; if(Math.abs(dx)>0.05&&Math.abs(dx)<=2&&Math.abs(b.y-a.y)<=3*Math.max(a.fs,b.fs)){ b.x=a.x; n++; } }));
+  return {items:it,n,thr,S}; }
+function tidyObjects(){ // app shapes (when the editable plat is not showing)
+  const objs=JSON.parse(JSON.stringify(state.objects)); const B=[], anchors=[]; let S=0;
+  objs.forEach(o=>{ if(o.hidden||o.kind==='text'||o.kind==='dimension'||o.kind==='eraser'||/^(wo|surveyErase)/.test(o.role||'')) return; const a=((o.angle||0)%180+180)%180; if(a!==0&&a!==90) return;
+    const [w,h]=objPixels(o), W=a?h:w, H=a?w:h, cx=o.x+w/2, cy=o.y+h/2; S=S||o.pxf||0;
+    const bx={o,l:cx-W/2,r:cx+W/2,t:cy-H/2,b:cy+H/2,mov:!o.locked&&o.role!=='garage'&&o.role!=='proposedGarage'&&o.role!=='lotOutline',resizable:false}; B.push(bx); });
+  const thr=clampThr(S||DRAW_PXF||4.8); const n=tidyBoxes(B,anchors,thr,[]);
+  B.forEach(b=>{ if(!b.mov) return; const o=b.o, [w,h]=objPixels(o); const a=((o.angle||0)%180+180)%180, W=a?h:w, H=a?w:h; o.x=(b.l+b.r)/2-w/2; o.y=(b.t+b.b)/2-h/2; });
+  return {objs,n,thr,S}; }
+function tidy(){ let msg='';
+  if(active()){ const r=tidyPlat(); if(r&&r.n){ try{snapshot()}catch(_){} doc().items=r.items; try{saveActiveSheetState()}catch(_){} render(); } msg=r&&r.n?`Tidy: ${r.n} small nudge${r.n>1?'s':''} (gaps under ${(r.thr/r.S).toFixed(2)} ft closed). Undo reverts.`:'Already tidy.'; window._agbTidy=r&&{n:r.n,thr:r.thr}; }
+  else { const r=tidyObjects(); if(r.n){ try{snapshot()}catch(_){} state.objects=r.objs; try{saveActiveSheetState()}catch(_){} try{renderObjects()}catch(_){} } msg=r.n?`Tidy: ${r.n} small nudge${r.n>1?'s':''}. Undo reverts.`:'Already tidy.'; window._agbTidy={n:r.n,thr:r.thr}; }
+  let tt=$i('pdToast'); if(!tt){ tt=document.createElement('div'); tt.id='pdToast'; document.body.appendChild(tt); } tt.textContent=msg; tt.style.display='block'; clearTimeout(tt._t); tt._t=setTimeout(()=>tt.style.display='none',2600);
+}
+window.agbTidy=tidy;
+{ const gb=$i('gridToggleBtn')||$i('snapToggleBtn'); if(gb){ const b=document.createElement('button'); b.type='button'; b.id='tidyBtn'; b.className='mobile-snap-btn on'; b.textContent='Tidy'; b.title='Close tiny gaps (under ~0.5 ft) and line up nearly-aligned shapes. One Undo reverts.'; b.onclick=tidy; gb.after(b); } }
 window.agbPlatDocStart=()=>build(false); window.agbPlatDocOff=off; window.agbPlatDocRender=render;
 window.agbPlatDocSelect=id=>{sel=id;render()}; window.agbPlatDocEdit=id=>{const d=doc();const o=d&&d.items.find(i=>i.id===id);if(o){sel=id;render();editText(o)}};
 $i('pdReset')&&$i('pdReset').addEventListener('click',()=>{ const h=host(); if(!h||!h.platDoc)return; if(!confirm('This replaces your hand edits. Continue?'))return; try{snapshot()}catch(_){} delete h.platDoc; build(true); syncBtns(); });
@@ -9413,6 +9447,8 @@ setTimeout(()=>{try{render()}catch(_){}},0);
 #agbPlatDoc .pd-h{cursor:crosshair}
 #paper.agb-platdoc #templateImg,#paper.agb-platdoc #drawLayer > .obj,#paper.agb-platdoc #autoDimLayer,#paper.agb-platdoc #agbSiteAnno,#paper.agb-platdoc #agbLegend,#paper.agb-platdoc #sitePlanPlaceholder,#paper.agb-platdoc #agbPermitPlan,#paper.agb-platdoc #agbPlatPlan{visibility:hidden!important}
 body.agb-platdoc-on #selQuickBar{display:none!important}
+@media (max-width:700px){#pdToast{top:auto!important;bottom:170px}}
+#pdToast{position:fixed;left:50%;top:120px;transform:translateX(-50%);z-index:3002;background:#0f172a;color:#fff;font:700 14px Arial;padding:10px 14px;border-radius:10px;display:none;max-width:90vw;text-align:center}
 #pdBar{position:fixed;z-index:3000;display:none;gap:6px;background:#0f172a;padding:6px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.3)}
 #pdBar button{min-height:40px;min-width:44px;padding:0 12px;border-radius:9px;border:0;font:800 14px Arial;background:#fff;color:#0f172a;white-space:nowrap}
 #pdBar button[data-a=del]{background:#fee2e2;color:#991b1b}

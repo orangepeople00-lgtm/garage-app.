@@ -4357,5 +4357,66 @@ function agbArchStamp(city,o){o=o||{};const k=Object.keys(AGB_ARCH_STAMP).find(x
 function agbArchHtml(a){if(!a)return '';return '<div class="agb-arch" role="alert"><div class="agb-arch-t">⚠ ARCHITECT STAMP REQUIRED</div><div class="agb-arch-m">'+a.city+': '+a.why+(a.minSF&&a.conditional?' (size not entered)':'')+'</div><div class="agb-arch-s">Source: '+a.src+'</div></div>';}
 (function(){const st=document.createElement('style');st.textContent='.agb-arch{box-sizing:border-box;max-width:100%;margin:8px 0;padding:10px 12px;border:3px solid #b91c1c;border-radius:8px;background:#fee2e2;color:#7f1d1d;font-family:system-ui,Arial,sans-serif;overflow-wrap:anywhere;position:relative;z-index:1}.agb-arch-t{font-size:22px;font-weight:900;color:#b91c1c;letter-spacing:.5px;line-height:1.15}.agb-arch-m{font-size:14px;font-weight:700;margin-top:4px;line-height:1.3}.agb-arch-s{font-size:11px;margin-top:3px;color:#991b1b}@media print{.agb-arch.noprint{display:none}}';document.head.appendChild(st);})();
 </script>
+<style id="gpHdrCss">
+/* 2026-10-17 Mobile header: the entry panel collapses to a one-line sticky summary bar at the TOP; tap it to open the
+   full entry sheet as a drawer that drops down from the top (88vh, own scroll, Done button). Desktop unchanged. */
+#gpHdrBar,#gpHdrBk,#gpHdrDone{display:none}
+@media(max-width:900px){
+  .sidebar{max-height:none!important}
+  body:not(.gp-hdr-open) aside.sidebar{display:none!important}
+  #gpHdrBar{display:flex;position:sticky;top:0;z-index:900;align-items:center;gap:8px;background:#0b1f3a;color:#e8eef6;padding:6px 8px;padding-top:max(6px,env(safe-area-inset-top));box-shadow:0 2px 8px #0004;min-height:52px;box-sizing:border-box;width:100%}
+  #gpHdrBar button{font:inherit;color:inherit;border:0;background:transparent;cursor:pointer}
+  #gpHdrBar .hb-back{flex:0 0 40px;height:40px;border-radius:10px;border:1px solid #ffffff40!important;font-size:18px}
+  #gpHdrBar .hb-sum{flex:1;min-width:0;text-align:left;display:flex;flex-direction:column;justify-content:center;min-height:40px;padding:0 2px}
+  #gpHdrBar .hb-l1{font-weight:800;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #gpHdrBar .hb-l2{font-size:12px;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #gpHdrBar .hb-stamp{flex:0 0 auto;background:#b91c1c;color:#fff;font-weight:900;font-size:11px;border-radius:6px;padding:4px 6px;display:none;white-space:nowrap}
+  #gpHdrBar.stamp .hb-stamp{display:block}
+  #gpHdrBar .hb-edit{flex:0 0 auto;height:40px;padding:0 12px!important;border-radius:10px;background:#e8c547!important;color:#0b1f3a!important;font-weight:800!important;white-space:nowrap}
+  body.gp-hdr-open aside.sidebar{display:block!important;position:fixed;top:0;left:0;right:0;width:100%;max-height:88vh!important;max-height:88dvh!important;z-index:1001;overflow:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;border-radius:0 0 16px 16px;box-shadow:0 12px 40px #0008;padding-top:0;box-sizing:border-box}
+  body.gp-hdr-open #gpHdrBk{display:block;position:fixed;inset:0;background:#0007;z-index:1000}
+  body.gp-hdr-open #gpHdrDone{display:flex;position:sticky;top:0;z-index:5;margin:0 -14px 8px;padding:8px 14px;padding-top:max(8px,env(safe-area-inset-top));background:#0b1f3a;border-bottom:1px solid #ffffff2a;align-items:center;gap:8px}
+  #gpHdrDone .hd-t{flex:1;font-weight:800;font-size:15px}
+  #gpHdrDone button{min-height:42px;padding:0 16px;border-radius:10px;border:0;background:#e8c547;color:#0b1f3a;font-weight:800;font-size:15px}
+  body.gp-hdr-open{overflow:hidden}
+  aside.sidebar .gp-dash-top{display:none!important} /* the bar has its own ← Dashboard */
+}
+@media print{#gpHdrBar,#gpHdrBk,#gpHdrDone{display:none!important}}
+</style>
+<script>
+(function(){
+const sb=document.querySelector('aside.sidebar'); if(!sb) return;
+const $=id=>document.getElementById(id);
+const bar=document.createElement('div'); bar.id='gpHdrBar'; bar.className='no-print';
+bar.innerHTML='<button type="button" class="hb-back" aria-label="Back to Dashboard">←</button><button type="button" class="hb-sum" aria-label="Edit job info"><span class="hb-l1"></span><span class="hb-l2"></span></button><span class="hb-stamp" title="Architect stamp required">⚠ STAMP</span><button type="button" class="hb-edit" aria-expanded="false">Edit ▾</button>';
+sb.parentNode.insertBefore(bar,sb);
+const bk=document.createElement('div'); bk.id='gpHdrBk'; sb.parentNode.insertBefore(bk,sb);
+const dn=document.createElement('div'); dn.id='gpHdrDone'; dn.className='no-print'; dn.innerHTML='<span class="hd-t">Job info &amp; garage specs</span><button type="button">Done ▴</button>'; sb.insertBefore(dn,sb.firstChild);
+const mob=()=>matchMedia('(max-width:900px)').matches;
+function open(on){ document.body.classList.toggle('gp-hdr-open',!!on); bar.querySelector('.hb-edit').setAttribute('aria-expanded',on?'true':'false'); bar.querySelector('.hb-edit').textContent=on?'Done ▴':'Edit ▾'; if(!on) sum(); }
+window.gpHdrOpen=open;
+bar.querySelector('.hb-back').onclick=()=>{ location.href='index.html'; };
+bar.querySelector('.hb-sum').onclick=()=>open(true);
+bar.querySelector('.hb-edit').onclick=()=>open(!document.body.classList.contains('gp-hdr-open'));
+bk.onclick=()=>open(false); dn.querySelector('button').onclick=()=>open(false);
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&document.body.classList.contains('gp-hdr-open')) open(false); });
+const v=id=>{const e=$(id); return e?String(e.value||'').trim():''};
+function sum(){
+  const city=v('city')==='__other'?'':v('city'); const cityTxt=city||v('cityManual')||'No village';
+  let cust=''; ['customer','customerName','project','projName','client'].some(id=>(cust=v(id))); if(!cust){ const lb=[...sb.querySelectorAll('label')].find(l=>/project\s*\/\s*customer/i.test(l.textContent)); const i=lb&&(lb.nextElementSibling&&lb.nextElementSibling.matches('input')?lb.nextElementSibling:lb.parentElement.querySelector('input')); if(i) cust=String(i.value||'').trim(); }
+  const W=v('width'),D=v('depth'),H=v('wallH')||v('height')||v('wallHeight');
+  bar.querySelector('.hb-l1').textContent=cust||'Tap to enter job info';
+  bar.querySelector('.hb-l2').textContent=[cityTxt,(W&&D?W+'×'+D+(H?' · '+H+"' walls":''):'')].filter(Boolean).join(' · ');
+  let st=null; try{ if(city&&typeof agbArchStamp==='function') st=agbArchStamp(city,{sf:(+W||0)*(+D||0)}); }catch(_){}
+  bar.classList.toggle('stamp',!!st);
+}
+sb.addEventListener('input',sum); sb.addEventListener('change',sum); setTimeout(sum,300); setTimeout(sum,1500);
+// Anything that scrolls to / focuses a sidebar field (e.g. checklist "Fix" links) opens the sheet first.
+const siv=Element.prototype.scrollIntoView;
+Element.prototype.scrollIntoView=function(){ try{ if(mob()&&sb.contains(this)&&!document.body.classList.contains('gp-hdr-open')) open(true); }catch(_){} return siv.apply(this,arguments); };
+sb.addEventListener('focusin',()=>{ if(mob()&&!document.body.classList.contains('gp-hdr-open')) open(true); });
+})();
+</script>
+
 </body>
 </html>

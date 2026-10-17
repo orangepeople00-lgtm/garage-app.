@@ -2646,6 +2646,24 @@ button.danger{color:#b42318}
   <div class="field"><label>Apron length (ft)</label><input id="spApronH" step=".5" type="number" value="3"/></div></div>
   <div class="field sp-al"><label>Apron offset (ft, − left / + right)</label><input id="spApronOff" step=".5" type="number" placeholder="0 = centered"/></div>
 </div>
+<div style="border:2px solid #0f274b;border-radius:10px;padding:10px;margin-top:8px" id="spPermitBox">
+  <div style="font-size:11px;font-weight:900;color:#0f274b;margin-bottom:6px;text-transform:uppercase">Permit drawing (blank sheet)</div>
+  <label style="display:flex;gap:6px;align-items:center;font-size:13px;margin-bottom:6px"><input id="spCleanOn" type="checkbox" checked style="width:20px;height:20px"/> Clean black permit drawing when no survey is loaded</label>
+  <div class="row"><div class="field"><label>Overhead door width(s) ft (e.g. 16 or 16, 8)</label><input id="spOhDoors" placeholder="blank = not shown"/></div>
+  <div class="field"><label>OH door left return (ft)</label><input id="spOhLeft" step=".5" type="number" placeholder="blank = centered"/></div></div>
+  <div class="row"><div class="field"><label>Service door</label><select id="spSvcDoor"><option value="none">None</option><option value="front">Front</option><option value="back">Back</option><option value="left">Left</option><option value="right">Right</option></select></div>
+  <div class="field"><label>Service door swing</label><select id="spSvcSwing"><option value="in">Swing in</option><option value="out">Swing out</option></select></div></div>
+  <div class="field"><label>Service door from corner (ft)</label><input id="spSvcPos" step=".5" type="number" placeholder="blank = app default"/></div>
+  <div class="row"><div class="field"><label>Party door</label><select id="spPartyDoor"><option value="">None</option><option value="6">6'</option><option value="7">7'</option><option value="8">8'</option><option value="9">9'</option><option value="10">10'</option></select></div>
+  <div class="field"><label>Party door wall</label><select id="spPartyWall"><option value="back">Back (house side)</option><option value="front">Front</option><option value="left">Left</option><option value="right">Right</option></select></div></div>
+  <div class="field"><label>Existing house size (width x depth)</label><input class="combo-dim" id="spHouseSize" placeholder="blank = not shown"/></div>
+  <div class="row"><div class="field"><label>House from front lot line (ft)</label><input id="spHouseFront" step=".5" type="number" placeholder="blank"/></div>
+  <div class="field"><label>House from left lot line (ft)</label><input id="spHouseLeft" step=".5" type="number" placeholder="blank = centered"/></div></div>
+  <div class="row"><div class="field"><label>Driveway width (ft, no alley)</label><input id="spDriveW" step=".5" type="number" placeholder="blank = none"/></div>
+  <div class="field"><label>Driveway from left lot line (ft)</label><input id="spDriveOff" step=".5" type="number" placeholder="blank = under apron"/></div></div>
+  <div class="row"><div class="field"><label>Sidewalk to garage is</label><select id="spWalkNew"><option value="existing">Existing</option><option value="new">New</option></select></div>
+  <div class="field"><label style="display:flex;gap:6px;align-items:center"><input id="spOnSlab" type="checkbox" style="width:20px;height:20px"/> Garage on existing slab</label></div></div>
+</div>
 </details>
 
 
@@ -8894,5 +8912,186 @@ const AGB_PULL_CFG={client:()=>getDrawingSupabase(),
  ]})()};
 
 </script>
+<script>
+/* ===== 2026-10-16: Clean permit site plan (blank sheet, no survey). All black; driven by the site-plan fields + lot/garage objects.
+   Read-only drawing layer: never writes objects except saving its own settings on the lot/garage object (spPermit). Survey/plat flow unchanged. ===== */
+(function(){
+const $i=id=>document.getElementById(id);
+const PF=['spCleanOn','spOhDoors','spOhLeft','spSvcDoor','spSvcSwing','spSvcPos','spPartyDoor','spPartyWall','spHouseSize','spHouseFront','spHouseLeft','spDriveW','spDriveOff','spOnSlab','spWalkNew'];
+const CORE=['spLotWidth','spLotLength','spLeftSetback','spRightSetback','spRearSetback','spGarageCombo','spGarageW','spGarageH','spPlacement','spAlley','spAlleyDist','spApronOn','spApronW','spApronH','spApronOff','spExistingWalk','spExistingWalkCombo','spExistingWalkW','spExistingWalkH'];
+const gv=id=>{const e=$i(id);if(!e)return '';return e.type==='checkbox'?(e.checked?'1':''):String(e.value==null?'':e.value).trim()};
+const num=id=>{const s=gv(id);if(s==='')return null;const v=+s;return Number.isFinite(v)?v:null};
+const host=()=>{try{return byRole('proposedGarage')||byRole('lotOutline')||null}catch(_){return null}};
+let _loadedFor=null;
+function pmLoad(){ const h=host(); if(!h||_loadedFor===h){return} _loadedFor=h; const c=h.spPermit; if(!c||!c.v)return;
+  for(const k in c.v){ const e=$i(k); if(!e||e===document.activeElement)continue; if(e.type==='checkbox')e.checked=c.v[k]==='1'; else e.value=c.v[k]; } }
+function pmSave(){ const h=host(); if(!h)return; const v={}; PF.concat(CORE).forEach(k=>{if($i(k))v[k]=gv(k)}); h.spPermit={v}; _loadedFor=h;
+  try{saveActiveSheetState()}catch(_){} try{persistDrawingDraft()}catch(_){} }
+function active(){ try{ return state.mode==='siteplan' && !surveyData && !!host() && ($i('spCleanOn')?$i('spCleanOn').checked:true); }catch(_){return false} }
+const ft=v=>{const i=Math.round(v*12);return Math.floor(i/12)+"'-"+(i%12)+'"'};
+const fts=v=>(Math.round(v*2)/2)+"'";
+const E=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const TWd=(t,fs)=>String(t).length*fs*0.64;
+const T=(x,y,t,fs=10,w=800,a='middle',rot)=>`<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" font-size="${fs}" font-weight="${w}" fill="#000" text-anchor="${a}"${rot!=null?` transform="rotate(${rot} ${x.toFixed(1)} ${y.toFixed(1)})"`:''}>${E(t)}</text>`;
+const L=(x1,y1,x2,y2,w=1,d)=>`<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="#000" stroke-width="${w}"${d?` stroke-dasharray="${d}"`:''}/>`;
+const R=(x,y,w,h,f='none',sw=1,ex='')=>`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" fill="${f}" stroke="#000" stroke-width="${sw}"${ex}/>`;
+const MASK=(x,y,w,h)=>`<rect class="lbl-bg" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" fill="#fff" stroke="none"/>`;
+const SCALES=[[12,'1/8" = 1\'-0"'],[9.6,'1" = 10\'-0"'],[9,'3/32" = 1\'-0"'],[6,'1/16" = 1\'-0"'],[4.8,'1" = 20\'-0"'],[3.2,'1" = 30\'-0"'],[2.4,'1" = 40\'-0"']];
+function data(){
+  const lot=byRole('lotOutline'), g=byRole('proposedGarage');
+  let W=lot?+lot.wf:num('spLotWidth'), D=lot?+lot.hf:num('spLotLength');
+  if(!(W>0&&D>0))return null;
+  let gw=g?+g.wf:num('spGarageW'), gd=g?+g.hf:num('spGarageH'); if(!(gw>0&&gd>0))return null;
+  const alley=gv('spAlley')!=='no';
+  let left,rear;
+  if(g&&lot){ const k=+lot.pxf||1, kg=+g.pxf||k; left=(g.x-lot.x)/k; rear=(lot.y+D*k-(g.y+gd*kg))/k; left=Math.round(left*2)/2; rear=Math.round(rear*2)/2; }
+  else { const pl=gv('spPlacement'); const ls=num('spLeftSetback'), rs=num('spRightSetback');
+    left = pl==='bottom-right' && rs!=null ? W-gw-rs : (ls!=null?ls:(rs!=null?W-gw-rs:null));
+    rear = alley ? num('spAlleyDist') : num('spRearSetback'); }
+  if(left==null||rear==null)return null;
+  return {W,D,gw,gd,alley,left,rear,gx:D-rear-gd};
+}
+function render(){
+  const paper=$i('paper'); let L0=$i('agbPermitPlan');
+  const on=active(); paper.classList.toggle('agb-permit',!!on);
+  const d=on?data():null;
+  if(!d){ if(L0)L0.remove(); paper.classList.remove('agb-permit'); hideGen(false); return; }
+  hideGen(true);
+  if(!L0){L0=document.createElementNS('http://www.w3.org/2000/svg','svg');L0.id='agbPermitPlan';paper.insertBefore(L0,$i('drawLayer'));}
+  const t=currentTemplate(), PW=t.w, PH=t.h; L0.setAttribute('width',PW);L0.setAttribute('height',PH);L0.setAttribute('viewBox',`0 0 ${PW} ${PH}`);
+  const {W,D,gw,gd,alley,left,rear,gx}=d;
+  // title block box (paper coords)
+  const tb=$i('agbTitleBlock'); const TB=tb?{x:tb.offsetLeft,y:tb.offsetTop,r:tb.offsetLeft+tb.offsetWidth,b:tb.offsetTop+tb.offsetHeight}:null;
+  const X0=96, TOP=34;
+  let S=null,SC='';
+  for(const [s,n] of SCALES){
+    const right=X0+W*s+40, topx=alley?2*s+28+30:30, botx=6+22+26;
+    let bottom=PH-14; if(TB && right>TB.x-6 && TB.y>PH/2) bottom=TB.y-8;
+    let top=TOP; if(TB && right>TB.x-6 && TB.y<PH/2) top=TB.b+8;
+    if(right<=PW-110 && top+topx+D*s+botx<=bottom){S=s;SC=n;var TOPY=top,BOTY=bottom,TX=topx,BX=botx;break;}
+  }
+  if(!S){S=2.4;SC=SCALES.at(-1)[1];var TOPY=TOP,BOTY=PH-14,TX=30,BX=54;}
+  const Yf=TOPY+TX+D*S+((BOTY-TOPY-TX-BX)-D*S)/2;
+  const X=a=>X0+a*S, Y=f=>Yf-f*S, LR=X(W), Yr=Y(D);
+  const g=[]; const defs='<pattern id="agbPpConc" patternUnits="userSpaceOnUse" width="7" height="7" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="7" stroke="#000" stroke-width="0.45"/></pattern>';
+  // street / public walk / alley
+  g.push(R(X0-30,Yf+6,LR-X0+60,22,'url(#agbPpConc)',1.1)); {const lb='PUBLIC SIDEWALK',w=TWd(lb,9)+10; g.push(MASK((X0+LR)/2-w/2,Yf+17-7,w,14)+T((X0+LR)/2,Yf+17+3.2,lb,9));}
+  g.push(R(X0-30,Yf+28,LR-X0+60,26,'#fff',1)+T((X0+LR)/2,Yf+28+17,'STREET',11));
+  if(alley) g.push(R(X0-30,Yr-2*S-28,LR-X0+60,28,'#fff',1)+T((X0+LR)/2,Yr-2*S-10,'PUBLIC ALLEY',11));
+  g.push(`<rect x="${X0}" y="${Yr.toFixed(1)}" width="${(LR-X0).toFixed(1)}" height="${(Yf-Yr).toFixed(1)}" fill="none" stroke="#000" stroke-width="2" stroke-dasharray="14 4 3 4"/>`);
+  // garage frame
+  const GL=X(left),GR=X(left+gw),GB=Y(gx),GT=Y(gx+gd);
+  const frontN=alley; // overhead wall faces the alley (top) or the street (bottom)
+  // concrete: apron flush with garage door wall, to alley lot line (alley) or apron length (front-loaded)
+  const conc=[];
+  const apOn=!$i('spApronOn')||$i('spApronOn').checked;
+  const apW=num('spApronW')||gw, apOff=num('spApronOff')||0, apA=left+(gw-apW)/2+apOff;
+  if(apOn){
+    if(alley){ if(rear>0) conc.push({f:gx+gd,a:apA,d:rear,w:apW,lab:['NEW CONC. APRON',fts(apW)+' x '+fts(rear)]}); }
+    else { const ah=num('spApronH'); if(ah>0){ conc.push({f:gx-ah,a:apA,d:ah,w:apW,lab:['NEW CONC. APRON',fts(apW)+' x '+fts(ah)]});
+      const dw=num('spDriveW'); if(dw>0){ const off=num('spDriveOff'); const da=off!=null?off:apA; conc.push({f:0,a:da,d:gx-ah,w:dw,lab:['NEW CONC. DRIVEWAY',fts(dw)+' WIDE']}); } } }
+  }
+  // house
+  const hs=parseDims(gv('spHouseSize')||''); const hW=hs&&hs[0]>0?hs[0]:null, hD=hs&&hs[1]>0?hs[1]:null;
+  const hDist=num('spHouseDist'), hFront=num('spHouseFront'), hLeft=num('spHouseLeft');
+  let house=null;
+  if(hW&&hD){ let hr=null; if(hDist!=null) hr=gx-hDist; else if(hFront!=null) hr=hFront+hD;
+    if(hr!=null){ const ha=hLeft!=null?hLeft:(W-hW)/2; house={f0:hr-hD,f1:hr,a0:ha,a1:ha+hW}; } }
+  // existing / new walk from garage back wall toward the house
+  const ws=[num('spExistingWalkW'),num('spExistingWalkH')];
+  // doors
+  const ops=[];
+  const ohs=(gv('spOhDoors')||'').split(/[,+&]|\s+and\s+/i).map(s=>+s.replace(/[^\d.]/g,'')).filter(v=>v>0);
+  if(ohs.length){ const tot=ohs.reduce((a,b)=>a+b,0); const lr=num('spOhLeft'); let gap=(gw-tot)/(ohs.length+1); let p=lr!=null?lr:gap;
+    const midGap=lr!=null&&ohs.length>1?(gw-tot-lr-gap)/(ohs.length-1):gap;
+    ohs.forEach((w,i)=>{ ops.push({wall:frontN?'N':'S',p0:p,p1:p+w,kind:'oh',w}); p+=w+(i<ohs.length-1?(lr!=null?Math.max(1,(gw-tot-lr)/(ohs.length)):gap):0); }); }
+  const wallOf=v=>({front:frontN?'N':'S',back:frontN?'S':'N',left:'W',right:'E'}[v]);
+  const lenOf=w=>(w==='N'||w==='S')?gw:gd;
+  const sv=gv('spSvcDoor'); if(sv&&sv!=='none'){ const wl=wallOf(sv), Ln=lenOf(wl), sp=num('spSvcPos'); const p0=sp!=null?sp:Math.max(0.5,Ln*0.25-1.5); ops.push({wall:wl,p0,p1:p0+3,kind:'svc',w:3,swing:gv('spSvcSwing')||'in'}); }
+  const pw=+gv('spPartyDoor'); if(pw>0){ const wl=wallOf(gv('spPartyWall')||'back'), Ln=lenOf(wl); ops.push({wall:wl,p0:(Ln-pw)/2,p1:(Ln+pw)/2,kind:'party',w:pw}); }
+  // screen coords along each wall: N/S measured from left corner (x), W/E measured from the front corner
+  const wallGeom={N:{o:'h',c:GT,inn:1},S:{o:'h',c:GB,inn:-1},W:{o:'v',c:GL,inn:1},E:{o:'v',c:GR,inn:-1}};
+  const toScr=(wl,p)=>{ if(wl==='N'||wl==='S')return GL+p*S; return frontN?GT+p*S:GB-p*S; };
+  ops.forEach(o=>{const a=toScr(o.wall,o.p0),b=toScr(o.wall,o.p1);o.a=Math.min(a,b);o.b=Math.max(a,b);o.hinge=a;o.end=b;});
+  // walk position: at the back-wall door (party, then service) or centered on the back wall
+  if(ws[0]>0&&ws[1]>0&&gv('spExistingWalk')==='yes'){ const bw=frontN?'S':'N'; const dr=ops.find(o=>o.wall===bw&&o.kind==='party')||ops.find(o=>o.wall===bw&&o.kind==='svc');
+    const ca=dr?(dr.p0+dr.p1)/2:gw/2; const wa=left+ca-ws[0]/2; const lab=[(gv('spWalkNew')==='new'?'NEW':'EXIST.')+' CONC. SIDEWALK '+fts(ws[0])];
+    if(frontN) conc.push({f:gx-ws[1],a:wa,d:ws[1],w:ws[0],lab}); else conc.push({f:gx+gd,a:wa,d:ws[1],w:ws[0],lab}); }
+  conc.forEach(c=>{ const x=X(c.a),y=Y(c.f+c.d),w=c.w*S,h=c.d*S; g.push(R(x,y,w,h,'url(#agbPpConc)',1.3));
+    const bw=Math.max(...c.lab.map(s=>TWd(s,9)))+10, bh=c.lab.length*11+5;
+    if(bw<=w-4 || (w>=h && bh<=h-2)){ g.push(MASK(x+w/2-bw/2,y+h/2-bh/2,bw,bh)); c.lab.forEach((s,i)=>g.push(T(x+w/2,y+h/2-(c.lab.length-1)*5.5+i*11+3.2,s,9))); }
+    else { g.push(MASK(x+w/2-bh/2,y+h/2-bw/2,bh,bw)); c.lab.forEach((s,i)=>g.push(T(x+w/2-(c.lab.length-1)*5.5+i*11+3.2,y+h/2,s,9,800,'middle',-90))); }
+    c.bx=(bw<=w-4||(w>=h&&bh<=h-2))?[x+w/2-bw/2,x+w/2+bw/2]:[x+w/2-bh/2,x+w/2+bh/2]; });
+  if(house){ g.push(R(X(house.a0),Y(house.f1),(house.a1-house.a0)*S,(house.f1-house.f0)*S,'#fff',2.2)); const cx=X((house.a0+house.a1)/2),cy=(Y(house.f0)+Y(house.f1))/2; g.push(T(cx,cy-2,'EXISTING HOUSE',11)+T(cx,cy+11,'(TO REMAIN)',8.5,700)); }
+  else if(hDist!=null){ const y=Y(gx-hDist); g.push(L(X0,y,LR,y,1.2,'6 3')); g.push(MASK(X0+6,y-14,TWd('REAR OF EXISTING HOUSE',9)+8,11)+T(X0+10,y-5,'REAR OF EXISTING HOUSE',9,800,'start')); house={f0:null,f1:gx-hDist,a0:0,a1:W,line:true}; }
+  // garage
+  g.push(R(GL,GT,GR-GL,GB-GT,'#fff',0,' stroke="none"'));
+  const CI=Math.max(3,0.6*S);
+  ['N','S','W','E'].forEach(wl=>{ const G=wallGeom[wl]; const lo=G.o==='h'?GL:GT, hi=G.o==='h'?GR:GB;
+    const cuts=ops.filter(o=>o.wall===wl).map(o=>[o.a,o.b]).sort((p,q)=>p[0]-q[0]); const segs=[]; let cur=lo; cuts.forEach(([a,b])=>{segs.push([cur,a]);cur=b}); segs.push([cur,hi]);
+    segs.forEach(([a,b])=>{ if(b-a<=0.5)return; const ci=G.c+G.inn*CI, a2=Math.max(a,lo+CI), b2=Math.min(b,hi-CI);
+      if(G.o==='h'){ g.push(L(a,G.c,b,G.c,4.5)); if(b2>a2)g.push(L(a2,ci,b2,ci,.9)); } else { g.push(L(G.c,a,G.c,b,4.5)); if(b2>a2)g.push(L(ci,a2,ci,b2,.9)); } }); });
+  const nm={oh:w=>w+"' OH DOOR",party:w=>w+"' PARTY DOOR",svc:w=>w+"' SVC DOOR"};
+  ops.forEach(o=>{ const G=wallGeom[o.wall], name=nm[o.kind](o.w);
+    if(o.kind!=='svc'){ if(G.o==='h'){ g.push(L(o.a,G.c,o.b,G.c,1.6,'6 3')); g.push(T((o.a+o.b)/2,G.c+G.inn*(CI+12)+(G.inn>0?0:4),name,8.5)); }
+      else { g.push(L(G.c,o.a,G.c,o.b,1.6,'6 3')); g.push(T(G.c+G.inn*(CI+4),(o.a+o.b)/2+3,name,8.5,800,G.inn>0?'start':'end')); } }
+    else { const dd=o.b-o.a, inn=(o.swing==='out'?-1:1)*G.inn; let P0,P1,n;
+      if(G.o==='h'){P0=[o.hinge,G.c];P1=[o.end,G.c];n=[0,inn];} else {P0=[G.c,o.hinge];P1=[G.c,o.end];n=[inn,0];}
+      const q=[P0[0]+n[0]*dd,P0[1]+n[1]*dd]; const cr=(q[0]-P0[0])*(P1[1]-P0[1])-(q[1]-P0[1])*(P1[0]-P0[0]); const sw=cr<0?1:0;
+      g.push(L(P0[0],P0[1],q[0],q[1],3)); g.push(`<path d="M${q[0].toFixed(1)} ${q[1].toFixed(1)} A ${dd.toFixed(1)} ${dd.toFixed(1)} 0 0 ${sw} ${P1[0].toFixed(1)} ${P1[1].toFixed(1)}" fill="none" stroke="#000" stroke-width="1.3"/>`);
+      const li=G.inn; // label always inside the garage
+      if(G.o==='h') g.push(T((o.a+o.b)/2+(o.swing==='out'?0:dd*0.2),G.c+li*((o.swing==='out'?CI:dd)+12)+(li>0?0:4),name,8.5));
+      else g.push(T(G.c+li*((o.swing==='out'?CI:dd)+5),(o.a+o.b)/2+3,name,8.5,800,li>0?'start':'end')); } });
+  const cx=(GL+GR)/2, cy=(GT+GB)/2;
+  g.push(T(cx,cy-6,'PROPOSED GARAGE',Math.min(12,(GR-GL-2*CI-10)/(15*0.66)),800)+T(cx,cy+8,ft(gw)+' x '+ft(gd),9.5,700));
+  if($i('spOnSlab')&&$i('spOnSlab').checked) g.push(T(cx,cy+21,'ON EXISTING SLAB',8.5));
+  // dimensions (black, tick ends)
+  const tick=(x,y)=>L(x-3,y+3,x+3,y-3,1.3);
+  const dH=(y,x0,x1,lab,out)=>{ let s=L(x0,y,x1,y,1)+tick(x0,y)+tick(x1,y); if(!out&&TWd(lab,9.5)+8<x1-x0) s+=T((x0+x1)/2,y-4,lab,9.5); else s+=T(out==='l'?x0-5:x1+5,y+3.5,lab,9.5,800,out==='l'?'end':'start'); return s; };
+  const dV=(x,y0,y1,labs,side=1)=>{ let s=L(x,y0,x,y1,1)+tick(x,y0)+tick(x,y1); const ym=(y0+y1)/2; labs.forEach((t,i)=>s+=T(x+side*5,ym+3.5-(labs.length-1)*5.5+i*11,t,9.5,800,side>0?'start':'end')); return s; };
+  g.push(L(X0-62,Yf,X0-62,Yr,1)+tick(X0-62,Yf)+tick(X0-62,Yr)+L(X0-66,Yf,X0-4,Yf,.6)+L(X0-66,Yr,X0-4,Yr,.6)+T(X0-68,(Yf+Yr)/2,'LOT DEPTH '+ft(D),9.5,800,'middle',-90));
+  const yt=alley?Yr-2*S-28-12:Yr-14; g.push(L(X0,yt,LR,yt,1)+tick(X0,yt)+tick(LR,yt)+L(X0,yt+4,X0,alley?Yr-2*S-28:Yr-2,.6)+L(LR,yt+4,LR,alley?Yr-2*S-28:Yr-2,.6)+T((X0+LR)/2,yt-4,'LOT WIDTH '+ft(W),9.5));
+  const right=W-left-gw;
+  const svcY=w=>{const o=ops.find(o=>o.wall===w);return o?((o.a+o.b)/2<cy?GB-(GB-GT)*0.2:GT+(GB-GT)*0.2):cy};
+  const yl=svcY('W'), yr=svcY('E');
+  if(left>0) g.push(dH(yl,X0,GL,ft(left),TWd(ft(left),9.5)+8<GL-X0?null:'l'));
+  if(right>0) g.push(dH(yr,GR,LR,ft(right),TWd(ft(right),9.5)+8<LR-GR?null:'r'));
+  if(rear>0){ const xr=X0-14; g.push(L(xr-4,GT,GL-2,GT,.6)+L(xr,GT,xr,Yr,1)+tick(xr,GT)+tick(xr,Yr)+T(xr-4,(GT+Yr)/2+3.5,ft(rear),9.5,800,'end')); }
+  if(house){ const hr=house.f1; const gap=gx-hr; if(gap>0){
+      const o0=Math.max(house.a0,left),o1=Math.min(house.a1,left+gw);
+      const inGap=conc.filter(c=>c.f<gx&&c.f+c.d>hr); const walks=inGap.filter(c=>c.w<=5).map(c=>[X(c.a),X(c.a+c.w)]).concat(inGap.filter(c=>c.w>5).flatMap(c=>[[X(c.a)-1,X(c.a)+1],[X(c.a+c.w)-1,X(c.a+c.w)+1]]));
+      const lw=TWd('HOUSE TO',9.5)+12; const cand=[];
+      const xs=[]; for(let xa=X(o0)+6; xa<=X(o1)-6; xa+=4) xs.push(xa); for(const xa of xs) for(const sd of [1,-1]){ const l0=sd>0?xa:xa-lw,l1=sd>0?xa+lw:xa; if(l0<X0+2||l1>LR-2)continue; const hitsLab=walks.some(([a,b])=>!(l1<a-1||l0>b+1))||walks.some(([a,b])=>xa>a-2&&xa<b+2)||conc.some(c=>c.bx&&c.f<gx&&c.f+c.d>hr&&xa>c.bx[0]-8&&xa<c.bx[1]+8); const onEdge=walks.some(([a,b])=>Math.abs(xa-a)<2||Math.abs(xa-b)<2); cand.push([hitsLab?1:0,onEdge?1:0,xa,sd]); }
+      cand.sort((p,q)=>p[0]-q[0]||p[1]-q[1]||(Math.abs(p[2]-(X(o0)+X(o1))/2)-Math.abs(q[2]-(X(o0)+X(o1))/2))); const [,,xd,sd]=cand[0]||[0,0,X(o0)+8,1];
+      const hasApInGap=conc.find(c=>c.f>=hr&&c.f<gx&&c.lab[0].includes('APRON')); const yTop=GB, yBot=Y(hr);
+      const ymid=hasApInGap?(Y(hasApInGap.f)+yBot)/2:(yTop+yBot)/2;
+      let s=L(xd,yTop,xd,yBot,1)+tick(xd,yTop)+tick(xd,yBot); [ft(gap),'HOUSE TO','GARAGE'].forEach((tx,i)=>s+=T(xd+sd*5,ymid+3.5-11+i*11,tx,9.5,800,sd>0?'start':'end')); g.push(s); }
+    if(!house.line && house.f0>0){ const xh=X(house.a0)+12; g.push(dV(xh,Yf,Y(house.f0),[ft(house.f0)])); } }
+  // north arrow + graphic scale (small, top right)
+  const nr=gv('spNorth'); const u=5*S>=20?5*S:10*S, us=5*S>=20?5:10; const nx=PW-2*u-24, ny=40;
+  if(nr!=='') g.push(`<g transform="rotate(${+nr} ${nx} ${ny+8})"><circle cx="${nx}" cy="${ny+8}" r="13" fill="#fff" stroke="#000" stroke-width="1.3"/><polygon points="${nx},${ny-3} ${nx+6},${ny+18} ${nx},${ny+13} ${nx-6},${ny+18}" fill="#000"/></g>`+T(nx,ny-11,'N',10.5));
+  for(let i=0;i<4;i++) g.push(`<rect x="${(nx-2*u+i*u).toFixed(1)}" y="${ny+42}" width="${u.toFixed(1)}" height="5" fill="${i%2?'#fff':'#000'}" stroke="#000" stroke-width=".8"/>`);
+  [0,2,4].forEach(i=>g.push(T(nx-2*u+i*u,ny+58,(i*us)+"'",8,700)));
+  g.push(T(nx,ny+37,'SCALE: '+SC,8.5));
+  const h=`<defs>${defs}</defs>`+g.join('');
+  if(L0._h!==h){L0._h=h;L0.innerHTML=h;}
+}
+const GEN=/^(lotOutline|proposedGarage|proposedApron|garageWallDim[NSEW]|spLeftSb|spRightSb|spRearSb|spAlleyDim|spAlleyLbl)$/;
+function hideGen(on){ try{ const ids=new Set(state.objects.filter(o=>GEN.test(o.role||'')).map(o=>String(o.id)));
+  document.querySelectorAll('#drawLayer > .obj').forEach(el=>{ const hid=on&&ids.has(String(el.dataset.id)); if(hid){el.dataset.pmHidden='1';el.style.visibility='hidden'} else if(el.dataset.pmHidden){delete el.dataset.pmHidden;el.style.visibility=''} }); }catch(_){} }
+window.agbRenderPermitPlan=render;
+// hook into the app's post-render pipeline (afterRender → renderSiteAnno)
+const _rn2=window.renderObjectsNow;
+window.renderObjectsNow=function(){ const r=_rn2.apply(this,arguments); try{pmLoad();render()}catch(e){console.warn('permit plan',e)} return r; };
+try{renderObjectsNow=window.renderObjectsNow}catch(_){}
+PF.concat(CORE).forEach(id=>{const e=$i(id); if(!e)return; const f=()=>{try{pmSave();render()}catch(e){console.warn(e)}}; e.addEventListener('input',f); e.addEventListener('change',f);});
+window.addEventListener('beforeprint',()=>{try{render()}catch(_){}});
+setTimeout(()=>{try{render()}catch(_){}},0);
+})();
+</script>
+<style>
+#agbPermitPlan{position:absolute;left:0;top:0;pointer-events:none;z-index:2;font-family:Arial,Helvetica,sans-serif}
+#paper.agb-permit #autoDimLayer,#paper.agb-permit #agbSiteAnno,#paper.agb-permit #agbLegend,#paper.agb-permit #sitePlanPlaceholder{display:none!important}
+</style>
 </body>
 </html>

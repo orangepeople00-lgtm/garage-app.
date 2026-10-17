@@ -1785,6 +1785,9 @@ function sheathWarn(el,city,kind,valueOverride){if(!el)return;const c=sheathCode
 <script>
 /* 2026-10-17 lighter pre-print check (same rules as GaragePlans pre-print checklist, data-level only). */
 function pcLiteEsc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+const PC_CODE_YEARS={"Oak Park": "2024", "Riverside": "2024", "Des Plaines": "2021", "Mundelein": "2024", "Evergreen Park": "2024", "Addison": "2024", "Wheaton": "2024", "Schaumburg": "2021", "Brookfield": "2021", "Elmhurst": "2021", "Berwyn": "2024", "Zion": "2021", "Evanston": "2021", "Calumet City": "2021", "Elmwood Park": "2021", "Lyons": "2021", "Skokie": "2021", "Joliet": "2015", "Aurora": "2021", "Barrington Hills": "2015", "Batavia": "2006", "Bedford Park": "2021", "Beecher": "2021", "Belvidere": "2021", "Bensenville": "2021", "Berkeley": "2024", "Bloomingdale": "2024", "Blue Island": "2021", "Bradley": "2021", "Bridgeview": "2024", "Carol Stream": "2024", "Cary": "2021", "Clarendon Hills": "2024", "Coal City": "2021", "Countryside": "2021", "Darien": "2021", "DeKalb": "2021", "DeKalb County": "2021", "Deer Park": "2021", "Deerfield": "2024", "Dolton": "2012", "Downers Grove": "2021", "East Dundee": "2021", "Elgin": "2021", "Elk Grove Village": "2024", "Forest Park": "2024", "Fox Lake": "2021", "Frankfort": "2021", "Franklin Park": "2021", "Geneva": "2021", "Glencoe": "2021", "Glendale Heights": "2021", "Glenview": "2021", "Golf": "2006", "Grayslake": "2009", "Westmont": "2021", "Westchester": "2021", "Villa Park": "2021", "Waukegan": "2021", "Palatine": "2021", "Wheeling": "2021"};
+const PC_CODE_YEAR_STATUS={"Elmhurst": "confirmed", "Des Plaines": "confirmed", "Bartlett": "conflicting", "Berwyn": "confirmed", "Brookfield": "confirmed", "Oak Park": "confirmed", "Zion": "confirmed", "Evanston": "confirmed", "Calumet City": "confirmed", "Elmwood Park": "confirmed", "Cicero": "not_found", "South Holland": "confirmed", "Midlothian": "confirmed", "Lyons": "confirmed", "Arlington Heights": "confirmed", "Evergreen Park": "confirmed", "Skokie": "confirmed", "Joliet": "confirmed", "Addison": "confirmed", "Antioch": "conflicting", "Algonquin": "confirmed", "Aurora": "confirmed", "Bannockburn": "confirmed", "Alsip": "not_found", "Barrington": "confirmed", "Barrington Hills": "confirmed", "Batavia": "confirmed", "Beach Park": "confirmed", "Bedford Park": "confirmed", "Beecher": "confirmed", "Bellwood": "confirmed", "Belvidere": "confirmed", "Bensenville": "confirmed", "Berkeley": "confirmed", "Bloomingdale": "confirmed", "Blue Island": "confirmed", "Bolingbrook": "confirmed", "Bourbonnais": "confirmed", "Bradley": "confirmed", "Big Rock": "not_found", "Braidwood": "not_found", "Bridgeview": "confirmed", "Broadview": "confirmed", "Buffalo Grove": "confirmed", "Burr Ridge": "conflicting", "Burbank": "conflicting", "Burnham": "not_found", "Calumet Park": "not_found", "Carol Stream": "confirmed", "Carpentersville": "confirmed", "Cary": "confirmed", "Chicago Heights": "confirmed", "Chicago Ridge": "not_found", "Clarendon Hills": "confirmed", "Coal City": "confirmed", "Country Club Hills": "confirmed", "Countryside": "confirmed", "Crest Hill": "conflicting", "Crestwood": "not_found", "Crete": "conflicting", "Crystal Lake": "confirmed", "Darien": "confirmed", "DeKalb": "confirmed", "DeKalb County": "confirmed", "Deer Park": "confirmed", "Deerfield": "confirmed", "Dixmoor": "not_found", "Dolton": "confirmed", "Downers Grove": "confirmed", "East Dundee": "confirmed", "East Hazel Crest": "not_found", "Elburn": "not_found", "Elgin": "confirmed", "Elk Grove Village": "confirmed", "Elwood": "confirmed", "Flossmoor": "confirmed", "Ford Heights": "not_found", "Forest Park": "confirmed", "Forest View": "conflicting", "Fox Lake": "confirmed", "Fox River Grove": "not_found", "Frankfort": "confirmed", "Franklin Park": "confirmed", "Geneva": "confirmed", "Glen Ellyn": "confirmed", "Glencoe": "confirmed", "Glendale Heights": "confirmed", "Glenview": "confirmed", "Glenwood": "not_found", "Golf": "confirmed", "Grayslake": "confirmed", "Gurnee": "conflicting", "Mundelein": "confirmed", "Libertyville": "confirmed", "Westmont": "confirmed", "Westchester": "confirmed", "Villa Park": "confirmed", "Waukegan": "confirmed", "Palatine": "confirmed", "Wheeling": "confirmed", "Riverside": "confirmed", "Wheaton": "confirmed", "Schaumburg": "confirmed"};
+const PC_CODE_YEAR_UPCOMING={"Glenview":"2024 IRC takes effect 1/1/2027","Bolingbrook":"2024 IRC takes effect 1/1/2027"};
 function pcLiteCityFlags(city,s){
   const F=[];const add=(t,m)=>F.push({type:t,msg:m});
   city=String(city||'').trim();
@@ -1793,8 +1796,12 @@ function pcLiteCityFlags(city,s){
   if(!s){add('FALLBACK','No code sheet on file for '+city+' — everything is generic.');return F}
   [['maxSize','Max size'],['height','Max height'],['rafters','Rafters'],['wallTies','Wall ties'],['ohHeader','Overhead door header'],['windowHeader','Window header'],['thickness','Slab thickness'],['footings','Footings'],['setSide','Side setback'],['setHouse','Distance to house'],['setRearNoAlley','Rear setback']].forEach(([k,l])=>{const v=String(s[k]||'').trim();if(!v||/^(SEE NOTE|SPECIAL NOTES|WIDTH:\s*DEPTH:)$/i.test(v))add('MISSING',l+': not on file')});
   const yrs=[];String(s.notes||'').replace(/(?:IRC\s*(\d{4}))|(?:(\d{4})\s*(?:INTERNATIONAL RESIDENTIAL|IRC))/gi,(m,a,b)=>{yrs.push(+(a||b))});
-  if(!yrs.length) add('FALLBACK','IRC edition not on file (plans default to 2018 IRC).');
-  yrs.filter(y=>y<2018).forEach(y=>add('VERIFY','Code sheet cites IRC '+y+' (older than 2018) — verify current adopted edition.'));
+  const cy=PC_CODE_YEARS[city]||'2018', st=PC_CODE_YEAR_STATUS[city]||(PC_CODE_YEARS[city]?'on file':'unknown');
+  if(st==='conflicting') add('VERIFY','Sources disagree on the adopted IRC edition — plans print '+cy+' IRC. Verify.');
+  else if(st==='not_found'||st==='unknown') add('FALLBACK','IRC edition not on file (plans default to 2018 IRC).');
+  if(+cy<2018) add('VERIFY','Official adopted edition is IRC '+cy+' (older than 2018) — verify nothing newer.');
+  if(PC_CODE_YEAR_UPCOMING[city]) add('VERIFY',city+': '+PC_CODE_YEAR_UPCOMING[city]+'.');
+  yrs.filter(y=>String(y)!==cy).forEach(y=>add('VERIFY','Code sheet notes cite IRC '+y+' but the adopted edition on file is '+cy+' — notes may be outdated.'));
   return F;
 }
 function pcLiteModal(title,flags){
@@ -1824,8 +1831,12 @@ function carpPcFlags(){const city=selectedCity();const F=[];const C=[];
   else{const cb=(typeof CITY_BUILD==='object'&&CITY_BUILD[city])||null;
     if(!cb) F.push({type:'FALLBACK',msg:'No city build data for '+city+' — generic defaults.'});
     else [['rafters','Rafters'],['ties','Cross ties'],['slab','Slab thickness']].forEach(([k,l])=>{if(!String(cb[k]||'').trim())F.push({type:'MISSING',msg:l+': not on file for '+city+' — default used.'})});
-    if(cb){const y=[];String(cb.notes||'').replace(/(?:IRC\s*(\d{4}))|(?:(\d{4})\s*IRC)/gi,(m,a,b)=>{y.push(+(a||b))});y.filter(v=>v<2018).forEach(v=>F.push({type:'VERIFY',msg:city+' notes cite IRC '+v+' (older than 2018) — verify.'}))}}
+    {const cy=PC_CODE_YEARS[city]||'2018',st=PC_CODE_YEAR_STATUS[city]||(PC_CODE_YEARS[city]?'on file':'unknown');
+     if(st==='conflicting')F.push({type:'VERIFY',msg:'Sources disagree on '+city+"'s IRC edition — verify."});
+     if(+cy<2018)F.push({type:'VERIFY',msg:city+' adopted IRC '+cy+' (older than 2018) — verify.'});
+     if(PC_CODE_YEAR_UPCOMING[city])F.push({type:'VERIFY',msg:city+': '+PC_CODE_YEAR_UPCOMING[city]+'.'})}}
   ['roof','wall'].forEach(k=>{const sc=sheathCodeFor(city,k);const el=document.getElementById(k+'Sheath');if(sc&&el&&!sheathMeetsCode(el.value,sc))C.push({type:'CONFLICT',msg:(k==='roof'?'Roof':'Wall')+' sheathing '+el.value+' differs from '+city+' code: '+sheathCodeText(sc)+'.',sig:city+'|'+k+'|'+el.value})});
+  try{carpSizeMsgs().forEach(x=>F.push({type:x.type,msg:x.msg}))}catch(e){}
   return {F,C}}
 (function(){if(typeof carpSavePdf!=='function')return;const orig=carpSavePdf;
   carpSavePdf=async function(){const {F,C}=carpPcFlags();
@@ -1835,6 +1846,37 @@ function carpPcFlags(){const city=selectedCity();const F=[];const C=[];
     if(open.length){const ok=await pcLiteModal('Code contradiction — accept to save',open);if(!ok)return;open.forEach(c=>acc[c.sig]=1);try{localStorage.setItem(key,JSON.stringify(acc))}catch(e){}}
     return orig.apply(this,arguments)};
   window.carpSavePdf=carpSavePdf})();
+</script>
+<script>
+/* 2026-10-17 shared size rules (GaragePlans / estimator / Carpenter):
+   total = garage footprint + roofed patio area; > 600 SF -> frost-footing question; city maxSize parsed to SF only when unambiguous. */
+function agbMaxSize(raw){const s=String(raw==null?'':raw).trim();if(!s)return {sf:null,note:''};const U=s.toUpperCase().replace(/\s+/g,' ');let m;
+  if((m=U.match(/^(\d+) ?X ?(\d+)(?: (\d+))?$/))){const p=+m[1]*+m[2];return (!m[3]||+m[3]===p)?{sf:p,note:''}:{sf:null,note:s}}
+  if((m=U.match(/^(\d+) (\d+) ?W? ?X? ?(\d+) ?L?$/))){return +m[1]===+m[2]*+m[3]?{sf:+m[1],note:''}:{sf:null,note:s}}
+  if((m=U.match(/^(\d+)(?: ?(?:SF|S\.F\.?|SQ\.? ?F(?:T|EET)?\.?|SQUARE FEET))?$/)))return {sf:+m[1],note:''};
+  if((m=U.match(/^(\d+) MINIMUM (.+)$/)))return {sf:+m[1],note:'MINIMUM '+m[2]};
+  return {sf:null,note:s}}
+const AGB_FROST_MSG="We're over 600 square feet. Did you want to continue or did you want a frost footing?";
+function agbSizeMsgs(garageSF,patioSF,city,maxRaw){const t=Math.round((garageSF||0)+(patioSF||0));const out=[];const desc=t+' SF total (garage '+Math.round(garageSF||0)+(patioSF?' + roofed patio '+Math.round(patioSF):'')+')';
+  if(t>600)out.push({k:'frost',type:'VERIFY',msg:AGB_FROST_MSG+' — '+desc+'.'});
+  const ms=agbMaxSize(maxRaw);
+  if(ms.sf&&t>ms.sf)out.push({k:'max',type:'CONFLICT',msg:desc+' is over the '+(city||'city')+' max of '+ms.sf+' SF ("'+String(maxRaw).trim()+'").'});
+  else if(!ms.sf&&ms.note)out.push({k:'maxnote',type:'VERIFY',msg:(city||'City')+' max size on file is not a number: "'+ms.note+'" — check it against '+desc+'.'});
+  else if(ms.sf&&ms.note)out.push({k:'maxnote',type:'VERIFY',msg:(city||'City')+' max size note: '+ms.note+'.'});
+  return out}
+function agbAmber(anchor,id,msgs){if(!anchor)return;let w=document.getElementById(id);const txt=msgs.map(m=>'⚠ '+m.msg).join('\n');
+  if(!txt){if(w)w.remove();return}
+  if(!w){w=document.createElement('div');w.id=id;w.className='sheath-warn size-warn no-print';w.setAttribute('role','note');w.style.cssText='margin-top:3px;padding:2px 6px;border-radius:5px;background:#fef3c7;border:1px solid #d97706;color:#92400e;font:700 11px/1.3 Arial,sans-serif;white-space:pre-line';anchor.insertAdjacentElement('afterend',w)}
+  if(w.textContent!==txt)w.textContent=txt}
+</script><style>@media print{.size-warn{display:none!important}}</style>
+<script>
+/* City max garage size (copied verbatim from CITY_CODE_SHEETS.maxSize) for the size warning. */
+const CITY_MAXSIZE={"Addison": "700", "Algonquin": "725", "Alsip": "576", "Antioch": "OPEN OR 35% LOT CVG.", "Arlington Heights": "700 MINIMUM 22 X 22", "Aurora": "OPEN (OVER 768 SF NEEDS", "Bannockburn": "800", "Barrington": "OPEN", "Barrington Hills": "OPEN", "Bartlett": "600", "Batavia": "3 CAR", "Beach Park": "OPEN", "Bedford Park": "OPEN", "Beecher": "OPEN", "Bellwood": "24 X 24", "Belvidere": "900", "Bensenville": "700", "Berkeley": "24 x 26", "Berwyn": "528", "Big Rock": "700 s.f.. OR", "Bloomingdale": "3 CAR", "Blue Island": "OPEN", "Bolingbrook": "OPEN, MIN 425", "Bourbonnais": "24 X 26", "Bradley": "24 X 32 784", "Braidwood": "HEIGHT:15'", "Bridgeview": "(832) SEE NOTE", "Broadview": "650", "Brookfield": "625", "Buffalo Grove": "DEPENDS ON LOT SIZE", "Burbank": "816 34W 24L", "Burnham": "24 X 24", "Burr Ridge": "30 X 47", "Calumet City": "OPEN", "Calumet Park": "576 24X24", "Carol Stream": "OPEN", "Carpentersville": "OPEN", "Cary": "OPEN", "Chicago Heights": "600", "Chicago Ridge": "900 24 X 26", "Clarendon Hills": "OPEN", "Coal City": "900", "Country Club Hills": "OPEN", "Countryside": "OPEN", "Crest Hill": "OPEN", "Crestwood": "600", "Crete": "HEIGHT", "Crystal Lake": "OPEN", "Darien": "800", "Des Plaines": "24 X 30", "Dixmoor": "2 1/2 CAR", "DeKalb": "no larger than house", "DeKalb County": "800 SQ. F", "Dolton": "24 X 24 576", "Deerfield": "3 CAR", "Deer Park": "3 CAR", "Downers Grove": "OPEN", "East Dundee": "3 CAR 24 X 36", "East Hazel Crest": "22X 24 528", "Elburn": "700", "Elk Grove Village": "600 SQUARE FEET", "Elgin": "4 CAR SEE NOTE", "Elmhurst": "720", "Elmwood Park": "528 22 X 24", "Evanston": "OPEN", "Evergreen Park": "816", "Flossmoor": "OPEN", "Ford Heights": "OPEN", "Forest Park": "700 SF", "Forest View": "576 24 X 24", "Fox Lake": "OPEN", "Fox River Grove": "OPEN", "Frankfort": "750", "Franklin Park": "3 CAR", "Geneva": "OPEN", "Glencoe": "400", "Glendale Heights": "600", "Glen Ellyn": "DEPENDS ON LOT", "Glenview": "3 CAR", "Glenwood": "576 24 X 24", "Golf": "HEIGHT", "Grayslake": "OPEN", "Gurnee": "OPEN", "Mundelein": "OPEN"};
+function carpPatioSF(){const t=String(val('patioRoof')||'').trim();if(!t)return {sf:0,ok:true};const m=t.match(/(\d+(?:\.\d+)?)\s*['’]?\s*[xX×]\s*(\d+(?:\.\d+)?)/);if(m)return {sf:+m[1]*+m[2],ok:true};return {sf:0,ok:false,raw:t}}
+function carpSizeMsgs(){const W=parseFloat(val('sizeW'))||0,L=parseFloat(val('sizeL'))||0;const p=carpPatioSF();const city=selectedCity();
+  const m=agbSizeMsgs(W*L,p.sf,city,/^chicago$/i.test(city||'')?'':(CITY_MAXSIZE[city]||''));
+  if(!p.ok)m.push({k:'patio',type:'VERIFY',msg:'Patio roof "'+p.raw+'" has no W x D size — enter it like 20x11 so it counts toward total square footage.'});return m}
+setInterval(()=>{try{const m=carpSizeMsgs();const a=document.getElementById('sizeL');agbAmber(a&&a.closest('.cf'),'sizeWarnCarp',m);const p=document.getElementById('patioRoof');agbAmber(p&&String(p.value).trim()?p.closest('.cf'):null,'sizeWarnCarpPatio',m.filter(x=>x.k!=='maxnote'));if(!(p&&String(p.value).trim())){const x=document.getElementById('sizeWarnCarpPatio');if(x)x.remove()}}catch(e){}},800);
 </script>
 </body>
 </html>

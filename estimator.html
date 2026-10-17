@@ -1077,16 +1077,17 @@ body.bg-zinc-950{
                                         <select id="wallSheathSize" onchange="calculateEstimate()" class="calc-input w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm">
                                             <option value='7/16"' selected>7/16"</option>
                                             <option value='1/2"'>1/2"</option>
+                                            <option value='15/32"'>15/32"</option>
                                             <option value='5/8"'>5/8"</option>
                                             <option value='3/4"'>3/4"</option>
                                         </select>
                                     </div>
                                     <div>
                                         <label class="text-[10px] text-zinc-500 block mb-1">Type</label>
-                                        <select id="wallSheathType" onchange="calculateEstimate()" class="calc-input w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm">
-                                            <option value="OSB" selected>OSB</option>
-                                            <option value="Plywood">Plywood</option>
+                                        <select id="wallSheathType" onchange="sheathingSheetText('wall');calculateEstimate()" class="calc-input w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm">
+                                            <option value="OSB" selected>OSB</option><option value="Plywood">Plywood</option><option value="CDX Plywood">CDX Plywood</option><option value="Zip System wall sheathing">Zip System</option><option value="T1-11 plywood siding panel">T1-11 Plywood Siding Panel</option><option value="None">None</option><option value="Other">Other (custom)</option>
                                         </select>
+                                        <input id="wallSheathCustom" type="text" placeholder="Custom wall sheathing" oninput="calculateEstimate()" class="calc-input hidden w-full mt-2 bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-sm">
                                     </div>
                                 </div>
                             </div>
@@ -1104,10 +1105,10 @@ body.bg-zinc-950{
                                     </div>
                                     <div>
                                         <label class="text-[10px] text-zinc-500 block mb-1">Type</label>
-                                        <select id="roofSheathType" onchange="calculateEstimate()" class="calc-input w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm">
-                                            <option value="OSB" selected>OSB</option>
-                                            <option value="Plywood">Plywood</option>
+                                        <select id="roofSheathType" onchange="sheathingSheetText('roof');calculateEstimate()" class="calc-input w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm">
+                                            <option value="OSB" selected>OSB</option><option value="OSB T&amp;G">OSB T&amp;G</option><option value="Plywood">Plywood</option><option value="CDX Plywood">CDX Plywood</option><option value="Zip System roof sheathing">Zip System</option><option value="Other">Other (custom)</option>
                                         </select>
+                                        <input id="roofSheathCustom" type="text" placeholder="Custom roof sheathing" oninput="calculateEstimate()" class="calc-input hidden w-full mt-2 bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-sm">
                                     </div>
                                 </div>
                             </div>
@@ -3068,6 +3069,10 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             const type=(kind==='roof'
                 ? (document.getElementById('roofSheathType')?.value||'OSB')
                 : (document.getElementById('wallSheathType')?.value||'OSB'));
+            const cust=document.getElementById(kind==='roof'?'roofSheathCustom':'wallSheathCustom');
+            if(cust) cust.classList.toggle('hidden', type!=='Other');
+            if(type==='None') return 'None';
+            if(type==='Other') return String((cust&&cust.value.trim())||'Other');
             return String(size)+' '+String(type);
         }
         function getEavesInches(){
@@ -3104,6 +3109,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
         }
 
         function calculateEstimate() {
+            try{sheathingSheetText('wall');sheathingSheetText('roof')}catch(e){}
             try{ if(typeof syncCarCapacityUI==='function') syncCarCapacityUI(); }catch(e){}
             const estimateWarnings=[];
             window._estimateWarnings=estimateWarnings;

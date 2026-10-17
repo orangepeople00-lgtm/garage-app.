@@ -476,7 +476,7 @@ html,body{margin:0;min-height:100%;background:#e8edf3;color:var(--ink);font-fami
             </select><input class="f" id="sizeL" inputmode="decimal" placeholder="L"/><button type="button" class="cs-back no-print" data-for="sizeL" title="Pick from list" aria-label="Pick length from list">▾</button></span></span></span></div>
             <div class="cf"><span class="cl">Wall height</span><span class="cv"><input class="f" id="wallHeight"/></span></div>
             <div class="cf"><span class="cl">Studs (wall centers)</span><span class="cv"><input class="f" id="wallCenters"/></span></div>
-            <div class="cf"><span class="cl">Wall sheathing</span><span class="cv"><input class="f" id="wallSheath"/></span></div>
+            <div class="cf"><span class="cl">Wall sheathing</span><span class="cv"><select class="f sheath-sel" id="wallSheath"><option value=""></option><option value="7/16&quot; OSB">7/16&quot; OSB</option><option value="1/2&quot; OSB">1/2&quot; OSB</option><option value="1/2&quot; CDX plywood">1/2&quot; CDX plywood</option><option value="5/8&quot; CDX plywood">5/8&quot; CDX plywood</option><option value="15/32&quot; plywood">15/32&quot; plywood</option><option value="7/16&quot; Zip System wall sheathing">7/16&quot; Zip System wall sheathing</option><option value="1/2&quot; Zip System wall sheathing">1/2&quot; Zip System wall sheathing</option><option value="5/8&quot; T1-11 plywood siding panel">5/8&quot; T1-11 plywood siding panel</option><option value="None">None</option><option value="__other">Other (custom)…</option></select></span></div>
           </div></section>
 
           <section class="cs-sec"><h4>Doors</h4><div class="cs-grid">
@@ -497,7 +497,7 @@ html,body{margin:0;min-height:100%;background:#e8edf3;color:var(--ink);font-fami
             <div class="cf"><span class="cl">Pitch</span><span class="cv"><input class="f" id="pitchLine"/></span></div>
             <div class="cf"><span class="cl">Rafters</span><span class="cv"><input class="f" id="rafters"/></span></div>
             <div class="cf"><span class="cl">Cross ties</span><span class="cv"><input class="f" id="crossties"/></span></div>
-            <div class="cf"><span class="cl">Roof sheathing</span><span class="cv"><input class="f" id="roofSheath"/></span></div>
+            <div class="cf"><span class="cl">Roof sheathing</span><span class="cv"><select class="f sheath-sel" id="roofSheath"><option value=""></option><option value="7/16&quot; OSB">7/16&quot; OSB</option><option value="1/2&quot; OSB">1/2&quot; OSB</option><option value="5/8&quot; OSB">5/8&quot; OSB</option><option value="3/4&quot; OSB T&amp;G">3/4&quot; OSB T&amp;G</option><option value="1/2&quot; CDX plywood">1/2&quot; CDX plywood</option><option value="5/8&quot; CDX plywood">5/8&quot; CDX plywood</option><option value="3/4&quot; CDX plywood">3/4&quot; CDX plywood</option><option value="1/2&quot; Zip System roof sheathing">1/2&quot; Zip System roof sheathing</option><option value="5/8&quot; Zip System roof sheathing">5/8&quot; Zip System roof sheathing</option><option value="__other">Other (custom)…</option></select></span></div>
             <div class="cf"><span class="cl">Shingles</span><span class="cv"><span class="choices" id="shingleCircles"><span class="circ on" data-v="ARCH" onclick="setChoice('shingles','ARCH')"><i></i> ARCH</span><span class="circ" data-v="3 TAB" onclick="setChoice('shingles','3 TAB')"><i></i> 3 TAB</span></span></span></div>
             <div class="cf"><span class="cl">Shingle color</span><span class="cv"><input class="f" id="shingleColorLine"/></span></div>
             <div class="cf"><span class="cl">Eaves</span><span class="cv"><span class="choices" id="eaveCircles"><span class="circ on" data-v="Realwood" onclick="setChoice('eaves','Realwood')"><i></i> REALWOOD</span><span class="circ" data-v="Aluminum" onclick="setChoice('eaves','Aluminum')"><i></i> ALUM</span></span></span></div>
@@ -1535,8 +1535,8 @@ const AGB_PULL_CFG={client:()=>sb,
   {k:'svcWall',label:'Service door wall',cur:()=>g('svcWall'),opts:()=>[...$('svcWall').options].map(o=>[o.value,o.textContent]),from:R=>String(st(R).serviceDoorLocation||'').toUpperCase(),set:v=>s('svcWall',v)},
   {k:'winHung',label:'Single-hung windows',cur:()=>g('winHung'),from:R=>st(R).windowType==='single'||st(R).windowType==='choice'?(st(R).windowQty||''):'',set:v=>s('winHung',v)},
   {k:'winSlider',label:'Slider windows',cur:()=>g('winSlider'),from:R=>st(R).windowType==='sliding'?(st(R).windowQty||''):'',set:v=>s('winSlider',v)},
-  {k:'roofSheath',label:'Roof sheathing',cur:()=>g('roofSheath'),from:R=>[st(R).roofSheathSize,st(R).roofSheathType].filter(Boolean).join(' '),set:v=>s('roofSheath',v)},
-  {k:'wallSheath',label:'Wall sheathing',cur:()=>g('wallSheath'),from:R=>[st(R).wallSheathSize,st(R).wallSheathType].filter(Boolean).join(' '),set:v=>s('wallSheath',v)},
+  {k:'roofSheath',label:'Roof sheathing',cur:()=>g('roofSheath'),from:R=>{const t=st(R).roofSheathType;return t==='None'?'None':t==='Other'?(st(R).roofSheathCustom||''):[st(R).roofSheathSize,t].filter(Boolean).join(' ')},set:v=>s('roofSheath',v)},
+  {k:'wallSheath',label:'Wall sheathing',cur:()=>g('wallSheath'),from:R=>{const t=st(R).wallSheathType;return t==='None'?'None':t==='Other'?(st(R).wallSheathCustom||''):[st(R).wallSheathSize,t].filter(Boolean).join(' ')},set:v=>s('wallSheath',v)},
   {k:'extraOverhang',label:'Extra overhang (beyond eaves)',cur:()=>g('extraOverhang'),from:R=>{const t=st(R);const n=parseFloat(t.overhangSize);return yes(t.overhangEnabled)&&n>0?n+'"':''},set:v=>{s('extraOverhang',v);carpPrevOh=parseFloat(v)||0;if(carpPrevOh>0){if(!String(($('extraOverhangWalls')||{}).value||''))carpOhAll();$('extraOverhangConfirmed').value='';}carpOhUi()}},
   {k:'patioRoof',label:'Roofed patio',cur:()=>g('patioRoof'),from:R=>yes(st(R).roofPatioEnabled)?((st(R).roofPatioDepth==='manual'?st(R).manualRoofPatioDepth:st(R).roofPatioDepth)+' ft'+(st(R).roofPatioSide?' '+st(R).roofPatioSide:'')):'',set:v=>s('patioRoof',v)},
   {k:'notes',label:'Notes (added to ticket notes)',multi:true,cur:()=>g('notes'),from:R=>{const t=st(R);const p=[];
@@ -1728,5 +1728,18 @@ function carpBoot(){const scan=carpScanPending();if(scan){const r=carpApplyScan(
   setInterval(()=>{sizeVis();if(mob())document.querySelectorAll('#paper .cs-sec.cs-closed').forEach(upd)},700);
   addEventListener('beforeprint',sizeVis);
 })();
-</script></body>
+</script><script>
+/* 2026-10-17 sheathing dropdowns: preset list + "Other (custom)…" free text. Any saved/legacy value not in the list is kept as its own option, so old jobs print unchanged. */
+function sheathCombo(id){const el=document.getElementById(id);if(!el||el._sc)return;el._sc=1;
+  const P=Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,'value');
+  const ensure=v=>{v=String(v==null?'':v);if(v&&v!=='__other'&&![...el.options].some(o=>o.value===v)){const o=new Option(v,v);o.dataset.custom='1';el.insertBefore(o,el.querySelector('option[value="__other"]'))}return v};
+  Object.defineProperty(el,'value',{configurable:true,get(){return P.get.call(el)},set(v){P.set.call(el,ensure(v))}});
+  const box=document.createElement('input');box.type='text';box.className='sheath-custom no-print';box.placeholder='Type custom sheathing, then Enter';box.style.cssText='display:none;width:100%;box-sizing:border-box;margin-top:4px';
+  el.after(box);let last=P.get.call(el);
+  const commit=()=>{const t=box.value.trim();box.style.display='none';el.value=t||last;last=el.value;el._customCommit=true;try{el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}))}finally{el._customCommit=false}};
+  el.addEventListener('change',e=>{if(P.get.call(el)==='__other'){e.stopImmediatePropagation();box.value=(el.querySelector('option[value="'+CSS.escape(last)+'"]')||{}).dataset?.custom?last:'';box.style.display='block';box.focus();return}last=P.get.call(el)},true);
+  box.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();commit()}if(e.key==='Escape'){box.value='';commit()}});box.addEventListener('blur',commit)}
+</script><style>select.sheath-sel{max-width:100%}@media print{select.sheath-sel{-webkit-appearance:none;appearance:none;border:0;background:none;padding:0}}.carp-pdf select.sheath-sel{-webkit-appearance:none;appearance:none;background:none}</style>
+<script>['wallSheath','roofSheath'].forEach(sheathCombo);</script>
+</body>
 </html>

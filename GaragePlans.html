@@ -272,8 +272,8 @@ body.oh-unconf .sheet .oh-banner{display:block;position:absolute;top:8px;left:16
     <div><label>Corner boards</label><input id="cornerBoards" value='5/4" x 4"'></div>
   </div>
   <div class="row2">
-    <div><label>Wall sheathing</label><select id="wallSheath"><option>7/16" OSB</option><option>1/2" OSB</option><option>5/8" OSB</option><option>1/2" Plywood</option></select></div>
-    <div><label>Roof sheathing</label><select id="roofSheath"><option>7/16" OSB</option><option>1/2" OSB</option><option>5/8" OSB</option></select></div>
+    <div><label>Wall sheathing</label><select id="wallSheath"><option value="7/16&quot; OSB">7/16&quot; OSB</option><option value="1/2&quot; OSB">1/2&quot; OSB</option><option value="5/8&quot; OSB">5/8&quot; OSB</option><option value="1/2&quot; CDX plywood">1/2&quot; CDX plywood</option><option value="5/8&quot; CDX plywood">5/8&quot; CDX plywood</option><option value="15/32&quot; plywood">15/32&quot; plywood</option><option value="7/16&quot; Zip System wall sheathing">7/16&quot; Zip System wall sheathing</option><option value="1/2&quot; Zip System wall sheathing">1/2&quot; Zip System wall sheathing</option><option value="5/8&quot; T1-11 plywood siding panel">5/8&quot; T1-11 plywood siding panel</option><option value="None">None</option><option value="1/2&quot; Plywood">1/2&quot; Plywood</option><option value="__other">Other (custom)…</option></select></div>
+    <div><label>Roof sheathing</label><input type="hidden" id="roofSheathUser" value=""><select id="roofSheath"><option value="7/16&quot; OSB">7/16&quot; OSB</option><option value="1/2&quot; OSB">1/2&quot; OSB</option><option value="5/8&quot; OSB">5/8&quot; OSB</option><option value="3/4&quot; OSB T&amp;G">3/4&quot; OSB T&amp;G</option><option value="1/2&quot; CDX plywood">1/2&quot; CDX plywood</option><option value="5/8&quot; CDX plywood">5/8&quot; CDX plywood</option><option value="3/4&quot; CDX plywood">3/4&quot; CDX plywood</option><option value="1/2&quot; Zip System roof sheathing">1/2&quot; Zip System roof sheathing</option><option value="5/8&quot; Zip System roof sheathing">5/8&quot; Zip System roof sheathing</option><option value="__other">Other (custom)…</option></select></div>
   </div>
   <div class="row2">
     <div><label>Eaves / soffit</label><input id="eaves" value='6" fascia / 6" soffit'></div>
@@ -464,6 +464,8 @@ function parseBuildMethod(c){
   if(/GUTTER/.test(T)) rules.push('Gutters required');
   return rules;
 }
+function roofSheathPicked(){return val('roofSheathUser')==='1'}
+function roofSheathCallout(){return (roofSheathPicked()?val('roofSheath'):(cityStruct().roofSheath||val('roofSheath')))||'7/16" OSB'}
 function applySheathingFromCode(c){
   const t=String((c&&c.notes)||'').toUpperCase();
   if(/5\/8/.test(t) && /ROOF/.test(t)) $('roofSheath').value='5/8" OSB';
@@ -732,11 +734,11 @@ function applyFetchedPacket(p){
   }
   if(p.wallSheath && $('wallSheath')){
     const opt=[...$('wallSheath').options].find(o=>o.value.toLowerCase().includes(String(p.wallSheath).toLowerCase().slice(0,6)));
-    if(opt) $('wallSheath').value=opt.value;
+    $('wallSheath').value=opt?opt.value:String(p.wallSheath);
   }
   if(p.roofSheath && $('roofSheath')){
     const opt=[...$('roofSheath').options].find(o=>o.value.toLowerCase().includes(String(p.roofSheath).toLowerCase().slice(0,6)));
-    if(opt) $('roofSheath').value=opt.value;
+    $('roofSheath').value=opt?opt.value:String(p.roofSheath);
   }
 }
 async function loadVillagePacket(force){
@@ -1693,7 +1695,7 @@ function roofPlanSvg(wIn,hIn){ wIn=wIn||8.2; hIn=hIn||9.29;
   const pat=patioDim();
   const patExt=s=>pat.on&&pat.wall===s?pat.d:0;
   const fs={lab:c.f(8.5),note:c.f(8),small:c.f(7.5),dim:c.f(8)};
-  const rf=String(val('shingles')||'').toUpperCase(), sheath=String(cityStruct().roofSheath||val('roofSheath')||'').toUpperCase();
+  const rf=String(val('shingles')||'').toUpperCase(), sheath=String(roofSheathCallout()).toUpperCase();
   const gtxt=gs==='none'?'NONE ON THIS JOB':(half?'5" HALF-ROUND':gs==='k'?'5" K-STYLE':'5" SEAMLESS')+' GUTTER'+(gs==='sides'?' (SIDES ONLY)':'')+' w/ '+(half?'3" RND.':'2x3')+' DOWNSPOUTS (@DS@)';
   const roofName=rt==='hip'?'HIP':rt==='revgable'?'REVERSE GABLE':'GABLE';
   const nl=[roofName+' ROOF · PITCH '+P+'/12',
@@ -1864,10 +1866,10 @@ function buildingSectionSvg(){
   const leftNotes=[
     'ALL LUMBER SPF #2 OR BETTER',
     (val('shingles')||'ARCH. SHINGLES')+' OVER 15# FELT',
-    'OVER '+(cityStruct().roofSheath||val('roofSheath')||'7/16" OSB'),
+    'OVER '+roofSheathCallout(),
     rafterCallout()+(showOnPlan('hurricane')?' w/ H-TIES':'') ,
     showOnPlan('gutters')?'6" FASCIA w/ ALUM. GUTTERS':'6" FASCIA — BOXED EAVES SEALED',
-    (val('wallSheath')||'7/16" OSB')+' + HOUSEWRAP',
+    (/^none$/i.test(val('wallSheath'))?'NO WALL SHEATHING — HOUSEWRAP OVER STUDS':(val('wallSheath')||'7/16" OSB')+' + HOUSEWRAP'),
     studCallout()+' (2) AT CORNERS',
     (val('siding')||'VINYL')+' HORIZONTAL SIDING',
     '2x4 TREATED SILL + 1/2" ANCHORS @ 6\' O.C.'
@@ -3905,5 +3907,17 @@ const AGB_PULL_CFG={client:()=>garageSb,
  after:()=>{try{seedPlanItems()}catch(e){}try{gpaSum()}catch(e){}try{snapshot&&snapshot()}catch(e){}try{buildPlans()}catch(e){}}};
 
 </script>
+<script>
+/* 2026-10-17 sheathing dropdowns: preset list + "Other (custom)…" free text. Any saved/legacy value not in the list is kept as its own option, so old jobs print unchanged. */
+function sheathCombo(id){const el=document.getElementById(id);if(!el||el._sc)return;el._sc=1;
+  const P=Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,'value');
+  const ensure=v=>{v=String(v==null?'':v);if(v&&v!=='__other'&&![...el.options].some(o=>o.value===v)){const o=new Option(v,v);o.dataset.custom='1';el.insertBefore(o,el.querySelector('option[value="__other"]'))}return v};
+  Object.defineProperty(el,'value',{configurable:true,get(){return P.get.call(el)},set(v){P.set.call(el,ensure(v))}});
+  const box=document.createElement('input');box.type='text';box.className='sheath-custom no-print';box.placeholder='Type custom sheathing, then Enter';box.style.cssText='display:none;width:100%;box-sizing:border-box;margin-top:4px';
+  el.after(box);let last=P.get.call(el);
+  const commit=()=>{const t=box.value.trim();box.style.display='none';el.value=t||last;last=el.value;el._customCommit=true;try{el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}))}finally{el._customCommit=false}};
+  el.addEventListener('change',e=>{if(P.get.call(el)==='__other'){e.stopImmediatePropagation();box.value=(el.querySelector('option[value="'+CSS.escape(last)+'"]')||{}).dataset?.custom?last:'';box.style.display='block';box.focus();return}last=P.get.call(el)},true);
+  box.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();commit()}if(e.key==='Escape'){box.value='';commit()}});box.addEventListener('blur',commit)}
+</script><script>['wallSheath','roofSheath'].forEach(sheathCombo);(function(){const r=$('roofSheath');if(r)r.addEventListener('change',e=>{$('roofSheathUser').value='1'})})();</script>
 </body>
 </html>

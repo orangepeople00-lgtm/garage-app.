@@ -19,15 +19,16 @@
   "form_name": "Building permit – online application via VillageView (CityView) portal; Garage/Coach House guidelines PDF",
   "template": null,
   "fields": null,
-  "portal_url": "https://villageview.oak-park.us/CityViewPortal/",
+  "portal_url": "https://villageview.oak-park.us/CityViewPortal/Permit/Application",
   "info_url": "https://villageview.oak-park.us/cityviewportal/content/oak%20park/Garage-Coachouse%20guidelines%20(10-2020).pdf",
   "pdf_url": null,
   "checklist_url": null,
   "submittal": "online only",
   "info_sheet": true,
-  "link_url": "https://villageview.oak-park.us/CityViewPortal/",
+  "link_url": "https://villageview.oak-park.us/CityViewPortal/Permit/Application",
   "link_type": "portal",
-  "link_checked": "2026-10-17"
+  "link_checked": "2026-10-17",
+  "link_note": "CityView: New Permit application"
  },
  "Zion": {
   "form_type": "general_covers_garage",
@@ -256,7 +257,15 @@
   "info_sheet": false,
   "link_url": "https://www.cityofzion.com/forms/building/other-information/Building-Permit-2024.pdf",
   "link_type": "pdf",
-  "link_checked": "2026-10-17"
+  "link_checked": "2026-10-17",
+  "electrical": {
+   "required": "not determined",
+   "note": "application has no electrical line; not determined"
+  },
+  "demolition": {
+   "required": "included in building permit",
+   "note": "building application lists 'DEMOLITION' as a work type"
+  }
  },
  "Evanston": {
   "form_type": "detached_garage",
@@ -371,7 +380,15 @@
   "info_sheet": false,
   "link_url": "https://aca-prod.accela.com/EVANSTON/Default.aspx",
   "link_type": "portal",
-  "link_checked": "2026-10-17"
+  "link_checked": "2026-10-17",
+  "electrical": {
+   "required": "included in building permit",
+   "note": "building application lists 'ELECTRICAL' (contractor/work line); no separate electrical application required by the form"
+  },
+  "demolition": {
+   "required": "included in building permit",
+   "note": "building application lists 'DEMOLITION' as a work type"
+  }
  },
  "Cicero": {
   "form_type": "general_covers_garage",
@@ -617,7 +634,15 @@
   "info_sheet": false,
   "link_url": "https://calumetcity.org/wp-content/uploads/2026/04/2026-Building-Permit-Application.pdf",
   "link_type": "pdf",
-  "link_checked": "2026-10-17"
+  "link_checked": "2026-10-17",
+  "electrical": {
+   "required": "included in building permit",
+   "note": "building application lists 'ELECTRICAL' (contractor/work line); no separate electrical application required by the form"
+  },
+  "demolition": {
+   "required": "not determined",
+   "note": "no demolition line on application; check city/Cook County demolition permit"
+  }
  },
  "Elmwood Park": {
   "form_type": "general_covers_garage",
@@ -644,35 +669,37 @@
   "form_name": "Online permit type 'Detached Garage (Residential)' – Customer Self Service portal; Permit Guide – Residential Accessory Structures",
   "template": null,
   "fields": null,
-  "portal_url": "https://www.desplainesil.gov/Departments/Community-and-Economic-Development/Building-and-Permits",
+  "portal_url": "https://cityofdesplainesil-energovweb.tylerhost.net/apps/selfservice#/applicationAssistant",
   "info_url": null,
   "pdf_url": null,
   "checklist_url": "https://www.desplainesil.gov/files/assets/city/v/1/ced/licenses-and-permits/05012026_permit-guide_r_accessory-structures.pdf",
   "submittal": "online only",
   "info_sheet": true,
-  "link_url": "https://www.desplainesil.gov/Departments/Community-and-Economic-Development/Building-and-Permits",
+  "link_url": "https://cityofdesplainesil-energovweb.tylerhost.net/apps/selfservice#/applicationAssistant",
   "link_type": "portal",
   "link_checked": "2026-10-17",
   "demolition": {
    "required": "separate",
    "pdf_url": "https://www.desplainesil.gov/files/assets/city/v/1/ced/licenses-and-permits/05112026_permit-guide_r_demolition.pdf",
    "note": "Residential demolition permit guide; apply via EnerGov"
-  }
+  },
+  "link_note": "EnerGov Apply (application assistant); Detached Garage guide https://www.desplainesil.gov/files/assets/city/v/1/ced/licenses-and-permits/05212026_permit-guide_r_detached-garage.pdf"
  },
  "South Holland": {
   "form_type": "unknown",
   "form_name": "Online Building Permits & Contractor Registration system",
   "template": null,
   "fields": null,
-  "portal_url": "https://cms5.revize.com/revize/southholland/departments/community_development/permits_and_contractor_information.php",
-  "info_url": null,
+  "portal_url": "https://elementsconnect.southholland.org/Account/Login?ReturnUrl=%2FPortal%2FPortal",
+  "info_url": "https://www.southholland.org/departments/community-development/permits-contractor-information",
   "pdf_url": null,
   "checklist_url": null,
   "submittal": "online only",
   "info_sheet": true,
-  "link_url": "https://cms5.revize.com/revize/southholland/departments/community_development/permits_and_contractor_information.php",
+  "link_url": "https://elementsconnect.southholland.org/Account/Login?ReturnUrl=%2FPortal%2FPortal",
   "link_type": "portal",
-  "link_checked": "2026-10-17"
+  "link_checked": "2026-10-17",
+  "link_note": "Elements Connect online permit application (login-gated; no public deep link). Old revize link was 404."
  },
  "Midlothian": {
   "form_type": "unknown",
@@ -864,6 +891,14 @@
    "source_fields": 0,
    "added_fields": 14,
    "prefill_fields": 9
+  },
+  "electrical": {
+   "required": "not determined",
+   "note": "scanned application, no separate electrical application found"
+  },
+  "demolition": {
+   "required": "not determined",
+   "note": "no demolition line on application; check city/Cook County demolition permit"
   }
  },
  "Lyons": {
@@ -1836,6 +1871,14 @@
    "source_fields": 0,
    "added_fields": 79,
    "prefill_fields": 21
+  },
+  "electrical": {
+   "required": "not determined",
+   "note": "scanned application, no separate electrical application found"
+  },
+  "demolition": {
+   "required": "not determined",
+   "note": "no demolition line on application; check city/Cook County demolition permit"
   }
  },
  "Arlington Heights": {
@@ -1843,21 +1886,23 @@
   "form_name": "Permit type 'Garage – Detached Residential' (Civic Access Portal) + Detached Garage – Residential packet",
   "template": null,
   "fields": null,
-  "portal_url": "https://vah.com/government/permits___licenses_/index.php",
+  "portal_url": "https://vilofarlingtonheightsil-energovweb.tylerhost.net/apps/selfservice#/applicationAssistant",
   "info_url": null,
   "pdf_url": null,
-  "checklist_url": "https://cms2.revize.com/revize/arlington/Detached%20Garage%20-%20Residential.pdf",
+  "checklist_url": "permit-forms/Arlington-Heights-garage-packet.pdf",
   "submittal": "online only",
   "info_sheet": true,
-  "link_url": "https://vah.com/government/permits___licenses_/index.php",
+  "link_url": "https://vilofarlingtonheightsil-energovweb.tylerhost.net/apps/selfservice#/applicationAssistant",
   "link_type": "portal",
   "link_checked": "2026-10-17",
   "demolition": {
    "required": "separate",
    "portal_url": "https://vah.com/government/permits___licenses_/index.php",
    "pdf_url": "https://vah.com/Demolition%20-%20Detached%20Residential%20Garage.pdf?t=202604281005570",
-   "note": "Demolition - Detached Residential Garage permit (applied via Civic Access portal); Cook County demolition permit also"
-  }
+   "note": "Demolition - Detached Residential Garage permit (applied via Civic Access portal); Cook County demolition permit also",
+   "template_copy": "permit-forms/Arlington-Heights-demolition.pdf"
+  },
+  "link_note": "Civic Access (EnerGov) Apply - permit type \"Garage - Detached Residential\"; packet stored permit-forms/Arlington-Heights-garage-packet.pdf"
  },
  "Evergreen Park": {
   "form_type": "detached_garage",
@@ -2784,22 +2829,31 @@
      605.3
     ]
    }
-  ]
+  ],
+  "electrical": {
+   "required": "not determined",
+   "note": "scanned application, no separate electrical application found"
+  },
+  "demolition": {
+   "required": "not determined",
+   "note": "no demolition line on application; check city/Cook County demolition permit"
+  }
  },
  "Skokie": {
   "form_type": "detached_garage",
   "form_name": "Online permit type 'Detached Garage' at skokiepermits.com; Accessory Structure Permit Application (now online interactive); Detached Garage Permit Guidelines",
   "template": null,
   "fields": null,
-  "portal_url": "https://www.skokiepermits.com",
+  "portal_url": "https://www.bsaonline.com/CD_PzeProcessApplication/ApplyForPzeProcess?uid=2564",
   "info_url": null,
   "pdf_url": null,
   "checklist_url": "https://www.skokie.org/DocumentCenter/View/8577/Detached-Garage-Requirements",
   "submittal": "online only",
   "info_sheet": true,
-  "link_url": "https://www.skokiepermits.com",
+  "link_url": "https://www.bsaonline.com/CD_PzeProcessApplication/ApplyForPzeProcess?uid=2564",
   "link_type": "portal",
-  "link_checked": "2026-10-17"
+  "link_checked": "2026-10-17",
+  "link_note": "BS&A Apply for Building Permit (Skokie uid 2564; login first)"
  },
  "Joliet": {
   "form_type": "detached_garage",
@@ -2880,6 +2934,14 @@
    "added_fields": 0,
    "prefill_fields": 14,
    "reviewed": true
+  },
+  "electrical": {
+   "required": "included in building permit",
+   "note": "building application lists 'Electric' (contractor/work line); no separate electrical application required by the form"
+  },
+  "demolition": {
+   "required": "not determined",
+   "note": "no demolition line on application; check city/Cook County demolition permit"
   }
  },
  "Lansing": {
@@ -3576,7 +3638,15 @@
      395.3
     ]
    }
-  ]
+  ],
+  "electrical": {
+   "required": "not determined",
+   "note": "scanned application, no separate electrical application found"
+  },
+  "demolition": {
+   "required": "not determined",
+   "note": "no demolition line on application; check city/Cook County demolition permit"
+  }
  },
  "Antioch": {
   "form_type": "link_only",
@@ -4586,13 +4656,34 @@
      385.0
     ]
    }
-  ]
+  ],
+  "electrical": {
+   "required": "included in building permit",
+   "note": "building application lists 'electric' (contractor/work line); no separate electrical application required by the form"
+  },
+  "demolition": {
+   "required": "not determined",
+   "note": "no demolition line on application; check city/Cook County demolition permit"
+  }
  },
  "Bannockburn": {
   "form_type": "building_permit",
   "form_name": "Village of Bannockburn Building Permit Application (fillable)",
   "template": "permit-forms/Bannockburn.pdf",
-  "fields": null,
+  "fields": [
+   {
+    "name": "agb_fix_1",
+    "page": 0,
+    "rect": [
+     33.2,
+     408.5,
+     581.8,
+     447.3
+    ],
+    "src": "description",
+    "size": 10
+   }
+  ],
   "portal_url": null,
   "info_url": "https://bannockburn.org/government/applications-forms/",
   "pdf_url": "https://ecode360.com/BA3216/document/552957028.pdf",
@@ -4669,10 +4760,6 @@
     "src": "sqft"
    },
    {
-    "name": "Description of Work",
-    "src": "description"
-   },
-   {
     "name": "NAME  COMPANY NAME",
     "src": "contractor"
    },
@@ -4696,7 +4783,15 @@
     "name": "CONTACT PHONE",
     "src": "contractorPhone"
    }
-  ]
+  ],
+  "electrical": {
+   "required": "included in building permit",
+   "note": "building application lists 'Electrical' (contractor/work line); no separate electrical application required by the form"
+  },
+  "demolition": {
+   "required": "included in building permit",
+   "note": "building application lists 'Demolition' as a work type"
+  }
  },
  "Barrington": {
   "form_type": "link_only",
@@ -5752,7 +5847,15 @@
      376.5
     ]
    }
-  ]
+  ],
+  "electrical": {
+   "required": "included in building permit",
+   "note": "building application lists 'Electrician' (contractor/work line); no separate electrical application required by the form"
+  },
+  "demolition": {
+   "required": "not determined",
+   "note": "no demolition line on application; check city/Cook County demolition permit"
+  }
  },
  "Bartlett": {
   "form_type": "link_only",
@@ -5858,6 +5961,14 @@
    "added_fields": 0,
    "prefill_fields": 10,
    "reviewed": true
+  },
+  "electrical": {
+   "required": "not determined",
+   "note": "application has no electrical line; not determined"
+  },
+  "demolition": {
+   "required": "not determined",
+   "note": "no demolition line on application; check city/Cook County demolition permit"
   }
  },
  "Bedford Park": {
@@ -6578,6 +6689,14 @@
    "source_fields": 0,
    "added_fields": 58,
    "prefill_fields": 11
+  },
+  "electrical": {
+   "required": "included in building permit",
+   "note": "building application lists 'Electrician' (contractor/work line); no separate electrical application required by the form"
+  },
+  "demolition": {
+   "required": "not determined",
+   "note": "no demolition line on application; check city/Cook County demolition permit"
   }
  },
  "Beecher": {
@@ -6966,7 +7085,15 @@
      176.3
     ]
    }
-  ]
+  ],
+  "electrical": {
+   "required": "included in building permit",
+   "note": "building application lists 'Electric' (contractor/work line); no separate electrical application required by the form"
+  },
+  "demolition": {
+   "required": "not determined",
+   "note": "no demolition line on application; check city/Cook County demolition permit"
+  }
  },
  "Bellwood": {
   "form_type": "link_only",
@@ -7146,6 +7273,14 @@
    "source_fields": 0,
    "added_fields": 13,
    "prefill_fields": 4
+  },
+  "electrical": {
+   "required": "included in building permit",
+   "note": "building application lists 'Electrician' (contractor/work line); no separate electrical application required by the form"
+  },
+  "demolition": {
+   "required": "not determined",
+   "note": "no demolition line on application; check city/Cook County demolition permit"
   }
  },
  "Belvidere": {
@@ -7153,15 +7288,15 @@
   "form_name": "iWorQ portal",
   "template": null,
   "fields": null,
-  "portal_url": "https://belvidere.portal.iworq.net/portalhome/belvidere",
+  "portal_url": "https://belvidere.portal.iworq.net/BELVIDERE/new-permit/600/535",
   "info_url": null,
   "pdf_url": null,
   "checklist_url": null,
   "submittal": null,
   "info_sheet": false,
-  "link_url": "https://belvidere.portal.iworq.net/portalhome/belvidere",
+  "link_url": "https://belvidere.portal.iworq.net/BELVIDERE/new-permit/600/535",
   "link_type": "portal",
-  "link_note": "iWorQ portal",
+  "link_note": "iWorQ: new permit application",
   "link_checked": "2026-10-17"
  },
  "Bensenville": {
@@ -7204,7 +7339,15 @@
     "name": "Day Time Phone_2",
     "src": "phone"
    }
-  ]
+  ],
+  "electrical": {
+   "required": "included in building permit",
+   "note": "building application lists 'ELECTRICAL' (contractor/work line); no separate electrical application required by the form"
+  },
+  "demolition": {
+   "required": "not determined",
+   "note": "no demolition line on application; check city/Cook County demolition permit"
+  }
  },
  "Berkeley": {
   "form_type": "link_only",
@@ -8145,6 +8288,14 @@
    "source_fields": 0,
    "added_fields": 34,
    "prefill_fields": 12
+  },
+  "electrical": {
+   "required": "not determined",
+   "note": "application has no electrical line; not determined"
+  },
+  "demolition": {
+   "required": "not determined",
+   "note": "no demolition line on application; check city/Cook County demolition permit"
   }
  },
  "Bloomingdale": {
@@ -8190,6 +8341,14 @@
    "source_fields": 26,
    "added_fields": 0,
    "prefill_fields": 5
+  },
+  "electrical": {
+   "required": "not determined",
+   "note": "application has no electrical line; not determined"
+  },
+  "demolition": {
+   "required": "not determined",
+   "note": "no demolition line on application; check city/Cook County demolition permit"
   }
  },
  "Blue Island": {
@@ -8466,6 +8625,14 @@
    "source_fields": 0,
    "added_fields": 21,
    "prefill_fields": 2
+  },
+  "electrical": {
+   "required": "not determined",
+   "note": "scanned application, no separate electrical application found"
+  },
+  "demolition": {
+   "required": "not determined",
+   "note": "no demolition line on application; check city/Cook County demolition permit"
   }
  },
  "Bolingbrook": {
@@ -8996,7 +9163,15 @@
      128.7
     ]
    }
-  ]
+  ],
+  "electrical": {
+   "required": "not determined",
+   "note": "application has no electrical line; not determined"
+  },
+  "demolition": {
+   "required": "not determined",
+   "note": "no demolition line on application; check city/Cook County demolition permit"
+  }
  },
  "Bradley": {
   "form_type": "link_only",
@@ -9153,6 +9328,14 @@
    "source_fields": 265,
    "added_fields": 0,
    "prefill_fields": 25
+  },
+  "electrical": {
+   "required": "included in building permit",
+   "note": "building application lists 'ELECTRICAL WORK' (contractor/work line); no separate electrical application required by the form"
+  },
+  "demolition": {
+   "required": "included in building permit",
+   "note": "building application lists 'DEMOLITION' as a work type"
   }
  },
  "Broadview": {
@@ -9184,7 +9367,7 @@
   "info_sheet": false,
   "link_url": "https://us.cloudpermit.com/login",
   "link_type": "portal",
-  "link_note": "Cloudpermit; checklist https://cms2.revize.com/revize/brookfield/Document%20Center/How%20Do%20I/Forms/Community%20Development%20Department/Checklists/Garage_AccessoryStructure.pdf",
+  "link_note": "Cloudpermit (login-gated, no public deep link)",
   "link_checked": "2026-10-17"
  },
  "Buffalo Grove": {
@@ -9247,7 +9430,15 @@
     "name": "Phone 1",
     "src": "contractorPhone"
    }
-  ]
+  ],
+  "demolition": {
+   "required": "included in building permit",
+   "note": "Building Permit Application has a Demolition type-of-improvement box; info https://www.vbg.org/723/Demolition-of-Building"
+  },
+  "electrical": {
+   "required": "included in building permit",
+   "note": "building application lists 'Electrical' (contractor/work line); no separate electrical application required by the form"
+  }
  },
  "Burbank": {
   "form_type": "link_only",
@@ -9294,7 +9485,7 @@
   "portal_url": "https://bsaonline.com/CD_PermitAjaxApplication/ApplyForPermit?applicationGuid=ecb35e8d-632a-46a0-b9b1-88d23f81392c&propertyGuid=0&projectGuid=0&uid=2311",
   "info_url": null,
   "pdf_url": null,
-  "checklist_url": null,
+  "checklist_url": "permit-forms/Burr-Ridge-accessory-packet.pdf",
   "submittal": null,
   "info_sheet": false,
   "link_url": "https://bsaonline.com/CD_PermitAjaxApplication/ApplyForPermit?applicationGuid=ecb35e8d-632a-46a0-b9b1-88d23f81392c&propertyGuid=0&projectGuid=0&uid=2311",
@@ -9304,7 +9495,8 @@
   "demolition": {
    "required": "separate",
    "pdf_url": "https://www.burr-ridge.gov/Document%20Center/Government/Department/Community%20Development/Building%20&%20Permits/Permit%20Applications/2026%20FEB/Demolition%20Checklist.pdf?t=202602041450430",
-   "note": "Demolition checklist; apply via BS&A"
+   "note": "Demolition checklist; apply via BS&A",
+   "template_copy": "permit-forms/Burr-Ridge-demolition-checklist.pdf"
   }
  },
  "Calumet Park": {
@@ -10032,7 +10224,15 @@
      627.0
     ]
    }
-  ]
+  ],
+  "electrical": {
+   "required": "included in building permit",
+   "note": "building application lists 'Electric' (contractor/work line); no separate electrical application required by the form"
+  },
+  "demolition": {
+   "required": "not determined",
+   "note": "no demolition line on application; check city/Cook County demolition permit"
+  }
  },
  "Cary": {
   "form_type": "link_only",
@@ -10042,7 +10242,7 @@
   "portal_url": null,
   "info_url": "https://www.caryillinois.com/685/Residential-Permits",
   "pdf_url": "https://www.caryillinois.com/DocumentCenter/View/4953/Building-Permit-Application---Residential---Alterations-and-Small-Projects",
-  "checklist_url": null,
+  "checklist_url": "permit-forms/Cary-garage-checklist.pdf",
   "submittal": null,
   "info_sheet": false,
   "link_url": "https://www.caryillinois.com/DocumentCenter/View/4953/Building-Permit-Application---Residential---Alterations-and-Small-Projects",
@@ -10146,6 +10346,14 @@
    "source_fields": 52,
    "added_fields": 0,
    "prefill_fields": 17
+  },
+  "electrical": {
+   "required": "included in building permit",
+   "note": "building application lists 'ELECTRICAL' (contractor/work line); no separate electrical application required by the form"
+  },
+  "demolition": {
+   "required": "included in building permit",
+   "note": "building application lists 'DEMOLITION' as a work type"
   }
  },
  "Chicago Ridge": {
@@ -11085,7 +11293,15 @@
      581.7
     ]
    }
-  ]
+  ],
+  "electrical": {
+   "required": "included in building permit",
+   "note": "building application lists 'Electrician' (contractor/work line); no separate electrical application required by the form"
+  },
+  "demolition": {
+   "required": "not determined",
+   "note": "no demolition line on application; check city/Cook County demolition permit"
+  }
  },
  "Coal City": {
   "form_type": "link_only",
@@ -11413,6 +11629,14 @@
    "source_fields": 0,
    "added_fields": 24,
    "prefill_fields": 2
+  },
+  "electrical": {
+   "required": "not determined",
+   "note": "scanned application, no separate electrical application found"
+  },
+  "demolition": {
+   "required": "not determined",
+   "note": "no demolition line on application; check city/Cook County demolition permit"
   }
  },
  "Countryside": {
@@ -11490,6 +11714,14 @@
    "source_fields": 127,
    "added_fields": 0,
    "prefill_fields": 13
+  },
+  "electrical": {
+   "required": "included in building permit",
+   "note": "building application lists 'Electrician' (contractor/work line); no separate electrical application required by the form"
+  },
+  "demolition": {
+   "required": "included in building permit",
+   "note": "building application lists 'Demolition' as a work type"
   }
  },
  "Crest Hill": {
@@ -12082,7 +12314,15 @@
      691.0
     ]
    }
-  ]
+  ],
+  "electrical": {
+   "required": "included in building permit",
+   "note": "building application lists 'electrician' (contractor/work line); no separate electrical application required by the form"
+  },
+  "demolition": {
+   "required": "not determined",
+   "note": "no demolition line on application; check city/Cook County demolition permit"
+  }
  },
  "Crestwood": {
   "form_type": "link_only",
@@ -12127,6 +12367,14 @@
    "source_fields": 21,
    "added_fields": 0,
    "prefill_fields": 5
+  },
+  "electrical": {
+   "required": "not determined",
+   "note": "application has no electrical line; not determined"
+  },
+  "demolition": {
+   "required": "not determined",
+   "note": "no demolition line on application; check city/Cook County demolition permit"
   }
  },
  "Crete": {
@@ -12150,15 +12398,15 @@
   "form_name": "Accela ez APP; Residential New for detached garage",
   "template": null,
   "fields": null,
-  "portal_url": "https://aca-prod.accela.com/CRYSTALLAKE/Cap/CapHome.aspx?module=Building",
+  "portal_url": "https://aca-prod.accela.com/CRYSTALLAKE/Cap/CapApplyDisclaimer.aspx?module=Building",
   "info_url": null,
   "pdf_url": null,
   "checklist_url": null,
   "submittal": null,
   "info_sheet": false,
-  "link_url": "https://aca-prod.accela.com/CRYSTALLAKE/Cap/CapHome.aspx?module=Building",
+  "link_url": "https://aca-prod.accela.com/CRYSTALLAKE/Cap/CapApplyDisclaimer.aspx?module=Building",
   "link_type": "portal",
-  "link_note": "Accela ez APP; Residential New for detached garage",
+  "link_note": "Accela Building: Create an Application (login first)",
   "link_checked": "2026-10-17"
  },
  "Darien": {
@@ -12376,6 +12624,14 @@
    "source_fields": 103,
    "added_fields": 0,
    "prefill_fields": 36
+  },
+  "electrical": {
+   "required": "included in building permit",
+   "note": "building application lists 'Electrical' (contractor/work line); no separate electrical application required by the form"
+  },
+  "demolition": {
+   "required": "included in building permit",
+   "note": "building application lists 'Demolition' as a work type"
   }
  },
  "Deerfield": {
@@ -12408,14 +12664,14 @@
   "template": null,
   "fields": null,
   "portal_url": null,
-  "info_url": null,
+  "info_url": "https://www.villageofdixmoor.org/",
   "pdf_url": null,
   "checklist_url": null,
   "submittal": null,
   "info_sheet": false,
-  "link_url": null,
-  "link_type": null,
-  "link_note": "no official form online (only third-party sites); Village Hall 708-389-6121",
+  "link_url": "https://www.villageofdixmoor.org/",
+  "link_type": "page",
+  "link_note": "No application online (permit forms section is empty); apply at Village Hall, 170 W 145th St, 708-389-6121",
   "link_checked": "2026-10-17"
  },
  "Dolton": {
@@ -13370,22 +13626,30 @@
      182.3
     ]
    }
-  ]
+  ],
+  "electrical": {
+   "required": "included in building permit",
+   "note": "building application lists 'Electric' (contractor/work line); no separate electrical application required by the form"
+  },
+  "demolition": {
+   "required": "not determined",
+   "note": "no demolition line on application; check city/Cook County demolition permit"
+  }
  },
  "Downers Grove": {
   "form_type": "link_only",
   "form_name": "Permit Portal; forms https://www.downers.us/permit-forms-and-docs",
   "template": null,
   "fields": null,
-  "portal_url": "https://www.downers.us/permits",
+  "portal_url": "https://cvportal.downers.us/Permit/Application",
   "info_url": null,
   "pdf_url": null,
   "checklist_url": null,
   "submittal": null,
   "info_sheet": false,
-  "link_url": "https://www.downers.us/permits",
+  "link_url": "https://cvportal.downers.us/Permit/Application",
   "link_type": "portal",
-  "link_note": "Permit Portal; forms https://www.downers.us/permit-forms-and-docs",
+  "link_note": "CityView: Apply for a Building or Fire Permit (login first)",
   "link_checked": "2026-10-17"
  },
  "East Dundee": {
@@ -13436,7 +13700,15 @@
     "name": "Total Value",
     "src": "price"
    }
-  ]
+  ],
+  "electrical": {
+   "required": "included in building permit",
+   "note": "building application lists 'Electrical Contractor' (contractor/work line); no separate electrical application required by the form"
+  },
+  "demolition": {
+   "required": "included in building permit",
+   "note": "building application lists 'Demolition' as a work type"
+  }
  },
  "East Hazel Crest": {
   "form_type": "link_only",
@@ -13491,15 +13763,15 @@
   "form_name": "Accela Citizen Access",
   "template": null,
   "fields": null,
-  "portal_url": "https://aca-prod.accela.com/elkgrove/Default.aspx",
+  "portal_url": "https://aca-prod.accela.com/elkgrove/Cap/CapApplyDisclaimer.aspx?module=Building",
   "info_url": null,
   "pdf_url": null,
   "checklist_url": null,
   "submittal": null,
   "info_sheet": false,
-  "link_url": "https://aca-prod.accela.com/elkgrove/Default.aspx",
+  "link_url": "https://aca-prod.accela.com/elkgrove/Cap/CapApplyDisclaimer.aspx?module=Building",
   "link_type": "portal",
-  "link_note": "Accela Citizen Access",
+  "link_note": "Accela Building: Create an Application (login first)",
   "link_checked": "2026-10-17"
  },
  "Elmhurst": {
@@ -13518,7 +13790,17 @@
   "link_note": "No PDF application on elmhurst.org — permits are online only (Tyler EnerGov CSS). Garage type id 71.",
   "link_checked": "2026-10-17",
   "handout_url": "https://cms3.revize.com/revize/elmhurst/Document%20Center/Services/Community%20Development/Permits%20&%20Forms%20Tyler%20Docs/2023%20DETACHED%20GARAGE%20HANDOUT.pdf?t=202402151339020",
-  "handout_name": "2023 Detached Garage Handout (required notes)"
+  "handout_name": "2023 Detached Garage Handout (required notes)",
+  "electrical": {
+   "required": "unknown",
+   "portal_url": "https://cityofelmhurstil-energovweb.tylerhost.net/apps/selfservice#/applicationAssistant",
+   "note": "Hook for Elmhurst worker: no separate electrical application found on elmhurst.org; online via CSSP - confirm permit type"
+  },
+  "demolition": {
+   "required": "unknown",
+   "portal_url": "https://cityofelmhurstil-energovweb.tylerhost.net/apps/selfservice#/applicationAssistant",
+   "note": "Hook: demo via CSSP; garage handout is scanned - confirm whether demo is a separate type"
+  }
  },
  "Elwood": {
   "form_type": "link_only",
@@ -13607,6 +13889,14 @@
    "source_fields": 111,
    "added_fields": 0,
    "prefill_fields": 16
+  },
+  "electrical": {
+   "required": "included in building permit",
+   "note": "building application lists 'Electrician' (contractor/work line); no separate electrical application required by the form"
+  },
+  "demolition": {
+   "required": "not determined",
+   "note": "no demolition line on application; check city/Cook County demolition permit"
   }
  },
  "Flossmoor": {
@@ -14219,7 +14509,15 @@
      25.6
     ]
    }
-  ]
+  ],
+  "electrical": {
+   "required": "included in building permit",
+   "note": "building application lists 'ELECTRICAL' (contractor/work line); no separate electrical application required by the form"
+  },
+  "demolition": {
+   "required": "included in building permit",
+   "note": "building application lists 'DEMOLITION' as a work type"
+  }
  },
  "Ford Heights": {
   "form_type": "link_only",
@@ -14635,6 +14933,14 @@
    "source_fields": 0,
    "added_fields": 30,
    "prefill_fields": 9
+  },
+  "electrical": {
+   "required": "included in building permit",
+   "note": "building application lists 'Electrician' (contractor/work line); no separate electrical application required by the form"
+  },
+  "demolition": {
+   "required": "not determined",
+   "note": "no demolition line on application; check city/Cook County demolition permit"
   }
  },
  "Fox Lake": {
@@ -14728,6 +15034,14 @@
    "source_fields": 79,
    "added_fields": 0,
    "prefill_fields": 17
+  },
+  "electrical": {
+   "required": "included in building permit",
+   "note": "building application lists 'ELECTRICAL' (contractor/work line); no separate electrical application required by the form"
+  },
+  "demolition": {
+   "required": "included in building permit",
+   "note": "building application lists 'DEMOLITION' as a work type"
   }
  },
  "Fox River Grove": {
@@ -15076,6 +15390,14 @@
    "source_fields": 0,
    "added_fields": 27,
    "prefill_fields": 6
+  },
+  "electrical": {
+   "required": "included in building permit",
+   "note": "building application lists 'ELECTRIC' (contractor/work line); no separate electrical application required by the form"
+  },
+  "demolition": {
+   "required": "not determined",
+   "note": "no demolition line on application; check city/Cook County demolition permit"
   }
  },
  "Frankfort": {
@@ -15157,6 +15479,14 @@
    "source_fields": 62,
    "added_fields": 0,
    "prefill_fields": 10
+  },
+  "electrical": {
+   "required": "included in building permit",
+   "note": "building application lists 'ELECTRICAL' (contractor/work line); no separate electrical application required by the form"
+  },
+  "demolition": {
+   "required": "included in building permit",
+   "note": "building application lists 'DEMOLITION' as a work type"
   }
  },
  "Geneva": {
@@ -15947,22 +16277,30 @@
      647.0
     ]
    }
-  ]
+  ],
+  "electrical": {
+   "required": "not determined",
+   "note": "scanned application, no separate electrical application found"
+  },
+  "demolition": {
+   "required": "not determined",
+   "note": "no demolition line on application; check city/Cook County demolition permit"
+  }
  },
  "Glen Ellyn": {
   "form_type": "link_only",
   "form_name": "LAMA portal; Detached Garage permit type",
   "template": null,
   "fields": null,
-  "portal_url": "https://glenellyn.onlama.com/Apply.aspx",
+  "portal_url": "https://glenellyn.onlama.com/Apply.aspx#building-permits",
   "info_url": null,
   "pdf_url": null,
   "checklist_url": null,
   "submittal": null,
   "info_sheet": false,
-  "link_url": "https://glenellyn.onlama.com/Apply.aspx",
+  "link_url": "https://glenellyn.onlama.com/Apply.aspx#building-permits",
   "link_type": "portal",
-  "link_note": "LAMA portal; Detached Garage permit type",
+  "link_note": "Lama: Building Permits apply section",
   "link_checked": "2026-10-17"
  },
  "Glencoe": {
@@ -16068,6 +16406,14 @@
    "source_fields": 92,
    "added_fields": 0,
    "prefill_fields": 20
+  },
+  "electrical": {
+   "required": "included in building permit",
+   "note": "building application lists 'electrical work' (contractor/work line); no separate electrical application required by the form"
+  },
+  "demolition": {
+   "required": "included in building permit",
+   "note": "building application lists 'Demolition' as a work type"
   }
  },
  "Glendale Heights": {
@@ -16825,7 +17171,15 @@
      643.3
     ]
    }
-  ]
+  ],
+  "electrical": {
+   "required": "included in building permit",
+   "note": "building application lists 'ELECTRIC' (contractor/work line); no separate electrical application required by the form"
+  },
+  "demolition": {
+   "required": "included in building permit",
+   "note": "building application lists 'DEMOLITION' as a work type"
+  }
  },
  "Glenview": {
   "form_type": "link_only",
@@ -17333,6 +17687,14 @@
    "source_fields": 0,
    "added_fields": 39,
    "prefill_fields": 9
+  },
+  "electrical": {
+   "required": "not determined",
+   "note": "application has no electrical line; not determined"
+  },
+  "demolition": {
+   "required": "not determined",
+   "note": "no demolition line on application; check city/Cook County demolition permit"
   }
  },
  "Golf": {
@@ -17395,7 +17757,15 @@
     "name": "AREA OF BLDG",
     "src": "sqft"
    }
-  ]
+  ],
+  "electrical": {
+   "required": "included in building permit",
+   "note": "building application lists 'ELECTRICIAN' (contractor/work line); no separate electrical application required by the form"
+  },
+  "demolition": {
+   "required": "not determined",
+   "note": "no demolition line on application; check city/Cook County demolition permit"
+  }
  },
  "Grayslake": {
   "form_type": "link_only",
@@ -17512,6 +17882,14 @@
    "source_fields": 216,
    "added_fields": 0,
    "prefill_fields": 23
+  },
+  "electrical": {
+   "required": "included in building permit",
+   "note": "building application lists 'Electrical' (contractor/work line); no separate electrical application required by the form"
+  },
+  "demolition": {
+   "required": "included in building permit",
+   "note": "building application lists 'Wrecking' as a work type"
   }
  },
  "Gurnee": {
@@ -17555,7 +17933,32 @@
   "form_type": "building_permit",
   "form_name": "Village of Libertyville Application for Construction Permit (fillable)",
   "template": "permit-forms/Libertyville.pdf",
-  "fields": null,
+  "fields": [
+   {
+    "name": "agb_fix_1",
+    "page": 0,
+    "rect": [
+     178.7,
+     253.4,
+     386.0,
+     282.2
+    ],
+    "src": "customer",
+    "size": 10
+   },
+   {
+    "name": "agb_fix_2",
+    "page": 0,
+    "rect": [
+     178.7,
+     326.6,
+     386.0,
+     355.4
+    ],
+    "src": "contractor",
+    "size": 10
+   }
+  ],
   "portal_url": null,
   "info_url": "https://www.libertyville.com/departments/community_development/building/general_permit/residential_permit.php",
   "pdf_url": "https://www.libertyville.com/Documents/Departments/Community%20Development/Building/General%20Permit/Residential%20Permit/Construction%20Permit%20Application%202025%20Milwaukee%20Fillable.pdf?t=202604271109560",
@@ -17576,10 +17979,6 @@
     "src": "price"
    },
    {
-    "name": "Property Owner",
-    "src": "customer"
-   },
-   {
     "name": "Phone",
     "src": "phone"
    },
@@ -17588,14 +17987,18 @@
     "src": "ownerEmail"
    },
    {
-    "name": "General Contractor",
-    "src": "contractor"
-   },
-   {
     "name": "Phone_3",
     "src": "contractorPhone"
    }
-  ]
+  ],
+  "electrical": {
+   "required": "included in building permit",
+   "note": "building application lists 'Electrical Contractor' (contractor/work line); no separate electrical application required by the form"
+  },
+  "demolition": {
+   "required": "not determined",
+   "note": "no demolition line on application; check city/Cook County demolition permit"
+  }
  },
  "Mount Prospect": {
   "form_type": "link_only",
@@ -18634,7 +19037,15 @@
      486.3
     ]
    }
-  ]
+  ],
+  "electrical": {
+   "required": "included in building permit",
+   "note": "building application lists 'Electrical' (contractor/work line); no separate electrical application required by the form"
+  },
+  "demolition": {
+   "required": "included in building permit",
+   "note": "building application lists 'Demolition' as a work type"
+  }
  },
  "Northbrook": {
   "form_type": "link_only",
@@ -18735,6 +19146,14 @@
    "source_fields": 31,
    "added_fields": 0,
    "prefill_fields": 19
+  },
+  "electrical": {
+   "required": "not determined",
+   "note": "application has no electrical line; not determined"
+  },
+  "demolition": {
+   "required": "not determined",
+   "note": "no demolition line on application; check city/Cook County demolition permit"
   }
  },
  "Palatine": {
@@ -18742,15 +19161,15 @@
   "form_name": "EnerGov CSS; handout https://www.palatine.il.us/DocumentCenter/View/744/Detached-Garage-Handout-PDF",
   "template": null,
   "fields": null,
-  "portal_url": "https://permits.palatine.il.us/EnerGov_Prod/SelfService/PalatineILProd",
+  "portal_url": "https://permits.palatine.il.us/EnerGov_Prod/selfservice/PalatineILProd#/applicationAssistant",
   "info_url": null,
   "pdf_url": null,
   "checklist_url": null,
   "submittal": null,
   "info_sheet": false,
-  "link_url": "https://permits.palatine.il.us/EnerGov_Prod/SelfService/PalatineILProd",
+  "link_url": "https://permits.palatine.il.us/EnerGov_Prod/selfservice/PalatineILProd#/applicationAssistant",
   "link_type": "portal",
-  "link_note": "EnerGov CSS; handout https://www.palatine.il.us/DocumentCenter/View/744/Detached-Garage-Handout-PDF",
+  "link_note": "EnerGov Apply (application assistant)",
   "link_checked": "2026-10-17"
  },
  "Park Ridge": {
@@ -18852,6 +19271,14 @@
    "source_fields": 47,
    "added_fields": 0,
    "prefill_fields": 19
+  },
+  "electrical": {
+   "required": "included in building permit",
+   "note": "building application lists 'ELECTRICAL' (contractor/work line); no separate electrical application required by the form"
+  },
+  "demolition": {
+   "required": "included in building permit",
+   "note": "building application lists 'WRECKING' as a work type"
   }
  },
  "Riverside": {
@@ -18961,6 +19388,14 @@
    "source_fields": 62,
    "added_fields": 0,
    "prefill_fields": 13
+  },
+  "electrical": {
+   "required": "included in building permit",
+   "note": "building application lists 'Electrician' (contractor/work line); no separate electrical application required by the form"
+  },
+  "demolition": {
+   "required": "not determined",
+   "note": "no demolition line on application; check city/Cook County demolition permit"
   }
  },
  "Waukegan": {
@@ -19301,6 +19736,14 @@
    "source_fields": 0,
    "added_fields": 25,
    "prefill_fields": 11
+  },
+  "electrical": {
+   "required": "not determined",
+   "note": "scanned application, no separate electrical application found"
+  },
+  "demolition": {
+   "required": "not determined",
+   "note": "no demolition line on application; check city/Cook County demolition permit"
   }
  },
  "Westmont": {
@@ -19466,6 +19909,14 @@
    "source_fields": 99,
    "added_fields": 0,
    "prefill_fields": 35
+  },
+  "electrical": {
+   "required": "included in building permit",
+   "note": "building application lists 'Electric' (contractor/work line); no separate electrical application required by the form"
+  },
+  "demolition": {
+   "required": "not determined",
+   "note": "no demolition line on application; check city/Cook County demolition permit"
   }
  },
  "Wheaton": {
@@ -19481,8 +19932,13 @@
   "info_sheet": false,
   "link_url": "https://h2.maintstar.co/wheaton/portal/",
   "link_type": "portal",
-  "link_note": "Maintstar portal; Garage page https://www.wheaton.il.us/836/Detached-Garage",
-  "link_checked": "2026-10-17"
+  "link_note": "Maintstar portal \"Building Application for Permit\" (login-gated SPA, no deep link); garage page https://www.wheaton.il.us/836/Garage---Construction-Demolition",
+  "link_checked": "2026-10-17",
+  "demolition": {
+   "required": "unknown",
+   "pdf_url": null,
+   "note": "Garage - Construction & Demolition page https://www.wheaton.il.us/836/Garage---Construction-Demolition; Demolitions https://www.wheaton.il.us/1292/Demolitions"
+  }
  },
  "Wheeling": {
   "form_type": "building_permit",
@@ -19536,6 +19992,14 @@
     "name": "Phone_4",
     "src": "contractorPhone"
    }
-  ]
+  ],
+  "electrical": {
+   "required": "included in building permit",
+   "note": "building application lists 'Electrical' (contractor/work line); no separate electrical application required by the form"
+  },
+  "demolition": {
+   "required": "included in building permit",
+   "note": "building application lists 'Demolition' as a work type"
+  }
  }
 }

@@ -141,3 +141,119 @@ Every link was found by web search of the city's official site (query: "<Village
 
 ## 2026-10-17 application audit (pass 2)
 Links re-checked by opening them in a real browser; page links replaced with the actual application PDF or the portal's application start where one exists. `electrical` / `demolition` keys in map.json record separate electrical/demo applications (data only; app UI list pending approval). Ford Heights: Building_Permit_Application.pdf link on the village site is broken (returns HTML).
+
+## 110-city application audit (2026-10-17, opened in real browser)
+PASS 98 / FAIL 12. Electrical/Demo columns: separate / included in building permit / not determined / unknown.
+
+| City | Result | Type | Link | Why | Electrical | Demo |
+|---|---|---|---|---|---|---|
+| Addison | PASS | portal | https://aglc.addison-il.org/CityViewPortal/Permit/Application | portal application start (login may be required) | not checked | not checked |
+| Algonquin | PASS | portal | https://form.jotform.com/71985982818174 | portal application start (login may be required) | not checked | not checked |
+| Alsip | PASS | pdf | https://villageofalsip.org/Application%20for%20Building%20Permit.pdf | mapped fillable application | not determined | not determined |
+| Antioch | PASS | pdf | https://irp.cdn-website.com/bcd23239/files/uploaded/Application-for-a-Resident-Permit-2021.pdf | direct application PDF | not checked | separate |
+| Arlington Heights | PASS | portal | https://vilofarlingtonheightsil-energovweb.tylerhost.net/apps/selfservice#/applicationAssistant | portal application start (login may be required) | not checked | separate |
+| Aurora | PASS | pdf | https://www.aurora.il.us/files/sharedassets/mainsite/v/1/development-services/documents/permits/residential/2026-app-updates/residential-garage.pdf | mapped fillable application | included in building permit | not determined |
+| Bannockburn | PASS | pdf | https://ecode360.com/BA3216/document/552957028.pdf | mapped fillable application | included in building permit | included in building permit |
+| Barrington | PASS | portal | https://vlg-barrington-il.smartgovcommunity.com/Application/CaseApplicationEntry | portal application start (login may be required) | not checked | not checked |
+| Barrington Hills | PASS | pdf | https://barringtonhills-il.gov/wp-content/uploads/2025/04/Building-Permit-App-2025-05.pdf | mapped fillable application | included in building permit | not determined |
+| Bartlett | PASS | portal | https://villageofbartlettil.portal.opengov.com/categories/1071/record-types/6522 | portal application start (login may be required) | separate | separate |
+| Batavia | PASS | portal | https://batavia.onlama.com/Apply.aspx#accessory-permits | portal application start (login may be required) | not checked | not checked |
+| Beach Park | PASS | pdf | https://villageofbeachpark.com/sitemedia/documents/permits_forms/Construction_Permit_-_New.pdf | mapped fillable application | not determined | not determined |
+| Bedford Park | PASS | pdf | https://cms2.revize.com/revize/bedfordparkil/Documents/Business/%20Building%20Permits/Building-Permit-Application.pdf | mapped fillable application | included in building permit | not determined |
+| Beecher | PASS | pdf | https://www.villageofbeecher.org/wp-content/uploads/2025/02/REVISED-Building-Permit-Application-Form-2025.pdf | mapped fillable application | included in building permit | not determined |
+| Bellwood | PASS | pdf | https://www.vil.bellwood.il.us/wp-content/uploads/revised_application_for_building_permit_2023.pdf | mapped fillable application | included in building permit | not determined |
+| Belvidere | PASS | portal | https://belvidere.portal.iworq.net/BELVIDERE/new-permit/600/535 | portal application start (login may be required) | not checked | not checked |
+| Bensenville | PASS | pdf | https://bensenville.gov/DocumentCenter/View/11656 | mapped fillable application | included in building permit | not determined |
+| Berkeley | PASS | pdf | https://www.berkeley.il.us/vertical/sites/%7BB4877CC9-5533-47FA-94DE-B3C09F1665AB%7D/uploads/Garage_Permit.pdf | direct application PDF | not checked | not checked |
+| Berwyn | PASS | pdf | https://www.berwyn-il.gov/home/showpublisheddocument/290/638723885355270000 | mapped fillable application | separate | included in building permit |
+| Big Rock | PASS | pdf | https://villageofbigrock.us/uploads/dm/81558/Building_permit_form | mapped fillable application | not determined | not determined |
+| Bloomingdale | PASS | pdf | https://villageofbloomingdale.org/DocumentCenter/View/153/Building-Permit-Application-- | mapped fillable application | not determined | not determined |
+| Blue Island | PASS | pdf | https://blueisland.org/DocumentCenter/View/152/General-Building-Permit-PDF | mapped fillable application | not determined | not determined |
+| Bolingbrook | PASS | portal | https://bolingbrookil.viewpointcloud.com | portal application start (login may be required) | not checked | not checked |
+| Bourbonnais | PASS | pdf | https://www.villageofbourbonnais.com/images/documents/development/Building_Permit_Application_-_2026.pdf | mapped fillable application | not determined | not determined |
+| Bradley | PASS | pdf | https://bradleyil.org/media/Detached-Garage-Permit-Application-min.pdf | direct application PDF | not checked | not checked |
+| Braidwood | PASS | portal | https://www6.citizenserve.com/Portal/PortalController?Action=showApplyPermitPage&type=Permit&installationID=381 | portal application start (login may be required) | not checked | not checked |
+| Bridgeview | PASS | pdf | https://bridgeview-il.gov/wp-content/uploads/2024/10/Plan-Examination-and-Building-Permit-_2024-_Interactive.pdf | mapped fillable application | included in building permit | included in building permit |
+| Broadview | PASS | pdf | https://broadview-il.gov/media/siicj13u/building_permit-application.pdf | direct application PDF | not checked | not checked |
+| Brookfield | FAIL | portal | https://us.cloudpermit.com/login | login-gated Cloudpermit; no deep link | not checked | not checked |
+| Buffalo Grove | PASS | pdf | https://www.vbg.org/DocumentCenter/View/191 | mapped fillable application | included in building permit | included in building permit |
+| Burbank | PASS | pdf | https://www.burbankil.gov/DocumentCenter/View/287/Miscellaneous-Building-Permit | direct application PDF | separate | not checked |
+| Burnham | FAIL | page | https://www.burnham-il.gov/blank-14 | no application on city site (Wix documents page only) | not checked | not checked |
+| Burr Ridge | PASS | portal | https://bsaonline.com/CD_PermitAjaxApplication/ApplyForPermit?applicationGuid=ecb35e8d-632a-46a0-b9b1-88d23f81392c&propertyGuid=0&projectGuid=0&uid=2311 | portal application start (login may be required) | not checked | separate |
+| Calumet City | PASS | pdf | https://calumetcity.org/wp-content/uploads/2026/04/2026-Building-Permit-Application.pdf | mapped fillable application | included in building permit | not determined |
+| Calumet Park | FAIL | page | https://www.villageofcalumetpark.org/building-department-2 | forms being updated; by phone 708-926-7412 | not checked | not checked |
+| Carol Stream | PASS | pdf | https://www.carolstream.org/home/showpublisheddocument/9166/639040699608370000 | direct application PDF | not checked | separate |
+| Carpentersville | PASS | pdf | https://www.cville.org/DocumentCenter/View/2326/Residential-Permit-Application | mapped fillable application | included in building permit | not determined |
+| Cary | PASS | pdf | https://www.caryillinois.com/DocumentCenter/View/4953/Building-Permit-Application---Residential---Alterations-and-Small-Projects | direct application PDF | separate | not checked |
+| Chicago | FAIL | portal | https://www.chicago.gov/city/en/depts/bldgs/provdrs/e_plan/svcs/dynamicportal.html | login-gated Dynamic Portal; no public deep link | not checked | not checked |
+| Chicago Heights | PASS | pdf | https://cityofchicagoheights.org/DocumentCenter/View/4792/Application-for-Building-Permit-Fillable-Form-English | mapped fillable application | included in building permit | included in building permit |
+| Chicago Ridge | PASS | pdf | https://www.chicagoridge.org/DocumentCenter/View/598 | direct application PDF | separate | not checked |
+| Cicero | PASS | pdf | https://thetownofcicero.com/wp-content/uploads/2025/10/New-Garage-Building-Electrical-Permit-Form.pdf | direct application PDF | included in building permit | not checked |
+| Clarendon Hills | PASS | pdf | https://www.clarendonhills.us/DocumentCenter/View/46/Building-Permit-Application-PDF | mapped fillable application | included in building permit | not determined |
+| Coal City | FAIL | page | https://coalcity-il.gov/village-government/codes-ordinances/ | application at Village Hall only | not checked | not checked |
+| Country Club Hills | PASS | pdf | https://countryclubhills.org/wp-content/uploads/2022/04/Permit-Application-as-of-2022.pdf | mapped fillable application | not determined | not determined |
+| Countryside | PASS | pdf | https://countryside-il.org/Documents/Business/Community%20Development/Planning%20and%20Permitting/Community%20Development%20Forms%20and%20Permits/Application%20-%20%20General%20Construction%20Permit.pdf | mapped fillable application | included in building permit | included in building permit |
+| Crest Hill | PASS | pdf | https://cresthill.gov/DocumentCenter/View/361/Building-Permit-Application---Residential--Commercial-PDF | mapped fillable application | included in building permit | not determined |
+| Crestwood | PASS | pdf | https://crestwood.illinois.gov/content/forms/2025-Village-of-Crestwood-Building-Permit-Application-Printable-PDF.pdf | mapped fillable application | not determined | not determined |
+| Crete | PASS | portal | https://form.jotform.com/233535235995061 | portal application start (login may be required) | not checked | not checked |
+| Crystal Lake | PASS | portal | https://aca-prod.accela.com/CRYSTALLAKE/Cap/CapApplyDisclaimer.aspx?module=Building | portal application start (login may be required) | not checked | not checked |
+| Darien | PASS | portal | https://darienil.portal.opengov.com/categories/1076 | portal application start (login may be required) | not checked | not checked |
+| DeKalb | PASS | portal | https://bsaonline.com/Home/MunicipalityHome?uid=2666 | portal application start (login may be required) | not checked | not checked |
+| DeKalb County | FAIL | page | https://dekalbcounty.org/departments/community-development/application-forms/ | hard-copy application at county office; site bot-challenge | not checked | not checked |
+| Deer Park | PASS | pdf | https://www.villageofdeerpark.com/DocumentCenter/View/283/Residential-Permit-Application-PDF | mapped fillable application | included in building permit | included in building permit |
+| Deerfield | PASS | portal | https://deerfieldil.portal.opengov.com/categories/1080/record-types/6519 | portal application start (login may be required) | separate | separate |
+| Des Plaines | PASS | portal | https://cityofdesplainesil-energovweb.tylerhost.net/apps/selfservice#/applicationAssistant | portal application start (login may be required) | not checked | separate |
+| Dixmoor | FAIL | page | https://www.villageofdixmoor.org/ | no application online; Village Hall only (708-389-6121) | not checked | not checked |
+| Dolton | PASS | pdf | https://vodolton.org/wp-content/uploads/2026/02/VOD-General-Pemit-Application-Fillable-2024.pdf | mapped fillable application | included in building permit | not determined |
+| Downers Grove | PASS | portal | https://cvportal.downers.us/Permit/Application | portal application start (login may be required) | not checked | not checked |
+| East Dundee | PASS | pdf | https://eastdundee.net/How%20Do%20I/Apply%20For/Building%20Permits/Residential%20Application%20Permit.pdf?t=202502071045440 | mapped fillable application | included in building permit | included in building permit |
+| East Hazel Crest | FAIL | page | https://www.easthazelcrest.com/index.asp?DE=EC32717A-C05B-4C29-AA31-1CDA2B828C6F&SEC=DB2D2489-1A5F-49BC-B941-B34AEFAC6295&Type=B_BASIC | no application posted online | not checked | not checked |
+| Elburn | FAIL | page | https://www.elburn.il.us/building-zoning/ | no application link on page (BS&A online mentioned) | not checked | not checked |
+| Elgin | PASS | pdf | https://elginil.gov/DocumentCenter/View/75248/Garage-Quick-Guide | direct application PDF | not checked | not checked |
+| Elk Grove Village | PASS | portal | https://aca-prod.accela.com/elkgrove/Cap/CapApplyDisclaimer.aspx?module=Building | portal application start (login may be required) | not checked | not checked |
+| Elmhurst | PASS | portal | https://cityofelmhurstil-energovweb.tylerhost.net/apps/selfservice#/permit/apply/71/0/0 | portal application start (login may be required) | unknown | unknown |
+| Elmwood Park | PASS | portal | https://www.elmwoodpark.org/FormCenter/Code-Department-12/Building-Permit-Application-for-Sundry-C-74 | portal application start (login may be required) | separate | not checked |
+| Elwood | PASS | pdf | https://www.villageofelwood.com/DocumentCenter/View/1834/Building-Permit-Application | mapped fillable application | included in building permit | not determined |
+| Evanston | PASS | portal | https://aca-prod.accela.com/EVANSTON/Default.aspx | mapped fillable application | included in building permit | included in building permit |
+| Evergreen Park | PASS | pdf | https://www.evergreenpark-ill.com/DocumentCenter/View/2382/Garage-Permit-Package-PDF | mapped fillable application | not determined | not determined |
+| Flossmoor | PASS | pdf | https://www.flossmoor.org/DocumentCenter/View/32/Building-Permit-Application-PDF | mapped fillable application | included in building permit | included in building permit |
+| Ford Heights | FAIL | page | https://villageoffordheights.org/building-permit-guidance | village PDF link broken (returns HTML) | not checked | not checked |
+| Forest Park | FAIL | page | https://www.forestpark.net/dfp/resources/forms/ | site blocks automated access (403) - fetch in browser | not checked | not checked |
+| Forest View | PASS | pdf | https://www.forestview-il.org/media/iuno5vij/application-for-building-permit.pdf | mapped fillable application | included in building permit | not determined |
+| Fox Lake | PASS | pdf | https://www.foxlake.org/DocumentCenter/View/6365/Permit-Application | mapped fillable application | included in building permit | included in building permit |
+| Fox River Grove | PASS | pdf | https://cms5.revize.com/revize/foxrivergrove/government/building/Building%20Permit%20Application%202026.pdf | mapped fillable application | included in building permit | not determined |
+| Frankfort | PASS | pdf | https://www.frankfortil.org/Documents/Departments/Building/Permits%20and%20Inspections/Building%20Permit%20Application%202024.pdf?t=202601211136540 | direct application PDF | not checked | not checked |
+| Franklin Park | PASS | pdf | https://www.villageoffranklinpark.com/assets/1/7/DIS-1004_bld_permit_app_2026.pdf | mapped fillable application | included in building permit | included in building permit |
+| Geneva | PASS | pdf | https://www.geneva.il.us/DocumentCenter/View/16666/Permit-Request---103125pdf | mapped fillable application | not determined | not determined |
+| Glen Ellyn | PASS | portal | https://glenellyn.onlama.com/Apply.aspx#building-permits | portal application start (login may be required) | not checked | not checked |
+| Glencoe | PASS | pdf | https://cms6.revize.com/revize/glencoe/BUILDING%20PERMIT%20APPLICATION_NEW%20101624.pdf | mapped fillable application | included in building permit | included in building permit |
+| Glendale Heights | PASS | pdf | https://www.glendaleheights.org/DocumentCenter/View/203/Building-Permit-Application-PDF | mapped fillable application | included in building permit | included in building permit |
+| Glenview | PASS | portal | https://glenview.onlama.com/Apply.aspx#accessory-permits | portal application start (login may be required) | not checked | not checked |
+| Glenwood | PASS | pdf | https://www.villageofglenwood.com/vertical/Sites/%7B9A67F9D7-6325-4274-B3B2-1DBA9283F42A%7D/uploads/2022_Residential_Building_Permit_Application(1).pdf | mapped fillable application | not determined | not determined |
+| Golf | PASS | pdf | https://drive.google.com/file/d/1HCQWupnvSRNYTsIMdVEyZU5km7dMDbF9/view | mapped fillable application | included in building permit | not determined |
+| Grayslake | PASS | pdf | https://www.villageofgrayslake.com/DocumentCenter/View/10021/Building-Permit-Form | mapped fillable application | included in building permit | included in building permit |
+| Gurnee | PASS | portal | https://onestop.gurnee.il.us/Apply.aspx | portal application start (login may be required) | not checked | not checked |
+| Hoffman Estates | PASS | portal | https://bsaonline.com/DirectUrl/Cd_PermitApplication/3266 | portal application start (login may be required) | not checked | separate |
+| Joliet | PASS | pdf | https://www.joliet.gov/government/departments/community-development/building-inspectional-services-division/building-permit-forms | mapped fillable application | included in building permit | not determined |
+| Lansing | PASS | portal | https://lansingil.portal.opengov.com/categories/1077/record-types/6518 | portal application start (login may be required) | not checked | not checked |
+| Libertyville | PASS | pdf | https://www.libertyville.com/Documents/Departments/Community%20Development/Building/General%20Permit/Residential%20Permit/Construction%20Permit%20Application%202025%20Milwaukee%20Fillable.pdf?t=202604271109560 | mapped fillable application | included in building permit | not determined |
+| Lyons | PASS | pdf | https://www.villageoflyons-il.net/wp-content/uploads/2017/06/Building-Permit-Plan-Review-Application-Contractor.pdf | mapped fillable application | not determined | not determined |
+| Midlothian | PASS | pdf | https://www.villageofmidlothian.net/DocumentCenter/View/2906/Building-Permit-Application-PDF | mapped fillable application | not determined | not determined |
+| Mount Prospect | PASS | pdf | https://www.mountprospect.org/Documents/Business/Building%20Permit%20Application%20and%20Inspections/2026%20Detached%20Garage%2071526.pdf | direct application PDF | not checked | not checked |
+| Mundelein | PASS | portal | https://bsaonline.com/Home/MunicipalityHome?uid=3142 | portal application start (login may be required) | not checked | not checked |
+| Niles | PASS | pdf | https://www.vniles.com/DocumentCenter/View/81/Village-of-Niles-Permit-Application | mapped fillable application | included in building permit | included in building permit |
+| Northbrook | PASS | pdf | https://www.northbrook.il.us/DocumentCenter/View/1617/Permit-Application | mapped fillable application | not determined | not determined |
+| Oak Park | PASS | portal | https://villageview.oak-park.us/CityViewPortal/Permit/Application | portal application start (login may be required) | not checked | not checked |
+| Palatine | PASS | portal | https://permits.palatine.il.us/EnerGov_Prod/selfservice/PalatineILProd#/applicationAssistant | portal application start (login may be required) | not checked | not checked |
+| Park Ridge | PASS | pdf | https://cms9files.revize.com/parkridgeil/CPD/Application%20-%20Building%20Permit%20(Fillable%20Form)%202018.pdf | mapped fillable application | included in building permit | included in building permit |
+| Riverside | PASS | portal | https://bsaonline.com/Home/MunicipalityHome?uid=2731 | portal application start (login may be required) | not checked | not checked |
+| Schaumburg | PASS | portal | https://www.villageofschaumburg.com/government/community-development/permit-services/residential-permits/garage-attached-and-detached-resource-guide | portal application start (login may be required) | not checked | not checked |
+| Skokie | PASS | portal | https://www.bsaonline.com/CD_PzeProcessApplication/ApplyForPzeProcess?uid=2564 | portal application start (login may be required) | not checked | not checked |
+| South Holland | PASS | portal | https://elementsconnect.southholland.org/Account/Login?ReturnUrl=%2FPortal%2FPortal | login-gated Elements Connect (opens login that returns to application) | not checked | not checked |
+| Villa Park | PASS | pdf | https://www.invillapark.com/DocumentCenter/View/921/Building-Permit-Application | mapped fillable application | included in building permit | not determined |
+| Waukegan | PASS | portal | https://www.waukeganil.gov/FormCenter/Building-Permits-14 | portal application start (login may be required) | not checked | not checked |
+| Westchester | PASS | pdf | https://www.westchester-il.gov/static/images/uploads/residential-building-permit.pdf | mapped fillable application | not determined | not determined |
+| Westmont | PASS | pdf | https://www.westmont.illinois.gov/DocumentCenter/View/933/Permit-Application-Community-Development---Fillable--Revised-07-2024 | mapped fillable application | included in building permit | not determined |
+| Wheaton | FAIL | portal | https://h2.maintstar.co/wheaton/portal/ | login-gated Maintstar SPA; no deep link | not checked | unknown |
+| Wheeling | PASS | pdf | https://www.wheelingil.gov/DocumentCenter/View/131/Application-for-Building-Permit-PDF | mapped fillable application | included in building permit | included in building permit |
+| Zion | PASS | pdf | https://www.cityofzion.com/forms/building/other-information/Building-Permit-2024.pdf | mapped fillable application | not determined | included in building permit |

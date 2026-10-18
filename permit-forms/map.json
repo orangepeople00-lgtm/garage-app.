@@ -8146,20 +8146,538 @@
   }
  },
  "Berkeley": {
-  "form_type": "link_only",
-  "form_name": "Garage Permit (fillable apps on https://www.berkeley.il.us/permits)",
-  "template": null,
-  "fields": null,
+  "form_type": "building_permit",
+  "form_name": "Village of Berkeley Building Department Permit Application (fillable)",
+  "template": "permit-forms/Berkeley.pdf",
+  "fields": [
+   {
+    "name": "agb_p0_1",
+    "page": 0,
+    "rect": [
+     119.4,
+     156.8,
+     566.6,
+     169.8
+    ],
+    "src": "address",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_2",
+    "page": 0,
+    "rect": [
+     157.5,
+     179.2,
+     566.4,
+     192.2
+    ],
+    "src": "customer",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_3",
+    "page": 0,
+    "rect": [
+     81.5,
+     201.8,
+     265.8,
+     214.8
+    ],
+    "src": "phone",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_4",
+    "page": 0,
+    "rect": [
+     348.4,
+     201.8,
+     565.5,
+     214.8
+    ],
+    "src": "ownerEmail",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_5",
+    "page": 0,
+    "rect": [
+     129.4,
+     224.2,
+     319.0,
+     237.2
+    ],
+    "src": "contractor",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_6",
+    "page": 0,
+    "rect": [
+     372.9,
+     224.2,
+     568.2,
+     237.2
+    ],
+    "src": "contractorPhone",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_7",
+    "page": 0,
+    "rect": [
+     150.4,
+     246.8,
+     318.2,
+     259.8
+    ],
+    "src": "pin",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_8",
+    "page": 0,
+    "rect": [
+     435.0,
+     246.8,
+     570.1,
+     259.8
+    ],
+    "src": "price",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_9",
+    "page": 0,
+    "rect": [
+     145.0,
+     269.2,
+     186.8,
+     282.2
+    ],
+    "src": "X",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_10",
+    "page": 0,
+    "rect": [
+     253.0,
+     269.2,
+     294.8,
+     282.2
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_11",
+    "page": 0,
+    "rect": [
+     361.0,
+     269.2,
+     402.9,
+     282.2
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_12",
+    "page": 0,
+    "rect": [
+     37.0,
+     314.3,
+     57.1,
+     327.3
+    ],
+    "src": "X",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_13",
+    "page": 0,
+    "rect": [
+     181.0,
+     314.3,
+     201.1,
+     327.3
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_14",
+    "page": 0,
+    "rect": [
+     37.0,
+     336.8,
+     57.0,
+     349.8
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_15",
+    "page": 0,
+    "rect": [
+     181.0,
+     336.8,
+     200.8,
+     349.8
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_16",
+    "page": 0,
+    "rect": [
+     37.0,
+     359.3,
+     57.0,
+     372.3
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_17",
+    "page": 0,
+    "rect": [
+     181.0,
+     359.3,
+     201.0,
+     372.3
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_18",
+    "page": 0,
+    "rect": [
+     37.0,
+     381.8,
+     57.1,
+     394.8
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_19",
+    "page": 0,
+    "rect": [
+     37.0,
+     404.3,
+     57.1,
+     417.3
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_20",
+    "page": 0,
+    "rect": [
+     37.0,
+     426.8,
+     57.0,
+     439.8
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_21",
+    "page": 0,
+    "rect": [
+     37.4,
+     449.2,
+     57.3,
+     462.2
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_22",
+    "page": 0,
+    "rect": [
+     37.0,
+     471.8,
+     57.0,
+     484.8
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_23",
+    "page": 0,
+    "rect": [
+     37.0,
+     494.2,
+     57.0,
+     507.2
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_24",
+    "page": 0,
+    "rect": [
+     181.0,
+     381.8,
+     201.1,
+     394.8
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_25",
+    "page": 0,
+    "rect": [
+     181.0,
+     404.3,
+     201.1,
+     417.3
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_26",
+    "page": 0,
+    "rect": [
+     181.0,
+     426.8,
+     201.1,
+     439.8
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_27",
+    "page": 0,
+    "rect": [
+     181.0,
+     449.2,
+     201.1,
+     462.2
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_28",
+    "page": 0,
+    "rect": [
+     181.0,
+     471.8,
+     201.0,
+     484.8
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_29",
+    "page": 0,
+    "rect": [
+     181.0,
+     494.2,
+     201.1,
+     507.2
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_30",
+    "page": 0,
+    "rect": [
+     37.0,
+     516.8,
+     57.1,
+     529.8
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_31",
+    "page": 0,
+    "rect": [
+     181.0,
+     516.8,
+     201.1,
+     529.8
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_32",
+    "page": 0,
+    "rect": [
+     37.0,
+     539.2,
+     57.0,
+     552.2
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_33",
+    "page": 0,
+    "rect": [
+     181.0,
+     539.2,
+     201.1,
+     552.2
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_34",
+    "page": 0,
+    "rect": [
+     99.5,
+     561.8,
+     273.0,
+     574.8
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_35",
+    "page": 0,
+    "rect": [
+     37.0,
+     584.2,
+     276.1,
+     597.2
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_36",
+    "page": 0,
+    "rect": [
+     469.0,
+     269.2,
+     510.9,
+     282.2
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_37",
+    "page": 0,
+    "rect": [
+     440.3,
+     693.7,
+     487.5,
+     705.3
+    ],
+    "src": "depth",
+    "size": 7
+   },
+   {
+    "name": "agb_p0_38",
+    "page": 0,
+    "rect": [
+     522.9,
+     693.7,
+     575.7,
+     705.3
+    ],
+    "src": "width",
+    "size": 7
+   },
+   {
+    "name": "agb_p0_39",
+    "page": 0,
+    "rect": [
+     480.4,
+     707.2,
+     577.3,
+     718.8
+    ],
+    "src": "sqft",
+    "size": 7
+   },
+   {
+    "name": "agb_p0_40",
+    "page": 0,
+    "rect": [
+     536.8,
+     720.6,
+     578.7,
+     732.1
+    ],
+    "src": "blank",
+    "size": 7
+   },
+   {
+    "name": "agb_p0_41",
+    "page": 0,
+    "rect": [
+     506.6,
+     733.9,
+     575.7,
+     745.5
+    ],
+    "src": "blank",
+    "size": 7
+   },
+   {
+    "name": "agb_p1_42",
+    "page": 1,
+    "rect": [
+     318.2,
+     233.1,
+     382.0,
+     246.1
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_43",
+    "page": 1,
+    "rect": [
+     419.8,
+     233.1,
+     532.9,
+     246.1
+    ],
+    "src": "blank",
+    "size": 9
+   }
+  ],
   "portal_url": null,
   "info_url": null,
-  "pdf_url": "https://www.berkeley.il.us/vertical/sites/%7BB4877CC9-5533-47FA-94DE-B3C09F1665AB%7D/uploads/Garage_Permit.pdf",
-  "checklist_url": null,
+  "pdf_url": "https://www.berkeley.il.us/vertical/Sites/%7BB4877CC9-5533-47FA-94DE-B3C09F1665AB%7D/uploads/Building_Department_Permit_Application_-_Fillable.pdf",
+  "checklist_url": "https://www.berkeley.il.us/vertical/Sites/%7BB4877CC9-5533-47FA-94DE-B3C09F1665AB%7D/uploads/Updated_Garage_handout.pdf",
   "submittal": null,
   "info_sheet": false,
-  "link_url": "https://www.berkeley.il.us/vertical/sites/%7BB4877CC9-5533-47FA-94DE-B3C09F1665AB%7D/uploads/Garage_Permit.pdf",
+  "link_url": "https://www.berkeley.il.us/vertical/Sites/%7BB4877CC9-5533-47FA-94DE-B3C09F1665AB%7D/uploads/Building_Department_Permit_Application_-_Fillable.pdf",
   "link_type": "pdf",
-  "link_note": "Garage Permit (fillable apps on https://www.berkeley.il.us/permits)",
-  "link_checked": "2026-10-17"
+  "link_note": "Building Department Permit Application (fillable) from berkeley.il.us/permits; Detached Garage handout in checklist_url",
+  "link_checked": "2026-10-17",
+  "fill": []
  },
  "Berwyn": {
   "form_type": "detached_garage",
@@ -18983,20 +19501,394 @@
   "link_checked": "2026-10-17"
  },
  "Elgin": {
-  "form_type": "link_only",
-  "form_name": "Garage Quick Guide (<490 sf) w/ Quick Permit Application; permits page https://elginil.gov/2614/Permits",
-  "template": null,
-  "fields": null,
+  "form_type": "building_permit",
+  "form_name": "City of Elgin Quick Permit Application (fillable)",
+  "template": "permit-forms/Elgin.pdf",
+  "fields": [
+   {
+    "name": "agb_p1_1",
+    "page": 1,
+    "rect": [
+     48.2,
+     78.3,
+     254.1,
+     91.3
+    ],
+    "src": "contractor",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_2",
+    "page": 1,
+    "rect": [
+     353.3,
+     79.1,
+     559.3,
+     92.1
+    ],
+    "src": "contractorFull",
+    "size": 8
+   },
+   {
+    "name": "agb_p1_3",
+    "page": 1,
+    "rect": [
+     48.2,
+     126.8,
+     254.1,
+     139.8
+    ],
+    "src": "contractorPhone",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_4",
+    "page": 1,
+    "rect": [
+     353.3,
+     126.8,
+     559.3,
+     139.8
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_5",
+    "page": 1,
+    "rect": [
+     48.2,
+     345.6,
+     558.1,
+     358.6
+    ],
+    "src": "addressCity",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_6",
+    "page": 1,
+    "rect": [
+     58.1,
+     443.2,
+     264.1,
+     456.2
+    ],
+    "src": "customer",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_7",
+    "page": 1,
+    "rect": [
+     363.3,
+     444.0,
+     569.2,
+     457.0
+    ],
+    "src": "addressCity",
+    "size": 8
+   },
+   {
+    "name": "agb_p1_8",
+    "page": 1,
+    "rect": [
+     58.1,
+     491.6,
+     264.1,
+     504.6
+    ],
+    "src": "phone",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_9",
+    "page": 1,
+    "rect": [
+     363.3,
+     491.7,
+     569.2,
+     504.7
+    ],
+    "src": "ownerEmail",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_10",
+    "page": 1,
+    "rect": [
+     48.2,
+     608.9,
+     254.1,
+     621.9
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_11",
+    "page": 1,
+    "rect": [
+     353.3,
+     609.8,
+     559.3,
+     622.8
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_12",
+    "page": 1,
+    "rect": [
+     48.2,
+     657.4,
+     254.1,
+     670.4
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_13",
+    "page": 1,
+    "rect": [
+     353.3,
+     657.5,
+     559.3,
+     670.5
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_14",
+    "page": 1,
+    "rect": [
+     94.6,
+     750.6,
+     140.6,
+     763.6
+    ],
+    "src": "price",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_15",
+    "page": 1,
+    "rect": [
+     208.7,
+     750.6,
+     254.7,
+     763.6
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_16",
+    "page": 1,
+    "rect": [
+     325.0,
+     750.6,
+     371.0,
+     763.6
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_17",
+    "page": 1,
+    "rect": [
+     420.6,
+     750.6,
+     466.6,
+     763.6
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_18",
+    "page": 1,
+    "rect": [
+     541.0,
+     749.4,
+     587.0,
+     762.4
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p2_19",
+    "page": 2,
+    "rect": [
+     51.8,
+     220.1,
+     257.8,
+     233.1
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p2_20",
+    "page": 2,
+    "rect": [
+     335.4,
+     219.2,
+     541.4,
+     232.2
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p2_21",
+    "page": 2,
+    "rect": [
+     51.8,
+     321.2,
+     553.8,
+     334.2
+    ],
+    "src": "description",
+    "size": 9
+   },
+   {
+    "name": "agb_p2_22",
+    "page": 2,
+    "rect": [
+     51.8,
+     344.4,
+     553.8,
+     357.4
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p2_23",
+    "page": 2,
+    "rect": [
+     51.8,
+     367.7,
+     553.8,
+     380.7
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p2_24",
+    "page": 2,
+    "rect": [
+     51.8,
+     391.0,
+     553.8,
+     404.0
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p2_25",
+    "page": 2,
+    "rect": [
+     51.8,
+     414.8,
+     553.8,
+     427.8
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p2_26",
+    "page": 2,
+    "rect": [
+     43.6,
+     499.7,
+     249.6,
+     512.7
+    ],
+    "src": "contractor",
+    "size": 9
+   },
+   {
+    "name": "agb_p2_27",
+    "page": 2,
+    "rect": [
+     348.8,
+     500.6,
+     554.7,
+     513.6
+    ],
+    "src": "contractorFull",
+    "size": 8
+   },
+   {
+    "name": "agb_p2_28",
+    "page": 2,
+    "rect": [
+     43.6,
+     548.2,
+     249.6,
+     561.2
+    ],
+    "src": "contractorPhone",
+    "size": 9
+   },
+   {
+    "name": "agb_p2_29",
+    "page": 2,
+    "rect": [
+     348.8,
+     548.2,
+     554.7,
+     561.2
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p2_31",
+    "page": 2,
+    "rect": [
+     357.8,
+     649.5,
+     449.2,
+     662.5
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p2_32",
+    "page": 2,
+    "rect": [
+     42.2,
+     692.6,
+     280.2,
+     705.6
+    ],
+    "src": "blank",
+    "size": 9
+   }
+  ],
   "portal_url": null,
   "info_url": null,
-  "pdf_url": "https://elginil.gov/DocumentCenter/View/75248/Garage-Quick-Guide",
-  "checklist_url": null,
+  "pdf_url": "https://elginil.gov/DocumentCenter/View/72301/Quick-Permit-Application",
+  "checklist_url": "https://elginil.gov/DocumentCenter/View/75248/Garage-Quick-Guide",
   "submittal": null,
   "info_sheet": false,
-  "link_url": "https://elginil.gov/DocumentCenter/View/75248/Garage-Quick-Guide",
+  "link_url": "https://elginil.gov/DocumentCenter/View/72301/Quick-Permit-Application",
   "link_type": "pdf",
-  "link_note": "Garage Quick Guide (<490 sf) w/ Quick Permit Application; permits page https://elginil.gov/2614/Permits",
-  "link_checked": "2026-10-17"
+  "link_note": "Quick Permit Application (garages under 490 sf per Garage Quick Guide); email permits@cityofelgin.org",
+  "link_checked": "2026-10-17",
+  "fill": []
  },
  "Elk Grove Village": {
   "form_type": "link_only",
@@ -25268,15 +26160,15 @@
   "form_name": "2026 Detached Garage handout; Citizenserve https://www4.citizenserve.com/Portal/PortalController?Action=showPermit&ctzPagePrefix=Portal_&installationID=252&original_contactID=0&original_iid=0",
   "template": null,
   "fields": null,
-  "portal_url": null,
+  "portal_url": "https://www4.citizenserve.com/Portal/PortalController?Action=showPermit&ctzPagePrefix=Portal_&installationID=252&original_contactID=0&original_iid=0",
   "info_url": null,
   "pdf_url": "https://www.mountprospect.org/Documents/Business/Building%20Permit%20Application%20and%20Inspections/2026%20Detached%20Garage%2071526.pdf",
-  "checklist_url": null,
+  "checklist_url": "https://www.mountprospect.org/Documents/Business/Building%20Permit%20Application%20and%20Inspections/2026%20Detached%20Garage%2071526.pdf",
   "submittal": null,
   "info_sheet": false,
-  "link_url": "https://www.mountprospect.org/Documents/Business/Building%20Permit%20Application%20and%20Inspections/2026%20Detached%20Garage%2071526.pdf",
-  "link_type": "pdf",
-  "link_note": "2026 Detached Garage handout; Citizenserve https://www4.citizenserve.com/Portal/PortalController?Action=showPermit&ctzPagePrefix=Portal_&installationID=252&original_contactID=0&original_iid=0",
+  "link_url": "https://www4.citizenserve.com/Portal/PortalController?Action=showPermit&ctzPagePrefix=Portal_&installationID=252&original_contactID=0&original_iid=0",
+  "link_type": "portal",
+  "link_note": "Citizenserve online permit application (Permits page; Village consolidated all permit types into one application). Paper application PDF not found on the official site (licenses-and-permits page now 404). Detached Garage Supplement in checklist_url.",
   "link_checked": "2026-10-17"
  },
  "Mundelein": {

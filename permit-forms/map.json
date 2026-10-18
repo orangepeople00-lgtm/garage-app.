@@ -13236,20 +13236,22 @@
   "link_checked": "2026-10-17"
  },
  "Elmhurst": {
-  "form_type": "link_only",
-  "form_name": "Citizen Self-Service portal; detached garage handout https://cms3.revize.com/revize/elmhurst/Document%20Center/Services/Community%20Development/Permits%20&%20Forms%20Tyler%20Docs/2023%20DETACHED%20GARAGE%20HANDOUT.pdf",
+  "form_type": "portal",
+  "form_name": "Garage permit — online application (Citizen Self-Service portal, permit type \"Garage\"; log in / register first)",
   "template": null,
   "fields": null,
-  "portal_url": "https://elmhurst.org/services/community_development/permits__forms.php",
-  "info_url": null,
+  "portal_url": "https://cityofelmhurstil-energovweb.tylerhost.net/apps/selfservice#/permit/apply/71/0/0",
+  "info_url": "https://www.elmhurst.org/services/community_development/permits__forms.php",
   "pdf_url": null,
-  "checklist_url": null,
+  "checklist_url": "https://cms3.revize.com/revize/elmhurst/Document%20Center/Services/Community%20Development/Permits%20&%20Forms%20Tyler%20Docs/2023%20DETACHED%20GARAGE%20HANDOUT.pdf?t=202402151339020",
   "submittal": null,
   "info_sheet": false,
-  "link_url": "https://elmhurst.org/services/community_development/permits__forms.php",
+  "link_url": "https://cityofelmhurstil-energovweb.tylerhost.net/apps/selfservice#/permit/apply/71/0/0",
   "link_type": "portal",
-  "link_note": "Citizen Self-Service portal; detached garage handout https://cms3.revize.com/revize/elmhurst/Document%20Center/Services/Community%20Development/Permits%20&%20Forms%20Tyler%20Docs/2023%20DETACHED%20GARAGE%20HANDOUT.pdf",
-  "link_checked": "2026-10-17"
+  "link_note": "No PDF application on elmhurst.org — permits are online only (Tyler EnerGov CSS). Garage type id 71.",
+  "link_checked": "2026-10-17",
+  "handout_url": "https://cms3.revize.com/revize/elmhurst/Document%20Center/Services/Community%20Development/Permits%20&%20Forms%20Tyler%20Docs/2023%20DETACHED%20GARAGE%20HANDOUT.pdf?t=202402151339020",
+  "handout_name": "2023 Detached Garage Handout (required notes)"
  },
  "Elwood": {
   "form_type": "link_only",

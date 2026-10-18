@@ -362,5 +362,175 @@
    "conditional": null,
    "page": "applications"
   }
+ ],
+ "Elmhurst": [
+  {
+   "item": "Garage permit application — online via Citizen Self-Service portal (Apply → Garage); contractor makes the application",
+   "conditional": null,
+   "page": "portal / handout p1",
+   "source": "2023 Detached Garage Handout"
+  },
+  {
+   "item": "All contractors bonded and registered with the City of Elmhurst",
+   "conditional": null,
+   "page": "handout p1",
+   "source": "2023 Detached Garage Handout"
+  },
+  {
+   "item": "Topographic Survey and Grading Plan, scale 1\" = 10'",
+   "conditional": null,
+   "page": "handout p1-2",
+   "source": "2023 Detached Garage Handout"
+  },
+  {
+   "item": "Site Development Plan signed & sealed by a Professional Engineer: drainage swales/system, garage location & dimensions, top of foundation elevations (incl. adjacent structures), silt fence, driveway location/dimension/composition, parkway trees, light poles & fire hydrants, curb/sidewalk elevations if new driveway, front/side setbacks incl. adjacent properties' actual building lines, utility lines & connections, City utilities & sizes, proposed grades at building corners, all improvements (walks, patios, decks), legend, ROW removal/restoration",
+   "conditional": null,
+   "page": "handout p5",
+   "source": "2023 Detached Garage Handout"
+  },
+  {
+   "item": "Separate Plat of Survey signed & sealed by a Licensed Surveyor: 1-ft contours through adjacent properties, legal description, adjacent structures with elevations, benchmark tied to USGS (NGVD), all easements & encumbrances",
+   "conditional": null,
+   "page": "handout p5",
+   "source": "2023 Detached Garage Handout"
+  },
+  {
+   "item": "Original Development Plan and Plat of Survey submitted free of any written changes or marks",
+   "conditional": null,
+   "page": "handout p5",
+   "source": "2023 Detached Garage Handout"
+  },
+  {
+   "item": "Site plan shows the City Standard Site Plan Notes and Erosion Control Notes",
+   "conditional": null,
+   "page": "handout p3",
+   "source": "2023 Detached Garage Handout"
+  },
+  {
+   "item": "Site plan: gutters & downspouts — indicate discharge; downspouts/sump connect to City storm sewer (min 6\" PVC SDR 26, air gap)",
+   "conditional": null,
+   "page": "handout p1-3",
+   "source": "2023 Detached Garage Handout"
+  },
+  {
+   "item": "Site plan: parkway tree diameter + Tree Protection Zone (\"No trenching or excavation within area\"; radius 5'/10'/12'/15' for trunk 1-9\"/10-14\"/15-19\"/over 19\")",
+   "conditional": "parkway tree",
+   "page": "handout p3",
+   "source": "2023 Detached Garage Handout"
+  },
+  {
+   "item": "Site plan: proposed driveway section noted (6\" PCC on 6\" compacted aggregate, or 3\" bituminous on 6\" aggregate)",
+   "conditional": "driveway in scope",
+   "page": "handout p3",
+   "source": "2023 Detached Garage Handout"
+  },
+  {
+   "item": "Site plan: 2\" PVC Schedule 8- conduit (as printed) under driveway for future street lighting (2' behind curb, ~18\" deep, 2' past pavement, ends capped)",
+   "conditional": "driveway in scope",
+   "page": "handout p3",
+   "source": "2023 Detached Garage Handout"
+  },
+  {
+   "item": "Stabilized construction entrance (min 3\" rock) before any excavation; silt fence / erosion control installed first",
+   "conditional": null,
+   "page": "handout p3/p5",
+   "source": "2023 Detached Garage Handout"
+  },
+  {
+   "item": "Construction drawings with span tables used (grade, species, span) for rafters/ties",
+   "conditional": null,
+   "page": "handout p1",
+   "source": "2023 Detached Garage Handout"
+  },
+  {
+   "item": "Garage floor area ≤ 720 sq ft; setbacks per lot zoning (check with City)",
+   "conditional": null,
+   "page": "handout p1",
+   "source": "2023 Detached Garage Handout"
+  },
+  {
+   "item": "Side walls ≤ 10' high; highest roof point ≤ 21' above finished grade",
+   "conditional": null,
+   "page": "handout p1",
+   "source": "2023 Detached Garage Handout"
+  },
+  {
+   "item": "Storage/attic above main story ≤ 50% of main-story cubic volume (show A×B×X vs C×D×X calc; A ≤ 10')",
+   "conditional": "attic/storage space",
+   "page": "handout p1, p8",
+   "source": "2023 Detached Garage Handout"
+  },
+  {
+   "item": "Garage built at existing grade; not elevated unless City Engineer approves; downspouts discharge on own property",
+   "conditional": null,
+   "page": "handout p1",
+   "source": "2023 Detached Garage Handout"
+  },
+  {
+   "item": "Roof: 240# Class A shingles over 15# felt on 5/8\" plywood (no OSB/particle board); 2x8 ridge min; 2x6 rafters @ 16\" O.C.; 2x6 collar ties @ 4' O.C.; cross ties @ 4' O.C. (city 2x6 — we use 2x8)",
+   "conditional": null,
+   "page": "handout p1",
+   "source": "2023 Detached Garage Handout"
+  },
+  {
+   "item": "Walls: 2x4 studs @ 16\" O.C., double top plate, triple corners; 1/2\" plywood wall sheathing (no particle board); let-in 1x4 sway braces or full 1/2\" plywood at corners; single 2x4 treated bottom plate; siding over 15# felt or wrap",
+   "conditional": null,
+   "page": "handout p1",
+   "source": "2023 Detached Garage Handout"
+  },
+  {
+   "item": "Headers: city min double 2x8 over windows, double 2x6 over service door, double 2x4 under window sill, OH door 2-2x12 w/ 1/2\" plywood flitch (7'-9') or 1/8\" steel flitch (>9'); LVL/microlam 'as designed by an architect' (we use 2 LVL)",
+   "conditional": null,
+   "page": "handout p1",
+   "source": "2023 Detached Garage Handout"
+  },
+  {
+   "item": "Slab: monolithic pour with grade beam, 6 bag mix, 5\" thick, 6x6 W2.1xW2.1 WWF on 5\" gravel; grade beam 12\" wide x 12\" deep w/ 2 #5 bars cont.",
+   "conditional": null,
+   "page": "handout p1",
+   "source": "2023 Detached Garage Handout"
+  },
+  {
+   "item": "Grade beam NOT permitted for garages 600 sq ft or larger (IRC R403.1.4 / R403.1.4.1) — frost footing required",
+   "conditional": "garage ≥ 600 sq ft",
+   "page": "handout p1",
+   "source": "2023 Detached Garage Handout"
+  },
+  {
+   "item": "Anchor bolts 1/2\" x 10\" @ 4'-0\" O.C., 1'-0\" from each corner",
+   "conditional": null,
+   "page": "handout p1",
+   "source": "2023 Detached Garage Handout"
+  },
+  {
+   "item": "No clay found when digging perimeter footing: 8\" dia. post holes on 5' centers around perimeter down to clay",
+   "conditional": "no clay at footing depth",
+   "page": "handout p1",
+   "source": "2023 Detached Garage Handout"
+  },
+  {
+   "item": "Remove sod/organic material, extra fill and vegetation from site; excavated material not used for backfill removed from site",
+   "conditional": null,
+   "page": "handout p1, p3",
+   "source": "2023 Detached Garage Handout"
+  },
+  {
+   "item": "Electric: rigid metal conduit through slab into house; house→garage rigid metal 6\", PVC 18\" or UF cable 24\" deep; min 2 GFCI wall receptacles + 1 ceiling outlet per OH door; 1 ceiling light per bay, 1 light at each service door, 1 light each side of OH doors",
+   "conditional": "electric in scope",
+   "page": "handout p1",
+   "source": "2023 Detached Garage Handout"
+  },
+  {
+   "item": "INSPECTION: prep area before gravel is placed",
+   "conditional": null,
+   "page": "handout p1",
+   "source": "2023 Detached Garage Handout"
+  },
+  {
+   "item": "INSPECTION: Spot Survey + Top of Foundation Elevation (signed & sealed PE or Registered Land Surveyor; foundation-to-property-line dims + all T/F steps) uploaded to portal after foundation pour — no backfilling/framing until approved",
+   "conditional": null,
+   "page": "handout p4, p6-7",
+   "source": "2023 Detached Garage Handout"
+  }
  ]
 }

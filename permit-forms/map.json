@@ -7069,20 +7069,497 @@
   "link_checked": "2026-10-17"
  },
  "Berwyn": {
-  "form_type": "link_only",
-  "form_name": "Garage Permit Application on Useful Forms; email buildingpermits@berwyn-il.gov",
-  "template": null,
-  "fields": null,
+  "form_type": "detached_garage",
+  "form_name": "City of Berwyn Garage Permit Application",
+  "template": "permit-forms/Berwyn.pdf",
+  "fields": [
+   {
+    "name": "agb_p0_1",
+    "page": 0,
+    "rect": [
+     158.2,
+     123.3,
+     548.2,
+     135.3
+    ],
+    "src": "address",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_2",
+    "page": 0,
+    "rect": [
+     155.9,
+     151.5,
+     406.0,
+     163.5
+    ],
+    "src": "customer",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_3",
+    "page": 0,
+    "rect": [
+     445.3,
+     151.5,
+     550.6,
+     163.5
+    ],
+    "src": "phone",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_4",
+    "page": 0,
+    "rect": [
+     169.8,
+     177.0,
+     214.9,
+     189.0
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_5",
+    "page": 0,
+    "rect": [
+     341.4,
+     177.0,
+     391.5,
+     189.0
+    ],
+    "src": "width",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_6",
+    "page": 0,
+    "rect": [
+     402.6,
+     177.0,
+     457.6,
+     189.0
+    ],
+    "src": "depth",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_7",
+    "page": 0,
+    "rect": [
+     504.1,
+     177.0,
+     554.3,
+     189.0
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_8",
+    "page": 0,
+    "rect": [
+     50.4,
+     223.5,
+     545.4,
+     235.5
+    ],
+    "src": "description",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_9",
+    "page": 0,
+    "rect": [
+     50.4,
+     251.7,
+     545.4,
+     263.7
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_10",
+    "page": 0,
+    "rect": [
+     348.1,
+     279.9,
+     543.2,
+     291.9
+    ],
+    "src": "price",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_11",
+    "page": 0,
+    "rect": [
+     134.4,
+     406.3,
+     398.5,
+     418.3
+    ],
+    "src": "contractor",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_12",
+    "page": 0,
+    "rect": [
+     430.1,
+     406.3,
+     526.1,
+     418.3
+    ],
+    "src": "contractorPhone",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_13",
+    "page": 0,
+    "rect": [
+     140.3,
+     431.6,
+     396.4,
+     443.6
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_14",
+    "page": 0,
+    "rect": [
+     427.9,
+     431.6,
+     523.8,
+     443.6
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_15",
+    "page": 0,
+    "rect": [
+     142.5,
+     457.0,
+     402.5,
+     469.0
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_16",
+    "page": 0,
+    "rect": [
+     434.1,
+     457.0,
+     530.2,
+     469.0
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_17",
+    "page": 0,
+    "rect": [
+     133.6,
+     479.6,
+     397.6,
+     491.6
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_18",
+    "page": 0,
+    "rect": [
+     429.3,
+     479.6,
+     525.2,
+     491.6
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_19",
+    "page": 0,
+    "rect": [
+     147.4,
+     502.2,
+     395.4,
+     514.2
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_20",
+    "page": 0,
+    "rect": [
+     426.9,
+     502.2,
+     522.9,
+     514.2
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_21",
+    "page": 0,
+    "rect": [
+     118.7,
+     555.5,
+     390.9,
+     567.5
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_22",
+    "page": 0,
+    "rect": [
+     438.6,
+     555.5,
+     550.9,
+     567.5
+    ],
+    "src": "blank",
+    "size": 9
+   }
+  ],
   "portal_url": null,
   "info_url": "https://www.berwyn-il.gov/services/useful-forms",
-  "pdf_url": null,
+  "pdf_url": "https://www.berwyn-il.gov/home/showpublisheddocument/290/638723885355270000",
   "checklist_url": null,
-  "submittal": null,
+  "submittal": "in person or email buildingpermits@berwyn-il.gov",
   "info_sheet": false,
-  "link_url": "https://www.berwyn-il.gov/services/useful-forms",
-  "link_type": "page",
-  "link_note": "Garage Permit Application on Useful Forms; email buildingpermits@berwyn-il.gov",
-  "link_checked": "2026-10-17"
+  "link_url": "https://www.berwyn-il.gov/home/showpublisheddocument/290/638723885355270000",
+  "link_type": "pdf",
+  "link_note": "Garage Permit Application PDF (site blocks bots; stored copy in repo). Demolition of existing garage is on this form (Demolish Existing + Demolition Fee); Cook County demo permit needed before issue.",
+  "link_checked": "2026-10-17",
+  "auto_mapped": false,
+  "electrical": {
+   "required": "separate",
+   "form_name": "City of Berwyn Electrical Permit Application",
+   "template": "permit-forms/Berwyn-electrical.pdf",
+   "pdf_url": "https://www.berwyn-il.gov/home/showpublisheddocument/288/638723885064130000",
+   "fields": [
+    {
+     "name": "agb_e0_1",
+     "page": 0,
+     "rect": [
+      140.2,
+      130.9,
+      530.2,
+      142.9
+     ],
+     "src": "address",
+     "size": 9
+    },
+    {
+     "name": "agb_e0_2",
+     "page": 0,
+     "rect": [
+      137.9,
+      156.3,
+      393.1,
+      168.3
+     ],
+     "src": "customer",
+     "size": 9
+    },
+    {
+     "name": "agb_e0_3",
+     "page": 0,
+     "rect": [
+      432.4,
+      156.3,
+      537.4,
+      168.3
+     ],
+     "src": "phone",
+     "size": 9
+    },
+    {
+     "name": "agb_e0_4",
+     "page": 0,
+     "rect": [
+      110.6,
+      181.0,
+      394.8,
+      193.0
+     ],
+     "src": "blank",
+     "size": 9
+    },
+    {
+     "name": "agb_e0_5",
+     "page": 0,
+     "rect": [
+      434.0,
+      181.0,
+      534.2,
+      193.0
+     ],
+     "src": "blank",
+     "size": 9
+    },
+    {
+     "name": "agb_e0_6",
+     "page": 0,
+     "rect": [
+      383.0,
+      208.0,
+      404.9,
+      220.0
+     ],
+     "src": "blank",
+     "size": 9
+    },
+    {
+     "name": "agb_e0_7",
+     "page": 0,
+     "rect": [
+      214.1,
+      384.2,
+      544.1,
+      396.2
+     ],
+     "src": "blank",
+     "size": 9
+    },
+    {
+     "name": "agb_e0_8",
+     "page": 0,
+     "rect": [
+      32.4,
+      405.3,
+      542.4,
+      417.3
+     ],
+     "src": "blank",
+     "size": 9
+    },
+    {
+     "name": "agb_e0_9",
+     "page": 0,
+     "rect": [
+      32.4,
+      426.6,
+      542.5,
+      438.6
+     ],
+     "src": "blank",
+     "size": 9
+    },
+    {
+     "name": "agb_e0_10",
+     "page": 0,
+     "rect": [
+      32.4,
+      447.7,
+      542.4,
+      459.7
+     ],
+     "src": "blank",
+     "size": 9
+    },
+    {
+     "name": "agb_e0_11",
+     "page": 0,
+     "rect": [
+      300.4,
+      507.9,
+      540.4,
+      519.9
+     ],
+     "src": "blank",
+     "size": 9
+    },
+    {
+     "name": "agb_e0_12",
+     "page": 0,
+     "rect": [
+      83.6,
+      560.2,
+      408.7,
+      572.2
+     ],
+     "src": "blank",
+     "size": 9
+    },
+    {
+     "name": "agb_e0_13",
+     "page": 0,
+     "rect": [
+      444.7,
+      559.6,
+      540.8,
+      571.6
+     ],
+     "src": "blank",
+     "size": 9
+    }
+   ],
+   "checks": [
+    {
+     "name": "agb_ecb_1",
+     "page": 0,
+     "rect": [
+      192.9,
+      210.0,
+      200.9,
+      218.0
+     ]
+    },
+    {
+     "name": "agb_ecb_2",
+     "page": 0,
+     "rect": [
+      247.9,
+      210.0,
+      255.9,
+      218.0
+     ]
+    },
+    {
+     "name": "agb_ecb_3",
+     "page": 0,
+     "rect": [
+      318.5,
+      210.0,
+      326.5,
+      218.0
+     ]
+    },
+    {
+     "name": "agb_ecb_4",
+     "page": 0,
+     "rect": [
+      470.7,
+      210.0,
+      478.7,
+      218.0
+     ]
+    }
+   ]
+  },
+  "demolition": {
+   "required": "included in building permit",
+   "note": "Garage form has 'Demolish Existing' + Demolition Fee; Cook County demolition permit required before permit issued",
+   "pdf_url": null
+  }
  },
  "Big Rock": {
   "form_type": "link_only",

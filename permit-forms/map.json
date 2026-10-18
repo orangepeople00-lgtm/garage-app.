@@ -28,7 +28,17 @@
   "link_url": "https://villageview.oak-park.us/CityViewPortal/Permit/Application",
   "link_type": "portal",
   "link_checked": "2026-10-17",
-  "link_note": "CityView: New Permit application"
+  "link_note": "CityView: New Permit application",
+  "cook_county": {
+   "type": "demolition",
+   "applies": "demolition",
+   "required": "separate",
+   "form_name": "Cook County DES Demolition Permit application (online portal)",
+   "portal_url": "https://espay.cookcountyil.gov/DesWebPortal/#/demolition",
+   "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
+   "partial": false,
+   "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only."
+  }
  },
  "Zion": {
   "form_type": "general_covers_garage",
@@ -388,6 +398,16 @@
   "demolition": {
    "required": "included in building permit",
    "note": "building application lists 'DEMOLITION' as a work type"
+  },
+  "cook_county": {
+   "type": "demolition",
+   "applies": "demolition",
+   "required": "separate",
+   "form_name": "Cook County DES Demolition Permit application (online portal)",
+   "portal_url": "https://espay.cookcountyil.gov/DesWebPortal/#/demolition",
+   "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
+   "partial": false,
+   "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only."
   }
  },
  "Cicero": {
@@ -557,6 +577,16 @@
     }
    ],
    "note": "Checklist: submit one building permit application and one electrical permit application. Electrician fields left blank."
+  },
+  "cook_county": {
+   "type": "demolition",
+   "applies": "demolition",
+   "required": "separate",
+   "form_name": "Cook County DES Demolition Permit application (online portal)",
+   "portal_url": "https://espay.cookcountyil.gov/DesWebPortal/#/demolition",
+   "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
+   "partial": false,
+   "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only."
   }
  },
  "Calumet City": {
@@ -791,6 +821,16 @@
   "demolition": {
    "required": "not determined",
    "note": "no demolition line on application; check city/Cook County demolition permit"
+  },
+  "cook_county": {
+   "type": "demolition",
+   "applies": "demolition",
+   "required": "separate",
+   "form_name": "Cook County DES Demolition Permit application (online portal)",
+   "portal_url": "https://espay.cookcountyil.gov/DesWebPortal/#/demolition",
+   "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
+   "partial": false,
+   "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only."
   }
  },
  "Elmwood Park": {
@@ -811,6 +851,16 @@
   "electrical": {
    "required": "separate",
    "portal_url": "https://www.elmwoodpark.org/FormCenter/Code-Department-12/Electrical-Permit-Application-75"
+  },
+  "cook_county": {
+   "type": "demolition",
+   "applies": "demolition",
+   "required": "separate",
+   "form_name": "Cook County DES Demolition Permit application (online portal)",
+   "portal_url": "https://espay.cookcountyil.gov/DesWebPortal/#/demolition",
+   "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
+   "partial": false,
+   "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only."
   }
  },
  "Des Plaines": {
@@ -832,7 +882,17 @@
    "pdf_url": "https://www.desplainesil.gov/files/assets/city/v/1/ced/licenses-and-permits/05112026_permit-guide_r_demolition.pdf",
    "note": "Residential demolition permit guide; apply via EnerGov"
   },
-  "link_note": "EnerGov Apply (application assistant); Detached Garage guide https://www.desplainesil.gov/files/assets/city/v/1/ced/licenses-and-permits/05212026_permit-guide_r_detached-garage.pdf"
+  "link_note": "EnerGov Apply (application assistant); Detached Garage guide https://www.desplainesil.gov/files/assets/city/v/1/ced/licenses-and-permits/05212026_permit-guide_r_detached-garage.pdf",
+  "cook_county": {
+   "type": "demolition",
+   "applies": "demolition",
+   "required": "separate",
+   "form_name": "Cook County DES Demolition Permit application (online portal)",
+   "portal_url": "https://espay.cookcountyil.gov/DesWebPortal/#/demolition",
+   "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
+   "partial": false,
+   "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only."
+  }
  },
  "South Holland": {
   "form_type": "unknown",
@@ -848,7 +908,17 @@
   "link_url": "https://elementsconnect.southholland.org/Account/Login?ReturnUrl=%2FPortal%2FPortal",
   "link_type": "portal",
   "link_checked": "2026-10-17",
-  "link_note": "Elements Connect online permit application (login-gated; no public deep link). Old revize link was 404."
+  "link_note": "Elements Connect online permit application (login-gated; no public deep link). Old revize link was 404.",
+  "cook_county": {
+   "type": "demolition",
+   "applies": "demolition",
+   "required": "separate",
+   "form_name": "Cook County DES Demolition Permit application (online portal)",
+   "portal_url": "https://espay.cookcountyil.gov/DesWebPortal/#/demolition",
+   "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
+   "partial": false,
+   "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only."
+  }
  },
  "Midlothian": {
   "form_type": "unknown",
@@ -1048,6 +1118,16 @@
   "demolition": {
    "required": "not determined",
    "note": "no demolition line on application; check city/Cook County demolition permit"
+  },
+  "cook_county": {
+   "type": "demolition",
+   "applies": "demolition",
+   "required": "separate",
+   "form_name": "Cook County DES Demolition Permit application (online portal)",
+   "portal_url": "https://espay.cookcountyil.gov/DesWebPortal/#/demolition",
+   "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
+   "partial": false,
+   "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only."
   }
  },
  "Lyons": {
@@ -2028,6 +2108,16 @@
   "demolition": {
    "required": "not determined",
    "note": "no demolition line on application; check city/Cook County demolition permit"
+  },
+  "cook_county": {
+   "type": "demolition",
+   "applies": "demolition",
+   "required": "separate",
+   "form_name": "Cook County DES Demolition Permit application (online portal)",
+   "portal_url": "https://espay.cookcountyil.gov/DesWebPortal/#/demolition",
+   "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
+   "partial": false,
+   "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only."
   }
  },
  "Arlington Heights": {
@@ -2051,7 +2141,17 @@
    "note": "Demolition - Detached Residential Garage permit (applied via Civic Access portal); Cook County demolition permit also",
    "template_copy": "permit-forms/Arlington-Heights-demolition.pdf"
   },
-  "link_note": "Civic Access (EnerGov) Apply - permit type \"Garage - Detached Residential\"; packet stored permit-forms/Arlington-Heights-garage-packet.pdf"
+  "link_note": "Civic Access (EnerGov) Apply - permit type \"Garage - Detached Residential\"; packet stored permit-forms/Arlington-Heights-garage-packet.pdf",
+  "cook_county": {
+   "type": "demolition",
+   "applies": "demolition",
+   "required": "separate",
+   "form_name": "Cook County DES Demolition Permit application (online portal)",
+   "portal_url": "https://espay.cookcountyil.gov/DesWebPortal/#/demolition",
+   "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
+   "partial": false,
+   "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only."
+  }
  },
  "Evergreen Park": {
   "form_type": "detached_garage",
@@ -2986,6 +3086,16 @@
   "demolition": {
    "required": "not determined",
    "note": "no demolition line on application; check city/Cook County demolition permit"
+  },
+  "cook_county": {
+   "type": "demolition",
+   "applies": "demolition",
+   "required": "separate",
+   "form_name": "Cook County DES Demolition Permit application (online portal)",
+   "portal_url": "https://espay.cookcountyil.gov/DesWebPortal/#/demolition",
+   "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
+   "partial": false,
+   "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only."
   }
  },
  "Skokie": {
@@ -3002,7 +3112,17 @@
   "link_url": "https://www.bsaonline.com/CD_PzeProcessApplication/ApplyForPzeProcess?uid=2564",
   "link_type": "portal",
   "link_checked": "2026-10-17",
-  "link_note": "BS&A Apply for Building Permit (Skokie uid 2564; login first)"
+  "link_note": "BS&A Apply for Building Permit (Skokie uid 2564; login first)",
+  "cook_county": {
+   "type": "demolition",
+   "applies": "demolition",
+   "required": "separate",
+   "form_name": "Cook County DES Demolition Permit application (online portal)",
+   "portal_url": "https://espay.cookcountyil.gov/DesWebPortal/#/demolition",
+   "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
+   "partial": false,
+   "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only."
+  }
  },
  "Joliet": {
   "form_type": "detached_garage",
@@ -3106,7 +3226,17 @@
   "info_sheet": true,
   "link_url": "https://lansingil.portal.opengov.com/categories/1077/record-types/6518",
   "link_type": "portal",
-  "link_checked": "2026-10-17"
+  "link_checked": "2026-10-17",
+  "cook_county": {
+   "type": "demolition",
+   "applies": "demolition",
+   "required": "separate",
+   "form_name": "Cook County DES Demolition Permit application (online portal)",
+   "portal_url": "https://espay.cookcountyil.gov/DesWebPortal/#/demolition",
+   "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
+   "partial": false,
+   "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only."
+  }
  },
  "Addison": {
   "form_type": "link_only",
@@ -3795,6 +3925,16 @@
   "demolition": {
    "required": "not determined",
    "note": "no demolition line on application; check city/Cook County demolition permit"
+  },
+  "cook_county": {
+   "type": "demolition",
+   "applies": "demolition",
+   "required": "separate",
+   "form_name": "Cook County DES Demolition Permit application (online portal)",
+   "portal_url": "https://espay.cookcountyil.gov/DesWebPortal/#/demolition",
+   "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
+   "partial": false,
+   "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only."
   }
  },
  "Antioch": {
@@ -5603,7 +5743,17 @@
   "link_url": "https://vlg-barrington-il.smartgovcommunity.com/Application/CaseApplicationEntry",
   "link_type": "portal",
   "link_note": "SmartGov: Apply (case application entry)",
-  "link_checked": "2026-10-17"
+  "link_checked": "2026-10-17",
+  "cook_county": {
+   "type": "demolition",
+   "applies": "demolition",
+   "required": "separate",
+   "form_name": "Cook County DES Demolition Permit application (online portal)",
+   "portal_url": "https://espay.cookcountyil.gov/DesWebPortal/#/demolition",
+   "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
+   "partial": true,
+   "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only. Only if the property is in the Cook County part of the village."
+  }
  },
  "Barrington Hills": {
   "form_type": "link_only",
@@ -6651,6 +6801,16 @@
   "demolition": {
    "required": "not determined",
    "note": "no demolition line on application; check city/Cook County demolition permit"
+  },
+  "cook_county": {
+   "type": "demolition",
+   "applies": "demolition",
+   "required": "separate",
+   "form_name": "Cook County DES Demolition Permit application (online portal)",
+   "portal_url": "https://espay.cookcountyil.gov/DesWebPortal/#/demolition",
+   "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
+   "partial": true,
+   "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only. Only if the property is in the Cook County part of the village."
   }
  },
  "Bartlett": {
@@ -6675,6 +6835,16 @@
   "demolition": {
    "required": "separate",
    "portal_url": "https://villageofbartlettil.portal.opengov.com/categories/1071/record-types/6529"
+  },
+  "cook_county": {
+   "type": "demolition",
+   "applies": "demolition",
+   "required": "separate",
+   "form_name": "Cook County DES Demolition Permit application (online portal)",
+   "portal_url": "https://espay.cookcountyil.gov/DesWebPortal/#/demolition",
+   "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
+   "partial": true,
+   "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only. Only if the property is in the Cook County part of the village."
   }
  },
  "Batavia": {
@@ -7493,6 +7663,16 @@
   "demolition": {
    "required": "not determined",
    "note": "no demolition line on application; check city/Cook County demolition permit"
+  },
+  "cook_county": {
+   "type": "demolition",
+   "applies": "demolition",
+   "required": "separate",
+   "form_name": "Cook County DES Demolition Permit application (online portal)",
+   "portal_url": "https://espay.cookcountyil.gov/DesWebPortal/#/demolition",
+   "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
+   "partial": false,
+   "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only."
   }
  },
  "Beecher": {
@@ -8077,6 +8257,16 @@
   "demolition": {
    "required": "not determined",
    "note": "no demolition line on application; check city/Cook County demolition permit"
+  },
+  "cook_county": {
+   "type": "demolition",
+   "applies": "demolition",
+   "required": "separate",
+   "form_name": "Cook County DES Demolition Permit application (online portal)",
+   "portal_url": "https://espay.cookcountyil.gov/DesWebPortal/#/demolition",
+   "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
+   "partial": false,
+   "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only."
   }
  },
  "Belvidere": {
@@ -8143,6 +8333,16 @@
   "demolition": {
    "required": "not determined",
    "note": "no demolition line on application; check city/Cook County demolition permit"
+  },
+  "cook_county": {
+   "type": "demolition",
+   "applies": "demolition",
+   "required": "separate",
+   "form_name": "Cook County DES Demolition Permit application (online portal)",
+   "portal_url": "https://espay.cookcountyil.gov/DesWebPortal/#/demolition",
+   "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
+   "partial": true,
+   "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only. Only if the property is in the Cook County part of the village."
   }
  },
  "Berkeley": {
@@ -8677,7 +8877,17 @@
   "link_type": "pdf",
   "link_note": "Building Department Permit Application (fillable) from berkeley.il.us/permits; Detached Garage handout in checklist_url",
   "link_checked": "2026-10-17",
-  "fill": []
+  "fill": [],
+  "cook_county": {
+   "type": "demolition",
+   "applies": "demolition",
+   "required": "separate",
+   "form_name": "Cook County DES Demolition Permit application (online portal)",
+   "portal_url": "https://espay.cookcountyil.gov/DesWebPortal/#/demolition",
+   "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
+   "partial": false,
+   "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only."
+  }
  },
  "Berwyn": {
   "form_type": "detached_garage",
@@ -9171,6 +9381,16 @@
    "required": "included in building permit",
    "note": "Garage form has 'Demolish Existing' + Demolition Fee; Cook County demolition permit required before permit issued",
    "pdf_url": null
+  },
+  "cook_county": {
+   "type": "demolition",
+   "applies": "demolition",
+   "required": "separate",
+   "form_name": "Cook County DES Demolition Permit application (online portal)",
+   "portal_url": "https://espay.cookcountyil.gov/DesWebPortal/#/demolition",
+   "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
+   "partial": false,
+   "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only."
   }
  },
  "Big Rock": {
@@ -9948,6 +10168,16 @@
   "demolition": {
    "required": "not determined",
    "note": "no demolition line on application; check city/Cook County demolition permit"
+  },
+  "cook_county": {
+   "type": "demolition",
+   "applies": "demolition",
+   "required": "separate",
+   "form_name": "Cook County DES Demolition Permit application (online portal)",
+   "portal_url": "https://espay.cookcountyil.gov/DesWebPortal/#/demolition",
+   "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
+   "partial": false,
+   "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only."
   }
  },
  "Bolingbrook": {
@@ -11747,6 +11977,16 @@
   "demolition": {
    "required": "included in building permit",
    "note": "building application lists 'DEMOLITION' as a work type"
+  },
+  "cook_county": {
+   "type": "demolition",
+   "applies": "demolition",
+   "required": "separate",
+   "form_name": "Cook County DES Demolition Permit application (online portal)",
+   "portal_url": "https://espay.cookcountyil.gov/DesWebPortal/#/demolition",
+   "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
+   "partial": false,
+   "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only."
   }
  },
  "Broadview": {
@@ -12595,7 +12835,17 @@
   "link_checked": "2026-10-17",
   "checks": null,
   "fill": null,
-  "auto_mapped": false
+  "auto_mapped": false,
+  "cook_county": {
+   "type": "demolition",
+   "applies": "demolition",
+   "required": "separate",
+   "form_name": "Cook County DES Demolition Permit application (online portal)",
+   "portal_url": "https://espay.cookcountyil.gov/DesWebPortal/#/demolition",
+   "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
+   "partial": false,
+   "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only."
+  }
  },
  "Brookfield": {
   "form_type": "link_only",
@@ -12611,7 +12861,17 @@
   "link_url": "https://us.cloudpermit.com/login",
   "link_type": "portal",
   "link_note": "Cloudpermit (login-gated, no public deep link)",
-  "link_checked": "2026-10-17"
+  "link_checked": "2026-10-17",
+  "cook_county": {
+   "type": "demolition",
+   "applies": "demolition",
+   "required": "separate",
+   "form_name": "Cook County DES Demolition Permit application (online portal)",
+   "portal_url": "https://espay.cookcountyil.gov/DesWebPortal/#/demolition",
+   "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
+   "partial": false,
+   "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only."
+  }
  },
  "Buffalo Grove": {
   "form_type": "building_permit",
@@ -12681,6 +12941,16 @@
   "electrical": {
    "required": "included in building permit",
    "note": "building application lists 'Electrical' (contractor/work line); no separate electrical application required by the form"
+  },
+  "cook_county": {
+   "type": "demolition",
+   "applies": "demolition",
+   "required": "separate",
+   "form_name": "Cook County DES Demolition Permit application (online portal)",
+   "portal_url": "https://espay.cookcountyil.gov/DesWebPortal/#/demolition",
+   "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
+   "partial": true,
+   "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only. Only if the property is in the Cook County part of the village."
   }
  },
  "Burbank": {
@@ -13401,7 +13671,17 @@
     "src": "contractorState"
    }
   ],
-  "auto_mapped": false
+  "auto_mapped": false,
+  "cook_county": {
+   "type": "demolition",
+   "applies": "demolition",
+   "required": "separate",
+   "form_name": "Cook County DES Demolition Permit application (online portal)",
+   "portal_url": "https://espay.cookcountyil.gov/DesWebPortal/#/demolition",
+   "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
+   "partial": false,
+   "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only."
+  }
  },
  "Burnham": {
   "form_type": "link_only",
@@ -13417,7 +13697,17 @@
   "link_url": "https://www.burnham-il.gov/blank-14",
   "link_type": "page",
   "link_note": "Building Permit Application with Requirements on Documents page",
-  "link_checked": "2026-10-17"
+  "link_checked": "2026-10-17",
+  "cook_county": {
+   "type": "demolition",
+   "applies": "demolition",
+   "required": "separate",
+   "form_name": "Cook County DES Demolition Permit application (online portal)",
+   "portal_url": "https://espay.cookcountyil.gov/DesWebPortal/#/demolition",
+   "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
+   "partial": false,
+   "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only."
+  }
  },
  "Burr Ridge": {
   "form_type": "link_only",
@@ -13439,6 +13729,16 @@
    "pdf_url": "https://www.burr-ridge.gov/Document%20Center/Government/Department/Community%20Development/Building%20&%20Permits/Permit%20Applications/2026%20FEB/Demolition%20Checklist.pdf?t=202602041450430",
    "note": "Demolition checklist; apply via BS&A",
    "template_copy": "permit-forms/Burr-Ridge-demolition-checklist.pdf"
+  },
+  "cook_county": {
+   "type": "demolition",
+   "applies": "demolition",
+   "required": "separate",
+   "form_name": "Cook County DES Demolition Permit application (online portal)",
+   "portal_url": "https://espay.cookcountyil.gov/DesWebPortal/#/demolition",
+   "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
+   "partial": true,
+   "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only. Only if the property is in the Cook County part of the village."
   }
  },
  "Calumet Park": {
@@ -13455,7 +13755,17 @@
   "link_url": "https://www.villageofcalumetpark.org/building-department-2",
   "link_type": "page",
   "link_note": "forms being updated; request by phone 708-926-7412 (no form online)",
-  "link_checked": "2026-10-17"
+  "link_checked": "2026-10-17",
+  "cook_county": {
+   "type": "demolition",
+   "applies": "demolition",
+   "required": "separate",
+   "form_name": "Cook County DES Demolition Permit application (online portal)",
+   "portal_url": "https://espay.cookcountyil.gov/DesWebPortal/#/demolition",
+   "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
+   "partial": false,
+   "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only."
+  }
  },
  "Carol Stream": {
   "form_type": "building_permit",
@@ -15593,6 +15903,16 @@
   "demolition": {
    "required": "included in building permit",
    "note": "building application lists 'DEMOLITION' as a work type"
+  },
+  "cook_county": {
+   "type": "demolition",
+   "applies": "demolition",
+   "required": "separate",
+   "form_name": "Cook County DES Demolition Permit application (online portal)",
+   "portal_url": "https://espay.cookcountyil.gov/DesWebPortal/#/demolition",
+   "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
+   "partial": false,
+   "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only."
   }
  },
  "Chicago Ridge": {
@@ -17478,7 +17798,17 @@
    }
   ],
   "fill": null,
-  "auto_mapped": false
+  "auto_mapped": false,
+  "cook_county": {
+   "type": "demolition",
+   "applies": "demolition",
+   "required": "separate",
+   "form_name": "Cook County DES Demolition Permit application (online portal)",
+   "portal_url": "https://espay.cookcountyil.gov/DesWebPortal/#/demolition",
+   "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
+   "partial": false,
+   "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only."
+  }
  },
  "Clarendon Hills": {
   "form_type": "link_only",
@@ -18740,6 +19070,16 @@
   "demolition": {
    "required": "not determined",
    "note": "no demolition line on application; check city/Cook County demolition permit"
+  },
+  "cook_county": {
+   "type": "demolition",
+   "applies": "demolition",
+   "required": "separate",
+   "form_name": "Cook County DES Demolition Permit application (online portal)",
+   "portal_url": "https://espay.cookcountyil.gov/DesWebPortal/#/demolition",
+   "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
+   "partial": false,
+   "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only."
   }
  },
  "Countryside": {
@@ -18825,6 +19165,16 @@
   "demolition": {
    "required": "included in building permit",
    "note": "building application lists 'Demolition' as a work type"
+  },
+  "cook_county": {
+   "type": "demolition",
+   "applies": "demolition",
+   "required": "separate",
+   "form_name": "Cook County DES Demolition Permit application (online portal)",
+   "portal_url": "https://espay.cookcountyil.gov/DesWebPortal/#/demolition",
+   "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
+   "partial": false,
+   "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only."
   }
  },
  "Crest Hill": {
@@ -19478,6 +19828,16 @@
   "demolition": {
    "required": "not determined",
    "note": "no demolition line on application; check city/Cook County demolition permit"
+  },
+  "cook_county": {
+   "type": "demolition",
+   "applies": "demolition",
+   "required": "separate",
+   "form_name": "Cook County DES Demolition Permit application (online portal)",
+   "portal_url": "https://espay.cookcountyil.gov/DesWebPortal/#/demolition",
+   "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
+   "partial": false,
+   "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only."
   }
  },
  "Crete": {
@@ -19735,6 +20095,16 @@
   "demolition": {
    "required": "included in building permit",
    "note": "building application lists 'Demolition' as a work type"
+  },
+  "cook_county": {
+   "type": "demolition",
+   "applies": "demolition",
+   "required": "separate",
+   "form_name": "Cook County DES Demolition Permit application (online portal)",
+   "portal_url": "https://espay.cookcountyil.gov/DesWebPortal/#/demolition",
+   "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
+   "partial": true,
+   "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only. Only if the property is in the Cook County part of the village."
   }
  },
  "Deerfield": {
@@ -19775,7 +20145,17 @@
   "link_url": "https://www.villageofdixmoor.org/",
   "link_type": "page",
   "link_note": "No application online (permit forms section is empty); apply at Village Hall, 170 W 145th St, 708-389-6121",
-  "link_checked": "2026-10-17"
+  "link_checked": "2026-10-17",
+  "cook_county": {
+   "type": "demolition",
+   "applies": "demolition",
+   "required": "separate",
+   "form_name": "Cook County DES Demolition Permit application (online portal)",
+   "portal_url": "https://espay.cookcountyil.gov/DesWebPortal/#/demolition",
+   "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
+   "partial": false,
+   "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only."
+  }
  },
  "Dolton": {
   "form_type": "link_only",
@@ -20737,6 +21117,16 @@
   "demolition": {
    "required": "not determined",
    "note": "no demolition line on application; check city/Cook County demolition permit"
+  },
+  "cook_county": {
+   "type": "demolition",
+   "applies": "demolition",
+   "required": "separate",
+   "form_name": "Cook County DES Demolition Permit application (online portal)",
+   "portal_url": "https://espay.cookcountyil.gov/DesWebPortal/#/demolition",
+   "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
+   "partial": false,
+   "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only."
   }
  },
  "Downers Grove": {
@@ -20827,7 +21217,17 @@
   "link_url": "https://www.easthazelcrest.com/index.asp?DE=EC32717A-C05B-4C29-AA31-1CDA2B828C6F&SEC=DB2D2489-1A5F-49BC-B941-B34AEFAC6295&Type=B_BASIC",
   "link_type": "page",
   "link_note": "Building/Remodeling Permit Application",
-  "link_checked": "2026-10-17"
+  "link_checked": "2026-10-17",
+  "cook_county": {
+   "type": "demolition",
+   "applies": "demolition",
+   "required": "separate",
+   "form_name": "Cook County DES Demolition Permit application (online portal)",
+   "portal_url": "https://espay.cookcountyil.gov/DesWebPortal/#/demolition",
+   "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
+   "partial": false,
+   "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only."
+  }
  },
  "Elburn": {
   "form_type": "link_only",
@@ -21233,7 +21633,17 @@
   "link_type": "pdf",
   "link_note": "Quick Permit Application (garages under 490 sf per Garage Quick Guide); email permits@cityofelgin.org",
   "link_checked": "2026-10-17",
-  "fill": []
+  "fill": [],
+  "cook_county": {
+   "type": "demolition",
+   "applies": "demolition",
+   "required": "separate",
+   "form_name": "Cook County DES Demolition Permit application (online portal)",
+   "portal_url": "https://espay.cookcountyil.gov/DesWebPortal/#/demolition",
+   "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
+   "partial": true,
+   "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only. Only if the property is in the Cook County part of the village."
+  }
  },
  "Elk Grove Village": {
   "form_type": "link_only",
@@ -21249,7 +21659,17 @@
   "link_url": "https://aca-prod.accela.com/elkgrove/Cap/CapApplyDisclaimer.aspx?module=Building",
   "link_type": "portal",
   "link_note": "Accela Building: Create an Application (login first)",
-  "link_checked": "2026-10-17"
+  "link_checked": "2026-10-17",
+  "cook_county": {
+   "type": "demolition",
+   "applies": "demolition",
+   "required": "separate",
+   "form_name": "Cook County DES Demolition Permit application (online portal)",
+   "portal_url": "https://espay.cookcountyil.gov/DesWebPortal/#/demolition",
+   "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
+   "partial": true,
+   "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only. Only if the property is in the Cook County part of the village."
+  }
  },
  "Elmhurst": {
   "form_type": "portal",
@@ -21994,6 +22414,16 @@
   "demolition": {
    "required": "included in building permit",
    "note": "building application lists 'DEMOLITION' as a work type"
+  },
+  "cook_county": {
+   "type": "demolition",
+   "applies": "demolition",
+   "required": "separate",
+   "form_name": "Cook County DES Demolition Permit application (online portal)",
+   "portal_url": "https://espay.cookcountyil.gov/DesWebPortal/#/demolition",
+   "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
+   "partial": false,
+   "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only."
   }
  },
  "Ford Heights": {
@@ -22010,7 +22440,17 @@
   "link_url": "https://villageoffordheights.org/building-permit-guidance",
   "link_type": "page",
   "link_note": "guidance only; no application form found online",
-  "link_checked": "2026-10-17"
+  "link_checked": "2026-10-17",
+  "cook_county": {
+   "type": "demolition",
+   "applies": "demolition",
+   "required": "separate",
+   "form_name": "Cook County DES Demolition Permit application (online portal)",
+   "portal_url": "https://espay.cookcountyil.gov/DesWebPortal/#/demolition",
+   "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
+   "partial": false,
+   "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only."
+  }
  },
  "Forest Park": {
   "form_type": "building_permit",
@@ -22915,6 +23355,16 @@
   "demolition": {
    "required": "included in building permit",
    "note": "Demolition contractor row and Demolition fee line on the building application."
+  },
+  "cook_county": {
+   "type": "demolition",
+   "applies": "demolition",
+   "required": "separate",
+   "form_name": "Cook County DES Demolition Permit application (online portal)",
+   "portal_url": "https://espay.cookcountyil.gov/DesWebPortal/#/demolition",
+   "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
+   "partial": false,
+   "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only."
   }
  },
  "Forest View": {
@@ -23307,6 +23757,16 @@
   "demolition": {
    "required": "not determined",
    "note": "no demolition line on application; check city/Cook County demolition permit"
+  },
+  "cook_county": {
+   "type": "demolition",
+   "applies": "demolition",
+   "required": "separate",
+   "form_name": "Cook County DES Demolition Permit application (online portal)",
+   "portal_url": "https://espay.cookcountyil.gov/DesWebPortal/#/demolition",
+   "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
+   "partial": false,
+   "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only."
   }
  },
  "Fox Lake": {
@@ -25222,6 +25682,16 @@
   "demolition": {
    "required": "included in building permit",
    "note": "building application lists 'DEMOLITION' as a work type"
+  },
+  "cook_county": {
+   "type": "demolition",
+   "applies": "demolition",
+   "required": "separate",
+   "form_name": "Cook County DES Demolition Permit application (online portal)",
+   "portal_url": "https://espay.cookcountyil.gov/DesWebPortal/#/demolition",
+   "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
+   "partial": false,
+   "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only."
   }
  },
  "Geneva": {
@@ -26149,6 +26619,16 @@
   "demolition": {
    "required": "included in building permit",
    "note": "building application lists 'Demolition' as a work type"
+  },
+  "cook_county": {
+   "type": "demolition",
+   "applies": "demolition",
+   "required": "separate",
+   "form_name": "Cook County DES Demolition Permit application (online portal)",
+   "portal_url": "https://espay.cookcountyil.gov/DesWebPortal/#/demolition",
+   "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
+   "partial": false,
+   "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only."
   }
  },
  "Glendale Heights": {
@@ -26930,7 +27410,17 @@
   "link_url": "https://glenview.onlama.com/Apply.aspx#accessory-permits",
   "link_type": "portal",
   "link_note": "Lama: Accessory Permits apply section",
-  "link_checked": "2026-10-17"
+  "link_checked": "2026-10-17",
+  "cook_county": {
+   "type": "demolition",
+   "applies": "demolition",
+   "required": "separate",
+   "form_name": "Cook County DES Demolition Permit application (online portal)",
+   "portal_url": "https://espay.cookcountyil.gov/DesWebPortal/#/demolition",
+   "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
+   "partial": false,
+   "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only."
+  }
  },
  "Glenwood": {
   "form_type": "link_only",
@@ -27430,6 +27920,16 @@
   "demolition": {
    "required": "not determined",
    "note": "no demolition line on application; check city/Cook County demolition permit"
+  },
+  "cook_county": {
+   "type": "demolition",
+   "applies": "demolition",
+   "required": "separate",
+   "form_name": "Cook County DES Demolition Permit application (online portal)",
+   "portal_url": "https://espay.cookcountyil.gov/DesWebPortal/#/demolition",
+   "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
+   "partial": false,
+   "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only."
   }
  },
  "Golf": {
@@ -27500,6 +28000,16 @@
   "demolition": {
    "required": "not determined",
    "note": "no demolition line on application; check city/Cook County demolition permit"
+  },
+  "cook_county": {
+   "type": "demolition",
+   "applies": "demolition",
+   "required": "separate",
+   "form_name": "Cook County DES Demolition Permit application (online portal)",
+   "portal_url": "https://espay.cookcountyil.gov/DesWebPortal/#/demolition",
+   "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
+   "partial": false,
+   "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only."
   }
  },
  "Grayslake": {
@@ -27662,6 +28172,16 @@
    "required": "separate",
    "pdf_url": "https://www.hoffmanestates.org/Documents/Services/Permits%20and%20Licenses/Building%20Permits/Residential%20Permit%20Handouts/Building-Demolition.pdf?t=202509191049110",
    "note": "Building Demolition handout; apply via BS&A"
+  },
+  "cook_county": {
+   "type": "demolition",
+   "applies": "demolition",
+   "required": "separate",
+   "form_name": "Cook County DES Demolition Permit application (online portal)",
+   "portal_url": "https://espay.cookcountyil.gov/DesWebPortal/#/demolition",
+   "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
+   "partial": true,
+   "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only. Only if the property is in the Cook County part of the village."
   }
  },
  "Libertyville": {
@@ -27749,7 +28269,17 @@
   "link_url": "https://www4.citizenserve.com/Portal/PortalController?Action=showPermit&ctzPagePrefix=Portal_&installationID=252&original_contactID=0&original_iid=0",
   "link_type": "portal",
   "link_note": "Citizenserve online permit application (Permits page; Village consolidated all permit types into one application). Paper application PDF not found on the official site (licenses-and-permits page now 404). Detached Garage Supplement in checklist_url.",
-  "link_checked": "2026-10-17"
+  "link_checked": "2026-10-17",
+  "cook_county": {
+   "type": "demolition",
+   "applies": "demolition",
+   "required": "separate",
+   "form_name": "Cook County DES Demolition Permit application (online portal)",
+   "portal_url": "https://espay.cookcountyil.gov/DesWebPortal/#/demolition",
+   "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
+   "partial": false,
+   "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only."
+  }
  },
  "Mundelein": {
   "form_type": "link_only",
@@ -28780,6 +29310,16 @@
   "demolition": {
    "required": "included in building permit",
    "note": "building application lists 'Demolition' as a work type"
+  },
+  "cook_county": {
+   "type": "demolition",
+   "applies": "demolition",
+   "required": "separate",
+   "form_name": "Cook County DES Demolition Permit application (online portal)",
+   "portal_url": "https://espay.cookcountyil.gov/DesWebPortal/#/demolition",
+   "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
+   "partial": false,
+   "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only."
   }
  },
  "Northbrook": {
@@ -28889,6 +29429,16 @@
   "demolition": {
    "required": "not determined",
    "note": "no demolition line on application; check city/Cook County demolition permit"
+  },
+  "cook_county": {
+   "type": "demolition",
+   "applies": "demolition",
+   "required": "separate",
+   "form_name": "Cook County DES Demolition Permit application (online portal)",
+   "portal_url": "https://espay.cookcountyil.gov/DesWebPortal/#/demolition",
+   "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
+   "partial": false,
+   "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only."
   }
  },
  "Palatine": {
@@ -28905,7 +29455,17 @@
   "link_url": "https://permits.palatine.il.us/EnerGov_Prod/selfservice/PalatineILProd#/applicationAssistant",
   "link_type": "portal",
   "link_note": "EnerGov Apply (application assistant)",
-  "link_checked": "2026-10-17"
+  "link_checked": "2026-10-17",
+  "cook_county": {
+   "type": "demolition",
+   "applies": "demolition",
+   "required": "separate",
+   "form_name": "Cook County DES Demolition Permit application (online portal)",
+   "portal_url": "https://espay.cookcountyil.gov/DesWebPortal/#/demolition",
+   "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
+   "partial": false,
+   "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only."
+  }
  },
  "Park Ridge": {
   "form_type": "link_only",
@@ -29014,6 +29574,16 @@
   "demolition": {
    "required": "included in building permit",
    "note": "building application lists 'WRECKING' as a work type"
+  },
+  "cook_county": {
+   "type": "demolition",
+   "applies": "demolition",
+   "required": "separate",
+   "form_name": "Cook County DES Demolition Permit application (online portal)",
+   "portal_url": "https://espay.cookcountyil.gov/DesWebPortal/#/demolition",
+   "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
+   "partial": false,
+   "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only."
   }
  },
  "Riverside": {
@@ -29030,7 +29600,17 @@
   "link_url": "https://bsaonline.com/Home/MunicipalityHome?uid=2731",
   "link_type": "portal",
   "link_note": "BS&A online; Accessory Building handout DocumentCenter/View/5143",
-  "link_checked": "2026-10-17"
+  "link_checked": "2026-10-17",
+  "cook_county": {
+   "type": "demolition",
+   "applies": "demolition",
+   "required": "separate",
+   "form_name": "Cook County DES Demolition Permit application (online portal)",
+   "portal_url": "https://espay.cookcountyil.gov/DesWebPortal/#/demolition",
+   "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
+   "partial": false,
+   "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only."
+  }
  },
  "Schaumburg": {
   "form_type": "link_only",
@@ -29046,7 +29626,17 @@
   "link_url": "https://www.villageofschaumburg.com/government/community-development/permit-services/residential-permits/garage-attached-and-detached-resource-guide",
   "link_type": "portal",
   "link_note": "OpenGov portal via Garage resource guide",
-  "link_checked": "2026-10-17"
+  "link_checked": "2026-10-17",
+  "cook_county": {
+   "type": "demolition",
+   "applies": "demolition",
+   "required": "separate",
+   "form_name": "Cook County DES Demolition Permit application (online portal)",
+   "portal_url": "https://espay.cookcountyil.gov/DesWebPortal/#/demolition",
+   "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
+   "partial": false,
+   "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only."
+  }
  },
  "Villa Park": {
   "form_type": "link_only",
@@ -29479,6 +30069,16 @@
   "demolition": {
    "required": "not determined",
    "note": "no demolition line on application; check city/Cook County demolition permit"
+  },
+  "cook_county": {
+   "type": "demolition",
+   "applies": "demolition",
+   "required": "separate",
+   "form_name": "Cook County DES Demolition Permit application (online portal)",
+   "portal_url": "https://espay.cookcountyil.gov/DesWebPortal/#/demolition",
+   "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
+   "partial": false,
+   "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only."
   }
  },
  "Westmont": {
@@ -29735,6 +30335,16 @@
   "demolition": {
    "required": "included in building permit",
    "note": "building application lists 'Demolition' as a work type"
+  },
+  "cook_county": {
+   "type": "demolition",
+   "applies": "demolition",
+   "required": "separate",
+   "form_name": "Cook County DES Demolition Permit application (online portal)",
+   "portal_url": "https://espay.cookcountyil.gov/DesWebPortal/#/demolition",
+   "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
+   "partial": false,
+   "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only."
   }
  }
 }

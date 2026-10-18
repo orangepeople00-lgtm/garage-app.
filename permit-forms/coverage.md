@@ -259,3 +259,16 @@ PASS 98 / FAIL 12. Electrical/Demo columns: separate / included in building perm
 | Wheaton | FAIL | portal | https://h2.maintstar.co/wheaton/portal/ | login-gated Maintstar SPA; no deep link | not checked | unknown |
 | Wheeling | PASS | pdf | https://www.wheelingil.gov/DocumentCenter/View/131/Application-for-Building-Permit-PDF | mapped fillable application | included in building permit | included in building permit |
 | Zion | PASS | pdf | https://www.cityofzion.com/forms/building/other-information/Building-Permit-2024.pdf | mapped fillable application | not determined | included in building permit |
+
+
+## Cook County demolition permit (added 2026-10-17)
+
+Demo jobs in suburban Cook County also need a Cook County Dept. of Environment & Sustainability (DES) demolition permit (garages included), applied online only: https://espay.cookcountyil.gov/DesWebPortal/#/demolition (info: https://www.cookcountyil.gov/service/demolition-permitting). Shown as its own row in the Permit Application list only when the job has demolition. Chicago is excluded. The County's PDF "Application for Demolition" is for unincorporated Cook only, so it isn't used.
+
+- All of village in Cook (51): Alsip, Arlington Heights, Bedford Park, Bellwood, Berkeley, Berwyn, Blue Island, Bridgeview, Broadview, Brookfield, Burbank, Burnham, Calumet City, Calumet Park, Chicago Heights, Chicago Ridge, Cicero, Country Club Hills, Countryside, Crestwood, Des Plaines, Dixmoor, Dolton, East Hazel Crest, Elmwood Park, Evanston, Evergreen Park, Flossmoor, Ford Heights, Forest Park, Forest View, Franklin Park, Glencoe, Glenview, Glenwood, Golf, Lansing, Lyons, Midlothian, Mount Prospect, Niles, Northbrook, Oak Park, Palatine, Park Ridge, Riverside, Schaumburg, Skokie, South Holland, Westchester, Wheeling
+- Partly in Cook, row says "if property is in Cook County" (10): Barrington, Barrington Hills, Bartlett, Bensenville, Buffalo Grove, Burr Ridge, Deer Park, Elgin, Elk Grove Village, Hoffman Estates
+
+## Electrical / demolition application prefill (2026-10-17)
+
+- Mapped electrical PDFs: Berwyn, Cicero, Forest Park (Garage + New Construction ticked), Burbank (NEW WORK ticked), Chicago Ridge (NEW ticked). Electrician fields blank.
+- No fillable demolition application exists in the linked city documents: Antioch, Arlington Heights, Burr Ridge, Carol Stream, Des Plaines and Hoffman Estates link to requirement guides/checklists; Cary electrical (DocumentCenter/View/8363) is a service-upgrade checklist. Deerfield and Bartlett (OpenGov) and Elmwood Park (online FormCenter) are online forms that can't be prefilled.

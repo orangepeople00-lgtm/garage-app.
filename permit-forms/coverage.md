@@ -89,7 +89,7 @@ _Status column refreshed from map.json 2026-10-17: 62 cities have a mapped PDF t
 | Evergreen Park | PDF mapped (prefilled, editable) | pdf | https://www.evergreenpark-ill.com/DocumentCenter/View/2382/Garage-Permit-Package-PDF | Garage Permit Package (Garage Permit Application) |
 | Flossmoor | PDF mapped (prefilled, editable) | pdf | https://www.flossmoor.org/DocumentCenter/View/32/Building-Permit-Application-PDF | Building Permit Application; BS&A online also |
 | Ford Heights | official page linked (form on page, not mapped) | page | https://villageoffordheights.org/building-permit-guidance | guidance only; no application form found online |
-| Forest Park | official page linked (form on page, not mapped) | page | https://www.forestpark.net/dfp/resources/forms/ | Forms page (building permit info https://www.forestpark.net/dfp/wp-content/uploads/2020/03/BuildingPermits1.pdf) |
+| Forest Park | PDF mapped (prefilled, editable) | pdf | https://www.forestpark.net/dfp/wp-content/uploads/2025/05/BuildingPermitApplication.pdf | Application for Building Permit (flat, overlay). Electrical: separate https://www.forestpark.net/dfp/wp-content/uploads/2025/03/ElectricalPermitResidentialApplication_fillable.pdf (fillable, mapped). Demolition: included in building permit. Site blocks bots; PDFs saved via browser. |
 | Forest View | PDF mapped (prefilled, editable) | pdf | https://www.forestview-il.org/media/iuno5vij/application-for-building-permit.pdf | Application for Building Permit |
 | Fox Lake | PDF mapped (prefilled, editable) | pdf | https://www.foxlake.org/DocumentCenter/View/6365/Permit-Application | Permit Application; email permit@foxlake.org |
 | Fox River Grove | PDF mapped (prefilled, editable) | pdf | https://cms5.revize.com/revize/foxrivergrove/government/building/Building%20Permit%20Application%202026.pdf | Building Permit Application 2026 |
@@ -220,7 +220,7 @@ PASS 98 / FAIL 12. Electrical/Demo columns: separate / included in building perm
 | Evergreen Park | PASS | pdf | https://www.evergreenpark-ill.com/DocumentCenter/View/2382/Garage-Permit-Package-PDF | mapped fillable application | not determined | not determined |
 | Flossmoor | PASS | pdf | https://www.flossmoor.org/DocumentCenter/View/32/Building-Permit-Application-PDF | mapped fillable application | included in building permit | included in building permit |
 | Ford Heights | FAIL | page | https://villageoffordheights.org/building-permit-guidance | village PDF link broken (returns HTML) | not checked | not checked |
-| Forest Park | FAIL | page | https://www.forestpark.net/dfp/resources/forms/ | site blocks automated access (403) - fetch in browser | not checked | not checked |
+| Forest Park | PASS | pdf | https://www.forestpark.net/dfp/wp-content/uploads/2025/05/BuildingPermitApplication.pdf | direct application PDF (mapped; saved via browser) | separate (Forest-Park-electrical.pdf, fillable, mapped) | included in building permit |
 | Forest View | PASS | pdf | https://www.forestview-il.org/media/iuno5vij/application-for-building-permit.pdf | mapped fillable application | included in building permit | not determined |
 | Fox Lake | PASS | pdf | https://www.foxlake.org/DocumentCenter/View/6365/Permit-Application | mapped fillable application | included in building permit | included in building permit |
 | Fox River Grove | PASS | pdf | https://cms5.revize.com/revize/foxrivergrove/government/building/Building%20Permit%20Application%202026.pdf | mapped fillable application | included in building permit | not determined |

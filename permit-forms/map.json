@@ -19776,20 +19776,674 @@
   "link_checked": "2026-10-17"
  },
  "Forest Park": {
-  "form_type": "link_only",
-  "form_name": "Forms page (building permit info https://www.forestpark.net/dfp/wp-content/uploads/2020/03/BuildingPermits1.pdf)",
-  "template": null,
-  "fields": null,
+  "form_type": "building_permit",
+  "form_name": "Village of Forest Park Application for Building Permit",
+  "template": "permit-forms/Forest-Park.pdf",
+  "fields": [
+   {
+    "name": "agb_p0_1",
+    "page": 0,
+    "rect": [
+     128,
+     252,
+     348,
+     264
+    ],
+    "src": "address",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_2",
+    "page": 0,
+    "rect": [
+     422,
+     252,
+     557,
+     264
+    ],
+    "src": "customer",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_3",
+    "page": 0,
+    "rect": [
+     122,
+     268,
+     557,
+     280
+    ],
+    "src": "addressCity",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_4",
+    "page": 0,
+    "rect": [
+     112,
+     284,
+     348,
+     296
+    ],
+    "src": "ownerEmail",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_5",
+    "page": 0,
+    "rect": [
+     412,
+     284,
+     557,
+     296
+    ],
+    "src": "phone",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_6",
+    "page": 0,
+    "rect": [
+     153,
+     300,
+     242,
+     312
+    ],
+    "src": "price",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_7",
+    "page": 0,
+    "rect": [
+     302,
+     300,
+     392,
+     312
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_8",
+    "page": 0,
+    "rect": [
+     460,
+     300,
+     557,
+     312
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_9",
+    "page": 0,
+    "rect": [
+     140,
+     316,
+     557,
+     328
+    ],
+    "src": "description",
+    "size": 8
+   },
+   {
+    "name": "agb_p0_10",
+    "page": 0,
+    "rect": [
+     150,
+     361,
+     262,
+     373
+    ],
+    "src": "blank",
+    "size": 7.5
+   },
+   {
+    "name": "agb_p0_11",
+    "page": 0,
+    "rect": [
+     264,
+     361,
+     392,
+     373
+    ],
+    "src": "blank",
+    "size": 6
+   },
+   {
+    "name": "agb_p0_12",
+    "page": 0,
+    "rect": [
+     394,
+     361,
+     484,
+     373
+    ],
+    "src": "blank",
+    "size": 7.5
+   },
+   {
+    "name": "agb_p0_13",
+    "page": 0,
+    "rect": [
+     486,
+     361,
+     557,
+     373
+    ],
+    "src": "blank",
+    "size": 6.5
+   },
+   {
+    "name": "agb_p0_14",
+    "page": 0,
+    "rect": [
+     150,
+     383,
+     262,
+     395
+    ],
+    "src": "contractor",
+    "size": 7.5
+   },
+   {
+    "name": "agb_p0_15",
+    "page": 0,
+    "rect": [
+     264,
+     383,
+     392,
+     395
+    ],
+    "src": "contractorFull",
+    "size": 6
+   },
+   {
+    "name": "agb_p0_16",
+    "page": 0,
+    "rect": [
+     394,
+     383,
+     484,
+     395
+    ],
+    "src": "contractorPhone",
+    "size": 7.5
+   },
+   {
+    "name": "agb_p0_17",
+    "page": 0,
+    "rect": [
+     486,
+     383,
+     557,
+     395
+    ],
+    "src": "blank",
+    "size": 6.5
+   },
+   {
+    "name": "agb_p0_18",
+    "page": 0,
+    "rect": [
+     150,
+     406,
+     262,
+     418
+    ],
+    "src": "blank",
+    "size": 7.5
+   },
+   {
+    "name": "agb_p0_19",
+    "page": 0,
+    "rect": [
+     264,
+     406,
+     392,
+     418
+    ],
+    "src": "blank",
+    "size": 6
+   },
+   {
+    "name": "agb_p0_20",
+    "page": 0,
+    "rect": [
+     394,
+     406,
+     484,
+     418
+    ],
+    "src": "blank",
+    "size": 7.5
+   },
+   {
+    "name": "agb_p0_21",
+    "page": 0,
+    "rect": [
+     486,
+     406,
+     557,
+     418
+    ],
+    "src": "blank",
+    "size": 6.5
+   },
+   {
+    "name": "agb_p0_22",
+    "page": 0,
+    "rect": [
+     150,
+     428,
+     262,
+     440
+    ],
+    "src": "blank",
+    "size": 7.5
+   },
+   {
+    "name": "agb_p0_23",
+    "page": 0,
+    "rect": [
+     264,
+     428,
+     392,
+     440
+    ],
+    "src": "blank",
+    "size": 6
+   },
+   {
+    "name": "agb_p0_24",
+    "page": 0,
+    "rect": [
+     394,
+     428,
+     484,
+     440
+    ],
+    "src": "blank",
+    "size": 7.5
+   },
+   {
+    "name": "agb_p0_25",
+    "page": 0,
+    "rect": [
+     486,
+     428,
+     557,
+     440
+    ],
+    "src": "blank",
+    "size": 6.5
+   },
+   {
+    "name": "agb_p0_26",
+    "page": 0,
+    "rect": [
+     150,
+     452,
+     262,
+     464
+    ],
+    "src": "blank",
+    "size": 7.5
+   },
+   {
+    "name": "agb_p0_27",
+    "page": 0,
+    "rect": [
+     264,
+     452,
+     392,
+     464
+    ],
+    "src": "blank",
+    "size": 6
+   },
+   {
+    "name": "agb_p0_28",
+    "page": 0,
+    "rect": [
+     394,
+     452,
+     484,
+     464
+    ],
+    "src": "blank",
+    "size": 7.5
+   },
+   {
+    "name": "agb_p0_29",
+    "page": 0,
+    "rect": [
+     486,
+     452,
+     557,
+     464
+    ],
+    "src": "blank",
+    "size": 6.5
+   },
+   {
+    "name": "agb_p0_30",
+    "page": 0,
+    "rect": [
+     150,
+     475,
+     262,
+     487
+    ],
+    "src": "blank",
+    "size": 7.5
+   },
+   {
+    "name": "agb_p0_31",
+    "page": 0,
+    "rect": [
+     264,
+     475,
+     392,
+     487
+    ],
+    "src": "blank",
+    "size": 6
+   },
+   {
+    "name": "agb_p0_32",
+    "page": 0,
+    "rect": [
+     394,
+     475,
+     484,
+     487
+    ],
+    "src": "blank",
+    "size": 7.5
+   },
+   {
+    "name": "agb_p0_33",
+    "page": 0,
+    "rect": [
+     486,
+     475,
+     557,
+     487
+    ],
+    "src": "blank",
+    "size": 6.5
+   },
+   {
+    "name": "agb_p0_34",
+    "page": 0,
+    "rect": [
+     150,
+     498,
+     262,
+     510
+    ],
+    "src": "blank",
+    "size": 7.5
+   },
+   {
+    "name": "agb_p0_35",
+    "page": 0,
+    "rect": [
+     264,
+     498,
+     392,
+     510
+    ],
+    "src": "blank",
+    "size": 6
+   },
+   {
+    "name": "agb_p0_36",
+    "page": 0,
+    "rect": [
+     394,
+     498,
+     484,
+     510
+    ],
+    "src": "blank",
+    "size": 7.5
+   },
+   {
+    "name": "agb_p0_37",
+    "page": 0,
+    "rect": [
+     486,
+     498,
+     557,
+     510
+    ],
+    "src": "blank",
+    "size": 6.5
+   },
+   {
+    "name": "agb_p0_38",
+    "page": 0,
+    "rect": [
+     150,
+     521,
+     262,
+     533
+    ],
+    "src": "blank",
+    "size": 7.5
+   },
+   {
+    "name": "agb_p0_39",
+    "page": 0,
+    "rect": [
+     264,
+     521,
+     392,
+     533
+    ],
+    "src": "blank",
+    "size": 6
+   },
+   {
+    "name": "agb_p0_40",
+    "page": 0,
+    "rect": [
+     394,
+     521,
+     484,
+     533
+    ],
+    "src": "blank",
+    "size": 7.5
+   },
+   {
+    "name": "agb_p0_41",
+    "page": 0,
+    "rect": [
+     486,
+     521,
+     557,
+     533
+    ],
+    "src": "blank",
+    "size": 6.5
+   },
+   {
+    "name": "agb_p0_42",
+    "page": 0,
+    "rect": [
+     150,
+     544,
+     262,
+     556
+    ],
+    "src": "blank",
+    "size": 7.5
+   },
+   {
+    "name": "agb_p0_43",
+    "page": 0,
+    "rect": [
+     264,
+     544,
+     392,
+     556
+    ],
+    "src": "blank",
+    "size": 6
+   },
+   {
+    "name": "agb_p0_44",
+    "page": 0,
+    "rect": [
+     394,
+     544,
+     484,
+     556
+    ],
+    "src": "blank",
+    "size": 7.5
+   },
+   {
+    "name": "agb_p0_45",
+    "page": 0,
+    "rect": [
+     486,
+     544,
+     557,
+     556
+    ],
+    "src": "blank",
+    "size": 6.5
+   },
+   {
+    "name": "agb_p0_46",
+    "page": 0,
+    "rect": [
+     150,
+     567,
+     262,
+     579
+    ],
+    "src": "blank",
+    "size": 7.5
+   },
+   {
+    "name": "agb_p0_47",
+    "page": 0,
+    "rect": [
+     264,
+     567,
+     392,
+     579
+    ],
+    "src": "blank",
+    "size": 6
+   },
+   {
+    "name": "agb_p0_48",
+    "page": 0,
+    "rect": [
+     394,
+     567,
+     484,
+     579
+    ],
+    "src": "blank",
+    "size": 7.5
+   },
+   {
+    "name": "agb_p0_49",
+    "page": 0,
+    "rect": [
+     486,
+     567,
+     557,
+     579
+    ],
+    "src": "blank",
+    "size": 6.5
+   },
+   {
+    "name": "agb_p0_50",
+    "page": 0,
+    "rect": [
+     162,
+     654,
+     283,
+     666
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_51",
+    "page": 0,
+    "rect": [
+     495,
+     654,
+     552,
+     666
+    ],
+    "src": "blank",
+    "size": 9
+   }
+  ],
   "portal_url": null,
   "info_url": "https://www.forestpark.net/dfp/resources/forms/",
-  "pdf_url": null,
+  "pdf_url": "https://www.forestpark.net/dfp/wp-content/uploads/2025/05/BuildingPermitApplication.pdf",
   "checklist_url": null,
   "submittal": null,
   "info_sheet": false,
-  "link_url": "https://www.forestpark.net/dfp/resources/forms/",
-  "link_type": "page",
-  "link_note": "Forms page (building permit info https://www.forestpark.net/dfp/wp-content/uploads/2020/03/BuildingPermits1.pdf)",
-  "link_checked": "2026-10-17"
+  "link_url": "https://www.forestpark.net/dfp/wp-content/uploads/2025/05/BuildingPermitApplication.pdf",
+  "link_type": "pdf",
+  "link_note": "Application for Building Permit (flat; text boxes added). Site blocks automated downloads; PDF saved via browser.",
+  "link_checked": "2026-10-17",
+  "electrical": {
+   "required": "separate",
+   "form_name": "Village of Forest Park Electrical Permit Application (Residential)",
+   "template": "permit-forms/Forest-Park-electrical.pdf",
+   "pdf_url": "https://www.forestpark.net/dfp/wp-content/uploads/2025/03/ElectricalPermitResidentialApplication_fillable.pdf",
+   "fill": [
+    {
+     "name": "Property Address",
+     "src": "address"
+    },
+    {
+     "name": "Property Owner",
+     "src": "customer"
+    },
+    {
+     "name": "Owner Address",
+     "src": "addressCity"
+    },
+    {
+     "name": "Owner Email",
+     "src": "ownerEmail"
+    },
+    {
+     "name": "Owner Phone",
+     "src": "phone"
+    },
+    {
+     "name": "Job Cost",
+     "src": "price"
+    },
+    {
+     "name": "Description of Work",
+     "src": "description"
+    }
+   ],
+   "note": "Building app marks Electrician 'Separate permit required'. Fillable; electrician fields and project-type checkboxes left for the user."
+  },
+  "demolition": {
+   "required": "included in building permit",
+   "note": "Demolition contractor row and Demolition fee line on the building application."
+  }
  },
  "Forest View": {
   "form_type": "link_only",

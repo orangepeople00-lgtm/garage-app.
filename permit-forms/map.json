@@ -391,10 +391,47 @@
   }
  },
  "Cicero": {
-  "form_type": "general_covers_garage",
+  "form_type": "building_permit",
   "form_name": "Town of Cicero Building Permit Application + 'Permitting Procedures – Garage' (detached garage) sheet",
-  "template": null,
-  "fields": null,
+  "template": "permit-forms/Cicero.pdf",
+  "fields": [
+   {
+    "name": "agb_e_p4_1",
+    "page": 4,
+    "rect": [
+     405,
+     452,
+     490,
+     464
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_e_p4_2",
+    "page": 4,
+    "rect": [
+     78,
+     485,
+     320,
+     497
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_e_p4_3",
+    "page": 4,
+    "rect": [
+     170,
+     569,
+     460,
+     581
+    ],
+    "src": "address",
+    "size": 9
+   }
+  ],
   "portal_url": null,
   "info_url": "https://thetownofcicero.com/government/building-department/building-department-forms/",
   "pdf_url": "https://thetownofcicero.com/wp-content/uploads/2025/10/New-Garage-Building-Electrical-Permit-Form.pdf",
@@ -404,10 +441,122 @@
   "link_url": "https://thetownofcicero.com/wp-content/uploads/2025/10/New-Garage-Building-Electrical-Permit-Form.pdf",
   "link_type": "pdf",
   "link_checked": "2026-10-17",
-  "link_note": "New Garage Building & Electrical Permit Form (scanned 14-page packet, not mapped)",
+  "link_note": "New Garage Building & Electrical Permit Form packet (scanned; normalized upright). Packet contains the garage checklist and the 'Garage Electrical Info' page (mapped: date, company, job address); it has no separate building-application form page.",
   "electrical": {
-   "required": "included in building permit",
-   "note": "New Garage Building & Electrical Permit Form is combined; standalone Electrical Permit Application https://thetownofcicero.com/wp-content/uploads/2025/10/Electrical-Permit-Application.pdf"
+   "required": "separate",
+   "pdf_url": "https://thetownofcicero.com/wp-content/uploads/2025/10/Electrical-Permit-Application.pdf",
+   "template": "permit-forms/Cicero-electrical.pdf",
+   "fields": [
+    {
+     "name": "agb_e_p0_1",
+     "page": 0,
+     "rect": [
+      147,
+      379,
+      290,
+      391
+     ],
+     "src": "blank",
+     "size": 9
+    },
+    {
+     "name": "agb_e_p0_2",
+     "page": 0,
+     "rect": [
+      80,
+      402,
+      290,
+      414
+     ],
+     "src": "customer",
+     "size": 9
+    },
+    {
+     "name": "agb_e_p0_3",
+     "page": 0,
+     "rect": [
+      80,
+      434,
+      290,
+      446
+     ],
+     "src": "phone",
+     "size": 9
+    },
+    {
+     "name": "agb_e_p0_4",
+     "page": 0,
+     "rect": [
+      80,
+      502,
+      290,
+      514
+     ],
+     "src": "address",
+     "size": 9
+    },
+    {
+     "name": "agb_e_p0_5",
+     "page": 0,
+     "rect": [
+      80,
+      530,
+      290,
+      542
+     ],
+     "src": "blank",
+     "size": 9
+    },
+    {
+     "name": "agb_e_p0_6",
+     "page": 0,
+     "rect": [
+      80,
+      556,
+      290,
+      568
+     ],
+     "src": "blank",
+     "size": 9
+    },
+    {
+     "name": "agb_e_p0_7",
+     "page": 0,
+     "rect": [
+      80,
+      580,
+      290,
+      592
+     ],
+     "src": "blank",
+     "size": 9
+    },
+    {
+     "name": "agb_e_p0_9",
+     "page": 0,
+     "rect": [
+      125,
+      681,
+      290,
+      693
+     ],
+     "src": "description",
+     "size": 7
+    },
+    {
+     "name": "agb_e_p0_10",
+     "page": 0,
+     "rect": [
+      80,
+      707,
+      290,
+      719
+     ],
+     "src": "blank",
+     "size": 9
+    }
+   ],
+   "note": "Checklist: submit one building permit application and one electrical permit application. Electrician fields left blank."
   }
  },
  "Calumet City": {
@@ -3649,10 +3798,443 @@
   }
  },
  "Antioch": {
-  "form_type": "link_only",
-  "form_name": "Application for a New Residential Building Permit + Garage Construction supplement linked here",
-  "template": null,
-  "fields": null,
+  "form_type": "building_permit",
+  "form_name": "Village of Antioch Application for New Single Family & Residential Renovation Permit",
+  "template": "permit-forms/Antioch.pdf",
+  "fields": [
+   {
+    "name": "agb_p0_1",
+    "page": 0,
+    "rect": [
+     136.0,
+     102,
+     298.0,
+     114
+    ],
+    "src": "address",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_2",
+    "page": 0,
+    "rect": [
+     341.0,
+     102,
+     497.0,
+     114
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_3",
+    "page": 0,
+    "rect": [
+     126.0,
+     122,
+     186.0,
+     134
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_4",
+    "page": 0,
+    "rect": [
+     202.0,
+     122,
+     318.0,
+     134
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_5",
+    "page": 0,
+    "rect": [
+     380.0,
+     122,
+     497.0,
+     134
+    ],
+    "src": "price",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_6",
+    "page": 0,
+    "rect": [
+     119.0,
+     315,
+     358.0,
+     327
+    ],
+    "src": "customer",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_7",
+    "page": 0,
+    "rect": [
+     391.0,
+     315,
+     497.0,
+     327
+    ],
+    "src": "phone",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_8",
+    "page": 0,
+    "rect": [
+     125.0,
+     326,
+     358.0,
+     338
+    ],
+    "src": "address",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_9",
+    "page": 0,
+    "rect": [
+     391.0,
+     329,
+     497.0,
+     341
+    ],
+    "src": "ownerEmail",
+    "size": 8
+   },
+   {
+    "name": "agb_p0_10",
+    "page": 0,
+    "rect": [
+     119.0,
+     357,
+     358.0,
+     369
+    ],
+    "src": "contractor",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_11",
+    "page": 0,
+    "rect": [
+     391.0,
+     357,
+     497.0,
+     369
+    ],
+    "src": "contractorPhone",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_12",
+    "page": 0,
+    "rect": [
+     125.0,
+     368,
+     358.0,
+     380
+    ],
+    "src": "contractorFull",
+    "size": 8
+   },
+   {
+    "name": "agb_p0_13",
+    "page": 0,
+    "rect": [
+     391.0,
+     371,
+     497.0,
+     383
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p0_14",
+    "page": 0,
+    "rect": [
+     119.0,
+     400,
+     358.0,
+     412
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_15",
+    "page": 0,
+    "rect": [
+     391.0,
+     400,
+     497.0,
+     412
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_16",
+    "page": 0,
+    "rect": [
+     125.0,
+     411,
+     358.0,
+     423
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_17",
+    "page": 0,
+    "rect": [
+     391.0,
+     414,
+     497.0,
+     426
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p0_18",
+    "page": 0,
+    "rect": [
+     119.0,
+     442,
+     358.0,
+     454
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_19",
+    "page": 0,
+    "rect": [
+     391.0,
+     442,
+     497.0,
+     454
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_20",
+    "page": 0,
+    "rect": [
+     125.0,
+     453,
+     358.0,
+     465
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_21",
+    "page": 0,
+    "rect": [
+     391.0,
+     456,
+     497.0,
+     468
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p0_22",
+    "page": 0,
+    "rect": [
+     119.0,
+     484,
+     358.0,
+     496
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_23",
+    "page": 0,
+    "rect": [
+     391.0,
+     484,
+     497.0,
+     496
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_24",
+    "page": 0,
+    "rect": [
+     125.0,
+     495,
+     358.0,
+     507
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_25",
+    "page": 0,
+    "rect": [
+     391.0,
+     498,
+     497.0,
+     510
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p0_26",
+    "page": 0,
+    "rect": [
+     119.0,
+     526,
+     358.0,
+     538
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_27",
+    "page": 0,
+    "rect": [
+     391.0,
+     526,
+     497.0,
+     538
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_28",
+    "page": 0,
+    "rect": [
+     125.0,
+     537,
+     358.0,
+     549
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_29",
+    "page": 0,
+    "rect": [
+     391.0,
+     540,
+     497.0,
+     552
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p0_30",
+    "page": 0,
+    "rect": [
+     119.0,
+     568,
+     358.0,
+     580
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_31",
+    "page": 0,
+    "rect": [
+     391.0,
+     568,
+     497.0,
+     580
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_32",
+    "page": 0,
+    "rect": [
+     125.0,
+     579,
+     358.0,
+     591
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_33",
+    "page": 0,
+    "rect": [
+     391.0,
+     582,
+     497.0,
+     594
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p0_34",
+    "page": 0,
+    "rect": [
+     170.0,
+     648,
+     358.0,
+     660
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_35",
+    "page": 0,
+    "rect": [
+     391.0,
+     652,
+     497.0,
+     664
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_36",
+    "page": 0,
+    "rect": [
+     391.0,
+     671,
+     497.0,
+     683
+    ],
+    "src": "blank",
+    "size": 9
+   }
+  ],
   "portal_url": null,
   "info_url": "https://www.antioch.il.gov/building-and-code-enforcement",
   "pdf_url": "https://irp.cdn-website.com/bcd23239/files/uploaded/Application-for-a-Resident-Permit-2021.pdf",
@@ -3661,13 +4243,227 @@
   "info_sheet": false,
   "link_url": "https://irp.cdn-website.com/bcd23239/files/uploaded/Application-for-a-Resident-Permit-2021.pdf",
   "link_type": "pdf",
-  "link_note": "Application for New Single Family & Residential Renovation Permit (flat, not mapped)",
+  "link_note": "Application for New Single Family & Residential Renovation Permit",
   "link_checked": "2026-10-17",
   "demolition": {
    "required": "separate",
    "pdf_url": "https://irp.cdn-website.com/bcd23239/files/uploaded/BUILDING-DEMOLITION-REVISED.pdf",
    "note": "Building Demolition requirements sheet"
-  }
+  },
+  "checks": [
+   {
+    "name": "agb_cb_p0_1",
+    "page": 0,
+    "rect": [
+     107.0,
+     148.0,
+     121.0,
+     159.5
+    ]
+   },
+   {
+    "name": "agb_cb_p0_2",
+    "page": 0,
+    "rect": [
+     107.0,
+     161.4,
+     121.0,
+     172.9
+    ]
+   },
+   {
+    "name": "agb_cb_p0_3",
+    "page": 0,
+    "rect": [
+     107.0,
+     174.8,
+     121.0,
+     186.3
+    ]
+   },
+   {
+    "name": "agb_cb_p0_4",
+    "page": 0,
+    "rect": [
+     107.0,
+     188.2,
+     121.0,
+     199.7
+    ]
+   },
+   {
+    "name": "agb_cb_p0_5",
+    "page": 0,
+    "rect": [
+     107.0,
+     201.6,
+     121.0,
+     213.1
+    ]
+   },
+   {
+    "name": "agb_cb_p0_6",
+    "page": 0,
+    "rect": [
+     107.0,
+     215.0,
+     121.0,
+     226.5
+    ]
+   },
+   {
+    "name": "agb_cb_p0_7",
+    "page": 0,
+    "rect": [
+     107.0,
+     228.4,
+     121.0,
+     239.9
+    ]
+   },
+   {
+    "name": "agb_cb_p0_8",
+    "page": 0,
+    "rect": [
+     251.0,
+     148.0,
+     265.0,
+     159.5
+    ]
+   },
+   {
+    "name": "agb_cb_p0_9",
+    "page": 0,
+    "rect": [
+     251.0,
+     161.4,
+     265.0,
+     172.9
+    ]
+   },
+   {
+    "name": "agb_cb_p0_10",
+    "page": 0,
+    "rect": [
+     251.0,
+     174.8,
+     265.0,
+     186.3
+    ]
+   },
+   {
+    "name": "agb_cb_p0_11",
+    "page": 0,
+    "rect": [
+     251.0,
+     188.2,
+     265.0,
+     199.7
+    ]
+   },
+   {
+    "name": "agb_cb_p0_12",
+    "page": 0,
+    "rect": [
+     251.0,
+     201.6,
+     265.0,
+     213.1
+    ]
+   },
+   {
+    "name": "agb_cb_p0_13",
+    "page": 0,
+    "rect": [
+     251.0,
+     215.0,
+     265.0,
+     226.5
+    ]
+   },
+   {
+    "name": "agb_cb_p0_14",
+    "page": 0,
+    "rect": [
+     251.0,
+     228.4,
+     265.0,
+     239.9
+    ]
+   },
+   {
+    "name": "agb_cb_p0_15",
+    "page": 0,
+    "rect": [
+     404.0,
+     148.0,
+     418.0,
+     159.5
+    ]
+   },
+   {
+    "name": "agb_cb_p0_16",
+    "page": 0,
+    "rect": [
+     404.0,
+     161.4,
+     418.0,
+     172.9
+    ]
+   },
+   {
+    "name": "agb_cb_p0_17",
+    "page": 0,
+    "rect": [
+     404.0,
+     174.8,
+     418.0,
+     186.3
+    ]
+   },
+   {
+    "name": "agb_cb_p0_18",
+    "page": 0,
+    "rect": [
+     404.0,
+     188.2,
+     418.0,
+     199.7
+    ]
+   },
+   {
+    "name": "agb_cb_p0_19",
+    "page": 0,
+    "rect": [
+     404.0,
+     201.6,
+     418.0,
+     213.1
+    ]
+   },
+   {
+    "name": "agb_cb_p0_20",
+    "page": 0,
+    "rect": [
+     404.0,
+     215.0,
+     418.0,
+     226.5
+    ]
+   },
+   {
+    "name": "agb_cb_p0_21",
+    "page": 0,
+    "rect": [
+     404.0,
+     228.4,
+     418.0,
+     239.9
+    ]
+   }
+  ],
+  "fill": null,
+  "auto_mapped": false
  },
  "Aurora": {
   "form_type": "link_only",
@@ -9174,10 +9970,1103 @@
   }
  },
  "Bradley": {
-  "form_type": "link_only",
-  "form_name": "Garage packet + General Permit https://bradleyil.org/media/Building-Permit-Application-Single-Contractor-min.pdf",
-  "template": null,
-  "fields": null,
+  "form_type": "building_permit",
+  "form_name": "Village of Bradley Detached Garage Permit Application packet (garage permit application p.5 + contractor list p.6)",
+  "template": "permit-forms/Bradley.pdf",
+  "fields": [
+   {
+    "name": "agb_p4_1",
+    "page": 4,
+    "rect": [
+     146.6,
+     109.9,
+     392.4,
+     121.9
+    ],
+    "src": "address",
+    "size": 9
+   },
+   {
+    "name": "agb_p4_2",
+    "page": 4,
+    "rect": [
+     489.2,
+     109.9,
+     547.7,
+     121.9
+    ],
+    "src": "price",
+    "size": 9
+   },
+   {
+    "name": "agb_p4_3",
+    "page": 4,
+    "rect": [
+     117.0,
+     127.1,
+     404.1,
+     139.1
+    ],
+    "src": "customer",
+    "size": 9
+   },
+   {
+    "name": "agb_p4_4",
+    "page": 4,
+    "rect": [
+     450.9,
+     127.1,
+     547.7,
+     139.1
+    ],
+    "src": "phone",
+    "size": 9
+   },
+   {
+    "name": "agb_p4_5",
+    "page": 4,
+    "rect": [
+     156.0,
+     145.0,
+     547.7,
+     157.0
+    ],
+    "src": "address",
+    "size": 9
+   },
+   {
+    "name": "agb_p4_6",
+    "page": 4,
+    "rect": [
+     75.7,
+     162.2,
+     333.2,
+     174.2
+    ],
+    "src": "city",
+    "size": 9
+   },
+   {
+    "name": "agb_p4_7",
+    "page": 4,
+    "rect": [
+     349.5,
+     162.2,
+     469.6,
+     174.2
+    ],
+    "src": "zip",
+    "size": 9
+   },
+   {
+    "name": "agb_p4_8",
+    "page": 4,
+    "rect": [
+     170.0,
+     180.1,
+     544.5,
+     192.1
+    ],
+    "src": "contractor",
+    "size": 9
+   },
+   {
+    "name": "agb_p4_9",
+    "page": 4,
+    "rect": [
+     126.4,
+     198.1,
+     417.4,
+     210.1
+    ],
+    "src": "contractorFull",
+    "size": 8
+   },
+   {
+    "name": "agb_p4_10",
+    "page": 4,
+    "rect": [
+     442.3,
+     198.1,
+     548.5,
+     210.1
+    ],
+    "src": "contractorPhone",
+    "size": 9
+   },
+   {
+    "name": "agb_p4_11",
+    "page": 4,
+    "rect": [
+     136.6,
+     229.2,
+     544.5,
+     241.2
+    ],
+    "src": "description",
+    "size": 9
+   },
+   {
+    "name": "agb_p4_12",
+    "page": 4,
+    "rect": [
+     36.6,
+     254.3,
+     544.5,
+     266.3
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p4_13",
+    "page": 4,
+    "rect": [
+     36.6,
+     274.5,
+     544.5,
+     286.5
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p4_14",
+    "page": 4,
+    "rect": [
+     126.4,
+     402.4,
+     417.4,
+     414.4
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p4_15",
+    "page": 4,
+    "rect": [
+     444.7,
+     402.4,
+     530.5,
+     414.4
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p4_16",
+    "page": 4,
+    "rect": [
+     134.2,
+     437.5,
+     417.4,
+     449.5
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p4_17",
+    "page": 4,
+    "rect": [
+     444.7,
+     437.5,
+     530.5,
+     449.5
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p5_18",
+    "page": 5,
+    "rect": [
+     141.9,
+     137.3,
+     448.5,
+     149.3
+    ],
+    "src": "address",
+    "size": 9
+   },
+   {
+    "name": "agb_p5_19",
+    "page": 5,
+    "rect": [
+     495.4,
+     137.3,
+     578.9,
+     149.3
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p5_20",
+    "page": 5,
+    "rect": [
+     144.3,
+     207.5,
+     425.1,
+     219.5
+    ],
+    "src": "contractor",
+    "size": 9
+   },
+   {
+    "name": "agb_p5_21",
+    "page": 5,
+    "rect": [
+     461.9,
+     207.5,
+     577.3,
+     219.5
+    ],
+    "src": "contractorPhone",
+    "size": 9
+   },
+   {
+    "name": "agb_p5_22",
+    "page": 5,
+    "rect": [
+     80.4,
+     224.6,
+     316.0,
+     236.6
+    ],
+    "src": "contractorStreet",
+    "size": 9
+   },
+   {
+    "name": "agb_p5_23",
+    "page": 5,
+    "rect": [
+     340.9,
+     224.6,
+     448.5,
+     236.6
+    ],
+    "src": "contractorCity",
+    "size": 9
+   },
+   {
+    "name": "agb_p5_24",
+    "page": 5,
+    "rect": [
+     479.8,
+     224.6,
+     499.3,
+     236.6
+    ],
+    "src": "contractorState",
+    "size": 8
+   },
+   {
+    "name": "agb_p5_25",
+    "page": 5,
+    "rect": [
+     521.1,
+     224.6,
+     577.3,
+     236.6
+    ],
+    "src": "contractorZip",
+    "size": 8
+   },
+   {
+    "name": "agb_p5_26",
+    "page": 5,
+    "rect": [
+     78.1,
+     242.6,
+     232.5,
+     254.6
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p5_27",
+    "page": 5,
+    "rect": [
+     287.1,
+     242.6,
+     405.7,
+     254.6
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p5_28",
+    "page": 5,
+    "rect": [
+     443.2,
+     242.6,
+     578.9,
+     254.6
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p5_29",
+    "page": 5,
+    "rect": [
+     144.3,
+     271.4,
+     425.1,
+     283.4
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p5_30",
+    "page": 5,
+    "rect": [
+     461.9,
+     271.4,
+     577.3,
+     283.4
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p5_31",
+    "page": 5,
+    "rect": [
+     80.4,
+     288.6,
+     316.0,
+     300.6
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p5_32",
+    "page": 5,
+    "rect": [
+     340.9,
+     288.6,
+     448.5,
+     300.6
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p5_33",
+    "page": 5,
+    "rect": [
+     479.8,
+     288.6,
+     499.3,
+     300.6
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p5_34",
+    "page": 5,
+    "rect": [
+     521.1,
+     288.6,
+     577.3,
+     300.6
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p5_35",
+    "page": 5,
+    "rect": [
+     78.1,
+     306.5,
+     232.5,
+     318.5
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p5_36",
+    "page": 5,
+    "rect": [
+     287.1,
+     306.5,
+     405.7,
+     318.5
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p5_37",
+    "page": 5,
+    "rect": [
+     443.2,
+     306.5,
+     578.9,
+     318.5
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p5_38",
+    "page": 5,
+    "rect": [
+     144.3,
+     335.4,
+     425.1,
+     347.4
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p5_39",
+    "page": 5,
+    "rect": [
+     461.9,
+     335.4,
+     577.3,
+     347.4
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p5_40",
+    "page": 5,
+    "rect": [
+     80.4,
+     352.6,
+     316.0,
+     364.6
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p5_41",
+    "page": 5,
+    "rect": [
+     340.9,
+     352.6,
+     448.5,
+     364.6
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p5_42",
+    "page": 5,
+    "rect": [
+     479.8,
+     352.6,
+     499.3,
+     364.6
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p5_43",
+    "page": 5,
+    "rect": [
+     521.1,
+     352.6,
+     577.3,
+     364.6
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p5_44",
+    "page": 5,
+    "rect": [
+     78.1,
+     370.5,
+     232.5,
+     382.5
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p5_45",
+    "page": 5,
+    "rect": [
+     287.1,
+     370.5,
+     405.7,
+     382.5
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p5_46",
+    "page": 5,
+    "rect": [
+     443.2,
+     370.5,
+     578.9,
+     382.5
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p5_47",
+    "page": 5,
+    "rect": [
+     144.3,
+     399.4,
+     425.1,
+     411.4
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p5_48",
+    "page": 5,
+    "rect": [
+     461.9,
+     399.4,
+     577.3,
+     411.4
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p5_49",
+    "page": 5,
+    "rect": [
+     80.4,
+     416.5,
+     316.0,
+     428.5
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p5_50",
+    "page": 5,
+    "rect": [
+     340.9,
+     416.5,
+     448.5,
+     428.5
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p5_51",
+    "page": 5,
+    "rect": [
+     479.8,
+     416.5,
+     499.3,
+     428.5
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p5_52",
+    "page": 5,
+    "rect": [
+     521.1,
+     416.5,
+     577.3,
+     428.5
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p5_53",
+    "page": 5,
+    "rect": [
+     78.1,
+     434.5,
+     232.5,
+     446.5
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p5_54",
+    "page": 5,
+    "rect": [
+     287.1,
+     434.5,
+     405.7,
+     446.5
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p5_55",
+    "page": 5,
+    "rect": [
+     443.2,
+     434.5,
+     578.9,
+     446.5
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p5_56",
+    "page": 5,
+    "rect": [
+     144.3,
+     463.3,
+     425.1,
+     475.3
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p5_57",
+    "page": 5,
+    "rect": [
+     461.9,
+     463.3,
+     577.3,
+     475.3
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p5_58",
+    "page": 5,
+    "rect": [
+     80.4,
+     480.5,
+     316.0,
+     492.5
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p5_59",
+    "page": 5,
+    "rect": [
+     340.9,
+     480.5,
+     448.5,
+     492.5
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p5_60",
+    "page": 5,
+    "rect": [
+     479.8,
+     480.5,
+     499.3,
+     492.5
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p5_61",
+    "page": 5,
+    "rect": [
+     521.1,
+     480.5,
+     577.3,
+     492.5
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p5_62",
+    "page": 5,
+    "rect": [
+     78.1,
+     498.4,
+     232.5,
+     510.4
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p5_63",
+    "page": 5,
+    "rect": [
+     287.1,
+     498.4,
+     405.7,
+     510.4
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p5_64",
+    "page": 5,
+    "rect": [
+     443.2,
+     498.4,
+     578.9,
+     510.4
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p5_65",
+    "page": 5,
+    "rect": [
+     144.3,
+     527.3,
+     425.1,
+     539.3
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p5_66",
+    "page": 5,
+    "rect": [
+     461.9,
+     527.3,
+     577.3,
+     539.3
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p5_67",
+    "page": 5,
+    "rect": [
+     80.4,
+     544.5,
+     316.0,
+     556.5
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p5_68",
+    "page": 5,
+    "rect": [
+     340.9,
+     544.5,
+     448.5,
+     556.5
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p5_69",
+    "page": 5,
+    "rect": [
+     479.8,
+     544.5,
+     499.3,
+     556.5
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p5_70",
+    "page": 5,
+    "rect": [
+     521.1,
+     544.5,
+     577.3,
+     556.5
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p5_71",
+    "page": 5,
+    "rect": [
+     78.1,
+     562.4,
+     232.5,
+     574.4
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p5_72",
+    "page": 5,
+    "rect": [
+     287.1,
+     562.4,
+     405.7,
+     574.4
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p5_73",
+    "page": 5,
+    "rect": [
+     443.2,
+     562.4,
+     578.9,
+     574.4
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p5_74",
+    "page": 5,
+    "rect": [
+     144.3,
+     591.3,
+     425.1,
+     603.3
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p5_75",
+    "page": 5,
+    "rect": [
+     461.9,
+     591.3,
+     577.3,
+     603.3
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p5_76",
+    "page": 5,
+    "rect": [
+     80.4,
+     608.4,
+     316.0,
+     620.4
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p5_77",
+    "page": 5,
+    "rect": [
+     340.9,
+     608.4,
+     448.5,
+     620.4
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p5_78",
+    "page": 5,
+    "rect": [
+     479.8,
+     608.4,
+     499.3,
+     620.4
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p5_79",
+    "page": 5,
+    "rect": [
+     521.1,
+     608.4,
+     577.3,
+     620.4
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p5_80",
+    "page": 5,
+    "rect": [
+     78.1,
+     626.4,
+     232.5,
+     638.4
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p5_81",
+    "page": 5,
+    "rect": [
+     287.1,
+     626.4,
+     405.7,
+     638.4
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p5_82",
+    "page": 5,
+    "rect": [
+     443.2,
+     626.4,
+     578.9,
+     638.4
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p5_83",
+    "page": 5,
+    "rect": [
+     144.3,
+     661.5,
+     425.1,
+     673.5
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p5_84",
+    "page": 5,
+    "rect": [
+     461.9,
+     661.5,
+     577.3,
+     673.5
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p5_85",
+    "page": 5,
+    "rect": [
+     80.4,
+     678.6,
+     316.0,
+     690.6
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p5_86",
+    "page": 5,
+    "rect": [
+     340.9,
+     678.6,
+     448.5,
+     690.6
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p5_87",
+    "page": 5,
+    "rect": [
+     479.8,
+     678.6,
+     499.3,
+     690.6
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p5_88",
+    "page": 5,
+    "rect": [
+     521.1,
+     678.6,
+     577.3,
+     690.6
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p5_89",
+    "page": 5,
+    "rect": [
+     78.1,
+     696.6,
+     232.5,
+     708.6
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p5_90",
+    "page": 5,
+    "rect": [
+     287.1,
+     696.6,
+     405.7,
+     708.6
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p5_91",
+    "page": 5,
+    "rect": [
+     443.2,
+     696.6,
+     578.9,
+     708.6
+    ],
+    "src": "blank",
+    "size": 9
+   }
+  ],
   "portal_url": null,
   "info_url": "https://bradleyil.org/community-development/building-services/",
   "pdf_url": "https://bradleyil.org/media/Detached-Garage-Permit-Application-min.pdf",
@@ -9186,8 +11075,11 @@
   "info_sheet": false,
   "link_url": "https://bradleyil.org/media/Detached-Garage-Permit-Application-min.pdf",
   "link_type": "pdf",
-  "link_note": "Detached Garage Permit Application packet (scanned, not mapped)",
-  "link_checked": "2026-10-17"
+  "link_note": "Detached Garage Permit Application packet",
+  "link_checked": "2026-10-17",
+  "checks": null,
+  "fill": null,
+  "auto_mapped": false
  },
  "Braidwood": {
   "form_type": "link_only",
@@ -9339,10 +11231,839 @@
   }
  },
  "Broadview": {
-  "form_type": "link_only",
-  "form_name": "Building Permit Application on Forms and Permits",
-  "template": null,
-  "fields": null,
+  "form_type": "building_permit",
+  "form_name": "Village of Broadview Application for Building Permit",
+  "template": "permit-forms/Broadview.pdf",
+  "fields": [
+   {
+    "name": "agb_p0_1",
+    "page": 0,
+    "rect": [
+     128,
+     61,
+     578,
+     73
+    ],
+    "src": "customer",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_2",
+    "page": 0,
+    "rect": [
+     98,
+     129,
+     345,
+     141
+    ],
+    "src": "pin",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_3",
+    "page": 0,
+    "rect": [
+     90,
+     145,
+     390,
+     157
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_4",
+    "page": 0,
+    "rect": [
+     405,
+     145,
+     470,
+     157
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_5",
+    "page": 0,
+    "rect": [
+     505,
+     145,
+     578,
+     157
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_6",
+    "page": 0,
+    "rect": [
+     108,
+     181,
+     345,
+     193
+    ],
+    "src": "customer",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_7",
+    "page": 0,
+    "rect": [
+     108,
+     235,
+     578,
+     247
+    ],
+    "src": "description",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_8",
+    "page": 0,
+    "rect": [
+     38,
+     253,
+     578,
+     265
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_9",
+    "page": 0,
+    "rect": [
+     75,
+     271,
+     268,
+     283
+    ],
+    "src": "address",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_10",
+    "page": 0,
+    "rect": [
+     352,
+     271,
+     470,
+     283
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_11",
+    "page": 0,
+    "rect": [
+     490,
+     271,
+     578,
+     283
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_12",
+    "page": 0,
+    "rect": [
+     75,
+     289,
+     178,
+     301
+    ],
+    "src": "width",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_13",
+    "page": 0,
+    "rect": [
+     225,
+     289,
+     357,
+     301
+    ],
+    "src": "depth",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_14",
+    "page": 0,
+    "rect": [
+     425,
+     289,
+     540,
+     301
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_15",
+    "page": 0,
+    "rect": [
+     92,
+     307,
+     142,
+     319
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_16",
+    "page": 0,
+    "rect": [
+     180,
+     307,
+     212,
+     319
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_17",
+    "page": 0,
+    "rect": [
+     262,
+     307,
+     298,
+     319
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_18",
+    "page": 0,
+    "rect": [
+     400,
+     307,
+     455,
+     319
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_19",
+    "page": 0,
+    "rect": [
+     490,
+     307,
+     530,
+     319
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_20",
+    "page": 0,
+    "rect": [
+     38,
+     325,
+     118,
+     337
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_21",
+    "page": 0,
+    "rect": [
+     150,
+     325,
+     232,
+     337
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_22",
+    "page": 0,
+    "rect": [
+     262,
+     325,
+     315,
+     337
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_23",
+    "page": 0,
+    "rect": [
+     445,
+     325,
+     552,
+     337
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_24",
+    "page": 0,
+    "rect": [
+     500,
+     357,
+     578,
+     369
+    ],
+    "src": "price",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_25",
+    "page": 0,
+    "rect": [
+     130,
+     375,
+     245,
+     387
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_26",
+    "page": 0,
+    "rect": [
+     297,
+     375,
+     400,
+     387
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_27",
+    "page": 0,
+    "rect": [
+     448,
+     375,
+     578,
+     387
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_28",
+    "page": 0,
+    "rect": [
+     112,
+     393,
+     222,
+     405
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_29",
+    "page": 0,
+    "rect": [
+     287,
+     393,
+     370,
+     405
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_30",
+    "page": 0,
+    "rect": [
+     445,
+     393,
+     578,
+     405
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_31",
+    "page": 0,
+    "rect": [
+     95,
+     411,
+     232,
+     423
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_32",
+    "page": 0,
+    "rect": [
+     292,
+     411,
+     385,
+     423
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_33",
+    "page": 0,
+    "rect": [
+     465,
+     411,
+     578,
+     423
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_34",
+    "page": 0,
+    "rect": [
+     140,
+     429,
+     272,
+     441
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p0_35",
+    "page": 0,
+    "rect": [
+     327,
+     429,
+     462,
+     441
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p0_36",
+    "page": 0,
+    "rect": [
+     500,
+     429,
+     578,
+     441
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p0_37",
+    "page": 0,
+    "rect": [
+     140,
+     447,
+     272,
+     459
+    ],
+    "src": "customer",
+    "size": 8
+   },
+   {
+    "name": "agb_p0_38",
+    "page": 0,
+    "rect": [
+     327,
+     447,
+     462,
+     459
+    ],
+    "src": "address",
+    "size": 8
+   },
+   {
+    "name": "agb_p0_39",
+    "page": 0,
+    "rect": [
+     500,
+     447,
+     578,
+     459
+    ],
+    "src": "phone",
+    "size": 8
+   },
+   {
+    "name": "agb_p0_40",
+    "page": 0,
+    "rect": [
+     140,
+     465,
+     272,
+     477
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p0_41",
+    "page": 0,
+    "rect": [
+     327,
+     465,
+     462,
+     477
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p0_42",
+    "page": 0,
+    "rect": [
+     500,
+     465,
+     578,
+     477
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p0_43",
+    "page": 0,
+    "rect": [
+     140,
+     483,
+     272,
+     495
+    ],
+    "src": "contractor",
+    "size": 8
+   },
+   {
+    "name": "agb_p0_44",
+    "page": 0,
+    "rect": [
+     327,
+     483,
+     462,
+     495
+    ],
+    "src": "contractorFull",
+    "size": 6.5
+   },
+   {
+    "name": "agb_p0_45",
+    "page": 0,
+    "rect": [
+     500,
+     483,
+     578,
+     495
+    ],
+    "src": "contractorPhone",
+    "size": 8
+   },
+   {
+    "name": "agb_p0_46",
+    "page": 0,
+    "rect": [
+     140,
+     501,
+     272,
+     513
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p0_47",
+    "page": 0,
+    "rect": [
+     327,
+     501,
+     462,
+     513
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p0_48",
+    "page": 0,
+    "rect": [
+     500,
+     501,
+     578,
+     513
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p0_49",
+    "page": 0,
+    "rect": [
+     140,
+     519,
+     272,
+     531
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p0_50",
+    "page": 0,
+    "rect": [
+     327,
+     519,
+     462,
+     531
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p0_51",
+    "page": 0,
+    "rect": [
+     500,
+     519,
+     578,
+     531
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p0_52",
+    "page": 0,
+    "rect": [
+     140,
+     537,
+     272,
+     549
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p0_53",
+    "page": 0,
+    "rect": [
+     327,
+     537,
+     462,
+     549
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p0_54",
+    "page": 0,
+    "rect": [
+     500,
+     537,
+     578,
+     549
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p0_55",
+    "page": 0,
+    "rect": [
+     140,
+     555,
+     272,
+     567
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p0_56",
+    "page": 0,
+    "rect": [
+     327,
+     555,
+     462,
+     567
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p0_57",
+    "page": 0,
+    "rect": [
+     500,
+     555,
+     578,
+     567
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p0_58",
+    "page": 0,
+    "rect": [
+     140,
+     573,
+     272,
+     585
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p0_59",
+    "page": 0,
+    "rect": [
+     327,
+     573,
+     462,
+     585
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p0_60",
+    "page": 0,
+    "rect": [
+     500,
+     573,
+     578,
+     585
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p0_61",
+    "page": 0,
+    "rect": [
+     140,
+     591,
+     272,
+     603
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p0_62",
+    "page": 0,
+    "rect": [
+     327,
+     591,
+     462,
+     603
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p0_63",
+    "page": 0,
+    "rect": [
+     500,
+     591,
+     578,
+     603
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p0_64",
+    "page": 0,
+    "rect": [
+     140,
+     609,
+     272,
+     621
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p0_65",
+    "page": 0,
+    "rect": [
+     327,
+     609,
+     462,
+     621
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p0_66",
+    "page": 0,
+    "rect": [
+     500,
+     609,
+     578,
+     621
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p0_67",
+    "page": 0,
+    "rect": [
+     140,
+     627,
+     272,
+     639
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p0_68",
+    "page": 0,
+    "rect": [
+     327,
+     627,
+     462,
+     639
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p0_69",
+    "page": 0,
+    "rect": [
+     500,
+     627,
+     578,
+     639
+    ],
+    "src": "blank",
+    "size": 8
+   }
+  ],
   "portal_url": null,
   "info_url": "https://broadview-il.gov/reference/forms-and-permits/",
   "pdf_url": "https://broadview-il.gov/media/siicj13u/building_permit-application.pdf",
@@ -9351,8 +12072,11 @@
   "info_sheet": false,
   "link_url": "https://broadview-il.gov/media/siicj13u/building_permit-application.pdf",
   "link_type": "pdf",
-  "link_note": "Building Permit Application (scanned, not mapped)",
-  "link_checked": "2026-10-17"
+  "link_note": "Building Permit Application",
+  "link_checked": "2026-10-17",
+  "checks": null,
+  "fill": null,
+  "auto_mapped": false
  },
  "Brookfield": {
   "form_type": "link_only",
@@ -9441,9 +12165,9 @@
   }
  },
  "Burbank": {
-  "form_type": "link_only",
-  "form_name": "Building Department forms page (no general building app PDF confirmed)",
-  "template": null,
+  "form_type": "building_permit",
+  "form_name": "City of Burbank Miscellaneous Building Permit (Other: explain)",
+  "template": "permit-forms/Burbank.pdf",
   "fields": null,
   "portal_url": null,
   "info_url": "https://www.burbankil.gov/172/Building-Department",
@@ -9453,13 +12177,57 @@
   "info_sheet": false,
   "link_url": "https://www.burbankil.gov/DocumentCenter/View/287/Miscellaneous-Building-Permit",
   "link_type": "pdf",
-  "link_note": "Miscellaneous Building Permit application (fillable, generic field names - not mapped)",
+  "link_note": "Miscellaneous Building Permit application (fillable, generic field names - mapped)",
   "link_checked": "2026-10-17",
   "electrical": {
    "required": "separate",
    "pdf_url": "https://www.burbankil.gov/DocumentCenter/View/284/Electrical-Permit",
    "note": "Electrical Permit application (fillable, not mapped)"
-  }
+  },
+  "checks": null,
+  "fill": [
+   {
+    "name": "Text2",
+    "src": "description"
+   },
+   {
+    "name": "Text3",
+    "src": "price"
+   },
+   {
+    "name": "Text7",
+    "src": "address"
+   },
+   {
+    "name": "Text10",
+    "src": "phone"
+   },
+   {
+    "name": "Text8",
+    "src": "customer"
+   },
+   {
+    "name": "Text9",
+    "src": "contractor"
+   },
+   {
+    "name": "Text12",
+    "src": "contractorPhone"
+   },
+   {
+    "name": "Text13",
+    "src": "contractorStreet"
+   },
+   {
+    "name": "Text17",
+    "src": "contractorCity"
+   },
+   {
+    "name": "Text18",
+    "src": "contractorState"
+   }
+  ],
+  "auto_mapped": false
  },
  "Burnham": {
   "form_type": "link_only",
@@ -9516,10 +12284,395 @@
   "link_checked": "2026-10-17"
  },
  "Carol Stream": {
-  "form_type": "link_only",
-  "form_name": "Residential Permit Application + detached garage handout; online submit",
-  "template": null,
-  "fields": null,
+  "form_type": "building_permit",
+  "form_name": "Village of Carol Stream Residential Permit Application",
+  "template": "permit-forms/Carol-Stream.pdf",
+  "fields": [
+   {
+    "name": "agb_p0_1",
+    "page": 0,
+    "rect": [
+     134.2,
+     197.3,
+     387.6,
+     209.3
+    ],
+    "src": "address",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_2",
+    "page": 0,
+    "rect": [
+     69.0,
+     240.6,
+     389.0,
+     251.6
+    ],
+    "src": "customer",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_3",
+    "page": 0,
+    "rect": [
+     79.2,
+     256.5,
+     390.5,
+     267.6
+    ],
+    "src": "address",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_4",
+    "page": 0,
+    "rect": [
+     446.6,
+     270.3,
+     544.3,
+     281.4
+    ],
+    "src": "price",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_5",
+    "page": 0,
+    "rect": [
+     62.1,
+     272.1,
+     218.0,
+     283.2
+    ],
+    "src": "city",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_6",
+    "page": 0,
+    "rect": [
+     244.8,
+     272.1,
+     284.8,
+     283.2
+    ],
+    "src": "ownerState",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_7",
+    "page": 0,
+    "rect": [
+     326.2,
+     272.1,
+     388.4,
+     283.2
+    ],
+    "src": "zip",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_8",
+    "page": 0,
+    "rect": [
+     68.6,
+     287.7,
+     250.9,
+     298.8
+    ],
+    "src": "ownerEmail",
+    "size": 8
+   },
+   {
+    "name": "agb_p0_9",
+    "page": 0,
+    "rect": [
+     282.5,
+     287.7,
+     389.2,
+     298.8
+    ],
+    "src": "phone",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_10",
+    "page": 0,
+    "rect": [
+     137.5,
+     310.0,
+     373.2,
+     321.1
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_11",
+    "page": 0,
+    "rect": [
+     404.8,
+     310.0,
+     560.5,
+     321.1
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_12",
+    "page": 0,
+    "rect": [
+     83.6,
+     325.8,
+     292.6,
+     336.8
+    ],
+    "src": "contractor",
+    "size": 8
+   },
+   {
+    "name": "agb_p0_13",
+    "page": 0,
+    "rect": [
+     321.1,
+     325.8,
+     561.5,
+     336.8
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_14",
+    "page": 0,
+    "rect": [
+     429.1,
+     341.7,
+     478.0,
+     352.8
+    ],
+    "src": "contractorState",
+    "size": 8
+   },
+   {
+    "name": "agb_p0_15",
+    "page": 0,
+    "rect": [
+     497.1,
+     341.7,
+     563.8,
+     352.8
+    ],
+    "src": "contractorZip",
+    "size": 8
+   },
+   {
+    "name": "agb_p0_16",
+    "page": 0,
+    "rect": [
+     393.8,
+     378.3,
+     547.1,
+     390.3
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_17",
+    "page": 0,
+    "rect": [
+     325.9,
+     477.0,
+     358.9,
+     488.5
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_18",
+    "page": 0,
+    "rect": [
+     533.0,
+     658.5,
+     573.1,
+     670.5
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_19",
+    "page": 0,
+    "rect": [
+     78,
+     340.5,
+     265,
+     352.5
+    ],
+    "src": "contractorStreet",
+    "size": 8
+   },
+   {
+    "name": "agb_p0_20",
+    "page": 0,
+    "rect": [
+     286,
+     340.5,
+     403,
+     352.5
+    ],
+    "src": "contractorCity",
+    "size": 8
+   },
+   {
+    "name": "agb_p1_1a",
+    "page": 1,
+    "rect": [
+     131,
+     318,
+     400,
+     332
+    ],
+    "src": "contractor",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_1b",
+    "page": 1,
+    "rect": [
+     402,
+     318,
+     577,
+     332
+    ],
+    "src": "contractorPhone",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_1c",
+    "page": 1,
+    "rect": [
+     131,
+     335,
+     577,
+     352
+    ],
+    "src": "contractorFull",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_2",
+    "page": 1,
+    "rect": [
+     131,
+     358,
+     577,
+     388
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_3",
+    "page": 1,
+    "rect": [
+     131,
+     394,
+     577,
+     428
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_4",
+    "page": 1,
+    "rect": [
+     131,
+     434,
+     577,
+     469
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_5",
+    "page": 1,
+    "rect": [
+     131,
+     475,
+     577,
+     509
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_6",
+    "page": 1,
+    "rect": [
+     131,
+     515,
+     577,
+     550
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_7",
+    "page": 1,
+    "rect": [
+     131,
+     556,
+     577,
+     585
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_8",
+    "page": 1,
+    "rect": [
+     131,
+     591,
+     577,
+     626
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_9",
+    "page": 1,
+    "rect": [
+     131,
+     632,
+     577,
+     665
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_10",
+    "page": 1,
+    "rect": [
+     131,
+     671,
+     577,
+     709
+    ],
+    "src": "blank",
+    "size": 9
+   }
+  ],
   "portal_url": null,
   "info_url": "https://www.carolstream.org/departments/community-development/building-permits-inspections",
   "pdf_url": "https://www.carolstream.org/home/showpublisheddocument/9166/639040699608370000",
@@ -9528,13 +12681,369 @@
   "info_sheet": false,
   "link_url": "https://www.carolstream.org/home/showpublisheddocument/9166/639040699608370000",
   "link_type": "pdf",
-  "link_note": "Residential Permit Application (site blocks bots; not mapped); online https://forms.carolstream.org/Forms/VOCSPermits",
+  "link_note": "Residential Permit Application (site blocks bots); online https://forms.carolstream.org/Forms/VOCSPermits",
   "link_checked": "2026-10-17",
   "demolition": {
    "required": "separate",
    "pdf_url": "https://www.carolstream.org/home/showpublisheddocument/6448/638487772515830000",
    "note": "Demolition handout"
-  }
+  },
+  "checks": [
+   {
+    "name": "agb_cb_p0_1",
+    "page": 0,
+    "rect": [
+     43.3,
+     226.3,
+     50.3,
+     233.3
+    ]
+   },
+   {
+    "name": "agb_cb_p0_2",
+    "page": 0,
+    "rect": [
+     170.4,
+     226.3,
+     177.4,
+     233.3
+    ]
+   },
+   {
+    "name": "agb_cb_p0_3",
+    "page": 0,
+    "rect": [
+     42.5,
+     380.6,
+     51.1,
+     389.2
+    ]
+   },
+   {
+    "name": "agb_cb_p0_4",
+    "page": 0,
+    "rect": [
+     163.9,
+     380.6,
+     172.6,
+     389.2
+    ]
+   },
+   {
+    "name": "agb_cb_p0_5",
+    "page": 0,
+    "rect": [
+     258.5,
+     380.6,
+     267.2,
+     389.2
+    ]
+   },
+   {
+    "name": "agb_cb_p0_6",
+    "page": 0,
+    "rect": [
+     42.5,
+     426.1,
+     49.4,
+     433.0
+    ]
+   },
+   {
+    "name": "agb_cb_p0_7",
+    "page": 0,
+    "rect": [
+     119.7,
+     426.1,
+     126.6,
+     433.0
+    ]
+   },
+   {
+    "name": "agb_cb_p0_8",
+    "page": 0,
+    "rect": [
+     196.7,
+     426.1,
+     203.7,
+     433.0
+    ]
+   },
+   {
+    "name": "agb_cb_p0_9",
+    "page": 0,
+    "rect": [
+     273.9,
+     426.1,
+     280.8,
+     433.0
+    ]
+   },
+   {
+    "name": "agb_cb_p0_10",
+    "page": 0,
+    "rect": [
+     351.1,
+     426.1,
+     358.0,
+     433.0
+    ]
+   },
+   {
+    "name": "agb_cb_p0_11",
+    "page": 0,
+    "rect": [
+     428.3,
+     426.1,
+     435.2,
+     433.0
+    ]
+   },
+   {
+    "name": "agb_cb_p0_12",
+    "page": 0,
+    "rect": [
+     505.4,
+     426.1,
+     512.4,
+     433.0
+    ]
+   },
+   {
+    "name": "agb_cb_p0_13",
+    "page": 0,
+    "rect": [
+     42.5,
+     467.1,
+     51.7,
+     476.4
+    ]
+   },
+   {
+    "name": "agb_cb_p0_14",
+    "page": 0,
+    "rect": [
+     105.9,
+     467.1,
+     115.1,
+     476.4
+    ]
+   },
+   {
+    "name": "agb_cb_p0_15",
+    "page": 0,
+    "rect": [
+     204.9,
+     467.1,
+     214.1,
+     476.4
+    ]
+   },
+   {
+    "name": "agb_cb_p0_16",
+    "page": 0,
+    "rect": [
+     285.9,
+     467.1,
+     295.1,
+     476.4
+    ]
+   },
+   {
+    "name": "agb_cb_p0_17",
+    "page": 0,
+    "rect": [
+     375.9,
+     467.1,
+     385.2,
+     476.4
+    ],
+    "on": true
+   },
+   {
+    "name": "agb_cb_p0_18",
+    "page": 0,
+    "rect": [
+     479.4,
+     467.1,
+     488.6,
+     476.4
+    ]
+   },
+   {
+    "name": "agb_cb_p0_19",
+    "page": 0,
+    "rect": [
+     375.9,
+     479.1,
+     382.9,
+     486.1
+    ],
+    "on": true
+   },
+   {
+    "name": "agb_cb_p0_20",
+    "page": 0,
+    "rect": [
+     375.9,
+     488.8,
+     382.9,
+     495.8
+    ]
+   },
+   {
+    "name": "agb_cb_p0_21",
+    "page": 0,
+    "rect": [
+     42.5,
+     502.4,
+     51.7,
+     511.6
+    ]
+   },
+   {
+    "name": "agb_cb_p0_22",
+    "page": 0,
+    "rect": [
+     105.9,
+     502.4,
+     115.1,
+     511.6
+    ]
+   },
+   {
+    "name": "agb_cb_p0_23",
+    "page": 0,
+    "rect": [
+     204.9,
+     502.4,
+     214.1,
+     511.6
+    ]
+   },
+   {
+    "name": "agb_cb_p0_24",
+    "page": 0,
+    "rect": [
+     285.9,
+     502.4,
+     295.1,
+     511.6
+    ]
+   },
+   {
+    "name": "agb_cb_p0_25",
+    "page": 0,
+    "rect": [
+     479.4,
+     502.4,
+     488.6,
+     511.6
+    ]
+   },
+   {
+    "name": "agb_cb_p0_26",
+    "page": 0,
+    "rect": [
+     375.9,
+     503.0,
+     385.2,
+     512.2
+    ]
+   },
+   {
+    "name": "agb_cb_p0_27",
+    "page": 0,
+    "rect": [
+     105.9,
+     514.4,
+     112.8,
+     521.4
+    ]
+   },
+   {
+    "name": "agb_cb_p0_28",
+    "page": 0,
+    "rect": [
+     204.9,
+     514.4,
+     211.8,
+     521.4
+    ]
+   },
+   {
+    "name": "agb_cb_p0_29",
+    "page": 0,
+    "rect": [
+     105.9,
+     524.1,
+     112.8,
+     531.1
+    ]
+   },
+   {
+    "name": "agb_cb_p0_30",
+    "page": 0,
+    "rect": [
+     285.9,
+     537.3,
+     295.1,
+     546.5
+    ]
+   },
+   {
+    "name": "agb_cb_p0_31",
+    "page": 0,
+    "rect": [
+     375.9,
+     537.3,
+     385.2,
+     546.5
+    ]
+   },
+   {
+    "name": "agb_cb_p0_32",
+    "page": 0,
+    "rect": [
+     42.5,
+     542.4,
+     51.7,
+     551.6
+    ]
+   },
+   {
+    "name": "agb_cb_p0_33",
+    "page": 0,
+    "rect": [
+     105.9,
+     542.2,
+     115.1,
+     551.5
+    ]
+   },
+   {
+    "name": "agb_cb_p0_34",
+    "page": 0,
+    "rect": [
+     479.4,
+     542.2,
+     488.6,
+     551.5
+    ]
+   },
+   {
+    "name": "agb_cb_p0_35",
+    "page": 0,
+    "rect": [
+     204.9,
+     542.8,
+     214.1,
+     552.1
+    ]
+   }
+  ],
+  "fill": null,
+  "auto_mapped": false
  },
  "Carpentersville": {
   "form_type": "link_only",
@@ -10235,10 +13744,563 @@
   }
  },
  "Cary": {
-  "form_type": "link_only",
-  "form_name": "Residential permits page (application PDFs + portal)",
-  "template": null,
-  "fields": null,
+  "form_type": "building_permit",
+  "form_name": "Village of Cary Application for Permit - Repairs, Alterations and Additions",
+  "template": "permit-forms/Cary.pdf",
+  "fields": [
+   {
+    "name": "agb_p0_1",
+    "page": 0,
+    "rect": [
+     119.2,
+     141.1,
+     273.5,
+     150.1
+    ],
+    "src": "description",
+    "size": 7
+   },
+   {
+    "name": "agb_p0_2",
+    "page": 0,
+    "rect": [
+     366.6,
+     138.1,
+     411.5,
+     150.1
+    ],
+    "src": "sqft",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_3",
+    "page": 0,
+    "rect": [
+     479.5,
+     138.1,
+     564.2,
+     150.1
+    ],
+    "src": "price",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_4",
+    "page": 0,
+    "rect": [
+     113.6,
+     162.5,
+     272.9,
+     174.5
+    ],
+    "src": "customer",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_5",
+    "page": 0,
+    "rect": [
+     315.2,
+     162.5,
+     414.8,
+     174.5
+    ],
+    "src": "phone",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_6",
+    "page": 0,
+    "rect": [
+     448.8,
+     162.5,
+     563.3,
+     174.5
+    ],
+    "src": "ownerEmail",
+    "size": 8
+   },
+   {
+    "name": "agb_p0_7",
+    "page": 0,
+    "rect": [
+     73.7,
+     198.2,
+     267.9,
+     210.2
+    ],
+    "src": "contractor",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_8",
+    "page": 0,
+    "rect": [
+     314.5,
+     201.2,
+     458.9,
+     210.2
+    ],
+    "src": "contractorFull",
+    "size": 6.5
+   },
+   {
+    "name": "agb_p0_9",
+    "page": 0,
+    "rect": [
+     498.9,
+     198.2,
+     563.6,
+     210.2
+    ],
+    "src": "contractorPhone",
+    "size": 8
+   },
+   {
+    "name": "agb_p0_10",
+    "page": 0,
+    "rect": [
+     82.4,
+     222.6,
+     266.7,
+     234.6
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_11",
+    "page": 0,
+    "rect": [
+     313.4,
+     222.6,
+     457.7,
+     234.6
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_12",
+    "page": 0,
+    "rect": [
+     497.6,
+     222.6,
+     562.5,
+     234.6
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_13",
+    "page": 0,
+    "rect": [
+     78.4,
+     247.0,
+     267.6,
+     259.0
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_14",
+    "page": 0,
+    "rect": [
+     314.3,
+     247.0,
+     458.7,
+     259.0
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_15",
+    "page": 0,
+    "rect": [
+     498.6,
+     247.0,
+     563.3,
+     259.0
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_16",
+    "page": 0,
+    "rect": [
+     88.2,
+     271.5,
+     267.5,
+     283.5
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_17",
+    "page": 0,
+    "rect": [
+     314.2,
+     271.5,
+     458.6,
+     283.5
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_18",
+    "page": 0,
+    "rect": [
+     498.5,
+     271.5,
+     563.2,
+     283.5
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_19",
+    "page": 0,
+    "rect": [
+     76.0,
+     295.8,
+     265.3,
+     307.8
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_20",
+    "page": 0,
+    "rect": [
+     314.3,
+     295.8,
+     458.7,
+     307.8
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_21",
+    "page": 0,
+    "rect": [
+     498.6,
+     295.8,
+     563.4,
+     307.8
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_22",
+    "page": 0,
+    "rect": [
+     110.7,
+     320.3,
+     195.2,
+     332.3
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_23",
+    "page": 0,
+    "rect": [
+     199.8,
+     320.3,
+     264.5,
+     332.3
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_24",
+    "page": 0,
+    "rect": [
+     355.5,
+     320.3,
+     460.0,
+     332.3
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_25",
+    "page": 0,
+    "rect": [
+     69.2,
+     344.7,
+     268.4,
+     356.7
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_26",
+    "page": 0,
+    "rect": [
+     315.0,
+     344.7,
+     459.4,
+     356.7
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_27",
+    "page": 0,
+    "rect": [
+     499.4,
+     344.7,
+     564.1,
+     356.7
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_28",
+    "page": 0,
+    "rect": [
+     110.7,
+     369.1,
+     264.9,
+     381.1
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_29",
+    "page": 0,
+    "rect": [
+     66.0,
+     393.5,
+     265.2,
+     405.5
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_30",
+    "page": 0,
+    "rect": [
+     312.0,
+     393.5,
+     456.2,
+     405.5
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_31",
+    "page": 0,
+    "rect": [
+     496.2,
+     393.5,
+     561.0,
+     405.5
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_32",
+    "page": 0,
+    "rect": [
+     78.5,
+     418.0,
+     267.8,
+     430.0
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_33",
+    "page": 0,
+    "rect": [
+     314.4,
+     418.0,
+     458.8,
+     430.0
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_34",
+    "page": 0,
+    "rect": [
+     498.7,
+     418.0,
+     563.5,
+     430.0
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_35",
+    "page": 0,
+    "rect": [
+     81.2,
+     442.3,
+     265.5,
+     454.3
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_36",
+    "page": 0,
+    "rect": [
+     312.2,
+     442.3,
+     456.5,
+     454.3
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_37",
+    "page": 0,
+    "rect": [
+     496.5,
+     442.3,
+     561.3,
+     454.3
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_38",
+    "page": 0,
+    "rect": [
+     65.6,
+     466.8,
+     264.8,
+     478.8
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_39",
+    "page": 0,
+    "rect": [
+     311.5,
+     466.8,
+     455.8,
+     478.8
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_40",
+    "page": 0,
+    "rect": [
+     495.7,
+     466.8,
+     560.6,
+     478.8
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_41",
+    "page": 0,
+    "rect": [
+     120.4,
+     558.6,
+     269.7,
+     570.6
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_42",
+    "page": 0,
+    "rect": [
+     466.6,
+     558.6,
+     566.2,
+     570.6
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_43",
+    "page": 0,
+    "rect": [
+     133.3,
+     583.0,
+     267.9,
+     595.0
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_44",
+    "page": 0,
+    "rect": [
+     310.1,
+     583.0,
+     394.6,
+     595.0
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_45",
+    "page": 0,
+    "rect": [
+     435.5,
+     583.0,
+     564.9,
+     595.0
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_46",
+    "page": 0,
+    "rect": [
+     104,
+     113.5,
+     350,
+     125.5
+    ],
+    "src": "address",
+    "size": 9
+   }
+  ],
   "portal_url": null,
   "info_url": "https://www.caryillinois.com/685/Residential-Permits",
   "pdf_url": "https://www.caryillinois.com/DocumentCenter/View/4953/Building-Permit-Application---Residential---Alterations-and-Small-Projects",
@@ -10247,13 +14309,16 @@
   "info_sheet": false,
   "link_url": "https://www.caryillinois.com/DocumentCenter/View/4953/Building-Permit-Application---Residential---Alterations-and-Small-Projects",
   "link_type": "pdf",
-  "link_note": "Application for Permit - Repairs, Alterations and Additions (flat, not mapped); Detached Garage checklist DocumentCenter/View/8362",
+  "link_note": "Application for Permit - Repairs, Alterations and Additions; Detached Garage checklist DocumentCenter/View/8362",
   "link_checked": "2026-10-17",
   "electrical": {
    "required": "separate",
    "pdf_url": "https://www.caryillinois.com/DocumentCenter/View/8363",
    "note": "Electric Service or Panel Upgrade checklist"
-  }
+  },
+  "checks": null,
+  "fill": null,
+  "auto_mapped": false
  },
  "Chicago Heights": {
   "form_type": "link_only",
@@ -10357,10 +14422,959 @@
   }
  },
  "Chicago Ridge": {
-  "form_type": "link_only",
-  "form_name": "Building Permit Application on Forms & Permits",
-  "template": null,
-  "fields": null,
+  "form_type": "building_permit",
+  "form_name": "Village of Chicago Ridge Application for Building Permit + Contractor Information Sheet",
+  "template": "permit-forms/Chicago-Ridge.pdf",
+  "fields": [
+   {
+    "name": "agb_p0_1",
+    "page": 0,
+    "rect": [
+     110,
+     189,
+     300,
+     201
+    ],
+    "src": "customer",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_2",
+    "page": 0,
+    "rect": [
+     85,
+     215,
+     350,
+     227
+    ],
+    "src": "address",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_3",
+    "page": 0,
+    "rect": [
+     65,
+     239,
+     205,
+     251
+    ],
+    "src": "city",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_4",
+    "page": 0,
+    "rect": [
+     240,
+     239,
+     305,
+     251
+    ],
+    "src": "ownerState",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_5",
+    "page": 0,
+    "rect": [
+     328,
+     239,
+     352,
+     251
+    ],
+    "src": "zip",
+    "size": 7
+   },
+   {
+    "name": "agb_p0_6",
+    "page": 0,
+    "rect": [
+     37,
+     282,
+     240,
+     294
+    ],
+    "src": "address",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_7",
+    "page": 0,
+    "rect": [
+     280,
+     282,
+     350,
+     294
+    ],
+    "src": "phone",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_8",
+    "page": 0,
+    "rect": [
+     210,
+     432,
+     352,
+     444
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_9",
+    "page": 0,
+    "rect": [
+     185,
+     460,
+     352,
+     472
+    ],
+    "src": "description",
+    "size": 8
+   },
+   {
+    "name": "agb_p0_10",
+    "page": 0,
+    "rect": [
+     37,
+     491,
+     352,
+     503
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_11",
+    "page": 0,
+    "rect": [
+     37,
+     519,
+     352,
+     531
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_12",
+    "page": 0,
+    "rect": [
+     37,
+     579,
+     250,
+     591
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_p0_13",
+    "page": 0,
+    "rect": [
+     272,
+     579,
+     350,
+     591
+    ],
+    "src": "price",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_14",
+    "page": 1,
+    "rect": [
+     185,
+     131,
+     510,
+     143
+    ],
+    "src": "customer",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_15",
+    "page": 1,
+    "rect": [
+     195,
+     154,
+     510,
+     166
+    ],
+    "src": "address",
+    "size": 9
+   },
+   {
+    "name": "agb_p1_16",
+    "page": 1,
+    "rect": [
+     190,
+     210,
+     316,
+     222
+    ],
+    "src": "contractor",
+    "size": 8
+   },
+   {
+    "name": "agb_p1_17",
+    "page": 1,
+    "rect": [
+     320,
+     210,
+     488,
+     222
+    ],
+    "src": "contractorFull",
+    "size": 6.5
+   },
+   {
+    "name": "agb_p1_18",
+    "page": 1,
+    "rect": [
+     492,
+     210,
+     559,
+     222
+    ],
+    "src": "contractorPhone",
+    "size": 7
+   },
+   {
+    "name": "agb_p1_19",
+    "page": 1,
+    "rect": [
+     190,
+     233,
+     316,
+     245
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p1_20",
+    "page": 1,
+    "rect": [
+     320,
+     233,
+     488,
+     245
+    ],
+    "src": "blank",
+    "size": 6.5
+   },
+   {
+    "name": "agb_p1_21",
+    "page": 1,
+    "rect": [
+     492,
+     233,
+     559,
+     245
+    ],
+    "src": "blank",
+    "size": 7
+   },
+   {
+    "name": "agb_p1_22",
+    "page": 1,
+    "rect": [
+     190,
+     255,
+     316,
+     267
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p1_23",
+    "page": 1,
+    "rect": [
+     320,
+     255,
+     488,
+     267
+    ],
+    "src": "blank",
+    "size": 6.5
+   },
+   {
+    "name": "agb_p1_24",
+    "page": 1,
+    "rect": [
+     492,
+     255,
+     559,
+     267
+    ],
+    "src": "blank",
+    "size": 7
+   },
+   {
+    "name": "agb_p1_25",
+    "page": 1,
+    "rect": [
+     190,
+     278,
+     316,
+     290
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p1_26",
+    "page": 1,
+    "rect": [
+     320,
+     278,
+     488,
+     290
+    ],
+    "src": "blank",
+    "size": 6.5
+   },
+   {
+    "name": "agb_p1_27",
+    "page": 1,
+    "rect": [
+     492,
+     278,
+     559,
+     290
+    ],
+    "src": "blank",
+    "size": 7
+   },
+   {
+    "name": "agb_p1_28",
+    "page": 1,
+    "rect": [
+     190,
+     300,
+     316,
+     312
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p1_29",
+    "page": 1,
+    "rect": [
+     320,
+     300,
+     488,
+     312
+    ],
+    "src": "blank",
+    "size": 6.5
+   },
+   {
+    "name": "agb_p1_30",
+    "page": 1,
+    "rect": [
+     492,
+     300,
+     559,
+     312
+    ],
+    "src": "blank",
+    "size": 7
+   },
+   {
+    "name": "agb_p1_31",
+    "page": 1,
+    "rect": [
+     190,
+     323,
+     316,
+     335
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p1_32",
+    "page": 1,
+    "rect": [
+     320,
+     323,
+     488,
+     335
+    ],
+    "src": "blank",
+    "size": 6.5
+   },
+   {
+    "name": "agb_p1_33",
+    "page": 1,
+    "rect": [
+     492,
+     323,
+     559,
+     335
+    ],
+    "src": "blank",
+    "size": 7
+   },
+   {
+    "name": "agb_p1_34",
+    "page": 1,
+    "rect": [
+     190,
+     345,
+     316,
+     357
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p1_35",
+    "page": 1,
+    "rect": [
+     320,
+     345,
+     488,
+     357
+    ],
+    "src": "blank",
+    "size": 6.5
+   },
+   {
+    "name": "agb_p1_36",
+    "page": 1,
+    "rect": [
+     492,
+     345,
+     559,
+     357
+    ],
+    "src": "blank",
+    "size": 7
+   },
+   {
+    "name": "agb_p1_37",
+    "page": 1,
+    "rect": [
+     190,
+     368,
+     316,
+     380
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p1_38",
+    "page": 1,
+    "rect": [
+     320,
+     368,
+     488,
+     380
+    ],
+    "src": "blank",
+    "size": 6.5
+   },
+   {
+    "name": "agb_p1_39",
+    "page": 1,
+    "rect": [
+     492,
+     368,
+     559,
+     380
+    ],
+    "src": "blank",
+    "size": 7
+   },
+   {
+    "name": "agb_p1_40",
+    "page": 1,
+    "rect": [
+     190,
+     391,
+     316,
+     403
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p1_41",
+    "page": 1,
+    "rect": [
+     320,
+     391,
+     488,
+     403
+    ],
+    "src": "blank",
+    "size": 6.5
+   },
+   {
+    "name": "agb_p1_42",
+    "page": 1,
+    "rect": [
+     492,
+     391,
+     559,
+     403
+    ],
+    "src": "blank",
+    "size": 7
+   },
+   {
+    "name": "agb_p1_43",
+    "page": 1,
+    "rect": [
+     190,
+     413,
+     316,
+     425
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p1_44",
+    "page": 1,
+    "rect": [
+     320,
+     413,
+     488,
+     425
+    ],
+    "src": "blank",
+    "size": 6.5
+   },
+   {
+    "name": "agb_p1_45",
+    "page": 1,
+    "rect": [
+     492,
+     413,
+     559,
+     425
+    ],
+    "src": "blank",
+    "size": 7
+   },
+   {
+    "name": "agb_p1_46",
+    "page": 1,
+    "rect": [
+     190,
+     436,
+     316,
+     448
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p1_47",
+    "page": 1,
+    "rect": [
+     320,
+     436,
+     488,
+     448
+    ],
+    "src": "blank",
+    "size": 6.5
+   },
+   {
+    "name": "agb_p1_48",
+    "page": 1,
+    "rect": [
+     492,
+     436,
+     559,
+     448
+    ],
+    "src": "blank",
+    "size": 7
+   },
+   {
+    "name": "agb_p1_49",
+    "page": 1,
+    "rect": [
+     190,
+     459,
+     316,
+     471
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p1_50",
+    "page": 1,
+    "rect": [
+     320,
+     459,
+     488,
+     471
+    ],
+    "src": "blank",
+    "size": 6.5
+   },
+   {
+    "name": "agb_p1_51",
+    "page": 1,
+    "rect": [
+     492,
+     459,
+     559,
+     471
+    ],
+    "src": "blank",
+    "size": 7
+   },
+   {
+    "name": "agb_p1_52",
+    "page": 1,
+    "rect": [
+     190,
+     481,
+     316,
+     493
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p1_53",
+    "page": 1,
+    "rect": [
+     320,
+     481,
+     488,
+     493
+    ],
+    "src": "blank",
+    "size": 6.5
+   },
+   {
+    "name": "agb_p1_54",
+    "page": 1,
+    "rect": [
+     492,
+     481,
+     559,
+     493
+    ],
+    "src": "blank",
+    "size": 7
+   },
+   {
+    "name": "agb_p1_55",
+    "page": 1,
+    "rect": [
+     190,
+     504,
+     316,
+     516
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p1_56",
+    "page": 1,
+    "rect": [
+     320,
+     504,
+     488,
+     516
+    ],
+    "src": "blank",
+    "size": 6.5
+   },
+   {
+    "name": "agb_p1_57",
+    "page": 1,
+    "rect": [
+     492,
+     504,
+     559,
+     516
+    ],
+    "src": "blank",
+    "size": 7
+   },
+   {
+    "name": "agb_p1_58",
+    "page": 1,
+    "rect": [
+     190,
+     526,
+     316,
+     538
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p1_59",
+    "page": 1,
+    "rect": [
+     320,
+     526,
+     488,
+     538
+    ],
+    "src": "blank",
+    "size": 6.5
+   },
+   {
+    "name": "agb_p1_60",
+    "page": 1,
+    "rect": [
+     492,
+     526,
+     559,
+     538
+    ],
+    "src": "blank",
+    "size": 7
+   },
+   {
+    "name": "agb_p1_61",
+    "page": 1,
+    "rect": [
+     190,
+     549,
+     316,
+     561
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p1_62",
+    "page": 1,
+    "rect": [
+     320,
+     549,
+     488,
+     561
+    ],
+    "src": "blank",
+    "size": 6.5
+   },
+   {
+    "name": "agb_p1_63",
+    "page": 1,
+    "rect": [
+     492,
+     549,
+     559,
+     561
+    ],
+    "src": "blank",
+    "size": 7
+   },
+   {
+    "name": "agb_p1_64",
+    "page": 1,
+    "rect": [
+     190,
+     571,
+     316,
+     583
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p1_65",
+    "page": 1,
+    "rect": [
+     320,
+     571,
+     488,
+     583
+    ],
+    "src": "blank",
+    "size": 6.5
+   },
+   {
+    "name": "agb_p1_66",
+    "page": 1,
+    "rect": [
+     492,
+     571,
+     559,
+     583
+    ],
+    "src": "blank",
+    "size": 7
+   },
+   {
+    "name": "agb_p1_67",
+    "page": 1,
+    "rect": [
+     190,
+     594,
+     316,
+     606
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p1_68",
+    "page": 1,
+    "rect": [
+     320,
+     594,
+     488,
+     606
+    ],
+    "src": "blank",
+    "size": 6.5
+   },
+   {
+    "name": "agb_p1_69",
+    "page": 1,
+    "rect": [
+     492,
+     594,
+     559,
+     606
+    ],
+    "src": "blank",
+    "size": 7
+   },
+   {
+    "name": "agb_p1_70",
+    "page": 1,
+    "rect": [
+     190,
+     617,
+     316,
+     629
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p1_71",
+    "page": 1,
+    "rect": [
+     320,
+     617,
+     488,
+     629
+    ],
+    "src": "blank",
+    "size": 6.5
+   },
+   {
+    "name": "agb_p1_72",
+    "page": 1,
+    "rect": [
+     492,
+     617,
+     559,
+     629
+    ],
+    "src": "blank",
+    "size": 7
+   },
+   {
+    "name": "agb_p1_73",
+    "page": 1,
+    "rect": [
+     190,
+     639,
+     316,
+     651
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p1_74",
+    "page": 1,
+    "rect": [
+     320,
+     639,
+     488,
+     651
+    ],
+    "src": "blank",
+    "size": 6.5
+   },
+   {
+    "name": "agb_p1_75",
+    "page": 1,
+    "rect": [
+     492,
+     639,
+     559,
+     651
+    ],
+    "src": "blank",
+    "size": 7
+   },
+   {
+    "name": "agb_p1_76",
+    "page": 1,
+    "rect": [
+     190,
+     662,
+     316,
+     674
+    ],
+    "src": "blank",
+    "size": 8
+   },
+   {
+    "name": "agb_p1_77",
+    "page": 1,
+    "rect": [
+     320,
+     662,
+     488,
+     674
+    ],
+    "src": "blank",
+    "size": 6.5
+   },
+   {
+    "name": "agb_p1_78",
+    "page": 1,
+    "rect": [
+     492,
+     662,
+     559,
+     674
+    ],
+    "src": "blank",
+    "size": 7
+   },
+   {
+    "name": "agb_p1_79",
+    "page": 1,
+    "rect": [
+     260,
+     697,
+     398,
+     709
+    ],
+    "src": "contractor",
+    "size": 8
+   }
+  ],
   "portal_url": null,
   "info_url": "https://www.chicagoridge.org/190/Forms-Permits",
   "pdf_url": "https://www.chicagoridge.org/DocumentCenter/View/598",
@@ -10369,13 +15383,239 @@
   "info_sheet": false,
   "link_url": "https://www.chicagoridge.org/DocumentCenter/View/598",
   "link_type": "pdf",
-  "link_note": "Building Permit Application (scanned, not mapped)",
+  "link_note": "Building Permit Application",
   "link_checked": "2026-10-17",
   "electrical": {
    "required": "separate",
    "pdf_url": "https://www.chicagoridge.org/DocumentCenter/View/35",
    "note": "Electrical Permit application"
-  }
+  },
+  "checks": [
+   {
+    "name": "agb_cb_p0_1",
+    "page": 0,
+    "rect": [
+     36,
+     324,
+     44,
+     332
+    ]
+   },
+   {
+    "name": "agb_cb_p0_2",
+    "page": 0,
+    "rect": [
+     36,
+     338,
+     44,
+     346
+    ],
+    "on": true
+   },
+   {
+    "name": "agb_cb_p0_3",
+    "page": 0,
+    "rect": [
+     36,
+     352,
+     44,
+     360
+    ]
+   },
+   {
+    "name": "agb_cb_p0_4",
+    "page": 0,
+    "rect": [
+     36,
+     366,
+     44,
+     374
+    ]
+   },
+   {
+    "name": "agb_cb_p0_5",
+    "page": 0,
+    "rect": [
+     36,
+     380,
+     44,
+     388
+    ]
+   },
+   {
+    "name": "agb_cb_p0_6",
+    "page": 0,
+    "rect": [
+     36,
+     394,
+     44,
+     402
+    ]
+   },
+   {
+    "name": "agb_cb_p0_7",
+    "page": 0,
+    "rect": [
+     36,
+     408,
+     44,
+     416
+    ]
+   },
+   {
+    "name": "agb_cb_p0_8",
+    "page": 0,
+    "rect": [
+     36,
+     422,
+     44,
+     430
+    ]
+   },
+   {
+    "name": "agb_cb_p0_9",
+    "page": 0,
+    "rect": [
+     36,
+     436,
+     44,
+     444
+    ]
+   },
+   {
+    "name": "agb_cb_p0_10",
+    "page": 0,
+    "rect": [
+     36,
+     451,
+     44,
+     459
+    ]
+   },
+   {
+    "name": "agb_cb_p0_11",
+    "page": 0,
+    "rect": [
+     140,
+     324,
+     148,
+     332
+    ]
+   },
+   {
+    "name": "agb_cb_p0_12",
+    "page": 0,
+    "rect": [
+     140,
+     338,
+     148,
+     346
+    ]
+   },
+   {
+    "name": "agb_cb_p0_13",
+    "page": 0,
+    "rect": [
+     140,
+     352,
+     148,
+     360
+    ]
+   },
+   {
+    "name": "agb_cb_p0_14",
+    "page": 0,
+    "rect": [
+     140,
+     366,
+     148,
+     374
+    ]
+   },
+   {
+    "name": "agb_cb_p0_15",
+    "page": 0,
+    "rect": [
+     244,
+     324,
+     252,
+     332
+    ]
+   },
+   {
+    "name": "agb_cb_p0_16",
+    "page": 0,
+    "rect": [
+     244,
+     338,
+     252,
+     346
+    ],
+    "on": true
+   },
+   {
+    "name": "agb_cb_p0_17",
+    "page": 0,
+    "rect": [
+     244,
+     352,
+     252,
+     360
+    ]
+   },
+   {
+    "name": "agb_cb_p0_18",
+    "page": 0,
+    "rect": [
+     244,
+     366,
+     252,
+     374
+    ]
+   },
+   {
+    "name": "agb_cb_p0_19",
+    "page": 0,
+    "rect": [
+     347,
+     324,
+     355,
+     332
+    ]
+   },
+   {
+    "name": "agb_cb_p0_20",
+    "page": 0,
+    "rect": [
+     450,
+     324,
+     458,
+     332
+    ]
+   },
+   {
+    "name": "agb_cb_p0_21",
+    "page": 0,
+    "rect": [
+     140,
+     394,
+     148,
+     402
+    ]
+   },
+   {
+    "name": "agb_cb_p0_22",
+    "page": 0,
+    "rect": [
+     244,
+     394,
+     252,
+     402
+    ]
+   }
+  ],
+  "fill": null,
+  "auto_mapped": false
  },
  "Clarendon Hills": {
   "form_type": "link_only",
@@ -15401,10 +20641,1355 @@
   }
  },
  "Frankfort": {
-  "form_type": "link_only",
-  "form_name": "BS&A Online; Detached Garages summary sheet",
-  "template": null,
-  "fields": null,
+  "form_type": "building_permit",
+  "form_name": "Village of Frankfort Building Permit Application 2024",
+  "template": "permit-forms/Frankfort.pdf",
+  "fields": [
+   {
+    "name": "agb_fr_1",
+    "page": 0,
+    "rect": [
+     113.4,
+     71.5,
+     245.6,
+     86.3
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_2",
+    "page": 0,
+    "rect": [
+     203.4,
+     229.2,
+     247.4,
+     244.0
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_3",
+    "page": 0,
+    "rect": [
+     251.2,
+     229.2,
+     295.1,
+     244.0
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_4",
+    "page": 0,
+    "rect": [
+     298.8,
+     229.2,
+     342.7,
+     244.0
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_5",
+    "page": 0,
+    "rect": [
+     346.4,
+     229.2,
+     395.9,
+     244.0
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_6",
+    "page": 0,
+    "rect": [
+     399.6,
+     229.2,
+     438.1,
+     244.0
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_7",
+    "page": 0,
+    "rect": [
+     122.4,
+     244.8,
+     249.0,
+     256.3
+    ],
+    "src": "sqft",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_8",
+    "page": 0,
+    "rect": [
+     391.1,
+     244.9,
+     550.6,
+     258.6
+    ],
+    "src": "price",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_9",
+    "page": 0,
+    "rect": [
+     98.6,
+     257.3,
+     225.1,
+     269.9
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_10",
+    "page": 0,
+    "rect": [
+     314.9,
+     259.6,
+     551.4,
+     271.1
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_11",
+    "page": 0,
+    "rect": [
+     162.5,
+     330.5,
+     388.0,
+     345.2
+    ],
+    "src": "description",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_12",
+    "page": 0,
+    "rect": [
+     420.5,
+     327.5,
+     548.0,
+     342.3
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_13",
+    "page": 0,
+    "rect": [
+     75.6,
+     346.2,
+     389.2,
+     361.0
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_14",
+    "page": 0,
+    "rect": [
+     75.2,
+     455.9,
+     383.3,
+     470.6
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_15",
+    "page": 0,
+    "rect": [
+     80.4,
+     439.4,
+     382.9,
+     454.2
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_16",
+    "page": 0,
+    "rect": [
+     42.0,
+     471.6,
+     383.0,
+     483.8
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_17",
+    "page": 0,
+    "rect": [
+     413.6,
+     439.9,
+     551.2,
+     454.7
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_18",
+    "page": 0,
+    "rect": [
+     415.9,
+     456.1,
+     553.3,
+     470.9
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_19",
+    "page": 0,
+    "rect": [
+     404.6,
+     471.8,
+     553.2,
+     486.4
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_20",
+    "page": 0,
+    "rect": [
+     75.7,
+     512.8,
+     383.8,
+     522.7
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_21",
+    "page": 0,
+    "rect": [
+     79.7,
+     491.5,
+     382.2,
+     506.3
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_22",
+    "page": 0,
+    "rect": [
+     42.5,
+     523.7,
+     383.4,
+     535.9
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_23",
+    "page": 0,
+    "rect": [
+     414.0,
+     490.1,
+     551.4,
+     504.8
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_24",
+    "page": 0,
+    "rect": [
+     405.0,
+     521.9,
+     553.4,
+     536.4
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_25",
+    "page": 0,
+    "rect": [
+     123.1,
+     552.0,
+     381.6,
+     566.8
+    ],
+    "src": "contractor",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_26",
+    "page": 0,
+    "rect": [
+     413.6,
+     552.8,
+     551.2,
+     567.6
+    ],
+    "src": "contractorPhone",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_27",
+    "page": 0,
+    "rect": [
+     74.5,
+     569.6,
+     382.6,
+     584.4
+    ],
+    "src": "contractorFull",
+    "size": 8
+   },
+   {
+    "name": "agb_fr_28",
+    "page": 0,
+    "rect": [
+     419.2,
+     568.7,
+     551.2,
+     583.4
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_29",
+    "page": 0,
+    "rect": [
+     131.9,
+     591.5,
+     379.3,
+     606.2
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_30",
+    "page": 0,
+    "rect": [
+     413.6,
+     596.9,
+     551.2,
+     611.6
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_31",
+    "page": 0,
+    "rect": [
+     74.2,
+     609.1,
+     382.1,
+     623.9
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_32",
+    "page": 0,
+    "rect": [
+     419.2,
+     612.7,
+     551.2,
+     627.5
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_33",
+    "page": 0,
+    "rect": [
+     137.3,
+     631.0,
+     379.2,
+     645.7
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_34",
+    "page": 0,
+    "rect": [
+     411.6,
+     637.8,
+     549.1,
+     652.6
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_35",
+    "page": 0,
+    "rect": [
+     74.0,
+     648.6,
+     382.1,
+     663.4
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_36",
+    "page": 0,
+    "rect": [
+     417.0,
+     653.6,
+     549.0,
+     668.4
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_37",
+    "page": 0,
+    "rect": [
+     127.4,
+     670.3,
+     380.4,
+     685.1
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_38",
+    "page": 0,
+    "rect": [
+     413.3,
+     677.0,
+     550.7,
+     691.8
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_39",
+    "page": 0,
+    "rect": [
+     74.6,
+     689.2,
+     382.7,
+     703.9
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_40",
+    "page": 0,
+    "rect": [
+     418.7,
+     692.9,
+     550.7,
+     707.6
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_41",
+    "page": 0,
+    "rect": [
+     130.1,
+     716.2,
+     383.0,
+     730.9
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_42",
+    "page": 0,
+    "rect": [
+     413.9,
+     719.3,
+     551.4,
+     734.0
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_43",
+    "page": 0,
+    "rect": [
+     74.2,
+     732.8,
+     382.2,
+     747.6
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_44",
+    "page": 0,
+    "rect": [
+     415.2,
+     735.2,
+     552.6,
+     750.0
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_45",
+    "page": 0,
+    "rect": [
+     421.5,
+     343.8,
+     549.6,
+     358.6
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_46",
+    "page": 0,
+    "rect": [
+     41.3,
+     384.4,
+     548.7,
+     432.9
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_47",
+    "page": 0,
+    "rect": [
+     416.2,
+     508.1,
+     553.7,
+     520.9
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_48",
+    "page": 1,
+    "rect": [
+     129.6,
+     8.3,
+     382.7,
+     24.0
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_49",
+    "page": 1,
+    "rect": [
+     412.6,
+     12.4,
+     544.6,
+     28.1
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_50",
+    "page": 1,
+    "rect": [
+     73.8,
+     27.1,
+     381.8,
+     42.8
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_51",
+    "page": 1,
+    "rect": [
+     415.1,
+     28.9,
+     552.6,
+     43.9
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_52",
+    "page": 1,
+    "rect": [
+     152.0,
+     54.1,
+     383.0,
+     69.8
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_53",
+    "page": 1,
+    "rect": [
+     413.9,
+     58.3,
+     551.4,
+     74.0
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_54",
+    "page": 1,
+    "rect": [
+     72.6,
+     70.8,
+     380.6,
+     86.5
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_55",
+    "page": 1,
+    "rect": [
+     419.3,
+     74.9,
+     551.3,
+     89.9
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_56",
+    "page": 1,
+    "rect": [
+     147.0,
+     92.4,
+     383.5,
+     108.1
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_57",
+    "page": 1,
+    "rect": [
+     415.4,
+     97.6,
+     553.0,
+     113.3
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_58",
+    "page": 1,
+    "rect": [
+     73.8,
+     111.2,
+     381.8,
+     127.0
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_59",
+    "page": 1,
+    "rect": [
+     421.0,
+     114.1,
+     553.0,
+     129.1
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_60",
+    "page": 1,
+    "rect": [
+     117.6,
+     138.2,
+     381.6,
+     154.0
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_61",
+    "page": 1,
+    "rect": [
+     416.2,
+     139.8,
+     553.7,
+     155.5
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_62",
+    "page": 1,
+    "rect": [
+     72.6,
+     154.9,
+     380.6,
+     170.6
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_63",
+    "page": 1,
+    "rect": [
+     417.5,
+     156.4,
+     554.9,
+     171.4
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_64",
+    "page": 1,
+    "rect": [
+     126.4,
+     177.7,
+     379.4,
+     193.4
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_65",
+    "page": 1,
+    "rect": [
+     413.6,
+     185.9,
+     551.2,
+     201.6
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_66",
+    "page": 1,
+    "rect": [
+     74.3,
+     196.6,
+     382.2,
+     212.3
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_67",
+    "page": 1,
+    "rect": [
+     419.2,
+     202.4,
+     551.0,
+     217.4
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_68",
+    "page": 1,
+    "rect": [
+     130.1,
+     223.6,
+     377.6,
+     239.3
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_69",
+    "page": 1,
+    "rect": [
+     415.3,
+     225.1,
+     552.7,
+     240.8
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_70",
+    "page": 1,
+    "rect": [
+     72.4,
+     240.2,
+     380.4,
+     256.0
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_71",
+    "page": 1,
+    "rect": [
+     420.7,
+     241.7,
+     552.7,
+     256.7
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_72",
+    "page": 1,
+    "rect": [
+     123.4,
+     261.8,
+     381.8,
+     277.6
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_73",
+    "page": 1,
+    "rect": [
+     416.0,
+     267.4,
+     553.4,
+     283.1
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_74",
+    "page": 1,
+    "rect": [
+     74.3,
+     280.7,
+     382.2,
+     296.4
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_75",
+    "page": 1,
+    "rect": [
+     417.2,
+     283.9,
+     554.6,
+     298.9
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_76",
+    "page": 1,
+    "rect": [
+     122.2,
+     307.7,
+     380.6,
+     323.4
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_77",
+    "page": 1,
+    "rect": [
+     416.5,
+     312.5,
+     548.5,
+     328.2
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_78",
+    "page": 1,
+    "rect": [
+     72.4,
+     324.4,
+     380.4,
+     340.1
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_79",
+    "page": 1,
+    "rect": [
+     419.0,
+     329.0,
+     556.6,
+     344.0
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_80",
+    "page": 1,
+    "rect": [
+     143.8,
+     350.0,
+     380.2,
+     365.8
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_81",
+    "page": 1,
+    "rect": [
+     417.8,
+     358.3,
+     555.4,
+     374.0
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_82",
+    "page": 1,
+    "rect": [
+     74.5,
+     368.9,
+     382.4,
+     384.6
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_83",
+    "page": 1,
+    "rect": [
+     423.2,
+     374.9,
+     555.2,
+     389.9
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_84",
+    "page": 1,
+    "rect": [
+     124.2,
+     395.9,
+     382.7,
+     411.6
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_85",
+    "page": 1,
+    "rect": [
+     419.4,
+     397.6,
+     556.9,
+     413.3
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_86",
+    "page": 1,
+    "rect": [
+     72.6,
+     412.6,
+     380.6,
+     428.3
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_87",
+    "page": 1,
+    "rect": [
+     424.9,
+     414.1,
+     556.9,
+     429.1
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_88",
+    "page": 1,
+    "rect": [
+     187.1,
+     437.4,
+     385.1,
+     453.1
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_89",
+    "page": 1,
+    "rect": [
+     420.1,
+     439.8,
+     557.6,
+     455.5
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_90",
+    "page": 1,
+    "rect": [
+     74.5,
+     456.2,
+     382.4,
+     472.0
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_91",
+    "page": 1,
+    "rect": [
+     421.4,
+     456.4,
+     558.8,
+     471.4
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_92",
+    "page": 1,
+    "rect": [
+     116.9,
+     483.2,
+     380.9,
+     499.0
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_93",
+    "page": 1,
+    "rect": [
+     417.6,
+     485.9,
+     555.1,
+     501.6
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_94",
+    "page": 1,
+    "rect": [
+     72.6,
+     499.9,
+     380.6,
+     515.6
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_95",
+    "page": 1,
+    "rect": [
+     423.1,
+     502.4,
+     555.0,
+     517.4
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_96",
+    "page": 1,
+    "rect": [
+     109.9,
+     518.9,
+     379.4,
+     534.6
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_97",
+    "page": 1,
+    "rect": [
+     419.3,
+     525.1,
+     556.7,
+     540.8
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_98",
+    "page": 1,
+    "rect": [
+     74.3,
+     537.8,
+     382.3,
+     553.6
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_99",
+    "page": 1,
+    "rect": [
+     424.7,
+     541.7,
+     556.7,
+     556.7
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_100",
+    "page": 1,
+    "rect": [
+     133.9,
+     564.8,
+     381.5,
+     580.6
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_101",
+    "page": 1,
+    "rect": [
+     420.0,
+     567.4,
+     557.4,
+     583.1
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_102",
+    "page": 1,
+    "rect": [
+     73.2,
+     581.5,
+     381.1,
+     597.1
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_103",
+    "page": 1,
+    "rect": [
+     421.2,
+     583.9,
+     558.6,
+     599.0
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_104",
+    "page": 1,
+    "rect": [
+     129.4,
+     603.6,
+     382.3,
+     619.3
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_105",
+    "page": 1,
+    "rect": [
+     419.3,
+     605.9,
+     551.3,
+     621.6
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_106",
+    "page": 1,
+    "rect": [
+     76.2,
+     622.4,
+     384.1,
+     638.2
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_107",
+    "page": 1,
+    "rect": [
+     421.7,
+     625.9,
+     553.7,
+     641.6
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_108",
+    "page": 1,
+    "rect": [
+     112.3,
+     649.4,
+     381.8,
+     665.2
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_109",
+    "page": 1,
+    "rect": [
+     417.0,
+     651.5,
+     549.0,
+     667.2
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_110",
+    "page": 1,
+    "rect": [
+     75.2,
+     665.7,
+     380.6,
+     681.5
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_111",
+    "page": 1,
+    "rect": [
+     419.4,
+     671.4,
+     551.4,
+     687.1
+    ],
+    "src": "blank",
+    "size": 9
+   },
+   {
+    "name": "agb_fr_112",
+    "page": 1,
+    "rect": [
+     356.4,
+     763.3,
+     499.4,
+     779.0
+    ],
+    "src": "blank",
+    "size": 9
+   }
+  ],
   "portal_url": "https://www.frankfortil.org/departments/building/permits_inspections.php",
   "info_url": null,
   "pdf_url": "https://www.frankfortil.org/Documents/Departments/Building/Permits%20and%20Inspections/Building%20Permit%20Application%202024.pdf?t=202601211136540",
@@ -15413,8 +21998,32 @@
   "info_sheet": false,
   "link_url": "https://www.frankfortil.org/Documents/Departments/Building/Permits%20and%20Inspections/Building%20Permit%20Application%202024.pdf?t=202601211136540",
   "link_type": "pdf",
-  "link_note": "Building Permit Application 2024 (not mapped); online BSA https://bsaonline.com/CD_PermitAjaxApplication/ApplyForPermit?applicationGuid=9147211f-3aec-4e7b-bfe4-995f496f1f62&propertyGuid=0&projectGuid=0&uid=2965",
-  "link_checked": "2026-10-17"
+  "link_note": "Building Permit Application 2024; online BSA https://bsaonline.com/CD_PermitAjaxApplication/ApplyForPermit?applicationGuid=9147211f-3aec-4e7b-bfe4-995f496f1f62&propertyGuid=0&projectGuid=0&uid=2965",
+  "link_checked": "2026-10-17",
+  "checks": null,
+  "fill": [
+   {
+    "name": "Project Address",
+    "src": "address"
+   },
+   {
+    "name": "Property Owner Tenant",
+    "src": "customer"
+   },
+   {
+    "name": "Phone",
+    "src": "phone"
+   },
+   {
+    "name": "Address",
+    "src": "address"
+   },
+   {
+    "name": "email",
+    "src": "ownerEmail"
+   }
+  ],
+  "auto_mapped": false
  },
  "Franklin Park": {
   "form_type": "link_only",

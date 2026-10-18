@@ -380,13 +380,18 @@
   "fields": null,
   "portal_url": null,
   "info_url": "https://thetownofcicero.com/government/building-department/building-department-forms/",
-  "pdf_url": null,
+  "pdf_url": "https://thetownofcicero.com/wp-content/uploads/2025/10/New-Garage-Building-Electrical-Permit-Form.pdf",
   "checklist_url": "https://toc.flywheelsites.com/wp-content/uploads/2015/09/Permitting-Procedures-Garage-1.pdf",
   "submittal": "paper (Town Hall)",
   "info_sheet": false,
-  "link_url": "https://thetownofcicero.com/government/building-department/building-department-forms/",
-  "link_type": "page",
-  "link_checked": "2026-10-17"
+  "link_url": "https://thetownofcicero.com/wp-content/uploads/2025/10/New-Garage-Building-Electrical-Permit-Form.pdf",
+  "link_type": "pdf",
+  "link_checked": "2026-10-17",
+  "link_note": "New Garage Building & Electrical Permit Form (scanned 14-page packet, not mapped)",
+  "electrical": {
+   "required": "included in building permit",
+   "note": "New Garage Building & Electrical Permit Form is combined; standalone Electrical Permit Application https://thetownofcicero.com/wp-content/uploads/2025/10/Electrical-Permit-Application.pdf"
+  }
  },
  "Calumet City": {
   "form_type": "general_covers_garage",
@@ -619,15 +624,20 @@
   "form_name": "Building Permit Application for Sundry Construction (has Garage Size/Frame/Roof fields) + Garage Requirements sheet",
   "template": null,
   "fields": null,
-  "portal_url": "https://www.elmwoodpark.org/FormCenter/Code-Department-12",
+  "portal_url": "https://www.elmwoodpark.org/FormCenter/Code-Department-12/Building-Permit-Application-for-Sundry-C-74",
   "info_url": "https://www.elmwoodpark.org/294/Code-Building-Administration-Forms",
   "pdf_url": "https://elmwoodpark.org/DocumentCenter/View/488/Building-Permit-Application-For-Sundry-Construction-PDF",
   "checklist_url": "https://elmwoodpark.org/DocumentCenter/View/491/Garage-Requirements-PDF",
   "submittal": "paper; online 'fillable' FormCenter version exists",
   "info_sheet": true,
-  "link_url": "https://www.elmwoodpark.org/FormCenter/Code-Department-12",
+  "link_url": "https://www.elmwoodpark.org/FormCenter/Code-Department-12/Building-Permit-Application-for-Sundry-C-74",
   "link_type": "portal",
-  "link_checked": "2026-10-17"
+  "link_checked": "2026-10-17",
+  "link_note": "Online Building Permit Application for Sundry Construction (FormCenter)",
+  "electrical": {
+   "required": "separate",
+   "portal_url": "https://www.elmwoodpark.org/FormCenter/Code-Department-12/Electrical-Permit-Application-75"
+  }
  },
  "Des Plaines": {
   "form_type": "detached_garage",
@@ -642,7 +652,12 @@
   "info_sheet": true,
   "link_url": "https://www.desplainesil.gov/Departments/Community-and-Economic-Development/Building-and-Permits",
   "link_type": "portal",
-  "link_checked": "2026-10-17"
+  "link_checked": "2026-10-17",
+  "demolition": {
+   "required": "separate",
+   "pdf_url": "https://www.desplainesil.gov/files/assets/city/v/1/ced/licenses-and-permits/05112026_permit-guide_r_demolition.pdf",
+   "note": "Residential demolition permit guide; apply via EnerGov"
+  }
  },
  "South Holland": {
   "form_type": "unknown",
@@ -1836,7 +1851,13 @@
   "info_sheet": true,
   "link_url": "https://vah.com/government/permits___licenses_/index.php",
   "link_type": "portal",
-  "link_checked": "2026-10-17"
+  "link_checked": "2026-10-17",
+  "demolition": {
+   "required": "separate",
+   "portal_url": "https://vah.com/government/permits___licenses_/index.php",
+   "pdf_url": "https://vah.com/Demolition%20-%20Detached%20Residential%20Garage.pdf?t=202604281005570",
+   "note": "Demolition - Detached Residential Garage permit (applied via Civic Access portal); Cook County demolition permit also"
+  }
  },
  "Evergreen Park": {
   "form_type": "detached_garage",
@@ -2881,15 +2902,15 @@
   "form_name": "CityView portal; Building > Accessory > Detached Garage",
   "template": null,
   "fields": null,
-  "portal_url": "https://aglc.addison-il.org/CityViewPortal/",
+  "portal_url": "https://aglc.addison-il.org/CityViewPortal/Permit/Application",
   "info_url": null,
   "pdf_url": null,
   "checklist_url": null,
   "submittal": null,
   "info_sheet": false,
-  "link_url": "https://aglc.addison-il.org/CityViewPortal/",
+  "link_url": "https://aglc.addison-il.org/CityViewPortal/Permit/Application",
   "link_type": "portal",
-  "link_note": "CityView portal; Building > Accessory > Detached Garage",
+  "link_note": "CityView: Apply for a Building Permit",
   "link_checked": "2026-10-17"
  },
  "Algonquin": {
@@ -3564,14 +3585,19 @@
   "fields": null,
   "portal_url": null,
   "info_url": "https://www.antioch.il.gov/building-and-code-enforcement",
-  "pdf_url": null,
+  "pdf_url": "https://irp.cdn-website.com/bcd23239/files/uploaded/Application-for-a-Resident-Permit-2021.pdf",
   "checklist_url": null,
   "submittal": null,
   "info_sheet": false,
-  "link_url": "https://www.antioch.il.gov/building-and-code-enforcement",
-  "link_type": "page",
-  "link_note": "Application for a New Residential Building Permit + Garage Construction supplement linked here",
-  "link_checked": "2026-10-17"
+  "link_url": "https://irp.cdn-website.com/bcd23239/files/uploaded/Application-for-a-Resident-Permit-2021.pdf",
+  "link_type": "pdf",
+  "link_note": "Application for New Single Family & Residential Renovation Permit (flat, not mapped)",
+  "link_checked": "2026-10-17",
+  "demolition": {
+   "required": "separate",
+   "pdf_url": "https://irp.cdn-website.com/bcd23239/files/uploaded/BUILDING-DEMOLITION-REVISED.pdf",
+   "note": "Building Demolition requirements sheet"
+  }
  },
  "Aurora": {
   "form_type": "link_only",
@@ -4563,35 +4589,129 @@
   ]
  },
  "Bannockburn": {
-  "form_type": "link_only",
-  "form_name": "Building Permit Application on Applications & Forms page",
-  "template": null,
+  "form_type": "building_permit",
+  "form_name": "Village of Bannockburn Building Permit Application (fillable)",
+  "template": "permit-forms/Bannockburn.pdf",
   "fields": null,
   "portal_url": null,
   "info_url": "https://bannockburn.org/government/applications-forms/",
-  "pdf_url": null,
+  "pdf_url": "https://ecode360.com/BA3216/document/552957028.pdf",
   "checklist_url": null,
   "submittal": null,
   "info_sheet": false,
-  "link_url": "https://bannockburn.org/government/applications-forms/",
-  "link_type": "page",
-  "link_note": "Building Permit Application on Applications & Forms page",
-  "link_checked": "2026-10-17"
+  "link_url": "https://ecode360.com/BA3216/document/552957028.pdf",
+  "link_type": "pdf",
+  "link_note": "Village of Bannockburn Building Permit Application (fillable)",
+  "link_checked": "2026-10-17",
+  "fill": [
+   {
+    "name": "Property Address",
+    "src": "address"
+   },
+   {
+    "name": "Owner Name",
+    "src": "customer"
+   },
+   {
+    "name": "EMail Address",
+    "src": "ownerEmail"
+   },
+   {
+    "name": "Address",
+    "src": "address"
+   },
+   {
+    "name": "City",
+    "src": "city"
+   },
+   {
+    "name": "State",
+    "src": "ownerState"
+   },
+   {
+    "name": "Zip",
+    "src": "zip"
+   },
+   {
+    "name": "Phone",
+    "src": "phone"
+   },
+   {
+    "name": "Contractor Company",
+    "src": "contractor"
+   },
+   {
+    "name": "Address_2",
+    "src": "contractorStreet"
+   },
+   {
+    "name": "City_2",
+    "src": "contractorCity"
+   },
+   {
+    "name": "State_2",
+    "src": "contractorState"
+   },
+   {
+    "name": "Zip_2",
+    "src": "contractorZip"
+   },
+   {
+    "name": "Phone_2",
+    "src": "contractorPhone"
+   },
+   {
+    "name": "Fair Market Value of Project including all materials labor and professional fees",
+    "src": "price"
+   },
+   {
+    "name": "Total Project Square Feet",
+    "src": "sqft"
+   },
+   {
+    "name": "Description of Work",
+    "src": "description"
+   },
+   {
+    "name": "NAME  COMPANY NAME",
+    "src": "contractor"
+   },
+   {
+    "name": "COMPANY ADDRESS",
+    "src": "contractorStreet"
+   },
+   {
+    "name": "CITY",
+    "src": "contractorCity"
+   },
+   {
+    "name": "STATE",
+    "src": "contractorState"
+   },
+   {
+    "name": "ZIP",
+    "src": "contractorZip"
+   },
+   {
+    "name": "CONTACT PHONE",
+    "src": "contractorPhone"
+   }
+  ]
  },
  "Barrington": {
   "form_type": "link_only",
   "form_name": "SmartGov portal; garages need 2 paper copies",
   "template": null,
   "fields": null,
-  "portal_url": "https://vlg-barrington-il.smartgovcommunity.com/ApplicationPublic/ApplicationHome",
+  "portal_url": "https://vlg-barrington-il.smartgovcommunity.com/Application/CaseApplicationEntry",
   "info_url": null,
   "pdf_url": null,
   "checklist_url": null,
   "submittal": null,
   "info_sheet": false,
-  "link_url": "https://vlg-barrington-il.smartgovcommunity.com/ApplicationPublic/ApplicationHome",
+  "link_url": "https://vlg-barrington-il.smartgovcommunity.com/Application/CaseApplicationEntry",
   "link_type": "portal",
-  "link_note": "SmartGov portal; garages need 2 paper copies",
+  "link_note": "SmartGov: Apply (case application entry)",
   "link_checked": "2026-10-17"
  },
  "Barrington Hills": {
@@ -5639,31 +5759,39 @@
   "form_name": "electronic submittal via Village permit portal (linked from Building Division)",
   "template": null,
   "fields": null,
-  "portal_url": "https://www.bartlettil.gov/government/planning-development-services/building-division",
+  "portal_url": "https://villageofbartlettil.portal.opengov.com/categories/1071/record-types/6522",
   "info_url": null,
   "pdf_url": null,
   "checklist_url": null,
   "submittal": null,
   "info_sheet": false,
-  "link_url": "https://www.bartlettil.gov/government/planning-development-services/building-division",
+  "link_url": "https://villageofbartlettil.portal.opengov.com/categories/1071/record-types/6522",
   "link_type": "portal",
-  "link_note": "electronic submittal via Village permit portal (linked from Building Division)",
-  "link_checked": "2026-10-17"
+  "link_note": "OpenGov: Accessory Building/Structure permit",
+  "link_checked": "2026-10-17",
+  "electrical": {
+   "required": "separate",
+   "portal_url": "https://villageofbartlettil.portal.opengov.com/categories/1071/record-types/6553"
+  },
+  "demolition": {
+   "required": "separate",
+   "portal_url": "https://villageofbartlettil.portal.opengov.com/categories/1071/record-types/6529"
+  }
  },
  "Batavia": {
   "form_type": "link_only",
   "form_name": "One-Stop Shop (Lama) portal; select Detached Garage",
   "template": null,
   "fields": null,
-  "portal_url": "https://batavia.onlama.com/Apply.aspx",
+  "portal_url": "https://batavia.onlama.com/Apply.aspx#accessory-permits",
   "info_url": null,
   "pdf_url": null,
   "checklist_url": null,
   "submittal": null,
   "info_sheet": false,
-  "link_url": "https://batavia.onlama.com/Apply.aspx",
+  "link_url": "https://batavia.onlama.com/Apply.aspx#accessory-permits",
   "link_type": "portal",
-  "link_note": "One-Stop Shop (Lama) portal; select Detached Garage",
+  "link_note": "Lama: Accessory Permits apply section",
   "link_checked": "2026-10-17"
  },
  "Beach Park": {
@@ -7037,20 +7165,46 @@
   "link_checked": "2026-10-17"
  },
  "Bensenville": {
-  "form_type": "link_only",
-  "form_name": "Building Permits page (application + garage handout DocumentCenter/View/9773); email permits@bensenville.il.us",
-  "template": null,
+  "form_type": "building_permit",
+  "form_name": "Village of Bensenville Permit Application (fillable)",
+  "template": "permit-forms/Bensenville.pdf",
   "fields": null,
   "portal_url": null,
   "info_url": "https://bensenville.gov/116/Building-Permits",
-  "pdf_url": null,
+  "pdf_url": "https://bensenville.gov/DocumentCenter/View/11656",
   "checklist_url": null,
   "submittal": null,
   "info_sheet": false,
-  "link_url": "https://bensenville.gov/116/Building-Permits",
-  "link_type": "page",
-  "link_note": "Building Permits page (application + garage handout DocumentCenter/View/9773); email permits@bensenville.il.us",
-  "link_checked": "2026-10-17"
+  "link_url": "https://bensenville.gov/DocumentCenter/View/11656",
+  "link_type": "pdf",
+  "link_note": "Village of Bensenville Permit Application (fillable)",
+  "link_checked": "2026-10-17",
+  "fill": [
+   {
+    "name": "SITE ADDRESS",
+    "src": "address"
+   },
+   {
+    "name": "DESCRIPTION OF WORK",
+    "src": "description"
+   },
+   {
+    "name": "Property Owners Name Print",
+    "src": "customer"
+   },
+   {
+    "name": "Address_2",
+    "src": "address"
+   },
+   {
+    "name": "City State  ZIP_2",
+    "src": "cityStateZip"
+   },
+   {
+    "name": "Day Time Phone_2",
+    "src": "phone"
+   }
+  ]
  },
  "Berkeley": {
   "form_type": "link_only",
@@ -8851,13 +9005,13 @@
   "fields": null,
   "portal_url": null,
   "info_url": "https://bradleyil.org/community-development/building-services/",
-  "pdf_url": null,
+  "pdf_url": "https://bradleyil.org/media/Detached-Garage-Permit-Application-min.pdf",
   "checklist_url": null,
   "submittal": null,
   "info_sheet": false,
-  "link_url": "https://bradleyil.org/community-development/building-services/",
-  "link_type": "page",
-  "link_note": "Garage packet + General Permit https://bradleyil.org/media/Building-Permit-Application-Single-Contractor-min.pdf",
+  "link_url": "https://bradleyil.org/media/Detached-Garage-Permit-Application-min.pdf",
+  "link_type": "pdf",
+  "link_note": "Detached Garage Permit Application packet (scanned, not mapped)",
   "link_checked": "2026-10-17"
  },
  "Braidwood": {
@@ -8865,15 +9019,15 @@
   "form_name": "Citizenserve portal; or email permits@braidwood.us (https://www.braidwood.gov/building)",
   "template": null,
   "fields": null,
-  "portal_url": "https://www6.citizenserve.com/Portal/PortalController?Action=showPermit&ctzPagePrefix=Portal_&installationID=381&original_contactID=0&original_iid=0",
+  "portal_url": "https://www6.citizenserve.com/Portal/PortalController?Action=showApplyPermitPage&type=Permit&installationID=381",
   "info_url": null,
   "pdf_url": null,
   "checklist_url": null,
   "submittal": null,
   "info_sheet": false,
-  "link_url": "https://www6.citizenserve.com/Portal/PortalController?Action=showPermit&ctzPagePrefix=Portal_&installationID=381&original_contactID=0&original_iid=0",
+  "link_url": "https://www6.citizenserve.com/Portal/PortalController?Action=showApplyPermitPage&type=Permit&installationID=381",
   "link_type": "portal",
-  "link_note": "Citizenserve portal; or email permits@braidwood.us (https://www.braidwood.gov/building)",
+  "link_note": "Citizenserve: Apply for Permit",
   "link_checked": "2026-10-17"
  },
  "Bridgeview": {
@@ -9008,13 +9162,13 @@
   "fields": null,
   "portal_url": null,
   "info_url": "https://broadview-il.gov/reference/forms-and-permits/",
-  "pdf_url": null,
+  "pdf_url": "https://broadview-il.gov/media/siicj13u/building_permit-application.pdf",
   "checklist_url": null,
   "submittal": null,
   "info_sheet": false,
-  "link_url": "https://broadview-il.gov/reference/forms-and-permits/",
-  "link_type": "page",
-  "link_note": "Building Permit Application on Forms and Permits",
+  "link_url": "https://broadview-il.gov/media/siicj13u/building_permit-application.pdf",
+  "link_type": "pdf",
+  "link_note": "Building Permit Application (scanned, not mapped)",
   "link_checked": "2026-10-17"
  },
  "Brookfield": {
@@ -9034,20 +9188,66 @@
   "link_checked": "2026-10-17"
  },
  "Buffalo Grove": {
-  "form_type": "link_only",
-  "form_name": "BS&A online portal; detached garage handout https://www.vbg.org/DocumentCenter/View/211/Garages---Detached-PDF",
-  "template": null,
+  "form_type": "building_permit",
+  "form_name": "Village of Buffalo Grove Building Permit Application (fillable)",
+  "template": "permit-forms/Buffalo-Grove.pdf",
   "fields": null,
   "portal_url": "https://www.vbg.org/bsa",
   "info_url": null,
-  "pdf_url": null,
+  "pdf_url": "https://www.vbg.org/DocumentCenter/View/191",
   "checklist_url": null,
   "submittal": null,
   "info_sheet": false,
-  "link_url": "https://www.vbg.org/bsa",
-  "link_type": "portal",
-  "link_note": "BS&A online portal; detached garage handout https://www.vbg.org/DocumentCenter/View/211/Garages---Detached-PDF",
-  "link_checked": "2026-10-17"
+  "link_url": "https://www.vbg.org/DocumentCenter/View/191",
+  "link_type": "pdf",
+  "link_note": "Village of Buffalo Grove Building Permit Application (fillable)",
+  "link_checked": "2026-10-17",
+  "fill": [
+   {
+    "name": "ADDRESS",
+    "src": "address"
+   },
+   {
+    "name": "Cost of Construction",
+    "src": "price"
+   },
+   {
+    "name": "Property Owner or Business Tenant required",
+    "src": "customer"
+   },
+   {
+    "name": "Address",
+    "src": "address"
+   },
+   {
+    "name": "City State ZIP",
+    "src": "cityStateZip"
+   },
+   {
+    "name": "Phone",
+    "src": "phone"
+   },
+   {
+    "name": "Email",
+    "src": "ownerEmail"
+   },
+   {
+    "name": "DESCRIPTION OF WORK",
+    "src": "description"
+   },
+   {
+    "name": "General",
+    "src": "contractor"
+   },
+   {
+    "name": "Address 1",
+    "src": "contractorFull"
+   },
+   {
+    "name": "Phone 1",
+    "src": "contractorPhone"
+   }
+  ]
  },
  "Burbank": {
   "form_type": "link_only",
@@ -9056,14 +9256,19 @@
   "fields": null,
   "portal_url": null,
   "info_url": "https://www.burbankil.gov/172/Building-Department",
-  "pdf_url": null,
+  "pdf_url": "https://www.burbankil.gov/DocumentCenter/View/287/Miscellaneous-Building-Permit",
   "checklist_url": null,
   "submittal": null,
   "info_sheet": false,
-  "link_url": "https://www.burbankil.gov/172/Building-Department",
-  "link_type": "page",
-  "link_note": "Building Department forms page (no general building app PDF confirmed)",
-  "link_checked": "2026-10-17"
+  "link_url": "https://www.burbankil.gov/DocumentCenter/View/287/Miscellaneous-Building-Permit",
+  "link_type": "pdf",
+  "link_note": "Miscellaneous Building Permit application (fillable, generic field names - not mapped)",
+  "link_checked": "2026-10-17",
+  "electrical": {
+   "required": "separate",
+   "pdf_url": "https://www.burbankil.gov/DocumentCenter/View/284/Electrical-Permit",
+   "note": "Electrical Permit application (fillable, not mapped)"
+  }
  },
  "Burnham": {
   "form_type": "link_only",
@@ -9086,16 +9291,21 @@
   "form_name": "online permit portal from Building Permits page; Accessory Building checklist",
   "template": null,
   "fields": null,
-  "portal_url": "https://www.burr-ridge.gov/government/departments/community_development/building_permits/index.php",
+  "portal_url": "https://bsaonline.com/CD_PermitAjaxApplication/ApplyForPermit?applicationGuid=ecb35e8d-632a-46a0-b9b1-88d23f81392c&propertyGuid=0&projectGuid=0&uid=2311",
   "info_url": null,
   "pdf_url": null,
   "checklist_url": null,
   "submittal": null,
   "info_sheet": false,
-  "link_url": "https://www.burr-ridge.gov/government/departments/community_development/building_permits/index.php",
+  "link_url": "https://bsaonline.com/CD_PermitAjaxApplication/ApplyForPermit?applicationGuid=ecb35e8d-632a-46a0-b9b1-88d23f81392c&propertyGuid=0&projectGuid=0&uid=2311",
   "link_type": "portal",
-  "link_note": "online permit portal from Building Permits page; Accessory Building checklist",
-  "link_checked": "2026-10-17"
+  "link_note": "BS&A online permit application; Accessory Building packet https://www.burr-ridge.gov/Document%20Center/Government/Department/Community%20Development/Building%20&%20Permits/Permit%20Applications/2024%20Fee%20Update/2024%20Bldg%20Ord%20Update/SFR%20Accessory%20Building%20Permit%20Packet.pdf",
+  "link_checked": "2026-10-17",
+  "demolition": {
+   "required": "separate",
+   "pdf_url": "https://www.burr-ridge.gov/Document%20Center/Government/Department/Community%20Development/Building%20&%20Permits/Permit%20Applications/2026%20FEB/Demolition%20Checklist.pdf?t=202602041450430",
+   "note": "Demolition checklist; apply via BS&A"
+  }
  },
  "Calumet Park": {
   "form_type": "link_only",
@@ -9120,14 +9330,19 @@
   "fields": null,
   "portal_url": null,
   "info_url": "https://www.carolstream.org/departments/community-development/building-permits-inspections",
-  "pdf_url": null,
+  "pdf_url": "https://www.carolstream.org/home/showpublisheddocument/9166/639040699608370000",
   "checklist_url": null,
   "submittal": null,
   "info_sheet": false,
-  "link_url": "https://www.carolstream.org/departments/community-development/building-permits-inspections",
-  "link_type": "page",
-  "link_note": "Residential Permit Application + detached garage handout; online submit",
-  "link_checked": "2026-10-17"
+  "link_url": "https://www.carolstream.org/home/showpublisheddocument/9166/639040699608370000",
+  "link_type": "pdf",
+  "link_note": "Residential Permit Application (site blocks bots; not mapped); online https://forms.carolstream.org/Forms/VOCSPermits",
+  "link_checked": "2026-10-17",
+  "demolition": {
+   "required": "separate",
+   "pdf_url": "https://www.carolstream.org/home/showpublisheddocument/6448/638487772515830000",
+   "note": "Demolition handout"
+  }
  },
  "Carpentersville": {
   "form_type": "link_only",
@@ -9826,14 +10041,19 @@
   "fields": null,
   "portal_url": null,
   "info_url": "https://www.caryillinois.com/685/Residential-Permits",
-  "pdf_url": null,
+  "pdf_url": "https://www.caryillinois.com/DocumentCenter/View/4953/Building-Permit-Application---Residential---Alterations-and-Small-Projects",
   "checklist_url": null,
   "submittal": null,
   "info_sheet": false,
-  "link_url": "https://www.caryillinois.com/685/Residential-Permits",
-  "link_type": "page",
-  "link_note": "Residential permits page (application PDFs + portal)",
-  "link_checked": "2026-10-17"
+  "link_url": "https://www.caryillinois.com/DocumentCenter/View/4953/Building-Permit-Application---Residential---Alterations-and-Small-Projects",
+  "link_type": "pdf",
+  "link_note": "Application for Permit - Repairs, Alterations and Additions (flat, not mapped); Detached Garage checklist DocumentCenter/View/8362",
+  "link_checked": "2026-10-17",
+  "electrical": {
+   "required": "separate",
+   "pdf_url": "https://www.caryillinois.com/DocumentCenter/View/8363",
+   "note": "Electric Service or Panel Upgrade checklist"
+  }
  },
  "Chicago Heights": {
   "form_type": "link_only",
@@ -9935,14 +10155,19 @@
   "fields": null,
   "portal_url": null,
   "info_url": "https://www.chicagoridge.org/190/Forms-Permits",
-  "pdf_url": null,
+  "pdf_url": "https://www.chicagoridge.org/DocumentCenter/View/598",
   "checklist_url": null,
   "submittal": null,
   "info_sheet": false,
-  "link_url": "https://www.chicagoridge.org/190/Forms-Permits",
-  "link_type": "page",
-  "link_note": "Building Permit Application on Forms & Permits",
-  "link_checked": "2026-10-17"
+  "link_url": "https://www.chicagoridge.org/DocumentCenter/View/598",
+  "link_type": "pdf",
+  "link_note": "Building Permit Application (scanned, not mapped)",
+  "link_checked": "2026-10-17",
+  "electrical": {
+   "required": "separate",
+   "pdf_url": "https://www.chicagoridge.org/DocumentCenter/View/35",
+   "note": "Electrical Permit application"
+  }
  },
  "Clarendon Hills": {
   "form_type": "link_only",
@@ -11909,15 +12134,15 @@
   "form_name": "Building Permit listed on Online Forms page; paper application also at Village Hall",
   "template": null,
   "fields": null,
-  "portal_url": null,
+  "portal_url": "https://form.jotform.com/233535235995061",
   "info_url": "https://villageofcrete.org/online-forms/",
   "pdf_url": null,
   "checklist_url": null,
   "submittal": null,
   "info_sheet": false,
-  "link_url": "https://villageofcrete.org/online-forms/",
-  "link_type": "page",
-  "link_note": "Building Permit listed on Online Forms page; paper application also at Village Hall",
+  "link_url": "https://form.jotform.com/233535235995061",
+  "link_type": "portal",
+  "link_note": "Village of Crete Building Permit online form (JotForm linked from villageofcrete.org/online-forms)",
   "link_checked": "2026-10-17"
  },
  "Crystal Lake": {
@@ -12158,16 +12383,24 @@
   "form_name": "online Detached Accessory Structure permit app; checklist https://www.deerfield.il.us/DocumentCenter/View/3318/Detached-Accessory-Structure-Checklist-PDF",
   "template": null,
   "fields": null,
-  "portal_url": null,
+  "portal_url": "https://deerfieldil.portal.opengov.com/categories/1080/record-types/6519",
   "info_url": "https://deerfield.il.us/163/Permit-Applications-Forms",
   "pdf_url": null,
   "checklist_url": null,
   "submittal": null,
   "info_sheet": false,
-  "link_url": "https://deerfield.il.us/163/Permit-Applications-Forms",
-  "link_type": "page",
-  "link_note": "online Detached Accessory Structure permit app; checklist https://www.deerfield.il.us/DocumentCenter/View/3318/Detached-Accessory-Structure-Checklist-PDF",
-  "link_checked": "2026-10-17"
+  "link_url": "https://deerfieldil.portal.opengov.com/categories/1080/record-types/6519",
+  "link_type": "portal",
+  "link_note": "OpenGov: Detached Accessory Structure (Garage, Shed) Permit Application",
+  "link_checked": "2026-10-17",
+  "electrical": {
+   "required": "separate",
+   "portal_url": "https://deerfieldil.portal.opengov.com/categories/1080/record-types/6465"
+  },
+  "demolition": {
+   "required": "separate",
+   "portal_url": "https://deerfieldil.portal.opengov.com/categories/1080/record-types/6526"
+  }
  },
  "Dixmoor": {
   "form_type": "link_only",
@@ -13156,20 +13389,54 @@
   "link_checked": "2026-10-17"
  },
  "East Dundee": {
-  "form_type": "link_only",
-  "form_name": "Residential Building Application on Apply For page",
-  "template": null,
+  "form_type": "building_permit",
+  "form_name": "Village of East Dundee Residential Building Permit application (fillable); garage requirements sheet https://eastdundee.net/How%20Do%20I/Apply%20For/Building%20Permits/Garage%20Permit.pdf",
+  "template": "permit-forms/East-Dundee.pdf",
   "fields": null,
   "portal_url": null,
   "info_url": "https://eastdundee.net/how_do_i/apply_for/index.php",
-  "pdf_url": null,
+  "pdf_url": "https://eastdundee.net/How%20Do%20I/Apply%20For/Building%20Permits/Residential%20Application%20Permit.pdf?t=202502071045440",
   "checklist_url": null,
   "submittal": null,
   "info_sheet": false,
-  "link_url": "https://eastdundee.net/how_do_i/apply_for/index.php",
-  "link_type": "page",
-  "link_note": "Residential Building Application on Apply For page",
-  "link_checked": "2026-10-17"
+  "link_url": "https://eastdundee.net/How%20Do%20I/Apply%20For/Building%20Permits/Residential%20Application%20Permit.pdf?t=202502071045440",
+  "link_type": "pdf",
+  "link_note": "Village of East Dundee Residential Building Permit application (fillable); garage requirements sheet https://eastdundee.net/How%20Do%20I/Apply%20For/Building%20Permits/Garage%20Permit.pdf",
+  "link_checked": "2026-10-17",
+  "fill": [
+   {
+    "name": "Project Address",
+    "src": "address"
+   },
+   {
+    "name": "Owners Name",
+    "src": "customer"
+   },
+   {
+    "name": "Phone",
+    "src": "phone"
+   },
+   {
+    "name": "Owners Address",
+    "src": "addressCity"
+   },
+   {
+    "name": "Email",
+    "src": "ownerEmail"
+   },
+   {
+    "name": "Building Contractor",
+    "src": "contractor"
+   },
+   {
+    "name": "Phone_2",
+    "src": "contractorPhone"
+   },
+   {
+    "name": "Total Value",
+    "src": "price"
+   }
+  ]
  },
  "East Hazel Crest": {
   "form_type": "link_only",
@@ -14818,13 +15085,13 @@
   "fields": null,
   "portal_url": "https://www.frankfortil.org/departments/building/permits_inspections.php",
   "info_url": null,
-  "pdf_url": null,
+  "pdf_url": "https://www.frankfortil.org/Documents/Departments/Building/Permits%20and%20Inspections/Building%20Permit%20Application%202024.pdf?t=202601211136540",
   "checklist_url": null,
   "submittal": null,
   "info_sheet": false,
-  "link_url": "https://www.frankfortil.org/departments/building/permits_inspections.php",
-  "link_type": "portal",
-  "link_note": "BS&A Online; Detached Garages summary sheet",
+  "link_url": "https://www.frankfortil.org/Documents/Departments/Building/Permits%20and%20Inspections/Building%20Permit%20Application%202024.pdf?t=202601211136540",
+  "link_type": "pdf",
+  "link_note": "Building Permit Application 2024 (not mapped); online BSA https://bsaonline.com/CD_PermitAjaxApplication/ApplyForPermit?applicationGuid=9147211f-3aec-4e7b-bfe4-995f496f1f62&propertyGuid=0&projectGuid=0&uid=2965",
   "link_checked": "2026-10-17"
  },
  "Franklin Park": {
@@ -16565,15 +16832,15 @@
   "form_name": "LAMA portal; Development Center https://www.glenview.il.us/651/Development-Center-Building-Permits",
   "template": null,
   "fields": null,
-  "portal_url": "https://glenview.onlama.com/Apply.aspx",
+  "portal_url": "https://glenview.onlama.com/Apply.aspx#accessory-permits",
   "info_url": null,
   "pdf_url": null,
   "checklist_url": null,
   "submittal": null,
   "info_sheet": false,
-  "link_url": "https://glenview.onlama.com/Apply.aspx",
+  "link_url": "https://glenview.onlama.com/Apply.aspx#accessory-permits",
   "link_type": "portal",
-  "link_note": "LAMA portal; Development Center https://www.glenview.il.us/651/Development-Center-Building-Permits",
+  "link_note": "Lama: Accessory Permits apply section",
   "link_checked": "2026-10-17"
  },
  "Glenwood": {
@@ -17069,20 +17336,66 @@
   }
  },
  "Golf": {
-  "form_type": "link_only",
-  "form_name": "Building Permit Application Form on Forms page",
-  "template": null,
+  "form_type": "building_permit",
+  "form_name": "Village of Golf Building Permit Application (fillable, hosted on village Google Drive)",
+  "template": "permit-forms/Golf.pdf",
   "fields": null,
   "portal_url": null,
   "info_url": "https://villageofgolf.us/forms",
-  "pdf_url": null,
+  "pdf_url": "https://drive.google.com/file/d/1HCQWupnvSRNYTsIMdVEyZU5km7dMDbF9/view",
   "checklist_url": null,
   "submittal": null,
   "info_sheet": false,
-  "link_url": "https://villageofgolf.us/forms",
-  "link_type": "page",
-  "link_note": "Building Permit Application Form on Forms page",
-  "link_checked": "2026-10-17"
+  "link_url": "https://drive.google.com/file/d/1HCQWupnvSRNYTsIMdVEyZU5km7dMDbF9/view",
+  "link_type": "pdf",
+  "link_note": "Village of Golf Building Permit Application (fillable, hosted on village Google Drive)",
+  "link_checked": "2026-10-17",
+  "fill": [
+   {
+    "name": "PROPERTY LOCATION",
+    "src": "address"
+   },
+   {
+    "name": "OWNER",
+    "src": "customer"
+   },
+   {
+    "name": "CITY STATE ZIP",
+    "src": "cityStateZip"
+   },
+   {
+    "name": "TEL",
+    "src": "phone"
+   },
+   {
+    "name": "EMAIL",
+    "src": "ownerEmail"
+   },
+   {
+    "name": "TOTAL COST",
+    "src": "price"
+   },
+   {
+    "name": "GEN CONTRACTOR",
+    "src": "contractor"
+   },
+   {
+    "name": "ADDRESS_2",
+    "src": "contractorStreet"
+   },
+   {
+    "name": "CITY ST ZIP_2",
+    "src": "contractorCSZ"
+   },
+   {
+    "name": "PH_2",
+    "src": "contractorPhone"
+   },
+   {
+    "name": "AREA OF BLDG",
+    "src": "sqft"
+   }
+  ]
  },
  "Grayslake": {
   "form_type": "link_only",
@@ -17206,15 +17519,15 @@
   "form_name": "Building Application Short Form + Detached Accessory reqs (village site, URLs moved); Short Form + Detached Accessory reqs; One-Stop https://onestop.gurnee.il.us/",
   "template": null,
   "fields": null,
-  "portal_url": "https://onestop.gurnee.il.us/",
+  "portal_url": "https://onestop.gurnee.il.us/Apply.aspx",
   "info_url": null,
   "pdf_url": null,
   "checklist_url": null,
   "submittal": null,
   "info_sheet": false,
-  "link_url": "https://onestop.gurnee.il.us/",
+  "link_url": "https://onestop.gurnee.il.us/Apply.aspx",
   "link_type": "portal",
-  "link_note": "Building Application Short Form + Detached Accessory reqs (village site, URLs moved); Short Form + Detached Accessory reqs; One-Stop https://onestop.gurnee.il.us/",
+  "link_note": "OneStop: Apply for a permit",
   "link_checked": "2026-10-17"
  },
  "Hoffman Estates": {
@@ -17222,32 +17535,67 @@
   "form_name": "BS&A online portal (from Building Permits page)",
   "template": null,
   "fields": null,
-  "portal_url": "https://www.hoffmanestates.org/services/permits_licenses/building_permits_inspections.php",
+  "portal_url": "https://bsaonline.com/DirectUrl/Cd_PermitApplication/3266",
   "info_url": null,
   "pdf_url": null,
   "checklist_url": null,
   "submittal": null,
   "info_sheet": false,
-  "link_url": "https://www.hoffmanestates.org/services/permits_licenses/building_permits_inspections.php",
+  "link_url": "https://bsaonline.com/DirectUrl/Cd_PermitApplication/3266",
   "link_type": "portal",
-  "link_note": "BS&A online portal (from Building Permits page)",
-  "link_checked": "2026-10-17"
+  "link_note": "BS&A: Residents - Apply for a Permit (contractors: https://bsaonline.com/CD_PermitApplication/ApplyForPermit?applyAsContractor=true)",
+  "link_checked": "2026-10-17",
+  "demolition": {
+   "required": "separate",
+   "pdf_url": "https://www.hoffmanestates.org/Documents/Services/Permits%20and%20Licenses/Building%20Permits/Residential%20Permit%20Handouts/Building-Demolition.pdf?t=202509191049110",
+   "note": "Building Demolition handout; apply via BS&A"
+  }
  },
  "Libertyville": {
-  "form_type": "link_only",
-  "form_name": "Construction Permit Application + online portal; email building@libertyville.com",
-  "template": null,
+  "form_type": "building_permit",
+  "form_name": "Village of Libertyville Application for Construction Permit (fillable)",
+  "template": "permit-forms/Libertyville.pdf",
   "fields": null,
   "portal_url": null,
   "info_url": "https://www.libertyville.com/departments/community_development/building/general_permit/residential_permit.php",
-  "pdf_url": null,
+  "pdf_url": "https://www.libertyville.com/Documents/Departments/Community%20Development/Building/General%20Permit/Residential%20Permit/Construction%20Permit%20Application%202025%20Milwaukee%20Fillable.pdf?t=202604271109560",
   "checklist_url": null,
   "submittal": null,
   "info_sheet": false,
-  "link_url": "https://www.libertyville.com/departments/community_development/building/general_permit/residential_permit.php",
-  "link_type": "page",
-  "link_note": "Construction Permit Application + online portal; email building@libertyville.com",
-  "link_checked": "2026-10-17"
+  "link_url": "https://www.libertyville.com/Documents/Departments/Community%20Development/Building/General%20Permit/Residential%20Permit/Construction%20Permit%20Application%202025%20Milwaukee%20Fillable.pdf?t=202604271109560",
+  "link_type": "pdf",
+  "link_note": "Village of Libertyville Application for Construction Permit (fillable)",
+  "link_checked": "2026-10-17",
+  "fill": [
+   {
+    "name": "Project Site AddressRow1",
+    "src": "address"
+   },
+   {
+    "name": "Cost of ConstructionRow1",
+    "src": "price"
+   },
+   {
+    "name": "Property Owner",
+    "src": "customer"
+   },
+   {
+    "name": "Phone",
+    "src": "phone"
+   },
+   {
+    "name": "Email",
+    "src": "ownerEmail"
+   },
+   {
+    "name": "General Contractor",
+    "src": "contractor"
+   },
+   {
+    "name": "Phone_3",
+    "src": "contractorPhone"
+   }
+  ]
  },
  "Mount Prospect": {
   "form_type": "link_only",
@@ -19137,19 +19485,57 @@
   "link_checked": "2026-10-17"
  },
  "Wheeling": {
-  "form_type": "link_only",
-  "form_name": "Building Permit Application on Forms & Permits; Detached Garage Handout 2026 DocumentCenter/View/6093",
-  "template": null,
+  "form_type": "building_permit",
+  "form_name": "Village of Wheeling Application for Building Permit (fillable); Detached Garage Handout DocumentCenter/View/6093",
+  "template": "permit-forms/Wheeling.pdf",
   "fields": null,
   "portal_url": null,
   "info_url": "https://www.wheelingil.gov/519/Forms-Permits",
-  "pdf_url": null,
+  "pdf_url": "https://www.wheelingil.gov/DocumentCenter/View/131/Application-for-Building-Permit-PDF",
   "checklist_url": null,
   "submittal": null,
   "info_sheet": false,
-  "link_url": "https://www.wheelingil.gov/519/Forms-Permits",
-  "link_type": "page",
-  "link_note": "Building Permit Application on Forms & Permits; Detached Garage Handout 2026 DocumentCenter/View/6093",
-  "link_checked": "2026-10-17"
+  "link_url": "https://www.wheelingil.gov/DocumentCenter/View/131/Application-for-Building-Permit-PDF",
+  "link_type": "pdf",
+  "link_note": "Village of Wheeling Application for Building Permit (fillable); Detached Garage Handout DocumentCenter/View/6093",
+  "link_checked": "2026-10-17",
+  "fill": [
+   {
+    "name": "SITE ADDRESS",
+    "src": "address"
+   },
+   {
+    "name": "DESCRIPTION OF WORK",
+    "src": "description"
+   },
+   {
+    "name": "Cost of Construction",
+    "src": "price"
+   },
+   {
+    "name": "Property Owner",
+    "src": "customer"
+   },
+   {
+    "name": "Address",
+    "src": "address"
+   },
+   {
+    "name": "Phone",
+    "src": "phone"
+   },
+   {
+    "name": "General Contractor",
+    "src": "contractor"
+   },
+   {
+    "name": "Address_3",
+    "src": "contractorFull"
+   },
+   {
+    "name": "Phone_4",
+    "src": "contractorPhone"
+   }
+  ]
  }
 }

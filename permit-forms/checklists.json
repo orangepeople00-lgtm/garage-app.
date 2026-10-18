@@ -371,6 +371,12 @@
    "source": "2023 Detached Garage Handout"
   },
   {
+   "item": "Check zoning for setbacks (Elmhurst setbacks depend on zoning district)",
+   "conditional": null,
+   "page": "zoning",
+   "source": "City of Elmhurst zoning"
+  },
+  {
    "item": "All contractors bonded and registered with the City of Elmhurst",
    "conditional": null,
    "page": "handout p1",
@@ -407,7 +413,7 @@
    "source": "2023 Detached Garage Handout"
   },
   {
-   "item": "Site plan: gutters & downspouts — indicate discharge; downspouts/sump connect to City storm sewer (min 6\" PVC SDR 26, air gap)",
+   "item": "Site plan: gutters & downspouts — indicate discharge; downspouts/sump connect to City storm sewer (min 6\" PVC SDR 26, air gap) — NOTE: Gutters must be tied into the sewer line — stay away from installing gutters if possible.",
    "conditional": null,
    "page": "handout p1-3",
    "source": "2023 Detached Garage Handout"

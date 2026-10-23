@@ -4114,7 +4114,7 @@ function gpPermitData(){
     wallH:g('wallH'),roof,doorW:dm?dm[1]:'',doorH:dm?dm[2]:'',price,
     description:(w&&d)?('New detached frame garage '+w+"' x "+d+"' ("+Math.round(w*d)+' sq ft)'+(roof?', '+roof.toLowerCase()+' roof':'')):'',
     contractor:GP_PERMIT_CO.name,contractorStreet:GP_PERMIT_CO.street,contractorCity:GP_PERMIT_CO.city,contractorState:GP_PERMIT_CO.state,contractorZip:GP_PERMIT_CO.zip,contractorPhone:GP_PERMIT_CO.phone,
-    contractorLicense:'',detachedWord:'Detached',X:'X',blank:''};
+    contractorLicense:'',detachedWord:'Detached',garageWord:'Garage',residentialWord:'Residential',singleFamilyWord:'Single Family',concreteWord:'Concrete',carpentryWord:'Carpentry',roofingWord:'Roofing',demoDescription:'Demolish existing detached garage',X:'X',blank:'',ownerState:city?'IL':'',cityStateZip:city?(city+', IL'+(j.zip?' '+j.zip:'')):'',contractorCSZ:'Chicago, IL 60618',contractorFull:'3050 W. Irving Park Rd., Chicago, IL 60618',ownerEmail:/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(String(j.email||'').trim())?String(j.email||'').trim():''};
 }
 function gpPermitLib(){ if(window.PDFLib) return Promise.resolve(window.PDFLib); return new Promise((ok,no)=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js';s.onload=()=>ok(window.PDFLib);s.onerror=()=>no(new Error('pdf-lib failed to load'));document.head.appendChild(s);}); }
 async function gpPermitMap(){ if(_gpPermitMap) return _gpPermitMap; const r=await fetch('permit-forms/map.json?v='+Date.now()); _gpPermitMap=await r.json(); return _gpPermitMap; }
@@ -4126,7 +4126,7 @@ function agbKeepEditable(L,pdf,form,font){ /* output must stay a fillable PDF: n
   try{ form.acroForm.dict.set(L.PDFName.of('NeedAppearances'),L.PDFBool.True); }catch(e){}
   try{ form.updateFieldAppearances(font); }catch(e){ console.warn('appearances',e); } }
 async function agbSavePdf(pdf){ try{ return await pdf.save(); }catch(e){ console.warn('save w/o appearance refresh',e); return pdf.save({updateFieldAppearances:false}); } }
-function agbFillExisting(L,form,fill,D){ (fill||[]).forEach(f=>{ const v=D[f.src]; if(!v) return; try{ const fl=form.getField(f.name); if(fl instanceof L.PDFTextField){ const mx=fl.getMaxLength(); fl.setText(mx?String(v).slice(0,mx):String(v)); } }catch(e){ console.warn('fill',f.name,e.message); } }); }
+function agbFillExisting(L,form,fill,D){ (fill||[]).forEach(f=>{ const v=D[f.src]; if(!v) return; try{ const fl=form.getField(f.name); if(fl instanceof L.PDFTextField){ const mx=fl.getMaxLength(); fl.setText(mx?String(v).slice(0,mx):String(v)); }else if(fl instanceof L.PDFCheckBox){ if(v==='X') fl.check(); } }catch(e){ console.warn('fill',f.name,e.message); } }); }
 function agbIsIOS(){ return /iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1); }
 /* iPhone: share sheet (Save to Files / Markup = typeable). Elsewhere (or if sharing is refused): normal download with a filename. Never opens a blob tab (iOS blob viewer can't type into fields). */
 async function agbDeliverPdf(bytes,name){ const b=new Blob([bytes],{type:'application/pdf'});

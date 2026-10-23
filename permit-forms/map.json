@@ -2828,7 +2828,193 @@
       "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
       "partial": false,
       "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only."
-    }
+    },
+    "supplemental": [
+      {
+        "id": "accessory-ack",
+        "label": "Detached Accessory Structure Statement of Acknowledgment",
+        "applies": "all",
+        "form_name": "Village of Arlington Heights Detached Accessory Structure Statement of Acknowledgment",
+        "pdf_url": "https://www.vah.com/Departments/Building And Life Safety/Residential Detached Accessory Structure Statement of Acknowledgment.pdf?t=202405061037040",
+        "template": "permit-forms/Arlington-Heights-accessory-ack.pdf",
+        "fill": [
+          {
+            "name": "Detached Garage",
+            "src": "X"
+          },
+          {
+            "name": "JobSite Address",
+            "src": "addressCity"
+          },
+          {
+            "name": "Print Name",
+            "src": "customer"
+          }
+        ]
+      },
+      {
+        "id": "concrete-ack",
+        "label": "Concrete / Asphalt Acknowledgment",
+        "applies": "all",
+        "form_name": "Village of Arlington Heights Concrete / Asphalt Statement of Acknowledgment",
+        "pdf_url": "https://www.vah.com/Departments/Building And Life Safety/Concrete Asphalt Acknowledgment.pdf?t=202405061027340",
+        "template": "permit-forms/Arlington-Heights-concrete-ack.pdf",
+        "fill": [
+          {
+            "name": "Job Address",
+            "src": "addressCity"
+          },
+          {
+            "name": "Print Name",
+            "src": "customer"
+          },
+          {
+            "name": "Phone Number",
+            "src": "phone"
+          }
+        ]
+      },
+      {
+        "id": "contractor-list",
+        "label": "Contractor List",
+        "applies": "all",
+        "form_name": "Village of Arlington Heights Contractor List",
+        "pdf_url": "https://www.vah.com/Departments/Building And Life Safety/Contractor List.pdf?t=202405061028010",
+        "template": "permit-forms/Arlington-Heights-contractor-list.pdf",
+        "fill": [
+          {
+            "name": "Job Address",
+            "src": "addressCity"
+          },
+          {
+            "name": "NameGeneral",
+            "src": "contractor"
+          },
+          {
+            "name": "AddressGeneral",
+            "src": "contractorFull"
+          },
+          {
+            "name": "PhoneGeneral",
+            "src": "contractorPhone"
+          },
+          {
+            "name": "NameConcrete Foundation",
+            "src": "contractor"
+          },
+          {
+            "name": "AddressConcrete Foundation",
+            "src": "contractorFull"
+          },
+          {
+            "name": "PhoneConcrete Foundation",
+            "src": "contractorPhone"
+          },
+          {
+            "name": "NameCarpenter",
+            "src": "contractor"
+          },
+          {
+            "name": "AddressCarpenter",
+            "src": "contractorFull"
+          },
+          {
+            "name": "PhoneCarpenter",
+            "src": "contractorPhone"
+          },
+          {
+            "name": "NameConcrete  Paver Flatwork",
+            "src": "contractor"
+          },
+          {
+            "name": "AddressConcrete  Paver Flatwork",
+            "src": "contractorFull"
+          },
+          {
+            "name": "PhoneConcrete  Paver Flatwork",
+            "src": "contractorPhone"
+          }
+        ]
+      },
+      {
+        "id": "fence-ack",
+        "label": "Construction / Silt Fence Acknowledgment",
+        "applies": "all",
+        "form_name": "Village of Arlington Heights Construction Fence / Silt Fence Statement of Acknowledgment",
+        "pdf_url": "https://www.vah.com/Departments/Construction Fence and Silt Fence Acknowledgment.pdf?t=202602121122280",
+        "template": "permit-forms/Arlington-Heights-fence-ack.pdf",
+        "fill": [
+          {
+            "name": "Text1",
+            "src": "addressCity"
+          },
+          {
+            "name": "Text1(1)",
+            "src": "customer"
+          },
+          {
+            "name": "Text1(2)",
+            "src": "phone"
+          }
+        ]
+      },
+      {
+        "id": "open-excavation",
+        "label": "Open Excavations / Areas of Construction Fence Acknowledgment",
+        "applies": "all",
+        "form_name": "Village of Arlington Heights Open Excavations / Areas of Construction Fence Statement of Acknowledgment",
+        "pdf_url": "https://www.vah.com/Departments/Building And Life Safety/Open Excavations or Areas of Construction Form.pdf?t=202405061031490",
+        "template": "permit-forms/Arlington-Heights-open-excavation.pdf",
+        "fill": [
+          {
+            "name": "JobSite Address",
+            "src": "addressCity"
+          },
+          {
+            "name": "Printed Name",
+            "src": "contractor"
+          },
+          {
+            "name": "Company Name",
+            "src": "contractor"
+          },
+          {
+            "name": "Company Address",
+            "src": "contractorFull"
+          },
+          {
+            "name": "Company Phone Number",
+            "src": "contractorPhone"
+          }
+        ]
+      },
+      {
+        "id": "roofing-affidavit-garage",
+        "label": "Residential Garage Roofing Affidavit",
+        "applies": "all",
+        "form_name": "Village of Arlington Heights Residential Garage Roofing Inspection Affidavit",
+        "pdf_url": "https://www.vah.com/Departments/Building And Life Safety/Roofing Affidavit Garage.pdf?t=202405061041490",
+        "template": "permit-forms/Arlington-Heights-roofing-affidavit-garage.pdf",
+        "fill": [
+          {
+            "name": "Roofing Contractor 1",
+            "src": "contractor"
+          },
+          {
+            "name": "Roofing Contractor 2",
+            "src": "contractorFull"
+          },
+          {
+            "name": "The residential garage roofing project at",
+            "src": "addressCity"
+          },
+          {
+            "name": "Permit HolderApplicant",
+            "src": "contractor"
+          }
+        ]
+      }
+    ]
   },
   "Evergreen Park": {
     "form_type": "detached_garage",
@@ -3799,7 +3985,35 @@
       "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
       "partial": false,
       "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only."
-    }
+    },
+    "supplemental": [
+      {
+        "id": "zoning-worksheet",
+        "label": "Zoning Information Worksheet",
+        "applies": "all",
+        "form_name": "Village of Skokie Single-Family Zoning Information Worksheet",
+        "pdf_url": "https://www.skokie.org/DocumentCenter/View/1740/Zoning-Information-Worksheet-PDF",
+        "template": "permit-forms/Skokie-zoning-worksheet.pdf",
+        "fill": [
+          {
+            "name": "ZONING DISTRICT",
+            "src": "addressCity"
+          },
+          {
+            "name": "undefined_15",
+            "src": "sqft"
+          },
+          {
+            "name": "E",
+            "src": "sqft"
+          },
+          {
+            "name": "proposed buildings in rear yard",
+            "src": "sqft"
+          }
+        ]
+      }
+    ]
   },
   "Joliet": {
     "form_type": "detached_garage",
@@ -9564,7 +9778,59 @@
       "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
       "partial": false,
       "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only."
-    }
+    },
+    "supplemental": [
+      {
+        "id": "gc-listing",
+        "label": "General Contractor & Subcontractor Listing",
+        "applies": "all",
+        "form_name": "Village of Berkeley General Contractor & Subcontractor Listing",
+        "pdf_url": "https://www.berkeley.il.us/vertical/Sites/%7BB4877CC9-5533-47FA-94DE-B3C09F1665AB%7D/uploads/Contractor_License_Application_Fillable_2023.pdf",
+        "template": "permit-forms/Berkeley-gc-listing.pdf",
+        "fill": [
+          {
+            "name": "Type of Work",
+            "src": "description"
+          },
+          {
+            "name": "Address of Construction",
+            "src": "addressCity"
+          },
+          {
+            "name": "Name of Owner",
+            "src": "customer"
+          },
+          {
+            "name": "Phone number",
+            "src": "phone"
+          },
+          {
+            "name": "Company Name",
+            "src": "contractor"
+          },
+          {
+            "name": "Address",
+            "src": "contractorFull"
+          },
+          {
+            "name": "Phone",
+            "src": "contractorPhone"
+          },
+          {
+            "name": "Company Name_8",
+            "src": "contractor"
+          },
+          {
+            "name": "Address_8",
+            "src": "contractorFull"
+          },
+          {
+            "name": "Phone_8",
+            "src": "contractorPhone"
+          }
+        ]
+      }
+    ]
   },
   "Berwyn": {
     "form_type": "detached_garage",
@@ -12648,8 +12914,57 @@
       "prefill_fields": 25
     },
     "electrical": {
-      "required": "included in building permit",
-      "note": "building application lists 'ELECTRICAL WORK' (contractor/work line); no separate electrical application required by the form"
+      "required": "separate",
+      "form_name": "Village of Bridgeview Electrical Permit Application",
+      "pdf_url": "https://bridgeview-il.gov/wp-content/uploads/2024/10/Electrical-Work-Permit_2024_Interactive.pdf",
+      "template": "permit-forms/Bridgeview-electrical.pdf",
+      "fill": [
+        {
+          "name": "Address",
+          "src": "address"
+        },
+        {
+          "name": "Owner Or User",
+          "src": "customer"
+        },
+        {
+          "name": "Worked Performed Address",
+          "src": "address"
+        },
+        {
+          "name": "City",
+          "src": "city"
+        },
+        {
+          "name": "State",
+          "src": "ownerState"
+        },
+        {
+          "name": "Zip Code",
+          "src": "zip"
+        },
+        {
+          "name": "Email",
+          "src": "ownerEmail"
+        },
+        {
+          "name": "Wiring check box",
+          "src": "X"
+        },
+        {
+          "name": "fixtures check box",
+          "src": "X"
+        },
+        {
+          "name": "Other_Line 1",
+          "src": "description"
+        },
+        {
+          "name": "Contract Job Amount",
+          "src": "price"
+        }
+      ],
+      "note": "Separate Electrical Permit Application; supervising electrician & license fields left blank."
     },
     "demolition": {
       "required": "included in building permit",
@@ -12664,7 +12979,103 @@
       "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
       "partial": false,
       "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only."
-    }
+    },
+    "supplemental": [
+      {
+        "id": "bldg-zoning",
+        "label": "Building and Zoning Permit Application",
+        "applies": "all",
+        "form_name": "Village of Bridgeview Building and Zoning Permit Application",
+        "pdf_url": "https://bridgeview-il.gov/wp-content/uploads/2024/10/Building-and-Zoning-Permit_2024_Interactive.pdf",
+        "template": "permit-forms/Bridgeview-bldg-zoning.pdf",
+        "fill": [
+          {
+            "name": "Building Address",
+            "src": "address"
+          },
+          {
+            "name": "PIN Number",
+            "src": "pin"
+          },
+          {
+            "name": "Estimated Valuation",
+            "src": "price"
+          },
+          {
+            "name": "Owner_Name",
+            "src": "customer"
+          },
+          {
+            "name": "Owner_Phone_Number",
+            "src": "phone"
+          },
+          {
+            "name": "Owner_Mailing_Address",
+            "src": "address"
+          },
+          {
+            "name": "Owner_City",
+            "src": "city"
+          },
+          {
+            "name": "Owner_State",
+            "src": "ownerState"
+          },
+          {
+            "name": "Owner_ZipCode",
+            "src": "zip"
+          },
+          {
+            "name": "Owner Information",
+            "src": "ownerEmail"
+          },
+          {
+            "name": "Contractor_Name",
+            "src": "contractor"
+          },
+          {
+            "name": "Contractor_PhoneNumber",
+            "src": "contractorPhone"
+          },
+          {
+            "name": "Contractor_Mailing_Address",
+            "src": "contractorStreet"
+          },
+          {
+            "name": "Contractor_City",
+            "src": "contractorCity"
+          },
+          {
+            "name": "Contractor_State",
+            "src": "contractorState"
+          },
+          {
+            "name": "Contractor_ZipCode",
+            "src": "contractorZip"
+          },
+          {
+            "name": "Scope of Work",
+            "src": "description"
+          },
+          {
+            "name": "New Checkbox",
+            "src": "X"
+          },
+          {
+            "name": "Use of Building",
+            "src": "detachedWord"
+          },
+          {
+            "name": "Size of Building",
+            "src": "dims"
+          },
+          {
+            "name": "Owner",
+            "src": "customer"
+          }
+        ]
+      }
+    ]
   },
   "Broadview": {
     "form_type": "building_permit",
@@ -14358,7 +14769,133 @@
       "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
       "partial": false,
       "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only."
-    }
+    },
+    "demolition": {
+      "required": "separate",
+      "form_name": "City of Burbank Demolition / Building Permit Application",
+      "pdf_url": "https://www.burbankil.gov/DocumentCenter/View/296/New-ConstructionDemo-Permit",
+      "template": "permit-forms/Burbank-demo.pdf",
+      "fill": [
+        {
+          "name": "Text Field 44",
+          "src": "addressCity"
+        },
+        {
+          "name": "Text Field 29",
+          "src": "price"
+        },
+        {
+          "name": "Text Field 49",
+          "src": "detachedWord"
+        },
+        {
+          "name": "Text Field 51",
+          "src": "sqft"
+        },
+        {
+          "name": "Text Field 52",
+          "src": "sqft"
+        },
+        {
+          "name": "Text Field 59",
+          "src": "customer"
+        },
+        {
+          "name": "Text Field 60",
+          "src": "address"
+        },
+        {
+          "name": "City Zip 1",
+          "src": "cityStateZip"
+        },
+        {
+          "name": "Text Field 64",
+          "src": "contractor"
+        },
+        {
+          "name": "Text Field 65",
+          "src": "contractorStreet"
+        },
+        {
+          "name": "City Zip 2",
+          "src": "contractorCSZ"
+        },
+        {
+          "name": "Text Field 66",
+          "src": "contractor"
+        },
+        {
+          "name": "Text Field 68",
+          "src": "contractorFull"
+        },
+        {
+          "name": "Text Field 69",
+          "src": "contractorPhone"
+        },
+        {
+          "name": "Architectural and Special Provisions 1",
+          "src": "demoDescription"
+        },
+        {
+          "name": "Text Field 1011",
+          "src": "contractor"
+        }
+      ],
+      "checks": [
+        {
+          "name": "chk_demolish",
+          "page": 0,
+          "rect": [
+            320,
+            84,
+            329,
+            93
+          ],
+          "on": true
+        }
+      ],
+      "note": "Demolition Permit Application (DEMOLISH checked); GC license left blank."
+    },
+    "supplemental": [
+      {
+        "id": "driveway",
+        "label": "Residential Driveway Permit Application",
+        "applies": "all",
+        "form_name": "City of Burbank Residential Driveway Detail & Permit Application",
+        "pdf_url": "https://www.burbankil.gov/DocumentCenter/View/283/Driveway-Permit",
+        "template": "permit-forms/Burbank-driveway.pdf",
+        "fill": [
+          {
+            "name": "Text1",
+            "src": "customer"
+          },
+          {
+            "name": "Text2",
+            "src": "addressCity"
+          },
+          {
+            "name": "Text4",
+            "src": "customer"
+          },
+          {
+            "name": "Text5",
+            "src": "contractor"
+          },
+          {
+            "name": "Text6",
+            "src": "contractorFull"
+          },
+          {
+            "name": "Text7",
+            "src": "contractorPhone"
+          },
+          {
+            "name": "Text8",
+            "src": "phone"
+          }
+        ]
+      }
+    ]
   },
   "Burnham": {
     "form_type": "link_only",
@@ -19836,8 +20373,41 @@
       "prefill_fields": 13
     },
     "electrical": {
-      "required": "included in building permit",
-      "note": "building application lists 'Electrician' (contractor/work line); no separate electrical application required by the form"
+      "required": "separate",
+      "form_name": "City of Countryside Electrical Permit Application",
+      "pdf_url": "https://countryside-il.org/government/city_clerk_s_office/Documents/Government/City Clerks Office/Clerk Forms and Permits/Community Development Department/Application - Electrical.pdf?t=202607080735280",
+      "template": "permit-forms/Countryside-electrical.pdf",
+      "fill": [
+        {
+          "name": "Single Family",
+          "src": "X"
+        },
+        {
+          "name": "Property Owner",
+          "src": "customer"
+        },
+        {
+          "name": "Owner Phone",
+          "src": "phone"
+        },
+        {
+          "name": "Countryside Project Address",
+          "src": "address"
+        },
+        {
+          "name": "Describe Work Being Done 1",
+          "src": "description"
+        },
+        {
+          "name": "Total Cost of Work",
+          "src": "price"
+        },
+        {
+          "name": "New",
+          "src": "X"
+        }
+      ],
+      "note": "Separate Electrical Permit Application; electrical contractor & registration fields left blank."
     },
     "demolition": {
       "required": "included in building permit",
@@ -19852,7 +20422,101 @@
       "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
       "partial": false,
       "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only."
-    }
+    },
+    "supplemental": [
+      {
+        "id": "homeowner-affidavit",
+        "label": "Homeowner Contractor Affidavit",
+        "applies": "all",
+        "form_name": "City of Countryside Homeowner Contractor Affidavit",
+        "pdf_url": "https://countryside-il.org/government/city_clerk_s_office/Documents/Government/City Clerks Office/Clerk Forms and Permits/Community Development Department/Application - Homeowner Affidavit.pdf?t=202607080735510",
+        "template": "permit-forms/Countryside-homeowner-affidavit.pdf",
+        "fill": [
+          {
+            "name": "HOMEOWNER NAME",
+            "src": "customer"
+          },
+          {
+            "name": "PROPERTYADDRESS",
+            "src": "address"
+          }
+        ]
+      },
+      {
+        "id": "subcontractor",
+        "label": "Subcontractor List",
+        "applies": "all",
+        "form_name": "City of Countryside Subcontractor List",
+        "pdf_url": "https://countryside-il.org/government/city_clerk_s_office/Documents/Government/City Clerks Office/Clerk Forms and Permits/Community Development Department/Application - Contractors Subcontractor Add-On.pdf?t=202607080735250",
+        "template": "permit-forms/Countryside-subcontractor.pdf",
+        "fill": [
+          {
+            "name": "Job Address",
+            "src": "addressCity"
+          },
+          {
+            "name": "General Contractor",
+            "src": "contractor"
+          },
+          {
+            "name": "p3",
+            "src": "contractorPhone"
+          },
+          {
+            "name": "General Contractor_2",
+            "src": "contractorFull"
+          },
+          {
+            "name": "Carpentry  Decks",
+            "src": "contractor"
+          },
+          {
+            "name": "p15",
+            "src": "contractorPhone"
+          },
+          {
+            "name": "cd2",
+            "src": "contractorFull"
+          },
+          {
+            "name": "Concrete",
+            "src": "contractor"
+          },
+          {
+            "name": "p17",
+            "src": "contractorPhone"
+          },
+          {
+            "name": "con2",
+            "src": "contractorFull"
+          },
+          {
+            "name": "Masonry",
+            "src": "contractor"
+          },
+          {
+            "name": "p23",
+            "src": "contractorPhone"
+          },
+          {
+            "name": "Masonry_2",
+            "src": "contractorFull"
+          },
+          {
+            "name": "Siding",
+            "src": "contractor"
+          },
+          {
+            "name": "p27",
+            "src": "contractorPhone"
+          },
+          {
+            "name": "Siding_2",
+            "src": "contractorFull"
+          }
+        ]
+      }
+    ]
   },
   "Crest Hill": {
     "form_type": "link_only",
@@ -21820,7 +22484,167 @@
     "link_url": "https://cvportal.downers.us/Permit/Application",
     "link_type": "portal",
     "link_note": "CityView: Apply for a Building or Fire Permit (login first)",
-    "link_checked": "2026-10-17"
+    "link_checked": "2026-10-17",
+    "supplemental": [
+      {
+        "id": "contractor-list",
+        "label": "Contractor List",
+        "applies": "all",
+        "form_name": "Village of Downers Grove Contractor List",
+        "pdf_url": "https://www.downers.us/corecode/uploads/document6/uploaded_pdfs/corecode/ContractorList_12.pdf",
+        "template": "permit-forms/Downers-Grove-contractor-list.pdf",
+        "fill": [
+          {
+            "name": "Address of Project Site",
+            "src": "addressCity"
+          },
+          {
+            "name": "Name",
+            "src": "contractor"
+          },
+          {
+            "name": "Phone",
+            "src": "contractorPhone"
+          },
+          {
+            "name": "Address",
+            "src": "contractorStreet"
+          },
+          {
+            "name": "City",
+            "src": "contractorCity"
+          },
+          {
+            "name": "State",
+            "src": "contractorState"
+          },
+          {
+            "name": "Zip",
+            "src": "contractorZip"
+          },
+          {
+            "name": "Name_4",
+            "src": "contractor"
+          },
+          {
+            "name": "Phone_4",
+            "src": "contractorPhone"
+          },
+          {
+            "name": "Address_4",
+            "src": "contractorStreet"
+          },
+          {
+            "name": "City_4",
+            "src": "contractorCity"
+          },
+          {
+            "name": "State_4",
+            "src": "contractorState"
+          },
+          {
+            "name": "Zip_4",
+            "src": "contractorZip"
+          },
+          {
+            "name": "Name_7",
+            "src": "contractor"
+          },
+          {
+            "name": "Phone_7",
+            "src": "contractorPhone"
+          },
+          {
+            "name": "Address_7",
+            "src": "contractorStreet"
+          },
+          {
+            "name": "City_7",
+            "src": "contractorCity"
+          },
+          {
+            "name": "State_7",
+            "src": "contractorState"
+          },
+          {
+            "name": "Zip_7",
+            "src": "contractorZip"
+          }
+        ]
+      },
+      {
+        "id": "owner-auth",
+        "label": "Property Owner Authorization",
+        "applies": "all",
+        "form_name": "Village of Downers Grove Property Owner Authorization Form",
+        "pdf_url": "https://www.downers.us/corecode/uploads/document6/uploaded_pdfs/corecode/OwnerAuthorization_55.pdf",
+        "template": "permit-forms/Downers-Grove-owner-auth.pdf",
+        "fill": [
+          {
+            "name": "Address of Project Site",
+            "src": "addressCity"
+          },
+          {
+            "name": "ProjectActivity Description for the permit application 1",
+            "src": "description"
+          },
+          {
+            "name": "Property Owner Printed Name",
+            "src": "customer"
+          },
+          {
+            "name": "Property Owners Email Address",
+            "src": "ownerEmail"
+          }
+        ]
+      }
+    ],
+    "demolition": {
+      "required": "separate",
+      "form_name": "Village of Downers Grove Demolition Submittal Checklist & Permit Form",
+      "pdf_url": "https://www.downers.us/corecode/uploads/document6/uploaded_pdfs/corecode/SiteMgt_DemoConstructionChecklist_17.pdf",
+      "template": "permit-forms/Downers-Grove-demo-checklist.pdf",
+      "fill": [
+        {
+          "name": "Address of Project Site",
+          "src": "addressCity"
+        },
+        {
+          "name": "Detached garage",
+          "src": "X"
+        },
+        {
+          "name": "Name",
+          "src": "contractor"
+        },
+        {
+          "name": "Cell Phone",
+          "src": "contractorPhone"
+        },
+        {
+          "name": "Address",
+          "src": "contractorFull"
+        }
+      ],
+      "note": "Demolition Submittal Checklist (Detached garage ticked); GC license left blank."
+    },
+    "electrical": {
+      "required": "separate",
+      "form_name": "Village of Downers Grove Residential Electrical Worksheet",
+      "pdf_url": "https://www.downers.us/corecode/uploads/document6/uploaded_pdfs/corecode/ElectricalApplication_13.pdf",
+      "template": "permit-forms/Downers-Grove-electrical.pdf",
+      "fill": [
+        {
+          "name": "Address of Project Site",
+          "src": "addressCity"
+        },
+        {
+          "name": "Type",
+          "src": "garageWord"
+        }
+      ],
+      "note": "Residential Electrical Worksheet; load/circuit counts and electrician details left blank."
+    }
   },
   "East Dundee": {
     "form_type": "building_permit",
@@ -22374,7 +23198,43 @@
       "required": "unknown",
       "portal_url": "https://cityofelmhurstil-energovweb.tylerhost.net/apps/selfservice#/applicationAssistant",
       "note": "Hook: demo via CSSP; garage handout is scanned - confirm whether demo is a separate type"
-    }
+    },
+    "supplemental": [
+      {
+        "id": "homeowner-affidavit",
+        "label": "Homeowner Building Permit Affidavit",
+        "applies": "all",
+        "form_name": "City of Elmhurst Homeowner Building Permit Affidavit",
+        "pdf_url": "https://www.elmhurst.org/Document Center/Services/Community Development/Permits & Forms/Residential Forms/HOMEOWNER AFFIDAVIT 2023 FILLABLE.pdf?t=202402081350400",
+        "template": "permit-forms/Elmhurst-homeowner-affidavit.pdf",
+        "fill": [
+          {
+            "name": "JOB ADDRESS",
+            "src": "addressCity"
+          },
+          {
+            "name": "OWNER ADDRESS",
+            "src": "addressCity"
+          },
+          {
+            "name": "OWNER PHONE",
+            "src": "phone"
+          },
+          {
+            "name": "EMAIL",
+            "src": "ownerEmail"
+          },
+          {
+            "name": "ALL PERMITTED WORK WITH THE EXCEPTION OF",
+            "src": "description"
+          },
+          {
+            "name": "PRINTED NAME OF HOMEOWNER",
+            "src": "customer"
+          }
+        ]
+      }
+    ]
   },
   "Elwood": {
     "form_type": "link_only",
@@ -24545,7 +25405,27 @@
     "demolition": {
       "required": "included in building permit",
       "note": "building application lists 'DEMOLITION' as a work type"
-    }
+    },
+    "supplemental": [
+      {
+        "id": "bond-waiver",
+        "label": "Property Owner Bond Waiver",
+        "applies": "all",
+        "form_name": "Village of Fox Lake Property Owner Cash Bond Waiver",
+        "pdf_url": "https://www.foxlake.org/DocumentCenter/View/3164/Bond-Waiver-Application",
+        "template": "permit-forms/Fox-Lake-bond-waiver.pdf",
+        "fill": [
+          {
+            "name": "SUBJECT ADDRESS",
+            "src": "addressCity"
+          },
+          {
+            "name": "PRINT NAME",
+            "src": "customer"
+          }
+        ]
+      }
+    ]
   },
   "Fox River Grove": {
     "form_type": "link_only",
@@ -26353,8 +27233,49 @@
       "prefill_fields": 10
     },
     "electrical": {
-      "required": "included in building permit",
-      "note": "building application lists 'ELECTRICAL' (contractor/work line); no separate electrical application required by the form"
+      "required": "separate",
+      "form_name": "Village of Franklin Park Electrical Permit Application",
+      "pdf_url": "https://www.villageoffranklinpark.com/assets/1/19/DIS-1002_Elect_Code_Amendments.pdf",
+      "template": "permit-forms/Franklin-Park-electrical.pdf",
+      "fill": [
+        {
+          "name": "ADDRESS OF PROPERTY",
+          "src": "addressCity"
+        },
+        {
+          "name": "PROP OWNERS NAME",
+          "src": "customer"
+        },
+        {
+          "name": "PHONE NUMBER",
+          "src": "phone"
+        },
+        {
+          "name": "EMAIL",
+          "src": "ownerEmail"
+        },
+        {
+          "name": "DESCRIPTION OF WORK",
+          "src": "description"
+        },
+        {
+          "name": "JOB COST",
+          "src": "price"
+        },
+        {
+          "name": "GARAGE",
+          "src": "X"
+        },
+        {
+          "name": "NO OF SQ FT",
+          "src": "sqft"
+        },
+        {
+          "name": "OWNERS PRINTED NAME",
+          "src": "customer"
+        }
+      ],
+      "note": "Electrical Permit Application (GARAGE checked); electrical contractor & registration left blank."
     },
     "demolition": {
       "required": "included in building permit",
@@ -27161,13 +28082,199 @@
       }
     ],
     "electrical": {
-      "required": "not determined",
-      "note": "scanned application, no separate electrical application found"
+      "required": "separate",
+      "form_name": "City of Geneva Electric Service Upgrade / Electrical Permit Application",
+      "pdf_url": "https://www.geneva.il.us/DocumentCenter/View/12",
+      "template": "permit-forms/Geneva-electric-upgrade.pdf",
+      "fill": [
+        {
+          "name": "PROJECT ADDRESS",
+          "src": "addressCity"
+        },
+        {
+          "name": "Name_2",
+          "src": "customer"
+        },
+        {
+          "name": "Address_2",
+          "src": "address"
+        },
+        {
+          "name": "City 2",
+          "src": "city"
+        },
+        {
+          "name": "State 2",
+          "src": "ownerState"
+        },
+        {
+          "name": "Zip Code 2",
+          "src": "zip"
+        },
+        {
+          "name": "Email_2",
+          "src": "ownerEmail"
+        },
+        {
+          "name": "Phone_2",
+          "src": "phone"
+        },
+        {
+          "name": "Residential",
+          "src": "X"
+        },
+        {
+          "name": "Electric",
+          "src": "X"
+        },
+        {
+          "name": "Discription of Work",
+          "src": "description"
+        },
+        {
+          "name": "What is the estimated project cost",
+          "src": "price"
+        }
+      ],
+      "note": "Electrical Permit Application (Residential & Electric checked); electrician & license left blank."
     },
     "demolition": {
-      "required": "not determined",
-      "note": "no demolition line on application; check city/Cook County demolition permit"
-    }
+      "required": "separate",
+      "form_name": "City of Geneva Demolition Permit Application",
+      "pdf_url": "https://www.geneva.il.us/DocumentCenter/View/10",
+      "template": "permit-forms/Geneva-demolition.pdf",
+      "fill": [
+        {
+          "name": "PROJECT ADDRESS",
+          "src": "addressCity"
+        },
+        {
+          "name": "Name",
+          "src": "contractor"
+        },
+        {
+          "name": "Address",
+          "src": "contractorStreet"
+        },
+        {
+          "name": "City",
+          "src": "contractorCity"
+        },
+        {
+          "name": "State",
+          "src": "contractorState"
+        },
+        {
+          "name": "Zip Code",
+          "src": "contractorZip"
+        },
+        {
+          "name": "Phone",
+          "src": "contractorPhone"
+        },
+        {
+          "name": "Name_2",
+          "src": "customer"
+        },
+        {
+          "name": "Address_2",
+          "src": "address"
+        },
+        {
+          "name": "City 2",
+          "src": "city"
+        },
+        {
+          "name": "State 2",
+          "src": "ownerState"
+        },
+        {
+          "name": "Zip Code 2",
+          "src": "zip"
+        },
+        {
+          "name": "Email_2",
+          "src": "ownerEmail"
+        },
+        {
+          "name": "Phone_2",
+          "src": "phone"
+        },
+        {
+          "name": "Name_3",
+          "src": "contractor"
+        },
+        {
+          "name": "Address_3",
+          "src": "contractorStreet"
+        },
+        {
+          "name": "City 3",
+          "src": "contractorCity"
+        },
+        {
+          "name": "State 3",
+          "src": "contractorState"
+        },
+        {
+          "name": "Zip Code 3",
+          "src": "contractorZip"
+        },
+        {
+          "name": "Phone_3",
+          "src": "contractorPhone"
+        },
+        {
+          "name": "Residential",
+          "src": "X"
+        },
+        {
+          "name": "Demolition",
+          "src": "X"
+        },
+        {
+          "name": "Discription of Work",
+          "src": "demoDescription"
+        },
+        {
+          "name": "What is the estimated project cost",
+          "src": "price"
+        }
+      ],
+      "note": "Demolition Permit Application (Residential & Demolition checked); GC license left blank."
+    },
+    "supplemental": [
+      {
+        "id": "tree-removal",
+        "label": "Tree Removal Permit Application",
+        "applies": "all",
+        "form_name": "City of Geneva Tree Removal Permit Application",
+        "pdf_url": "https://www.geneva.il.us/DocumentCenter/View/3370",
+        "template": "permit-forms/Geneva-tree-removal.pdf",
+        "fill": [
+          {
+            "name": "Project Address",
+            "src": "addressCity"
+          },
+          {
+            "name": "Property Owners Name",
+            "src": "customer"
+          },
+          {
+            "name": "Property Owners Address 1",
+            "src": "addressCity"
+          },
+          {
+            "name": "Property Owners Phone",
+            "src": "phone"
+          },
+          {
+            "name": "Property Owners Email",
+            "src": "ownerEmail"
+          }
+        ]
+      }
+    ]
   },
   "Glen Ellyn": {
     "form_type": "link_only",
@@ -29985,8 +31092,97 @@
       "note": "building application lists 'Electrical' (contractor/work line); no separate electrical application required by the form"
     },
     "demolition": {
-      "required": "included in building permit",
-      "note": "building application lists 'Demolition' as a work type"
+      "required": "separate",
+      "form_name": "Village of Niles Demolition Information Packet & Neighbor Notification Form",
+      "pdf_url": "https://www.vniles.com/DocumentCenter/View/73",
+      "template": "permit-forms/Niles-demo-info.pdf",
+      "fields": [
+        {
+          "name": "demo_date",
+          "page": 2,
+          "rect": [
+            96,
+            234,
+            220,
+            248
+          ],
+          "src": "blank",
+          "size": 9
+        },
+        {
+          "name": "demo_prop_addr",
+          "page": 2,
+          "rect": [
+            229,
+            276,
+            412,
+            290
+          ],
+          "src": "address",
+          "size": 9
+        },
+        {
+          "name": "demo_site_addr",
+          "page": 2,
+          "rect": [
+            345,
+            372,
+            480,
+            386
+          ],
+          "src": "address",
+          "size": 9
+        },
+        {
+          "name": "demo_app_name",
+          "page": 2,
+          "rect": [
+            171,
+            460,
+            352,
+            474
+          ],
+          "src": "contractor",
+          "size": 9
+        },
+        {
+          "name": "demo_app_addr1",
+          "page": 2,
+          "rect": [
+            171,
+            474,
+            352,
+            487
+          ],
+          "src": "contractorStreet",
+          "size": 9
+        },
+        {
+          "name": "demo_app_addr2",
+          "page": 2,
+          "rect": [
+            171,
+            488,
+            352,
+            501
+          ],
+          "src": "contractorCSZ",
+          "size": 9
+        },
+        {
+          "name": "demo_app_phone",
+          "page": 2,
+          "rect": [
+            171,
+            515,
+            352,
+            529
+          ],
+          "src": "contractorPhone",
+          "size": 9
+        }
+      ],
+      "note": "Demolition Information Packet (checklist widgets on p. 2 editable; neighbor notification form on p. 3 prefilled)."
     },
     "cook_county": {
       "type": "demolition",
@@ -31022,6 +32218,66 @@
       "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
       "partial": false,
       "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only."
-    }
+    },
+    "supplemental": [
+      {
+        "id": "affidavit",
+        "label": "Affidavit for Building Permit (Owner Authorization)",
+        "applies": "all",
+        "form_name": "Village of Wheeling Affidavit for Building Permit",
+        "pdf_url": "https://www.wheelingil.gov/DocumentCenter/View/129/Affidavit-for-Building-Permit-PDF",
+        "template": "permit-forms/Wheeling-affidavit.pdf",
+        "fill": [
+          {
+            "name": "Name of Agent Applying for the Permit",
+            "src": "contractor"
+          },
+          {
+            "name": "construction of",
+            "src": "description"
+          },
+          {
+            "name": "upon the following property",
+            "src": "addressCity"
+          },
+          {
+            "name": "Applicant",
+            "src": "contractor"
+          },
+          {
+            "name": "Address",
+            "src": "contractorStreet"
+          },
+          {
+            "name": "undefined",
+            "src": "contractorCSZ"
+          },
+          {
+            "name": "Phone",
+            "src": "contractorPhone"
+          },
+          {
+            "name": "Property Owner",
+            "src": "customer"
+          },
+          {
+            "name": "Address_2",
+            "src": "address"
+          },
+          {
+            "name": "undefined_2",
+            "src": "cityStateZip"
+          },
+          {
+            "name": "Phone_2",
+            "src": "phone"
+          },
+          {
+            "name": "Name of Property Owner",
+            "src": "customer"
+          }
+        ]
+      }
+    ]
   }
 }

@@ -4278,7 +4278,7 @@ async function gpAddImagePage(pdf,L,bytes,isPng,label){ const im=isPng?await pdf
   const s=Math.min((W-48)/im.width,(H-64)/im.height); p.drawImage(im,{x:(W-im.width*s)/2,y:24+(H-64-im.height*s)/2,width:im.width*s,height:im.height*s});
   const f=await pdf.embedFont(L.StandardFonts.Helvetica); p.drawText(label.slice(0,110),{x:24,y:H-24,size:9,font:f}); }
 async function gpAppendAttachments(bytes){
-  const L=await gpPermitLib(), ctx=await gpPermitCtx(true), pdf=await L.PDFDocument.load(bytes), log=[], miss=[], base=pdf.getPageCount();
+  const L=await gpPermitLib(), ctx=await gpPermitCtx(true), pdf=await L.PDFDocument.load(bytes,{ignoreEncryption:true}), log=[], miss=[], base=pdf.getPageCount();
   const city=gpPermitCity(), r=gpReqEntry(city);
   if(r){ r.list.forEach(it=>{ const ap=it.conditional?gpCondApplies(it.conditional,ctx):true; if(ap&&gpItemStatus(it.item,ctx,false)==='missing') miss.push('MISSING: '+it.item); }); }
   if(!ctx.door) miss.push('MISSING: Door size blank — fill in'); if(!ctx.price) miss.push('MISSING: Sold price not found — value/cost fields left blank');

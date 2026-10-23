@@ -765,6 +765,11 @@ body.bg-zinc-950{
                     <div class="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
                     <span class="text-yellow-400 font-medium">LIVE CALCULATOR</span>
                 </div>
+                <button type="button" onclick="openRepairEstimatorFromHere()"
+                        class="flex items-center gap-x-2 px-4 py-2 text-xs font-semibold bg-amber-950/80 hover:bg-amber-900/90 text-amber-200 transition-colors rounded-2xl border border-amber-700/70">
+                    <i class="fa-solid fa-screwdriver-wrench text-xs"></i>
+                    <span>REPAIR ESTIMATOR</span>
+                </button>
                 <button type="button" onclick="startNewEstimate()"
                         class="flex items-center gap-x-2 px-4 py-2 text-xs font-semibold bg-zinc-900 hover:bg-zinc-800 transition-colors rounded-2xl border border-zinc-800">
                     <i class="fa-solid fa-file-circle-plus text-xs"></i>
@@ -5425,6 +5430,12 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                 if(!e)return alert(window._agbOffline
                     ? 'Offline — the saved estimate could not be loaded because the database is unavailable. Reconnect and reload this page.'
                     : 'Could not load the saved estimate for editing. Please return to Estimate History and click Edit again.');
+                const snapCheck=e.estimate_snapshot||{};
+                if(snapCheck.estimate_type==='repair' || snapCheck.app==='repair.html' || snapCheck.repair_state || /^REPAIR\b/i.test(String(e.garage_size||''))){
+                    const jid=new URLSearchParams(location.search).get('jobId');
+                    window.location.replace('repair.html?editRepair='+encodeURIComponent(id)+(jid?'&jobId='+encodeURIComponent(jid):'')+'&v='+Date.now());
+                    return;
+                }
                 setBoundEstimateIdentity(e.customer||'', e.address||'');
                 const s=e.estimate_snapshot||{};
                 if(s.sheet_presentation && typeof s.sheet_presentation==='object'){
@@ -10934,6 +10945,39 @@ document.addEventListener('click', function(e){
         await loadEstimateForEditing();
         try{ applyJobLinkFromUrl(); }catch(e){}
     },250));
+        function openRepairEstimatorFromHere(){
+            try{
+                const q=new URLSearchParams(location.search);
+                const jobId=q.get('jobId')||'';
+                const cname=(document.getElementById('customerName')?.value||'').trim();
+                const caddr=(document.getElementById('customerAddress')?.value||'').trim();
+                const ccity=(document.getElementById('city')?.value||'').trim();
+                const cphone=((document.getElementById('customerPhone1')||document.getElementById('customerPhone'))?.value||'').trim();
+                const cemail=(document.getElementById('customerEmail')?.value||'').trim();
+                const sales=(document.getElementById('salesman')?.value||'').trim();
+                const wSel=document.getElementById('width')?.value||'20';
+                const dSel=document.getElementById('depth')?.value||'20';
+                const w=wSel==='custom'?(document.getElementById('customWidth')?.value||'20'):wSel;
+                const d=dSel==='custom'?(document.getElementById('customDepth')?.value||'20'):dSel;
+                const roof=(document.getElementById('roofType')?.value||'hip').trim();
+                const ho={jobId,customer:cname,address:caddr,city:ccity,phone:cphone,email:cemail,sales,width:w,depth:d,size:w+'x'+d,roof};
+                try{ sessionStorage.setItem('agb_estimator_to_repair_handoff', JSON.stringify(ho)); }catch(_){}
+                const p=new URLSearchParams();
+                if(jobId) p.set('jobId', jobId);
+                if(cname) p.set('customer', cname);
+                if(caddr) p.set('address', caddr);
+                if(ccity) p.set('city', ccity);
+                if(cphone) p.set('phone', cphone);
+                if(cemail) p.set('email', cemail);
+                if(sales) p.set('sales', sales);
+                if(w&&d) p.set('size', w+'x'+d);
+                if(roof) p.set('roof', roof);
+                p.set('v', Date.now());
+                window.location.href='repair.html?'+p.toString();
+            }catch(e){
+                window.location.href='repair.html?v='+Date.now();
+            }
+        }
         function applyJobLinkFromUrl(){
             const q=new URLSearchParams(location.search);
             const jobId=q.get('jobId');
@@ -10943,14 +10987,25 @@ document.addEventListener('click', function(e){
             const addr=q.get('address');
             const city=q.get('city');
             const phone=q.get('phone');
+            const email=q.get('email');
+            const sales=q.get('sales');
+            const roof=q.get('roof');
             const size=q.get('size');
-            if(name && !document.getElementById('customerName')?.value) setEstimatorField('customerName', name);
-            if(addr && !document.getElementById('customerAddress')?.value) setEstimatorField('customerAddress', addr);
-            if(city) setEstimatorField('city', city);
+            if(name) setEstimatorField('customerName', name);
+            if(addr) setEstimatorField('customerAddress', addr);
+            if(city){
+                const cSel=document.getElementById('city');
+                const cleanCity=String(city).replace(/,?\s*IL\b.*$/i,'').replace(/\s+\d{5}.*$/,'').trim().toLowerCase();
+                const matchOpt=cSel && Array.from(cSel.options||[]).find(o=>o.value.toLowerCase()===cleanCity || o.textContent.toLowerCase().startsWith(cleanCity));
+                setEstimatorField('city', matchOpt ? matchOpt.value : city);
+            }
             if(phone){
                 const p1=document.getElementById('customerPhone1')||document.getElementById('customerPhone');
-                if(p1 && !p1.value) setEstimatorField(p1.id, phone);
+                if(p1) setEstimatorField(p1.id, phone);
             }
+            if(email && document.getElementById('customerEmail')) setEstimatorField('customerEmail', email);
+            if(sales && document.getElementById('salesman')) setEstimatorField('salesman', sales.toLowerCase());
+            if(roof && document.getElementById('roofType')) setEstimatorField('roofType', /gable/i.test(roof)?'gable':'hip');
             if(size && !q.get('editEstimate')){
                 // Accept "24x20", "24 x 20", "24' x 20'" (the old pattern missed plain "24x20")
                 const m=String(size).match(/([0-9.]+)\D*?[x×]\D*([0-9.]+)/i);

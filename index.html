@@ -632,7 +632,7 @@ function jobQs(j){
   if(j.garage_size) p.set('size', j.garage_size);
   if(j.salesman_username) p.set('sales', j.salesman_username);
   try{ const rf=roofOf(j); if(rf) p.set('roof', rf); }catch(e){}
-  try{ const e=latestEstimateForJob(j); if(e){ p.set('estId', e.id); if(e.roof_type && !p.get('roof')) p.set('roof', e.roof_type); if(e.wall_height) p.set('wall', e.wall_height); if(!j.garage_size && e.garage_size && !/^REPAIR/i.test(e.garage_size)) p.set('size', e.garage_size); } }catch(e){}
+  try{ const e=latestEstimateForJob(j); if(e){ p.set('estId', e.id); if(e.roof_type && !p.get('roof')) p.set('roof', e.roof_type); if(e.wall_height) p.set('wall', e.wall_height); if(!j.garage_size && e.garage_size) p.set('size', String(e.garage_size).replace(/^REPAIR\s*/i,'')); } }catch(e){}
   p.set('v', Date.now());
   return p.toString();
 }
@@ -658,9 +658,10 @@ function openJobEstimator(id){
   const j=jobs.find(x=>x.id===id); if(!j) return;
   recordRecentJob(j.id);
   const list=estimatesForJob(j).map(e=>({e,why:estimateMatchReason(j,e)}));
+  const targetApp=/^repair$/i.test(String(j.type||''))?'repair.html':'estimator.html';
   if(list.length===1) return openEstimateSheet(list[0].e.id,j.id);
-  if(!list.length) return void(window.location.href='estimator.html?'+jobQs(j));
-  showEstimatePicker('Saved estimates — '+(j.customer||''),list,j.id,'estimator.html?'+jobQs(j));
+  if(!list.length) return void(window.location.href=targetApp+'?'+jobQs(j));
+  showEstimatePicker('Saved estimates — '+(j.customer||''),list,j.id,targetApp+'?'+jobQs(j));
 }
 function openJobDrawing(id){
   const j=jobs.find(x=>x.id===id); if(!j) return;
@@ -2372,7 +2373,7 @@ function historyFrameAutosave(frame, viewer){
  const id=frame.dataset.estimateId||window._lastEstimateHistoryId; const slot=frame.dataset.optionSlot||null; if(!id) return;
  let t=null, running=false, pending=false;
  const pill=(msg,kind)=>{ let p=d.getElementById('sheetAutoPill'); if(!p){ p=d.createElement('div'); p.id='sheetAutoPill'; p.className='no-print'; p.style.cssText='position:fixed;right:12px;bottom:12px;z-index:9999;padding:5px 10px;border-radius:999px;font:600 12px Arial,sans-serif;background:rgba(24,24,27,.85)'; d.body.appendChild(p); } p.textContent=msg; p.style.color=kind==='ok'?'#86efac':kind==='err'?'#fca5a5':'#e4e4e7'; p.style.cursor=kind==='err'?'pointer':'default'; p.onclick=kind==='err'?()=>run():null; };
- const capture=()=>{ const keep=['sheetAutoPill','sheetSaveBanner'].map(x=>d.getElementById(x)).filter(Boolean); keep.forEach(x=>x.remove()); const ed=d.body.classList.contains('sheet-editing'); if(ed) d.body.classList.remove('sheet-editing'); const h='<!DOCTYPE html>\n'+d.documentElement.outerHTML; if(ed) d.body.classList.add('sheet-editing'); keep.forEach(x=>d.body.appendChild(x)); return h; };
+ const capture=()=>{ const keep=['sheetAutoPill','sheetSaveBanner'].map(x=>d.getElementById(x)).filter(Boolean); keep.forEach(x=>x.remove()); const ed=d.body.classList.contains('sheet-editing'); if(ed) d.body.classList.remove('sheet-editing'); const sc=d.getElementById('sheetScale'); const kz=sc?sc.style.zoom:''; if(sc) sc.style.zoom=''; const h='<!DOCTYPE html>\n'+d.documentElement.outerHTML; if(sc) sc.style.zoom=kz; if(ed) d.body.classList.add('sheet-editing'); keep.forEach(x=>d.body.appendChild(x)); return h; };
  let last=capture(), capturing=false;
  const run=async()=>{ clearTimeout(t); t=null; if(running){ pending=true; return; } capturing=true; const html=capture(); capturing=false; if(html===last) return; running=true; pill('Saving…');
   try{ try{ d.querySelectorAll('.sheet-edit').forEach(el=>{ try{ cw.saveSheetInlineEdit&&cw.saveSheetInlineEdit(el); }catch(_){} }); }catch(_){}
@@ -2396,7 +2397,7 @@ async function viewEstimateHistory(id){
  window._lastEstimateHistoryId=id;
  const w=window.open('','_blank','width=1100,height=1000');if(!w)return alert('Your browser blocked the popup. Please allow popups and try again.');
  const hasSheet=!!savedSheet;
- w.document.write(`<!doctype html><html><head><title>${esc(e.customer)} - Estimate History</title><style>body{font-family:Arial,sans-serif;margin:0;background:#e9eef5;color:#172033}.top{position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid #cbd5e1;padding:14px 18px}.head{max-width:1050px;margin:auto;display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap}h1{font-size:20px;margin:0;color:#14233c}.muted{color:#64748b}.small{font-size:11px}.summary{max-width:1050px;margin:14px auto;background:#fff;border:1px solid #dbe2ea;border-radius:12px;padding:16px}.summary h3{margin:0 0 10px}.summary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px 18px;font-size:12px}.frame-wrap{max-width:1050px;margin:14px auto 30px;background:#d7dde6;padding:12px;border-radius:12px}iframe{width:100%;height:1250px;border:0;background:#fff;border-radius:6px}button{padding:9px 13px;border:0;border-radius:8px;font-weight:800;cursor:pointer;background:#14233c;color:#fff}.save{background:#0f766e}@media(max-width:700px){.summary-grid{grid-template-columns:1fr 1fr}.frame-wrap{padding:4px;margin:8px}.summary{margin:8px}iframe{height:1050px}}</style></head><body><div class="top"><div class="head"><div><h1>${esc(e.customer)}</h1><div class="muted small">Saved ${new Date(e.created_at).toLocaleString()} • Created by ${esc(DISPLAY[ukey(e.salesman_username)]||e.salesman_username)}</div></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="save" onclick="saveHistorySheetEdits()">Save Changes</button><button onclick="window.close()">Close</button></div></div></div><div class="summary"><h3>Estimate Summary</h3><div class="summary-grid"><div><b>Price</b><br>${money(e.estimate_price)}</div><div><b>Garage</b><br>${esc(e.garage_size||'—')}</div><div><b>Roof</b><br>${esc(e.roof_type||'—')}</div><div><b>Wall Height</b><br>${esc(e.wall_height||'—')}</div><div><b>Address</b><br>${esc(e.address||'—')}</div><div><b>City</b><br>${esc(e.city||'—')}</div><div><b>Siding</b><br>${esc(e.siding||'—')}</div><div><b>Salesperson</b><br>${esc(DISPLAY[ukey(e.salesman_username)]||e.salesman_username)}</div></div><div style="margin-top:12px">${estimatePricingDetails(e)}</div></div>${hasSheet?`<div class="frame-wrap"><iframe id="savedEstimateFrame" title="Saved Estimate Sheet"></iframe></div>`:`<div class="summary"><b>Older estimate record:</b> this was saved before full estimate-sheet snapshots were enabled.<div style="margin-top:12px">${estimateHistorySummary(e)}</div></div>`}</body></html>`);
+ w.document.write(`<!doctype html><html><head><title>${esc(e.customer)} - Estimate History</title><style>body{font-family:Arial,sans-serif;margin:0;background:#e9eef5;color:#172033}.top{position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid #cbd5e1;padding:14px 18px}.head{max-width:1050px;margin:auto;display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap}h1{font-size:20px;margin:0;color:#14233c}.muted{color:#64748b}.small{font-size:11px}.summary{max-width:1050px;margin:14px auto;background:#fff;border:1px solid #dbe2ea;border-radius:12px;padding:16px}.summary h3{margin:0 0 10px}.summary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px 18px;font-size:12px}.frame-wrap{max-width:1050px;margin:14px auto 30px;background:#d7dde6;padding:12px;border-radius:12px}iframe{width:100%;height:1250px;border:0;background:#fff;border-radius:6px}button{padding:9px 13px;border:0;border-radius:8px;font-weight:800;cursor:pointer;background:#14233c;color:#fff}.save{background:#0f766e}.print-btn{background:#1d4ed8}@media(max-width:700px){.summary-grid{grid-template-columns:1fr 1fr}.frame-wrap{padding:4px;margin:8px}.summary{margin:8px}iframe{height:1050px}}@media print{@page{size:Letter portrait;margin:0}html,body{background:#fff!important;margin:0!important;padding:0!important;width:8.5in!important;height:11in!important;overflow:hidden!important}.top,.summary,.frame-wrap>div{display:none!important}.frame-wrap{max-width:none!important;margin:0!important;padding:0!important;background:#fff!important;border:0!important;border-radius:0!important;width:8.5in!important;height:11in!important;overflow:hidden!important}iframe{width:8.5in!important;height:11in!important;border:0!important;border-radius:0!important;display:block!important}}</style></head><body><div class="top"><div class="head"><div><h1>${esc(e.customer)}</h1><div class="muted small">Saved ${new Date(e.created_at).toLocaleString()} • Created by ${esc(DISPLAY[ukey(e.salesman_username)]||e.salesman_username)}</div></div><div style="display:flex;gap:8px;flex-wrap:wrap">${hasSheet?`<button class="print-btn" onclick="printHistorySheet()">🖨 Print / PDF</button>`:''}<button class="save" onclick="saveHistorySheetEdits()">Save Changes</button><button onclick="window.close()">Close</button></div></div></div><div class="summary"><h3>Estimate Summary</h3><div class="summary-grid"><div><b>Price</b><br>${money(e.estimate_price)}</div><div><b>Garage</b><br>${esc(e.garage_size||'—')}</div><div><b>Roof</b><br>${esc(e.roof_type||'—')}</div><div><b>Wall Height</b><br>${esc(e.wall_height||'—')}</div><div><b>Address</b><br>${esc(e.address||'—')}</div><div><b>City</b><br>${esc(e.city||'—')}</div><div><b>Siding</b><br>${esc(e.siding||'—')}</div><div><b>Salesperson</b><br>${esc(DISPLAY[ukey(e.salesman_username)]||e.salesman_username)}</div></div><div style="margin-top:12px">${estimatePricingDetails(e)}</div></div>${hasSheet?`<div class="frame-wrap"><iframe id="savedEstimateFrame" title="Saved Estimate Sheet"></iframe></div>`:`<div class="summary"><b>Older estimate record:</b> this was saved before full estimate-sheet snapshots were enabled.<div style="margin-top:12px">${estimateHistorySummary(e)}</div></div>`}</body></html>`);
  w.document.close();
  try{
   if(optionSheets.length){
@@ -2451,7 +2452,9 @@ async function viewEstimateHistory(id){
    frames.forEach((frame,i)=>{
     const doc=frame.contentDocument||(frame.contentWindow&&frame.contentWindow.document);
     if(!doc||!doc.documentElement) return;
+    const sc=doc.getElementById('sheetScale'); const kz=sc?sc.style.zoom:''; if(sc) sc.style.zoom='';
     const html='<!DOCTYPE html>\n'+doc.documentElement.outerHTML;
+    if(sc) sc.style.zoom=kz;
     if(html.length<200) return;
     const priceTxt=(doc.querySelector('.total-price,#sheetTotal')?.innerText||'').replace(/[^0-9.]/g,'');
     const price=parseFloat(priceTxt)||0;
@@ -2467,13 +2470,29 @@ async function viewEstimateHistory(id){
    else w.alert(window._agbLastSaveError||'Save did not go through. Press Save again.');
   }catch(err){ console.error(err); w.alert(friendlySheetSaveError(err)); }
  };
+ w.printHistorySheet=async function(){
+  try{
+   const frame=w.document.getElementById('savedEstimateFrame')||w.document.querySelector('iframe');
+   if(frame && frame.contentWindow){
+    const cw=frame.contentWindow;
+    if(typeof cw.rsdPrint==='function'){ cw.rsdPrint(); return; }
+    if(typeof cw.saveSheetEditsNow==='function'){ try{ await cw.saveSheetEditsNow(true); }catch(_){} }
+    const sc=cw.document && cw.document.getElementById('sheetScale');
+    if(sc){ sc.style.zoom=''; sc.style.transform=''; }
+    cw.focus();
+    cw.print();
+    return;
+   }
+   w.print();
+  }catch(_){ w.print(); }
+ };
  w.focus();
 }
 async function editEstimateHistory(id){
  const e=await fetchFullEstimateRecord(id);if(!e)return alert('Estimate not found.');
  const own=!!(profile&&String(e.salesman_username||'').toLowerCase()===String(profile.username||'').toLowerCase());
  if(!own&&!privateAccessManager()&&!manager())return alert('You can edit your own estimates. Sam and Ramsey can edit any salesperson’s estimate.');
- if((e.estimate_snapshot||{}).estimate_type==='repair'){ window.location.href='repair.html?editRepair='+encodeURIComponent(id)+'&v='+Date.now(); return; }
+ if(isRepairEstimate(e)){ window.location.href='repair.html?editRepair='+encodeURIComponent(id)+'&v='+Date.now(); return; }
  try{sessionStorage.setItem('garage_edit_estimate_record',JSON.stringify(e));}catch(err){console.warn('Could not cache estimate edit record',err)}
  window.location.href=`estimator.html?editEstimate=${encodeURIComponent(id)}&v=20260820edit3`;
 }

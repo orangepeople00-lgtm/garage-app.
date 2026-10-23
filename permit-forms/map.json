@@ -1264,7 +1264,319 @@
       "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
       "partial": false,
       "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only."
-    }
+    },
+    "supplemental": [
+      {
+        "id": "building-app",
+        "label": "Application for Building Permit",
+        "applies": "all",
+        "form_name": "Town of Cicero Application for Building Permit",
+        "pdf_url": "https://thetownofcicero.com/wp-content/uploads/2025/10/Application-for-Building-Permit.pdf",
+        "template": "permit-forms/Cicero-building-app.pdf",
+        "fields": [
+          {
+            "name": "pin",
+            "page": 1,
+            "rect": [
+              170,
+              224,
+              370,
+              237
+            ],
+            "src": "pin",
+            "size": 9
+          },
+          {
+            "name": "lot_size",
+            "page": 1,
+            "rect": [
+              412,
+              224,
+              595,
+              237
+            ],
+            "src": "blank",
+            "size": 9
+          },
+          {
+            "name": "street_num",
+            "page": 1,
+            "rect": [
+              100,
+              257,
+              595,
+              270
+            ],
+            "src": "address",
+            "size": 9
+          },
+          {
+            "name": "owner",
+            "page": 1,
+            "rect": [
+              50,
+              272,
+              295,
+              285
+            ],
+            "src": "customer",
+            "size": 9
+          },
+          {
+            "name": "owner_addr",
+            "page": 1,
+            "rect": [
+              338,
+              272,
+              470,
+              285
+            ],
+            "src": "addressCity",
+            "size": 9
+          },
+          {
+            "name": "owner_phone",
+            "page": 1,
+            "rect": [
+              505,
+              272,
+              598,
+              285
+            ],
+            "src": "phone",
+            "size": 9
+          },
+          {
+            "name": "mason_name",
+            "page": 1,
+            "rect": [
+              95,
+              305,
+              295,
+              317
+            ],
+            "src": "contractor",
+            "size": 9
+          },
+          {
+            "name": "mason_addr",
+            "page": 1,
+            "rect": [
+              338,
+              305,
+              470,
+              317
+            ],
+            "src": "contractorFull",
+            "size": 9
+          },
+          {
+            "name": "mason_phone",
+            "page": 1,
+            "rect": [
+              505,
+              305,
+              598,
+              317
+            ],
+            "src": "contractorPhone",
+            "size": 9
+          },
+          {
+            "name": "roof_name",
+            "page": 1,
+            "rect": [
+              98,
+              338,
+              295,
+              350
+            ],
+            "src": "contractor",
+            "size": 9
+          },
+          {
+            "name": "roof_addr",
+            "page": 1,
+            "rect": [
+              338,
+              338,
+              470,
+              350
+            ],
+            "src": "contractorFull",
+            "size": 9
+          },
+          {
+            "name": "roof_phone",
+            "page": 1,
+            "rect": [
+              505,
+              338,
+              598,
+              350
+            ],
+            "src": "contractorPhone",
+            "size": 9
+          },
+          {
+            "name": "elec_name",
+            "page": 1,
+            "rect": [
+              102,
+              370,
+              295,
+              382
+            ],
+            "src": "blank",
+            "size": 9
+          },
+          {
+            "name": "gc_name",
+            "page": 1,
+            "rect": [
+              130,
+              385,
+              295,
+              397
+            ],
+            "src": "contractor",
+            "size": 9
+          },
+          {
+            "name": "gc_addr",
+            "page": 1,
+            "rect": [
+              338,
+              385,
+              470,
+              397
+            ],
+            "src": "contractorFull",
+            "size": 9
+          },
+          {
+            "name": "gc_phone",
+            "page": 1,
+            "rect": [
+              505,
+              385,
+              598,
+              397
+            ],
+            "src": "contractorPhone",
+            "size": 9
+          },
+          {
+            "name": "garage_size",
+            "page": 1,
+            "rect": [
+              335,
+              444,
+              425,
+              457
+            ],
+            "src": "dims",
+            "size": 9
+          },
+          {
+            "name": "const_type",
+            "page": 1,
+            "rect": [
+              155,
+              463,
+              345,
+              476
+            ],
+            "src": "description",
+            "size": 9
+          },
+          {
+            "name": "const_val",
+            "page": 1,
+            "rect": [
+              450,
+              463,
+              595,
+              476
+            ],
+            "src": "price",
+            "size": 9
+          },
+          {
+            "name": "cert_co",
+            "page": 1,
+            "rect": [
+              325,
+              837,
+              595,
+              850
+            ],
+            "src": "contractor",
+            "size": 9
+          },
+          {
+            "name": "cert_addr",
+            "page": 1,
+            "rect": [
+              292,
+              857,
+              595,
+              870
+            ],
+            "src": "contractorStreet",
+            "size": 9
+          },
+          {
+            "name": "cert_city",
+            "page": 1,
+            "rect": [
+              280,
+              877,
+              595,
+              890
+            ],
+            "src": "contractorCSZ",
+            "size": 9
+          },
+          {
+            "name": "cert_phone",
+            "page": 1,
+            "rect": [
+              290,
+              897,
+              595,
+              910
+            ],
+            "src": "contractorPhone",
+            "size": 9
+          }
+        ],
+        "checks": [
+          {
+            "name": "chk_res",
+            "page": 1,
+            "rect": [
+              408,
+              241,
+              417,
+              250
+            ],
+            "on": true
+          },
+          {
+            "name": "chk_frame",
+            "page": 1,
+            "rect": [
+              118,
+              446,
+              127,
+              455
+            ],
+            "on": true
+          }
+        ]
+      }
+    ]
   },
   "Calumet City": {
     "form_type": "general_covers_garage",
@@ -1696,21 +2008,292 @@
   "Elmwood Park": {
     "form_type": "general_covers_garage",
     "form_name": "Building Permit Application for Sundry Construction (has Garage Size/Frame/Roof fields) + Garage Requirements sheet",
-    "template": null,
-    "fields": null,
+    "template": "permit-forms/Elmwood-Park.pdf",
+    "fields": [
+      {
+        "name": "date",
+        "page": 0,
+        "rect": [
+          412,
+          94,
+          555,
+          108
+        ],
+        "src": "blank",
+        "size": 9
+      },
+      {
+        "name": "address",
+        "page": 0,
+        "rect": [
+          112,
+          116,
+          480,
+          130
+        ],
+        "src": "addressCity",
+        "size": 9
+      },
+      {
+        "name": "owner",
+        "page": 0,
+        "rect": [
+          104,
+          138,
+          280,
+          152
+        ],
+        "src": "customer",
+        "size": 9
+      },
+      {
+        "name": "owner_addr",
+        "page": 0,
+        "rect": [
+          325,
+          138,
+          560,
+          152
+        ],
+        "src": "addressCity",
+        "size": 9
+      },
+      {
+        "name": "work_desc",
+        "page": 0,
+        "rect": [
+          90,
+          160,
+          560,
+          174
+        ],
+        "src": "description",
+        "size": 9
+      },
+      {
+        "name": "garage_size",
+        "page": 0,
+        "rect": [
+          62,
+          226,
+          175,
+          240
+        ],
+        "src": "dims",
+        "size": 9
+      },
+      {
+        "name": "roof_style",
+        "page": 0,
+        "rect": [
+          335,
+          226,
+          430,
+          240
+        ],
+        "src": "blank",
+        "size": 9
+      },
+      {
+        "name": "val",
+        "page": 0,
+        "rect": [
+          160,
+          283,
+          350,
+          297
+        ],
+        "src": "price",
+        "size": 9
+      },
+      {
+        "name": "gc_info",
+        "page": 0,
+        "rect": [
+          82,
+          352,
+          560,
+          366
+        ],
+        "src": "contractorFull",
+        "size": 9
+      },
+      {
+        "name": "carp_info",
+        "page": 0,
+        "rect": [
+          82,
+          384,
+          560,
+          398
+        ],
+        "src": "contractorFull",
+        "size": 9
+      },
+      {
+        "name": "cement_info",
+        "page": 0,
+        "rect": [
+          82,
+          402,
+          560,
+          416
+        ],
+        "src": "contractorFull",
+        "size": 9
+      },
+      {
+        "name": "elec_info",
+        "page": 0,
+        "rect": [
+          82,
+          422,
+          560,
+          436
+        ],
+        "src": "blank",
+        "size": 9
+      },
+      {
+        "name": "exc_info",
+        "page": 0,
+        "rect": [
+          82,
+          440,
+          560,
+          454
+        ],
+        "src": "contractorFull",
+        "size": 9
+      },
+      {
+        "name": "roofer_info",
+        "page": 0,
+        "rect": [
+          82,
+          530,
+          560,
+          544
+        ],
+        "src": "contractorFull",
+        "size": 9
+      },
+      {
+        "name": "roofer_lic",
+        "page": 0,
+        "rect": [
+          110,
+          548,
+          350,
+          562
+        ],
+        "src": "blank",
+        "size": 9
+      }
+    ],
     "portal_url": "https://www.elmwoodpark.org/FormCenter/Code-Department-12/Building-Permit-Application-for-Sundry-C-74",
     "info_url": "https://www.elmwoodpark.org/294/Code-Building-Administration-Forms",
     "pdf_url": "https://elmwoodpark.org/DocumentCenter/View/488/Building-Permit-Application-For-Sundry-Construction-PDF",
     "checklist_url": "https://elmwoodpark.org/DocumentCenter/View/491/Garage-Requirements-PDF",
     "submittal": "paper; online 'fillable' FormCenter version exists",
-    "info_sheet": true,
+    "info_sheet": false,
     "link_url": "https://www.elmwoodpark.org/FormCenter/Code-Department-12/Building-Permit-Application-for-Sundry-C-74",
     "link_type": "portal",
     "link_checked": "2026-10-17",
     "link_note": "Online Building Permit Application for Sundry Construction (FormCenter)",
     "electrical": {
       "required": "separate",
-      "portal_url": "https://www.elmwoodpark.org/FormCenter/Code-Department-12/Electrical-Permit-Application-75"
+      "form_name": "Village of Elmwood Park Electrical Permit Application",
+      "pdf_url": "https://elmwoodpark.org/DocumentCenter/View/490/Electrical-Permit-Application-PDF",
+      "portal_url": "https://www.elmwoodpark.org/FormCenter/Code-Department-12/Electrical-Permit-Application-75",
+      "template": "permit-forms/Elmwood-Park-electrical.pdf",
+      "fields": [
+        {
+          "name": "date",
+          "page": 0,
+          "rect": [
+            130,
+            71,
+            250,
+            84
+          ],
+          "src": "blank",
+          "size": 9
+        },
+        {
+          "name": "permit_no",
+          "page": 0,
+          "rect": [
+            368,
+            71,
+            470,
+            84
+          ],
+          "src": "blank",
+          "size": 9
+        },
+        {
+          "name": "location",
+          "page": 0,
+          "rect": [
+            150,
+            118,
+            465,
+            132
+          ],
+          "src": "addressCity",
+          "size": 9
+        },
+        {
+          "name": "owner",
+          "page": 0,
+          "rect": [
+            175,
+            142,
+            465,
+            156
+          ],
+          "src": "customer",
+          "size": 9
+        },
+        {
+          "name": "phone",
+          "page": 0,
+          "rect": [
+            156,
+            166,
+            350,
+            180
+          ],
+          "src": "phone",
+          "size": 9
+        },
+        {
+          "name": "elec_co",
+          "page": 0,
+          "rect": [
+            155,
+            190,
+            465,
+            204
+          ],
+          "src": "blank",
+          "size": 9
+        },
+        {
+          "name": "elec_addr",
+          "page": 0,
+          "rect": [
+            155,
+            214,
+            465,
+            228
+          ],
+          "src": "blank",
+          "size": 9
+        }
+      ],
+      "note": "Electrical Permit Application; electrical contractor & registration left blank."
     },
     "cook_county": {
       "type": "demolition",
@@ -1778,7 +2361,31 @@
         }
       ],
       "note": "Rodent Baiting Release of Liability Form required prior to garage demolition."
-    }
+    },
+    "checks": [
+      {
+        "name": "chk_single_res",
+        "page": 0,
+        "rect": [
+          100,
+          206,
+          109,
+          215
+        ],
+        "on": true
+      },
+      {
+        "name": "chk_frame_gar",
+        "page": 0,
+        "rect": [
+          176,
+          228,
+          185,
+          237
+        ],
+        "on": true
+      }
+    ]
   },
   "Des Plaines": {
     "form_type": "detached_garage",
@@ -4350,12 +4957,383 @@
       }
     ],
     "electrical": {
-      "required": "not determined",
-      "note": "scanned application, no separate electrical application found"
+      "required": "separate",
+      "form_name": "Village of Evergreen Park Electrical Permit Application",
+      "pdf_url": "https://www.evergreenpark-ill.com/DocumentCenter/View/17/Electrical-Permit-Application-PDF",
+      "template": "permit-forms/Evergreen-Park-electrical.pdf",
+      "fields": [
+        {
+          "name": "date",
+          "page": 0,
+          "rect": [
+            95,
+            251,
+            260,
+            265
+          ],
+          "src": "blank",
+          "size": 9
+        },
+        {
+          "name": "address",
+          "page": 0,
+          "rect": [
+            135,
+            276,
+            320,
+            290
+          ],
+          "src": "address",
+          "size": 9
+        },
+        {
+          "name": "owner",
+          "page": 0,
+          "rect": [
+            102,
+            302,
+            320,
+            316
+          ],
+          "src": "customer",
+          "size": 9
+        },
+        {
+          "name": "gc_name",
+          "page": 0,
+          "rect": [
+            148,
+            327,
+            320,
+            341
+          ],
+          "src": "contractor",
+          "size": 9
+        },
+        {
+          "name": "gc_addr",
+          "page": 0,
+          "rect": [
+            105,
+            352,
+            320,
+            366
+          ],
+          "src": "contractorStreet",
+          "size": 9
+        },
+        {
+          "name": "gc_city",
+          "page": 0,
+          "rect": [
+            88,
+            378,
+            168,
+            392
+          ],
+          "src": "contractorCity",
+          "size": 9
+        },
+        {
+          "name": "gc_st",
+          "page": 0,
+          "rect": [
+            194,
+            378,
+            228,
+            392
+          ],
+          "src": "contractorState",
+          "size": 9
+        },
+        {
+          "name": "gc_zip",
+          "page": 0,
+          "rect": [
+            250,
+            378,
+            320,
+            392
+          ],
+          "src": "contractorZip",
+          "size": 9
+        },
+        {
+          "name": "cost",
+          "page": 0,
+          "rect": [
+            145,
+            428,
+            320,
+            442
+          ],
+          "src": "price",
+          "size": 9
+        },
+        {
+          "name": "job_info",
+          "page": 0,
+          "rect": [
+            132,
+            503,
+            320,
+            517
+          ],
+          "src": "description",
+          "size": 9
+        },
+        {
+          "name": "elec_lic",
+          "page": 0,
+          "rect": [
+            182,
+            579,
+            320,
+            593
+          ],
+          "src": "blank",
+          "size": 9
+        },
+        {
+          "name": "elec_co",
+          "page": 0,
+          "rect": [
+            152,
+            604,
+            320,
+            618
+          ],
+          "src": "blank",
+          "size": 9
+        },
+        {
+          "name": "elec_addr",
+          "page": 0,
+          "rect": [
+            105,
+            629,
+            320,
+            643
+          ],
+          "src": "blank",
+          "size": 9
+        },
+        {
+          "name": "elec_phone",
+          "page": 0,
+          "rect": [
+            95,
+            679,
+            320,
+            693
+          ],
+          "src": "blank",
+          "size": 9
+        },
+        {
+          "name": "sqft",
+          "page": 0,
+          "rect": [
+            415,
+            681,
+            520,
+            695
+          ],
+          "src": "sqft",
+          "size": 9
+        }
+      ],
+      "checks": [
+        {
+          "name": "chk_wiring",
+          "page": 0,
+          "rect": [
+            384,
+            279,
+            392,
+            287
+          ],
+          "on": true
+        },
+        {
+          "name": "chk_fixtures",
+          "page": 0,
+          "rect": [
+            446,
+            279,
+            454,
+            287
+          ],
+          "on": true
+        }
+      ],
+      "note": "Electrical Permit Application (Wiring & Fixtures checked); electrical contractor & license left blank."
     },
     "demolition": {
-      "required": "not determined",
-      "note": "no demolition line on application; check city/Cook County demolition permit"
+      "required": "separate",
+      "form_name": "Village of Evergreen Park Demolition Permit Application",
+      "pdf_url": "https://www.evergreenpark-ill.com/DocumentCenter/View/915/Demolition-Permit-PDF",
+      "template": "permit-forms/Evergreen-Park-demolition.pdf",
+      "fields": [
+        {
+          "name": "address",
+          "page": 1,
+          "rect": [
+            108,
+            168,
+            305,
+            181
+          ],
+          "src": "address",
+          "size": 9
+        },
+        {
+          "name": "owner",
+          "page": 1,
+          "rect": [
+            404,
+            168,
+            560,
+            181
+          ],
+          "src": "customer",
+          "size": 9
+        },
+        {
+          "name": "applicant",
+          "page": 1,
+          "rect": [
+            114,
+            186,
+            305,
+            199
+          ],
+          "src": "contractor",
+          "size": 9
+        },
+        {
+          "name": "owner_addr",
+          "page": 1,
+          "rect": [
+            412,
+            186,
+            560,
+            199
+          ],
+          "src": "addressCity",
+          "size": 9
+        },
+        {
+          "name": "bldg_use",
+          "page": 1,
+          "rect": [
+            98,
+            204,
+            305,
+            217
+          ],
+          "src": "detachedWord",
+          "size": 9
+        },
+        {
+          "name": "owner_phone",
+          "page": 1,
+          "rect": [
+            406,
+            204,
+            560,
+            217
+          ],
+          "src": "phone",
+          "size": 9
+        },
+        {
+          "name": "pin",
+          "page": 1,
+          "rect": [
+            142,
+            221,
+            305,
+            234
+          ],
+          "src": "pin",
+          "size": 9
+        },
+        {
+          "name": "cost",
+          "page": 1,
+          "rect": [
+            390,
+            221,
+            560,
+            234
+          ],
+          "src": "price",
+          "size": 9
+        },
+        {
+          "name": "stories",
+          "page": 1,
+          "rect": [
+            116,
+            246,
+            215,
+            259
+          ],
+          "src": "blank",
+          "size": 9
+        },
+        {
+          "name": "sqft",
+          "page": 1,
+          "rect": [
+            478,
+            246,
+            560,
+            259
+          ],
+          "src": "sqft",
+          "size": 9
+        },
+        {
+          "name": "app_addr",
+          "page": 1,
+          "rect": [
+            118,
+            711,
+            370,
+            724
+          ],
+          "src": "contractorFull",
+          "size": 9
+        },
+        {
+          "name": "app_phone",
+          "page": 1,
+          "rect": [
+            112,
+            728,
+            300,
+            741
+          ],
+          "src": "contractorPhone",
+          "size": 9
+        }
+      ],
+      "checks": [
+        {
+          "name": "chk_garage",
+          "page": 1,
+          "rect": [
+            335,
+            263,
+            343,
+            271
+          ],
+          "on": true
+        }
+      ],
+      "note": "Demolition Permit Application (Garage checked on p. 2); GC license left blank."
     },
     "cook_county": {
       "type": "demolition",
@@ -12415,7 +13393,128 @@
     "link_url": "https://bolingbrookil.viewpointcloud.com",
     "link_type": "portal",
     "link_note": "OpenGov portal; Garage Permit Tips https://www.bolingbrook.gov/uploads/dm/5130/Garage_Permit_Tips",
-    "link_checked": "2026-10-17"
+    "link_checked": "2026-10-17",
+    "supplemental": [
+      {
+        "id": "tree-removal",
+        "label": "Tree Removal Permit Application",
+        "applies": "all",
+        "form_name": "Village of Bolingbrook Tree Removal Permit Application",
+        "pdf_url": "https://www.bolingbrook.gov/&#xA;                  /vertical/sites/%7B55EB27CA-CA9F-40A5-A0EF-1E4EEF52F39E%7D/uploads/Tree_Removal_Permit.pdf",
+        "template": "permit-forms/Bolingbrook-tree-removal.pdf",
+        "fields": [
+          {
+            "name": "name",
+            "page": 0,
+            "rect": [
+              180,
+              178,
+              460,
+              192
+            ],
+            "src": "customer",
+            "size": 9
+          },
+          {
+            "name": "address",
+            "page": 0,
+            "rect": [
+              200,
+              198,
+              460,
+              212
+            ],
+            "src": "addressCity",
+            "size": 9
+          },
+          {
+            "name": "phone",
+            "page": 0,
+            "rect": [
+              195,
+              219,
+              460,
+              233
+            ],
+            "src": "phone",
+            "size": 9
+          },
+          {
+            "name": "email",
+            "page": 0,
+            "rect": [
+              240,
+              240,
+              460,
+              254
+            ],
+            "src": "ownerEmail",
+            "size": 9
+          },
+          {
+            "name": "date_req",
+            "page": 0,
+            "rect": [
+              252,
+              261,
+              460,
+              275
+            ],
+            "src": "blank",
+            "size": 9
+          },
+          {
+            "name": "num_trees",
+            "page": 0,
+            "rect": [
+              262,
+              302,
+              460,
+              316
+            ],
+            "src": "blank",
+            "size": 9
+          },
+          {
+            "name": "type_trees",
+            "page": 0,
+            "rect": [
+              242,
+              323,
+              460,
+              337
+            ],
+            "src": "blank",
+            "size": 9
+          },
+          {
+            "name": "contractor",
+            "page": 0,
+            "rect": [
+              225,
+              343,
+              460,
+              357
+            ],
+            "src": "contractor",
+            "size": 9
+          }
+        ],
+        "checks": [
+          {
+            "name": "chk_construct",
+            "page": 1,
+            "rect": [
+              142,
+              326,
+              151,
+              335
+            ],
+            "on": true
+          }
+        ]
+      }
+    ]
   },
   "Bourbonnais": {
     "form_type": "link_only",
@@ -15211,6 +16310,87 @@
       "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
       "partial": false,
       "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only."
+    },
+    "electrical": {
+      "required": "separate",
+      "form_name": "Village of Broadview Application for Electrical Permit",
+      "pdf_url": "https://broadview-il.gov/reference/forms-and-permits/",
+      "template": "permit-forms/Broadview-electrical.pdf",
+      "fields": [
+        {
+          "name": "date",
+          "page": 0,
+          "rect": [
+            42,
+            68,
+            175,
+            81
+          ],
+          "src": "blank",
+          "size": 9
+        },
+        {
+          "name": "permit_no",
+          "page": 0,
+          "rect": [
+            236,
+            68,
+            365,
+            81
+          ],
+          "src": "blank",
+          "size": 9
+        },
+        {
+          "name": "location",
+          "page": 0,
+          "rect": [
+            58,
+            83,
+            365,
+            96
+          ],
+          "src": "addressCity",
+          "size": 9
+        },
+        {
+          "name": "owner",
+          "page": 0,
+          "rect": [
+            82,
+            99,
+            365,
+            112
+          ],
+          "src": "customer",
+          "size": 9
+        },
+        {
+          "name": "elec_co",
+          "page": 0,
+          "rect": [
+            82,
+            115,
+            365,
+            128
+          ],
+          "src": "blank",
+          "size": 9
+        },
+        {
+          "name": "elec_addr",
+          "page": 0,
+          "rect": [
+            82,
+            131,
+            365,
+            144
+          ],
+          "src": "blank",
+          "size": 9
+        }
+      ],
+      "note": "Application for Electrical Permit; electrical contractor & license left blank."
     }
   },
   "Brookfield": {
@@ -27704,6 +28884,124 @@
             "src": "customer"
           }
         ]
+      },
+      {
+        "id": "tree-removal",
+        "label": "Tree Removal Permit Application",
+        "applies": "all",
+        "form_name": "Village of Fox Lake Tree Removal Permit Application",
+        "pdf_url": "https://www.foxlake.org/DocumentCenter/View/3173/Tree-Removal-Application-",
+        "template": "permit-forms/Fox-Lake-tree-removal.pdf",
+        "fields": [
+          {
+            "name": "address",
+            "page": 0,
+            "rect": [
+              138,
+              152,
+              550,
+              166
+            ],
+            "src": "addressCity",
+            "size": 9
+          },
+          {
+            "name": "owner",
+            "page": 0,
+            "rect": [
+              156,
+              204,
+              360,
+              218
+            ],
+            "src": "customer",
+            "size": 9
+          },
+          {
+            "name": "owner_phone",
+            "page": 0,
+            "rect": [
+              500,
+              204,
+              575,
+              218
+            ],
+            "src": "phone",
+            "size": 9
+          },
+          {
+            "name": "val",
+            "page": 0,
+            "rect": [
+              200,
+              257,
+              350,
+              271
+            ],
+            "src": "price",
+            "size": 9
+          },
+          {
+            "name": "contractor",
+            "page": 0,
+            "rect": [
+              172,
+              364,
+              550,
+              378
+            ],
+            "src": "contractor",
+            "size": 9
+          },
+          {
+            "name": "contractor_addr",
+            "page": 0,
+            "rect": [
+              76,
+              401,
+              550,
+              415
+            ],
+            "src": "contractorFull",
+            "size": 9
+          },
+          {
+            "name": "agent_csz",
+            "page": 0,
+            "rect": [
+              130,
+              580,
+              420,
+              594
+            ],
+            "src": "contractorFull",
+            "size": 9
+          },
+          {
+            "name": "agent_phone",
+            "page": 0,
+            "rect": [
+              60,
+              600,
+              280,
+              614
+            ],
+            "src": "contractorPhone",
+            "size": 9
+          },
+          {
+            "name": "date",
+            "page": 0,
+            "rect": [
+              50,
+              639,
+              200,
+              653
+            ],
+            "src": "blank",
+            "size": 9
+          }
+        ]
       }
     ]
   },
@@ -32307,12 +33605,334 @@
       "prefill_fields": 9
     },
     "electrical": {
-      "required": "not determined",
-      "note": "application has no electrical line; not determined"
+      "required": "separate",
+      "form_name": "Village of Glenwood Electrical Permit Application",
+      "pdf_url": "http://villageofglenwood.com/vertical/sites/%7B9A67F9D7-6325-4274-B3B2-1DBA9283F42A%7D/uploads/Electrical_Permit.PDF",
+      "template": "permit-forms/Glenwood-electrical.pdf",
+      "fields": [
+        {
+          "name": "permit_no",
+          "page": 0,
+          "rect": [
+            150,
+            168,
+            260,
+            180
+          ],
+          "src": "blank",
+          "size": 9
+        },
+        {
+          "name": "date",
+          "page": 0,
+          "rect": [
+            392,
+            168,
+            490,
+            180
+          ],
+          "src": "blank",
+          "size": 9
+        },
+        {
+          "name": "elec_co",
+          "page": 0,
+          "rect": [
+            118,
+            208,
+            265,
+            220
+          ],
+          "src": "blank",
+          "size": 9
+        },
+        {
+          "name": "owner",
+          "page": 0,
+          "rect": [
+            145,
+            230,
+            290,
+            242
+          ],
+          "src": "customer",
+          "size": 9
+        },
+        {
+          "name": "garage_elec",
+          "page": 0,
+          "rect": [
+            160,
+            318,
+            320,
+            330
+          ],
+          "src": "description",
+          "size": 9
+        },
+        {
+          "name": "location",
+          "page": 0,
+          "rect": [
+            225,
+            349,
+            480,
+            361
+          ],
+          "src": "addressCity",
+          "size": 9
+        },
+        {
+          "name": "cost",
+          "page": 0,
+          "rect": [
+            172,
+            377,
+            290,
+            389
+          ],
+          "src": "price",
+          "size": 9
+        },
+        {
+          "name": "remarks",
+          "page": 0,
+          "rect": [
+            155,
+            442,
+            485,
+            455
+          ],
+          "src": "description",
+          "size": 9
+        },
+        {
+          "name": "reg_no",
+          "page": 0,
+          "rect": [
+            200,
+            516,
+            310,
+            528
+          ],
+          "src": "blank",
+          "size": 9
+        }
+      ],
+      "checks": [
+        {
+          "name": "chk_install",
+          "page": 0,
+          "rect": [
+            265,
+            189,
+            273,
+            197
+          ],
+          "on": true
+        },
+        {
+          "name": "chk_wiring",
+          "page": 0,
+          "rect": [
+            414,
+            200,
+            422,
+            208
+          ],
+          "on": true
+        },
+        {
+          "name": "chk_sfd",
+          "page": 0,
+          "rect": [
+            204,
+            394,
+            212,
+            402
+          ],
+          "on": true
+        }
+      ],
+      "note": "Electrical Permit Application (Install, Wiring, SFD checked); electrical contractor & registration left blank."
     },
     "demolition": {
-      "required": "not determined",
-      "note": "no demolition line on application; check city/Cook County demolition permit"
+      "required": "separate",
+      "form_name": "Village of Glenwood Application for Permit to Demolish Building",
+      "pdf_url": "http://www.villageofglenwood.com/vertical/sites/%7B9A67F9D7-6325-4274-B3B2-1DBA9283F42A%7D/uploads/20150611140359(1).pdf",
+      "template": "permit-forms/Glenwood-demolition.pdf",
+      "fields": [
+        {
+          "name": "date",
+          "page": 0,
+          "rect": [
+            122,
+            64,
+            280,
+            78
+          ],
+          "src": "blank",
+          "size": 9
+        },
+        {
+          "name": "owner",
+          "page": 0,
+          "rect": [
+            115,
+            90,
+            315,
+            104
+          ],
+          "src": "customer",
+          "size": 9
+        },
+        {
+          "name": "phone",
+          "page": 0,
+          "rect": [
+            375,
+            92,
+            480,
+            106
+          ],
+          "src": "phone",
+          "size": 9
+        },
+        {
+          "name": "cost",
+          "page": 0,
+          "rect": [
+            582,
+            94,
+            740,
+            108
+          ],
+          "src": "price",
+          "size": 9
+        },
+        {
+          "name": "address",
+          "page": 0,
+          "rect": [
+            104,
+            115,
+            480,
+            129
+          ],
+          "src": "addressCity",
+          "size": 9
+        },
+        {
+          "name": "pin",
+          "page": 0,
+          "rect": [
+            595,
+            120,
+            750,
+            134
+          ],
+          "src": "pin",
+          "size": 9
+        },
+        {
+          "name": "garage_size",
+          "page": 0,
+          "rect": [
+            148,
+            186,
+            265,
+            200
+          ],
+          "src": "dims",
+          "size": 9
+        },
+        {
+          "name": "gc_name",
+          "page": 0,
+          "rect": [
+            75,
+            236,
+            305,
+            250
+          ],
+          "src": "contractor",
+          "size": 9
+        },
+        {
+          "name": "gc_addr",
+          "page": 0,
+          "rect": [
+            355,
+            236,
+            588,
+            250
+          ],
+          "src": "contractorFull",
+          "size": 9
+        },
+        {
+          "name": "gc_phone",
+          "page": 0,
+          "rect": [
+            630,
+            238,
+            745,
+            252
+          ],
+          "src": "contractorPhone",
+          "size": 9
+        },
+        {
+          "name": "exc_name",
+          "page": 0,
+          "rect": [
+            75,
+            260,
+            305,
+            274
+          ],
+          "src": "contractor",
+          "size": 9
+        },
+        {
+          "name": "exc_addr",
+          "page": 0,
+          "rect": [
+            355,
+            260,
+            588,
+            274
+          ],
+          "src": "contractorFull",
+          "size": 9
+        },
+        {
+          "name": "exc_phone",
+          "page": 0,
+          "rect": [
+            630,
+            262,
+            745,
+            276
+          ],
+          "src": "contractorPhone",
+          "size": 9
+        }
+      ],
+      "checks": [
+        {
+          "name": "chk_garage",
+          "page": 0,
+          "rect": [
+            62,
+            188,
+            71,
+            197
+          ],
+          "on": true
+        }
+      ],
+      "note": "Application for Permit to Demolish Building (Garage checked, normalized upright); GC license left blank."
     },
     "cook_county": {
       "type": "demolition",
@@ -32323,7 +33943,223 @@
       "info_url": "https://www.cookcountyil.gov/service/demolition-permitting",
       "partial": false,
       "note": "Cook County Dept. of Environment & Sustainability demolition permit is required for demolitions (incl. detached garages) everywhere in Cook County except Chicago, in addition to the village permit; online only."
-    }
+    },
+    "supplemental": [
+      {
+        "id": "contractor-list",
+        "label": "Contractor Information List",
+        "applies": "all",
+        "form_name": "Village of Glenwood Contractor Information List",
+        "pdf_url": "https://www.villageofglenwood.com/&#xA;                  /vertical/sites/%7B9A67F9D7-6325-4274-B3B2-1DBA9283F42A%7D/uploads/20180503101715.pdf",
+        "template": "permit-forms/Glenwood-contractor-list.pdf",
+        "fields": [
+          {
+            "name": "t1_trade",
+            "page": 0,
+            "rect": [
+              72,
+              70,
+              175,
+              83
+            ],
+            "src": "generalWord",
+            "size": 9
+          },
+          {
+            "name": "t1_name",
+            "page": 0,
+            "rect": [
+              218,
+              70,
+              320,
+              83
+            ],
+            "src": "contractor",
+            "size": 9
+          },
+          {
+            "name": "t1_addr",
+            "page": 0,
+            "rect": [
+              372,
+              70,
+              555,
+              83
+            ],
+            "src": "contractorFull",
+            "size": 9
+          },
+          {
+            "name": "t1_phone",
+            "page": 0,
+            "rect": [
+              600,
+              70,
+              680,
+              83
+            ],
+            "src": "contractorPhone",
+            "size": 9
+          },
+          {
+            "name": "t1_lic",
+            "page": 0,
+            "rect": [
+              735,
+              70,
+              775,
+              83
+            ],
+            "src": "blank",
+            "size": 9
+          },
+          {
+            "name": "t2_trade",
+            "page": 0,
+            "rect": [
+              72,
+              88,
+              175,
+              101
+            ],
+            "src": "concreteWord",
+            "size": 9
+          },
+          {
+            "name": "t2_name",
+            "page": 0,
+            "rect": [
+              218,
+              88,
+              320,
+              101
+            ],
+            "src": "contractor",
+            "size": 9
+          },
+          {
+            "name": "t2_addr",
+            "page": 0,
+            "rect": [
+              372,
+              88,
+              555,
+              101
+            ],
+            "src": "contractorFull",
+            "size": 9
+          },
+          {
+            "name": "t2_phone",
+            "page": 0,
+            "rect": [
+              600,
+              88,
+              680,
+              101
+            ],
+            "src": "contractorPhone",
+            "size": 9
+          },
+          {
+            "name": "t3_trade",
+            "page": 0,
+            "rect": [
+              72,
+              105,
+              175,
+              118
+            ],
+            "src": "carpentryWord",
+            "size": 9
+          },
+          {
+            "name": "t3_name",
+            "page": 0,
+            "rect": [
+              218,
+              105,
+              320,
+              118
+            ],
+            "src": "contractor",
+            "size": 9
+          },
+          {
+            "name": "t3_addr",
+            "page": 0,
+            "rect": [
+              372,
+              105,
+              555,
+              118
+            ],
+            "src": "contractorFull",
+            "size": 9
+          },
+          {
+            "name": "t3_phone",
+            "page": 0,
+            "rect": [
+              600,
+              105,
+              680,
+              118
+            ],
+            "src": "contractorPhone",
+            "size": 9
+          },
+          {
+            "name": "t4_trade",
+            "page": 0,
+            "rect": [
+              72,
+              122,
+              175,
+              135
+            ],
+            "src": "roofingWord",
+            "size": 9
+          },
+          {
+            "name": "t4_name",
+            "page": 0,
+            "rect": [
+              218,
+              122,
+              320,
+              135
+            ],
+            "src": "contractor",
+            "size": 9
+          },
+          {
+            "name": "t4_addr",
+            "page": 0,
+            "rect": [
+              372,
+              122,
+              555,
+              135
+            ],
+            "src": "contractorFull",
+            "size": 9
+          },
+          {
+            "name": "t4_phone",
+            "page": 0,
+            "rect": [
+              600,
+              122,
+              680,
+              135
+            ],
+            "src": "contractorPhone",
+            "size": 9
+          }
+        ]
+      }
+    ]
   },
   "Golf": {
     "form_type": "building_permit",
@@ -35140,8 +36976,169 @@
       "prefill_fields": 11
     },
     "electrical": {
-      "required": "not determined",
-      "note": "scanned application, no separate electrical application found"
+      "required": "separate",
+      "form_name": "Village of Westchester Electrical Permit Application",
+      "pdf_url": "https://www.westchester-il.gov/static/images/uploads/electric-meter-fitting.pdf",
+      "template": "permit-forms/Westchester-electrical.pdf",
+      "fields": [
+        {
+          "name": "date",
+          "page": 0,
+          "rect": [
+            112,
+            148,
+            238,
+            162
+          ],
+          "src": "blank",
+          "size": 9
+        },
+        {
+          "name": "site_addr",
+          "page": 0,
+          "rect": [
+            318,
+            148,
+            560,
+            162
+          ],
+          "src": "address",
+          "size": 9
+        },
+        {
+          "name": "owner",
+          "page": 0,
+          "rect": [
+            218,
+            193,
+            365,
+            207
+          ],
+          "src": "customer",
+          "size": 9
+        },
+        {
+          "name": "owner_phone",
+          "page": 0,
+          "rect": [
+            408,
+            193,
+            560,
+            207
+          ],
+          "src": "phone",
+          "size": 9
+        },
+        {
+          "name": "owner_addr",
+          "page": 0,
+          "rect": [
+            92,
+            218,
+            365,
+            232
+          ],
+          "src": "addressCity",
+          "size": 9
+        },
+        {
+          "name": "owner_email",
+          "page": 0,
+          "rect": [
+            406,
+            218,
+            560,
+            232
+          ],
+          "src": "ownerEmail",
+          "size": 9
+        },
+        {
+          "name": "gc_name",
+          "page": 0,
+          "rect": [
+            148,
+            243,
+            365,
+            257
+          ],
+          "src": "contractor",
+          "size": 9
+        },
+        {
+          "name": "gc_phone",
+          "page": 0,
+          "rect": [
+            406,
+            243,
+            560,
+            257
+          ],
+          "src": "contractorPhone",
+          "size": 9
+        },
+        {
+          "name": "gc_addr",
+          "page": 0,
+          "rect": [
+            148,
+            269,
+            365,
+            283
+          ],
+          "src": "contractorFull",
+          "size": 9
+        },
+        {
+          "name": "desc",
+          "page": 0,
+          "rect": [
+            148,
+            295,
+            560,
+            309
+          ],
+          "src": "description",
+          "size": 9
+        },
+        {
+          "name": "cost",
+          "page": 0,
+          "rect": [
+            118,
+            320,
+            350,
+            334
+          ],
+          "src": "price",
+          "size": 9
+        },
+        {
+          "name": "misc_desc",
+          "page": 0,
+          "rect": [
+            210,
+            500,
+            560,
+            514
+          ],
+          "src": "description",
+          "size": 9
+        },
+        {
+          "name": "print_name",
+          "page": 0,
+          "rect": [
+            90,
+            647,
+            350,
+            661
+          ],
+          "src": "blank",
+          "size": 9
+        }
+      ],
+      "note": "Electrical Permit Application; electrical contractor & registration left blank."
     },
     "demolition": {
       "required": "separate",
@@ -35314,6 +37311,173 @@
             ],
             "src": "blank",
             "size": 9
+          }
+        ]
+      },
+      {
+        "id": "concrete",
+        "label": "Residential Concrete Permit Application",
+        "applies": "all",
+        "form_name": "Village of Westchester Residential Concrete Permit Application",
+        "pdf_url": "https://www.westchester-il.gov/static/images/uploads/commercial-concrete-permit.pdf",
+        "template": "permit-forms/Westchester-concrete.pdf",
+        "fields": [
+          {
+            "name": "date",
+            "page": 0,
+            "rect": [
+              132,
+              142,
+              245,
+              156
+            ],
+            "src": "blank",
+            "size": 9
+          },
+          {
+            "name": "site_addr",
+            "page": 0,
+            "rect": [
+              320,
+              142,
+              560,
+              156
+            ],
+            "src": "address",
+            "size": 9
+          },
+          {
+            "name": "owner",
+            "page": 0,
+            "rect": [
+              192,
+              186,
+              352,
+              200
+            ],
+            "src": "customer",
+            "size": 9
+          },
+          {
+            "name": "owner_phone",
+            "page": 0,
+            "rect": [
+              395,
+              186,
+              560,
+              200
+            ],
+            "src": "phone",
+            "size": 9
+          },
+          {
+            "name": "owner_addr",
+            "page": 0,
+            "rect": [
+              108,
+              212,
+              380,
+              226
+            ],
+            "src": "addressCity",
+            "size": 9
+          },
+          {
+            "name": "owner_email",
+            "page": 0,
+            "rect": [
+              422,
+              212,
+              560,
+              226
+            ],
+            "src": "ownerEmail",
+            "size": 9
+          },
+          {
+            "name": "contractor",
+            "page": 0,
+            "rect": [
+              122,
+              238,
+              360,
+              252
+            ],
+            "src": "contractor",
+            "size": 9
+          },
+          {
+            "name": "con_phone",
+            "page": 0,
+            "rect": [
+              402,
+              238,
+              560,
+              252
+            ],
+            "src": "contractorPhone",
+            "size": 9
+          },
+          {
+            "name": "con_addr",
+            "page": 0,
+            "rect": [
+              164,
+              263,
+              380,
+              277
+            ],
+            "src": "contractorFull",
+            "size": 9
+          },
+          {
+            "name": "desc",
+            "page": 0,
+            "rect": [
+              164,
+              289,
+              560,
+              303
+            ],
+            "src": "description",
+            "size": 9
+          },
+          {
+            "name": "cost",
+            "page": 0,
+            "rect": [
+              132,
+              314,
+              350,
+              328
+            ],
+            "src": "price",
+            "size": 9
+          },
+          {
+            "name": "print_name",
+            "page": 0,
+            "rect": [
+              95,
+              611,
+              350,
+              625
+            ],
+            "src": "contractor",
+            "size": 9
+          }
+        ],
+        "checks": [
+          {
+            "name": "chk_concrete_drv",
+            "page": 0,
+            "rect": [
+              110,
+              494,
+              118,
+              502
+            ],
+            "on": true
           }
         ]
       }

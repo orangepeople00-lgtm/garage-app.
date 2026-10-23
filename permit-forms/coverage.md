@@ -272,3 +272,45 @@ Demo jobs in suburban Cook County also need a Cook County Dept. of Environment &
 
 - Mapped electrical PDFs: Berwyn, Cicero, Forest Park (Garage + New Construction ticked), Burbank (NEW WORK ticked), Chicago Ridge (NEW ticked). Electrician fields blank.
 - No fillable demolition application exists in the linked city documents: Antioch, Arlington Heights, Burr Ridge, Carol Stream, Des Plaines and Hoffman Estates link to requirement guides/checklists; Cary electrical (DocumentCenter/View/8363) is a service-upgrade checklist. Deerfield and Bartlett (OpenGov) and Elmwood Park (online FormCenter) are online forms that can't be prefilled.
+
+## Supplemental, Electrical & Demolition PDFs Mapped (2026-10-23)
+
+All mapped supplemental, electrical, and demolition PDFs below are pre-filled via `pdf-lib` with `NeedAppearances` enabled, zero read-only fields, real interactive checkboxes, and contractor/subcontractor license fields left blank for manual entry:
+
+| City | Mapped Supplemental / Electrical / Demolition Forms |
+|---|---|
+| Arlington Heights | Detached Accessory Structure Statement of Acknowledgment (`Arlington-Heights-accessory-ack.pdf`); Concrete / Asphalt Acknowledgment (`Arlington-Heights-concrete-ack.pdf`); Contractor List (`Arlington-Heights-contractor-list.pdf`); Construction / Silt Fence Acknowledgment (`Arlington-Heights-fence-ack.pdf`); Open Excavations / Areas of Construction Fence Acknowledgment (`Arlington-Heights-open-excavation.pdf`); Residential Garage Roofing Affidavit (`Arlington-Heights-roofing-affidavit-garage.pdf`); Single Family Zoning Worksheet (`Arlington-Heights-zoning-worksheet.pdf`) |
+| Bannockburn | Permit Security Deposit Agreement (`Bannockburn-security-agreement.pdf`) |
+| Barrington Hills | Tree Removal Detail Sheet (`Barrington-Hills-tree-removal.pdf`); Zoning Certificate (`Barrington-Hills-zoning-cert.pdf`) |
+| Berkeley | General Contractor & Subcontractor Listing (`Berkeley-gc-listing.pdf`) |
+| Berwyn | Electrical (`Berwyn-electrical.pdf`) |
+| Big Rock | Kane County Building and Zoning Permit Application (`Big-Rock-kane-county.pdf`) |
+| Bolingbrook | Tree Removal Permit Application (`Bolingbrook-tree-removal.pdf`) |
+| Bridgeview | Electrical (`Bridgeview-electrical.pdf`); Building and Zoning Permit Application (`Bridgeview-bldg-zoning.pdf`) |
+| Broadview | Electrical (`Broadview-electrical.pdf`) |
+| Burbank | Electrical (`Burbank-electrical.pdf`); Demolition (`Burbank-demo.pdf`); Residential Driveway Permit Application (`Burbank-driveway.pdf`) |
+| Calumet City | Electrical (`Calumet-City-electrical.pdf`) |
+| Carpentersville | Electrical (`Carpentersville-electrical.pdf`); Tree Removal Permit Application (`Carpentersville-tree-removal.pdf`) |
+| Cary | Lot Coverage Calculation Worksheet (`Cary-lot-coverage.pdf`) |
+| Chicago Ridge | Electrical (`Chicago-Ridge-electrical.pdf`) |
+| Cicero | Electrical (`Cicero-electrical.pdf`); Application for Building Permit (`Cicero-building-app.pdf`) |
+| Clarendon Hills | Plat of Survey Affidavit (`Clarendon-Hills-survey-affidavit.pdf`) |
+| Country Club Hills | Electrical (`Country-Club-Hills-electrical.pdf`); Garage Site Plan Diagram Sheet (`Country-Club-Hills-diagram.pdf`); Street Opening and Driveway Permit Application (`Country-Club-Hills-driveway.pdf`) |
+| Countryside | Electrical (`Countryside-electrical.pdf`); Homeowner Contractor Affidavit (`Countryside-homeowner-affidavit.pdf`); Subcontractor List (`Countryside-subcontractor.pdf`) |
+| Downers Grove | Electrical (`Downers-Grove-electrical.pdf`); Demolition (`Downers-Grove-demo-checklist.pdf`); Contractor List (`Downers-Grove-contractor-list.pdf`); Property Owner Authorization (`Downers-Grove-owner-auth.pdf`) |
+| Elmhurst | Homeowner Building Permit Affidavit (`Elmhurst-homeowner-affidavit.pdf`); Tree and Parkway Protection Sheet (`Elmhurst-tree-protection.pdf`) |
+| Elmwood Park | Primary Building Permit Application (`Elmwood-Park.pdf`); Electrical (`Elmwood-Park-electrical.pdf`); Demolition (`Elmwood-Park-rodent.pdf`) |
+| Evanston | Electrical Worksheet (`Evanston-electrical-worksheet.pdf`); Tree Preservation Plan & Policy Submittal (`Evanston-tree-plan.pdf`); Contractor List (`Evanston-contractor-list.pdf`); Water & Sewer Services Demolition Worksheet (if water/sewer disconnect) (`Evanston-water-sewer-demolition.pdf`) |
+| Evergreen Park | Electrical (`Evergreen-Park-electrical.pdf`); Demolition (`Evergreen-Park-demolition.pdf`) |
+| Flossmoor | Parkway Tree Work Permit Application (`Flossmoor-tree-permit.pdf`) |
+| Forest Park | Electrical (`Forest-Park-electrical.pdf`) |
+| Fox Lake | Property Owner Bond Waiver (`Fox-Lake-bond-waiver.pdf`); Tree Removal Permit Application (`Fox-Lake-tree-removal.pdf`) |
+| Franklin Park | Electrical (`Franklin-Park-electrical.pdf`); Demolition (`Franklin-Park-demolition.pdf`) |
+| Geneva | Electrical (`Geneva-electric-upgrade.pdf`); Demolition (`Geneva-demolition.pdf`); Tree Removal Permit Application (`Geneva-tree-removal.pdf`); Tree Preservation Review Application (`Geneva-tree-preservation.pdf`) |
+| Glenwood | Electrical (`Glenwood-electrical.pdf`); Demolition (`Glenwood-demolition.pdf`); Contractor Information List (`Glenwood-contractor-list.pdf`) |
+| Niles | Demolition (`Niles-demo-info.pdf`); Plat of Survey Affidavit (`Niles-survey-affidavit.pdf`) |
+| Riverside | Homeowner Waiver Form (`Riverside-homeowner-waiver.pdf`) |
+| Skokie | Zoning Information Worksheet (`Skokie-zoning-worksheet.pdf`); Contractor Information Sheet (`Skokie-contractor-info.pdf`) |
+| Villa Park | Electrical (`Villa-Park-electrical.pdf`); Demolition (`Villa-Park-demolition.pdf`); Additional Contractors List (`Villa-Park-contractors-list.pdf`) |
+| Westchester | Electrical (`Westchester-electrical.pdf`); Demolition (`Westchester-demolition.pdf`); Building Permit Letter of Authorization (`Westchester-auth-letter.pdf`); Residential Concrete Permit Application (`Westchester-concrete.pdf`) |
+| Wheeling | Affidavit for Building Permit (Owner Authorization) (`Wheeling-affidavit.pdf`); Affidavit for Homeowner Acting as Contractor (`Wheeling-homeowner-affidavit.pdf`) |

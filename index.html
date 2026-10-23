@@ -636,7 +636,7 @@ function jobQs(j){
   p.set('v', Date.now());
   return p.toString();
 }
-function openEstimateInCalculator(estId,jobId){window.location.href='estimator.html?editEstimate='+encodeURIComponent(estId)+(jobId?'&jobId='+encodeURIComponent(jobId):'')+'&v='+Date.now()}
+function openEstimateInCalculator(estId,jobId){const e=(Array.isArray(estimateHistory)?estimateHistory:[]).find(x=>String(x.id)===String(estId));if(e&&isRepairEstimate(e)){window.location.href='repair.html?editRepair='+encodeURIComponent(estId)+(jobId?'&jobId='+encodeURIComponent(jobId):'')+'&v='+Date.now();return;}window.location.href='estimator.html?editEstimate='+encodeURIComponent(estId)+(jobId?'&jobId='+encodeURIComponent(jobId):'')+'&v='+Date.now()}
 function closeEstimatePicker(){$('estPickBg')?.classList.remove('show')}
 function estimateHasSheet(e){return !!(e&&(listHistoryOptionSheets(e).some(o=>o.html)||(e.estimate_snapshot||{}).sheet_html))}
 // Open the saved estimate SHEET (Estimate History viewer). If no sheet was saved, say so and offer the calculator.
@@ -2285,6 +2285,13 @@ function saveEditedEstimateSheetHtml(html, meta){
    if(Number.isFinite(price)&&price>0){
     patch.estimate_price=price;
     snap.final_project_price=price;
+    if(isRepairEstimate(row)){
+     snap.customer_quote=price;
+     if(snap.repair_state&&snap.repair_state.fields){
+      snap.repair_state.fields.profitMode='total';
+      snap.repair_state.fields.profitValue=String(Math.round(price));
+     }
+    }
    }
    let up=await sheetSaveTimeout(sb.from('estimate_history').update(patch).eq('id',editId).select('id'),45000).catch(e=>({error:e}));
    if(up.error && /fetch|network|timeout|503|502|504/i.test(String(up.error.message||'')+(up.error.agbTimeout?' timeout':''))){
@@ -2369,7 +2376,7 @@ function historyFrameAutosave(frame, viewer){
  let last=capture(), capturing=false;
  const run=async()=>{ clearTimeout(t); t=null; if(running){ pending=true; return; } capturing=true; const html=capture(); capturing=false; if(html===last) return; running=true; pill('Saving…');
   try{ try{ d.querySelectorAll('.sheet-edit').forEach(el=>{ try{ cw.saveSheetInlineEdit&&cw.saveSheetInlineEdit(el); }catch(_){} }); }catch(_){}
-   const price=parseFloat((d.querySelector('.total-price')?.innerText||'').replace(/[^0-9.]/g,''))||0;
+   const price=parseFloat((d.querySelector('.total-price,#sheetTotal')?.innerText||'').replace(/[^0-9.]/g,''))||0;
    const ok=await saveEditedEstimateSheetHtml(html,{id,price,option:slot,silent:true});
    if(ok){ last=html; pill('Saved ✓','ok'); } else pill('Save failed – retry','err');
   }catch(e){ pill('Save failed – retry','err'); }
@@ -2446,14 +2453,16 @@ async function viewEstimateHistory(id){
     if(!doc||!doc.documentElement) return;
     const html='<!DOCTYPE html>\n'+doc.documentElement.outerHTML;
     if(html.length<200) return;
-    const priceTxt=(doc.querySelector('.total-price')?.innerText||'').replace(/[^0-9.]/g,'');
+    const priceTxt=(doc.querySelector('.total-price,#sheetTotal')?.innerText||'').replace(/[^0-9.]/g,'');
     const price=parseFloat(priceTxt)||0;
     if(i===0){ primaryHtml=html; primaryPrice=price; }
-    const slot=frame.dataset.optionSlot||['A','B','C'][i]||'A';
-    option_sheets[slot]=Object.assign({}, option_sheets[slot]||{}, {sheet_html:html, quote:price||((option_sheets[slot]||{}).quote)||0});
+    if(!isRepairEstimate(e)){
+     const slot=frame.dataset.optionSlot||['A','B','C'][i]||'A';
+     option_sheets[slot]=Object.assign({}, option_sheets[slot]||{}, {sheet_html:html, quote:price||((option_sheets[slot]||{}).quote)||0});
+    }
    });
    if(!primaryHtml){ alert('Sheet did not capture. Wait for it to finish loading and press Save again.'); return; }
-   const ok=await saveEditedEstimateSheetHtml(primaryHtml,{id:id,price:primaryPrice,option_sheets,silent:true});
+   const ok=await saveEditedEstimateSheetHtml(primaryHtml,{id:id,price:primaryPrice,option_sheets:isRepairEstimate(e)?undefined:option_sheets,silent:true});
    if(ok) w.alert('Saved. '+(frames.length>1?'All option sheets and prices are':'The sheet and price are')+' stored on this estimate.');
    else w.alert(window._agbLastSaveError||'Save did not go through. Press Save again.');
   }catch(err){ console.error(err); w.alert(friendlySheetSaveError(err)); }

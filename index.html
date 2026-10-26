@@ -2337,6 +2337,39 @@ function listHistoryOptionSheets(e){
 }
 // A sheet shown inside the History viewer frame has no window.opener; point it at the viewer so its own
 // "Save Changes" button (including on sheets saved by older versions) can reach the save function.
+// Repair/estimate sheets saved by older versions: never print the on-screen "no picture" prompt,
+// and only show "Items marked OPTION..." when an option line actually has a price (kept live while editing).
+function historySheetNormalize(d){
+ if(!d) return; let has=false;
+ try{
+  d.querySelectorAll('#sheetPhotoSection,.rs-photos,.rs-photo').forEach(el=>{ if(el.querySelector('img')){ el.classList.remove('rs-nopic'); if(el.id==='sheetPhotoSection') el.classList.remove('noprint'); } else el.classList.add('rs-nopic','noprint'); });
+  d.querySelectorAll('.rs-nophoto-bar').forEach(el=>el.classList.add('noprint'));
+  d.querySelectorAll('.rs-tbl tbody tr').forEach(tr=>{
+   const lbl=tr.querySelector('.optlbl');
+   if(!(tr.classList.contains('optrow')||(lbl&&/option/i.test(lbl.textContent)))) return;
+   const pe=tr.querySelector('.optp,.sheet-opt-price'); const t=pe?pe.textContent.trim():''; if(!t) return;
+   const n=t.replace(/[^0-9.]/g,''); if(n===''){ if(/[a-z]/i.test(t)) has=true; return; }
+   if(parseFloat(n)>0) has=true;
+  });
+  d.querySelectorAll('#sheetOptNote,.rs-optnote').forEach(el=>{ el.classList.toggle('rs-optnote-off',!has); el.classList.toggle('noprint',!has); });
+ }catch(e){}
+}
+function fixHistorySheetPrintBits(frame){
+ const d=frame.contentDocument; if(!d||!d.head) return;
+ if(!d.getElementById('agbSheetPrintFix')){
+  const st=d.createElement('style'); st.id='agbSheetPrintFix';
+  st.textContent='.rs-optnote.rs-optnote-off{display:none!important}@media print{.noprint,.no-print,.rs-nophoto-bar,.rs-nopic,#sheetPhotoSection:not(:has(img)),.rs-photos:not(:has(img)),.rs-photo:not(:has(img)){display:none!important}}';
+  d.head.appendChild(st);
+ }
+ historySheetNormalize(d);
+ if(!d._agbNormWired){
+  d._agbNormWired=true;
+  const run=()=>{ try{ historySheetNormalize(frame.contentDocument); }catch(e){} };
+  d.addEventListener('input',run,true);
+  d.addEventListener('click',()=>setTimeout(run,0),true);
+  try{ frame.contentWindow.addEventListener('beforeprint',run); }catch(e){}
+ }
+}
 function wireHistorySheetFrame(frame, viewer){
  try{
   frame.addEventListener('load', ()=>{
@@ -2345,7 +2378,7 @@ function wireHistorySheetFrame(frame, viewer){
    try{ setTimeout(()=>historyFrameAutosave(frame, viewer), 2500); }catch(e){}
    try{ mirrorSheetPill(frame); }catch(e){}
    // The "AI Sheet Changes" panel is retired: strip it from sheets saved by older versions
-   try{ const d=frame.contentDocument; if(d) d.querySelectorAll('.sheet-ai-panel').forEach(el=>el.remove()); }catch(e){}
+   try{ const d=frame.contentDocument; if(d) d.querySelectorAll('.sheet-ai-panel').forEach(el=>el.remove()); }catch(e){}   try{ fixHistorySheetPrintBits(frame); }catch(e){}
   });
  }catch(e){}
 }
@@ -2475,6 +2508,7 @@ async function viewEstimateHistory(id){
    const frame=w.document.getElementById('savedEstimateFrame')||w.document.querySelector('iframe');
    if(frame && frame.contentWindow){
     const cw=frame.contentWindow;
+    try{ fixHistorySheetPrintBits(frame); }catch(_){}
     if(typeof cw.rsdPrint==='function'){ cw.rsdPrint(); return; }
     if(typeof cw.saveSheetEditsNow==='function'){ try{ await cw.saveSheetEditsNow(true); }catch(_){} }
     const sc=cw.document && cw.document.getElementById('sheetScale');

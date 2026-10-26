@@ -134,6 +134,7 @@ tr.optrow td{background:#fff7e6}
 .rs-total .a{background:#F5A623;font-family:'Arial Black',Arial,sans-serif;font-weight:900;font-size:29px;display:flex;align-items:center;justify-content:center}
 .rs-total .b{background:#111;color:#fff;font-family:'Arial Black',Arial,sans-serif;font-weight:900;font-size:32px;display:flex;align-items:center;justify-content:center}
 .rs-optnote{margin:3px 18px 0;font-size:10px;text-align:right;font-style:italic}
+.rs-optnote.rs-optnote-off{display:none!important}
 .rs-notes{display:grid;grid-template-columns:1fr 2.25in;border:1.5px solid #9ca3af;margin:7px 18px 0;padding:7px 10px;gap:10px;font-size:10.5px;line-height:1.3}
 .rs-notes .n{display:flex;gap:10px}.rs-ex{width:30px;height:30px;border-radius:50%;background:#F5A623;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:20px;flex:0 0 30px}
 .rs-notes .rb{display:flex;gap:10px;align-items:center;border-left:1.5px solid #9ca3af;padding-left:10px}.rs-notes .rb svg{width:34px;height:40px;flex:0 0 34px}
@@ -154,6 +155,7 @@ tr.optrow td{background:#fff7e6}
   body>*:not(#sheetModal){display:none!important}
   #sheetModal{display:block!important;position:static!important;inset:auto!important;margin:0!important;padding:0!important;width:8.5in!important;height:11in!important;max-height:11in!important;background:#fff!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;filter:none!important;overflow:hidden!important;transform:none!important;zoom:1!important}
   #sheetModal .mbar,.rsd-bar,.noprint,.rs-row-tools,.rs-tbl-foot,.rs-ph-tools{display:none!important}
+  .no-print,.rs-nophoto-bar,.rs-nopic,#sheetPhotoSection:not(:has(img)),.rs-photos:not(:has(img)),.rs-photo:not(:has(img)){display:none!important}
   #sheetHost{padding:0!important;margin:0!important;width:8.5in!important;height:11in!important;max-height:11in!important;background:#fff!important;overflow:hidden!important;transform:none!important;zoom:1!important}
   #sheetScale,.sheetScale{transform:none!important;-webkit-transform:none!important;zoom:1!important;width:8.5in!important;height:11in!important;max-height:11in!important;margin:0!important;padding:0!important}
   .rs,#repairSheet{margin:0!important;width:8.5in!important;height:11in!important;min-height:11in!important;max-height:11in!important;box-shadow:none!important;page-break-after:avoid!important;page-break-inside:avoid!important;break-inside:avoid!important;overflow:hidden!important}
@@ -725,6 +727,7 @@ function refreshSheetPhotosInDom(){
   const sec=$('sheetPhotoSection');
   if(sec){
     sec.outerHTML=buildSheetPhotosBlock();
+    updateOptNoteVisibility();
     fitSheet();
     repSched(200);
   }
@@ -823,6 +826,7 @@ function ensureRowToolsInDom(){
   const sc=$('sheetScale');if(!sc)return;
   // Remove any legacy fake svg placeholders if present from old saved sheets
   sc.querySelectorAll('svg.phs').forEach(svg=>{const ph=svg.closest('.rs-photo');if(ph)ph.remove();});
+  rsNormalizeSheet(sc);
   sc.querySelectorAll('.rs-tbl tbody tr').forEach(tr=>{
     const td=tr.querySelector('td.inc')||tr.lastElementChild;
     if(td && !td.querySelector('.rs-row-tools')){
@@ -851,11 +855,29 @@ function sheetAddRow(isOpt,afterTr){
   fitSheet();
   repairSheetSaveNow(true);
 }
+function rsNormalizeSheet(root){
+  root=root||document;var has=false;
+  try{
+    root.querySelectorAll('#sheetPhotoSection,.rs-photos,.rs-photo').forEach(function(el){
+      if(el.querySelector('img')){el.classList.remove('rs-nopic');if(el.id==='sheetPhotoSection')el.classList.remove('noprint');}
+      else{el.classList.add('rs-nopic','noprint');}
+    });
+    root.querySelectorAll('.rs-nophoto-bar').forEach(function(el){el.classList.add('noprint');});
+    root.querySelectorAll('.rs-tbl tbody tr').forEach(function(tr){
+      var lbl=tr.querySelector('.optlbl');
+      if(!(tr.classList.contains('optrow')||(lbl&&/option/i.test(lbl.textContent))))return;
+      var pe=tr.querySelector('.optp,.sheet-opt-price');var t=pe?pe.textContent.trim():'';if(!t)return;
+      var n=t.replace(/[^0-9.]/g,'');
+      if(n===''){if(/[a-z]/i.test(t))has=true;return;}
+      if(parseFloat(n)>0)has=true;
+    });
+    root.querySelectorAll('#sheetOptNote,.rs-optnote').forEach(function(el){el.classList.toggle('rs-optnote-off',!has);el.classList.toggle('noprint',!has);});
+  }catch(e){}
+  return has;
+}
 function updateOptNoteVisibility(){
   const sc=$('sheetScale');if(!sc)return;
-  const hasOpt=!!sc.querySelector('.rs-tbl tbody tr.optrow');
-  const note=sc.querySelector('#sheetOptNote,.rs-optnote');
-  if(note)note.classList.toggle('noprint',!hasOpt);
+  return rsNormalizeSheet(sc);
 }
 function syncSheetEditsToCalculator(){
   const sc=$('sheetScale');if(!sc||!sc.querySelector('#repairSheet'))return;
@@ -975,6 +997,7 @@ function syncCalculatorToExistingSheet(R){
 
 function prepareRepairPrintLayout(){
   window._isPrintingSheet=true;
+  try{updateOptNoteVisibility();}catch(e){}
   if(!$('sheetModal').classList.contains('open')){
     const R=calc();
     if(S.sheet_html){
@@ -1086,12 +1109,13 @@ function repairSheetDoc(inner){
   const css=Array.from(document.querySelectorAll('style')).map(x=>x.textContent).join('\n');
   const tools='<div class="noprint rsd-bar"><button type="button" id="sheetSaveBtn" onclick="window.saveSheetEditsNow(true)" style="background:#16a34a">💾 Save Changes</button><button type="button" id="sheetEditRowsBtn" onclick="rsdToggle()">✏ Edit Rows</button><button type="button" onclick="rsdAddRow(false)">＋ Add Row</button><button type="button" onclick="rsdTriggerPhoto()">📷 Picture</button><button type="button" onclick="window.rsdPrint()">🖨 Print</button><input type="file" id="rsdPhotoInput" accept="image/*" style="display:none" onchange="rsdLoadPhoto(this)"><span id="popupChangeStatus">Tap any text or price to edit</span></div>';
   const js="<scr"+"ipt>(function(){"
+   +rsNormalizeSheet.toString()+"window.rsNormalizeSheet=rsNormalizeSheet;function norm(){rsNormalizeSheet(document);}norm();window.addEventListener('load',norm);document.addEventListener('input',norm,true);document.addEventListener('click',function(){setTimeout(norm,0);},true);"
    +"var _printing=false;"
    +"function isPrint(){return _printing||!!(window.matchMedia&&window.matchMedia('print').matches);}"
    +"window.rsdToggle=function(f){var m=document.getElementById('sheetModal')||document.body;var on=typeof f==='boolean'?f:!m.classList.contains('sheet-editing');m.classList.toggle('sheet-editing',on);document.body.classList.toggle('sheet-editing',on);var b=document.getElementById('sheetEditRowsBtn');if(b)b.textContent=on?'✓ Done Rows':'✏ Edit Rows';fit();};"
    +"function fit(){var sh=document.getElementById('repairSheet'),inn=document.getElementById('rsIn'),s=document.getElementById('sheetScale');if(!sh||!inn)return;var z=s?s.style.zoom:'';if(s)s.style.zoom='';inn.style.transform='';inn.style.width='';var phs=sh.querySelectorAll('.rs-photo');phs.forEach(function(e){e.style.height='';});var av=sh.clientHeight||1044,h=inn.scrollHeight;if(h>av&&phs.length){var cur=phs[0].offsetHeight||225;var nh=Math.max(139,cur-(h-av));phs.forEach(function(e){e.style.height=nh+'px';});h=inn.scrollHeight;}if(h>av){var k=av/h;inn.style.transform='scale('+k+')';inn.style.transformOrigin='top left';inn.style.width=(100/k)+'%';}if(s&&!isPrint())s.style.zoom=z;}window.addEventListener('load',fit);setTimeout(fit,300);"
    +"function vw(){var s=document.getElementById('sheetScale');if(!s)return;if(isPrint()){s.style.zoom='';s.style.transform='';return;}s.style.zoom='';var k=Math.min(1,(window.innerWidth-8)/Math.max(816,s.scrollWidth));if(k<1)s.style.zoom=k;}window.addEventListener('load',vw);window.addEventListener('resize',vw);"
-   +"function prepPrint(){_printing=true;var s=document.getElementById('sheetScale');if(s){s.style.zoom='';s.style.transform='';}window.scrollTo(0,0);fit();if(_t)window.saveSheetEditsNow(false);}"
+   +"function prepPrint(){_printing=true;norm();var s=document.getElementById('sheetScale');if(s){s.style.zoom='';s.style.transform='';}window.scrollTo(0,0);fit();if(_t)window.saveSheetEditsNow(false);}"
    +"function donePrint(){_printing=false;vw();}"
    +"window.addEventListener('beforeprint',prepPrint);window.addEventListener('afterprint',donePrint);"
    +"try{var mq=window.matchMedia&&window.matchMedia('print');if(mq&&mq.addEventListener)mq.addEventListener('change',function(e){if(e.matches)prepPrint();else donePrint();});}catch(_){}"
@@ -1112,7 +1136,7 @@ function repairSheetDoc(inner){
   return '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Repair Estimate</title><style>'+css
    +'\nbody{background:#e5e7eb!important;margin:0;padding:0}#sheetModal{display:block!important;position:static!important;background:#e5e7eb!important;overflow:visible;padding:0;backdrop-filter:none;-webkit-backdrop-filter:none}#sheetHost{padding:10px 0}.sheetScale{margin:0 auto;width:8.5in}'
    +'.rsd-bar{position:sticky;top:0;z-index:5;display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px;background:#0f172a}.rsd-bar button{background:#1d4ed8;color:#fff;border:0;border-radius:8px;padding:6px 12px;font-weight:700;cursor:pointer}#popupChangeStatus{color:#86efac;font:600 12px Arial}'
-   +'@media print{.rsd-bar,.noprint,.rs-row-tools,.rs-tbl-foot,.rs-ph-tools{display:none!important}html,body{background:#fff!important;margin:0!important;padding:0!important;width:8.5in!important;height:11in!important;overflow:hidden!important}#sheetModal{background:#fff!important;padding:0!important;margin:0!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;width:8.5in!important;height:11in!important;overflow:hidden!important}#sheetHost{padding:0!important;margin:0!important;background:#fff!important;width:8.5in!important;height:11in!important;overflow:hidden!important}#sheetScale,.sheetScale{zoom:1!important;transform:none!important;-webkit-transform:none!important;width:8.5in!important;height:11in!important;margin:0!important;padding:0!important}.rs,#repairSheet{margin:0!important;width:8.5in!important;height:11in!important;overflow:hidden!important}}</style></head><body>'+tools
+   +'@media print{.rsd-bar,.noprint,.no-print,.rs-nophoto-bar,.rs-nopic,#sheetPhotoSection:not(:has(img)),.rs-photos:not(:has(img)),.rs-photo:not(:has(img)),.rs-row-tools,.rs-tbl-foot,.rs-ph-tools{display:none!important}html,body{background:#fff!important;margin:0!important;padding:0!important;width:8.5in!important;height:11in!important;overflow:hidden!important}#sheetModal{background:#fff!important;padding:0!important;margin:0!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;width:8.5in!important;height:11in!important;overflow:hidden!important}#sheetHost{padding:0!important;margin:0!important;background:#fff!important;width:8.5in!important;height:11in!important;overflow:hidden!important}#sheetScale,.sheetScale{zoom:1!important;transform:none!important;-webkit-transform:none!important;width:8.5in!important;height:11in!important;margin:0!important;padding:0!important}.rs,#repairSheet{margin:0!important;width:8.5in!important;height:11in!important;overflow:hidden!important}}</style></head><body>'+tools
    +'<div id="sheetModal" class="modal open"><div id="sheetHost"><div class="sheetScale" id="sheetScale">'+inner+'</div></div></div>'+js+'</body></html>';
 }
 function currentRepairSheetInner(){
@@ -1187,6 +1211,7 @@ function startRepairSheetAutosave(){
   _repObs.observe(sc,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['src','class','hidden']});
   sc.addEventListener('focusin',e=>{if(e.target&&e.target.isContentEditable)pushSheetUndo();},true);
   sc.addEventListener('input',()=>{syncSheetEditsToCalculator();repSched(900);},true);
+  sc.addEventListener('input',()=>updateOptNoteVisibility(),true);
   sc.addEventListener('focusout',()=>{syncSheetEditsToCalculator();if(_repAutoT)repairSheetSaveNow(false);},true);
   sc.addEventListener('click',e=>{
     const btn=e.target.closest&&e.target.closest('.rs-rt-btn[data-act]');

@@ -884,6 +884,20 @@ async function rsDownloadPdf(btn){
     if(typeof window.html2pdf!=='function'){await new Promise(function(res,rej){var s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';s.onload=res;s.onerror=function(){rej(new Error('PDF library did not load. Check the internet connection and try again.'));};document.head.appendChild(s);});}
     host=document.createElement('div');host.className='noprint';host.style.cssText='position:fixed;left:-20000px;top:0;width:816px;height:1056px;background:#fff;overflow:hidden;z-index:-1';
     var clone=sheet.cloneNode(true);clone.id='repairSheetPdf';
+    var oSv=sheet.querySelectorAll('svg'),cSv=clone.querySelectorAll('svg');
+    var PROPS=['fill','stroke','stroke-width','stroke-linecap','stroke-linejoin','stroke-miterlimit','fill-opacity','stroke-opacity','opacity','fill-rule'];
+    for(var si=0;si<oSv.length&&si<cSv.length;si++){try{
+      var os=oSv[si],cs=cSv[si];var on=[os].concat([].slice.call(os.querySelectorAll('*'))),cn=[cs].concat([].slice.call(cs.querySelectorAll('*')));
+      for(var k=0;k<on.length&&k<cn.length;k++){var st=getComputedStyle(on[k]);PROPS.forEach(function(pr){var v=st.getPropertyValue(pr);if(v)cn[k].setAttribute(pr,v);});}
+      var oc=getComputedStyle(os);var w=parseFloat(oc.width)||os.getBoundingClientRect().width,h=parseFloat(oc.height)||os.getBoundingClientRect().height;
+      if(!w||!h)continue;
+      cs.setAttribute('xmlns','http://www.w3.org/2000/svg');cs.setAttribute('width',w*2);cs.setAttribute('height',h*2);
+      var im=document.createElement('img');im.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(new XMLSerializer().serializeToString(cs));
+      im.style.cssText='width:'+w+'px;height:'+h+'px;display:'+(oc.display==='inline'?'inline-block':oc.display)+';vertical-align:'+oc.verticalAlign+';flex:none;margin:'+oc.margin;
+      cs.parentNode.replaceChild(im,cs);
+    }catch(_){}}
+    clone.querySelectorAll('.bchk').forEach(function(b){var im=document.createElement('img');im.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="112" height="112" viewBox="0 0 28 28"><circle cx="14" cy="14" r="14" fill="#111"/><polyline points="8,14.5 12.2,18.5 20,10" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>');im.style.cssText='width:28px;height:28px;display:inline-block;vertical-align:middle';b.parentNode.replaceChild(im,b);});
+    clone.querySelectorAll('li').forEach(function(li){if(/^(Tap to describe repair scope and materials|Describe the repair work( and materials)?)$/i.test((li.textContent||'').trim()))li.remove();});
     clone.querySelectorAll('.noprint,.no-print,.rs-nophoto-bar,.rs-nopic,.rs-optnote-off,.rs-row-tools,.rs-tbl-foot,.rs-ph-tools,.rsd-bar,#sheetAutoPill,#sheetSaveBanner,input,button').forEach(function(el){el.remove();});
     clone.querySelectorAll('#sheetPhotoSection').forEach(function(el){if(!el.querySelector('img'))el.remove();});
     clone.querySelectorAll('[contenteditable]').forEach(function(el){el.removeAttribute('contenteditable');});

@@ -9869,7 +9869,7 @@ async function downloadEstimatePdf(){
 
     const clone=sheet.cloneNode(true);
     clone.id='pdfExportSheet';
-    clone.querySelectorAll('.no-print, .sheet-row-remove, .sheet-row-add, .sheet-row-tools, .sheet-add-row, .actions, .sheet-ai-panel').forEach(el=>{
+    clone.querySelectorAll('.no-print, .noprint, .rs-nophoto-bar, .rs-optnote-off, .sheet-row-remove, .sheet-row-add, .sheet-row-tools, .sheet-add-row, .actions, .sheet-ai-panel').forEach(el=>{
       try{ el.remove(); }catch(_){}
     });
     clone.style.setProperty('width','8.5in','important');

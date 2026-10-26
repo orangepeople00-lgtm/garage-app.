@@ -9115,9 +9115,12 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                     .forEach(line => notes.push(line));
             }
 
+            // Only mention demolition when this estimate actually includes demo.
+            const inclusionHasDemo = !!document.getElementById('demoExisting')?.checked;
+            const inclusionDemo = inclusionHasDemo ? 'demolition, ' : '';
             const inclusionSentence = isSuburb
-                ? 'Materials, labor, taxes, demolition, cleanup, and debris removal included.'
-                : 'Permit, materials, labor, taxes, demolition, cleanup, and debris removal included.';
+                ? `Materials, labor, taxes, ${inclusionDemo}cleanup, and debris removal included.`
+                : `Permit, materials, labor, taxes, ${inclusionDemo}cleanup, and debris removal included.`;
             notes.push(inclusionSentence);
             if (!salesman.wally) {
                 notes.push('Built to meet applicable local building codes.');

@@ -270,7 +270,7 @@ tr.optrow td{background:#fff7e6}
   </div>
 </div>
 <div class="sticky noprint"><div><div class="muted">Project price</div><div class="v" id="stickyTotal">$0</div></div><button class="btn yellow" type="button" onclick="openSheet()">📄 Sheet</button></div>
-<div class="modal" id="sheetModal"><div class="mbar"><button class="btn" type="button" onclick="closeModal('sheetModal')">✕ Close</button><button class="btn green" type="button" id="repairSheetSaveBtn" onclick="repairSheetSaveNow(true)">💾 Save Changes</button><button class="btn" type="button" id="repairEditRowsBtn" onclick="toggleRepairRowEdit()">✏ Edit Rows</button><button class="btn" type="button" onclick="sheetAddRow()">＋ Add Row</button><button class="btn" type="button" onclick="triggerSheetPhotoUpload(0)">📷 Picture</button><button class="btn" type="button" id="repairUndoBtn" onclick="undoSheetEdit()" style="display:none">↩ Undo</button><button class="btn primary" type="button" onclick="printRepairSheet()">🖨 Print / Save PDF</button><input type="file" id="sheetQuickPhotoInput" accept="image/*" style="display:none" onchange="onSheetQuickPhoto(this)"><span class="muted" style="align-self:center">Tap any text, cell, or price on the sheet to edit.</span><span id="repairAutoPill" class="muted" style="align-self:center;font-weight:700"></span></div><div id="sheetHost"><div class="sheetScale" id="sheetScale"></div></div></div>
+<div class="modal" id="sheetModal"><div class="mbar"><button class="btn" type="button" onclick="closeModal('sheetModal')">✕ Close</button><button class="btn green" type="button" id="repairSheetSaveBtn" onclick="repairSheetSaveNow(true)">💾 Save Changes</button><button class="btn" type="button" id="repairEditRowsBtn" onclick="toggleRepairRowEdit()">✏ Edit Rows</button><button class="btn" type="button" onclick="sheetAddRow()">＋ Add Row</button><button class="btn" type="button" onclick="triggerSheetPhotoUpload(0)">📷 Picture</button><button class="btn" type="button" id="repairUndoBtn" onclick="undoSheetEdit()" style="display:none">↩ Undo</button><button class="btn primary" type="button" onclick="printRepairSheet()">🖨 Print</button><button class="btn primary" type="button" onclick="rsDownloadPdf(this)">⬇ Download PDF</button><input type="file" id="sheetQuickPhotoInput" accept="image/*" style="display:none" onchange="onSheetQuickPhoto(this)"><span class="muted" style="align-self:center">Tap any text, cell, or price on the sheet to edit.</span><span id="repairAutoPill" class="muted" style="align-self:center;font-weight:700"></span></div><div id="sheetHost"><div class="sheetScale" id="sheetScale"></div></div></div>
 <div class="modal" id="settingsModal"><div class="mbar"><button class="btn" type="button" onclick="closeModal('settingsModal');calc()">✓ Done</button><button class="btn" type="button" onclick="resetPrices()">Reset to example prices</button></div>
  <div class="panel"><h2 class="font-display" style="margin:0 0 4px;color:#fff">PRICE TABLE (internal unit costs)</h2>
  <div class="banner" style="margin-top:8px">These are EXAMPLE placeholder prices only. Replace every value with real costs. Saved on this device (localStorage).</div>
@@ -875,6 +875,37 @@ function rsNormalizeSheet(root){
   }catch(e){}
   return has;
 }
+async function rsDownloadPdf(btn){
+  var sheet=document.getElementById('repairSheet');if(!sheet){alert('Open the repair sheet first.');return;}
+  var old=btn&&btn.textContent;if(btn){btn.disabled=true;btn.textContent='Making PDF…';}
+  var host=null;
+  try{
+    try{if(typeof window.rsNormalizeSheet==='function')window.rsNormalizeSheet(document);}catch(_){}
+    if(typeof window.html2pdf!=='function'){await new Promise(function(res,rej){var s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';s.onload=res;s.onerror=function(){rej(new Error('PDF library did not load. Check the internet connection and try again.'));};document.head.appendChild(s);});}
+    host=document.createElement('div');host.className='noprint';host.style.cssText='position:fixed;left:-20000px;top:0;width:816px;height:1056px;background:#fff;overflow:hidden;z-index:-1';
+    var clone=sheet.cloneNode(true);clone.id='repairSheetPdf';
+    clone.querySelectorAll('.noprint,.no-print,.rs-nophoto-bar,.rs-nopic,.rs-optnote-off,.rs-row-tools,.rs-tbl-foot,.rs-ph-tools,.rsd-bar,#sheetAutoPill,#sheetSaveBanner,input,button').forEach(function(el){el.remove();});
+    clone.querySelectorAll('#sheetPhotoSection').forEach(function(el){if(!el.querySelector('img'))el.remove();});
+    clone.querySelectorAll('[contenteditable]').forEach(function(el){el.removeAttribute('contenteditable');});
+    clone.querySelectorAll('[data-ph]').forEach(function(el){el.removeAttribute('data-ph');});
+    clone.style.cssText+=';width:816px!important;height:1056px!important;min-height:1056px!important;max-height:1056px!important;margin:0!important;box-shadow:none!important;transform:none!important;zoom:1!important;overflow:hidden!important';
+    host.appendChild(clone);document.body.appendChild(host);
+    await new Promise(function(r){setTimeout(r,60);});
+    var worker=window.html2pdf().set({margin:0,html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff',logging:false,scrollX:0,scrollY:0,x:0,y:0,width:816,height:1056,windowWidth:816,windowHeight:1056},jsPDF:{unit:'in',format:'letter',orientation:'portrait',compress:true}}).from(clone).toCanvas();
+    var canvas=await worker.get('canvas');
+    if(!canvas||!canvas.width)throw new Error('The sheet could not be rendered.');
+    var img=canvas.toDataURL('image/jpeg',0.95);
+    var pdf=await worker.toPdf().get('pdf');
+    var c=pdf.internal.getNumberOfPages();while(c>1){pdf.deletePage(c);c--;}
+    pdf.setFillColor(255,255,255);pdf.rect(0,0,8.5,11,'F');
+    pdf.addImage(img,'JPEG',0,0,8.5,11,undefined,'FAST');
+    var t=function(sel){var e=sheet.querySelector(sel);return e?(e.textContent||'').trim():'';};
+    var name=['Repair Estimate',t('[data-bind="customerName"]'),t('[data-bind="customerAddress"]')].filter(Boolean).join(' - ');
+    pdf.save(name.replace(/[\\/:*?"<>|]+/g,'-')+'.pdf');
+  }catch(err){console.error('Repair PDF failed',err);alert('Could not download the PDF. '+(err&&err.message?err.message:err));}
+  finally{if(host&&host.parentNode)host.parentNode.removeChild(host);if(btn){btn.disabled=false;btn.textContent=old;}}
+}
+window.rsDownloadPdf=rsDownloadPdf;window.rsNormalizeSheet=rsNormalizeSheet;
 function updateOptNoteVisibility(){
   const sc=$('sheetScale');if(!sc)return;
   return rsNormalizeSheet(sc);
@@ -1107,9 +1138,9 @@ function closeModal(id){
 // ===== Standalone, editable repair sheet document stored in History (estimate_snapshot.sheet_html) =====
 function repairSheetDoc(inner){
   const css=Array.from(document.querySelectorAll('style')).map(x=>x.textContent).join('\n');
-  const tools='<div class="noprint rsd-bar"><button type="button" id="sheetSaveBtn" onclick="window.saveSheetEditsNow(true)" style="background:#16a34a">💾 Save Changes</button><button type="button" id="sheetEditRowsBtn" onclick="rsdToggle()">✏ Edit Rows</button><button type="button" onclick="rsdAddRow(false)">＋ Add Row</button><button type="button" onclick="rsdTriggerPhoto()">📷 Picture</button><button type="button" onclick="window.rsdPrint()">🖨 Print</button><input type="file" id="rsdPhotoInput" accept="image/*" style="display:none" onchange="rsdLoadPhoto(this)"><span id="popupChangeStatus">Tap any text or price to edit</span></div>';
+  const tools='<div class="noprint rsd-bar"><button type="button" id="sheetSaveBtn" onclick="window.saveSheetEditsNow(true)" style="background:#16a34a">💾 Save Changes</button><button type="button" id="sheetEditRowsBtn" onclick="rsdToggle()">✏ Edit Rows</button><button type="button" onclick="rsdAddRow(false)">＋ Add Row</button><button type="button" onclick="rsdTriggerPhoto()">📷 Picture</button><button type="button" onclick="window.rsdPrint()">🖨 Print</button><button type="button" onclick="window.rsDownloadPdf(this)">⬇ Download PDF</button><input type="file" id="rsdPhotoInput" accept="image/*" style="display:none" onchange="rsdLoadPhoto(this)"><span id="popupChangeStatus">Tap any text or price to edit</span></div>';
   const js="<scr"+"ipt>(function(){"
-   +rsNormalizeSheet.toString()+"window.rsNormalizeSheet=rsNormalizeSheet;function norm(){rsNormalizeSheet(document);}norm();window.addEventListener('load',norm);document.addEventListener('input',norm,true);document.addEventListener('click',function(){setTimeout(norm,0);},true);"
+   +rsNormalizeSheet.toString()+rsDownloadPdf.toString()+"window.rsDownloadPdf=rsDownloadPdf;window.rsNormalizeSheet=rsNormalizeSheet;function norm(){rsNormalizeSheet(document);}norm();window.addEventListener('load',norm);document.addEventListener('input',norm,true);document.addEventListener('click',function(){setTimeout(norm,0);},true);"
    +"var _printing=false;"
    +"function isPrint(){return _printing||!!(window.matchMedia&&window.matchMedia('print').matches);}"
    +"window.rsdToggle=function(f){var m=document.getElementById('sheetModal')||document.body;var on=typeof f==='boolean'?f:!m.classList.contains('sheet-editing');m.classList.toggle('sheet-editing',on);document.body.classList.toggle('sheet-editing',on);var b=document.getElementById('sheetEditRowsBtn');if(b)b.textContent=on?'✓ Done Rows':'✏ Edit Rows';fit();};"
@@ -1398,7 +1429,10 @@ function applyIncomingUrlOrHandoff(){
 }
 // ================= INIT =================
 loadPrices();S=defState();
-(function(){let d=null;try{d=JSON.parse(localStorage.getItem('agb_repair_draft')||'null');}catch(e){}window._hadDraft=!!d;if(d){if(d.job_id)window._linkedJobId=d.job_id;applySnap(d);}else{renderItems();renderExtras();renderCond();renderPhotos();calc();}applyIncomingUrlOrHandoff();})();
+// Opening the Repair Estimator normally ALWAYS starts a fresh sheet. The local draft is only restored when this same tab
+// is reloaded or reached with Back/Forward (so an accidental refresh doesn't lose work). Saved estimates in History are untouched.
+function repairNavRestoresDraft(){try{const nv=performance.getEntriesByType&&performance.getEntriesByType('navigation')[0];const t=nv?nv.type:(performance.navigation&&performance.navigation.type===1?'reload':performance.navigation&&performance.navigation.type===2?'back_forward':'navigate');return t==='reload'||t==='back_forward';}catch(e){return false;}}
+(function(){let d=null;if(repairNavRestoresDraft()&&!new URLSearchParams(location.search).get('editRepair')){try{d=JSON.parse(localStorage.getItem('agb_repair_draft')||'null');}catch(e){}}else{try{localStorage.removeItem('agb_repair_draft');}catch(e){}}window._hadDraft=!!d;if(d){if(d.job_id)window._linkedJobId=d.job_id;applySnap(d);}else{renderItems();renderExtras();renderCond();renderPhotos();calc();}applyIncomingUrlOrHandoff();})();
 syncSignedInSalesman();
 (async function(){ const id=new URLSearchParams(location.search).get('editRepair'); if(!id) return;
   try{ const {data,error}=await garageSb.from('estimate_history').select('id,customer,address,city,estimate_price,estimate_snapshot').eq('id',id).maybeSingle(); if(error||!data) { toast('Could not load that repair estimate.',true); return; }

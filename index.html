@@ -2375,7 +2375,28 @@ function agbFitNoPhotoNotes(d){
   if(!st){ st=d.createElement('style'); st.id='agbNotesFit'; d.head.appendChild(st); }
   var sh=d.querySelector('.sheet.no-photo')||(d.documentElement.hasAttribute('data-agb-nopic')?d.querySelector('.sheet'):null);
   st.textContent='';
-  if(!sh) return;
+  if(!sh){
+   // Sheets WITH a picture: keep the current look; only shrink the notes if they would run past the box
+   var ps=d.querySelector('.sheet'), pl=ps&&ps.querySelector('.main .left'), pp=ps&&ps.querySelector('.main .right .notes-panel');
+   var pu=pp&&pp.querySelector('.notes'), pt=pp&&pp.querySelector('.panel-title'), ptb=pl&&pl.querySelector('.total-box');
+   if(!pu||!pt||!ptb||!ps.querySelector('.exterior')) return;
+   var avail=Math.floor(ptb.getBoundingClientRect().bottom-pu.getBoundingClientRect().top-3);
+   var pr=false; try{ pr=(d.defaultView||window).matchMedia('print').matches; }catch(_){}
+   var mh=parseFloat(getComputedStyle(pp).maxHeight); if(!pr&&isFinite(mh)) avail=Math.min(avail, Math.floor(mh-pt.getBoundingClientRect().height-3));
+   var pm=ps.querySelector('.main'), extra='';
+   var need0=function(){ var li=pu.lastElementChild; return li?li.getBoundingClientRect().bottom-pu.getBoundingClientRect().top:0; };
+   // Print: the page has room under the price box, so let a long notes box grow toward the footer before shrinking text
+   if(pr&&pm&&need0()>avail){ avail=Math.floor(pm.getBoundingClientRect().bottom-pu.getBoundingClientRect().top-6); extra='html:not([data-agb-nopic]) .sheet:not(.no-photo) .main .right .notes-panel{max-height:none!important}'; }
+   var need=function(){ var li=pu.lastElementChild; return li?li.getBoundingClientRect().bottom-pu.getBoundingClientRect().top+(parseFloat(getComputedStyle(pu).paddingBottom)||0):0; };
+   if(avail<30||need()<=avail+1) return;
+   var f0=parseFloat(getComputedStyle(pu).fontSize)||13;
+   var P='html:not([data-agb-nopic]) .sheet:not(.no-photo) .main .right .notes-panel ';
+   for(var g=f0-0.5; g>=6; g-=0.5){
+    st.textContent=extra+P+'ul.notes{font-size:'+g+'px!important;line-height:1.22!important;max-height:'+avail+'px!important;overflow:hidden!important;padding-top:'+Math.max(4,g*.5)+'px!important;padding-bottom:'+Math.max(3,g*.35)+'px!important}'+P+'ul.notes li{margin-bottom:'+(g*.3)+'px!important}'+P+'ul.notes li:before{width:'+(g*.85)+'px!important;height:'+(g*.85)+'px!important;font-size:'+(g*.85)+'px!important;line-height:'+(g*.8)+'px!important}';
+    if(need()<=avail+1) return;
+   }
+   return;
+  }
   var left=sh.querySelector('.main .left'), panel=sh.querySelector('.main .right .notes-panel');
   var ul=panel&&panel.querySelector('.notes'), title=panel&&panel.querySelector('.panel-title'), tb=left&&(left.querySelector('.total-box')||left.lastElementChild);
   if(!left||!ul||!title||!tb) return;

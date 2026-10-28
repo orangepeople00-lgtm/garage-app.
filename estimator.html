@@ -7742,11 +7742,14 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             const sideDesc={left:"LEFT SIDE WALL (the short wall to the viewer's left, perpendicular to the overhead door wall)",right:"RIGHT SIDE WALL (the short wall to the viewer's right, perpendicular to the overhead door wall)",back:"BACK WALL (the rear wall opposite the overhead door wall)"};
             const sideWall=loc!=='front' && sideDesc[loc];
             const where=loc==='front'?('on the FRONT wall, to the '+fs+' of the overhead door'):('on the '+(sideDesc[loc]||(loc.toUpperCase()+' wall'))+'. The FRONT wall has ONLY the overhead door(s) — zero man doors on the front');
-            if(kind==='party') L.push('PARTY DOOR: one '+(agbSelText('partyDoorWidth')||'6')+'x'+(agbSelText('partyDoorHeight')||'7')+' small overhead door '+where+'; no other service door');
+            const hasSvc0=!(kind==='no'||kind==='none'), vv=agbResolvedView();
+            const svcHidden=hasSvc0 && (vv==='back'?loc!=='back':(vv==='left'||vv==='right')?(loc!==vv&&loc!=='front'):loc==='back');
+            if(svcHidden) L.push('SERVICE DOOR: No service door is visible in this view; the front wall has ONLY the overhead door(s) — do NOT draw any man door on the front or patio wall');
+            else if(kind==='party') L.push('PARTY DOOR: one '+(agbSelText('partyDoorWidth')||'6')+'x'+(agbSelText('partyDoorHeight')||'7')+' small overhead door '+where+'; no other service door');
             else if(kind==='french') L.push('FRENCH DOORS: one pair of '+(agbSelText('frenchDoorStyle')||'glass')+' French doors '+where+'; no other service door');
             else if(kind==='no'||kind==='none') L.push('NO SERVICE DOOR anywhere');
             else L.push('SERVICE DOOR: one 36x80 white steel man door '+where);
-            const hasSvc=!(kind==='no'||kind==='none');
+            const hasSvc=hasSvc0 && !svcHidden;
             if(hasSvc && agbChecked('roofPatioEnabled') && agbChecked('roofPatioSide') && loc!=='front'){
                 const pw=agbPatioSideName(), sw=loc.toUpperCase();
                 if(pw!==sw){ var agbPatioWallSaid=true;

@@ -2014,8 +2014,8 @@ body.bg-zinc-950{
                     </div>
 
                     <div class="flex items-center justify-between gap-3 mb-4 flex-wrap">
-                        <button type="button" onclick="toggleEstimateSummary()" class="section-header flex items-center gap-x-2 cursor-pointer select-none text-emerald-400" aria-expanded="false" aria-controls="breakdown" title="Open estimate summary">
-                            <i id="estimateSummaryArrow" class="fa-solid fa-chevron-right transition-transform text-emerald-400"></i>
+                        <button type="button" onclick="toggleEstimateSummary()" class="section-header flex items-center gap-x-2 cursor-pointer select-none text-emerald-400" aria-expanded="true" aria-controls="breakdown" title="Collapse estimate summary">
+                            <i id="estimateSummaryArrow" class="fa-solid fa-chevron-right transition-transform text-emerald-400" style="transform:rotate(90deg)"></i>
                             <i class="fa-solid fa-calculator"></i>
                             <span>ESTIMATE SUMMARY</span>
                         </button>
@@ -2025,9 +2025,9 @@ body.bg-zinc-950{
                         </div>
                     </div>
 
-                    <!-- Breakdown: collapsed by default; totals remain visible -->
+                    <!-- Breakdown: open by default (owner 10/28); tap header to collapse -->
                     <div id="breakdown" 
-                         class="hidden flex-1 overflow-auto text-sm space-y-px pr-1 custom-scroll max-h-[420px] text-zinc-300">
+                         class="flex-1 overflow-auto text-sm space-y-px pr-1 custom-scroll max-h-[420px] text-zinc-300">
                         <!-- Populated dynamically by JS -->
                     </div>
 
@@ -10588,13 +10588,14 @@ document.addEventListener('click', function(e){
 
 
         // Copy estimate to clipboard
-        function toggleEstimateSummary(){
+        function toggleEstimateSummary(forceOpen){
             const breakdown=document.getElementById('breakdown');
             const arrow=document.getElementById('estimateSummaryArrow');
             const button=arrow?.closest('button');
             if(!breakdown)return;
-            const opening=breakdown.classList.contains('hidden');
+            const opening=(typeof forceOpen==='boolean')?forceOpen:breakdown.classList.contains('hidden');
             breakdown.classList.toggle('hidden',!opening);
+            if(forceOpen===true){ const fold=breakdown.closest('details'); if(fold) fold.open=true; }
             if(arrow)arrow.style.transform=opening?'rotate(90deg)':'rotate(0deg)';
             if(button){
                 button.setAttribute('aria-expanded',opening?'true':'false');
@@ -10728,6 +10729,7 @@ document.addEventListener('click', function(e){
         }
 
         function resetForm(runCalc = true) {
+            if (typeof toggleEstimateSummary==='function') toggleEstimateSummary(true); // summary open by default
             try{ clearCityDefaultTouched(); }catch(e){}
             try{ clearSummaryLineOverrides(); }catch(e){}
             // New Estimate / Reset: back to a single overhead door (extra doors + their openers used to carry over)
@@ -10955,7 +10957,8 @@ document.addEventListener('click', function(e){
             folds.forEach((g,i)=>{
                 const d=document.createElement('details');
                 d.className='est-fold';
-                d.open = i < 4; // customer, city/size, roof, concrete stay open
+                // customer, city/size, roof, concrete stay open; Estimate Summary fold also open by default (owner 10/28)
+                d.open = i < 4 || g.nodes.some(n=>n.id==='breakdown'||(n.querySelector&&n.querySelector('#breakdown')));
                 const s=document.createElement('summary');
                 const tt=document.createElement('span'); tt.className='est-fold-title'; tt.textContent=g.title;
                 const sm=document.createElement('span'); sm.className='est-fold-sum';

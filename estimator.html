@@ -7682,17 +7682,25 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             const kind=((document.getElementById('doorType')||{}).value||'standard').toLowerCase();
             const loc=((document.getElementById('serviceDoorLocation')||{}).value||'right').toLowerCase();
             const fs=((document.getElementById('serviceDoorFrontSide')||{}).value||'right');
-            const where=loc==='front'?('on the FRONT wall, to the '+fs+' of the overhead door'):('on the '+loc.toUpperCase()+' wall (none on the front)');
+            const sideDesc={left:"LEFT SIDE WALL (the short wall to the viewer's left, perpendicular to the overhead door wall)",right:"RIGHT SIDE WALL (the short wall to the viewer's right, perpendicular to the overhead door wall)",back:"BACK WALL (the rear wall opposite the overhead door wall)"};
+            const sideWall=loc!=='front' && sideDesc[loc];
+            const where=loc==='front'?('on the FRONT wall, to the '+fs+' of the overhead door'):('on the '+(sideDesc[loc]||(loc.toUpperCase()+' wall'))+'. The FRONT wall has ONLY the overhead door(s) — zero man doors on the front');
             if(kind==='party') L.push('PARTY DOOR: one '+(agbSelText('partyDoorWidth')||'6')+'x'+(agbSelText('partyDoorHeight')||'7')+' small overhead door '+where+'; no other service door');
             else if(kind==='french') L.push('FRENCH DOORS: one pair of '+(agbSelText('frenchDoorStyle')||'glass')+' French doors '+where+'; no other service door');
             else if(kind==='no'||kind==='none') L.push('NO SERVICE DOOR anywhere');
             else L.push('SERVICE DOOR: one 36x80 white steel man door '+where);
+            const hasSvc=!(kind==='no'||kind==='none');
+            if(hasSvc && sideWall){
+                const view=((document.getElementById('garagePhotoView')||{}).value||'front');
+                if(view==='front' && (loc==='left'||loc==='right')) L.push('VIEW: three-quarter view from the front-'+loc.toUpperCase()+' corner so the front wall AND the '+loc.toUpperCase()+' side wall with its service door are both clearly visible');
+            }
             L.push(agbWindowLine());
             L.push(agbChecked('gutters')?'GUTTERS: white seamless gutters along both eaves WITH downspouts at the corners':'GUTTERS: NONE — no gutters and no downspouts');
             L.push(agbChecked('aluminumSoffit')?'SOFFIT/FASCIA: white aluminum soffit and fascia':'SOFFIT/FASCIA: pre-finished WOOD fascia, soffit and trim boards (painted wood trim, NO aluminum wrap)');
             if(document.getElementById('stoneAccent')) L.push(agbChecked('stoneAccent')?'STONE: stone veneer wainscot along the base of the front':'NO stone');
             if(agbChecked('roofPatioEnabled')) L.push('ROOFED PATIO: one open roofed patio on the '+(agbChecked('roofPatioSide')?'SIDE (right) wall':'REAR wall')+', posts, roof matching shingles');
             else L.push('NO roofed patio');
+            if(hasSvc && sideWall) L.push('REPEAT: the service door is on the '+loc.toUpperCase()+(loc==='back'?' WALL':' SIDE WALL')+' only — NOT on the front. Front wall = overhead door(s) only, zero man doors');
             return L;
         }
         /* 2026-10-28: every-choice prompt for NEW AI photos (all roofs). Replaces the long prompt, which the
@@ -7710,11 +7718,11 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             else L.push('ROOF: classic STANDARD FRONT-GABLE, '+pitch+' pitch — the FRONT wall (overhead door wall) rises to a triangular peak centered directly above the overhead door, matching peak on the BACK wall, ridge runs front-to-back, LEFT and RIGHT side walls are plain rectangles under the long side eaves. FORBIDDEN: reverse/side gable (no peaks on the side walls, no flat eave across the front)');
             const view=((document.getElementById('garagePhotoView')||{}).value||'front');
             const acc=((document.getElementById('garageAccessType')||{}).value||'driveway');
-            L.push('CAMERA: '+(view==='front'?'front elevation, slight 3/4 angle, overhead door wall facing camera':view==='back'?'REAR elevation only (back wall facing camera, overhead door NOT visible)':(view.toUpperCase()+' SIDE wall facing camera'))+'; '+(acc==='alley'?'garage opens onto a city alley (concrete apron to the alley)':'concrete driveway in front of the overhead door'));
+            L.push('CAMERA: '+(view==='front'?'front elevation, 3/4 angle, overhead door wall facing camera':view==='back'?'REAR elevation only (back wall facing camera, overhead door NOT visible)':(view.toUpperCase()+' SIDE wall facing camera'))+'; '+(acc==='alley'?'garage opens onto a city alley (concrete apron to the alley)':'concrete driveway in front of the overhead door'));
             agbSpecLines().forEach(x=>L.push(x));
             const extra=((document.getElementById('aiPhotoExtraInstructions')||{}).value||'').trim();
             if(extra) L.push('SALESMAN REQUEST: '+extra.slice(0,300));
-            L.push('Overhead door(s) only on the front, reaching the concrete. Sharp detail, soft daylight, no text, no people, no logos');
+            L.push('Overhead door(s) only on the front, reaching the concrete; no man door on the front unless SERVICE DOOR says FRONT. Sharp detail, soft daylight, no text, no people, no logos');
             let out=L.join('. ');
             if(out.length>2900){ // trim least-critical words only, never drop lines
                 out=out.replace(/, wide proportions spanning the frame/,'').replace(/ \(Chicago area\)/,'');
@@ -8720,7 +8728,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             let ref='';
             for(const u of [new URL('library/'+p.file, document.baseURI).href, new URL('images/'+p.file, document.baseURI).href]){ try{ ref=await agbFetchAsDataUrl(u); if(/^data:image\//.test(ref)) break; }catch(e){ ref=''; } }
             if(!ref) throw new Error('could not load approved photo '+p.file);
-            const prompt=('KEEP THE EXACT ROOF of the reference photo: standard FRONT gable — triangular peak centered directly above the overhead door, ridge running front-to-back, side walls plain rectangles under the side eaves. Keep the same camera angle and roof shape. Remove any vent/window in the gable triangle unless asked. Repaint/rebuild everything else to match EXACTLY: '+agbSpecLines().join('. ')).slice(0,2900);
+            const prompt=('KEEP THE EXACT ROOF of the reference photo: standard FRONT gable — triangular peak centered directly above the overhead door, ridge running front-to-back, side walls plain rectangles under the side eaves. Keep the same roof shape (the camera may turn to a three-quarter view if needed to show the service-door side wall). Remove any vent/window in the gable triangle unless asked. Repaint/rebuild everything else to match EXACTLY: '+agbSpecLines().join('. ')).slice(0,2900);
             const r=await generateOpenAIGaragePhotoUrl(prompt,{edit:true, editFromUrl:ref, refEdit:true});
             if(r && typeof r==='object'){ r.source='openai-company-gable-ref'; r.refPhoto=p.file; }
             return r;
@@ -11883,7 +11891,7 @@ async function resolveReverseGableAiEditPhoto(){
         const ref=await rgToJpegDataUrl(preset.primary);
         if(!ref) throw new Error('Could not read the example photo');
         const specs=(typeof window.agbSpecLines==='function')?window.agbSpecLines().join('. '):((typeof buildGarageAIPrompt==='function')?buildGarageAIPrompt():'');
-        const prompt=('KEEP THE EXACT ROOF of the reference photo: reverse (side-end) gable, ridge running left-to-right parallel to the front door wall, triangular gable peaks ONLY on the left and right end walls, straight continuous front eave with NO triangle above the overhead door. Keep the same camera angle and roof shape. Repaint/rebuild everything else to match EXACTLY: '+specs).slice(0,2900); // function caps edit prompt at 4000 incl. its own rules
+        const prompt=('KEEP THE EXACT ROOF of the reference photo: reverse (side-end) gable, ridge running left-to-right parallel to the front door wall, triangular gable peaks ONLY on the left and right end walls, straight continuous front eave with NO triangle above the overhead door. Keep the same roof shape (the camera may turn to a three-quarter view if needed to show the service-door side wall). Repaint/rebuild everything else to match EXACTLY: '+specs).slice(0,2900); // function caps edit prompt at 4000 incl. its own rules
         const r=await generateOpenAIGaragePhotoUrl(prompt,{edit:true, editFromUrl:ref, rgPresetEdit:true});
         const url=r && (typeof r==='string' ? r : r.url);
         if(!url) throw new Error('AI returned no image');

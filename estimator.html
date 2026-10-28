@@ -723,6 +723,14 @@ body.bg-zinc-950{
 .est-fold > summary .est-fold-sum{ flex:1; min-width:0; text-align:right; font-weight:600; letter-spacing:0; text-transform:none; color:#93c5fd; font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .est-fold[open] > summary .est-fold-sum{ display:none; }
 .customer-top-panel > .section-header{ display:none; }
+
+.rgask{display:none;margin:10px 0;padding:12px;border:1px solid #f59e0b;border-radius:14px;background:#1c1405;color:#fde68a;font-size:13px;line-height:1.35}
+.rgask.rgask-show{display:block}
+.rgask b{color:#fff}
+.rgask-btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.rgask-btns button{flex:1 1 140px;min-height:40px;padding:8px 12px;border-radius:10px;font-weight:700;font-size:13px}
+.rgask-yes{background:#f59e0b;color:#111}
+.rgask-no{background:#27272a;color:#e4e4e7;border:1px solid #52525b}
 </style>
 <style id="agbPhoneFit">
 /* Phone / small-tablet fit: compact header, >=40px touch targets, >=12px text */
@@ -1745,6 +1753,13 @@ body.bg-zinc-950{
                             <div class="section-header flex items-center gap-x-2"><i class="fa-solid fa-house-chimney-window"></i><span>ROOF PATIO</span></div>
                             <label class="flex items-center cursor-pointer"><input type="checkbox" id="roofPatioEnabled" onchange="toggleRoofPatio(); calculateEstimate()" class="accent-emerald-500 w-4 h-4"><span class="ml-2 text-xs font-medium text-zinc-300">Add Roof Patio</span></label>
                         </div>
+                        <div id="rgPatioAsk" class="rgask" role="dialog" aria-live="polite">
+                            <div><i class="fa-solid fa-circle-question"></i> <b>Gable with a roofed patio</b> — do you want a reverse gable instead?</div>
+                            <div class="rgask-btns">
+                                <button type="button" class="rgask-yes" onclick="agbRgAskSwitch()">Switch to reverse gable</button>
+                                <button type="button" class="rgask-no" onclick="agbRgAskKeep()">Keep gable</button>
+                            </div>
+                        </div>
                         <div id="roofPatioOptions" class="hidden">
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                                 <div><label class="text-xs text-zinc-400 block mb-1">Roof Patio Depth</label>
@@ -1813,6 +1828,13 @@ body.bg-zinc-950{
                                         <span class="text-xs">Aluminum soffit + fascia</span>
                                         <div id="soffitInfo" class="text-[10px] text-yellow-400 font-mono hidden"></div>
                                     </div>
+                                </label>
+                            </div>
+                            <!-- Pre-finished wood soffit/fascia is the default when aluminum is off; optional line on the sheet (no price change) -->
+                            <div class="flex items-end" id="woodSoffitNoteWrap">
+                                <label class="flex items-center cursor-pointer w-full text-sm bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2" title="Aluminum off = pre-finished wood soffit/fascia (standard). Check to print that line on the estimate. No price change.">
+                                    <input type="checkbox" id="showWoodSoffitNote" onchange="calculateEstimate()" class="accent-blue-500 w-4 h-4 mr-2 shrink-0" style="flex:none">
+                                    <span class="text-xs">Show "Pre-finished wood soffit &amp; fascia" on estimate</span>
                                 </label>
                             </div>
 
@@ -2156,7 +2178,8 @@ body.bg-zinc-950{
                         <input type="hidden" id="rgPresetCustomData" value="">
                         <div id="rgPhotoRow" class="rg-photo-row">
                             <img id="rgPhotoThumb" alt="Reverse gable example photo" title="Click to change the example photo" onclick="openReverseGablePicker()">
-                            <div class="rg-row-text"><b>REVERSE GABLE PHOTO · NO AI</b><span id="rgPhotoLabel"></span></div>
+                            <div class="rg-row-text"><b id="rgModeTitle">REVERSE GABLE PHOTO · NO AI</b><span id="rgPhotoLabel"></span><span id="rgModeNote" class="rg-mode-note"></span></div>
+                            <label class="rg-ai-toggle" title="When on (and AI photo is on), the AI edits this example photo with the estimate's siding, doors, windows and colors but keeps its reverse gable roof. Off = print the example photo as-is."><input type="checkbox" id="rgAiEditToggle" onchange="rgSetAiEdit(this.checked)"> AI-edit this photo to match the estimate</label>
                             <button type="button" class="rg-change-btn" onclick="openReverseGablePicker()">Change photo</button>
                         </div>
                     </div>
@@ -2174,6 +2197,10 @@ body.bg-zinc-950{
                         <button type="button" id="libraryPhotoBtn" class="pl-pick hidden" onclick="openPhotoLibrary()">Choose / change library photo</button>
                         <span id="libraryPhotoLabel" class="pl-lbl"></span>
                     </div>
+                    <label id="gableRefRow" class="gref-row col-span-2" title="Standard gable only: the AI starts from an approved front-gable library photo and repaints it to this estimate, so the peak stays over the overhead door. If no photo matches or the edit fails, a normal AI picture is made.">
+                        <input type="checkbox" id="gableRefToggle" onchange="agbSetGableRef(this.checked)">
+                        <span><b>Gable AI: start from an approved gable photo</b><span id="gableRefNote" class="gref-note"></span></span>
+                    </label>
 
                     <button type="button" onclick="safePrintEstimateSheet()"
                             class="print-action col-span-2 w-full px-3 py-2.5 text-xs font-semibold bg-green-700 hover:bg-green-600 active:bg-green-800 transition-all rounded-xl flex items-center justify-center gap-x-2 text-white">
@@ -3795,6 +3822,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
         function updateInfoLines(gutterFt, hasGutters, soffitFt, hasSoffit) {
             const gutterInfo = document.getElementById('gutterInfo');
             const soffitInfo = document.getElementById('soffitInfo');
+            { const ww=document.getElementById('woodSoffitNoteWrap'); if(ww) ww.style.display=document.getElementById('aluminumSoffit')?.checked?'none':''; }
             
             if (hasGutters && gutterFt > 0) {
                 gutterInfo.textContent = `${gutterFt.toFixed(0)} lf @ $10`;
@@ -7656,6 +7684,153 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
         document.addEventListener('DOMContentLoaded', ()=>setTimeout(()=>{ loadGaragePhotoMode(); loadAIPhotoExtraInstructions(); loadGarageAccessType(); loadGaragePhotoView(); }, 100));
         if(document.readyState!=='loading') setTimeout(()=>{ loadGaragePhotoMode(); loadAIPhotoExtraInstructions(); loadGarageAccessType(); loadGaragePhotoView(); }, 200);
 
+        /* rg-ai-sample: overhead door position from the estimator's offset slider (left return) */
+        function agbOverheadDoorPositionLine(){
+            try{
+                if(typeof updateOverheadDoorOffsetControl!=='function' || !document.getElementById('doorOffset')) return '';
+                const pos=updateOverheadDoorOffsetControl()||{};
+                const off=Number(pos.offset)||0, L=Number(pos.leftReturn)||0, R=Number(pos.rightReturn)||0;
+                const f=n=>Number.isInteger(n)?String(n):n.toFixed(1);
+                if(Math.abs(off)<0.001) return 'OVERHEAD DOOR POSITION: CENTERED on the front wall (equal wall on both sides of the overhead door, about '+f(L)+' ft each)';
+                return 'OVERHEAD DOOR POSITION: OFF-CENTER, shifted '+f(Math.abs(off))+' ft to the '+(off<0?'LEFT':'RIGHT')+' of center (seen from the front) — about '+f(L)+' ft of wall from the LEFT front corner to the door and about '+f(R)+' ft of wall from the door to the RIGHT front corner; the '+(off<0?'right':'left')+' side of the front wall is visibly wider';
+            }catch(e){ return ''; }
+        }
+        /* rg-ai-sample: exact estimator choices as short prompt lines (used by the reverse gable photo edit + compact prompt) */
+        function agbSelText(id){ const el=document.getElementById(id); if(!el) return ''; if(el.tagName==='SELECT'){ const o=el.options[el.selectedIndex]; return String(o?o.text:el.value).replace(/\s*\(.*?\)\s*/g,' ').trim(); } return String(el.value||'').trim(); }
+        function agbChecked(id){ return !!(document.getElementById(id)||{}).checked; }
+        function agbWindowLine(){
+            const n=Math.max(0,Math.round(Number((document.getElementById('windowQty')||{}).value)||0));
+            if(!n) return 'WALL WINDOWS: NONE — no wall windows anywhere';
+            const pl=((document.getElementById('windowPlacement')||{}).value||'left').toLowerCase();
+            const walls=pl==='both'?'split between the LEFT and RIGHT side walls':(pl==='front'?'on the FRONT wall, clear of the overhead door':('on the '+pl.toUpperCase()+' wall'));
+            return 'WALL WINDOWS: exactly '+n+' white vinyl window'+(n>1?'s':'')+' '+walls+'; if a service/party/French door shares that wall, space the window(s) and door evenly with no overlap';
+        }
+        /* 2026-10-28: view/access + owner patio-roof rule shared by every AI path (normal, gable edit, reverse-gable edit). */
+        function agbResolvedView(){
+            const v=((document.getElementById('garagePhotoView')||{}).value||'front');
+            if(v==='front' && agbChecked('roofPatioEnabled')) return agbChecked('roofPatioSide')?'right':'back';
+            return v;
+        }
+        function agbPatioSideName(){ return ((document.getElementById('garagePhotoView')||{}).value==='left')?'LEFT':'RIGHT'; }
+        function agbPatioRoofRule(){
+            const roof=((document.getElementById('roofType')||{}).value||'gable');
+            const rg=roof==='gable' && ((document.getElementById('eaveDir')||{}).value==='sides');
+            const base='NO separate slant, lean-to, shed roof or lower/flatter patio roof';
+            if(roof==='hip') return 'PATIO ROOF (HIP): the patio roof is the SAME hip roof simply extended — it continues straight off the existing hip roof lines in the same planes at the same pitch, one continuous hip roof covering garage + patio, hips and eave line run straight out to the patio posts; '+base;
+            const sp=agbChecked('roofPatioEnabled')&&agbChecked('roofPatioSide');
+            return 'PATIO ROOF ('+(rg?'REVERSE GABLE':'FRONT GABLE')+'): flush with the main roof — same pitch, ONE continuous roof over garage + patio'+(sp&&!rg?'; ONE symmetrical front gable spans garage + patio together, the patio-side eave lands at the OUTER patio post corner (not at the garage wall); patio open on front, side and back (posts only)':(rg?' (peaks only on left/right end walls; ridge and eave extend over the whole patio)':'; ridge and eave lines extend over the whole patio'))+'; '+base;
+        }
+        function agbPatioLine(){
+            if(!agbChecked('roofPatioEnabled')) return 'NO roofed patio';
+            const side=agbChecked('roofPatioSide');
+            const dim=(typeof getGarageDimensions==='function')?getGarageDimensions():{width:20,depth:20};
+            let dep=''; try{ dep=getRoofPatioDepth(); }catch(e){}
+            const wallName=side?(agbPatioSideName()+' side wall'):'rear wall', len=side?(Number(dim.depth)||20):(Number(dim.width)||20);
+            const sz=dep?(dep+' ft deep x '+len+' ft long'):('full-size, roughly as deep as a car, x '+len+' ft long');
+            // Owner 2026-10-28: patio should LOOK about one third of the garage front width (real depth number kept)
+            const prop=dep?(' SCALE: the patio roof sticks out '+dep+' ft from the '+wallName+' — visually about ONE-THIRD of the garage\'s '+(side?'front (door-wall) width':'side-wall length')+'; posts stand well out from the wall, not hugging it.'):'';
+            return 'ROOFED PATIO: '+sz+' roofed patio extending '+(dep?dep+' ft ':'')+'out from the '+wallName+', full length of the wall, EXACTLY 4 posts at the OUTER edge, open covered area, concrete floor, NOT a thin overhang, same shingles.'+prop+' '+agbPatioRoofRule();
+        }
+        function agbCameraAccessLine(){
+            const v=agbResolvedView();
+            const acc=((document.getElementById('garageAccessType')||{}).value||'driveway');
+            const cam=v==='back'?'CAMERA: REAR view — camera behind the garage looking at the BACK wall (overhead door hidden)'+(agbChecked('roofPatioEnabled')&&!agbChecked('roofPatioSide')?', rear three-quarter angle so the patio\'s full DEPTH (wall to posts) is clearly visible':'')
+                :v==='left'||v==='right'?('CAMERA: '+v.toUpperCase()+' SIDE three-quarter view — the '+v.toUpperCase()+' side wall is the main subject'+(agbChecked('roofPatioEnabled')&&agbChecked('roofPatioSide')?', camera at the FRONT-'+v.toUpperCase()+' corner so the patio\'s full depth (wall to posts) is clearly visible':''))
+                :'CAMERA: front three-quarter view, overhead door wall facing camera';
+            const set=acc==='alley'?'SETTING: Chicago CITY ALLEY — garage faces a paved/asphalt alley with a short concrete apron from the overhead door to the alley, utility poles and neighbor fences/garages along the alley, NO long driveway and NO front lawn':'SETTING: concrete DRIVEWAY leading to the overhead door, residential yard';
+            return cam+'. '+set;
+        }
+        try{ Object.assign(window,{agbResolvedView,agbPatioRoofRule,agbPatioLine,agbCameraAccessLine}); }catch(_){}
+        function agbDoorStyleLine(){
+            const v=((document.getElementById('overheadDoorStyle')||{}).value||'raised');
+            const D={raised:'traditional RAISED (embossed) short rectangular panels, NO windows',long:'LONG raised panels (wide horizontal rectangles), NO windows',carriage:'CARRIAGE-HOUSE style (decorative trim boards / X or vertical-board look with handles and hinges)',flush:'FLUSH smooth flat panels (no raised panels), NO windows',windows:'RAISED short panels WITH one row of glass windows across the TOP section',vinyl:'traditional RAISED short panels (insulated), NO windows',metal:'traditional RAISED short panels (insulated), NO windows'};
+            return 'OVERHEAD DOOR DESIGN: REPLACE the reference door — new white door = '+(D[v]||D.raised)+'; not the reference panels/windows';
+        }
+        try{ window.agbDoorStyleLine=agbDoorStyleLine; }catch(_){}
+        function agbSpecLines(){
+            const L=[];
+            const sid=(document.getElementById('sidingType')||{}).value||'vinyl';
+            const col=agbSelText('sidingColor')||(sid==='hardie'?agbSelText('hardieColor'):agbSelText('vinylColor')); // same priority as buildGarageAIPromptInner
+            L.push('SIDING: '+(sid==='hardie'?'James Hardie fiber-cement lap':'vinyl lap')+' siding, color '+(col||'as selected')+', on every wall'+(((document.getElementById('roofType')||{}).value==='hip')?'':' incl. gable ends'));
+            L.push('ROOF SHINGLES: '+(agbSelText('shingleColor')||'Black')+' architectural asphalt shingles');
+            const q=Math.max(1,Math.round(Number((document.getElementById('ohDoorQty')||{}).value)||1));
+            L.push('OVERHEAD DOOR'+(q>1?'S':'')+': exactly '+q+' white '+(agbSelText('overheadDoorStyle')||'raised panel')+' door'+(q>1?'s':'')+', each '+String(agbSelText('overheadDoorWidth')||'16').replace(/[^0-9.]/g,'')+' ft wide x '+String(agbSelText('overheadDoorHeight')||'7').replace(/[^0-9.]/g,'')+' ft tall, on the FRONT wall only');
+            const dp=agbOverheadDoorPositionLine(); if(dp && q===1) L.push(dp);
+            const kind=((document.getElementById('doorType')||{}).value||'standard').toLowerCase();
+            const loc=((document.getElementById('serviceDoorLocation')||{}).value||'right').toLowerCase();
+            const fs=((document.getElementById('serviceDoorFrontSide')||{}).value||'right');
+            const sideDesc={left:"LEFT SIDE WALL (the short wall to the viewer's left, perpendicular to the overhead door wall)",right:"RIGHT SIDE WALL (the short wall to the viewer's right, perpendicular to the overhead door wall)",back:"BACK WALL (the rear wall opposite the overhead door wall)"};
+            const sideWall=loc!=='front' && sideDesc[loc];
+            const where=loc==='front'?('on the FRONT wall, to the '+fs+' of the overhead door'):('on the '+(sideDesc[loc]||(loc.toUpperCase()+' wall'))+'. The FRONT wall has ONLY the overhead door(s) — zero man doors on the front');
+            const hasSvc0=!(kind==='no'||kind==='none'), vv=agbResolvedView();
+            const wallHidden=w=>(vv==='back'?w!=='back':(vv==='left'||vv==='right')?(w!==vv&&w!=='front'):w==='back');
+            let dlist=null; try{ dlist=window.agbDoorListGet&&window.agbDoorListGet(); }catch(e){}
+            const multi=Array.isArray(dlist)&&dlist.length>1;
+            const svcHidden=!multi && hasSvc0 && wallHidden(loc);
+            if(multi){
+                const wk=w=>w==='rear'?'back':(String(w).indexOf('front')===0?'front':w);
+                const vis=dlist.filter(d=>!wallHidden(wk(d.wall)));
+                const dd=d=>(window.agbDoorDesc?window.agbDoorDesc(d):d.type+' — '+d.wall);
+                if(!vis.length) L.push('SERVICE DOOR: No service door is visible in this view; the front wall has ONLY the overhead door(s) — do NOT draw any man door on the front or patio wall');
+                else {
+                    L.push('SIDE/REAR DOORS visible in this view (exact, no others): '+vis.map(dd).join('; ')+(vis.length<dlist.length?'. Other listed doors are on walls out of view — do not draw them':'')+(vis.some(d=>wk(d.wall)==='front')?'':'. FRONT wall = overhead door(s) only, zero man doors')+'. French doors = pair of glass swing doors; party door = small overhead sectional door; service door = single 36x80 white steel swing door');
+                    if(agbChecked('roofPatioEnabled') && agbChecked('roofPatioSide') && !vis.some(d=>wk(d.wall)===agbPatioSideName().toLowerCase())) L.push('PATIO WALL: NO door of any kind on the patio wall');
+                    const sd=vis.find(d=>d.wall==='left'||d.wall==='right');
+                    if(vv==='front' && sd) L.push('VIEW: three-quarter view from the front-'+sd.wall.toUpperCase()+' corner so the front wall AND the '+sd.wall.toUpperCase()+' side wall with its door(s) are both clearly visible');
+                }
+            }
+            else if(svcHidden) L.push('SERVICE DOOR: No service door is visible in this view; the front wall has ONLY the overhead door(s) — do NOT draw any man door on the front or patio wall');
+            else if(kind==='party') L.push('PARTY DOOR: one '+(agbSelText('partyDoorWidth')||'6')+'x'+(agbSelText('partyDoorHeight')||'7')+' small overhead door '+where+'; no other service door');
+            else if(kind==='french') L.push('FRENCH DOORS: one pair of '+(agbSelText('frenchDoorStyle')||'glass')+' French doors '+where+'; no other service door');
+            else if(kind==='no'||kind==='none') L.push('NO SERVICE DOOR anywhere');
+            else L.push('SERVICE DOOR: one 36x80 white steel man door '+where);
+            const hasSvc=hasSvc0 && !svcHidden && !multi;
+            if(hasSvc && agbChecked('roofPatioEnabled') && agbChecked('roofPatioSide') && loc!=='front'){
+                const pw=agbPatioSideName(), sw=loc.toUpperCase();
+                if(pw!==sw){ var agbPatioWallSaid=true;
+                    const vis=agbResolvedView().toUpperCase();
+                    L.push('PATIO WALL: NO door of any kind on the '+pw+' patio wall; service door ONLY on the '+((vis!==sw)?'hidden ':'')+sw+(loc==='back'?' WALL':' SIDE WALL')+((vis!==sw)?' (out of view); do not draw any door on the patio wall':''));
+                }
+            }
+            if(hasSvc && sideWall){
+                const view=agbResolvedView();
+                if(view==='front' && (loc==='left'||loc==='right')) L.push('VIEW: three-quarter view from the front-'+loc.toUpperCase()+' corner so the front wall AND the '+loc.toUpperCase()+' side wall with its service door are both clearly visible');
+            }
+            L.push(agbWindowLine());
+            L.push(agbChecked('gutters')?'GUTTERS: white seamless gutters along both eaves WITH downspouts at the corners':'GUTTERS: NONE — no gutters and no downspouts');
+            L.push(agbChecked('aluminumSoffit')?'SOFFIT/FASCIA: white aluminum soffit and fascia':'SOFFIT/FASCIA: pre-finished WOOD fascia, soffit and trim boards (painted wood trim, NO aluminum wrap)');
+            if(document.getElementById('stoneAccent')) L.push(agbChecked('stoneAccent')?'STONE: stone veneer wainscot along the base of the front':'NO stone');
+            L.push(agbPatioLine());
+            if(hasSvc && sideWall && typeof agbPatioWallSaid==='undefined') L.push('REPEAT: the service door is on the '+loc.toUpperCase()+(loc==='back'?' WALL':' SIDE WALL')+' only — NOT on the front. Front wall = overhead door(s) only, zero man doors');
+            return L;
+        }
+        /* 2026-10-28: every-choice prompt for NEW AI photos (all roofs). Replaces the long prompt, which the
+           company function clipped at 4000 chars, and the old compact one (it sat after a return and never ran). */
+        function agbFullPrompt(){
+            const dim=(typeof getGarageDimensions==='function')?getGarageDimensions():{width:20,depth:20};
+            const w=Number(dim.width)||20, d=Number(dim.depth)||20;
+            const cars=agbSelText('carCapacity');
+            const roof=((document.getElementById('roofType')||{}).value||'gable');
+            const eave=((document.getElementById('eaveDir')||{}).value||'front-back');
+            const pitch=agbSelText('pitch')||'4/12';
+            const L=['Photorealistic photo of a brand-new detached residential garage (Chicago area), '+w+' ft wide x '+d+' ft deep, '+String(agbSelText('wallHeight')||'8').replace(/\s*(ft|feet|')\.?\s*$/i,'')+' ft walls'+(cars?', '+cars:'')+(w>=20?', wide proportions spanning the frame':'')];
+            if(roof==='hip') L.push('ROOF: HIP roof, '+pitch+' pitch — all four sides slope up to a short ridge, NO gable triangles on any wall, front eave straight across above the overhead door');
+            else if(eave==='sides') L.push('ROOF: REVERSE (side-end) GABLE, '+pitch+' pitch — ridge runs left-to-right parallel to the front door wall, triangular gable peaks ONLY on the LEFT and RIGHT end walls, straight continuous front eave with NO triangle above the overhead door');
+            else L.push('ROOF: classic STANDARD FRONT-GABLE, '+pitch+' pitch — the FRONT wall (overhead door wall) rises to a triangular peak centered directly above the overhead door, matching peak on the BACK wall, ridge runs front-to-back, LEFT and RIGHT side walls are plain rectangles under the long side eaves. FORBIDDEN: reverse/side gable (no peaks on the side walls, no flat eave across the front)');
+            L.push(agbCameraAccessLine());
+            agbSpecLines().forEach(x=>L.push(x));
+            const extra=((document.getElementById('aiPhotoExtraInstructions')||{}).value||'').trim();
+            if(extra) L.push('SALESMAN REQUEST: '+extra.slice(0,300));
+            L.push('Overhead door(s) only on the front, reaching the concrete; no man door on the front unless SERVICE DOOR says FRONT. Sharp detail, soft daylight, no text, no people, no logos');
+            let out=L.join('. ');
+            if(out.length>2900){ // trim least-critical words only, never drop lines
+                out=out.replace(/, wide proportions spanning the frame/,'').replace(/ \(Chicago area\)/,'');
+                if(out.length>2900) out=out.slice(0,2900);
+            }
+            return out;
+        }
+        try{ window.agbFullPrompt=agbFullPrompt; }catch(_){}
+        try{ window.agbSpecLines=agbSpecLines; window.agbOverheadDoorPositionLine=agbOverheadDoorPositionLine; }catch(_){}
         function buildGarageAIPrompt(){
             // Never let a prompt bug kill the whole AI photo pipeline
             try{
@@ -7972,7 +8147,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             // Only auto-shift camera for patio when user left view on default "front"
             else if (viewSel === 'front' || !viewSel) {
                 if (roofPatioOn && !roofPatioSide) resolvedView = 'back';
-                else if (roofPatioOn && roofPatioSide) resolvedView = 'left';
+                else if (roofPatioOn && roofPatioSide) resolvedView = 'right';
             }
             // If user picked back/left/right in the dropdown, keep it — never force front
 
@@ -8098,20 +8273,19 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                     ? [
                         'REVERSE-GABLE + PATIO (MANDATORY): keep reverse-gable geometry on the main building — peaks only on left and right ends, front stays a flat eave over the overhead door',
                         'do NOT turn the garage into a front-gable just because a patio was added',
-                        'extend the main roof ridge/eave RUN flush and continuously out over the patio so the patio roof is a straight continuation of the same roof plane',
-                        'patio roof is flush with the main roof edge — same pitch, same shingles, no awkward step or separate roof style',
+                        'OWNER RULE: the patio roof extends FLUSH with the main roof — same ridge line, same pitch, same eave line, ONE continuous roof; NO separate slant, NO lean-to, NO shed roof, NO lower or flatter patio roof',
                         'patio does not add a new gable peak on the front'
                       ].join(', ')
                     : (roof === 'gable'
-                        ? 'GABLE EXTENDED PATIO: extend the gable roof plane continuously out over the patio to the outer edge of the patio concrete — same roof run, flush extension'
-                        : 'HIP/OTHER: extend the main roof eave line flush and continuously out over the patio with the same pitch and shingles');
+                        ? 'GABLE EXTENDED PATIO (OWNER RULE): the patio roof extends FLUSH with the main roof — same ridge line continued, same pitch, same eave line, ONE continuous roof out to the patio posts; NO separate slant, NO lean-to, NO shed roof, NO lower or flatter patio roof'
+                        : 'HIP EXTENDED PATIO (OWNER RULE): the patio roof continues straight off the existing hip roof lines — same hip planes, same pitch, the hip simply extends to cover the patio as ONE continuous hip roof; NO separate slant, NO lean-to, NO shed roof, NO lower or flatter patio roof');
                 patioWords = [
                     roofPatioSide
                         ? 'CRITICAL PATIO LOCATION: SIDE roofed patio on a SIDE wall ONLY — do NOT put the patio on the back'
                         : 'CRITICAL PATIO LOCATION: REAR roofed patio on the BACK wall ONLY — do NOT put the patio on the left or right side',
                     'MUST SHOW a full-width roofed covered patio attached to the '+loc,
                     'CRITICAL PATIO SIZE: the patio roof AND the concrete slab under it MUST span the ENTIRE '+spanDim,
-                    'patio roof starts at the eave overhang line of the main garage roof and continues out',
+                    'patio roof is part of the main garage roof (continuous), not attached below the eave',
                     'patio concrete is flush and the same width as the garage wall it attaches to — full wall-to-wall',
                     'do NOT make a small or narrow patio in the middle',
                     'patio is about '+roofPatioDepth+' feet deep (projection out from the garage wall)',
@@ -8251,6 +8425,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                 parts.push('Do not substitute a different view, location, or feature than what the salesman asked for');
             }
             try{ const _dl=window.agbDoorPromptLine&&window.agbDoorPromptLine(); if(_dl) parts.push(_dl); }catch(e){}
+            { const dp=agbOverheadDoorPositionLine(); if(dp) parts.splice(1,0,dp); }
             return parts.filter(Boolean).join(', ');
 
         // Compact prompt for OpenAI — ONLY active job rules, always under budget (no clipping)
@@ -8317,6 +8492,8 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                     lines.push('CRITICAL ROOF: standard front-gable — peak centered above front overhead door');
                 }
                 lines.push('CRITICAL SIZE: '+w+' feet wide by '+d+' feet deep'+(w>=20?', LARGE close-up two-car garage filling 80-90% of the photo, both front corners in frame, 16-ft door looks huge not a shed, camera close':'')+'; walls '+wall+' ft; main door '+doorW+'x'+doorH+' ft on FRONT only');
+                { const dp=agbOverheadDoorPositionLine(); if(dp) lines.push(dp); }
+                lines.push(agbWindowLine());
                 if (hasPartyDoor) {
                     lines.push('CRITICAL PARTY DOOR: '+partyW+'x'+partyH+' ft white raised-panel overhead mini door on '+service+(service==='front'?' '+serviceFrontSide+' of main door':'')+' wall — not a swing door');
                 } else {
@@ -8333,7 +8510,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                 }
                 try{ const _dl=window.agbDoorPromptLine&&window.agbDoorPromptLine(); if(_dl) lines.push(_dl); }catch(e){}
                 if (roofPatioOn) {
-                    lines.push('CRITICAL PATIO: '+(roofPatioSide?'SIDE':'REAR')+' roofed patio on '+(roofPatioSide?'SIDE':'BACK')+' wall only — full wall width — EXACTLY 4 posts — depth ~'+patioDepth+' ft — same roof run flush extension'+(isReverseGable?', keep reverse-gable peaks on ends only':''));
+                    lines.push('CRITICAL PATIO: '+(roofPatioSide?'SIDE':'REAR')+' roofed patio on '+(roofPatioSide?'SIDE':'BACK')+' wall only — full wall width — EXACTLY 4 posts — depth ~'+patioDepth+' ft — patio roof = main roof continued (same ridge/hip lines, same pitch, same eave), no lean-to/shed/separate slant'+(isReverseGable?', keep reverse-gable peaks on ends only':''));
                 } else {
                     lines.push('NO ROOFED PATIO');
                 }
@@ -8456,8 +8633,9 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
         }
         async function generateOpenAIGaragePhotoUrl(prompt, opts){
             // Safety net: AI image generation is disabled for reverse gables (preset photos only).
-            if(typeof isReverseGableSelected==='function' && isReverseGableSelected()) throw new Error('AI photos are off for Reverse Gable — using the picked example photo.');
             opts=opts||{};
+            // rg-ai-sample: the only allowed reverse-gable AI path is an EDIT of the example photo
+            if(typeof isReverseGableSelected==='function' && isReverseGableSelected() && !opts.rgPresetEdit) throw new Error('AI photos are off for Reverse Gable — using the picked example photo.');
             const editFromUrl=opts.editFromUrl||'';
             const isEdit=!!(opts.edit && editFromUrl);
             const cacheKey=garageAICacheKey('openai:'+(isEdit?'edit:':'')+prompt);
@@ -8517,6 +8695,8 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                         throw new Error(detail);
                     }
                     const url = data && (data.url || (data.b64 ? ('data:image/png;base64,'+data.b64) : null));
+                    // rg-ai-sample: the function silently falls back to a fresh generate if the edit fails — reject that for reverse gable
+                    if(url && (opts.rgPresetEdit||opts.refEdit) && data.mode && data.mode!=='edit') throw new Error('AI could not edit the example photo (function fell back to a new picture)');
                     if(url){
                         try{ localStorage.setItem(cacheKey, url); }catch(e){}
                         setLastAiGaragePhotoUrl(url);
@@ -8533,6 +8713,8 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                 console.warn('Company OpenAI edge function unavailable, trying device key…', edgeErr);
             }
 
+            // rg-ai-sample: device-key fallback only makes new pictures (no edit), which can get the roof wrong
+            if(opts.rgPresetEdit||opts.refEdit) throw new Error('Company AI failed: '+(lastEdgeError||'unknown error'));
             // 2) Fallback: device-locked personal key (optional)
             const apiKey=(typeof getStoredOpenAIKey==='function'?getStoredOpenAIKey():(localStorage.getItem('agb_openai_api_key')||'')).trim();
             if(!apiKey) throw new Error(
@@ -8596,11 +8778,79 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             return {url, prompt, source:'free', cached:false};
         }
 
+        /* 2026-10-28: standard gable = AI edit of an approved front-gable library photo (plain generate kept putting the peaks on the sides). */
+        const AGB_GABLE_REF_SEEDS=[
+            {file:'garage-24.jpg',car:2,doors:1,win:true,color:'charcoal',off:false},
+            {file:'garage-02.jpg',car:2,doors:1,win:true,color:'gray',off:false},
+            {file:'garage-22.jpg',car:2,doors:1,win:true,color:'green',off:false},
+            {file:'garage-06.jpg',car:2,doors:1,win:false,color:'tan',off:false},
+            {file:'garage-08.jpg',car:2,doors:1,win:false,color:'navy',off:false},
+            {file:'garage-12.jpg',car:2,doors:1,win:false,color:'navy',off:false},
+            {file:'garage-19.jpg',car:2,doors:1,win:false,color:'red',off:true},
+            {file:'garage-28.jpg',car:2,doors:1,win:true,color:'white',off:true},
+            {file:'garage-11.jpg',car:1,doors:1,win:false,color:'gray',off:true},
+            {file:'garage-07.jpg',car:1,doors:1,win:false,color:'white',off:true},
+            {file:'garage-16.jpg',car:2.5,doors:2,win:true,color:'white',off:false}
+        ];
+        function agbGableRefEnabled(){ try{ return localStorage.getItem('agb_gable_ref_edit')!=='0'; }catch(e){ return true; } }
+        function agbIsStandardGable(){ return ((document.getElementById('roofType')||{}).value==='gable') && ((document.getElementById('eaveDir')||{}).value!=='sides'); }
+        const AGB_GABLE_SIDEPATIO_REF={file:'garage-29.jpg',car:2,doors:1,sidePatio:true};
+        function agbPickGableRef(){
+            if(agbChecked('roofPatioEnabled') && agbChecked('roofPatioSide')){
+                const q0=Math.max(1,Math.round(Number((document.getElementById('ohDoorQty')||{}).value)||1));
+                const w0=Number(((typeof getGarageDimensions==='function')?getGarageDimensions():{}).width)||20;
+                if(q0===1 && w0>=16 && w0<26) return AGB_GABLE_SIDEPATIO_REF; // 2-car single door only; other sizes fall back below
+            }
+            const q=Math.max(1,Math.round(Number((document.getElementById('ohDoorQty')||{}).value)||1));
+            const w=Number(((typeof getGarageDimensions==='function')?getGarageDimensions():{}).width)||20;
+            const car=q>=2?2.5:(w<16?1:2);
+            const win=/window/i.test(((document.getElementById('overheadDoorStyle')||{}).value||''));
+            let off=false; try{ off=Math.abs(Number(updateOverheadDoorOffsetControl().offset)||0)>0.001; }catch(e){}
+            const col=String((document.getElementById('sidingColor')||{}).value||'').toLowerCase();
+            let best=null,bs=-1;
+            AGB_GABLE_REF_SEEDS.forEach(p=>{ const sc=(p.doors===Math.min(q,2)?8:0)+(p.car===car?4:0)+(p.win===win?2:0)+(p.off===off?2:0)+(col&&p.color===col?1:0); if(sc>bs){bs=sc;best=p;} });
+            return best && best.doors===Math.min(q,2) ? best : null;
+        }
+        function agbRefreshGableRefUi(){
+            const row=document.getElementById('gableRefRow'); if(!row) return;
+            const show=agbIsStandardGable() && ((document.getElementById('photoSource')||{}).value||'ai')==='ai';
+            row.classList.toggle('gref-show', show);
+            const t=document.getElementById('gableRefToggle'); if(t) t.checked=agbGableRefEnabled();
+            const n=document.getElementById('gableRefNote');
+            if(n){ const p=agbPickGableRef(); n.textContent=agbGableRefEnabled()?(p?('On — AI repaints approved photo '+p.file+' to this estimate (normal AI picture if that fails).'):'On — no matching approved photo for this door count, a normal AI picture will be made.'):'Off — normal AI picture from the prompt only.'; }
+        }
+        function agbSetGableRef(on){ try{ localStorage.setItem('agb_gable_ref_edit', on?'1':'0'); }catch(e){} agbRefreshGableRefUi(); }
+        try{ window.agbSetGableRef=agbSetGableRef; window.agbRefreshGableRefUi=agbRefreshGableRefUi; window.agbPickGableRef=agbPickGableRef; }catch(_){}
+        document.addEventListener('change', e=>{ if(e.target && /^(roofType|eaveDir|ohDoorQty|overheadDoorStyle|sidingColor|width|doorOffset)$/.test(e.target.id||'')) agbRefreshGableRefUi(); }, true);
+        document.addEventListener('click', e=>{ if(e.target && e.target.closest && e.target.closest('[data-photo-src]')) setTimeout(agbRefreshGableRefUi,0); }, true);
+        setTimeout(()=>{ try{ agbRefreshGableRefUi(); }catch(_){} }, 0);
+        async function agbFetchAsDataUrl(url){
+            const r=await fetch(url,{cache:'force-cache'}); if(!r.ok) throw new Error('photo '+r.status);
+            const b=await r.blob();
+            return await new Promise((res,rej)=>{ const fr=new FileReader(); fr.onload=()=>res(String(fr.result)); fr.onerror=()=>rej(new Error('read failed')); fr.readAsDataURL(b); });
+        }
+        async function agbGableRefGenerate(specPrompt){
+            const p=agbPickGableRef(); if(!p) throw new Error('no matching approved gable photo');
+            let ref='';
+            for(const u of [new URL('library/'+p.file, document.baseURI).href, new URL('images/'+p.file, document.baseURI).href]){ try{ ref=await agbFetchAsDataUrl(u); if(/^data:image\//.test(ref)) break; }catch(e){ ref=''; } }
+            if(!ref) throw new Error('could not load approved photo '+p.file);
+            const prompt=((p.sidePatio?'KEEP THE ROOF/PATIO FORM of the reference: ONE symmetrical front gable spanning garage + side patio; patio-side eave lands at the OUTER patio post corner; patio open front/side/BACK, posts only, no wall behind it; patio about 1/3 of the front width. The reference fixes ONLY this form; change camera/setting as asked; mirror it if the patio is on the LEFT. Rebuild everything else EXACTLY: ':'KEEP THE EXACT ROOF of the reference photo: standard FRONT gable — triangular peak centered directly above the overhead door, ridge running front-to-back, side walls plain rectangles under the side eaves. The reference fixes ONLY the roof shape: show it correctly from the requested camera view; change camera/setting as asked below. Remove any vent/window in the gable triangle unless asked. Repaint/rebuild everything else to match EXACTLY: ')+agbDoorStyleLine()+'. '+agbCameraAccessLine()+'. '+agbSpecLines().join('. ')).slice(0,2900);
+            const r=await generateOpenAIGaragePhotoUrl(prompt,{edit:true, editFromUrl:ref, refEdit:true});
+            if(r && typeof r==='object'){ r.source='openai-company-gable-ref'; r.refPhoto=p.file; }
+            return r;
+        }
         async function generateAIGaragePhotoUrl(preferOpenAI, opts){
+            if(preferOpenAI && !(opts&&opts.edit) && agbIsStandardGable() && agbGableRefEnabled()){
+                try{
+                    try{ if(typeof window.__estimateLoadingSetStatus==='function') window.__estimateLoadingSetStatus('Gable — AI repainting an approved gable photo to match this estimate…'); }catch(_){}
+                    const r=await agbGableRefGenerate();
+                    if(r && (r.url||typeof r==='string')) return r;
+                }catch(e){ console.warn('Gable reference edit failed, making a normal AI picture', e); try{ if(typeof window.__estimateLoadingSetStatus==='function') window.__estimateLoadingSetStatus('Gable photo edit failed — making a normal AI picture…'); }catch(_){} }
+            }
             // Compact pack = all active rules, guaranteed under budget (nothing critical clipped)
-            const prompt = (typeof buildGarageAIPromptCompact==='function')
-                ? buildGarageAIPromptCompact()
-                : buildGarageAIPrompt();
+            let prompt='';
+            try{ prompt=agbFullPrompt(); }catch(e){ console.error('agbFullPrompt failed', e); }
+            if(!prompt) prompt=String(buildGarageAIPrompt()).slice(0,2900);
             if(preferOpenAI){
                 return await generateOpenAIGaragePhotoUrl(prompt, opts);
             }
@@ -8630,7 +8880,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             if(typeof isReverseGableSelected==='function' && isReverseGableSelected() && typeof resolveReverseGablePresetPhoto==='function'){
                 window._sheetPhotoMode='generate';
                 window._sheetPhotoEditPrompt='';
-                return await resolveReverseGablePresetPhoto();
+                return await resolveReverseGableAiEditPhoto();
             }
             const mode=document.getElementById('garagePhotoMode')?.value || localStorage.getItem('agb_garage_photo_mode') || 'openai';
             const status=document.getElementById('aiPhotoStatus');
@@ -9177,6 +9427,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             if (electricOnNote && checked('threeWaySwitch')) notes.push('3-way switch included.');
             if (checked('gutters')) notes.push(roofType === 'gable' ? 'Seamless Gutters 2 Sides - 2 Down Spouts included.' : 'Seamless Gutters 4 Sides - 2 Down Spouts included.');
             if (checked('aluminumSoffit')) notes.push('Aluminum soffit and fascia included.');
+            else if (checked('showWoodSoffitNote')) notes.push('Pre-finished wood soffit and fascia included.');
             if (Number(val('firewallWalls') || 0) > 0) notes.push(`${val('firewallWalls')} firewall wall${Number(val('firewallWalls')) > 1 ? 's' : ''} included.`);
             if (checked('hurricaneTies')) notes.push('Hurricane ties included.');
             const ctNote=Number(val('concreteThickness')||4);
@@ -9259,7 +9510,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             const garagePhotoFallbackSrc = fb[0] || garagePhotoSrc;
             const garagePhotoOriginalSrc = fb[1] || fb[0] || garagePhotoSrc;
             const usedAI = resolvedGarage.source!=='library' && (resolvedGarage.source==='openai' || resolvedGarage.source==='ai' || resolvedGarage.aiSource);
-            const aiBadge = resolvedGarage.source==='rg-preset' ? 'Reverse gable example photo' : (usedAI ? 'AI preview based on this estimate' : (resolvedGarage.aiSource==='library' ? 'Library photo' : 'Library photo (AI unavailable)'));
+            const aiBadge = resolvedGarage.source==='rg-ai-edit' ? 'AI preview (edited from reverse gable example photo)' : resolvedGarage.source==='rg-preset' ? 'Reverse gable example photo' : (usedAI ? 'AI preview based on this estimate' : (resolvedGarage.aiSource==='library' ? 'Library photo' : 'Library photo (AI unavailable)'));
             const photoFailNote = (!usedAI && resolvedGarage.error)
                 ? `<div style="font-size:9px;color:#b91c1c;padding:4px 6px;background:#fef2f2;border:1px solid #fecaca;margin-top:4px">AI photo failed: ${esc(String(resolvedGarage.error).slice(0,180))}</div>`
                 : '';
@@ -10933,6 +11184,7 @@ document.addEventListener('click', function(e){
             document.getElementById('retainWallHeight').value = '8';
             document.getElementById('gutters').checked = false;
             document.getElementById('aluminumSoffit').checked = false;
+            if (document.getElementById('showWoodSoffitNote')) document.getElementById('showWoodSoffitNote').checked = false;
             document.getElementById('sidingType').value = 'vinyl';
             if (document.getElementById('vinylColor')) document.getElementById('vinylColor').value = '#F5F5F5';
             if (document.getElementById('hardieColor')) document.getElementById('hardieColor').value = '#F5F5F5';
@@ -11359,6 +11611,13 @@ function toggleStickyInternal(){
 #rgPickerModal .rg-btn.rg-primary{background:#2563eb;border-color:#2563eb}
 .rg-photo-row{display:none;flex-wrap:wrap;align-items:center;gap:8px;margin-top:6px;padding:6px;border:1px solid rgba(59,130,246,.45);border-radius:10px;background:#09090b}
 .rg-photo-row.rg-show{display:flex}
+.gref-row{display:none;align-items:flex-start;gap:8px;margin-top:6px;padding:6px 8px;border:1px solid rgba(34,197,94,.4);border-radius:10px;background:#09090b;font-size:11px;color:#e4e4e7;cursor:pointer}
+.gref-row.gref-show{display:flex}
+.gref-row input{width:16px;height:16px;flex:none;margin-top:1px}
+.gref-note{display:block;color:#86efac;font-weight:400;margin-top:2px}
+.rg-ai-toggle{display:flex;align-items:center;gap:6px;width:100%;font-size:11px;color:#e4e4e7;cursor:pointer}
+.rg-ai-toggle input{width:16px;height:16px}
+.rg-mode-note{display:block;color:#93c5fd;margin-top:2px}
 .rg-photo-row img{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:8px;background:#27272a;flex:none;cursor:pointer}
 .rg-photo-row .rg-row-text{font-size:10px;line-height:1.25;color:#d4d4d8;flex:1;min-width:0}
 .rg-photo-row .rg-row-text b{display:block;color:#93c5fd;font-size:9px;letter-spacing:.06em}
@@ -11708,6 +11967,51 @@ function rgRefreshUi(){
     const picked=!!((document.getElementById('rgPresetId')||{}).value);
     if(img){ const s=p?p.src:''; if(img.getAttribute('src')!==s){ if(s) img.setAttribute('src',s); else img.removeAttribute('src'); } }
     if(lab) lab.textContent=(p?p.label:'No photo')+(picked?'':' (default)');
+    const on=rgAiEditActive();
+    const tg=document.getElementById('rgAiEditToggle'); if(tg) tg.checked=rgAiEditEnabled();
+    const t=document.getElementById('rgModeTitle'); if(t) t.textContent=on?'REVERSE GABLE · AI EDIT OF THIS PHOTO':'REVERSE GABLE PHOTO · NO AI';
+    const n=document.getElementById('rgModeNote'); if(n) n.textContent=on?'AI repaints siding/doors/colors from the estimate; roof stays as in this photo. If AI fails, this photo prints as-is.':(rgAiEditEnabled()?'AI photo is off for this estimate, so this photo prints as-is.':'This photo prints as-is.');
+}
+/* rg-ai-sample: AI edit of the reverse gable example photo (switch-off-able, per device) */
+function rgAiEditEnabled(){ try{ return localStorage.getItem('agb_rg_ai_edit')!=='0'; }catch(e){ return true; } }
+function rgSetAiEdit(on){ try{ localStorage.setItem('agb_rg_ai_edit', on?'1':'0'); }catch(e){} rgRefreshUi(); }
+function rgAiEditActive(){
+    if(!rgAiEditEnabled()) return false;
+    const src=(document.getElementById('photoSource')||{}).value||'ai';
+    if(src!=='ai') return false;
+    const mode=(document.getElementById('garagePhotoMode')||{}).value || (function(){try{return localStorage.getItem('agb_garage_photo_mode')}catch(e){return ''}})() || 'openai';
+    return mode!=='library' && mode!=='none';
+}
+function rgToJpegDataUrl(src){
+    return new Promise(resolve=>{
+        const img=new Image(); const t=setTimeout(()=>resolve(''),8000);
+        img.onload=()=>{ try{ const w=Math.min(1024,img.naturalWidth||1024), h=Math.round(w*(img.naturalHeight||576)/(img.naturalWidth||1024));
+            const c=document.createElement('canvas'); c.width=w; c.height=h; c.getContext('2d').drawImage(img,0,0,w,h);
+            clearTimeout(t); resolve(c.toDataURL('image/jpeg',0.9)); }catch(e){ clearTimeout(t); resolve(''); } };
+        img.onerror=()=>{ clearTimeout(t); resolve(''); };
+        img.src=src;
+    });
+}
+async function resolveReverseGableAiEditPhoto(){
+    const preset=await resolveReverseGablePresetPhoto();
+    if(!rgAiEditActive() || !preset.primary) return preset;
+    const status=document.getElementById('aiPhotoStatus');
+    try{
+        try{ if(typeof window.__estimateLoadingSetStatus==='function') window.__estimateLoadingSetStatus('Reverse gable — AI editing the example photo to match this estimate…'); }catch(_){}
+        const ref=await rgToJpegDataUrl(preset.primary);
+        if(!ref) throw new Error('Could not read the example photo');
+        const specs=(typeof window.agbSpecLines==='function')?(((typeof window.agbDoorStyleLine==='function')?window.agbDoorStyleLine()+'. ':'')+((typeof window.agbCameraAccessLine==='function')?window.agbCameraAccessLine()+'. ':'')+window.agbSpecLines().join('. ')):((typeof buildGarageAIPrompt==='function')?buildGarageAIPrompt():'');
+        const prompt=('KEEP THE EXACT ROOF of the reference photo: reverse (side-end) gable, ridge running left-to-right parallel to the front door wall, triangular gable peaks ONLY on the left and right end walls, straight continuous front eave with NO triangle above the overhead door. The reference fixes ONLY the roof shape: show it correctly from the requested camera view; change camera/setting as asked below. Repaint/rebuild everything else to match EXACTLY: '+specs).slice(0,2900); // function caps edit prompt at 4000 incl. its own rules
+        const r=await generateOpenAIGaragePhotoUrl(prompt,{edit:true, editFromUrl:ref, rgPresetEdit:true});
+        const url=r && (typeof r==='string' ? r : r.url);
+        if(!url) throw new Error('AI returned no image');
+        if(status) status.textContent='Reverse gable: AI edit of example photo "'+(preset.prompt||'')+'".';
+        return {primary:url, fallbacks:[preset.primary].concat(preset.fallbacks||[]), source:'rg-ai-edit', rgPresetId:preset.rgPresetId, prompt};
+    }catch(e){
+        const msg=String(e&&e.message||e);
+        try{ if(typeof window.__estimateLoadingSetStatus==='function') window.__estimateLoadingSetStatus('AI edit failed — using the example photo as-is. '+msg); }catch(_){}
+        return Object.assign({}, preset, {error:'AI edit of example photo failed, printed the example photo instead: '+msg});
+    }
 }
 /** Called from the roof selects. Opens the picker when the roof BECOMES reverse gable. */
 function onRoofStyleChangedForRgPicker(){
@@ -11756,6 +12060,7 @@ const LIBRARY_SEED=[
   {id:'seed:garage-07',file:'garage-07.jpg',tags:{carSize:1,roof:'gable',ohDoors:1,doorStyle:'raised panel + service door',color:'white',trim:'aluminum',offCenter:true,patio:false}},
   {id:'seed:garage-08',file:'garage-08.jpg',tags:{carSize:2,roof:'gable',ohDoors:1,doorStyle:'flush',color:'navy',trim:'aluminum',offCenter:false,patio:false}},
   {id:'seed:garage-09',file:'garage-09.jpg',tags:{carSize:2,roof:'hip',ohDoors:1,doorStyle:'raised panel carriage',color:'green',trim:'wood',offCenter:false,patio:false}},
+  {id:'seed:garage-29',file:'garage-29.jpg',tags:{carSize:2,roof:'gable',ohDoors:1,doorStyle:'raised panel',color:'beige',trim:'aluminum',offCenter:true,patio:true,patioSide:true}},
   {id:'seed:garage-10',file:'garage-10.jpg',tags:{carSize:2,roof:'gable',ohDoors:0,doorStyle:'rear view (no overhead door)',color:'white',trim:'wood',offCenter:false,patio:true}},
   {id:'seed:garage-11',file:'garage-11.jpg',tags:{carSize:1,roof:'gable',ohDoors:1,doorStyle:'raised panel + service door + window',color:'gray',trim:'aluminum',offCenter:true,patio:false}},
   {id:'seed:garage-12',file:'garage-12.jpg',tags:{carSize:2,roof:'gable',ohDoors:1,doorStyle:'wood-look',color:'navy',trim:'wood',offCenter:false,patio:false}},
@@ -11796,8 +12101,9 @@ function currentTags(){
   const cap=val('carCapacity');
   const carSize=cap==='3'&&w>=27?3:(w<=14?1:(w<=24?2:(w<30?2.5:3)));
   const patio=!!(document.getElementById('roofPatioEnabled')||{}).checked;
+  const patioSide=patio&&!!(document.getElementById('roofPatioSide')||{}).checked;
   const alum=!!(document.getElementById('aluminumSoffit')||{}).checked;
-  return {size:w+'x'+d,width:w,depth:d,carSize,roof:reverse?'reverse gable':roof,reverse,siding:val('sidingType'),color:val('sidingColor')||val('vinylColor'),colorFamily:colorFamily(val('sidingColor')||val('vinylColor')),ohDoors:n,doorStyle:val('overheadDoorStyle'),serviceDoor:val('doorType'),trim:alum?'aluminum':'wood',patio,...agbDoorPosTags()};
+  return {patioSide,size:w+'x'+d,width:w,depth:d,carSize,roof:reverse?'reverse gable':roof,reverse,siding:val('sidingType'),color:val('sidingColor')||val('vinylColor'),colorFamily:colorFamily(val('sidingColor')||val('vinylColor')),ohDoors:n,doorStyle:val('overheadDoorStyle'),serviceDoor:val('doorType'),trim:alum?'aluminum':'wood',patio,...agbDoorPosTags()};
 }
 function colorFamily(c){c=String(c||'').toLowerCase();if(/sage|green/.test(c))return 'green';if(/beige|almond|cream|tan|khaki/.test(c))return 'tan';if(/charcoal|black|dark/.test(c))return 'charcoal';if(/gray|grey|pewter/.test(c))return 'gray';if(/brown|clay|mocha/.test(c))return 'brown';if(/white/.test(c))return 'white';if(/navy|blue/.test(c))return 'navy';if(/red/.test(c))return 'red';return c;}
 // similarity of a library photo to the current estimate; null = hard-excluded from Recommended
@@ -11808,6 +12114,8 @@ function photoScore(t,cur){
   if(cur&&cur.reverse&&isRgRoof(t.roof)){ let s=100; if(t.ohDoors!=null&&Number(t.ohDoors)===Number(cur.ohDoors))s+=25; const f=colorFamily(t.color); if(f&&f===cur.colorFamily)s+=20; if(t.offCenter!=null&&cur.offCenter!=null&&!!t.offCenter===!!cur.offCenter)s+=10; if(t.doorSide&&t.doorSide===cur.doorSide)s+=5; return s; }
   if(t.carSize!=null&&cur.carSize!=null&&Number(t.carSize)!==Number(cur.carSize))return null;
   if(!!t.patio!==!!cur.patio)return null;
+  if(cur.patio&&!!t.patioSide!==!!cur.patioSide)return null; // side-patio photo only for side-patio estimates (and vice versa)
+  if(t.patioSide&&(cur.reverse||!/gable/.test(String(cur.roof||''))))return null; // approved side-patio photo is a standard front gable
   if(t.carSize==null)return null;
   let sc=0;const r=String(t.roof||'').toLowerCase();
   if(r===String(cur.roof||'').toLowerCase())sc+=40;else if(/gable/.test(r)&&/gable/.test(cur.roof||''))sc+=15;
@@ -11939,7 +12247,7 @@ function renderGrid(){
   // fix 2026-10-15: with a filter on, Recommended obeys the filter too (it used to stay the same 8 photos above the results)
   const filtersOn=['plRoof','plDoors','plColor','plSize','plKind'].some(id=>String(val(id)||'').trim());
   const rec=allEntries.filter(e=>!filtersOn||matches(e)).map(e=>({e,sc:photoScore(e.tags,cur)})).filter(x=>x.sc!=null).sort((a,b)=>b.sc-a.sc).slice(0,8);
-  const card=e=>{ const t=e.tags||{}; const bits=[t.carSize?(t.carSize+'-car'):'',t.size,t.roof,t.color,t.ohDoors?(t.ohDoors+' door'+(t.ohDoors>1?'s':'')):'',t.doorStyle,t.trim?t.trim+' trim':'',t.offCenter?'off-center':'',t.patio?'rear patio':''].filter(Boolean).map(esc).join(' · ');
+  const card=e=>{ const t=e.tags||{}; const bits=[t.carSize?(t.carSize+'-car'):'',t.size,t.roof,t.color,t.ohDoors?(t.ohDoors+' door'+(t.ohDoors>1?'s':'')):'',t.doorStyle,t.trim?t.trim+' trim':'',t.offCenter?'off-center':'',t.patio?(t.patioSide?'side patio':'rear patio'):''].filter(Boolean).map(esc).join(' · ');
     const canDel=e.kind==='AI' && (isAdmin || e.local);
     return '<div class="pl-card'+(e.id===sel?' pl-sel':'')+'" data-id="'+esc(e.id)+'"><img alt="" decoding="async" src="'+esc(e.thumb||e.src||'')+'"'+(e.alt?' onerror="if(!this.dataset.t){this.dataset.t=1;this.src=\''+esc(e.alt)+'\'}"':'')+'><div class="pl-tags"><b>'+esc(e.kind)+'</b> '+bits+'</div>'+(canDel?'<button type="button" class="pl-del" data-del="'+esc(e.id)+'">Delete</button>':'')+'</div>'; };
   const recHtml=filtersOn&&!rec.length?'':'<div class="pl-sec">Recommended for this estimate</div>'+(rec.length?rec.map(x=>card(x.e)).join(''):'<div class="pl-note">No close matches (same car size and patio) — pick from all photos below.</div>');
@@ -12314,7 +12622,7 @@ run();setInterval(run,1500);document.addEventListener('change',run);})();
 (function(){
   // Prices come from the existing app constants (see updateBreakdown): service door included,
   // French 9 Light $1,150 / Full View $1,450, party door $800 for 6x7 +$100 per extra ft, windows +$300.
-  // An ADDITIONAL service door has no price in the app: price field left blank and flagged.
+  // Owner-confirmed 2026-10-28: first service door included ($0), each ADDITIONAL service door +$600.
   const WALLS=[['left','Left wall'],['right','Right wall'],['rear','Rear wall'],['front-left','Front, left of OH door'],['front-right','Front, right of OH door']];
   const TYPES=[['service','Service door (36×80)'],['french','French doors'],['party','Party door (small overhead)']];
   const $=id=>document.getElementById(id);
@@ -12332,7 +12640,7 @@ run();setInterval(run,1500);document.addEventListener('change',run);})();
   function read(){ try{ const v=JSON.parse($('sideDoorsJson')?.value||'null'); if(Array.isArray(v)) return v; }catch(e){} return null; }
   function list(){ return read()||fromLegacy(); }
   function autoPrice(d,idx,arr){
-    if(d.type==='service'){ const first=arr.findIndex(x=>x.type==='service')===idx; return first?0:null; }
+    if(d.type==='service'){ const first=arr.findIndex(x=>x.type==='service')===idx; return first?0:600; }
     if(d.type==='french') return d.style==='fullview'?1450:1150;
     if(d.type==='party'){ const pw=Math.max(1,Number(d.w)||6), ph=Math.max(1,Number(d.h)||7); return 800+Math.max(0,Math.ceil((pw-6)+(ph-7)))*100+(d.windows?300:0); }
     return null;
@@ -12457,9 +12765,37 @@ run();setInterval(run,1500);document.addEventListener('change',run);})();
   };
   // AI photo prompts: state the exact door list
   function promptLine(){ const arr=agbDoorListGet(); if(!arr) return ''; if(!arr.length) return 'SIDE/REAR DOORS: none — no service door, no French doors, no party door'; return 'SIDE/REAR DOORS (exact, no others): '+arr.map(desc).join('; ')+'. French doors = pair of glass swing doors; party door = small overhead sectional door; service door = single 36x80 swing door'; }
-  window.agbDoorPromptLine=promptLine;
+  window.agbDoorPromptLine=promptLine; window.agbDoorDesc=desc;
   document.addEventListener('DOMContentLoaded',()=>{ render(true); });
   if(document.readyState!=='loading') render(true);
+})();
+</script>
+
+<script>
+/* Sample 2026-10-28: ask once when a standard gable has a roofed patio (either order). */
+(function(){
+  function cond(){ const r=document.getElementById('roofType'),e=document.getElementById('eaveDir'),p=document.getElementById('roofPatioEnabled'); return r&&e&&p&&r.value==='gable'&&e.value!=='sides'&&p.checked; }
+  function box(){ return document.getElementById('rgPatioAsk'); }
+  function hide(){ const b=box(); if(b) b.classList.remove('rgask-show'); }
+  function show(near){
+    const b=box(); if(!b) return;
+    if(near==='roof'){ const e=document.getElementById('eaveDir'); if(e && e.parentNode) e.insertAdjacentElement('afterend', b); }
+    else { const o=document.getElementById('roofPatioOptions'); if(o) o.insertAdjacentElement('beforebegin', b); }
+    b.classList.add('rgask-show');
+  }
+  window.agbRgAskSwitch=function(){
+    const r=document.getElementById('roofType'), e=document.getElementById('eaveDir');
+    if(r && r.value!=='gable'){ r.value='gable'; r.dispatchEvent(new Event('change',{bubbles:true})); }
+    window._agbRgSwitching=true;
+    if(e){ e.value='sides'; e.dispatchEvent(new Event('change',{bubbles:true})); }
+    window._agbRgSwitching=false; hide();
+  };
+  window.agbRgAskKeep=function(){ window._agbRgAskKept=true; hide(); };
+  document.addEventListener('change', function(ev){
+    const id=ev.target && ev.target.id; if(!/^(roofType|eaveDir|roofPatioEnabled)$/.test(id||'')||window._agbRgSwitching) return;
+    window._agbRgAskKept=false; // roof/patio toggled again -> may ask again
+    if(cond()) show(id==='roofPatioEnabled'?'patio':'roof'); else hide();
+  }, false);
 })();
 </script>
 </body>

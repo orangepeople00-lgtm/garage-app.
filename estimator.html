@@ -7682,7 +7682,8 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             const rg=roof==='gable' && ((document.getElementById('eaveDir')||{}).value==='sides');
             const base='NO separate slant, lean-to, shed roof or lower/flatter patio roof';
             if(roof==='hip') return 'PATIO ROOF (HIP): the patio roof is the SAME hip roof simply extended — it continues straight off the existing hip roof lines in the same planes at the same pitch, one continuous hip roof covering garage + patio, hips and eave line run straight out to the patio posts; '+base;
-            return 'PATIO ROOF ('+(rg?'REVERSE GABLE':'FRONT GABLE')+'): the patio roof extends FLUSH with the main roof — same ridge line continued, same pitch, same eave line, ONE continuous roof over garage + patio'+(rg?' (gable peaks stay only on the left and right end walls)':' (gable peaks stay front and back)')+'; '+base;
+            const sp=agbChecked('roofPatioEnabled')&&agbChecked('roofPatioSide');
+            return 'PATIO ROOF ('+(rg?'REVERSE GABLE':'FRONT GABLE')+'): flush with the main roof — same pitch, ONE continuous roof over garage + patio'+(sp&&!rg?'; the main roof plane on the patio side continues straight down and out over the WHOLE patio to the posts (wide asymmetric front gable), its eave at the post line':(rg?' (peaks only on left/right end walls; ridge and eave extend over the whole patio)':'; ridge and eave lines extend over the whole patio'))+'; '+base;
         }
         function agbPatioLine(){
             if(!agbChecked('roofPatioEnabled')) return 'NO roofed patio';
@@ -7691,13 +7692,15 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             let dep=''; try{ dep=getRoofPatioDepth(); }catch(e){}
             const wallName=side?(agbPatioSideName()+' side wall'):'rear wall', len=side?(Number(dim.depth)||20):(Number(dim.width)||20);
             const sz=dep?(dep+' ft deep x '+len+' ft long'):('full-size, roughly as deep as a car, x '+len+' ft long');
-            return 'ROOFED PATIO: '+sz+' roofed patio extending '+(dep?dep+' ft ':'')+'out from the '+wallName+', full length of the wall, EXACTLY 4 posts at the OUTER edge, clearly visible open covered area with concrete floor (a real deep patio, NOT a thin overhang), same shingles. '+agbPatioRoofRule();
+            // Owner 2026-10-28: patio should LOOK about one third of the garage front width (real depth number kept)
+            const prop=dep?(' SCALE: the patio roof sticks out '+dep+' ft from the '+wallName+' — visually about ONE-THIRD of the garage\'s '+(side?'front (door-wall) width':'side-wall length')+'; posts stand well out from the wall, not hugging it.'):'';
+            return 'ROOFED PATIO: '+sz+' roofed patio extending '+(dep?dep+' ft ':'')+'out from the '+wallName+', full length of the wall, EXACTLY 4 posts at the OUTER edge, open covered area, concrete floor, NOT a thin overhang, same shingles.'+prop+' '+agbPatioRoofRule();
         }
         function agbCameraAccessLine(){
             const v=agbResolvedView();
             const acc=((document.getElementById('garageAccessType')||{}).value||'driveway');
             const cam=v==='back'?'CAMERA: REAR view — camera behind the garage looking at the BACK wall (overhead door hidden)'+(agbChecked('roofPatioEnabled')&&!agbChecked('roofPatioSide')?', rear three-quarter angle so the patio\'s full DEPTH (wall to posts) is clearly visible':'')
-                :v==='left'||v==='right'?('CAMERA: '+v.toUpperCase()+' SIDE three-quarter view — the '+v.toUpperCase()+' side wall is the main subject'+(agbChecked('roofPatioEnabled')&&agbChecked('roofPatioSide')?', angled so the side patio\'s full DEPTH (wall to posts) is clearly visible':''))
+                :v==='left'||v==='right'?('CAMERA: '+v.toUpperCase()+' SIDE three-quarter view — the '+v.toUpperCase()+' side wall is the main subject'+(agbChecked('roofPatioEnabled')&&agbChecked('roofPatioSide')?', camera at the FRONT-'+v.toUpperCase()+' corner so the patio\'s full depth (wall to posts) is clearly visible':''))
                 :'CAMERA: front three-quarter view, overhead door wall facing camera';
             const set=acc==='alley'?'SETTING: Chicago CITY ALLEY — garage faces a paved/asphalt alley with a short concrete apron from the overhead door to the alley, utility poles and neighbor fences/garages along the alley, NO long driveway and NO front lawn':'SETTING: concrete DRIVEWAY leading to the overhead door, residential yard';
             return cam+'. '+set;
@@ -7733,7 +7736,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                 const pw=agbPatioSideName(), sw=loc.toUpperCase();
                 if(pw!==sw){ var agbPatioWallSaid=true;
                     const vis=agbResolvedView().toUpperCase();
-                    L.push('PATIO WALL: the '+pw+' side wall under the roofed patio has NO man door (no door of any kind); the service door is ONLY on the '+sw+(loc==='back'?' WALL':' SIDE WALL')+((vis!==sw)?(' — that wall is out of camera view: service door is on the hidden '+sw+' wall; do not draw any door on the patio wall'):''));
+                    L.push('PATIO WALL: NO door of any kind on the '+pw+' patio wall; service door ONLY on the '+((vis!==sw)?'hidden ':'')+sw+(loc==='back'?' WALL':' SIDE WALL')+((vis!==sw)?' (out of view); do not draw any door on the patio wall':''));
                 }
             }
             if(hasSvc && sideWall){
@@ -8770,7 +8773,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             let ref='';
             for(const u of [new URL('library/'+p.file, document.baseURI).href, new URL('images/'+p.file, document.baseURI).href]){ try{ ref=await agbFetchAsDataUrl(u); if(/^data:image\//.test(ref)) break; }catch(e){ ref=''; } }
             if(!ref) throw new Error('could not load approved photo '+p.file);
-            const prompt=('KEEP THE EXACT ROOF of the reference photo: standard FRONT gable — triangular peak centered directly above the overhead door, ridge running front-to-back, side walls plain rectangles under the side eaves. The reference fixes ONLY the roof geometry: re-render the SAME roof from the requested camera view (front, side or rear) with correct geometry from that angle; move the camera and change the setting as requested below. Remove any vent/window in the gable triangle unless asked. Repaint/rebuild everything else to match EXACTLY: '+agbDoorStyleLine()+'. '+agbCameraAccessLine()+'. '+agbSpecLines().join('. ')).slice(0,2900);
+            const prompt=('KEEP THE EXACT ROOF of the reference photo: standard FRONT gable — triangular peak centered directly above the overhead door, ridge running front-to-back, side walls plain rectangles under the side eaves. The reference fixes ONLY the roof shape: show it correctly from the requested camera view; change camera/setting as asked below. Remove any vent/window in the gable triangle unless asked. Repaint/rebuild everything else to match EXACTLY: '+agbDoorStyleLine()+'. '+agbCameraAccessLine()+'. '+agbSpecLines().join('. ')).slice(0,2900);
             const r=await generateOpenAIGaragePhotoUrl(prompt,{edit:true, editFromUrl:ref, refEdit:true});
             if(r && typeof r==='object'){ r.source='openai-company-gable-ref'; r.refPhoto=p.file; }
             return r;
@@ -11933,7 +11936,7 @@ async function resolveReverseGableAiEditPhoto(){
         const ref=await rgToJpegDataUrl(preset.primary);
         if(!ref) throw new Error('Could not read the example photo');
         const specs=(typeof window.agbSpecLines==='function')?(((typeof window.agbDoorStyleLine==='function')?window.agbDoorStyleLine()+'. ':'')+((typeof window.agbCameraAccessLine==='function')?window.agbCameraAccessLine()+'. ':'')+window.agbSpecLines().join('. ')):((typeof buildGarageAIPrompt==='function')?buildGarageAIPrompt():'');
-        const prompt=('KEEP THE EXACT ROOF of the reference photo: reverse (side-end) gable, ridge running left-to-right parallel to the front door wall, triangular gable peaks ONLY on the left and right end walls, straight continuous front eave with NO triangle above the overhead door. The reference fixes ONLY the roof geometry: re-render the SAME roof from the requested camera view (front, side or rear) with correct geometry from that angle; move the camera and change the setting as requested below. Repaint/rebuild everything else to match EXACTLY: '+specs).slice(0,2900); // function caps edit prompt at 4000 incl. its own rules
+        const prompt=('KEEP THE EXACT ROOF of the reference photo: reverse (side-end) gable, ridge running left-to-right parallel to the front door wall, triangular gable peaks ONLY on the left and right end walls, straight continuous front eave with NO triangle above the overhead door. The reference fixes ONLY the roof shape: show it correctly from the requested camera view; change camera/setting as asked below. Repaint/rebuild everything else to match EXACTLY: '+specs).slice(0,2900); // function caps edit prompt at 4000 incl. its own rules
         const r=await generateOpenAIGaragePhotoUrl(prompt,{edit:true, editFromUrl:ref, rgPresetEdit:true});
         const url=r && (typeof r==='string' ? r : r.url);
         if(!url) throw new Error('AI returned no image');

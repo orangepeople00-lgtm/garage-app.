@@ -1240,8 +1240,16 @@ body.bg-zinc-950{
                             <div>
                                 <label class="text-xs text-zinc-400 block mb-1">Excavation / Stone Quantity</label>
                                 <input type="hidden" id="excavation" value="auto">
+                                <div class="flex flex-col gap-1.5 mb-1.5">
+                                    <select id="excavationMode" aria-label="Excavation mode" onchange="agbExcavUiChanged()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm min-h-[44px]">
+                                        <option value="auto">Auto</option>
+                                        <option value="sqft">Sq ft</option>
+                                        <option value="usd">$ amount</option>
+                                    </select>
+                                    <input id="excavationValue" type="number" inputmode="decimal" min="0" step="any" placeholder="Auto" disabled oninput="agbExcavUiChanged()" aria-label="Excavation sq ft or dollar amount" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm min-h-[44px] disabled:opacity-50">
+                                </div>
                                 <div id="excavationAuto" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm">$0</div>
-                                <div class="text-[10px] text-zinc-500 mt-0.5">Excavation / stone base • auto: garage sq ft (width × depth) × $1.50 • only when no demo</div>
+                                <div class="text-[10px] text-zinc-500 mt-0.5">Excavation / stone base • Auto: garage sq ft × $1.50 (off with demo / existing slab) • Sq ft: your sq ft × $1.50 • $: amount as typed</div>
                             </div>
                         </div>
 
@@ -3240,16 +3248,29 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             }
             // Excavation / stone base = garage sq ft (width x depth) x $1.50. Existing slab: off (no garage concrete work).
             const EXCAVATION_RATE_PER_SQFT = 1.5;
-            // Charged only when there is NO demolition (demo on => excavation $0).
+            // Auto: charged only when there is NO demolition and no existing slab. Manual (sqft:/usd:) always charged.
             const excavDemoOn = !!document.getElementById('demoExisting')?.checked;
-            const excavationSqft = (existingSlabNoConcrete || excavDemoOn) ? 0 : Math.max(0, (Number(width) || 0) * (Number(depth) || 0));
-            const excavation = Math.round(excavationSqft * EXCAVATION_RATE_PER_SQFT * 100) / 100;
-            window._agbExcavation = { sqft: excavationSqft, cost: excavation };
+            const excavParsed = agbParseExcavation(document.getElementById('excavation')?.value);
+            agbSyncExcavUi(excavParsed);
+            let excavationSqft = 0, excavation = 0, excavLabel = '';
+            if (excavParsed.mode === 'sqft') {
+                excavationSqft = excavParsed.value;
+                excavation = Math.round(excavationSqft * EXCAVATION_RATE_PER_SQFT * 100) / 100;
+                excavLabel = `${excavationSqft.toLocaleString()} sq ft × $1.50 = $${excavation.toLocaleString(undefined,{maximumFractionDigits:2})}`;
+            } else if (excavParsed.mode === 'usd') {
+                excavation = Math.round(excavParsed.value * 100) / 100;
+                excavLabel = `Manual: $${excavation.toLocaleString(undefined,{maximumFractionDigits:2})}`;
+            } else {
+                excavationSqft = (existingSlabNoConcrete || excavDemoOn) ? 0 : Math.max(0, (Number(width) || 0) * (Number(depth) || 0));
+                excavation = Math.round(excavationSqft * EXCAVATION_RATE_PER_SQFT * 100) / 100;
+                excavLabel = existingSlabNoConcrete
+                    ? 'Auto: off — Build On Existing Slab (enter sq ft or $ to charge excavation)'
+                    : excavDemoOn ? 'Auto: off — demolition included (enter sq ft or $ to charge excavation)'
+                    : `${excavationSqft.toLocaleString()} sq ft × $1.50 = $${excavation.toLocaleString(undefined,{maximumFractionDigits:2})}`;
+            }
+            window._agbExcavation = { mode: excavParsed.mode, sqft: excavationSqft, cost: excavation };
             const excavAuto = document.getElementById('excavationAuto');
-            if (excavAuto) excavAuto.textContent = existingSlabNoConcrete
-                ? 'Off — Build On Existing Slab (no excavation / stone base charged)'
-                : excavDemoOn ? 'Off — demo included'
-                : `${excavationSqft.toLocaleString()} sq ft × $1.50 = $${excavation.toLocaleString(undefined,{maximumFractionDigits:2})}`;
+            if (excavAuto) excavAuto.textContent = excavLabel;
             
             // Two extra patios
             const patio1Length = parseInt(document.getElementById('extraPatio1Length').value) || 0;
@@ -5369,6 +5390,28 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             return state;
         }
 
+        // Excavation stored in hidden #excavation: 'auto' | 'sqft:400' | 'usd:850'. Legacy numbers/'auto' => Auto.
+        function agbParseExcavation(raw){
+            const m=String(raw==null?'':raw).trim().match(/^(sqft|usd):\s*([0-9.]*)$/i);
+            if(!m) return {mode:'auto',value:0,text:''};
+            const v=Math.max(0,parseFloat(m[2])||0);
+            return {mode:m[1].toLowerCase(),value:v,text:m[2]};
+        }
+        function agbSyncExcavUi(p){
+            const sel=document.getElementById('excavationMode'), inp=document.getElementById('excavationValue');
+            if(!sel||!inp) return;
+            if(sel.value!==p.mode) sel.value=p.mode;
+            inp.disabled=p.mode==='auto';
+            inp.placeholder=p.mode==='sqft'?'Sq ft':p.mode==='usd'?'$ amount':'Auto';
+            if(document.activeElement!==inp && inp.value!==p.text) inp.value=p.text;
+        }
+        function agbExcavUiChanged(){
+            const sel=document.getElementById('excavationMode'), inp=document.getElementById('excavationValue'), h=document.getElementById('excavation');
+            if(!sel||!inp||!h) return;
+            if(sel.value==='auto'){ inp.value=''; h.value='auto'; }
+            else h.value=sel.value+':'+String(inp.value||'').trim();
+            if(typeof calculateEstimate==='function') calculateEstimate();
+        }
         function setEstimatorField(id,value){
             const el=document.getElementById(id); if(!el||value===undefined||value===null)return;
             if(el.type==='checkbox'||el.type==='radio') el.checked=!!value;
@@ -9093,8 +9136,8 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             if (ctNote===5) notes.push('5" concrete thickness upgrade included.');
             if (ctNote===6) notes.push('6" concrete thickness upgrade included.');
             if (ctNote===7) notes.push('7" concrete thickness upgrade included.');
-            // excavation is automatic: garage sq ft x $1.50 (off on existing slab)
-            const excavNote = existingSlabBuild ? 0 : Number((window._agbExcavation||{}).cost || 0);
+            // excavation: auto (garage sq ft x $1.50, off on existing slab/demo) or manual sqft/$
+            const excavNote = Number((window._agbExcavation||{}).cost || 0); // manual value counts even on existing slab
             if (excavNote > 0) notes.push('Excavation and stone base included.');
             if (frostProtectedFooting) notes.push('42" frost protected footing included.');
             if (checked('epaFee')) notes.push('EPA fee included.');

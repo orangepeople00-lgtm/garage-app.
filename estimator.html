@@ -12075,7 +12075,7 @@ run();setInterval(run,1500);document.addEventListener('change',run);})();
     const labels=(typeof ESTIMATE_FIELD_LABELS==='object')?ESTIMATE_FIELD_LABELS:{};
     const skip=/^(profitMode|profitValue|customExtras|salesman|customer.*|additionalEstimateNotes|rgPresetId|excavation)$/;
     add('City',v('city'));
-    Object.keys(labels).forEach(id=>{if(skip.test(id)||id==='city')return;const el=document.getElementById(id);if(!el)return;
+    Object.keys(labels).forEach(id=>{if(skip.test(id)||id==='city')return;if(/^demo/.test(id)&&id!=='demoSlabPreset'&&!document.getElementById('demoExisting')?.checked)return;const el=document.getElementById(id);if(!el)return;
       if(el.closest&&el.closest('.hidden')&&el.type!=='hidden')return;
       let val=v(id);if(el.type==='checkbox'&&!val)return;if(String(val)==='0')return;add(labels[id],val);});
     {const em=document.getElementById('excavationMode'),ev=v('excavationValue');if(em)add('Excavation / Stone',em.value==='usd'&&ev?'$ amount: '+money(ev):em.value==='sqft'&&ev?ev+' sq ft':'Auto');}

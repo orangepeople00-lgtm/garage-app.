@@ -2163,6 +2163,10 @@ body.bg-zinc-950{
                         <button type="button" id="libraryPhotoBtn" class="pl-pick hidden" onclick="openPhotoLibrary()">Choose / change library photo</button>
                         <span id="libraryPhotoLabel" class="pl-lbl"></span>
                     </div>
+                    <label id="gableRefRow" class="gref-row col-span-2" title="Standard gable only: the AI starts from an approved front-gable library photo and repaints it to this estimate, so the peak stays over the overhead door. If no photo matches or the edit fails, a normal AI picture is made.">
+                        <input type="checkbox" id="gableRefToggle" onchange="agbSetGableRef(this.checked)">
+                        <span><b>Gable AI: start from an approved gable photo</b><span id="gableRefNote" class="gref-note"></span></span>
+                    </label>
 
                     <button type="button" onclick="safePrintEstimateSheet()"
                             class="print-action col-span-2 w-full px-3 py-2.5 text-xs font-semibold bg-green-700 hover:bg-green-600 active:bg-green-800 transition-all rounded-xl flex items-center justify-center gap-x-2 text-white">
@@ -8584,7 +8588,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                     }
                     const url = data && (data.url || (data.b64 ? ('data:image/png;base64,'+data.b64) : null));
                     // rg-ai-sample: the function silently falls back to a fresh generate if the edit fails — reject that for reverse gable
-                    if(url && opts.rgPresetEdit && data.mode && data.mode!=='edit') throw new Error('AI could not edit the example photo (function fell back to a new picture)');
+                    if(url && (opts.rgPresetEdit||opts.refEdit) && data.mode && data.mode!=='edit') throw new Error('AI could not edit the example photo (function fell back to a new picture)');
                     if(url){
                         try{ localStorage.setItem(cacheKey, url); }catch(e){}
                         setLastAiGaragePhotoUrl(url);
@@ -8602,7 +8606,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             }
 
             // rg-ai-sample: device-key fallback only makes new pictures (no edit), which can get the roof wrong
-            if(opts.rgPresetEdit) throw new Error('Company AI failed: '+(lastEdgeError||'unknown error'));
+            if(opts.rgPresetEdit||opts.refEdit) throw new Error('Company AI failed: '+(lastEdgeError||'unknown error'));
             // 2) Fallback: device-locked personal key (optional)
             const apiKey=(typeof getStoredOpenAIKey==='function'?getStoredOpenAIKey():(localStorage.getItem('agb_openai_api_key')||'')).trim();
             if(!apiKey) throw new Error(
@@ -8666,7 +8670,69 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             return {url, prompt, source:'free', cached:false};
         }
 
+        /* 2026-10-28: standard gable = AI edit of an approved front-gable library photo (plain generate kept putting the peaks on the sides). */
+        const AGB_GABLE_REF_SEEDS=[
+            {file:'garage-24.jpg',car:2,doors:1,win:true,color:'charcoal',off:false},
+            {file:'garage-02.jpg',car:2,doors:1,win:true,color:'gray',off:false},
+            {file:'garage-22.jpg',car:2,doors:1,win:true,color:'green',off:false},
+            {file:'garage-06.jpg',car:2,doors:1,win:false,color:'tan',off:false},
+            {file:'garage-08.jpg',car:2,doors:1,win:false,color:'navy',off:false},
+            {file:'garage-12.jpg',car:2,doors:1,win:false,color:'navy',off:false},
+            {file:'garage-19.jpg',car:2,doors:1,win:false,color:'red',off:true},
+            {file:'garage-28.jpg',car:2,doors:1,win:true,color:'white',off:true},
+            {file:'garage-11.jpg',car:1,doors:1,win:false,color:'gray',off:true},
+            {file:'garage-07.jpg',car:1,doors:1,win:false,color:'white',off:true},
+            {file:'garage-16.jpg',car:2.5,doors:2,win:true,color:'white',off:false}
+        ];
+        function agbGableRefEnabled(){ try{ return localStorage.getItem('agb_gable_ref_edit')!=='0'; }catch(e){ return true; } }
+        function agbIsStandardGable(){ return ((document.getElementById('roofType')||{}).value==='gable') && ((document.getElementById('eaveDir')||{}).value!=='sides'); }
+        function agbPickGableRef(){
+            const q=Math.max(1,Math.round(Number((document.getElementById('ohDoorQty')||{}).value)||1));
+            const w=Number(((typeof getGarageDimensions==='function')?getGarageDimensions():{}).width)||20;
+            const car=q>=2?2.5:(w<16?1:2);
+            const win=/window/i.test(((document.getElementById('overheadDoorStyle')||{}).value||''));
+            let off=false; try{ off=Math.abs(Number(updateOverheadDoorOffsetControl().offset)||0)>0.001; }catch(e){}
+            const col=String((document.getElementById('sidingColor')||{}).value||'').toLowerCase();
+            let best=null,bs=-1;
+            AGB_GABLE_REF_SEEDS.forEach(p=>{ const sc=(p.doors===Math.min(q,2)?8:0)+(p.car===car?4:0)+(p.win===win?2:0)+(p.off===off?2:0)+(col&&p.color===col?1:0); if(sc>bs){bs=sc;best=p;} });
+            return best && best.doors===Math.min(q,2) ? best : null;
+        }
+        function agbRefreshGableRefUi(){
+            const row=document.getElementById('gableRefRow'); if(!row) return;
+            const show=agbIsStandardGable() && ((document.getElementById('photoSource')||{}).value||'ai')==='ai';
+            row.classList.toggle('gref-show', show);
+            const t=document.getElementById('gableRefToggle'); if(t) t.checked=agbGableRefEnabled();
+            const n=document.getElementById('gableRefNote');
+            if(n){ const p=agbPickGableRef(); n.textContent=agbGableRefEnabled()?(p?('On — AI repaints approved photo '+p.file+' to this estimate (normal AI picture if that fails).'):'On — no matching approved photo for this door count, a normal AI picture will be made.'):'Off — normal AI picture from the prompt only.'; }
+        }
+        function agbSetGableRef(on){ try{ localStorage.setItem('agb_gable_ref_edit', on?'1':'0'); }catch(e){} agbRefreshGableRefUi(); }
+        try{ window.agbSetGableRef=agbSetGableRef; window.agbRefreshGableRefUi=agbRefreshGableRefUi; window.agbPickGableRef=agbPickGableRef; }catch(_){}
+        document.addEventListener('change', e=>{ if(e.target && /^(roofType|eaveDir|ohDoorQty|overheadDoorStyle|sidingColor|width|doorOffset)$/.test(e.target.id||'')) agbRefreshGableRefUi(); }, true);
+        document.addEventListener('click', e=>{ if(e.target && e.target.closest && e.target.closest('[data-photo-src]')) setTimeout(agbRefreshGableRefUi,0); }, true);
+        setTimeout(()=>{ try{ agbRefreshGableRefUi(); }catch(_){} }, 0);
+        async function agbFetchAsDataUrl(url){
+            const r=await fetch(url,{cache:'force-cache'}); if(!r.ok) throw new Error('photo '+r.status);
+            const b=await r.blob();
+            return await new Promise((res,rej)=>{ const fr=new FileReader(); fr.onload=()=>res(String(fr.result)); fr.onerror=()=>rej(new Error('read failed')); fr.readAsDataURL(b); });
+        }
+        async function agbGableRefGenerate(specPrompt){
+            const p=agbPickGableRef(); if(!p) throw new Error('no matching approved gable photo');
+            let ref='';
+            for(const u of [new URL('library/'+p.file, document.baseURI).href, new URL('images/'+p.file, document.baseURI).href]){ try{ ref=await agbFetchAsDataUrl(u); if(/^data:image\//.test(ref)) break; }catch(e){ ref=''; } }
+            if(!ref) throw new Error('could not load approved photo '+p.file);
+            const prompt=('KEEP THE EXACT ROOF of the reference photo: standard FRONT gable — triangular peak centered directly above the overhead door, ridge running front-to-back, side walls plain rectangles under the side eaves. Keep the same camera angle and roof shape. Remove any vent/window in the gable triangle unless asked. Repaint/rebuild everything else to match EXACTLY: '+agbSpecLines().join('. ')).slice(0,2900);
+            const r=await generateOpenAIGaragePhotoUrl(prompt,{edit:true, editFromUrl:ref, refEdit:true});
+            if(r && typeof r==='object'){ r.source='openai-company-gable-ref'; r.refPhoto=p.file; }
+            return r;
+        }
         async function generateAIGaragePhotoUrl(preferOpenAI, opts){
+            if(preferOpenAI && !(opts&&opts.edit) && agbIsStandardGable() && agbGableRefEnabled()){
+                try{
+                    try{ if(typeof window.__estimateLoadingSetStatus==='function') window.__estimateLoadingSetStatus('Gable — AI repainting an approved gable photo to match this estimate…'); }catch(_){}
+                    const r=await agbGableRefGenerate();
+                    if(r && (r.url||typeof r==='string')) return r;
+                }catch(e){ console.warn('Gable reference edit failed, making a normal AI picture', e); try{ if(typeof window.__estimateLoadingSetStatus==='function') window.__estimateLoadingSetStatus('Gable photo edit failed — making a normal AI picture…'); }catch(_){} }
+            }
             // Compact pack = all active rules, guaranteed under budget (nothing critical clipped)
             let prompt='';
             try{ prompt=agbFullPrompt(); }catch(e){ console.error('agbFullPrompt failed', e); }
@@ -11427,6 +11493,10 @@ function toggleStickyInternal(){
 #rgPickerModal .rg-btn.rg-primary{background:#2563eb;border-color:#2563eb}
 .rg-photo-row{display:none;flex-wrap:wrap;align-items:center;gap:8px;margin-top:6px;padding:6px;border:1px solid rgba(59,130,246,.45);border-radius:10px;background:#09090b}
 .rg-photo-row.rg-show{display:flex}
+.gref-row{display:none;align-items:flex-start;gap:8px;margin-top:6px;padding:6px 8px;border:1px solid rgba(34,197,94,.4);border-radius:10px;background:#09090b;font-size:11px;color:#e4e4e7;cursor:pointer}
+.gref-row.gref-show{display:flex}
+.gref-row input{width:16px;height:16px;flex:none;margin-top:1px}
+.gref-note{display:block;color:#86efac;font-weight:400;margin-top:2px}
 .rg-ai-toggle{display:flex;align-items:center;gap:6px;width:100%;font-size:11px;color:#e4e4e7;cursor:pointer}
 .rg-ai-toggle input{width:16px;height:16px}
 .rg-mode-note{display:block;color:#93c5fd;margin-top:2px}

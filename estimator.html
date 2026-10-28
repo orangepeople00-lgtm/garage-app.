@@ -7637,6 +7637,53 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
         document.addEventListener('DOMContentLoaded', ()=>setTimeout(()=>{ loadGaragePhotoMode(); loadAIPhotoExtraInstructions(); loadGarageAccessType(); loadGaragePhotoView(); }, 100));
         if(document.readyState!=='loading') setTimeout(()=>{ loadGaragePhotoMode(); loadAIPhotoExtraInstructions(); loadGarageAccessType(); loadGaragePhotoView(); }, 200);
 
+        /* rg-ai-sample: overhead door position from the estimator's offset slider (left return) */
+        function agbOverheadDoorPositionLine(){
+            try{
+                if(typeof updateOverheadDoorOffsetControl!=='function' || !document.getElementById('doorOffset')) return '';
+                const pos=updateOverheadDoorOffsetControl()||{};
+                const off=Number(pos.offset)||0, L=Number(pos.leftReturn)||0, R=Number(pos.rightReturn)||0;
+                const f=n=>Number.isInteger(n)?String(n):n.toFixed(1);
+                if(Math.abs(off)<0.001) return 'OVERHEAD DOOR POSITION: CENTERED on the front wall (equal wall on both sides of the overhead door, about '+f(L)+' ft each)';
+                return 'OVERHEAD DOOR POSITION: OFF-CENTER, shifted '+f(Math.abs(off))+' ft to the '+(off<0?'LEFT':'RIGHT')+' of center (seen from the front) — about '+f(L)+' ft of wall from the LEFT front corner to the door and about '+f(R)+' ft of wall from the door to the RIGHT front corner; the '+(off<0?'right':'left')+' side of the front wall is visibly wider';
+            }catch(e){ return ''; }
+        }
+        /* rg-ai-sample: exact estimator choices as short prompt lines (used by the reverse gable photo edit + compact prompt) */
+        function agbSelText(id){ const el=document.getElementById(id); if(!el) return ''; if(el.tagName==='SELECT'){ const o=el.options[el.selectedIndex]; return String(o?o.text:el.value).replace(/\s*\(.*?\)\s*/g,' ').trim(); } return String(el.value||'').trim(); }
+        function agbChecked(id){ return !!(document.getElementById(id)||{}).checked; }
+        function agbWindowLine(){
+            const n=Math.max(0,Math.round(Number((document.getElementById('windowQty')||{}).value)||0));
+            if(!n) return 'WALL WINDOWS: NONE — no wall windows anywhere';
+            const pl=((document.getElementById('windowPlacement')||{}).value||'left').toLowerCase();
+            const walls=pl==='both'?'split between the LEFT and RIGHT side walls':(pl==='front'?'on the FRONT wall, clear of the overhead door':('on the '+pl.toUpperCase()+' wall'));
+            return 'WALL WINDOWS: exactly '+n+' white vinyl window'+(n>1?'s':'')+' '+walls+'; if a service/party/French door shares that wall, space the window(s) and door evenly with no overlap';
+        }
+        function agbSpecLines(){
+            const L=[];
+            const sid=(document.getElementById('sidingType')||{}).value||'vinyl';
+            const col=agbSelText('sidingColor')||(sid==='hardie'?agbSelText('hardieColor'):agbSelText('vinylColor')); // same priority as buildGarageAIPromptInner
+            L.push('SIDING: '+(sid==='hardie'?'James Hardie fiber-cement lap':'vinyl lap')+' siding, color '+(col||'as selected')+', on every wall incl. gable ends');
+            L.push('ROOF SHINGLES: '+(agbSelText('shingleColor')||'Black')+' architectural asphalt shingles');
+            const q=Math.max(1,Math.round(Number((document.getElementById('ohDoorQty')||{}).value)||1));
+            L.push('OVERHEAD DOOR'+(q>1?'S':'')+': exactly '+q+' white '+(agbSelText('overheadDoorStyle')||'raised panel')+' door'+(q>1?'s':'')+', each '+(agbSelText('overheadDoorWidth')||'16')+' wide x '+(agbSelText('overheadDoorHeight')||'7')+' tall, on the FRONT wall only');
+            const dp=agbOverheadDoorPositionLine(); if(dp && q===1) L.push(dp);
+            const kind=((document.getElementById('doorType')||{}).value||'standard').toLowerCase();
+            const loc=((document.getElementById('serviceDoorLocation')||{}).value||'right').toLowerCase();
+            const fs=((document.getElementById('serviceDoorFrontSide')||{}).value||'right');
+            const where=loc==='front'?('on the FRONT wall, to the '+fs+' of the overhead door'):('on the '+loc.toUpperCase()+' wall (none on the front)');
+            if(kind==='party') L.push('PARTY DOOR: one '+(agbSelText('partyDoorWidth')||'6')+'x'+(agbSelText('partyDoorHeight')||'7')+' small overhead door '+where+'; no other service door');
+            else if(kind==='french') L.push('FRENCH DOORS: one pair of '+(agbSelText('frenchDoorStyle')||'glass')+' French doors '+where+'; no other service door');
+            else if(kind==='no'||kind==='none') L.push('NO SERVICE DOOR anywhere');
+            else L.push('SERVICE DOOR: one 36x80 white steel man door '+where);
+            L.push(agbWindowLine());
+            L.push(agbChecked('gutters')?'GUTTERS: white seamless gutters along both eaves WITH downspouts at the corners':'GUTTERS: NONE — no gutters and no downspouts');
+            L.push(agbChecked('aluminumSoffit')?'SOFFIT/FASCIA: white aluminum soffit and fascia':'SOFFIT/FASCIA: painted wood trim (not aluminum)');
+            if(document.getElementById('stoneAccent')) L.push(agbChecked('stoneAccent')?'STONE: stone veneer wainscot along the base of the front':'NO stone');
+            if(agbChecked('roofPatioEnabled')) L.push('ROOFED PATIO: one open roofed patio on the '+(agbChecked('roofPatioSide')?'SIDE (right) wall':'REAR wall')+', posts, roof matching shingles');
+            else L.push('NO roofed patio');
+            return L;
+        }
+        try{ window.agbSpecLines=agbSpecLines; window.agbOverheadDoorPositionLine=agbOverheadDoorPositionLine; }catch(_){}
         function buildGarageAIPrompt(){
             // Never let a prompt bug kill the whole AI photo pipeline
             try{
@@ -8231,6 +8278,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                 parts.push('FINAL CHECK: the finished photo must match this salesman request exactly: ' + extra);
                 parts.push('Do not substitute a different view, location, or feature than what the salesman asked for');
             }
+            { const dp=agbOverheadDoorPositionLine(); if(dp) parts.splice(1,0,dp); }
             return parts.filter(Boolean).join(', ');
 
         // Compact prompt for OpenAI — ONLY active job rules, always under budget (no clipping)
@@ -8297,6 +8345,8 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                     lines.push('CRITICAL ROOF: standard front-gable — peak centered above front overhead door');
                 }
                 lines.push('CRITICAL SIZE: '+w+' feet wide by '+d+' feet deep'+(w>=20?', LARGE close-up two-car garage filling 80-90% of the photo, both front corners in frame, 16-ft door looks huge not a shed, camera close':'')+'; walls '+wall+' ft; main door '+doorW+'x'+doorH+' ft on FRONT only');
+                { const dp=agbOverheadDoorPositionLine(); if(dp) lines.push(dp); }
+                lines.push(agbWindowLine());
                 if (hasPartyDoor) {
                     lines.push('CRITICAL PARTY DOOR: '+partyW+'x'+partyH+' ft white raised-panel overhead mini door on '+service+(service==='front'?' '+serviceFrontSide+' of main door':'')+' wall — not a swing door');
                 } else {
@@ -11724,8 +11774,8 @@ async function resolveReverseGableAiEditPhoto(){
         try{ if(typeof window.__estimateLoadingSetStatus==='function') window.__estimateLoadingSetStatus('Reverse gable — AI editing the example photo to match this estimate…'); }catch(_){}
         const ref=await rgToJpegDataUrl(preset.primary);
         if(!ref) throw new Error('Could not read the example photo');
-        const specs=(typeof buildGarageAIPromptCompact==='function')?buildGarageAIPromptCompact():buildGarageAIPrompt();
-        const prompt=('KEEP THE EXACT ROOF of the reference photo: reverse (side-end) gable, ridge running left-to-right parallel to the front door wall, triangular gable peaks ONLY on the left and right end walls, straight continuous front eave with NO triangle above the overhead door. Keep the same camera angle, building size and roof shape. Change ONLY siding, trim, colors, shingles, overhead doors, service door, windows and patio to match this estimate: '+specs).slice(0,2600); // function caps edit prompt at 4000 incl. its own roof rules
+        const specs=(typeof window.agbSpecLines==='function')?window.agbSpecLines().join('. '):((typeof buildGarageAIPrompt==='function')?buildGarageAIPrompt():'');
+        const prompt=('KEEP THE EXACT ROOF of the reference photo: reverse (side-end) gable, ridge running left-to-right parallel to the front door wall, triangular gable peaks ONLY on the left and right end walls, straight continuous front eave with NO triangle above the overhead door. Keep the same camera angle and roof shape. Repaint/rebuild everything else to match EXACTLY: '+specs).slice(0,2900); // function caps edit prompt at 4000 incl. its own rules
         const r=await generateOpenAIGaragePhotoUrl(prompt,{edit:true, editFromUrl:ref, rgPresetEdit:true});
         const url=r && (typeof r==='string' ? r : r.url);
         if(!url) throw new Error('AI returned no image');

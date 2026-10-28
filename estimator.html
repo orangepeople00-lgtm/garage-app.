@@ -2137,7 +2137,8 @@ body.bg-zinc-950{
                         <input type="hidden" id="rgPresetCustomData" value="">
                         <div id="rgPhotoRow" class="rg-photo-row">
                             <img id="rgPhotoThumb" alt="Reverse gable example photo" title="Click to change the example photo" onclick="openReverseGablePicker()">
-                            <div class="rg-row-text"><b>REVERSE GABLE PHOTO · NO AI</b><span id="rgPhotoLabel"></span></div>
+                            <div class="rg-row-text"><b id="rgModeTitle">REVERSE GABLE PHOTO · NO AI</b><span id="rgPhotoLabel"></span><span id="rgModeNote" class="rg-mode-note"></span></div>
+                            <label class="rg-ai-toggle" title="When on (and AI photo is on), the AI edits this example photo with the estimate's siding, doors, windows and colors but keeps its reverse gable roof. Off = print the example photo as-is."><input type="checkbox" id="rgAiEditToggle" onchange="rgSetAiEdit(this.checked)"> AI-edit this photo to match the estimate</label>
                             <button type="button" class="rg-change-btn" onclick="openReverseGablePicker()">Change photo</button>
                         </div>
                     </div>
@@ -8434,8 +8435,9 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
         }
         async function generateOpenAIGaragePhotoUrl(prompt, opts){
             // Safety net: AI image generation is disabled for reverse gables (preset photos only).
-            if(typeof isReverseGableSelected==='function' && isReverseGableSelected()) throw new Error('AI photos are off for Reverse Gable — using the picked example photo.');
             opts=opts||{};
+            // rg-ai-sample: the only allowed reverse-gable AI path is an EDIT of the example photo
+            if(typeof isReverseGableSelected==='function' && isReverseGableSelected() && !opts.rgPresetEdit) throw new Error('AI photos are off for Reverse Gable — using the picked example photo.');
             const editFromUrl=opts.editFromUrl||'';
             const isEdit=!!(opts.edit && editFromUrl);
             const cacheKey=garageAICacheKey('openai:'+(isEdit?'edit:':'')+prompt);
@@ -8495,6 +8497,8 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                         throw new Error(detail);
                     }
                     const url = data && (data.url || (data.b64 ? ('data:image/png;base64,'+data.b64) : null));
+                    // rg-ai-sample: the function silently falls back to a fresh generate if the edit fails — reject that for reverse gable
+                    if(url && opts.rgPresetEdit && data.mode && data.mode!=='edit') throw new Error('AI could not edit the example photo (function fell back to a new picture)');
                     if(url){
                         try{ localStorage.setItem(cacheKey, url); }catch(e){}
                         setLastAiGaragePhotoUrl(url);
@@ -8511,6 +8515,8 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                 console.warn('Company OpenAI edge function unavailable, trying device key…', edgeErr);
             }
 
+            // rg-ai-sample: device-key fallback only makes new pictures (no edit), which can get the roof wrong
+            if(opts.rgPresetEdit) throw new Error('Company AI failed: '+(lastEdgeError||'unknown error'));
             // 2) Fallback: device-locked personal key (optional)
             const apiKey=(typeof getStoredOpenAIKey==='function'?getStoredOpenAIKey():(localStorage.getItem('agb_openai_api_key')||'')).trim();
             if(!apiKey) throw new Error(
@@ -8608,7 +8614,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             if(typeof isReverseGableSelected==='function' && isReverseGableSelected() && typeof resolveReverseGablePresetPhoto==='function'){
                 window._sheetPhotoMode='generate';
                 window._sheetPhotoEditPrompt='';
-                return await resolveReverseGablePresetPhoto();
+                return await resolveReverseGableAiEditPhoto();
             }
             const mode=document.getElementById('garagePhotoMode')?.value || localStorage.getItem('agb_garage_photo_mode') || 'openai';
             const status=document.getElementById('aiPhotoStatus');
@@ -9234,7 +9240,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             const garagePhotoFallbackSrc = fb[0] || garagePhotoSrc;
             const garagePhotoOriginalSrc = fb[1] || fb[0] || garagePhotoSrc;
             const usedAI = resolvedGarage.source!=='library' && (resolvedGarage.source==='openai' || resolvedGarage.source==='ai' || resolvedGarage.aiSource);
-            const aiBadge = resolvedGarage.source==='rg-preset' ? 'Reverse gable example photo' : (usedAI ? 'AI preview based on this estimate' : (resolvedGarage.aiSource==='library' ? 'Library photo' : 'Library photo (AI unavailable)'));
+            const aiBadge = resolvedGarage.source==='rg-ai-edit' ? 'AI preview (edited from reverse gable example photo)' : resolvedGarage.source==='rg-preset' ? 'Reverse gable example photo' : (usedAI ? 'AI preview based on this estimate' : (resolvedGarage.aiSource==='library' ? 'Library photo' : 'Library photo (AI unavailable)'));
             const photoFailNote = (!usedAI && resolvedGarage.error)
                 ? `<div style="font-size:9px;color:#b91c1c;padding:4px 6px;background:#fef2f2;border:1px solid #fecaca;margin-top:4px">AI photo failed: ${esc(String(resolvedGarage.error).slice(0,180))}</div>`
                 : '';
@@ -11333,6 +11339,9 @@ function toggleStickyInternal(){
 #rgPickerModal .rg-btn.rg-primary{background:#2563eb;border-color:#2563eb}
 .rg-photo-row{display:none;flex-wrap:wrap;align-items:center;gap:8px;margin-top:6px;padding:6px;border:1px solid rgba(59,130,246,.45);border-radius:10px;background:#09090b}
 .rg-photo-row.rg-show{display:flex}
+.rg-ai-toggle{display:flex;align-items:center;gap:6px;width:100%;font-size:11px;color:#e4e4e7;cursor:pointer}
+.rg-ai-toggle input{width:16px;height:16px}
+.rg-mode-note{display:block;color:#93c5fd;margin-top:2px}
 .rg-photo-row img{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:8px;background:#27272a;flex:none;cursor:pointer}
 .rg-photo-row .rg-row-text{font-size:10px;line-height:1.25;color:#d4d4d8;flex:1;min-width:0}
 .rg-photo-row .rg-row-text b{display:block;color:#93c5fd;font-size:9px;letter-spacing:.06em}
@@ -11682,6 +11691,51 @@ function rgRefreshUi(){
     const picked=!!((document.getElementById('rgPresetId')||{}).value);
     if(img){ const s=p?p.src:''; if(img.getAttribute('src')!==s){ if(s) img.setAttribute('src',s); else img.removeAttribute('src'); } }
     if(lab) lab.textContent=(p?p.label:'No photo')+(picked?'':' (default)');
+    const on=rgAiEditActive();
+    const tg=document.getElementById('rgAiEditToggle'); if(tg) tg.checked=rgAiEditEnabled();
+    const t=document.getElementById('rgModeTitle'); if(t) t.textContent=on?'REVERSE GABLE · AI EDIT OF THIS PHOTO':'REVERSE GABLE PHOTO · NO AI';
+    const n=document.getElementById('rgModeNote'); if(n) n.textContent=on?'AI repaints siding/doors/colors from the estimate; roof stays as in this photo. If AI fails, this photo prints as-is.':(rgAiEditEnabled()?'AI photo is off for this estimate, so this photo prints as-is.':'This photo prints as-is.');
+}
+/* rg-ai-sample: AI edit of the reverse gable example photo (switch-off-able, per device) */
+function rgAiEditEnabled(){ try{ return localStorage.getItem('agb_rg_ai_edit')!=='0'; }catch(e){ return true; } }
+function rgSetAiEdit(on){ try{ localStorage.setItem('agb_rg_ai_edit', on?'1':'0'); }catch(e){} rgRefreshUi(); }
+function rgAiEditActive(){
+    if(!rgAiEditEnabled()) return false;
+    const src=(document.getElementById('photoSource')||{}).value||'ai';
+    if(src!=='ai') return false;
+    const mode=(document.getElementById('garagePhotoMode')||{}).value || (function(){try{return localStorage.getItem('agb_garage_photo_mode')}catch(e){return ''}})() || 'openai';
+    return mode!=='library' && mode!=='none';
+}
+function rgToJpegDataUrl(src){
+    return new Promise(resolve=>{
+        const img=new Image(); const t=setTimeout(()=>resolve(''),8000);
+        img.onload=()=>{ try{ const w=Math.min(1024,img.naturalWidth||1024), h=Math.round(w*(img.naturalHeight||576)/(img.naturalWidth||1024));
+            const c=document.createElement('canvas'); c.width=w; c.height=h; c.getContext('2d').drawImage(img,0,0,w,h);
+            clearTimeout(t); resolve(c.toDataURL('image/jpeg',0.9)); }catch(e){ clearTimeout(t); resolve(''); } };
+        img.onerror=()=>{ clearTimeout(t); resolve(''); };
+        img.src=src;
+    });
+}
+async function resolveReverseGableAiEditPhoto(){
+    const preset=await resolveReverseGablePresetPhoto();
+    if(!rgAiEditActive() || !preset.primary) return preset;
+    const status=document.getElementById('aiPhotoStatus');
+    try{
+        try{ if(typeof window.__estimateLoadingSetStatus==='function') window.__estimateLoadingSetStatus('Reverse gable — AI editing the example photo to match this estimate…'); }catch(_){}
+        const ref=await rgToJpegDataUrl(preset.primary);
+        if(!ref) throw new Error('Could not read the example photo');
+        const specs=(typeof buildGarageAIPromptCompact==='function')?buildGarageAIPromptCompact():buildGarageAIPrompt();
+        const prompt=('KEEP THE EXACT ROOF of the reference photo: reverse (side-end) gable, ridge running left-to-right parallel to the front door wall, triangular gable peaks ONLY on the left and right end walls, straight continuous front eave with NO triangle above the overhead door. Keep the same camera angle, building size and roof shape. Change ONLY siding, trim, colors, shingles, overhead doors, service door, windows and patio to match this estimate: '+specs).slice(0,2600); // function caps edit prompt at 4000 incl. its own roof rules
+        const r=await generateOpenAIGaragePhotoUrl(prompt,{edit:true, editFromUrl:ref, rgPresetEdit:true});
+        const url=r && (typeof r==='string' ? r : r.url);
+        if(!url) throw new Error('AI returned no image');
+        if(status) status.textContent='Reverse gable: AI edit of example photo "'+(preset.prompt||'')+'".';
+        return {primary:url, fallbacks:[preset.primary].concat(preset.fallbacks||[]), source:'rg-ai-edit', rgPresetId:preset.rgPresetId, prompt};
+    }catch(e){
+        const msg=String(e&&e.message||e);
+        try{ if(typeof window.__estimateLoadingSetStatus==='function') window.__estimateLoadingSetStatus('AI edit failed — using the example photo as-is. '+msg); }catch(_){}
+        return Object.assign({}, preset, {error:'AI edit of example photo failed, printed the example photo instead: '+msg});
+    }
 }
 /** Called from the roof selects. Opens the picker when the roof BECOMES reverse gable. */
 function onRoofStyleChangedForRgPicker(){

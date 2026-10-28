@@ -723,6 +723,14 @@ body.bg-zinc-950{
 .est-fold > summary .est-fold-sum{ flex:1; min-width:0; text-align:right; font-weight:600; letter-spacing:0; text-transform:none; color:#93c5fd; font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .est-fold[open] > summary .est-fold-sum{ display:none; }
 .customer-top-panel > .section-header{ display:none; }
+
+.rgask{display:none;margin:10px 0;padding:12px;border:1px solid #f59e0b;border-radius:14px;background:#1c1405;color:#fde68a;font-size:13px;line-height:1.35}
+.rgask.rgask-show{display:block}
+.rgask b{color:#fff}
+.rgask-btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.rgask-btns button{flex:1 1 140px;min-height:40px;padding:8px 12px;border-radius:10px;font-weight:700;font-size:13px}
+.rgask-yes{background:#f59e0b;color:#111}
+.rgask-no{background:#27272a;color:#e4e4e7;border:1px solid #52525b}
 </style>
 <style id="agbPhoneFit">
 /* Phone / small-tablet fit: compact header, >=40px touch targets, >=12px text */
@@ -1725,6 +1733,13 @@ body.bg-zinc-950{
                         <div class="flex items-center justify-between mb-3">
                             <div class="section-header flex items-center gap-x-2"><i class="fa-solid fa-house-chimney-window"></i><span>ROOF PATIO</span></div>
                             <label class="flex items-center cursor-pointer"><input type="checkbox" id="roofPatioEnabled" onchange="toggleRoofPatio(); calculateEstimate()" class="accent-emerald-500 w-4 h-4"><span class="ml-2 text-xs font-medium text-zinc-300">Add Roof Patio</span></label>
+                        </div>
+                        <div id="rgPatioAsk" class="rgask" role="dialog" aria-live="polite">
+                            <div><i class="fa-solid fa-circle-question"></i> <b>Gable with a roofed patio</b> — do you want a reverse gable instead?</div>
+                            <div class="rgask-btns">
+                                <button type="button" class="rgask-yes" onclick="agbRgAskSwitch()">Switch to reverse gable</button>
+                                <button type="button" class="rgask-no" onclick="agbRgAskKeep()">Keep gable</button>
+                            </div>
                         </div>
                         <div id="roofPatioOptions" class="hidden">
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -12534,6 +12549,34 @@ run();setInterval(run,1500);document.addEventListener('change',run);})();
     }catch(e){alert('Could not build cost sheet: '+(e&&e.message||e));}
     finally{if(lbl)lbl.textContent=old;if(btn)btn.disabled=false;}
   };
+})();
+</script>
+
+<script>
+/* Sample 2026-10-28: ask once when a standard gable has a roofed patio (either order). */
+(function(){
+  function cond(){ const r=document.getElementById('roofType'),e=document.getElementById('eaveDir'),p=document.getElementById('roofPatioEnabled'); return r&&e&&p&&r.value==='gable'&&e.value!=='sides'&&p.checked; }
+  function box(){ return document.getElementById('rgPatioAsk'); }
+  function hide(){ const b=box(); if(b) b.classList.remove('rgask-show'); }
+  function show(near){
+    const b=box(); if(!b) return;
+    if(near==='roof'){ const e=document.getElementById('eaveDir'); if(e && e.parentNode) e.insertAdjacentElement('afterend', b); }
+    else { const o=document.getElementById('roofPatioOptions'); if(o) o.insertAdjacentElement('beforebegin', b); }
+    b.classList.add('rgask-show');
+  }
+  window.agbRgAskSwitch=function(){
+    const r=document.getElementById('roofType'), e=document.getElementById('eaveDir');
+    if(r && r.value!=='gable'){ r.value='gable'; r.dispatchEvent(new Event('change',{bubbles:true})); }
+    window._agbRgSwitching=true;
+    if(e){ e.value='sides'; e.dispatchEvent(new Event('change',{bubbles:true})); }
+    window._agbRgSwitching=false; hide();
+  };
+  window.agbRgAskKeep=function(){ window._agbRgAskKept=true; hide(); };
+  document.addEventListener('change', function(ev){
+    const id=ev.target && ev.target.id; if(!/^(roofType|eaveDir|roofPatioEnabled)$/.test(id||'')||window._agbRgSwitching) return;
+    window._agbRgAskKept=false; // roof/patio toggled again -> may ask again
+    if(cond()) show(id==='roofPatioEnabled'?'patio':'roof'); else hide();
+  }, false);
 })();
 </script>
 </body>

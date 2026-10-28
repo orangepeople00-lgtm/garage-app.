@@ -9310,9 +9310,9 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                     return !sheetPres.removedNoteKeywords.some(k=>k && t.includes(String(k).toLowerCase()));
                 });
             }
-            notesHtml = notesForSheet.map((n, ni) => `<li><span class="sheet-edit" contenteditable="true" data-field="note" data-note-idx="${ni}" title="Click to edit">${esc(capitalizeNoteLine(n))}</span></li>`).join('');
+            notesHtml = notesForSheet.map((n, ni) => `<li><span class="sheet-edit" contenteditable="true" data-field="note" data-note-idx="${ni}" title="Click to edit">${esc(capitalizeNoteLine(n))}</span><button type="button" class="sheet-row-remove sheet-note-remove no-print" title="Delete this note line">×</button></li>`).join('');
             if(sheetPres.noteTextOverride){
-                notesHtml = String(sheetPres.noteTextOverride).split(/\n+/).map((n,ni)=>`<li><span class="sheet-edit" contenteditable="true" data-field="note" data-note-idx="${ni}" title="Click to edit">${esc(capitalizeNoteLine(n.trim()))}</span></li>`).filter(Boolean).join('');
+                notesHtml = String(sheetPres.noteTextOverride).split(/\n+/).filter(n=>n.trim()).map((n,ni)=>`<li><span class="sheet-edit" contenteditable="true" data-field="note" data-note-idx="${ni}" title="Click to edit">${esc(capitalizeNoteLine(n.trim()))}</span><button type="button" class="sheet-row-remove sheet-note-remove no-print" title="Delete this note line">×</button></li>`).join('');
             }
 
             const tx = (sheetPres.textOverrides && typeof sheetPres.textOverrides==='object') ? sheetPres.textOverrides : {};
@@ -9592,6 +9592,17 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
       font-weight: 800;
       margin: 4px 0;
     }
+    /* Notes / Inclusions line delete + add (Edit Rows mode only) */
+    body:not(.sheet-editing) .sheet-note-add-bar { display:none !important; }
+    .notes li .sheet-note-remove { position:relative; float:right; margin:0 -8px 0 6px; width:22px; height:22px; line-height:20px; font-size:15px; vertical-align:middle; }
+    .sheet-note-add-bar { padding:2px 8px 6px 14px; }
+    .sheet-note-add-bar .sheet-note-add { margin:2px 0; }
+    @media (pointer:coarse), (max-width:700px) {
+      .notes li .sheet-note-remove { width:30px; height:30px; line-height:28px; font-size:19px; }
+      .notes li .sheet-note-remove::after, .sheet-note-add-bar .sheet-note-add::after { content:''; position:absolute; inset:-10px; }
+      .sheet-note-add-bar .sheet-note-add { position:relative; }
+      .sheet-note-add-bar .sheet-note-add { min-height:36px; padding:6px 14px; font-size:14px; }
+    }
     .sheet-add-row td {
       border: none;
       background: transparent;
@@ -9600,7 +9611,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
     }
     @media print {
       .sheet-edit:focus { background: transparent; box-shadow: none; }
-      .sheet-row-remove, .sheet-row-add, .sheet-row-tools, .sheet-add-row, .no-print { display: none !important; }
+      .sheet-row-remove, .sheet-row-add, .sheet-row-tools, .sheet-add-row, .sheet-note-add-bar, .no-print { display: none !important; }
     }
 
     /* Configurable photo-style exterior overlays */
@@ -9850,6 +9861,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             <div class="notes-panel">
                 <div class="panel-title estimate-notes-page ${notesClass}">${se('notesTitle','NOTES / INCLUSIONS')}</div>
                 <ul class="notes">${notesHtml}</ul>
+                <div class="sheet-note-add-bar no-print"><button type="button" class="sheet-row-add sheet-row-add-bar sheet-note-add no-print" title="Add a note line">+ Add note</button></div>
             </div>
         </div>
     </div>
@@ -9948,7 +9960,7 @@ async function downloadEstimatePdf(){
 
     const clone=sheet.cloneNode(true);
     clone.id='pdfExportSheet';
-    clone.querySelectorAll('.no-print, .noprint, .rs-nophoto-bar, .rs-optnote-off, .sheet-row-remove, .sheet-row-add, .sheet-row-tools, .sheet-add-row, .actions, .sheet-ai-panel').forEach(el=>{
+    clone.querySelectorAll('.no-print, .noprint, .rs-nophoto-bar, .rs-optnote-off, .sheet-row-remove, .sheet-row-add, .sheet-row-tools, .sheet-add-row, .sheet-note-add-bar, .actions, .sheet-ai-panel').forEach(el=>{
       try{ el.remove(); }catch(_){}
     });
     clone.style.setProperty('width','8.5in','important');
@@ -10134,7 +10146,7 @@ function saveSheetInlineEdit(el){
     } else if(field==='note'){
       const notes = Array.from(document.querySelectorAll('.sheet-edit[data-field="note"]'))
         .map(n => (n.innerText||n.textContent||'').trim()).filter(Boolean);
-      p.noteTextOverride = notes.join(String.fromCharCode(10));
+      p.noteTextOverride = notes.length ? notes.join(String.fromCharCode(10)) : ' '; // ' ' = all notes deleted (keeps auto notes from coming back)
     } else if(field){
       if(!p.textOverrides || typeof p.textOverrides!=='object') p.textOverrides = {};
       p.textOverrides[field] = text;
@@ -10513,7 +10525,45 @@ document.addEventListener('focusout', function(e){
     saveSheetInlineEdit(e.target);
   }
 });
+function sheetNotesChanged(msg){
+  try{
+    const li=document.querySelector('.notes .sheet-edit[data-field="note"]');
+    const pseudo=li||(function(){ const x=document.createElement('span'); x.setAttribute('data-field','note'); return x; })();
+    if(!li){ const p=getSheetPresFromOpener(); if(p){ p.noteTextOverride=' '; if(typeof window.opener.saveSheetPresentationSession==='function') window.opener.saveSheetPresentationSession(window.ESTIMATE_OPTION_SLOT||null); } }
+    else saveSheetInlineEdit(pseudo);
+  }catch(_){ }
+  document.querySelectorAll('.notes .sheet-edit[data-field="note"]').forEach(function(el,i){ el.setAttribute('data-note-idx', i); });
+  try{ agbFitNoPhotoNotes(document); setTimeout(function(){ agbFitNoPhotoNotes(document); },60); }catch(_){ }
+  const st=document.getElementById('popupChangeStatus'); if(st&&msg) st.textContent=msg;
+}
+function removeSheetNote(btn){
+  const li=btn&&btn.closest('li'); if(!li) return;
+  const ul=li.parentNode, next=li.nextElementSibling;
+  li.remove();
+  pushSheetUndo('delete note', function(){ if(next&&next.parentNode===ul) ul.insertBefore(li,next); else ul.appendChild(li); sheetNotesChanged('Note restored.'); });
+  sheetNotesChanged('Removed note line — tap Undo to bring it back.');
+}
+function addSheetNote(){
+  const ul=document.querySelector('.notes-panel ul.notes'); if(!ul) return;
+  let txt='';
+  try{ txt=window.prompt('Type the new note (or leave blank and type it on the sheet):',''); }catch(_){ txt=''; }
+  if(txt===null) return; // Cancel = don't add
+  const li=document.createElement('li');
+  const sp=document.createElement('span');
+  sp.className='sheet-edit'; sp.setAttribute('contenteditable','true'); sp.setAttribute('data-field','note'); sp.title='Click to edit';
+  sp.textContent=String(txt).trim()||'New note';
+  li.appendChild(sp);
+  li.insertAdjacentHTML('beforeend','<button type="button" class="sheet-row-remove sheet-note-remove no-print" title="Delete this note line">×</button>');
+  ul.appendChild(li);
+  pushSheetUndo('add note', function(){ li.remove(); sheetNotesChanged('Removed added note.'); });
+  sheetNotesChanged('Added a note line — tap it to edit. Undo available.');
+  if(!String(txt).trim()){ sp.focus(); try{ document.execCommand('selectAll', false, null); }catch(_){ } }
+}
 document.addEventListener('click', function(e){
+  const nrm=e.target && e.target.closest && e.target.closest('.sheet-note-remove');
+  if(nrm){ e.preventDefault(); e.stopPropagation(); removeSheetNote(nrm); return; }
+  const nadd=e.target && e.target.closest && e.target.closest('.sheet-note-add');
+  if(nadd){ e.preventDefault(); e.stopPropagation(); addSheetNote(); return; }
   const rm=e.target && e.target.closest && e.target.closest('.sheet-row-remove');
   if(rm){ e.preventDefault(); removeSheetRow(rm); return; }
   const add=e.target && e.target.closest && e.target.closest('.sheet-row-add');

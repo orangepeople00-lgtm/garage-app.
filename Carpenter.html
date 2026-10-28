@@ -1799,7 +1799,7 @@ function pcLiteCityFlags(city,s){
   const F=[];const add=(t,m)=>F.push({type:t,msg:m});
   city=String(city||'').trim();
   if(!city||city==='Other'){add('MISSING','No city selected — generic defaults only.');return F}
-  if(/^chicago$/i.test(city)){add('VERIFY','Chicago has no code sheet on file: default slab 4" per owner (10/28/2026); owner 10/28/2026: 2\' rear, 2\'/3\' sides, 600 SF+ needs footing, closer than setbacks needs architect/expediter + fire-retardant siding with metal studs; rafters, ties, headers and footing are generic defaults; Express Permit covers frame garages up to 600 SF with 2:12 or steeper hip/gable roof; Chicago requires 42" frost footings (≤ 600 SF slab-on-grade exception) — verify.');return F}
+  if(/^chicago$/i.test(city)){add('VERIFY','Chicago has no code sheet on file: default slab 4" per owner (10/28/2026); owner 10/28/2026: 2\' rear, 2\'/3\' sides, Footing & Rods required at 600 SF or more, closer than setbacks needs architect/expediter + fire-retardant siding with metal studs; rafters, ties, headers and footing are generic defaults; Express Permit covers frame garages up to 600 SF with 2:12 or steeper hip/gable roof; Chicago requires 42" frost footings (≤ 600 SF slab-on-grade exception) — verify.');return F}
   if(!s){add('FALLBACK','No code sheet on file for '+city+' — everything is generic.');return F}
   [['maxSize','Max size'],['height','Max height'],['rafters','Rafters'],['wallTies','Wall ties'],['ohHeader','Overhead door header'],['windowHeader','Window header'],['thickness','Slab thickness'],['footings','Footings'],['setSide','Side setback'],['setHouse','Distance to house'],['setRearNoAlley','Rear setback']].forEach(([k,l])=>{const v=String(s[k]||'').trim();if(!v||/^(SEE NOTE|SPECIAL NOTES|WIDTH:\s*DEPTH:)$/i.test(v))add('MISSING',l+': not on file')});
   const yrs=[];String(s.notes||'').replace(/(?:IRC\s*(\d{4}))|(?:(\d{4})\s*(?:INTERNATIONAL RESIDENTIAL|IRC))/gi,(m,a,b)=>{yrs.push(+(a||b))});
@@ -1835,7 +1835,7 @@ function pcLiteBanner(title,flags){
 /* 2026-10-17 Carpenter one-click Save to Job: city flags in a non-blocking banner; blocks only on a real code contradiction (sheathing vs city code), with one Accept. */
 function carpPcFlags(){const city=selectedCity();const F=[];const C=[];
   if(!city){F.push({type:'MISSING',msg:'No city selected — generic defaults only.'});return {F,C}}
-  if(/^chicago$/i.test(city)) F.push({type:'VERIFY',msg:"Chicago setbacks (owner 10/28/2026): 2' rear; 2' one side + 3' other (or 3' + 3' when alley/rear lot line to back of garage is 30' or more). Closer requires architect/expediter + fire-retardant siding with metal studs. 600 SF or more requires a footing."});
+  if(/^chicago$/i.test(city)) F.push({type:'VERIFY',msg:"Chicago setbacks (owner 10/28/2026): 2' rear; 2' one side + 3' other (or 3' + 3' when alley/rear lot line to back of garage is 30' or more). Closer requires architect/expediter + fire-retardant siding with metal studs. Footing & Rods required at 600 SF or more (owner 10/28/2026)."});
   if(/^chicago$/i.test(city)) F.push({type:'VERIFY',msg:'Chicago: default slab 4" per owner (10/28/2026); no other city build data on file (rafters, ties, headers generic); Express Permit: frame garage up to 600 SF, 2:12 or steeper hip/gable roof; Chicago requires 42" frost footings (≤ 600 SF slab exception) — verify.'});
   else{const cb=(typeof CITY_BUILD==='object'&&CITY_BUILD[city])||null;
     if(!cb) F.push({type:'FALLBACK',msg:'No city build data for '+city+' — generic defaults.'});

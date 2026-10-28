@@ -1796,6 +1796,13 @@ body.bg-zinc-950{
                                     </div>
                                 </label>
                             </div>
+                            <!-- Pre-finished wood soffit/fascia is the default when aluminum is off; optional line on the sheet (no price change) -->
+                            <div class="flex items-end" id="woodSoffitNoteWrap">
+                                <label class="flex items-center cursor-pointer w-full text-sm bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2" title="Aluminum off = pre-finished wood soffit/fascia (standard). Check to print that line on the estimate. No price change.">
+                                    <input type="checkbox" id="showWoodSoffitNote" onchange="calculateEstimate()" class="accent-blue-500 w-4 h-4 mr-2 shrink-0" style="flex:none">
+                                    <span class="text-xs">Show "Pre-finished wood soffit &amp; fascia" on estimate</span>
+                                </label>
+                            </div>
 
                             <!-- Siding Upgrade -->
                             <div class="mt-3 pt-3 border-t border-zinc-700 col-span-2 md:col-span-3">
@@ -3776,6 +3783,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
         function updateInfoLines(gutterFt, hasGutters, soffitFt, hasSoffit) {
             const gutterInfo = document.getElementById('gutterInfo');
             const soffitInfo = document.getElementById('soffitInfo');
+            { const ww=document.getElementById('woodSoffitNoteWrap'); if(ww) ww.style.display=document.getElementById('aluminumSoffit')?.checked?'none':''; }
             
             if (hasGutters && gutterFt > 0) {
                 gutterInfo.textContent = `${gutterFt.toFixed(0)} lf @ $10`;
@@ -7662,10 +7670,10 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             const L=[];
             const sid=(document.getElementById('sidingType')||{}).value||'vinyl';
             const col=agbSelText('sidingColor')||(sid==='hardie'?agbSelText('hardieColor'):agbSelText('vinylColor')); // same priority as buildGarageAIPromptInner
-            L.push('SIDING: '+(sid==='hardie'?'James Hardie fiber-cement lap':'vinyl lap')+' siding, color '+(col||'as selected')+', on every wall incl. gable ends');
+            L.push('SIDING: '+(sid==='hardie'?'James Hardie fiber-cement lap':'vinyl lap')+' siding, color '+(col||'as selected')+', on every wall'+(((document.getElementById('roofType')||{}).value==='hip')?'':' incl. gable ends'));
             L.push('ROOF SHINGLES: '+(agbSelText('shingleColor')||'Black')+' architectural asphalt shingles');
             const q=Math.max(1,Math.round(Number((document.getElementById('ohDoorQty')||{}).value)||1));
-            L.push('OVERHEAD DOOR'+(q>1?'S':'')+': exactly '+q+' white '+(agbSelText('overheadDoorStyle')||'raised panel')+' door'+(q>1?'s':'')+', each '+(agbSelText('overheadDoorWidth')||'16')+' wide x '+(agbSelText('overheadDoorHeight')||'7')+' tall, on the FRONT wall only');
+            L.push('OVERHEAD DOOR'+(q>1?'S':'')+': exactly '+q+' white '+(agbSelText('overheadDoorStyle')||'raised panel')+' door'+(q>1?'s':'')+', each '+String(agbSelText('overheadDoorWidth')||'16').replace(/[^0-9.]/g,'')+' ft wide x '+String(agbSelText('overheadDoorHeight')||'7').replace(/[^0-9.]/g,'')+' ft tall, on the FRONT wall only');
             const dp=agbOverheadDoorPositionLine(); if(dp && q===1) L.push(dp);
             const kind=((document.getElementById('doorType')||{}).value||'standard').toLowerCase();
             const loc=((document.getElementById('serviceDoorLocation')||{}).value||'right').toLowerCase();
@@ -7677,12 +7685,40 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             else L.push('SERVICE DOOR: one 36x80 white steel man door '+where);
             L.push(agbWindowLine());
             L.push(agbChecked('gutters')?'GUTTERS: white seamless gutters along both eaves WITH downspouts at the corners':'GUTTERS: NONE — no gutters and no downspouts');
-            L.push(agbChecked('aluminumSoffit')?'SOFFIT/FASCIA: white aluminum soffit and fascia':'SOFFIT/FASCIA: painted wood trim (not aluminum)');
+            L.push(agbChecked('aluminumSoffit')?'SOFFIT/FASCIA: white aluminum soffit and fascia':'SOFFIT/FASCIA: pre-finished WOOD fascia, soffit and trim boards (painted wood trim, NO aluminum wrap)');
             if(document.getElementById('stoneAccent')) L.push(agbChecked('stoneAccent')?'STONE: stone veneer wainscot along the base of the front':'NO stone');
             if(agbChecked('roofPatioEnabled')) L.push('ROOFED PATIO: one open roofed patio on the '+(agbChecked('roofPatioSide')?'SIDE (right) wall':'REAR wall')+', posts, roof matching shingles');
             else L.push('NO roofed patio');
             return L;
         }
+        /* 2026-10-28: every-choice prompt for NEW AI photos (all roofs). Replaces the long prompt, which the
+           company function clipped at 4000 chars, and the old compact one (it sat after a return and never ran). */
+        function agbFullPrompt(){
+            const dim=(typeof getGarageDimensions==='function')?getGarageDimensions():{width:20,depth:20};
+            const w=Number(dim.width)||20, d=Number(dim.depth)||20;
+            const cars=agbSelText('carCapacity');
+            const roof=((document.getElementById('roofType')||{}).value||'gable');
+            const eave=((document.getElementById('eaveDir')||{}).value||'front-back');
+            const pitch=agbSelText('pitch')||'4/12';
+            const L=['Photorealistic photo of a brand-new detached residential garage (Chicago area), '+w+' ft wide x '+d+' ft deep, '+String(agbSelText('wallHeight')||'8').replace(/\s*(ft|feet|')\.?\s*$/i,'')+' ft walls'+(cars?', '+cars:'')+(w>=20?', wide proportions spanning the frame':'')];
+            if(roof==='hip') L.push('ROOF: HIP roof, '+pitch+' pitch — all four sides slope up to a short ridge, NO gable triangles on any wall, front eave straight across above the overhead door');
+            else if(eave==='sides') L.push('ROOF: REVERSE (side-end) GABLE, '+pitch+' pitch — ridge runs left-to-right parallel to the front door wall, triangular gable peaks ONLY on the LEFT and RIGHT end walls, straight continuous front eave with NO triangle above the overhead door');
+            else L.push('ROOF: classic STANDARD FRONT-GABLE, '+pitch+' pitch — the FRONT wall (overhead door wall) rises to a triangular peak centered directly above the overhead door, matching peak on the BACK wall, ridge runs front-to-back, LEFT and RIGHT side walls are plain rectangles under the long side eaves. FORBIDDEN: reverse/side gable (no peaks on the side walls, no flat eave across the front)');
+            const view=((document.getElementById('garagePhotoView')||{}).value||'front');
+            const acc=((document.getElementById('garageAccessType')||{}).value||'driveway');
+            L.push('CAMERA: '+(view==='front'?'front elevation, slight 3/4 angle, overhead door wall facing camera':view==='back'?'REAR elevation only (back wall facing camera, overhead door NOT visible)':(view.toUpperCase()+' SIDE wall facing camera'))+'; '+(acc==='alley'?'garage opens onto a city alley (concrete apron to the alley)':'concrete driveway in front of the overhead door'));
+            agbSpecLines().forEach(x=>L.push(x));
+            const extra=((document.getElementById('aiPhotoExtraInstructions')||{}).value||'').trim();
+            if(extra) L.push('SALESMAN REQUEST: '+extra.slice(0,300));
+            L.push('Overhead door(s) only on the front, reaching the concrete. Sharp detail, soft daylight, no text, no people, no logos');
+            let out=L.join('. ');
+            if(out.length>2900){ // trim least-critical words only, never drop lines
+                out=out.replace(/, wide proportions spanning the frame/,'').replace(/ \(Chicago area\)/,'');
+                if(out.length>2900) out=out.slice(0,2900);
+            }
+            return out;
+        }
+        try{ window.agbFullPrompt=agbFullPrompt; }catch(_){}
         try{ window.agbSpecLines=agbSpecLines; window.agbOverheadDoorPositionLine=agbOverheadDoorPositionLine; }catch(_){}
         function buildGarageAIPrompt(){
             // Never let a prompt bug kill the whole AI photo pipeline
@@ -8632,9 +8668,9 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
 
         async function generateAIGaragePhotoUrl(preferOpenAI, opts){
             // Compact pack = all active rules, guaranteed under budget (nothing critical clipped)
-            const prompt = (typeof buildGarageAIPromptCompact==='function')
-                ? buildGarageAIPromptCompact()
-                : buildGarageAIPrompt();
+            let prompt='';
+            try{ prompt=agbFullPrompt(); }catch(e){ console.error('agbFullPrompt failed', e); }
+            if(!prompt) prompt=String(buildGarageAIPrompt()).slice(0,2900);
             if(preferOpenAI){
                 return await generateOpenAIGaragePhotoUrl(prompt, opts);
             }
@@ -9208,6 +9244,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             if (electricOnNote && checked('threeWaySwitch')) notes.push('3-way switch included.');
             if (checked('gutters')) notes.push(roofType === 'gable' ? 'Seamless Gutters 2 Sides - 2 Down Spouts included.' : 'Seamless Gutters 4 Sides - 2 Down Spouts included.');
             if (checked('aluminumSoffit')) notes.push('Aluminum soffit and fascia included.');
+            else if (checked('showWoodSoffitNote')) notes.push('Pre-finished wood soffit and fascia included.');
             if (Number(val('firewallWalls') || 0) > 0) notes.push(`${val('firewallWalls')} firewall wall${Number(val('firewallWalls')) > 1 ? 's' : ''} included.`);
             if (checked('hurricaneTies')) notes.push('Hurricane ties included.');
             const ctNote=Number(val('concreteThickness')||4);
@@ -10963,6 +11000,7 @@ document.addEventListener('click', function(e){
             document.getElementById('retainWallHeight').value = '8';
             document.getElementById('gutters').checked = false;
             document.getElementById('aluminumSoffit').checked = false;
+            if (document.getElementById('showWoodSoffitNote')) document.getElementById('showWoodSoffitNote').checked = false;
             document.getElementById('sidingType').value = 'vinyl';
             if (document.getElementById('vinylColor')) document.getElementById('vinylColor').value = '#F5F5F5';
             if (document.getElementById('hardieColor')) document.getElementById('hardieColor').value = '#F5F5F5';

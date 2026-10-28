@@ -1459,19 +1459,38 @@ body.bg-zinc-950{
                             <i class="fa-solid fa-door-open"></i>
                             <span>DOORS &amp; OPENINGS</span>
                         </div>
+                        <div id="agbDoorListPanel" class="mb-3 rounded-2xl border border-zinc-700 bg-zinc-900/60 p-3">
+                            <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+                                <div class="text-sm font-semibold text-zinc-100">Side / Rear Doors</div>
+                                <label class="flex items-center gap-2 text-xs text-zinc-300 min-h-[36px]"><input type="checkbox" id="sideDoorsListOn" checked onchange="agbDoorsToggle()" class="rounded border-zinc-600"> Use door list</label>
+                            </div>
+                            <input type="hidden" id="sideDoorsJson" value="">
+                            <div id="agbDoorListBody">
+                                <div class="text-[11px] text-zinc-400 mb-1">Quick pick:</div>
+                                <div id="agbDoorQuick" class="grid grid-cols-2 md:grid-cols-5 gap-2 mb-3"></div>
+                                <div id="agbDoorRows" class="space-y-2"></div>
+                                <div class="flex flex-wrap gap-2 mt-3">
+                                    <button type="button" onclick="agbDoorAdd()" class="min-h-[44px] px-4 rounded-2xl bg-zinc-800 border border-zinc-600 text-sm text-zinc-100">+ Add door</button>
+                                    <button type="button" id="agbDoorSwapBtn" onclick="agbDoorSwap()" class="min-h-[44px] px-4 rounded-2xl bg-zinc-800 border border-zinc-600 text-sm text-zinc-100">Swap service door for French doors</button>
+                                </div>
+                                <div id="agbDoorTotal" class="text-xs text-zinc-300 mt-2"></div>
+                                <div class="text-[10px] text-zinc-500 mt-1">Service door = 36×80 swing door (first one included). French doors = double swing doors. Party door = small overhead door. Turn off "Use door list" to go back to the old dropdowns.</div>
+                            </div>
+                        </div>
                         <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
-                            <div>
+                            <div id="doorTypeWrap" class="agb-legacy-door">
                                 <label class="text-xs text-zinc-400 block mb-1">Side / rear door</label>
                                 <select id="doorType" onchange="toggleServiceDoorLocationFields(); togglePartyDoorSize(); calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm">
                                     <option value="standard" selected>Service door only (included)</option>
                                     <option value="party">Party door + service door</option>
                                     <option value="french">French door</option>
+                                    <option value="no">No side/rear door</option>
                                 </select>
                                 <div class="text-[10px] text-zinc-500 mt-0.5">Party door = small overhead door. Service door = 36×80 swing door. They are different and can share a wall.</div>
                             </div>
                             <div id="partyDoorSizeWrap" class="hidden md:col-span-2">
                                 <label class="text-xs text-zinc-400 block mb-1">Party door size (type any size — default 6' × 7')</label>
-                                <div class="flex items-center gap-2">
+                                <div class="flex items-center gap-2 agb-legacy-door">
                                     <div class="flex-1">
                                         <label class="text-[10px] text-zinc-500">Width (ft)</label>
                                         <input type="number" id="partyDoorWidth" value="6" min="1" step="0.5" inputmode="decimal"
@@ -1486,7 +1505,7 @@ body.bg-zinc-950{
                                                class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm">
                                     </div>
                                 </div>
-                                <label class="flex items-center gap-2 mt-2 text-xs text-zinc-300">
+                                <label class="flex items-center gap-2 mt-2 text-xs text-zinc-300 agb-legacy-door">
                                     <input type="checkbox" id="partyDoorWindows" onchange="calculateEstimate()" class="rounded border-zinc-600">
                                     Windows in party door (+$300)
                                 </label>
@@ -1500,7 +1519,7 @@ body.bg-zinc-950{
                                 </select>
                                 <div class="text-[10px] text-zinc-500 mt-0.5">Base $800 for 6×7. +$100 for each extra foot of width or height. Type any custom size.</div>
                             </div>
-                            <div id="frenchDoorStyleWrap" class="hidden">
+                            <div id="frenchDoorStyleWrap" class="hidden agb-legacy-door">
                                 <label class="text-xs text-zinc-400 block mb-1">French door style</label>
                                 <select id="frenchDoorStyle" onchange="calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm">
                                     <option value="9light" selected>9 Light (+$1,150)</option>
@@ -1508,14 +1527,14 @@ body.bg-zinc-950{
                                 </select>
                             </div>
                             <div>
-                                <label class="text-xs text-zinc-400 block mb-1">Service / side door location</label>
-                                <select id="serviceDoorLocation" onchange="toggleServiceDoorLocationFields(); calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm">
+                                <label class="text-xs text-zinc-400 block mb-1 agb-legacy-door">Service / side door location</label>
+                                <select id="serviceDoorLocation" onchange="toggleServiceDoorLocationFields(); calculateEstimate()" class="agb-legacy-door calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm">
                                     <option value="left" selected>Left wall</option>
                                     <option value="right">Right wall</option>
                                     <option value="front">Front wall</option>
                                     <option value="back">Back wall</option>
                                 </select>
-                                <div class="text-[10px] text-zinc-500 mt-0.5">Front = beside the overhead door. Left/Right/Back = that wall only. Default left.</div>
+                                <div class="text-[10px] text-zinc-500 mt-0.5 agb-legacy-door">Front = beside the overhead door. Left/Right/Back = that wall only. Default left.</div>
                                 <label class="flex items-center gap-2 mt-2 text-xs text-zinc-300">
                                     <input type="checkbox" id="svcInsulated" onchange="toggleInsul('svc'); calculateEstimate()" class="rounded border-zinc-600">
                                     Insulated?
@@ -1525,7 +1544,7 @@ body.bg-zinc-950{
                                     <option value="metal">3 Layer Metal Backed (+$1,000)</option>
                                 </select>
                             </div>
-                            <div id="serviceDoorFrontSideWrap" class="hidden">
+                            <div id="serviceDoorFrontSideWrap" class="hidden agb-legacy-door">
                                 <label class="text-xs text-zinc-400 block mb-1">If front, place service door</label>
                                 <select id="serviceDoorFrontSide" onchange="calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm">
                                     <option value="right" selected>Right of overhead door</option>
@@ -3550,6 +3569,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                 sideDoorCost = st === 'fullview' ? 1450 : 1150;
                 sideDoorLabel = st === 'fullview' ? 'French door — Full View' : 'French door — 9 Light';
             }
+            try{ const _dl=window.agbDoorListPricing&&window.agbDoorListPricing(); if(_dl){ sideDoorCost=_dl.cost; sideDoorLabel=_dl.label; } }catch(e){}
             
             // Concrete areas + two patios
             let slabArea = newConcrete ? floorArea : 0;
@@ -4442,7 +4462,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             if (data.sideDoorCost > 0) {
                 lines.push({ label: data.sideDoorLabel, amount: data.sideDoorCost, section: 'core', key: 'side_door' });
             } else {
-                lines.push({ label: 'Standard service door', amount: 0, section: 'core', note: 'included' });
+                lines.push({ label: (data.sideDoorLabel && data.sideDoorLabel !== 'Service door (included)') ? data.sideDoorLabel : 'Standard service door', amount: 0, section: 'core', note: 'included' });
             }
             
             if (isChicagoCity()) {
@@ -8230,6 +8250,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                 parts.push('FINAL CHECK: the finished photo must match this salesman request exactly: ' + extra);
                 parts.push('Do not substitute a different view, location, or feature than what the salesman asked for');
             }
+            try{ const _dl=window.agbDoorPromptLine&&window.agbDoorPromptLine(); if(_dl) parts.push(_dl); }catch(e){}
             return parts.filter(Boolean).join(', ');
 
         // Compact prompt for OpenAI — ONLY active job rules, always under budget (no clipping)
@@ -8310,6 +8331,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                 } else {
                     lines.push('NO SERVICE DOOR anywhere');
                 }
+                try{ const _dl=window.agbDoorPromptLine&&window.agbDoorPromptLine(); if(_dl) lines.push(_dl); }catch(e){}
                 if (roofPatioOn) {
                     lines.push('CRITICAL PATIO: '+(roofPatioSide?'SIDE':'REAR')+' roofed patio on '+(roofPatioSide?'SIDE':'BACK')+' wall only — full wall width — EXACTLY 4 posts — depth ~'+patioDepth+' ft — same roof run flush extension'+(isReverseGable?', keep reverse-gable peaks on ends only':''));
                 } else {
@@ -8959,9 +8981,10 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                     addSpec('Service Door', '(1) 36"x80" Six Panel Steel Prehung Door with Deadbolt and Lock Set'+(typeof insulationSheetText==='function'?insulationSheetText('svc'):''));
                 } else if (doorType === 'french') {
                     addSpec('French Door', 'French Door Allowance');
-                } else {
+                } else if (doorType !== 'no') {
                     addSpec('Service Door', '(1) 36"x80" Six Panel Steel Prehung Door with Deadbolt and Lock Set'+(typeof insulationSheetText==='function'?insulationSheetText('svc'):''));
                 }
+                try{ (window.agbDoorSheetExtras?window.agbDoorSheetExtras():[]).forEach(x=>addSpec(x[0],x[1])); }catch(e){}
                 try{
                     (typeof collectExtraOhDoors==='function'?collectExtraOhDoors():[]).forEach((d,i)=>{
                         addSpec('Overhead Door '+(i+1+(tcDoorsW?tcDoorsW.length:1)), d.label+(d.ins?(typeof insulationSheetText==='function'?insulationSheetText('extraOh'+(i+1)):''):'')+(d.hasOp?' with opener':''));
@@ -9018,7 +9041,8 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                     addSpec('Party Door', `${pw}' x ${ph}' Steel Door`+(typeof insulationSheetText==='function'?insulationSheetText('party'):''));
                     addSpec('Service Door', '1 x 36"x80" Steel Door with Deadbolt Lock'+(typeof insulationSheetText==='function'?insulationSheetText('svc'):''));
                 } else if (doorType === 'french') addSpec('French Door', 'French Door Allowance');
-                else addSpec('Service Door', '1 x 36"x80" Steel Door with Deadbolt Lock'+(typeof insulationSheetText==='function'?insulationSheetText('svc'):''));
+                else if (doorType !== 'no') addSpec('Service Door', '1 x 36"x80" Steel Door with Deadbolt Lock'+(typeof insulationSheetText==='function'?insulationSheetText('svc'):''));
+                try{ (window.agbDoorSheetExtras?window.agbDoorSheetExtras():[]).forEach(x=>addSpec(x[0],x[1])); }catch(e){}
                 try{
                     (typeof collectExtraOhDoors==='function'?collectExtraOhDoors():[]).forEach((d,i)=>{
                         addSpec('Overhead Door '+(i+1+(tcDoorsS?tcDoorsS.length:1)), d.label+(d.ins?(typeof insulationSheetText==='function'?insulationSheetText('extraOh'+(i+1)):''):'')+(d.hasOp?' with opener':''));
@@ -9145,6 +9169,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
 
             if (doorType === 'party') notes.push('Quote Includes Party Door.');
             if (doorType === 'french') notes.push('Quote Includes French Door.');
+            try{ (window.agbDoorSheetExtras?window.agbDoorSheetExtras():[]).forEach(x=>notes.push('Quote Includes '+x[0]+' ('+x[1]+').')); }catch(e){}
 
             // Windows: total on sheet is extra+1; notes only mention true extras
             if (val('windowType')!=='none' && Number(val('extraWindows') || 0) > 0) notes.push(`${val('extraWindows')} additional window${Number(val('extraWindows')) > 1 ? 's' : ''} included.`);
@@ -10864,6 +10889,7 @@ document.addEventListener('click', function(e){
             document.getElementById('epaFee').disabled = false;
             
             document.getElementById('doorType').value = 'standard';
+            try{ const sj=document.getElementById('sideDoorsJson'); if(sj) sj.value=''; }catch(e){}
             const sdl = document.getElementById('serviceDoorLocation'); if (sdl) sdl.value = 'left';
             const sdf = document.getElementById('serviceDoorFrontSide'); if (sdf) sdf.value = 'right';
             toggleServiceDoorLocationFields();
@@ -12249,6 +12275,171 @@ run();setInterval(run,1500);document.addEventListener('change',run);})();
     }catch(e){alert('Could not build cost sheet: '+(e&&e.message||e));}
     finally{if(lbl)lbl.textContent=old;if(btn)btn.disabled=false;}
   };
+})();
+</script>
+<!-- ===== SIDE / REAR DOOR LIST — sample, branch doors-ui-sample ===== -->
+<style>
+#agbDoorListPanel.agb-on ~ .grid .agb-legacy-door{display:none!important}
+.agb-door-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:end;padding:10px;border:1px solid #3f3f46;border-radius:14px;background:#09090b}
+.agb-door-row>div:first-child{grid-column:1/-1}
+@media(min-width:768px){.agb-door-row{grid-template-columns:1.2fr 1.2fr 1.4fr 0.9fr auto}.agb-door-row>div:first-child{grid-column:auto}}
+.agb-door-row select,.agb-door-row input{width:100%;min-height:44px;background:#09090b;border:1px solid #3f3f46;border-radius:12px;padding:6px 10px;font-size:14px;color:#e4e4e7}
+.agb-door-row label{font-size:10px;color:#a1a1aa;display:block;margin-bottom:2px}
+.agb-door-row .agb-rm{min-height:44px;min-width:44px;border-radius:12px;border:1px solid #7f1d1d;color:#fecaca;background:#450a0a;font-size:13px;padding:0 12px}
+.agb-door-quick{min-height:44px;border-radius:14px;border:1px solid #52525b;background:#18181b;color:#e4e4e7;font-size:13px;padding:6px 8px;line-height:1.15}
+.agb-door-quick.agb-sel{border-color:#facc15;background:#422006;color:#fef08a;font-weight:600}
+.agb-door-flag{grid-column:1/-1;font-size:11px;color:#fde047}
+</style>
+<script>
+(function(){
+  // Prices come from the existing app constants (see updateBreakdown): service door included,
+  // French 9 Light $1,150 / Full View $1,450, party door $800 for 6x7 +$100 per extra ft, windows +$300.
+  // An ADDITIONAL service door has no price in the app: price field left blank and flagged.
+  const WALLS=[['left','Left wall'],['right','Right wall'],['rear','Rear wall'],['front-left','Front, left of OH door'],['front-right','Front, right of OH door']];
+  const TYPES=[['service','Service door (36×80)'],['french','French doors'],['party','Party door (small overhead)']];
+  const $=id=>document.getElementById(id);
+  let lastRendered=null, lastLegacySig=null, lastJson=null;
+  function on(){ return !!$('sideDoorsListOn')?.checked; }
+  function legacyWall(){ const l=($('serviceDoorLocation')?.value||'left'); if(l==='front') return 'front-'+(($('serviceDoorFrontSide')?.value)||'right'); return l==='back'?'rear':l; }
+  function legacySig(){ return [$('doorType')?.value,$('serviceDoorLocation')?.value,$('serviceDoorFrontSide')?.value,$('frenchDoorStyle')?.value,$('partyDoorWidth')?.value,$('partyDoorHeight')?.value,!!$('partyDoorWindows')?.checked].join('|'); }
+  function fromLegacy(){
+    const t=$('doorType')?.value||'standard', w=legacyWall();
+    if(t==='no'||t==='none'||t==='hidden') return [];
+    if(t==='french') return [{type:'french',wall:w,style:$('frenchDoorStyle')?.value||'9light'}];
+    if(t==='party') return [{type:'party',wall:w,w:Number($('partyDoorWidth')?.value)||6,h:Number($('partyDoorHeight')?.value)||7,windows:!!$('partyDoorWindows')?.checked},{type:'service',wall:w}];
+    return [{type:'service',wall:w}];
+  }
+  function read(){ try{ const v=JSON.parse($('sideDoorsJson')?.value||'null'); if(Array.isArray(v)) return v; }catch(e){} return null; }
+  function list(){ return read()||fromLegacy(); }
+  function autoPrice(d,idx,arr){
+    if(d.type==='service'){ const first=arr.findIndex(x=>x.type==='service')===idx; return first?0:null; }
+    if(d.type==='french') return d.style==='fullview'?1450:1150;
+    if(d.type==='party'){ const pw=Math.max(1,Number(d.w)||6), ph=Math.max(1,Number(d.h)||7); return 800+Math.max(0,Math.ceil((pw-6)+(ph-7)))*100+(d.windows?300:0); }
+    return null;
+  }
+  function price(d,i,arr){ if(d.price!==undefined && d.price!==null && String(d.price)!=='') return Number(d.price)||0; return autoPrice(d,i,arr); }
+  function wallTxt(w){ return (WALLS.find(x=>x[0]===w)||[0,w])[1]; }
+  function desc(d){
+    if(d.type==='service') return 'Service door 36x80 — '+wallTxt(d.wall);
+    if(d.type==='french') return 'French doors ('+(d.style==='fullview'?'Full View':'9 Light')+') — '+wallTxt(d.wall);
+    return "Party door "+(Number(d.w)||6)+"' x "+(Number(d.h)||7)+"'"+(d.windows?' with windows':'')+' — '+wallTxt(d.wall);
+  }
+  // Legacy fields carry the "primary" doors so every existing feature keeps working.
+  function syncLegacy(arr){
+    const party=arr.find(d=>d.type==='party'), fr=arr.find(d=>d.type==='french'), svc=arr.find(d=>d.type==='service');
+    let t='standard', primary=svc;
+    if(!arr.length) t='no';
+    else if(party){ t='party'; primary=svc||party; }
+    else if(fr && !svc){ t='french'; primary=fr; }
+    const set=(id,v)=>{ const el=$(id); if(!el) return; if(el.type==='checkbox') el.checked=!!v; else el.value=String(v); };
+    set('doorType',t);
+    if(primary){ const w=primary.wall||'left'; if(w.startsWith('front-')){ set('serviceDoorLocation','front'); set('serviceDoorFrontSide',w.slice(6)); } else set('serviceDoorLocation',w==='rear'?'back':w); }
+    if(party){ set('partyDoorWidth',Number(party.w)||6); set('partyDoorHeight',Number(party.h)||7); set('partyDoorWindows',!!party.windows); }
+    if(fr) set('frenchDoorStyle',fr.style||'9light');
+    try{ togglePartyDoorSize(); }catch(e){} try{ toggleServiceDoorLocationFields(); }catch(e){}
+    lastLegacySig=legacySig(); lastJson=$('sideDoorsJson')?.value||'';
+  }
+  // Which list doors are NOT represented by the legacy fields (printed as extra sheet lines)
+  function extras(arr){
+    const t=$('doorType')?.value||'standard', used=new Set();
+    const take=type=>{ const i=arr.findIndex((d,j)=>d.type===type&&!used.has(j)); if(i>=0) used.add(i); };
+    if(t==='party'){ take('party'); take('service'); } else if(t==='french') take('french'); else if(t!=='no') take('service');
+    return arr.filter((d,i)=>!used.has(i));
+  }
+  function save(arr){ $('sideDoorsJson').value=JSON.stringify(arr); syncLegacy(arr); render(true); try{ calculateEstimate(); }catch(e){} }
+  const QUICK=[
+    ['svc','Service door only',w=>[{type:'service',wall:w}]],
+    ['fr','French doors only',w=>[{type:'french',wall:w,style:'9light'}]],
+    ['svcfr','Service door + French doors',w=>[{type:'service',wall:w},{type:'french',wall:w==='rear'?'left':'rear',style:'9light'}]],
+    ['party','Party door + service door',w=>[{type:'party',wall:w,w:6,h:7,windows:false},{type:'service',wall:w}]],
+    ['none','No side/rear door',()=>[]]
+  ];
+  function quickKey(arr){
+    const k=arr.map(d=>d.type).sort().join(',');
+    return {'service':'svc','french':'fr','french,service':'svcfr','party,service':'party','':'none'}[k]||'';
+  }
+  function render(force){
+    const panel=$('agbDoorListPanel'); if(!panel) return;
+    panel.classList.toggle('agb-on',on());
+    $('agbDoorListBody').style.display=on()?'':'none';
+    if(!on()) return;
+    const arr=list(), sig=JSON.stringify(arr);
+    if(!force && sig===lastRendered) return; lastRendered=sig;
+    const qk=quickKey(arr);
+    $('agbDoorQuick').innerHTML=QUICK.map(q=>'<button type="button" class="agb-door-quick'+(q[0]===qk?' agb-sel':'')+'" data-q="'+q[0]+'">'+q[1]+'</button>').join('');
+    $('agbDoorQuick').querySelectorAll('button').forEach(b=>b.onclick=()=>{ const q=QUICK.find(x=>x[0]===b.dataset.q); const cur=list(); const w=(cur[0]&&cur[0].wall)||legacyWall(); save(q[2](w)); });
+    const opt=(pairs,v)=>pairs.map(p=>'<option value="'+p[0]+'"'+(p[0]===v?' selected':'')+'>'+p[1]+'</option>').join('');
+    $('agbDoorRows').innerHTML=arr.length?arr.map((d,i)=>{
+      const ap=autoPrice(d,i,arr), pv=(d.price!==undefined&&d.price!==null)?d.price:'';
+      let extra='';
+      if(d.type==='french') extra='<div><label>Style</label><select data-i="'+i+'" data-f="style">'+opt([['9light','9 Light ($1,150)'],['fullview','Full View ($1,450)']],d.style||'9light')+'</select></div>';
+      else if(d.type==='party') extra='<div><label>Size W×H (ft) / windows</label><div style="display:flex;gap:4px;align-items:center"><input type="number" inputmode="decimal" step="0.5" min="1" data-i="'+i+'" data-f="w" value="'+(d.w||6)+'"><input type="number" inputmode="decimal" step="0.5" min="1" data-i="'+i+'" data-f="h" value="'+(d.h||7)+'"><input type="checkbox" style="width:22px;min-height:22px" title="Windows (+$300)" data-i="'+i+'" data-f="windows"'+(d.windows?' checked':'')+'></div></div>';
+      else extra='<div><label>&nbsp;</label><div style="font-size:12px;color:#a1a1aa;min-height:44px;display:flex;align-items:center">36×80 steel swing door</div></div>';
+      const flag=(ap===null && pv==='')?'<div class="agb-door-flag">⚠ No price in the app for an additional service door — type the price.</div>':'';
+      return '<div class="agb-door-row" data-row="'+i+'"><div><label>Door '+(i+1)+'</label><select data-i="'+i+'" data-f="type">'+opt(TYPES,d.type)+'</select></div>'+
+        '<div><label>Wall</label><select data-i="'+i+'" data-f="wall">'+opt(WALLS,d.wall)+'</select></div>'+extra+
+        '<div><label>Price $ '+(ap===null?'(needed)':'(auto '+(ap?'$'+ap.toLocaleString():'included')+')')+'</label><input type="number" inputmode="decimal" data-i="'+i+'" data-f="price" placeholder="'+(ap===null?'enter':ap)+'" value="'+pv+'"></div>'+
+        '<div><label>&nbsp;</label><button type="button" class="agb-rm" data-rm="'+i+'" aria-label="Remove door '+(i+1)+'">Remove</button></div>'+flag+'</div>';
+    }).join(''):'<div class="text-xs text-zinc-400">No side or rear doors. Tap "+ Add door" to add one.</div>';
+    $('agbDoorRows').querySelectorAll('[data-f]').forEach(el=>{
+      el.addEventListener(el.tagName==='SELECT'||el.type==='checkbox'?'change':'change',()=>{
+        const a=list(), d=a[Number(el.dataset.i)], f=el.dataset.f;
+        if(f==='windows') d.windows=el.checked; else if(f==='w'||f==='h') d[f]=Number(el.value)||'';
+        else if(f==='price') d.price=el.value===''?null:el.value; else d[f]=el.value;
+        if(f==='type'){ delete d.price; if(d.type==='party'){d.w=d.w||6;d.h=d.h||7;} if(d.type==='french') d.style=d.style||'9light'; }
+        save(a);
+      });
+    });
+    $('agbDoorRows').querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{ const a=list(); a.splice(Number(b.dataset.rm),1); save(a); });
+    $('agbDoorSwapBtn').disabled=!arr.some(d=>d.type==='service');
+    $('agbDoorSwapBtn').style.opacity=arr.some(d=>d.type==='service')?'1':'0.45';
+    const p=window.agbDoorListPricing();
+    $('agbDoorTotal').innerHTML=p?('Side/rear doors total: <b>$'+p.cost.toLocaleString()+'</b>'+(p.missing?' <span style="color:#fde047">— '+p.missing+' price(s) needed</span>':'')):'';
+  }
+  window.agbDoorAdd=function(){ const a=list(); const used=a.map(d=>d.wall); const w=['rear','right','left'].find(x=>!used.includes(x))||'rear'; a.push({type:'service',wall:w}); save(a); };
+  window.agbDoorSwap=function(){ const a=list(); const i=a.findIndex(d=>d.type==='service'); if(i<0) return; a[i]={type:'french',wall:a[i].wall,style:'9light'}; save(a); };
+  window.agbDoorsToggle=function(){ if(on()) { lastLegacySig=null; } render(true); try{ calculateEstimate(); }catch(e){} };
+  window.agbDoorListGet=function(){ return on()?list():null; };
+  window.agbDoorListPricing=function(){
+    if(!on()) return null;
+    // If legacy fields were changed elsewhere (reset, AI command, preset, old estimate load) rebuild from them.
+    if(read() && lastLegacySig!==null && ($('sideDoorsJson').value===lastJson) && legacySig()!==lastLegacySig){ $('sideDoorsJson').value=''; }
+    const arr=list(); if(read()) syncLegacy(arr); else { lastLegacySig=legacySig(); lastJson=''; }
+    let cost=0, missing=0;
+    arr.forEach((d,i)=>{ const p=price(d,i,arr); if(p===null) missing++; else cost+=p; });
+    const label=arr.length?('Side/rear doors: '+arr.map(desc).join('; ')):'No side/rear door';
+    setTimeout(()=>render(false),0);
+    return {cost,label,missing,doors:arr};
+  };
+  window.agbDoorSheetExtras=function(){
+    if(!on()) return [];
+    const arr=list();
+    return extras(arr).map(d=>{ const i=arr.indexOf(d), p=price(d,i,arr);
+      const name=d.type==='service'?'Additional Service Door':d.type==='french'?'French Doors':'Party Door';
+      return [name, desc(d).replace(/^[^—]*— /,'')+' — '+(d.type==='service'?'36"x80" Steel Door with Deadbolt Lock':d.type==='french'?'French Door Allowance ('+(d.style==='fullview'?'Full View':'9 Light')+')':((Number(d.w)||6)+"' x "+(Number(d.h)||7)+"' Steel Door"))+(p===null?' (price TBD)':'')];
+    });
+  };
+  // Placement checks: front returns + total door width per wall
+  const _val=window.validateGaragePlacementConflicts;
+  if(typeof _val==='function') window.validateGaragePlacementConflicts=validateGaragePlacementConflicts=function(){
+    const issues=_val.apply(this,arguments)||[];
+    try{
+      const arr=agbDoorListGet(); if(!arr) return issues;
+      const dim=getGarageDimensions(); const W=Number(dim.width)||20, D=Number(dim.depth)||20;
+      const pos=(typeof updateOverheadDoorOffsetControl==='function')?updateOverheadDoorOffsetControl():{leftReturn:2,rightReturn:2};
+      const width=d=>d.type==='service'?3:d.type==='french'?5:(Number(d.w)||6);
+      const per={};
+      arr.forEach(d=>{ per[d.wall]=(per[d.wall]||0)+width(d)+1; });
+      [['left',D],['right',D],['rear',W]].forEach(([w,len])=>{ if(per[w] && per[w]>len-1) issues.push(wallTxt(w)+': doors need about '+per[w]+"' but the wall is "+len+"'. Move a door to another wall."); });
+      ['left','right'].forEach(side=>{ const need=per['front-'+side]; const ret=Number(side==='left'?pos.leftReturn:pos.rightReturn)||0; if(need && ret<need-0.5) issues.push('Front, '+side+' of OH door: doors need about '+need+"' but the "+side+" return is only "+ret+"'."); });
+    }catch(e){}
+    return [...new Set(issues)];
+  };
+  // AI photo prompts: state the exact door list
+  function promptLine(){ const arr=agbDoorListGet(); if(!arr) return ''; if(!arr.length) return 'SIDE/REAR DOORS: none — no service door, no French doors, no party door'; return 'SIDE/REAR DOORS (exact, no others): '+arr.map(desc).join('; ')+'. French doors = pair of glass swing doors; party door = small overhead sectional door; service door = single 36x80 swing door'; }
+  window.agbDoorPromptLine=promptLine;
+  document.addEventListener('DOMContentLoaded',()=>{ render(true); });
+  if(document.readyState!=='loading') render(true);
 })();
 </script>
 </body>

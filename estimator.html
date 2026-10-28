@@ -8416,6 +8416,22 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             try{ sessionStorage.setItem('agb_last_ai_garage_photo', url); }catch(e){}
         }
 
+        // fix 2026-10-28: AI picture failures were only in a hidden status line — show them in plain words
+        function agbShowAiPhotoError(msg){
+            let el=document.getElementById('agbAiPhotoErr');
+            if(!el){
+                el=document.createElement('div'); el.id='agbAiPhotoErr'; el.setAttribute('role','alert');
+                el.style.cssText='position:fixed;left:12px;right:12px;bottom:12px;z-index:2147483000;max-width:640px;margin:0 auto;background:#7f1d1d;color:#fff;border:1px solid #fca5a5;border-radius:12px;padding:10px 38px 10px 12px;font:600 13px/1.35 Arial,sans-serif;box-shadow:0 6px 24px rgba(0,0,0,.4)';
+                el.addEventListener('click',()=>{ el.style.display='none'; });
+                document.body.appendChild(el);
+            }
+            el.innerHTML='';
+            const b=document.createElement('b'); b.textContent='AI picture not made: '; el.appendChild(b);
+            el.appendChild(document.createTextNode(String(msg||'unknown error').slice(0,300)));
+            const x=document.createElement('span'); x.textContent='×'; x.style.cssText='position:absolute;right:12px;top:6px;font-size:20px;cursor:pointer'; el.appendChild(x);
+            el.style.display='block';
+            clearTimeout(el._t); el._t=setTimeout(()=>{ el.style.display='none'; }, 20000);
+        }
         async function generateOpenAIGaragePhotoUrl(prompt, opts){
             // Safety net: AI image generation is disabled for reverse gables (preset photos only).
             if(typeof isReverseGableSelected==='function' && isReverseGableSelected()) throw new Error('AI photos are off for Reverse Gable — using the picked example photo.');
@@ -8501,58 +8517,44 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                 (lastEdgeError
                     ? ('Company AI failed: '+lastEdgeError+' ')
                     : '')
-                + 'No personal OpenAI key on this device. Check Supabase function generate-garage-photo + OPENAI_API_KEY secret, or lock a key in the estimator.'
+                + 'No OpenAI key saved on this device, so no AI picture could be made. Lock an OpenAI key in the estimator, or fix the company function (generate-garage-photo + OPENAI_API_KEY; it must use a current model, gpt-image-1 was shut down 10/23/2026).'
             );
 
-            let res;
-            try{
-                res=await fetch('https://api.openai.com/v1/images/generations', {
-                    method:'POST',
-                    headers:{
-                        'Content-Type':'application/json',
-                        'Authorization':'Bearer '+apiKey
-                    },
-                    body: JSON.stringify({
-                        model:'gpt-image-1',
-                        prompt: prompt.slice(0, 3000),
-                        n:1,
-                        size:'1024x1024',
-                        quality:'high'
-                    })
-                });
-            }catch(netErr){
-                throw new Error('Browser blocked the OpenAI request. Details: '+(netErr && netErr.message ? netErr.message : netErr));
-            }
-            const data=await res.json().catch(()=>({}));
-            if(!res.ok){
-                const msg=(data && data.error && data.error.message) ? data.error.message : ('OpenAI error '+res.status);
-                if(res.status===401) throw new Error('OpenAI key rejected (401). Replace key — wrong key or revoked.');
-                if(res.status===429) throw new Error('OpenAI rate limit / quota (429). Check billing at platform.openai.com.');
-                if(/model|unknown|not found|does not exist/i.test(msg)){
-                    const res2=await fetch('https://api.openai.com/v1/images/generations', {
+            // fix 2026-10-28: gpt-image-1 was shut down by OpenAI on 2026-10-23 and dall-e-3 on 2026-05-12,
+            // so every device-key request failed. Use the current GPT Image models (b64_json only, no response_format).
+            const models=['gpt-image-2.5-flare','gpt-image-1.5'];
+            let data=null, lastMsg='';
+            for(const model of models){
+                let res;
+                try{
+                    res=await fetch('https://api.openai.com/v1/images/generations', {
                         method:'POST',
-                        headers:{'Content-Type':'application/json','Authorization':'Bearer '+apiKey},
-                        body: JSON.stringify({ model:'dall-e-3', prompt: prompt.slice(0, 3900), n:1, size:'1024x1024' })
+                        headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+apiKey },
+                        body: JSON.stringify({ model, prompt: prompt.slice(0, 3000), n:1, size:'1024x1024', quality:'high' })
                     });
-                    const data2=await res2.json().catch(()=>({}));
-                    if(!res2.ok){
-                        const msg2=(data2 && data2.error && data2.error.message) ? data2.error.message : ('OpenAI error '+res2.status);
-                        throw new Error(msg2);
-                    }
-                    const item2=data2 && data2.data && data2.data[0];
-                    let url2=item2 && (item2.url || (item2.b64_json ? ('data:image/png;base64,'+item2.b64_json) : null));
-                    if(!url2) throw new Error('OpenAI returned no image.');
-                    try{ localStorage.setItem(cacheKey, url2); }catch(e){}
-                    return {url:url2, prompt, source:'openai', cached:false};
+                }catch(netErr){
+                    throw new Error('Could not reach OpenAI (network or browser blocked it): '+(netErr && netErr.message ? netErr.message : netErr));
                 }
-                throw new Error(msg);
+                const body=await res.json().catch(()=>({}));
+                if(res.ok){ data=body; break; }
+                const e=(body && body.error) || {};
+                const msg=e.message || ('HTTP '+res.status);
+                const code=String(e.code||e.type||'');
+                if(res.status===401) throw new Error('OpenAI rejected the key (401). The key is wrong or was revoked — tap Replace key and paste a new one.');
+                if(res.status===429 && /insufficient_quota|billing|quota/i.test(code+' '+msg)) throw new Error('OpenAI account is out of credits (429). Add credits at platform.openai.com → Billing.');
+                if(res.status===429) throw new Error('OpenAI is busy / rate limited (429). Wait a minute and try again.');
+                if(res.status===403 && /verif/i.test(msg)) throw new Error('OpenAI needs Organization Verification before this key can make images (403). Verify at platform.openai.com → Settings → Organization.');
+                lastMsg='OpenAI request failed ('+model+'): '+msg;
+                // try the next model only when this one is unknown / retired / not allowed for the key
+                if(!(res.status===404 || res.status===403 || /model|not found|does not exist|shut ?down|deprecat|access/i.test(msg))) throw new Error(lastMsg);
             }
+            if(!data) throw new Error(lastMsg || 'OpenAI request failed.');
             const item=data && data.data && data.data[0];
             let url=item && item.url;
             if(!url && item && item.b64_json){
-                url='data:image/png;base64,'+item.b64_json;
+                url='data:image/'+(data.output_format||'png')+';base64,'+item.b64_json;
             }
-            if(!url) throw new Error('OpenAI returned no image.');
+            if(!url) throw new Error('OpenAI answered but sent no image.');
             try{ localStorage.setItem(cacheKey, url); }catch(e){}
             return {url, prompt, source:'openai', cached:false};
         }
@@ -8618,10 +8620,11 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                     const matched=getExteriorPhotoMatch().photo;
                     const src=matched && matched.src ? matched.src : 'garage_114.png';
                     const file=String(src).replace(/^.*\//,'');
+                    // fix 2026-10-28: library photos live next to this file (no images/ folder on the site) — root first
                     return {
-                        primary: new URL('images/'+file, document.baseURI).href,
+                        primary: new URL(file, document.baseURI).href,
                         fallbacks: [
-                            new URL(file, document.baseURI).href,
+                            new URL('images/'+file, document.baseURI).href,
                             new URL(src, document.baseURI).href
                         ],
                         source: 'library'
@@ -8733,6 +8736,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                     }
                 }catch(_){}
                 try{ window.__lastGaragePhotoError=msg; }catch(_){}
+                try{ agbShowAiPhotoError(msg); }catch(_){}
                 // Prefer last AI photo over library if we have one
                 if(lastUrl && (/^https?:\/\//i.test(lastUrl) || lastUrl.startsWith('data:image'))){
                     return {primary:lastUrl, fallbacks:libraryFallback().fallbacks, source:'openai', aiSource:'reused-after-error', error:msg, prompt:'(reused prior AI photo after error)'};

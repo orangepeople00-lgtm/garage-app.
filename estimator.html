@@ -2161,6 +2161,11 @@ body.bg-zinc-950{
                         <i class="fa-solid fa-file-invoice"></i>
                         <span>Create / View Estimate Sheet</span>
                     </button>
+                    <button type="button" id="salesmanCostSheetBtn" onclick="downloadSalesmanCostSheet(this)"
+                            class="print-action col-span-2 w-full px-3 py-2.5 text-xs font-semibold bg-red-800 hover:bg-red-700 active:bg-red-900 transition-all rounded-xl flex items-center justify-center gap-x-2 text-white" style="background:#991b1b">
+                        <i class="fa-solid fa-lock"></i>
+                        <span>Salesman Cost Sheet (internal PDF)</span>
+                    </button>
                 </div>
             </div>
 
@@ -4604,6 +4609,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             data.profitAmount = adjustedProfit;
             data.profitMode = profitSettingsAdj.mode;
             data.profitValue = profitSettingsAdj.value;
+            window._agbCostSheetData = { lines: lines.map(L => ({ label: L.label, amount: Number(L.amount) || 0, section: L.section, key: L.key, note: L.note, overridden: !!L.overridden })), internalTotal: adjustedInternal, customerQuote: adjustedQuote, profitMode: profitSettingsAdj.mode, profitValue: profitSettingsAdj.value };
             
             lines.forEach((line, index) => {
                 if (line.section !== currentSection) {
@@ -12033,6 +12039,151 @@ let b=document.getElementById('agbArchTop');const a=agbArchStamp(c,{sf:w*d});con
 if(!b){b=document.createElement('div');b.id='agbArchTop';b.style.cssText='box-sizing:border-box;max-width:1280px;margin:0 auto;padding:0 12px';const bk=document.getElementById('backToProductionBtn');if(bk&&bk.nextSibling)bk.parentNode.insertBefore(b,bk.nextSibling);else document.body.prepend(b);}
 if(b._h!==h){b.innerHTML=h;b._h=h;}b.style.display=h?'block':'none';}
 run();setInterval(run,1500);document.addEventListener('change',run);})();
+</script>
+<!-- ===== INTERNAL SALESMAN COST SHEET (PDF) — sample feature, branch cost-sheet ===== -->
+<script>
+(function(){
+  const SECTION_ORDER=['Base Garage','Concrete','Demo / Excavation','Doors / Windows','Electrical','Permits / City','Extras'];
+  const money=n=>(n<0?'-':'')+'$'+Math.abs(Number(n)||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const esc=t=>String(t==null?'':t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const v=id=>{const el=document.getElementById(id);if(!el)return '';if(el.type==='checkbox')return el.checked;if(el.tagName==='SELECT'){const o=el.options[el.selectedIndex];return o?String(o.text).trim():'';}return String(el.value||'').trim();};
+  function groupOf(L){
+    const t=(L.label||'').toLowerCase(), k=(L.key||'').toLowerCase();
+    if(/permit|survey|andrew|wheeling|epa/.test(t)) return 'Permits / City';
+    if(L.section==='demo'||/excavation|demolition|removal/.test(t)) return 'Demo / Excavation';
+    if(/door|opener|window|insulation/.test(t)||/oh|door|window/.test(k)) return 'Doors / Windows';
+    if(L.section==='addons'&&/ev |ev$|ev charger|ev prep|switch|light|outlet|electric/.test(t)||/electrical/.test(t)) return 'Electrical';
+    if(L.section==='concrete'||/footing|rebar|rods|concrete|slab|retain|patio concrete/.test(t)) return 'Concrete';
+    if(/included in price/.test(t)) return 'Extras';
+    if(L.section==='core'||L.section==='structural') return 'Base Garage';
+    return 'Extras';
+  }
+  function collectSpecs(){
+    const rows=[];const add=(k,val)=>{if(val===true)val='Yes';if(val===false||val===''||val==null)return;rows.push([k,String(val)]);};
+    const labels=(typeof ESTIMATE_FIELD_LABELS==='object')?ESTIMATE_FIELD_LABELS:{};
+    const skip=/^(profitMode|profitValue|customExtras|salesman|customer.*|additionalEstimateNotes|rgPresetId|excavation)$/;
+    add('City',v('city'));
+    Object.keys(labels).forEach(id=>{if(skip.test(id)||id==='city')return;const el=document.getElementById(id);if(!el)return;
+      if(el.closest&&el.closest('.hidden')&&el.type!=='hidden')return;
+      let val=v(id);if(el.type==='checkbox'&&!val)return;if(String(val)==='0')return;add(labels[id],val);});
+    {const em=document.getElementById('excavationMode'),ev=v('excavationValue');if(em)add('Excavation / Stone',em.value==='usd'&&ev?'$ amount: '+money(ev):em.value==='sqft'&&ev?ev+' sq ft':'Auto');}
+    const sl=document.getElementById('slabMode');if(sl&&!labels.slabMode)add('Slab Mode',v('slabMode'));
+    document.querySelectorAll('#extrasContainer > div').forEach(row=>{const d=(row.querySelector('.extra-desc')?.value||'').trim();const c=parseFloat(row.querySelector('.extra-cost')?.value)||0;const disp=row.querySelector('.extra-display')?.value||'included';if(d||c)add(disp==='option'?'Option (not included)':'Custom extra',(d||'Custom Extra')+(c?' — '+money(c):''));});
+    add('Notes',v('additionalEstimateNotes'));
+    return rows;
+  }
+  function build(){
+    if(typeof calculateEstimate==='function'){try{calculateEstimate();}catch(e){}}
+    const S=window._agbCostSheetData;if(!S||!S.lines)throw new Error('Run the estimate first.');
+    const lines=S.lines.filter(L=>(Number(L.amount)||0)!==0||L.note);
+    const cost=lines.reduce((s,L)=>s+(Number(L.amount)||0),0);
+    // Customer total = the estimator's Customer Quote (same number the estimate sheet prints)
+    const price=(typeof estimateNumberFromText==='function')?estimateNumberFromText(document.getElementById('customerQuote')?.textContent||'0'):S.customerQuote;
+    const profit=price-cost;
+    const factor=cost>0?price/cost:0;
+    // Allocate price to each line in proportion to its internal cost; pennies fixed on the largest line so it sums exactly
+    let alloc=lines.map(L=>Math.round((Number(L.amount)||0)*factor*100)/100);
+    const diff=Math.round((price-alloc.reduce((a,b)=>a+b,0))*100)/100;
+    if(diff&&alloc.length){let mi=0;lines.forEach((L,i)=>{if((Number(L.amount)||0)>(Number(lines[mi].amount)||0))mi=i;});alloc[mi]=Math.round((alloc[mi]+diff)*100)/100;}
+    const groups={};lines.forEach((L,i)=>{const g=groupOf(L);(groups[g]=groups[g]||[]).push({L,price:alloc[i]});});
+    const options=[];document.querySelectorAll('#extrasContainer > div').forEach(row=>{const d=(row.querySelector('.extra-desc')?.value||'Option').trim()||'Option';const c=parseFloat(row.querySelector('.extra-cost')?.value)||0;if(c>0&&(row.querySelector('.extra-display')?.value||'included')==='option')options.push({d,c});});
+    return {lines,cost,price,profit,groups,options,mode:S.profitMode,pval:S.profitValue,specs:collectSpecs()};
+  }
+  function pctTxt(m){return m.cost>0?(m.profit/m.cost*100).toFixed(2)+'% of cost':'—';}
+  function marginTxt(m){return m.price>0?(m.profit/m.price*100).toFixed(2)+'% of price':'—';}
+  function headerHtml(pg){
+    const hid=window._lastEstimateHistoryId||'';
+    return `<div class="cs-band">INTERNAL — SALESMAN COST SHEET — NOT FOR CUSTOMER</div>
+    <div class="cs-head"><div><div class="cs-co">Absolute Garage Builders</div><div class="cs-sub">Salesman Cost Sheet</div></div>
+    <table class="cs-meta"><tr><td>Customer</td><td>${esc(v('customerName')||'—')}</td></tr><tr><td>Address</td><td>${esc(v('customerAddress')||'—')}</td></tr>
+    <tr><td>Salesman</td><td>${esc(v('salesman')||'—')}</td></tr><tr><td>Date</td><td>${new Date().toLocaleDateString('en-US')}</td></tr>
+    ${hid?`<tr><td>Estimate #</td><td>${esc(hid)}</td></tr>`:''}</table></div>
+    <div class="cs-pg">Page ${pg}</div>`;
+  }
+  const CSS=`.cs-page{width:816px;height:1056px;box-sizing:border-box;padding:34px 40px;background:#fff;color:#111827;font:12px/1.35 Arial,Helvetica,sans-serif;position:relative;overflow:hidden}
+  .cs-band{background:#b91c1c;color:#fff;font-weight:800;text-align:center;letter-spacing:.06em;padding:6px;border-radius:4px;font-size:12px}
+  .cs-head{display:flex;justify-content:space-between;align-items:flex-start;margin:10px 0 6px;border-bottom:3px solid #1e3a8a;padding-bottom:8px}
+  .cs-co{font-size:22px;font-weight:800;color:#1e3a8a}.cs-sub{font-size:12px;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:.08em}
+  .cs-meta td{padding:1px 6px;font-size:11px;vertical-align:top}.cs-meta td:first-child{color:#6b7280;font-weight:700;text-align:right}
+  .cs-pg{position:absolute;bottom:14px;right:40px;font-size:9px;color:#9ca3af}
+  .cs-h2{font-size:13px;font-weight:800;color:#1e3a8a;margin:10px 0 4px;text-transform:uppercase;letter-spacing:.05em}
+  .cs-specs{display:grid;grid-template-columns:1fr 1fr;column-gap:18px}.cs-spec{display:flex;gap:6px;border-bottom:1px solid #e5e7eb;padding:2px 0;font-size:11px}.cs-spec b{color:#374151;min-width:130px;flex:0 0 130px}.cs-spec span{word-break:break-word}
+  table.cs-t{width:100%;border-collapse:collapse;font-size:11px}.cs-t th{background:#1e3a8a;color:#fff;text-align:left;padding:4px 6px}.cs-t td{padding:3px 6px;border-bottom:1px solid #e5e7eb;vertical-align:top}
+  .cs-t .n{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}.cs-t tr.g td{background:#eef2ff;font-weight:800;color:#1e3a8a}.cs-t tr.st td{font-weight:700;background:#f9fafb}
+  .cs-sum{width:100%;border-collapse:collapse;font-size:13px}.cs-sum td{padding:5px 8px;border-bottom:1px solid #e5e7eb}.cs-sum .n{text-align:right;font-weight:700}
+  .cs-sum tr.tot td{background:#1e3a8a;color:#fff;font-size:16px;font-weight:800}.cs-sum tr.pr td{color:#166534;font-weight:800}.cs-note{font-size:10px;color:#6b7280;margin-top:6px}`;
+  function blocks(m){
+    const B=[];
+    B.push(`<div class="cs-h2">Garage specs</div><div class="cs-specs">${m.specs.map(r=>`<div class="cs-spec"><b>${esc(r[0])}</b><span>${esc(r[1])}</span></div>`).join('')}</div>`);
+    B.push(`<div class="cs-h2">Line-item cost &amp; price breakdown</div>`);
+    const th=`<table class="cs-t"><colgroup><col style="width:52%"><col style="width:16%"><col style="width:16%"><col style="width:16%"></colgroup><tr><th>Item / qty basis</th><th class="n">Cost</th><th class="n">Price (adds to total)</th><th class="n">Profit</th></tr></table>`;
+    B.push({th});
+    SECTION_ORDER.concat(Object.keys(m.groups).filter(g=>!SECTION_ORDER.includes(g))).forEach(g=>{const arr=m.groups[g];if(!arr)return;
+      B.push({row:`<tr class="g"><td colspan="4">${esc(g)}</td></tr>`});
+      let c=0,p=0;arr.forEach(({L,price})=>{const a=Number(L.amount)||0;c+=a;p+=price;
+        B.push({row:a===0?`<tr><td>${esc(L.label)}</td><td class="n" colspan="3">${esc(L.note||'included')}</td></tr>`:`<tr><td>${esc(L.label)}${L.overridden?' <i style="color:#b45309">(edited)</i>':''}</td><td class="n">${money(a)}</td><td class="n">${money(price)}</td><td class="n">${money(price-a)}</td></tr>`});});
+      if(c!==0||p!==0)B.push({row:`<tr class="st"><td>${esc(g)} subtotal</td><td class="n">${money(c)}</td><td class="n">${money(p)}</td><td class="n">${money(p-c)}</td></tr>`});});
+    B.push({end:1});
+    if(m.options.length){B.push(`<div class="cs-h2">Options — NOT included in total</div>`);B.push({th:`<table class="cs-t"><colgroup><col style="width:68%"><col style="width:32%"></colgroup><tr><th>Option</th><th class="n">Amount (not in price)</th></tr></table>`});m.options.forEach(o=>B.push({row:`<tr><td>${esc(o.d)}</td><td class="n">${money(o.c)}</td></tr>`}));B.push({end:1});}
+    const modeTxt=m.mode==='total'?'Total project price typed by salesman':m.mode==='amount'?'Profit dollar amount ('+money(m.pval)+')':'Profit percentage ('+Number(m.pval||0)+'% on internal cost)';
+    B.push(`<div class="cs-h2">Summary</div><table class="cs-sum"><tr><td>Total internal cost (sum of estimator line amounts)</td><td class="n">${money(m.cost)}</td></tr>
+      <tr><td>Pricing method</td><td class="n">${esc(modeTxt)}</td></tr>
+      <tr class="pr"><td>Profit on job ($)</td><td class="n">${money(m.profit)}</td></tr>
+      <tr class="pr"><td>Profit %</td><td class="n">${pctTxt(m)} &nbsp;|&nbsp; ${marginTxt(m)}</td></tr>
+      <tr class="tot"><td>TOTAL PROJECT PRICE</td><td class="n">${money(m.price)}</td></tr></table>
+      <div class="cs-note">Cost = the estimator's internal line amounts (same as the Internal Cost total). Price per line = that line's cost × (total price ÷ total cost); the profit is spread evenly across lines, it is not a separate per-item markup. No separate overhead or commission fields exist in the estimator, so none are shown.${m.options.length?' Options are not included in cost or price.':''}</div>`);
+    return B;
+  }
+  function paginate(m,host){
+    const pages=[];let pg,body,table=null,th=null;
+    const newPage=()=>{pg=document.createElement('div');pg.className='cs-page';pg.innerHTML=headerHtml(pages.length+1)+'<div class="cs-body"></div>';host.appendChild(pg);pages.push(pg);body=pg.querySelector('.cs-body');table=null;};
+    const limit=()=>pg.getBoundingClientRect().top+1056-40;
+    const over=el=>el.getBoundingClientRect().bottom>limit();
+    const openTable=()=>{const w=document.createElement('div');w.innerHTML=th;table=w.firstChild;body.appendChild(table);};
+    newPage();
+    blocks(m).forEach(b=>{
+      if(typeof b==='string'){const d=document.createElement('div');d.innerHTML=b;body.appendChild(d);if(over(d)){d.remove();newPage();body.appendChild(d);}table=null;return;}
+      if(b.th){th=b.th;openTable();if(over(table)){table.remove();newPage();openTable();}return;}
+      if(b.end){table=null;th=null;return;}
+      if(b.row){const t=document.createElement('tbody');t.innerHTML=b.row;const tr=t.firstChild;table.appendChild(tr);
+        if(over(tr)){tr.remove();newPage();openTable();table.querySelector('tr').insertAdjacentHTML('beforebegin','');table.appendChild(tr);}}
+    });
+    pages.forEach((p,i)=>{p.querySelector('.cs-pg').textContent='Page '+(i+1)+' of '+pages.length;});
+    return pages;
+  }
+  async function loadLib(){
+    if(typeof window.html2pdf==='function')return;
+    await new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';s.onload=res;s.onerror=()=>rej(new Error('PDF library did not load.'));document.head.appendChild(s);});
+  }
+  async function makePdf(){
+    await loadLib();
+    const m=build();window._agbCostSheetModel=m;
+    const host=document.createElement('div');host.id='agbCostSheetHost';host.style.cssText='position:fixed;left:0;top:0;width:816px;background:#fff;z-index:-9999;pointer-events:none';
+    host.innerHTML='<style>'+CSS+'</style>';document.documentElement.appendChild(host);
+    try{
+      const pages=paginate(m,host);
+      const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+      const opt={margin:0,image:{type:'jpeg',quality:0.95},html2canvas:{scale:isIOS?1.5:2,useCORS:true,backgroundColor:'#ffffff',logging:false,scrollX:0,scrollY:0},jsPDF:{unit:'px',format:[816,1056],hotfixes:['px_scaling'],orientation:'portrait',compress:true}};
+      let w=window.html2pdf().set(opt).from(pages[0]).toPdf();
+      for(let i=1;i<pages.length;i++){const p=pages[i];w=w.get('pdf').then(pdf=>{pdf.addPage([816,1056],'portrait');}).from(p).toContainer().toCanvas().toImg().toPdf();}
+      const pdf=await w.get('pdf');
+      return {pdf,model:m};
+    }finally{host.remove();}
+  }
+  window.agbBuildCostSheetPdf=makePdf;
+  window.downloadSalesmanCostSheet=async function(btn){
+    const lbl=btn&&btn.querySelector('span');const old=lbl?lbl.textContent:'';if(lbl)lbl.textContent='Building cost sheet…';if(btn)btn.disabled=true;
+    try{
+      const {pdf}=await makePdf();
+      const name='INTERNAL Cost Sheet - '+((v('customerName')||'Estimate').replace(/[\\/:*?"<>|]+/g,'-'))+'.pdf';
+      const blob=pdf.output('blob');const file=new File([blob],name,{type:'application/pdf'});
+      const isMobile=/iPad|iPhone|iPod|Android/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+      if(isMobile&&navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],title:name});return;}catch(e){if(e&&e.name==='AbortError')return;}}
+      const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
+    }catch(e){alert('Could not build cost sheet: '+(e&&e.message||e));}
+    finally{if(lbl)lbl.textContent=old;if(btn)btn.disabled=false;}
+  };
+})();
 </script>
 </body>
 </html>

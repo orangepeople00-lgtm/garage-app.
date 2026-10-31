@@ -36,7 +36,7 @@ window.AGBVoiceCore={create:function(cfg){
 
   function apply(a){ // from set_estimate_fields
     const asked=new Set((a.questions||[]).map(q=>q&&q.fieldId));
-    (a.fields||[]).forEach(f=>{ if(asked.has(f.id)) return;
+    (a.fields||[]).forEach(f=>{ if(asked.has(f.id)&&(/^(none|)$/i.test(String(f.value||'').trim())||!(cfg.keepAsked||[]).includes(f.id))) return; if(cfg.guard&&cfg.guard(f,a)===false) return;
       const v=norm(f.id,f.value); if(v===null){ if(f.id) unknown.push(f.id+': '+f.value); return; } props[f.id]={v,on:true,heard:f.heard||'',orig:v}; });
     if(Array.isArray(a.side_doors)) doors={list:a.side_doors.filter(d=>d&&d.type&&d.wall),on:true};
     if(Array.isArray(a.questions)) questions=a.questions.filter(q=>q&&q.question).map(q=>({fieldId:q.fieldId,question:q.question,options:(q.options||[]).slice(0,9)}));

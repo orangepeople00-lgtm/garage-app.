@@ -57,7 +57,7 @@ window.AGBVoiceCore={create:function(cfg){
     if(doors&&cfg.fillDoors){ const sj=$('sideDoorsJson'); if(doorsPrev===null) doorsPrev=sj?sj.value:'';
       if(doors.on&&!doorsApplied){ cfg.fillDoors(doors.list); doorsApplied=true; changed=true; }
       else if(!doors.on&&doorsApplied){ if(sj){ sj.value=doorsPrev; try{ agbDoorsToggle(); }catch(e){} } doorsApplied=false; changed=true; } }
-    if(changed){ try{ cfg.afterFill&&cfg.afterFill(); }catch(e){} } try{ cfg.afterCommit&&cfg.afterCommit(props); }catch(e){} }
+    if(changed){ try{ cfg.afterFill&&cfg.afterFill(); }catch(e){} } try{ cfg.afterCommit&&cfg.afterCommit(props,doors); }catch(e){} }
   function render(){ commit();
     const ids=FIELDS.map(f=>f[0]).filter(id=>props[id]&&!(cfg.hideOnCard||[]).includes(id));
     $('agbvCard').hidden=!(ids.length||doors||questions.length||unknown.length||heardTxt);
@@ -242,7 +242,7 @@ window.AGBVoiceCore={create:function(cfg){
     catch(e){ status('Could not read that ('+(e.message||e)+').'); }
   }
   async function answerTyped(d){ if(!d) return; let parts=[];
-    if(d.price_check&&cfg.priceInfo){ const r=cfg.priceInfo(d.price_check); window.agbVoicePrice=r; parts.push(r.error?r.error:r.difference_text!=null?('Company pricing: '+r.difference_text+(r.pinned_total?' at standard pricing (your total stays pinned at $'+r.pinned_total.toLocaleString()+')':' (total would be $'+Math.round(r.with_change_price).toLocaleString()+')')):('Current project price '+r.project_price_text)); }
+    if(d.price_check&&cfg.priceInfo){ const r=cfg.priceInfo(d.price_check); window.agbVoicePrice=r; parts.push(r.error?r.error:r.difference_text!=null?(r.difference_text):('Current project price '+r.project_price_text)); }
     if(d.city_check&&cfg.cityInfo){ const r=cfg.cityInfo(d.city_check); window.agbVoiceCity=r; parts.push(r.error||((r.notes||'')+(r.code_year?' Code year '+r.code_year+'.':'')).slice(0,400)); }
     if(d.answer) parts.push(d.answer);
     if(d.web_query){ try{ const w=await callFn({mode:'web',question:d.web_query}); window.agbVoiceWeb=w; if(w.answer) parts.push('General info: '+w.answer); }catch(e){ parts.push('Web lookup failed.'); } }

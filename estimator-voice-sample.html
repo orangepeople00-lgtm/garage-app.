@@ -12670,6 +12670,9 @@ run();setInterval(run,1500);document.addEventListener('change',run);})();
     if(d.type==='party'){ const pw=Math.max(1,Number(d.w)||6), ph=Math.max(1,Number(d.h)||7); return 800+Math.max(0,Math.ceil((pw-6)+(ph-7)))*100+(d.windows?300:0); }
     return null;
   }
+  function doorName(d,i,arr){ if(d.type==='service'){ const n=arr.slice(0,i+1).filter(x=>x.type==='service').length; return n<=1?'Service door':(['','','Second','Third','Fourth','Fifth'][n]||(n+'th'))+' service door'; }
+    if(d.type==='french') return 'French doors ('+(d.style==='fullview'?'Full View':'9 Light')+')'; return 'Party door'; }
+  window.agbDoorAddonLines=function(){ if(!on()) return []; const arr=list(); return arr.map((d,i)=>({name:doorName(d,i,arr),wall:wallTxt(d.wall),cost:price(d,i,arr)})).filter(x=>x.cost>0); };
   function price(d,i,arr){ if(d.price!==undefined && d.price!==null && String(d.price)!=='') return Number(d.price)||0; return autoPrice(d,i,arr); }
   function wallTxt(w){ return (WALLS.find(x=>x[0]===w)||[0,w])[1]; }
   function desc(d){
@@ -12760,7 +12763,7 @@ run();setInterval(run,1500);document.addEventListener('change',run);})();
     const arr=list(); if(read()) syncLegacy(arr); else { lastLegacySig=legacySig(); lastJson=''; }
     let cost=0, missing=0;
     arr.forEach((d,i)=>{ const p=price(d,i,arr); if(p===null) missing++; else cost+=p; });
-    const label=arr.length?('Side/rear doors: '+arr.map(desc).join('; ')):'No side/rear door';
+    const label=arr.length?('Side/rear doors: '+arr.map((d,i)=>{ const p=price(d,i,arr); return p>0?doorName(d,i,arr)+' +$'+p.toLocaleString()+' (cost) — '+wallTxt(d.wall):desc(d); }).join('; ')):'No side/rear door';
     setTimeout(()=>render(false),0);
     return {cost,label,missing,doors:arr};
   };
@@ -12823,7 +12826,7 @@ run();setInterval(run,1500);document.addEventListener('change',run);})();
   }, false);
 })();
 </script>
-<script src="voice-core.js?v=20261031d"></script>
+<script src="voice-core.js?v=20261031e"></script>
 <script>
 /* SAMPLE voice-estimate: estimator field schema for the shared voice-core.js */
 window.agbVoice=AGBVoiceCore.create({
@@ -12865,9 +12868,8 @@ window.agbVoice=AGBVoiceCore.create({
     const money=()=>parseFloat(String(($('customerQuote')||{}).textContent||'0').replace(/[^0-9.]/g,''))||0;
     const items=()=>[...(($('breakdown')||{}).querySelectorAll?$('breakdown').querySelectorAll('div,li,tr'):[])].map(e=>e.childElementCount?'':e.textContent.replace(/\$?[\d,]+(\.\d+)?/g,'').replace(/\s+/g,' ').trim()).filter(t=>t&&t.length<70).slice(0,30);
     const pm=$('profitMode'), pv=$('profitValue'), pinned=pm&&pm.value==='total', pin0=pinned?[pm.value,pv.value]:null;
-    if(pinned){ pm.value='percent'; pv.value='24.75'; }
     try{ calculateEstimate(); }catch(e){}
-    const base=money(), out={project_price:base, project_price_text:'$'+base.toLocaleString(), line_items:[...new Set(items())]};
+    const cost=()=>parseFloat(String(($('internalTotal')||{}).textContent||'0').replace(/[^0-9.]/g,''))||0; const base=money(), cost0=cost(), out={project_price:base, project_price_text:'$'+base.toLocaleString(), line_items:[...new Set(items())]};
     const ch=(q.changes||[]).filter(c=>c&&$(c.id)); const door=q.add_side_door&&q.add_side_door.type?q.add_side_door:null;
     if(!ch.length&&!door) return out;
     const saved=[]; const save=id=>{ const el=$(id); if(el&&!saved.some(x=>x[0]===id)) saved.push([id,el.type==='checkbox'?el.checked:el.value]); };
@@ -12877,13 +12879,16 @@ window.agbVoice=AGBVoiceCore.create({
         if(!Array.isArray(list)) list=[]; const dt=($('doorType')||{}).value||'standard'; if(!list.length&&dt!=='no'){ const loc=($('serviceDoorLocation')||{}).value||'left'; list.push(dt==='french'?{type:'french',wall:loc==='back'?'rear':loc,style:($('frenchDoorStyle')||{}).value||'9light'}:{type:'service',wall:loc==='back'?'rear':(loc==='front'?'left':loc)}); }
         list.push(door.type==='french'?{type:'french',wall:door.wall||'right',style:door.style||'9light'}:door.type==='party'?{type:'party',wall:door.wall||'right',w:6,h:7,windows:false}:{type:'service',wall:door.wall||'right'});
         $('sideDoorsListOn').checked=true; sj.value=JSON.stringify(list); }
-      calculateEstimate(); const after=money();
-      out.with_change_price=after; out.difference=Math.round((after-base)*100)/100; out.difference_text=(after>=base?'+$':'-$')+Math.abs(Math.round(after-base)).toLocaleString();
-      if(door&&door.type==='service'&&!ch.length){ out.calculator_difference_text=out.difference_text; out.difference_text='+$600 flat'; out.calculator_with_change_price=out.with_change_price; out.with_change_price=base+600; out.difference=600; out.owner_note='Owner price: a 2nd service door is quoted at $600 flat (no profit added).'; }
+      calculateEstimate(); const after=money(), costDiff=Math.round(cost()-cost0);
+      let label='This change'; if(door){ const svc=(()=>{ try{ return JSON.parse($('sideDoorsJson').value||'[]'); }catch(e){ return []; } })(); const n=svc.filter(x=>x.type==='service').length;
+        label=door.type==='service'?(n<=1?'Service door':(['','','Second','Third','Fourth'][n]||'Another')+' service door'):door.type==='french'?'French doors ('+(door.style==='fullview'?'Full View':'9 Light')+')':'Party door'; }
+      out.addon_label=label; out.cost_difference=costDiff; out.with_change_price=after; out.difference=Math.round((after-base)*100)/100;
+      if(pinned){ out.difference_text=label+' adds $'+costDiff.toLocaleString()+' to cost; the total stays locked at $'+Number(pv.value).toLocaleString()+' (profit drops by $'+costDiff.toLocaleString()+').'; }
+      else out.difference_text=label+' adds $'+Math.round(after-base).toLocaleString()+' to the customer price ($'+costDiff.toLocaleString()+' cost + profit); new total $'+Math.round(after).toLocaleString()+'.';
     }catch(e){ out.error='Could not price that change ('+(e.message||e)+')'; }
-    finally{ saved.forEach(([id,v])=>{ const el=$(id); if(el.type==='checkbox') el.checked=v; else el.value=v; }); if(pin0){ pm.value=pin0[0]; pv.value=pin0[1]; } try{ calculateEstimate(); }catch(e){} }
-    if(pin0){ out.note='The salesman pinned the total at $'+Number(pin0[1]).toLocaleString()+'; it STAYS $'+Number(pin0[1]).toLocaleString()+' even if this is added. The difference is at standard company pricing.'; out.pinned_total=Number(pin0[1]); }
-    else if(money()!==base) out.warning='restore mismatch';
+    finally{ saved.forEach(([id,v])=>{ const el=$(id); if(el.type==='checkbox') el.checked=v; else el.value=v; }); try{ calculateEstimate(); }catch(e){} }
+    if(pinned) out.locked_total=Number(pv.value);
+    if(money()!==base) out.warning='restore mismatch';
     return out; },
   cityInfo:function(city){ city=String(city||'').trim(); const pick=o=>{ if(!o) return null; const k=Object.keys(o).find(k=>k.toLowerCase()===city.toLowerCase()); return k?o[k]:null; };
     const g=n=>{ try{ return eval('typeof '+n+'!=="undefined"?'+n+':null'); }catch(e){ return null; } };
@@ -12905,6 +12910,9 @@ window.agbVoice=AGBVoiceCore.create({
     const internal=parseFloat(((document.getElementById('internalTotal')||{}).textContent||'').replace(/[^0-9.]/g,''))||0;
     const bad=on&&internal>Number(p.v);
     if(!w&&bad){ w=document.createElement('div'); w.id='agbvTotalWarn'; w.className='agbv-unk'; card.insertBefore(w,document.getElementById('agbvQs')); }
+    let a=document.getElementById('agbvAddons'); const lines=on&&window.agbDoorAddonLines?window.agbDoorAddonLines():[];
+    if(!a&&lines.length){ a=document.createElement('div'); a.id='agbvAddons'; a.className='agbv-unk'; a.style.color='#fbbf24'; card.insertBefore(a,document.getElementById('agbvQs')); }
+    if(a){ a.hidden=!lines.length; a.innerHTML=lines.map(l=>l.name+' +$'+l.cost.toLocaleString()+' (cost) — total stays $'+Number(p.v).toLocaleString()).map(t=>'<div>'+t.replace(/[<>&]/g,'')+'</div>').join(''); }
     if(w){ w.hidden=!bad; if(bad) w.textContent='⚠ Pinned total $'+Number(p.v).toLocaleString()+' is below internal cost $'+Math.round(internal).toLocaleString()+' — profit is negative.'; }
     },
   itemLabel:function(id,p){ return id==='profitValue'?'Total set to $'+Number(p.v).toLocaleString()+' (uncheck for calculated price)':null; },

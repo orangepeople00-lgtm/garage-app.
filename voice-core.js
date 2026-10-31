@@ -11,35 +11,46 @@ window.AGBVoiceCore={create:function(cfg){
   const FN=cfg.fnName||'estimate-voice-session';
   const MAX_TOTAL=900, MAX_IDLE=120, STILL_THERE=80; // seconds: quiet safety caps (15 min total, 2 min silence)
   // id, plain label. Order = fill order (city first so city rules apply, parents before children).
-  const FIELDS=cfg.fields;
-  const LABEL=Object.fromEntries(FIELDS);
+  /* Field list = hand-tuned cfg.fields + cfg.autoFields() (schema scraped from the page, so new calculator controls and
+     dynamically built rows are covered automatically). Refreshed before every catalog/apply/commit/render. */
+  let FIELDS=cfg.fields, LABEL=Object.fromEntries(FIELDS);
+  function refreshFields(){ let auto=[]; try{ auto=cfg.autoFields?cfg.autoFields(cfg.fields)||[]:[]; }catch(e){} const seen=new Set(cfg.fields.map(f=>f[0]));
+    FIELDS=cfg.fields.concat(auto.filter(f=>f&&f[0]&&!seen.has(f[0])&&seen.add(f[0]))); LABEL=Object.fromEntries(FIELDS); }
+  /* Spoken value -> option: exact value/label first, then every spoken word must appear in the option label.
+     One match fills silently; several = ambiguous (ask which, naming the real options). */
+  function fuzzyOpt(el,v){ const toks=String(v||'').toLowerCase().replace(/[^a-z0-9.\/' ]/g,' ').split(/\s+/).filter(t=>t&&!/^(the|a|an|door|color|colour|please|with|of)$/.test(t));
+    if(!toks.length) return {one:null,many:[]}; const o=optsOf(el).filter(x=>x[0]!==''); const hit=o.filter(x=>{ const L=(x[1]+' '+x[0]).toLowerCase(); return toks.every(t=>L.includes(t)); });
+    if(hit.length===1) return {one:hit[0][0],many:[]}; return {one:null,many:hit}; }
   let props={}, doors=null, questions=[], unknown=[];
   let heardSpeech=false, sayBuf='', sayNew=true; let pc=null, dc=null, mic=null, audio=null, t0=0, lastAct=0, tick=null, usage={sessions:0,in_audio:0,in_text:0,in_cached:0,out_audio:0,out_text:0};
 
   function optsOf(el){ return Array.from(el.options||[]).filter(o=>!o.disabled).map(o=>[o.value,o.textContent.trim()]); }
   function kindOf(el){ if(!el) return null; if(el.tagName==='SELECT') return 'select'; if(el.type==='checkbox') return 'bool'; if(el.type==='number'||el.type==='range') return 'number'; return 'text'; }
-  function catalog(){
+  function catalog(){ refreshFields();
     const lines=[];
     FIELDS.forEach(([id,lab])=>{ const el=$(id), k=kindOf(el); if(!k) return;
       let a=k==='bool'?'true/false':k==='number'?('number'+(el.min?(' min '+el.min):'')+(el.max?(' max '+el.max):'')):k==='text'?'text':optsOf(el).map(o=>o[0]===o[1]?o[0]:o[0]+'='+o[1].replace(/\s*\(\+?\$[^)]*\)/g,'')).join('; ');
       lines.push(id+' | '+lab+' | '+a); });
-    (cfg.extraCatalog||[]).forEach(l=>lines.push(l));
+    ((typeof cfg.extraCatalog==='function'?cfg.extraCatalog():cfg.extraCatalog)||[]).forEach(l=>lines.push(l));
     return lines.join('\n');
   }
   function current(){ return FIELDS.map(([id])=>{ const el=$(id),k=kindOf(el); if(!k) return ''; return id+'='+(k==='bool'?el.checked:el.value); }).filter(Boolean).join(', '); }
   function norm(id,v){ const el=$(id),k=kindOf(el); if(!k) return null; v=String(v==null?'':v).trim(); if(k==='select'&&v.includes('=')) v=v.split('=')[0].trim();
     if(k==='bool'){ if(/^(true|yes|1|on|checked)$/i.test(v)) return true; if(/^(false|no|0|off)$/i.test(v)) return false; return null; }
     if(k==='number'){ const n=Number(v.replace(/[^0-9.\-]/g,'')); return isFinite(n)&&v!==''?n:null; }
-    if(k==='select'){ const o=optsOf(el), lv=v.toLowerCase(); const m=o.find(x=>x[0].toLowerCase()===lv)||o.find(x=>x[1].toLowerCase()===lv)||o.find(x=>x[1].toLowerCase().replace(/,\s*il$/,'')===lv); return m?m[0]:null; }
+    if(k==='select'){ const o=optsOf(el), lv=v.toLowerCase(); const m=o.find(x=>x[0].toLowerCase()===lv)||o.find(x=>x[1].toLowerCase()===lv)||o.find(x=>x[1].toLowerCase().replace(/,\s*il$/,'')===lv)||o.find(x=>x[1].toLowerCase().replace(/\s*\(.*\)\s*$/,'')===lv); if(m) return m[0]; const fz=fuzzyOpt(el,v); return fz.one; }
     return v||null; }
   function plain(id,v){ const el=$(id),k=kindOf(el); if(k==='bool') return v?'Yes':'No'; if(k==='select'){ const o=optsOf(el).find(x=>x[0]===String(v)); return o?o[1]:v; } return String(v); }
 
   function apply(a){ // from set_estimate_fields
+    refreshFields(); const ambig=[]; const noteTxt=String(a.notes||window._agbLastNote||'').toLowerCase();
+    if(a.notes) addNote(a.notes,a.notes);
     const asked=new Set((a.questions||[]).map(q=>q&&q.fieldId));
-    (a.fields||[]).forEach(f=>{ if(asked.has(f.id)&&(/^(none|)$/i.test(String(f.value||'').trim())||!(cfg.keepAsked||[]).includes(f.id))){ const pv=norm(f.id,f.value); if(pv!==null&&!/^(none|)$/i.test(String(f.value||'').trim())) pending[f.id]=pv; return; } if(cfg.guard&&cfg.guard(f,a)===false) return;
-      const v=norm(f.id,f.value); if(v===null){ if(f.id) unknown.push(f.id+': '+f.value); return; } props[f.id]={v,on:true,heard:f.heard||'',orig:v}; });
+    (a.fields||[]).forEach(f=>{ if(f&&f.id==='additionalEstimateNotes'&&a.notes) return; if(f&&f.id!=='additionalEstimateNotes'&&noteTxt&&f.heard&&noteTxt.includes(String(f.heard).toLowerCase().trim())) return; if(asked.has(f.id)&&(/^(none|)$/i.test(String(f.value||'').trim())||!(cfg.keepAsked||[]).includes(f.id))){ const pv=norm(f.id,f.value); if(pv!==null&&!/^(none|)$/i.test(String(f.value||'').trim())) pending[f.id]=pv; return; } if(cfg.guard&&cfg.guard(f,a)===false) return;
+      const v=norm(f.id,f.value); if(v===null){ const el=$(f.id); if(el&&kindOf(el)==='select'){ const fz=fuzzyOpt(el,f.value); if(fz.many.length>1){ ambig.push({fieldId:f.id,question:'Which '+String(LABEL[f.id]||f.id).replace(/\s*\(.*$/,'').toLowerCase()+' — '+fz.many.slice(0,8).map(x=>x[1].replace(/\s*\(\+?\$[^)]*\)/g,'')).join(', ')+'?',options:fz.many.slice(0,9).map(x=>x[1])}); return; } } if(f.id) unknown.push(f.id+': '+f.value); return; } props[f.id]={v,on:true,heard:f.heard||'',orig:v}; });
     if(Array.isArray(a.side_doors)) doors={list:a.side_doors.filter(d=>d&&d.type&&d.wall),on:true};
-    if(Array.isArray(a.questions)) questions=a.questions.filter(q=>q&&q.question).map(q=>({fieldId:q.fieldId,question:q.question,options:(q.options||[]).slice(0,9)}));
+    if(Array.isArray(a.questions)||ambig.length) questions=(a.questions||[]).filter(q=>q&&q.question).map(q=>({fieldId:q.fieldId,question:q.question,options:(q.options||[]).slice(0,9)})).concat(ambig.filter(x=>!(a.questions||[]).some(q=>q&&q.fieldId===x.fieldId)));
+    a._ambig=ambig;
     (a.unknownPhrases||[]).forEach(p=>unknown.push(p));
     // answered questions drop off
     questions=questions.filter(q=>asked.has(q.fieldId)||!(props[q.fieldId]&&a.fields&&a.fields.some(f=>f.id===q.fieldId)));
@@ -50,7 +61,7 @@ window.AGBVoiceCore={create:function(cfg){
      price updates while he talks. prevVals keeps each control's value from before voice touched it, so unchecking reverts it. */
   let prevVals={}, doorsPrev=null, doorsApplied=false;
   function curVal(id){ const el=$(id); if(!el) return undefined; return kindOf(el)==='bool'?el.checked:el.value; }
-  function commit(){ let changed=false; Object.entries(cfg.linked||{}).forEach(([lead,deps])=>{ if(props[lead]) deps.forEach(d=>{ if(props[d]) props[d].on=props[lead].on; }); });
+  function commit(){ refreshFields(); let changed=false; Object.entries(cfg.linked||{}).forEach(([lead,deps])=>{ if(props[lead]) deps.forEach(d=>{ if(props[d]) props[d].on=props[lead].on; }); });
     FIELDS.forEach(([id])=>{ if(props[id]&&!(id in prevVals)) prevVals[id]=curVal(id); });
     FIELDS.forEach(([id])=>{ const p=props[id]; if(!p) return;
       const want=p.on?p.v:prevVals[id]; const before=curVal(id); setEl(id,want); if(String(curVal(id))!==String(before)) changed=true; });
@@ -65,7 +76,7 @@ window.AGBVoiceCore={create:function(cfg){
       let ed=k==='select'?'<select data-ed="'+id+'">'+optsOf(el).map(o=>'<option value="'+esc(o[0])+'"'+(o[0]===String(p.v)?' selected':'')+'>'+esc(o[1])+'</option>').join('')+'</select>'
         :k==='bool'?'<select data-ed="'+id+'"><option value="true"'+(p.v?' selected':'')+'>Yes</option><option value="false"'+(!p.v?' selected':'')+'>No</option></select>'
         :'<input type="text" data-ed="'+id+'" value="'+esc(p.v)+'">';
-      return '<label class="agbv-item"><input type="checkbox" data-on="'+id+'"'+(p.on?' checked':'')+'><span>'+esc((cfg.itemLabel&&cfg.itemLabel(id,p))||LABEL[id])+(p.heard?'<br><i style="color:#a1a1aa;font-size:11px">heard as “'+esc(p.heard)+'”</i>':'')+'</span>'+ed+'</label>'; }).join('')
+      return '<label class="agbv-item"><input type="checkbox" data-on="'+id+'"'+(p.on?' checked':'')+'><span>'+esc((cfg.itemLabel&&cfg.itemLabel(id,p,prevVals[id]))||LABEL[id])+(p.heard?'<br><i style="color:#a1a1aa;font-size:11px">heard as “'+esc(p.heard)+'”</i>':'')+'</span>'+ed+'</label>'; }).join('')
       +(doors?'<label class="agbv-item"><input type="checkbox" data-on="__doors"'+(doors.on?' checked':'')+'><span>Side/rear doors</span><span>'+(doors.list.length?doors.list.map(doorTxt).map(esc).join('<br>'):'None')+'</span></label>':'');
     $('agbvQs').innerHTML=questions.map((q,i)=>'<div class="agbv-q">'+esc(q.question)+'<div class="opts">'+q.options.map((o,j)=>'<button type="button" data-q="'+i+'" data-o="'+j+'">'+esc(o)+'</button>').join('')+'</div></div>').join('');
     $('agbvUnknown').hidden=!unknown.length; $('agbvUnknown').textContent=unknown.length?'Not understood: '+unknown.join('; '):'';
@@ -143,6 +154,8 @@ window.AGBVoiceCore={create:function(cfg){
     if(on){ clearTimeout(playChk); const t0a=audio?audio.currentTime:0; playChk=setTimeout(()=>{ if(aiTalking&&audio&&(audio.paused||audio.currentTime<=t0a)) soundWarn(); else { const w=$('agbvSoundWarn'); if(w) w.hidden=true; } window.agbVoiceAudio={paused:audio.paused,currentTime:audio.currentTime,start:t0a}; },1500); } }
   function ensureSayUI(){ if($('agbvSay')) return; const d=document.createElement('div'); d.id='agbvSay'; d.className='agbv-say'; d.hidden=true;
     d.innerHTML='<span class="agbv-eq"><i></i><i></i><i></i></span><span><b>AI:</b> <span id="agbvSayTxt"></span></span>'; $('agbvStatus').after(d); }
+  let lastBd='', bdT=null;
+  function pushBreakdown(){ if(!live()||!cfg.breakdown){ clearInterval(bdT); return; } const b=cfg.breakdown(); if(!b||b===lastBd) return; lastBd=b; send({type:'conversation.item.create',item:{type:'message',role:'system',content:[{type:'input_text',text:'CURRENT ESTIMATE (replaces earlier): '+b}]}}); }
   function live(){ return !!(dc&&dc.readyState==='open'); }
   function send(o){ if(live()) dc.send(JSON.stringify(o)); }
   function say(text){ send({type:'conversation.item.create',item:{type:'message',role:'user',content:[{type:'input_text',text}]}}); send({type:'response.create'}); lastAct=Date.now(); }
@@ -153,12 +166,12 @@ window.AGBVoiceCore={create:function(cfg){
     unlockAudio(); // must run inside the Talk tap (iPhone)
     try{
       mic=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true,channelCount:1}});
-      const tok=await callFn({mode:'realtime',page:cfg.page||'',catalog:catalog(),current:current(),learned:learnedText()});
+      const tok=await callFn({mode:'realtime',page:cfg.page||'',catalog:catalog(),current:current(),knowledge:(cfg.knowledgePack?cfg.knowledgePack():''),breakdown:(cfg.breakdown?cfg.breakdown():''),learned:learnedText()});
       pc=new RTCPeerConnection();
       pc.ontrack=e=>{ playRemote(e.streams[0]||new MediaStream([e.track])); };
       pc.addTrack(mic.getTracks()[0],mic);
       dc=pc.createDataChannel('oai-events'); dc.onmessage=e=>{ try{ onEvent(JSON.parse(e.data)); }catch(x){} };
-      dc.onopen=()=>{ ensureSayUI(); status('Listening…'); heardSpeech=false; stillAsked=false; userAct=Date.now(); /* silent start: no greeting, no response.create */
+      dc.onopen=()=>{ lastBd=cfg.breakdown?cfg.breakdown():''; clearInterval(bdT); bdT=setInterval(pushBreakdown,2500); ensureSayUI(); status('Listening…'); heardSpeech=false; stillAsked=false; userAct=Date.now(); /* silent start: no greeting, no response.create */
         if(Object.keys(props).length) send({type:'conversation.item.create',item:{type:'message',role:'user',content:[{type:'input_text',text:'(Context, do not reply: already set '+JSON.stringify(Object.fromEntries(Object.entries(props).map(([k,p])=>[k,p.v])))+')'}]}});
         setTimeout(()=>{ if(live()&&!heardSpeech) status('Listening… (not hearing anything yet — check mic permission: aA → Website Settings → Microphone)'); },15000); };
       pc.onconnectionstatechange=()=>{ const st=pc&&pc.connectionState; if(st==='failed'||st==='closed') stop('Voice ended (connection lost). Tap Talk to keep going — the list is kept.'); else if(st==='disconnected') setTimeout(()=>{ if(pc&&pc.connectionState==='disconnected') stop('Voice ended (connection lost). Tap Talk to keep going — the list is kept.'); },10000); };
@@ -178,10 +191,23 @@ window.AGBVoiceCore={create:function(cfg){
     else if(idle>STILL_THERE&&!stillAsked){ stillAsked=true; status('Still there? (voice ends after 2 min of quiet)'); } }
   let lastUserTxt='';
   /* Background noise often transcribes as nothing, a filler ("uh", "mm"), or a stock phrase ("Thank you.", "Bye.") — never act on those. */
-  function realSpeech(t){ const s=String(t||'').toLowerCase().replace(/[^a-z0-9 ]/g,' ').trim(); if(!s) return false;
-    if(/^(uh+|um+|mm+|hmm+|ah+|oh+|you|bye|thank you|thanks|thanks for watching|okay|ok|yeah|huh)( (uh+|um+|you|bye|thank you))*$/.test(s)&&!pendingQuestion()) return false;
-    lastUserTxt=t; heardSpeech=true; return true; }
-  function pendingQuestion(){ return (questions||[]).length>0||aiTalking; }
+  let aiAskedAt=0;
+  /* Noise/filler never interrupts the AI. While it talks, only a real utterance (2+ words or a number) counts.
+     Short "yes/okay/no" count only as an answer after the AI (or the card) asked something and the AI has finished. */
+  function realSpeech(t){ const s=String(t||'').toLowerCase().replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim(); if(!s) return false;
+    const words=s.split(' '), noise=/^((uh+|um+|mm+|hmm+|ah+|oh+|huh|you|bye|thank you|thanks|thanks for watching)\s*)+$/.test(s),
+      short=/^((yes|yeah|yep|no|nope|okay|ok|sure|right|correct)\s*)+$/.test(s);
+    if(noise) return false;
+    if(aiTalking&&(short||(words.length<2&&!/\d/.test(s)))) return false;
+    if(short&&!((questions||[]).length||Date.now()-aiAskedAt<30000)) return false;
+    lastUserTxt=t; window._agbLastUtter=t; heardSpeech=true; return true; }
+  /* Local safety-net parsing of one utterance: open card questions, note text (kept apart so it never sets fields),
+     spoken sizes, contact info, price phrases. The AI's set_estimate_fields stays primary. */
+  function localParse(txt,dims){ const ns=cfg.splitNote?cfg.splitNote(txt):null; window._agbLastNote=ns&&ns.note?ns.note:''; const body=ns?ns.before:txt;
+    answerFromSpeech(body); if(dims!==false) dimsFromSpeech(body); extraFromSpeech(body); if(ns&&ns.note) addNote(ns.note,ns.heard); }
+  function addNote(n,h){ const f={id:'additionalEstimateNotes',value:String(n||'').trim(),heard:h||n}; if(!f.value||!$(f.id)) return; if(cfg.guard&&cfg.guard(f,{})===false) return; props[f.id]={v:f.value,on:true,heard:f.heard,orig:f.value}; }
+  function answerFromSpeech(t){ const N=x=>String(x||'').toLowerCase().replace(/\(\+?\$[^)]*\)/g,'').replace(/\bby\b/g,'x').replace(/[^a-z0-9]/g,''); const T=N(t); if(!T) return;
+    for(let i=questions.length-1;i>=0;i--){ const q=questions[i]; if(!q.fieldId||!q.options||!q.options.length) continue; const hit=q.options.map((o,j)=>[N(o),j]).filter(([o])=>o&&T.includes(o)); if(hit.length===1) answer(i,hit[0][1]); } }
   function stop(msg){ clearInterval(tick); tick=null; window.agbVoiceDebug={heardSpeech,heard:heardTxt,at:new Date().toISOString()};
     try{ dc&&dc.close(); }catch(e){} try{ pc&&pc.close(); }catch(e){} try{ mic&&mic.getTracks().forEach(t=>t.stop()); }catch(e){}
     dc=pc=mic=null; aiTalking=false; clearTimeout(playChk); const sy=$('agbvSay'); if(sy) sy.classList.remove('talking'); $('agbvMic').classList.remove('live'); $('agbvMicTxt').textContent='Talk with the helper'; $('agbvTimer').hidden=true;
@@ -193,20 +219,20 @@ window.AGBVoiceCore={create:function(cfg){
     else if(t==='output_audio_buffer.stopped'||t==='output_audio_buffer.cleared') setTalking(false);
     else if(t==='response.output_audio_transcript.delta'&&ev.delta){ if(!sayBuf||sayNew){ sayBuf=''; sayNew=false; } sayBuf+=ev.delta; sayLine(sayBuf); }
     else if(t==='input_audio_buffer.speech_stopped'){ if(!aiTalking) status('Listening…'); }
-    else if(t==='conversation.item.input_audio_transcription.completed'&&ev.transcript) { if(!realSpeech(ev.transcript)) return; lastAct=userAct=Date.now(); stillAsked=false; if(aiTalking){ send({type:'response.cancel'}); send({type:'output_audio_buffer.clear'}); setTalking(false); } send({type:'response.create'}); status('Listening… (updating estimate)'); log('u',ev.transcript); lastAct=Date.now(); heardSpeech=true; heard(ev.transcript); voicedYes(ev.transcript); dimsFromSpeech(ev.transcript); extraFromSpeech(ev.transcript); render(); }
+    else if(t==='conversation.item.input_audio_transcription.completed'&&ev.transcript) { if(!realSpeech(ev.transcript)) return; lastAct=userAct=Date.now(); stillAsked=false; if(aiTalking){ send({type:'response.cancel'}); send({type:'output_audio_buffer.clear'}); setTalking(false); } send({type:'response.create'}); status('Listening… (updating estimate)'); log('u',ev.transcript); lastAct=Date.now(); heardSpeech=true; heard(ev.transcript); voicedYes(ev.transcript); localParse(ev.transcript); render(); }
     else if(t==='conversation.item.input_audio_transcription.failed'){ /* usually noise: ignore quietly */ }
-    else if(t==='response.output_audio_transcript.done'&&ev.transcript){ log('a',ev.transcript); sayLine(ev.transcript,true); sayNew=true; }
+    else if(t==='response.output_audio_transcript.done'&&ev.transcript){ if(/\?\s*$/.test(ev.transcript)) aiAskedAt=Date.now(); log('a',ev.transcript); sayLine(ev.transcript,true); sayNew=true; }
     else if(t==='response.function_call_arguments.done'){
       let a={}; try{ a=JSON.parse(ev.arguments||'{}'); }catch(e){}
-      if(ev.name==='get_price_info'||ev.name==='get_city_info'||ev.name==='web_lookup'){ status(ev.name==='web_lookup'?'Looking that up…':'Checking…');
+      if(ev.name==='get_price_info'||ev.name==='get_city_info'||ev.name==='web_lookup'||ev.name==='search_page_info'){ status(ev.name==='web_lookup'?'Looking that up…':'Checking…');
         const reply=r=>{ send({type:'conversation.item.create',item:{type:'function_call_output',call_id:ev.call_id,output:JSON.stringify(r).slice(0,3000)}}); send({type:'response.create'}); };
-        Promise.resolve().then(()=>ev.name==='get_price_info'?(cfg.priceInfo?cfg.priceInfo(a):{error:'no pricing on this page'}):ev.name==='get_city_info'?(cfg.cityInfo?cfg.cityInfo(a.city):{error:'no city data'}):callFn({mode:'web',question:a.question}).then(d=>({answer:d.answer,source:'web (general info)'})))
+        Promise.resolve().then(()=>ev.name==='get_price_info'?(cfg.priceInfo?cfg.priceInfo(a):{error:'no pricing on this page'}):ev.name==='get_city_info'?(cfg.cityInfo?cfg.cityInfo(a.city):{error:'no city data'}):ev.name==='search_page_info'?(cfg.searchInfo?cfg.searchInfo(a.query):{error:'no page search'}):callFn({mode:'web',question:a.question}).then(d=>({answer:d.answer,source:'web (general info)'})))
           .catch(e=>({error:String(e.message||e)})).then(reply); return; }
       if(ev.name==='get_job_status'){ status('Looking up job…'); jobStatus(a.query).catch(e=>({error:String(e.message||e)})).then(r=>{ send({type:'conversation.item.create',item:{type:'function_call_output',call_id:ev.call_id,output:JSON.stringify(r).slice(0,4000)}}); send({type:'response.create'}); status('Listening…'); }); return; }
       if(ev.name==='finish_estimate'&&!/\b(done|that'?s (it|all)|that is (it|all)|finished|all set|we'?re good|end (it|the conversation)|stop)\b/i.test(lastUserTxt)){ send({type:'conversation.item.create',item:{type:'function_call_output',call_id:ev.call_id,output:'He did not say he is done. Keep listening silently.'}}); return; }
       if(ev.name==='finish_estimate'){ send({type:'conversation.item.create',item:{type:'function_call_output',call_id:ev.call_id,output:'all set; everything is already on the estimate'}}); setTimeout(()=>stop('All set — everything you said is on the estimate. Fix anything in the list below, or tap Talk to add more.'),2500); return; }
-      apply(a); const needQ=(a.questions||[]).length>0||(a.unknownPhrases||[]).length>0;
-      send({type:'conversation.item.create',item:{type:'function_call_output',call_id:ev.call_id,output:needQ?'set; now ask your one short question out loud':'set on the estimate; stay silent'}});
+      apply(a); const needQ=(a.questions||[]).length>0||(a.unknownPhrases||[]).length>0||(a._ambig||[]).length>0;
+      send({type:'conversation.item.create',item:{type:'function_call_output',call_id:ev.call_id,output:needQ?('set; now ask your one short question out loud'+((a._ambig||[]).length?(': '+a._ambig.map(x=>x.question).join(' ')):'')):'set on the estimate; stay silent'}});
       if(needQ) send({type:'response.create'}); /* otherwise stay silent and keep listening */
     }
     if(t==='response.done'&&ev.response&&ev.response.status&&ev.response.status!=='completed'){ window.agbVoiceLastBad=ev.response.status_details; status('Helper reply was cut off ('+ev.response.status+') — say it again or type it.'); }
@@ -243,9 +269,10 @@ window.AGBVoiceCore={create:function(cfg){
   }
   async function sendText(txt){
     txt=txt||$('agbvText').value.trim(); if(!txt) return; $('agbvText').value='';
-    if(live()){ log('u',txt); heard(txt); voicedYes(txt); dimsFromSpeech(txt); extraFromSpeech(txt); render(); say(txt); return; }
+    if(live()){ log('u',txt); heard(txt); voicedYes(txt); localParse(txt); render(); say(txt); return; }
     status('Reading…');
-    try{ const d=await callFn({mode:'text',page:cfg.page||'',catalog:catalog(),current:current(),learned:learnedText(),transcript:txt}); window.agbVoiceLastText=d; heard(txt); voicedYes(txt); apply(d); const W=(cfg.dims||[])[0]; if(!(d.fields||[]).some(f=>f.id===W)) dimsFromSpeech(txt); extraFromSpeech(txt); answerTyped(d); render(); status(questions.length?'Answer the questions below — everything else is already on the estimate.':'Set on the estimate — uncheck anything that is wrong.'); }
+    window._agbLastUtter=txt;
+    try{ const d=await callFn({mode:'text',page:cfg.page||'',catalog:catalog(),current:current(),knowledge:(cfg.knowledgePack?cfg.knowledgePack():''),breakdown:(cfg.breakdown?cfg.breakdown():''),learned:learnedText(),transcript:txt}); window.agbVoiceLastText=d; heard(txt); voicedYes(txt); const ns0=cfg.splitNote?cfg.splitNote(txt):null; window._agbLastNote=(d.notes||(ns0&&ns0.note)||''); apply(d); const W=(cfg.dims||[])[0]; const hadNote=!!d.notes; localParse(txt,!(d.fields||[]).some(f=>f.id===W)); if(hadNote&&ns0&&ns0.note&&props.additionalEstimateNotes){}  answerTyped(d); render(); status(questions.length?'Answer the questions below — everything else is already on the estimate.':'Set on the estimate — uncheck anything that is wrong.'); }
     catch(e){ status('Could not read that ('+(e.message||e)+').'); }
   }
   async function answerTyped(d){ if(!d) return; let parts=[];
@@ -260,5 +287,5 @@ window.AGBVoiceCore={create:function(cfg){
   function reset(){ props={}; doors=null; questions=[]; unknown=[]; pending={}; heardTxt=''; prevVals={}; doorsPrev=null; doorsApplied=false; const h=$('agbvHeard'); if(h) h.remove(); render(); }
   function fill(){ /* "Done": values are already on the estimate; just close the list */ if(live()) stop('Done — everything is on the estimate.'); else status('Done — everything is on the estimate.'); reset(); }
   function clear(){ /* "Undo all": revert every control voice changed */ Object.keys(props).forEach(id=>props[id].on=false); if(doors) doors.on=false; commit(); status('Undid everything voice set.'); reset(); }
-  return {toggle:()=>live()||pc?stop('Voice stopped.'):start(), sendText, fill, clear, catalog, _apply:apply, learned, _jobStatus:jobStatus, _state:()=>({props,doors,questions,unknown}), usage:()=>usage, /* offline test hook: fake data channel, feed events */ _sim:()=>{ window.agbVoiceSent=[]; dc={readyState:'open',send:m=>window.agbVoiceSent.push(JSON.parse(m)),close(){}}; return onEvent; }};
+  return {toggle:()=>live()||pc?stop('Voice stopped.'):start(), sendText, fill, clear, catalog, _apply:apply, learned, _jobStatus:jobStatus, _state:()=>({props,doors,questions,unknown}), usage:()=>usage, /* offline test hook: fake data channel, feed events */ _pushBreakdown:pushBreakdown, _priceInfo:q=>cfg.priceInfo?cfg.priceInfo(q):null, _sim:()=>{ window.agbVoiceSent=[]; dc={readyState:'open',send:m=>window.agbVoiceSent.push(JSON.parse(m)),close(){}}; return onEvent; }};
 }};

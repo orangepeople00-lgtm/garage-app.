@@ -12826,7 +12826,7 @@ run();setInterval(run,1500);document.addEventListener('change',run);})();
   }, false);
 })();
 </script>
-<script src="voice-core.js?v=20261031f"></script>
+<script src="voice-core.js?v=20261031g"></script>
 <script>
 /* Voice estimate: estimator field schema for the shared voice-core.js */
 /* Contact info from speech: "his number is 708-555-1234", "seven oh eight five five five ...", "email bob at gmail dot com" */
@@ -12851,6 +12851,80 @@ window.agbPriceFromSpeech=function(t){ const s=String(t).toLowerCase().replace(/
     if(m) n=+m[1].replace(/,/g,''); else if((m=s.match(/(\d+(?:\.\d+)?)\s*(k|thousand|grand)(?:\s*(?:and\s*)?(\d)\s*hundred|\s*(\d{3}))?/))) n=Math.round(+m[1]*1000+(m[3]?+m[3]*100:0)+(m[4]?+m[4]:0));
     if(!n||n<5000||n>500000) return [];
     return [{id:'profitMode',value:'total',heard:m[0]},{id:'profitValue',value:String(n),heard:m[0]}]; };
+/* ===== Voice: schema-driven field catalog (every calculator control, scraped from the page) ===== */
+window.agbNumbersSaid=function(t){ let s=String(t||'').toLowerCase().replace(/(\d),(\d{3})/g,'$1$2');
+  const W={zero:0,one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10,eleven:11,twelve:12,thirteen:13,fourteen:14,fifteen:15,sixteen:16,seventeen:17,eighteen:18,nineteen:19,twenty:20,thirty:30,forty:40,fifty:50,sixty:60,seventy:70,eighty:80,ninety:90};
+  const out=[]; (s.match(/\$?\d+(?:\.\d+)?\s*(?:k\b|thousand|grand|hundred)?/g)||[]).forEach(m=>{ let n=parseFloat(m.replace(/[^0-9.]/g,'')); if(/k\b|thousand|grand/.test(m)) n*=1000; else if(/hundred/.test(m)) n*=100; out.push(n); });
+  // spoken words: "two thousand", "fifteen hundred", "twenty five hundred", "two thousand five hundred"
+  const toks=s.replace(/-/g,' ').split(/[^a-z0-9]+/); let cur=0,total=0,any=false; const flush=()=>{ if(any) out.push(total+cur); cur=0; total=0; any=false; };
+  toks.forEach(w=>{ if(w in W){ cur+=W[w]; any=true; } else if(w==='hundred'&&any){ cur*=100; } else if((w==='thousand'||w==='grand')&&any){ total+=cur*1000; cur=0; } else if(w==='and'&&any){} else flush(); }); flush();
+  return out; };
+window.agbIsDollarField=function(id){ if(/^lineov_/.test(id)) return true; const el=document.getElementById(id); if(!el||el.tagName==='SELECT'||el.type==='checkbox') return false;
+  const L=(window.agbFieldLabel(el)+' '+id).toLowerCase(); return /(cost|price|fee|charge|amount|\$)/.test(L)&&!/(count|qty|quantity|sq ?ft|feet|ft\b|inch|depth|width|height|length)/.test(L); };
+window.agbFieldLabel=function(el){ let t=''; try{ if(el.labels&&el.labels[0]) t=el.labels[0].textContent; }catch(e){}
+  if(!t){ let p=el.parentElement; for(let k=0;k<4&&p&&!t;k++,p=p.parentElement){ const l=p.querySelector('label'); if(l&&!l.contains(el)) t=l.textContent; else if(l&&l.contains(el)) t=l.textContent; } }
+  t=(t||el.getAttribute('aria-label')||el.placeholder||el.title||el.id).replace(/\s+/g,' ').trim(); return t.slice(0,70); };
+window.agbAutoFields=function(known){ const have=new Set(known.map(f=>f[0])); const out=[];
+  const SKIP=/^(agbv|agbLineOv|estimatorSearch|aiPhoto|garagePhoto|rgAiEdit|estimateChangeRequest|gableRefToggle|pl[A-Z]|pcLiteAck|profitSlider|sideDoorsJson|repair|ai[A-Z])/;
+  document.querySelectorAll('input[id],select[id],textarea[id]').forEach(el=>{ const id=el.id; if(have.has(id)||SKIP.test(id)) return;
+    if(el.closest('#agbVoice,#agbLineOvBox,[id*="Modal"],[id*="modal"],#costSheetPrint')) return;
+    if(el.getAttribute('aria-hidden')==='true') return;
+    if(['hidden','file','button','submit','range','password','search','color','image','reset'].includes(el.type)) return;
+    let lab=window.agbFieldLabel(el); const hum=id.replace(/([a-z])([A-Z0-9])/g,'$1 $2').toLowerCase(); if(lab.split(' ').length<4||lab===id) lab=hum+': '+lab; if(window.agbIsDollarField(id)) lab+=' — DOLLAR AMOUNT (internal cost; profit added on top unless total is locked). ONLY when he states the amount';
+    out.push([id,lab]); have.add(id); });
+  // every cost-sheet line (computed ones too): voice override = the same "edited" override as typing on the cost summary
+  let box=document.getElementById('agbLineOvBox'); if(!box){ box=document.createElement('div'); box.id='agbLineOvBox'; box.hidden=true; document.body.appendChild(box); }
+  const lines=((window._agbCostSheetData||{}).lines||[]).filter(L=>L.key);
+  lines.forEach(L=>{ const id='lineov_'+L.key.replace(/[^A-Za-z0-9_]/g,'_'); let inp=document.getElementById(id);
+    if(!inp){ inp=document.createElement('input'); inp.type='number'; inp.id=id; inp.dataset.key=L.key; inp.addEventListener('change',()=>window.agbSetLineOverride(inp.dataset.key,inp.value)); box.appendChild(inp); }
+    const ov=(window._summaryLineOverrides||{})[L.key]; inp.value=(ov!=null&&isFinite(ov))?String(ov):'';
+    const base=(window._lastComputedLines||{})[L.key]; inp.dataset.label=String(L.label).replace(/\s+/g,' ').slice(0,60); const syn=L.key==='package'?' = MATERIALS':''; if(L.key==='package') inp.dataset.label='Materials'; inp.dataset.base=base!=null?base:L.amount;
+    out.push([id,'Cost line "'+inp.dataset.label+'"'+syn+' (now $'+Math.round(Number(L.amount)||0).toLocaleString()+') — DOLLAR override (internal cost). ONLY when he states a price for this item']); });
+  return out; };
+window.agbSetLineOverride=function(key,v){ const o=(typeof loadSummaryOverrides==='function'?loadSummaryOverrides():(window._summaryLineOverrides||{}));
+  const n=parseFloat(String(v).replace(/[$,\s]/g,'')); if(String(v).trim()===''||!isFinite(n)) delete o[key]; else o[key]=n;
+  window._summaryLineOverrides=o; try{ saveSummaryOverrides(); }catch(e){} try{ calculateEstimate(); }catch(e){} };
+/* Notes intent fallback (the AI's "notes" argument is primary). Text after the trigger goes to the estimate-sheet notes verbatim. */
+window.agbSplitNote=function(t){ const s=String(t||''); const m=s.match(/\b(?:(?:please\s+)?(?:add|put|write|stick)\s+(?:it\s+|that\s+|this\s+)?(?:in|into|on|to)\s+(?:the\s+)?notes?|add\s+(?:a\s+)?note|make\s+a\s+note|write\s+down|note\s+that|notes?\s*:|note\s*[:,-])\s*(?:that\s+)?[:,-]?\s*/i);
+  if(!m||m.index==null) return null; let note=s.slice(m.index+m[0].length).trim().replace(/\s+/g,' ').replace(/^[,.:;-]+/,''); if(!note) return null;
+  note=note.charAt(0).toUpperCase()+note.slice(1); if(!/[.!?]$/.test(note)) note+='.'; return {before:s.slice(0,m.index),note,heard:m[0].trim()}; };
+/* ===== Voice: knowledge pack (built from the estimator's own data + calculator, injected into the session) ===== */
+window.agbGlobal=function(n){ try{ return eval('typeof '+n+'!=="undefined"?'+n+':null'); }catch(e){ return null; } };
+window.agbBreakdown=function(){ const d=window._agbCostSheetData||{}; const m=x=>'$'+Math.round(Number(x)||0).toLocaleString();
+  const $=id=>document.getElementById(id); const pm=($('profitMode')||{}).value, pv=($('profitValue')||{}).value;
+  const L=(d.lines||[]).map(l=>l.label.replace(/\s+/g,' ')+(l.key==='package'?' [materials]':'')+': '+(Number(l.amount)?m(l.amount):(l.note||'included'))+(l.overridden?' (set)':''));
+  return 'Size '+(($('width')||{}).value)+'x'+(($('depth')||{}).value)+', city '+(($('city')||{}).value||'?')+'. Internal cost lines: '+L.join('; ')+'. INTERNAL COST TOTAL '+(($('internalTotal')||{}).textContent||'')+'; CUSTOMER PRICE '+(($('customerQuote')||{}).textContent||'')+'; price mode '+(pm==='total'?'LOCKED total $'+pv:pm==='amount'?'profit $'+pv:'profit '+pv+'%')+'.'; };
+window.agbRateCard=function(){ const PI=window.agbVoice&&window.agbVoice._priceInfo; if(!PI) return '';
+  const P=[['Hip roof instead of gable','roofType','hip'],['Hardie siding','sidingType','hardie'],['Gutters','gutters','true'],['18x7 overhead door instead of 16x7','overheadDoorSizePreset','18x7'],['Insulated overhead door','ohInsulated','true'],
+    ['+1 window','extraWindows','+1'],['Standard retaining wall 24" (16" above 8")','retainType','standard',[['retainWallHeight','24']]],['42" frost protected footing','frostProtectedFooting','true'],['5" concrete','concreteThickness','5'],['6" concrete','concreteThickness','6'],
+    ['EPA fee','epaFee','true'],['30 amp subpanel','electricSubpanel','1000'],['60 amp subpanel','electricSubpanel','1200'],['100 amp subpanel','electricSubpanel','3000'],['EV charger','evCharger','true'],['EV prep','evPrep','true'],
+    ['+1 interior light','extraLightsInterior','+1'],['+1 exterior light','extraLightsExterior','+1'],['+1 interior outlet','extraOutletsInterior','+1'],['+1 exterior outlet','extraOutletsExterior','+1'],['3-way switch','threeWaySwitch','true'],['Hurricane ties','hurricaneTies','true'],
+    ['+1 firewall wall','firewallWalls','+1'],['9 ft walls','wallHeight','9'],['10 ft walls','wallHeight','10'],['12" eaves','eavesSize','12'],['Front overhang','overhangEnabled','true'],['Wheeling charge','wheelingCharge','true'],['Arlington survey','arlingtonSurvey','true'],['Andrew permit','andrewPermit','true'],
+    ['+2 ft width','width','+2'],['+2 ft depth','depth','+2'],['Aluminum soffit','aluminumSoffit','true']];
+  const out=[]; P.forEach(([lab,id,v,extra])=>{ const el=document.getElementById(id); if(!el) return; let val=v; if(/^\+/.test(v)) val=String((parseFloat(el.value)||0)+parseFloat(v)); if(el.type==='checkbox'&&el.checked) return; if(String(el.value)===val) return;
+    const r=PI({changes:[{id,value:val}].concat((extra||[]).map(([a,b])=>({id:a,value:b})))}); if(r&&r.cost_difference!=null) out.push(lab+': '+(r.cost_difference>=0?'+':'')+'$'+r.cost_difference.toLocaleString()); });
+  out.push('Side doors (fixed rates): first service door included; extra service door +$600; French doors 9-light $1,150 / full-view $1,450; party door from $800');
+  return out.join('; '); };
+window.agbCityPack=function(){ const N=window.agbGlobal('CITY_CODE_NOTES')||{}, S=window.agbGlobal('CITY_CODE_SHEETS')||{}, R=window.agbGlobal('CITY_CODE_RULES')||{}, Y=window.agbGlobal('PC_CODE_YEARS')||{};
+  const cur=(document.getElementById('city')||{}).value||''; const full=c=>c+': '+String(N[c]||'').replace(/\s+/g,' ')+(R[c]?' RULES '+JSON.stringify(R[c]):'')+(S[c]?' SHEET '+JSON.stringify(S[c]):'');
+  const chicagoSide="Chicago setbacks (owner 10/28/2026): rear 2' (alley or no alley); side 2' one side + 3' the other; closer requires architect/expediter + fire-retardant siding w/ metal studs; 3'+3' if alley/rear lot line to back of garage >= 30'.";
+  const pick=(o,ks)=>ks.filter(k=>o&&o[k]).map(k=>k+' '+o[k]).join(', ');
+  const rows=Object.keys(Object.assign({},N,S)).sort().map(c=>{ if(c==='Chicago') return ''; const sh=S[c]||{}; const v=[pick(sh,['maxSize','height','setHouse','setRearAlley','setRearNoAlley','setSide']),Y[c]?'code '+Y[c]:''].filter(Boolean).join('; '); return v?c+': '+v:''; }).filter(Boolean);
+  return {chicagoSide, chicago:full('Chicago'), current:(cur&&cur!=='Chicago'&&cur!=='Other')?full(cur):'', table:rows.join('\n')}; };
+window.agbKnowledgePack=function(){ const C=window.agbCityPack(); const M=window.agbGlobal('MONEY_INPUT_DEFAULTS')||{};
+  const fixed=['Retaining wall: $95 per inch of wall height ABOVE 8" (standard, reverse or 4-sided; existing/none $0), e.g. 24" wall = 16" x $95 = $1,520 cost',
+    'Excavation/stone: $1.50 per sq ft (auto) or entered sq ft / $ amount','42" frost protected footing: $200 per linear ft of perimeter','Firewall: $600 per wall','Demolition: the salesman enters the demo cost (demoCostInput)','First service door included; each extra service door adds $600 cost',
+    'Default money inputs: '+Object.keys(M).map(k=>k+' $'+M[k]).join(', ')].join('. ');
+  return 'RATES (internal cost; customer price = cost + profit unless total locked): '+fixed+'.\nMEASURED FROM THE CALCULATOR on the current estimate (cost change): '+window.agbRateCard()+
+    '\nCITY CODES — '+C.chicagoSide+'\n'+C.chicago.slice(0,2500)+(C.current?'\nCURRENT CITY '+C.current.slice(0,2500):'')+'\nALL CITIES (key fields):\n'+C.table; };
+window.agbSearchInfo=function(query){ const q=String(query||'').toLowerCase(); const terms=q.split(/[^a-z0-9]+/).filter(w=>w.length>2&&!/^(the|what|how|many|much|from|does|for|and|are|cost)$/.test(w));
+  const docs=[]; const N=window.agbGlobal('CITY_CODE_NOTES')||{}, S=window.agbGlobal('CITY_CODE_SHEETS')||{}, R=window.agbGlobal('CITY_CODE_RULES')||{};
+  Object.keys(N).forEach(c=>docs.push(c+' code notes: '+N[c])); Object.keys(S).forEach(c=>docs.push(c+' code sheet: '+JSON.stringify(S[c]))); Object.keys(R).forEach(c=>docs.push(c+' rules: '+JSON.stringify(R[c])));
+  window.agbKnowledgePack().split(/\.\s|\n|; /).forEach(t=>docs.push(t));
+  document.querySelectorAll('label,option,[title],h2,h3,.text-xs,.text-\\[10px\\]').forEach(e=>{ const t=(e.getAttribute('title')||e.textContent||'').replace(/\s+/g,' ').trim(); if(t.length>8&&t.length<400) docs.push(t); });
+  const sc=t=>{ const l=t.toLowerCase(); return terms.reduce((s,w)=>s+(l.includes(w)?1:0),0); };
+  const hits=[...new Set(docs)].map(t=>[sc(t),t]).filter(x=>x[0]>0).sort((a,b)=>b[0]-a[0]).slice(0,5).map(x=>x[1].slice(0,600));
+  return hits.length?{source:'company estimator',results:hits}:{error:'Nothing in the estimator about that.'}; };
 window.agbVoice=AGBVoiceCore.create({
   page:'estimator',
   fields:[
@@ -12878,9 +12952,11 @@ window.agbVoice=AGBVoiceCore.create({
   /* Demo = remove old garage + slab. On an existing slab the SAME demo preset + existing demolition cost box ($1300 default)
      is used; the manual calculator then charges only demoCostInput (no slab removal, "slab and apron to remain"). */
   guard:function(f,a){
+    /* Dollar fields / cost-line overrides: only a dollar amount he actually said (the number must be in his words). */
+    if(window.agbIsDollarField(f.id)){ const n=Number(String(f.value).replace(/[^0-9.]/g,'')); const said=window.agbNumbersSaid(window._agbLastUtter||''); if(!(n>=0)||!said.some(x=>Math.abs(x-n)<0.5)) return false; f.value=String(n); }
     if(f.id==='customerPhone1'||f.id==='customerPhone2'){ const v=window.agbNormPhone(f.value); if(!v) return false; f.value=v; }
     if(f.id==='customerEmail'){ const v=window.agbNormEmail(f.value); if(!v) return false; f.value=v; }
-    if(f.id==='additionalEstimateNotes'){ const cur=(document.getElementById('additionalEstimateNotes')||{}).value||''; const add=String(f.value||'').trim(); if(!add) return false; if(cur&&!cur.includes(add)) f.value=cur.replace(/\s+$/,'')+'\n'+add; }
+    if(f.id==='additionalEstimateNotes'){ const cur=(document.getElementById('additionalEstimateNotes')||{}).value||''; const add=String(f.value||'').trim(); if(!add) return false; if(cur.includes(add)) return false; if(cur) f.value=cur.replace(/\s+$/,'')+'\n'+add; }
     if(f.id==='demoSlabPreset'){ const v=String(f.value||'').trim().toLowerCase().replace(/[×\s]/g,'x').replace(/x+/g,'x');
       if(v==='none'||v==='') return false;
       const sel=document.getElementById('demoSlabPreset');
@@ -12923,9 +12999,12 @@ window.agbVoice=AGBVoiceCore.create({
     if(!r.notes&&!r.rules&&!sh) r.error='No saved code info for that city in the estimator.'; return r; },
   /* Spoken total price ("I want the price to be 29,000") reuses Profit Control "Total Project Price" mode: the total stays pinned
      while other items change; unchecking the card item restores the previous profit mode/value. */
+  autoFields:function(known){ return window.agbAutoFields(known); }, splitNote:function(t){ return window.agbSplitNote(t); },
+  knowledgePack:function(){ return window.agbKnowledgePack(); }, breakdown:function(){ return window.agbBreakdown(); }, searchInfo:function(q){ return window.agbSearchInfo(q); },
   hideOnCard:['profitMode'], linked:{profitValue:['profitMode']},
   extraParse:function(t){ const contact=window.agbContactFromSpeech(t); return contact.concat(window.agbPriceFromSpeech(t)); },
-  afterCommit:function(props){ const card=document.getElementById('agbvCard'); let w=document.getElementById('agbvTotalWarn');
+  afterCommit:function(props){ let re=false; Object.keys(props).forEach(id=>{ if(!/^lineov_/.test(id)||!props[id].on) return; const el=document.getElementById(id); const k=el&&el.dataset.key; const o=window._summaryLineOverrides||{}; if(k&&Number(o[k])!==Number(props[id].v)){ o[k]=Number(props[id].v); window._summaryLineOverrides=o; re=true; } }); if(re){ try{ saveSummaryOverrides(); calculateEstimate(); }catch(e){} }
+    const card=document.getElementById('agbvCard'); let w=document.getElementById('agbvTotalWarn');
     const p=props.profitValue, on=p&&p.on&&(props.profitMode||{}).v==='total';
     const internal=parseFloat(((document.getElementById('internalTotal')||{}).textContent||'').replace(/[^0-9.]/g,''))||0;
     const bad=on&&internal>Number(p.v);
@@ -12935,7 +13014,12 @@ window.agbVoice=AGBVoiceCore.create({
     if(a){ a.hidden=!lines.length; a.innerHTML=lines.map(l=>l.name+' +$'+l.cost.toLocaleString()+' (cost) — total stays $'+Number(p.v).toLocaleString()).map(t=>'<div>'+t.replace(/[<>&]/g,'')+'</div>').join(''); }
     if(w){ w.hidden=!bad; if(bad) w.textContent='⚠ Pinned total $'+Number(p.v).toLocaleString()+' is below internal cost $'+Math.round(internal).toLocaleString()+' — profit is negative.'; }
     },
-  itemLabel:function(id,p){ return id==='profitValue'?'Total set to $'+Number(p.v).toLocaleString()+' (uncheck for calculated price)':null; },
+  itemLabel:function(id,p,prev){ if(id==='profitValue') return 'Total set to $'+Number(p.v).toLocaleString()+' (uncheck for calculated price)';
+    const money=x=>'$'+Math.round(Number(x)||0).toLocaleString();
+    if(/^lineov_/.test(id)){ const el=document.getElementById(id); return (el?el.dataset.label:id)+' '+money(p.v)+' (was '+money(el?el.dataset.base:0)+')'; }
+    if(window.agbIsDollarField(id)){ const el=document.getElementById(id); return window.agbFieldLabel(el).replace(/\s*\(.*$/,'')+' '+money(p.v)+(prev!==undefined&&prev!==''?' (was '+money(prev)+')':''); }
+    if(id==='additionalEstimateNotes') return 'Estimate sheet note: '+String(p.v).split('\n').pop();
+    return null; },
   afterFill:function(){ const o=window._agbDemoOverride; if(o){ const el=document.getElementById('oldConcreteOverride'); if(el&&!el.value){ el.value=o; el.dispatchEvent(new Event('input',{bubbles:true})); } window._agbDemoOverride=null; try{ syncDemoPreset(); }catch(e){} } try{ calculateEstimate(); }catch(e){} }
 });
 </script>

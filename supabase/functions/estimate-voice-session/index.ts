@@ -31,6 +31,10 @@ Rules:
 - Never ask about demo apron depth, demo cost, EPA, or excavation unless he brings them up; leave demoApronDepth unset unless he says an apron number.
 - SIZE (most important): whenever the salesman says a size, call set_estimate_fields with width AND depth right away. "A by B" / "A x B" / "A-by-B" = width A, depth B (first number is ALWAYS width). Spoken numbers count ("twenty two by twenty four" = 22 x 24). "24 deep"/"24 long" = depth only; "22 wide" = width only. Sizes not in the width/depth options (e.g. 21, 25, 23.5) -> width/depth = custom plus customWidth/customDepth numbers. Only ask if truly ambiguous (e.g. a single number with no wide/deep).
 - "two car" with only a depth (e.g. "two car, 24 deep") -> width 20 plus that depth, and ask to confirm the width. Do not ask about overhead door count, car capacity or other items he did not mention.
+- EVERY control in the catalog can be set; infer the field from context, no per-field commands. Selects: use an exact option value. If his words match several options or name a category (e.g. "special size door", a color with several close names), ask ONE short question naming the real option labels instead of guessing; a single clear match -> set silently.
+- DOLLAR fields (marked DOLLAR) and "Cost line" overrides: ONLY when he states the amount for that item ("big demo, charge two thousand" -> demolition cost 2000; "materials cost 8,000" -> that cost line 8000). Never invent or estimate a dollar amount. These are internal cost; profit is added on top unless a total is locked.
+- NOTES: anything he wants written on the sheet ("write down that...", "let them know...", "customer wants to start in summer, put that on there", "note: ...") -> the notes argument, not fields. If unsure whether it's a note or a change, ask briefly.
+- REFERENCE QUESTIONS (codes, setbacks, rates, 'what does X cost', 'cost of materials'): answer at once from COMPANY ESTIMATOR KNOWLEDGE and the CURRENT ESTIMATE breakdown; use search_page_info only for detail not there; web_lookup last. Line amounts are internal cost unless called customer price.
 - CUSTOMER INFO: map spoken name, phone (customerPhone1; a 2nd/spouse/other number -> customerPhone2), email (spell out 'at'/'dot' -> real address), street address (customerAddress; town -> city) and salesman straight to those fields in one call, silently. Never say you can't enter contact info.
 - PRICE OVERRIDE: "I want the price to be 29,000" / "make it 29 thousand" / "set total to 27,500" -> set profitMode total AND profitValue 29000 (exact dollars). Silent; ask only if the number is unclear. This is not a question.
 - If no size at all was given, ask for it ONCE ("What size?").
@@ -95,6 +99,7 @@ const SET_TOOL = {
       questions: { type: "array", items: { type: "object", properties: {
         fieldId: { type: "string" }, question: { type: "string" }, options: { type: "array", items: { type: "string" } } }, required: ["fieldId", "question", "options"] } },
       unknownPhrases: { type: "array", items: { type: "string" } },
+      notes: { type: "string", description: "Text he wants written on the customer estimate sheet notes (any phrasing: note / write down / mention on the sheet / let them know / remind them / put that on there). His words, cleaned up. Note content must NOT also go into fields." },
       answer: { type: "string", description: "Typed mode only: short answer if the salesman ASKED a question (company knowledge first; say 'generally' for general info). Leave fields empty for pure questions." },
       price_check: { type: "object", description: "Typed mode only: pricing question -> hypothetical changes to price with the estimator (never invent a number)", properties: { changes: { type: "array", items: { type: "object", properties: { id: { type: "string" }, value: { type: "string" } } } }, add_side_door: { type: "object", properties: { type: { type: "string" }, wall: { type: "string" }, style: { type: "string" } } } } },
       city_check: { type: "string", description: "Typed mode only: city name if he asked about a city's codes" },
@@ -105,6 +110,7 @@ const SET_TOOL = {
 };
 const PRICE_TOOL = { type: "function", name: "get_price_info", description: "READ-ONLY. Current project price + main line items from the estimator, and optionally the price difference of a hypothetical change computed with the estimator's own pricing (the form is not changed).", parameters: { type: "object", properties: { changes: { type: "array", description: "hypothetical field changes (catalog ids/values), e.g. [{id:'sidingType',value:'lp'}]", items: { type: "object", properties: { id: { type: "string" }, value: { type: "string" } }, required: ["id", "value"] } }, add_side_door: { type: "object", properties: { type: { type: "string", enum: ["service", "french", "party"] }, wall: { type: "string" }, style: { type: "string", enum: ["9light", "fullview"] } } } } } };
 const CITY_TOOL = { type: "function", name: "get_city_info", description: "READ-ONLY. The estimator's saved code/requirement notes for a city (setbacks, max size/height, slab, footing, code year).", parameters: { type: "object", properties: { city: { type: "string" } }, required: ["city"] } };
+const SEARCH_TOOL = { type: "function", name: "search_page_info", description: "READ-ONLY fallback: search everything in the company estimator (all city code data, labels, help text, price notes) for detail NOT already in the knowledge pack/breakdown. Never changes fields.", parameters: { type: "object", properties: { query: { type: "string" } }, required: ["query"] } };
 const WEB_TOOL = { type: "function", name: "web_lookup", description: "One short web search for a general garage/building question you can't answer from company knowledge. Not for company prices.", parameters: { type: "object", properties: { question: { type: "string" } }, required: ["question"] } };
 const JOB_TOOL = { type: "function", name: "get_job_status", description: "READ-ONLY: look up the status of one of the salesman's own sold jobs by customer name or address. Call when asked how a job is going / where a job stands.", parameters: { type: "object", properties: { query: { type: "string", description: "customer name or part of the address" } }, required: ["query"] } };
 const FINISH_TOOL = { type: "function", name: "finish_estimate", description: "Salesman is done; fill the estimate now.", parameters: { type: "object", properties: {} } };
@@ -115,9 +121,11 @@ Deno.serve(async (req) => {
     const key = Deno.env.get("OPENAI_API_KEY");
     if (!key) return json({ error: "OPENAI_API_KEY secret not set" }, 500);
     const body = await req.json().catch(() => ({}));
-    const catalog = String(body.catalog || "").slice(0, 14000);
+    const catalog = String(body.catalog || "").slice(0, 18000);
     const instructions = BASE_RULES + "\n\nFIELD CATALOG (id | label | allowed values):\n" + catalog +
       (body.learned ? "\n\nLEARNED TERMS for this salesman/device (heard -> meaning; trust these):\n" + String(body.learned).slice(0, 2000) : "") +
+      (body.knowledge ? "\n\nCOMPANY ESTIMATOR KNOWLEDGE (from the estimator app's own data and calculator; answer reference/price/code questions from this FIRST, instantly, no tool call; say it's from the company estimator):\n" + String(body.knowledge).slice(0, 20000) : "") +
+      (body.breakdown ? "\n\nCURRENT ESTIMATE BREAKDOWN (live; newer 'CURRENT ESTIMATE' system messages replace this):\n" + String(body.breakdown).slice(0, 3000) : "") +
       (body.current ? "\n\nCURRENT VALUES:\n" + String(body.current).slice(0, 3000) : "");
 
     if (body.mode === "realtime") {
@@ -135,7 +143,7 @@ Deno.serve(async (req) => {
               input: { noise_reduction: { type: "near_field" }, turn_detection: { type: "semantic_vad", eagerness: "low", create_response: false, interrupt_response: false }, transcription: { model: "gpt-4o-mini-transcribe", language: "en" } },
               output: { voice: "marin" },
             },
-            tools: [SET_TOOL, FINISH_TOOL, JOB_TOOL, PRICE_TOOL, CITY_TOOL, WEB_TOOL],
+            tools: [SET_TOOL, FINISH_TOOL, JOB_TOOL, PRICE_TOOL, CITY_TOOL, SEARCH_TOOL, WEB_TOOL],
             tool_choice: "auto",
           },
         }),
@@ -182,7 +190,7 @@ Deno.serve(async (req) => {
     if (!r.ok) return json({ error: d?.error?.message || ("OpenAI " + r.status) }, 502);
     let out: any = {};
     try { out = JSON.parse(d.choices[0].message.tool_calls[0].function.arguments); } catch { out = {}; }
-    return json({ fields: out.fields || [], side_doors: out.side_doors, questions: out.questions || [], unknownPhrases: out.unknownPhrases || [], answer: out.answer || "", price_check: out.price_check || null, city_check: out.city_check || "", web_query: out.web_query || "", usage: d.usage, model: d.model });
+    return json({ fields: out.fields || [], side_doors: out.side_doors, questions: out.questions || [], unknownPhrases: out.unknownPhrases || [], answer: out.answer || "", notes: out.notes || "", price_check: out.price_check || null, city_check: out.city_check || "", web_query: out.web_query || "", usage: d.usage, model: d.model });
   } catch (e) {
     return json({ error: String((e as Error)?.message || e) }, 500);
   }

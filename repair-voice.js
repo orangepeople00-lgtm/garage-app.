@@ -43,7 +43,7 @@ function fields(){ const F=[['salesman','Salesman'],['customerName','Customer na
   ITEMS.forEach(it=>{ F.push(['vx_on_'+it.id,'INCLUDE repair: '+it.cat]);
     it.f.forEach(x=>F.push(['f_'+it.id+'_'+x.k,it.cat+' — '+x.l]));
     F.push(['m_'+it.id,it.cat+' — on sheet as']); F.push(['ad_'+it.id,it.cat+' — extra sheet bullet lines (separate with ;)']);
-    if(!it.permit) F.push(['vx_price_'+it.id,it.cat+' — line PRICE $ (only when he says a dollar amount for this line)']); });
+    if(!it.permit) F.push(['vx_price_'+it.id,it.cat+' — line CUSTOMER (total) PRICE $ (only when he says a dollar amount for this line)']); });
   CONDITIONS.forEach((c,i)=>F.push(['vx_cond_'+i,'Condition checklist: '+c]));
   [1,2].forEach(k=>{ F.push(['vx_x'+k+'_desc','Custom extra '+k+' description (work not in the list)']); F.push(['vx_x'+k+'_amt','Custom extra '+k+' $ (only if said)']); F.push(['vx_x'+k+'_disp','Custom extra '+k+' type']); });
   return F; }
@@ -109,7 +109,7 @@ function boot(){ proxies(); syncProxies();
     extraCatalog:['NOTE: item rows are OFF until included. Setting any f_<item>_* / line price turns that row on. Defaults shown are the standard for anything not mentioned.'],
     guard, extraParse, priceInfo,
     hideOnCard:['profitMode'], linked:{profitValue:['profitMode']},
-    itemLabel:(id,p)=>{ if(/^vx_price_/.test(id)) return (ITEMS.find(i=>'vx_price_'+i.id===id)||{}).cat+' price $'+Number(p.v).toLocaleString(); if(id==='profitValue'&&$('profitMode').value==='total') return 'Total set to $'+Number(p.v).toLocaleString(); return null; },
+    itemLabel:(id,p)=>{ if(/^vx_price_/.test(id)) return (ITEMS.find(i=>'vx_price_'+i.id===id)||{}).cat+' — customer price $'+Number(p.v).toLocaleString()+' (total for this line)'; if(id==='profitValue'&&$('profitMode').value==='total') return 'Total set to $'+Number(p.v).toLocaleString(); return null; },
     afterCommit:autoOn, afterFill:()=>{ try{ calc(); }catch(e){} } }); }
 /* manual changes (row taps, New, loaded estimates) keep the proxies in step */
 const oc=window.calc; window.calc=calc=function(){ const r=oc.apply(this,arguments); try{ syncProxies(); }catch(e){} return r; };

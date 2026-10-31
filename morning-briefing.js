@@ -35,12 +35,16 @@ function gather(){ const t=day(); let J=[]; try{ J=(jobs||[]).filter(j=>!j.delet
   const demos=J.filter(j=>alive(j)&&d10(j.scheduled_demo)===t&&j.demo_status!=='N/A').map(j=>({j,crew:j.demo_crew||'',time:t12(j.demo_time),done:j.demo_status==='Complete'}));
   const pours=J.filter(j=>alive(j)&&d10(j.concrete_scheduled)===t&&j.concrete_status!=='N/A').map(j=>({j,crew:j.concrete_crew||'',time:t12(j.concrete_time),done:j.concrete_status==='Poured'}));
   const permits=J.filter(j=>alive(j)&&['Applied/Submitted','Submitted','Corrections Needed'].includes(j.permit_status)).map(j=>({j,fix:j.permit_status==='Corrections Needed',since:d10(j.permit_date)}));
+  const insp=J.filter(j=>alive(j)&&d10(j.inspection_date)===t&&j.inspection_status!=='N/A').map(j=>({j,st:j.inspection_status||'',type:j.inspection_type||''}));
+  const notSub=J.filter(j=>{ try{ return status(j)==='Permit Not Submitted'; }catch(e){ return false; } }).map(j=>({j}));
+  const crews=[]; J.filter(alive).forEach(j=>{ let ev=[]; try{ ev=jobEvents(j); }catch(e){} ev.forEach(e=>{ if(d10(e[1])===t&&e[2]) crews.push({j,stage:e[0],crew:String(e[2]),time:t12(e[3])}); }); });
+  crews.sort((a,b)=>a.crew.localeCompare(b.crew)||String(a.time).localeCompare(String(b.time)));
   const od=J.filter(j=>{ try{ return overdue(j); }catch(e){ return false; } }).map(j=>{ const r=[];
     if(j.concrete_scheduled&&d10(j.concrete_scheduled)<t&&!['Poured','N/A'].includes(j.concrete_status)) r.push('concrete was set for '+md(j.concrete_scheduled));
     if(j.carpentry_scheduled&&d10(j.carpentry_scheduled)<t&&j.carpentry_status!=='Garage Built') r.push('carpentry was set for '+md(j.carpentry_scheduled));
     if(j.inspection_date&&d10(j.inspection_date)<t&&!['Passed','N/A'].includes(j.inspection_status)) r.push('inspection was set for '+md(j.inspection_date));
     return {j,why:r}; });
-  return {t,demos,pours,permits,od,count:J.length}; }
+  return {t,demos,pours,insp,crews,permits,notSub,od,count:J.length}; }
 function md(v){ const s=d10(v); const m=s.match(/^(\d{4})-(\d{2})-(\d{2})$/); if(!m) return s; return ['January','February','March','April','May','June','July','August','September','October','November','December'][+m[2]-1]+' '+(+m[3]); }
 const list=(a,n)=>a.length<=n?a:a.slice(0,n);
 const andJoin=a=>a.length<2?a.join(''):a.slice(0,-1).join(', ')+' and '+a[a.length-1];
@@ -53,15 +57,21 @@ function build(g){ const name=(()=>{ try{ return DISPLAY[String(me().username).t
   const stg=(x,verb)=>who(x.j)+(x.crew?' with '+x.crew:'')+(x.time?' at '+x.time:'')+(x.done?' ('+verb+')':'');
   S.push(g.demos.length?plural(g.demos.length,'demo')+' today: '+andJoin(list(g.demos,5).map(x=>stg(x,'marked done')))+(g.demos.length>5?', and '+(g.demos.length-5)+' more':'')+'.':'No demos scheduled today.');
   S.push(g.pours.length?plural(g.pours.length,'pour')+' today: '+andJoin(list(g.pours,5).map(x=>stg(x,'marked poured')))+(g.pours.length>5?', and '+(g.pours.length-5)+' more':'')+'.':'No concrete pours scheduled today.');
+  S.push(g.insp.length?plural(g.insp.length,'inspection')+' today: '+andJoin(list(g.insp,5).map(x=>who(x.j)+(x.st&&x.st!=='Scheduled'?' ('+x.st+')':'')))+(g.insp.length>5?', and '+(g.insp.length-5)+' more':'')+'.':'No inspections scheduled today.');
+  S.push(g.crews.length?'Crew assignments: '+list(g.crews,6).map(x=>x.crew+' — '+x.stage.toLowerCase()+' at '+(x.j.customer||'a job')+(x.time?' at '+x.time:'')).join('; ')+(g.crews.length>6?', and '+(g.crews.length-6)+' more':'')+'.':'No crews assigned today.');
   if(g.permits.length){ const fix=g.permits.filter(x=>x.fix); S.push(plural(g.permits.length,'permit')+' pending'+(fix.length?', '+fix.length+' with corrections needed: '+andJoin(list(fix,4).map(x=>who(x.j)))+(fix.length>4?' and '+(fix.length-4)+' more':''):'')+'.'); }
   else S.push('No permits pending.');
+  S.push(g.notSub.length?plural(g.notSub.length,'job')+(g.notSub.length===1?' still needs':' still need')+' a permit submitted'+(g.notSub.length<=3?': '+andJoin(g.notSub.map(x=>who(x.j))):'')+'.':'No permits waiting to be submitted.');
   S.push(g.od.length?plural(g.od.length,'job')+' overdue: '+andJoin(list(g.od,4).map(x=>who(x.j)+(x.why[0]?', '+x.why[0]:'')))+(g.od.length>4?', and '+(g.od.length-4)+' more':'')+'.':'Nothing overdue.');
   return S.join(' '); }
 function html(g){ const row=(x,extra)=>'<li>'+esc(x.j.customer||'Job')+(x.j.address?' — '+esc(x.j.address):'')+(x.j.city?', '+esc(x.j.city):'')+esc(extra||'')+'</li>';
   const sec=(t,a,f,empty)=>'<div class="mb-sec"><b>'+t+' ('+a.length+')</b>'+(a.length?'<ul>'+a.slice(0,12).map(f).join('')+(a.length>12?'<li>… '+(a.length-12)+' more</li>':'')+'</ul>':'<div class="mb-empty">'+empty+'</div>')+'</div>';
   return sec('Demos today',g.demos,x=>row(x,(x.crew?' • '+x.crew:'')+(x.time?' • '+x.time:'')+(x.done?' • done':'')),'No demos scheduled today.')
     +sec('Pours today',g.pours,x=>row(x,(x.crew?' • '+x.crew:'')+(x.time?' • '+x.time:'')+(x.done?' • poured':'')),'No concrete pours scheduled today.')
+    +sec('Inspections today',g.insp,x=>row(x,(x.type?' • '+x.type:'')+(x.st?' • '+x.st:'')),'No inspections scheduled today.')
+    +sec('Crew assignments today',g.crews,x=>'<li>'+esc(x.crew)+' — '+esc(x.stage)+' • '+esc(x.j.customer||'Job')+(x.j.address?', '+esc(x.j.address):'')+(x.time?' • '+esc(x.time):'')+'</li>','No crews assigned today.')
     +sec('Permits pending',g.permits,x=>row(x,' • '+(x.fix?'Corrections needed':x.j.permit_status)+(x.since?' since '+x.since:'')),'No permits pending.')
+    +sec('Permits not submitted',g.notSub,x=>row(x,''),'No permits waiting to be submitted.')
     +sec('Overdue',g.od,x=>row(x,x.why.length?' • '+x.why.join('; '):''),'Nothing overdue.'); }
 
 /* ---------- audio ---------- */
@@ -99,7 +109,7 @@ function mount(){ if($('mbPanel')||!isMgr()) return false; const main=$('appMain
   $('mbMute').onclick=()=>{ try{ localStorage.setItem(MKEY(),muted()?'0':'1'); }catch(e){} if(muted()) stopAudio(); setBtn(); };
   $('mbHide').onclick=()=>{ stopAudio(); d.hidden=true; };
   return true; }
-function render(){ const g=gather(); text=build(g); blobUrl=blobUrl&&window._mbText===text?blobUrl:''; window._mbText=text; window.mbBriefing={text,data:{demos:g.demos.length,pours:g.pours.length,permits:g.permits.length,overdue:g.od.length}};
+function render(){ const g=gather(); text=build(g); blobUrl=blobUrl&&window._mbText===text?blobUrl:''; window._mbText=text; window.mbBriefing={text,data:{insp:g.insp.length,crews:g.crews.length,notSub:g.notSub.length,demos:g.demos.length,pours:g.pours.length,permits:g.permits.length,overdue:g.od.length}};
   $('mbText').textContent=text; $('mbList').innerHTML=html(g); setBtn(); }
 let booted=false; const t0=Date.now();
 function boot(){ if(booted) return true; const p=me(); if(!p||!$('appMain')||$('appMain').classList.contains('hidden')) return false;

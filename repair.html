@@ -185,6 +185,30 @@ tr.optrow td{background:#fff7e6}
     </div>
   </div>
   <div class="banner" id="priceBanner"><span>⚠ Example prices — set real prices in Settings. These placeholder numbers are NOT real Absolute Garage Builders prices.</span><button class="btn yellow" type="button" onclick="openSettings()">Open Settings</button></div>
+  <!-- Live voice for the repair estimator (repair-voice.js + voice-core.js) -->
+<style>#agbVoice,#agbVoice *{scroll-margin-bottom:96px;scroll-margin-top:12px}</style>
+<div id="agbVoice" class="agbv">
+  <div class="agbv-top">
+    <button type="button" id="agbvMic" class="agbv-mic" onclick="agbVoice.toggle()">🎤 <span id="agbvMicTxt">Talk with the helper</span></button>
+    <span id="agbvTimer" class="agbv-timer" hidden></span>
+  </div>
+  <div id="agbvStatus" class="agbv-status">Tap Talk and just describe the repair — everything you say goes on the estimate right away (anything not mentioned stays standard). The helper only speaks to ask when something is unclear or to answer your question. Say “done” when finished. Or type it:</div>
+  <div class="agbv-type">
+    <input id="agbvText" type="text" placeholder="Type the repair instead…" onkeydown="if(event.key==='Enter'){event.preventDefault();agbVoice.sendText();}">
+    <button type="button" class="agbv-btn" onclick="agbVoice.sendText()">Go</button>
+  </div>
+  <div id="agbvLog" class="agbv-log" hidden></div>
+  <div id="agbvCard" class="agbv-card" hidden>
+    <div class="agbv-h">What I set <span class="agbv-sub">(already on the estimate — tap to fix or uncheck to undo)</span></div>
+    <div id="agbvItems"></div>
+    <div id="agbvQs"></div>
+    <div id="agbvUnknown" class="agbv-unk" hidden></div>
+    <div class="agbv-actions">
+      <button type="button" id="agbvFill" class="agbv-btn" onclick="agbVoice.fill()">Done</button>
+      <button type="button" class="agbv-btn" onclick="agbVoice.clear()">Undo all</button>
+    </div>
+  </div>
+</div>
   <div class="grid">
    <div>
     <div class="card">
@@ -1470,4 +1494,6 @@ syncSignedInSalesman();
     toast('Loaded repair estimate from History.');
   }catch(e){ toast('Could not load that repair estimate.',true); } })();
 </script>
+<script src="voice-core.js?v=20261031h"></script>
+<script src="repair-voice.js?v=20261031c"></script>
 </body></html>

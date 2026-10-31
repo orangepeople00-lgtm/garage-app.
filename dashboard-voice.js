@@ -251,8 +251,8 @@ function stop(msg){ clearInterval(tick); tick=null; try{ dc&&dc.close(); }catch(
   dc=pc=mic=null; aiTalking=false; clearTimeout(playChk); const m=$('dvMic'); if(m){ m.classList.remove('live'); $('dvMicTxt').textContent='🎤 Talk'; $('dvTimer').hidden=true; } if(msg) stat(msg); }
 let lastUserTxt='', lastAiTxt='';
 /* Background noise often transcribes as nothing, a filler ("uh", "mm"), or a stock phrase ("Thank you.", "Bye.") — never act on those
-   (okay/yeah only count right after a question: AI talking, a question just asked, or a confirm/pick card on screen). */
-function pendingQuestion(){ return aiTalking||/\?\s*$/.test(lastAiTxt)||!!document.querySelector('#dvCards .dv-card .dv-ok,#dvCards .dv-pick'); }
+   (okay/yeah only count right after a question once the AI has finished speaking, or with a confirm/pick card on screen; filler never interrupts the AI). */
+function pendingQuestion(){ return !aiTalking&&(/\?\s*$/.test(lastAiTxt)||!!document.querySelector('#dvCards .dv-card .dv-ok,#dvCards .dv-pick')); }
 function realSpeech(t){ const s=String(t||'').toLowerCase().replace(/[^a-z0-9 ]/g,' ').trim(); if(!s) return false;
   if(/^(uh+|um+|mm+|hmm+|ah+|oh+|you|bye|thank you|thanks|thanks for watching|okay|ok|yeah|huh)( (uh+|um+|you|bye|thank you))*$/.test(s)&&!pendingQuestion()) return false;
   lastUserTxt=t; return true; }

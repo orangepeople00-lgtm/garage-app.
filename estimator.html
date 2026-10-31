@@ -12826,9 +12826,31 @@ run();setInterval(run,1500);document.addEventListener('change',run);})();
   }, false);
 })();
 </script>
-<script src="voice-core.js?v=20261031e"></script>
+<script src="voice-core.js?v=20261031f"></script>
 <script>
 /* Voice estimate: estimator field schema for the shared voice-core.js */
+/* Contact info from speech: "his number is 708-555-1234", "seven oh eight five five five ...", "email bob at gmail dot com" */
+window.agbNormPhone=function(v){ const W={zero:0,oh:0,o:0,one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9};
+  let s=String(v||'').toLowerCase().replace(/\b(zero|oh|one|two|three|four|five|six|seven|eight|nine)\b/g,m=>W[m]);
+  s=s.replace(/double (\d)/g,'$1$1').replace(/triple (\d)/g,'$1$1$1'); let d=s.replace(/\D/g,''); if(d.length===11&&d[0]==='1') d=d.slice(1);
+  return d.length===10?'('+d.slice(0,3)+') '+d.slice(3,6)+'-'+d.slice(6):(d.length===7?d.slice(0,3)+'-'+d.slice(3):''); };
+window.agbNormEmail=function(v){ let s=String(v||'').trim().toLowerCase().replace(/^(email|e-mail)( is| address is)?\s*/,'');
+  s=s.replace(/\s+at\s+/g,'@').replace(/\s+dot\s+/g,'.').replace(/\s*(underscore)\s*/g,'_').replace(/\s*(dash|hyphen)\s*/g,'-').replace(/\s+/g,'');
+  if(/@(gmail|yahoo|hotmail|outlook|aol|icloud|comcast|att|sbcglobal|live|msn|me)$/.test(s)) s+=s.endsWith('@att')?'.net':s.endsWith('@comcast')?'.net':s.endsWith('@sbcglobal')?'.net':'.com';
+  return /^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,}$/.test(s)?s:''; };
+window.agbContactFromSpeech=function(t){ const out=[], s=String(t||'');
+  const pm=[...s.matchAll(/(?:(second|other|wife'?s?|husband'?s?|cell|alternate|2nd)\b[^.]{0,25}?)?(?:number|phone|cell)\b[^0-9a-z]{0,12}(?:is\s*)?((?:\(?\d[\d\s().\-]{6,16}\d)|(?:(?:zero|oh|one|two|three|four|five|six|seven|eight|nine|\d)[\s,\-]*){7,11})/ig)];
+  pm.forEach((m,i)=>{ const v=window.agbNormPhone(m[2]); if(!v) return; out.push({id:(m[1]||i>0)?'customerPhone2':'customerPhone1',value:v,heard:m[0].trim()}); });
+  const em=s.match(/e-?mail(?: address)?(?: is)?\s+([a-z0-9._\-]+(?:\s+(?:dot|underscore|dash)\s+[a-z0-9]+)*\s*(?:@|\bat\b)\s*[a-z0-9\-]+(?:\s*(?:\.|\bdot\b)\s*[a-z]{2,})*)/i);
+  if(em){ const v=window.agbNormEmail(em[1]); if(v) out.push({id:'customerEmail',value:v,heard:em[0].trim()}); }
+  return out; };
+window.agbPriceFromSpeech=function(t){ const s=String(t).toLowerCase().replace(/twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety/g,m=>({twenty:'20 ',thirty:'30 ',forty:'40 ',fifty:'50 ',sixty:'60 ',seventy:'70 ',eighty:'80 ',ninety:'90 '}[m]))
+      .replace(/\b(\d0) (one|two|three|four|five|six|seven|eight|nine)\b/g,(m,a,b)=>String(+a+{one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9}[b]));
+    if(!(/\b(price|total|sell it|charge|quote)\b/.test(s)||/\bmake it \$?\d[\d.,]*\s*(k|thousand|grand)\b/.test(s))||!/(\bmake it\b|\bset\b|\bwant\b|\bput\b|\bshould be\b|\bto be\b|\bat\b)/.test(s)) return [];
+    let m=s.match(/\$?\s*(\d{1,3}(?:,\d{3})+|\d{4,6})(?:\.\d+)?\b/), n=null;
+    if(m) n=+m[1].replace(/,/g,''); else if((m=s.match(/(\d+(?:\.\d+)?)\s*(k|thousand|grand)(?:\s*(?:and\s*)?(\d)\s*hundred|\s*(\d{3}))?/))) n=Math.round(+m[1]*1000+(m[3]?+m[3]*100:0)+(m[4]?+m[4]:0));
+    if(!n||n<5000||n>500000) return [];
+    return [{id:'profitMode',value:'total',heard:m[0]},{id:'profitValue',value:String(n),heard:m[0]}]; };
 window.agbVoice=AGBVoiceCore.create({
   page:'estimator',
   fields:[
@@ -12844,7 +12866,8 @@ window.agbVoice=AGBVoiceCore.create({
     ['roofPatioEnabled','Roof patio'],['roofPatioDepth','Roof patio depth'],['roofPatioSide','Side roof patio (unchecked = rear)'],
     ['overhangEnabled','Front overhang'],['overhangSize','Overhang size'],
     ['electricIncluded','Standard electric included'],['evCharger','EV charger'],['evPrep','EV prep'],
-    ['customerName','Customer name'],['customerAddress','Customer address'],['salesman','Salesman'],
+    ['wallHeight','Wall height ft'],['extraLightsInterior','Extra interior lights (count)'],['extraLightsExterior','Extra exterior lights (count)'],['extraOutletsInterior','Extra interior outlets (count)'],['extraOutletsExterior','Extra exterior outlets (count)'],['electricSubpanel','Electric subpanel'],['threeWaySwitch','3-way switch'],['hurricaneTies','Hurricane ties'],['firewallWalls','Firewall (fire-rated) walls'],
+    ['customerName','Customer name'],['customerAddress','Customer / job street address (city goes in city)'],['customerPhone1','Customer phone'],['customerPhone2','Customer 2nd phone (spouse/other contact)'],['customerEmail','Customer email'],['salesman','Salesman'],['additionalEstimateNotes','Notes for the estimate sheet (only when he says note/add a note)'],
     ['profitMode','Price by (total = pinned Total Project Price)'],['profitValue','Total price set to $ (with profitMode total)']
   ],
   extraCatalog:['side_doors (use the side_doors argument, not fields) | walk doors: type service/french/party, wall left/right/rear/front-left/front-right, french style 9light/fullview'],
@@ -12855,6 +12878,9 @@ window.agbVoice=AGBVoiceCore.create({
   /* Demo = remove old garage + slab. On an existing slab the SAME demo preset + existing demolition cost box ($1300 default)
      is used; the manual calculator then charges only demoCostInput (no slab removal, "slab and apron to remain"). */
   guard:function(f,a){
+    if(f.id==='customerPhone1'||f.id==='customerPhone2'){ const v=window.agbNormPhone(f.value); if(!v) return false; f.value=v; }
+    if(f.id==='customerEmail'){ const v=window.agbNormEmail(f.value); if(!v) return false; f.value=v; }
+    if(f.id==='additionalEstimateNotes'){ const cur=(document.getElementById('additionalEstimateNotes')||{}).value||''; const add=String(f.value||'').trim(); if(!add) return false; if(cur&&!cur.includes(add)) f.value=cur.replace(/\s+$/,'')+'\n'+add; }
     if(f.id==='demoSlabPreset'){ const v=String(f.value||'').trim().toLowerCase().replace(/[×\s]/g,'x').replace(/x+/g,'x');
       if(v==='none'||v==='') return false;
       const sel=document.getElementById('demoSlabPreset');
@@ -12898,13 +12924,7 @@ window.agbVoice=AGBVoiceCore.create({
   /* Spoken total price ("I want the price to be 29,000") reuses Profit Control "Total Project Price" mode: the total stays pinned
      while other items change; unchecking the card item restores the previous profit mode/value. */
   hideOnCard:['profitMode'], linked:{profitValue:['profitMode']},
-  extraParse:function(t){ const s=String(t).toLowerCase().replace(/twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety/g,m=>({twenty:'20 ',thirty:'30 ',forty:'40 ',fifty:'50 ',sixty:'60 ',seventy:'70 ',eighty:'80 ',ninety:'90 '}[m]))
-      .replace(/\b(\d0) (one|two|three|four|five|six|seven|eight|nine)\b/g,(m,a,b)=>String(+a+{one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9}[b]));
-    if(!(/\b(price|total|sell it|charge|quote)\b/.test(s)||/\bmake it \$?\d[\d.,]*\s*(k|thousand|grand)\b/.test(s))||!/(\bmake it\b|\bset\b|\bwant\b|\bput\b|\bshould be\b|\bto be\b|\bat\b)/.test(s)) return [];
-    let m=s.match(/\$?\s*(\d{1,3}(?:,\d{3})+|\d{4,6})(?:\.\d+)?\b/), n=null;
-    if(m) n=+m[1].replace(/,/g,''); else if((m=s.match(/(\d+(?:\.\d+)?)\s*(k|thousand|grand)(?:\s*(?:and\s*)?(\d)\s*hundred|\s*(\d{3}))?/))) n=Math.round(+m[1]*1000+(m[3]?+m[3]*100:0)+(m[4]?+m[4]:0));
-    if(!n||n<5000||n>500000) return [];
-    return [{id:'profitMode',value:'total',heard:m[0]},{id:'profitValue',value:String(n),heard:m[0]}]; },
+  extraParse:function(t){ const contact=window.agbContactFromSpeech(t); return contact.concat(window.agbPriceFromSpeech(t)); },
   afterCommit:function(props){ const card=document.getElementById('agbvCard'); let w=document.getElementById('agbvTotalWarn');
     const p=props.profitValue, on=p&&p.on&&(props.profitMode||{}).v==='total';
     const internal=parseFloat(((document.getElementById('internalTotal')||{}).textContent||'').replace(/[^0-9.]/g,''))||0;

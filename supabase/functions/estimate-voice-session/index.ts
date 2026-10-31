@@ -31,6 +31,7 @@ Rules:
 - Never ask about demo apron depth, demo cost, EPA, or excavation unless he brings them up; leave demoApronDepth unset unless he says an apron number.
 - SIZE (most important): whenever the salesman says a size, call set_estimate_fields with width AND depth right away. "A by B" / "A x B" / "A-by-B" = width A, depth B (first number is ALWAYS width). Spoken numbers count ("twenty two by twenty four" = 22 x 24). "24 deep"/"24 long" = depth only; "22 wide" = width only. Sizes not in the width/depth options (e.g. 21, 25, 23.5) -> width/depth = custom plus customWidth/customDepth numbers. Only ask if truly ambiguous (e.g. a single number with no wide/deep).
 - "two car" with only a depth (e.g. "two car, 24 deep") -> width 20 plus that depth, and ask to confirm the width. Do not ask about overhead door count, car capacity or other items he did not mention.
+- CUSTOMER INFO: map spoken name, phone (customerPhone1; a 2nd/spouse/other number -> customerPhone2), email (spell out 'at'/'dot' -> real address), street address (customerAddress; town -> city) and salesman straight to those fields in one call, silently. Never say you can't enter contact info.
 - PRICE OVERRIDE: "I want the price to be 29,000" / "make it 29 thousand" / "set total to 27,500" -> set profitMode total AND profitValue 29000 (exact dollars). Silent; ask only if the number is unclear. This is not a question.
 - If no size at all was given, ask for it ONCE ("What size?").
 - When the salesman answers yes / correct / that's right to your confirm question, immediately call set_estimate_fields with that field set to the value you proposed (no question). When he answers with a different number, set that number.
@@ -67,7 +68,7 @@ LIVE MODE (voice):
 - After he finishes a turn: call set_estimate_fields with what you understood; it goes straight onto the estimate. Do NOT speak a confirmation.
 - Speak ONLY when (a) something he mentioned is ambiguous/incomplete (e.g. French doors without style, a city not in the list, "two car" without a depth) - ask ONE short question; (b) no size at all after he described the job - ask once "What size?"; (c) he asked you a question.
 - QUESTIONS he asks: never change fields. Pricing -> ALWAYS call get_price_info and quote its difference_text exactly and answer with those numbers only, say it's company pricing. City codes -> get_city_info. Garage/building facts -> answer briefly from company knowledge, else general knowledge (say "generally"); if unsure or needs current info -> web_lookup once, then answer in 1-2 sentences and say it's general info.
-- 1-2 short sentences when you do speak. He may interrupt. No "anything else", no summaries. If he says done / that's it, call finish_estimate silently.`;
+- 1-2 short sentences when you do speak. Ignore background noise, TV/radio or other people talking. No "anything else", no summaries. If he says done / that's it, call finish_estimate silently.`;
 
 
 
@@ -131,7 +132,7 @@ Deno.serve(async (req) => {
             instructions: instructions + OWNER + CONVO,
             max_output_tokens: 1200,
             audio: {
-              input: { turn_detection: { type: "semantic_vad", eagerness: "high" }, transcription: { model: "gpt-4o-mini-transcribe", language: "en" } },
+              input: { noise_reduction: { type: "near_field" }, turn_detection: { type: "semantic_vad", eagerness: "low", create_response: false, interrupt_response: false }, transcription: { model: "gpt-4o-mini-transcribe", language: "en" } },
               output: { voice: "marin" },
             },
             tools: [SET_TOOL, FINISH_TOOL, JOB_TOOL, PRICE_TOOL, CITY_TOOL, WEB_TOOL],

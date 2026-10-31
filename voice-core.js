@@ -139,7 +139,7 @@ window.AGBVoiceCore={create:function(cfg){
     w.textContent="Can't play sound — check volume / Silent switch, then tap here. (You can still read what the helper says above.)"; w.hidden=false; }
   function sayLine(txt,final){ const el=$('agbvSay'); el.hidden=false; $('agbvSayTxt').textContent=txt; }
   function setTalking(on){ aiTalking=on; const el=$('agbvSay'); if(el) el.classList.toggle('talking',on);
-    if(live()) status(on?'AI asking… (you can interrupt)':'Listening…');
+    if(live()) status(on?'AI talking… (just keep talking to interrupt)':'Listening…');
     if(on){ clearTimeout(playChk); const t0a=audio?audio.currentTime:0; playChk=setTimeout(()=>{ if(aiTalking&&audio&&(audio.paused||audio.currentTime<=t0a)) soundWarn(); else { const w=$('agbvSoundWarn'); if(w) w.hidden=true; } window.agbVoiceAudio={paused:audio.paused,currentTime:audio.currentTime,start:t0a}; },1500); } }
   function ensureSayUI(){ if($('agbvSay')) return; const d=document.createElement('div'); d.id='agbvSay'; d.className='agbv-say'; d.hidden=true;
     d.innerHTML='<span class="agbv-eq"><i></i><i></i><i></i></span><span><b>AI:</b> <span id="agbvSayTxt"></span></span>'; $('agbvStatus').after(d); }
@@ -152,7 +152,7 @@ window.AGBVoiceCore={create:function(cfg){
     $('agbvMic').disabled=true; status('Listening…');
     unlockAudio(); // must run inside the Talk tap (iPhone)
     try{
-      mic=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}});
+      mic=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true,channelCount:1}});
       const tok=await callFn({mode:'realtime',page:cfg.page||'',catalog:catalog(),current:current(),learned:learnedText()});
       pc=new RTCPeerConnection();
       pc.ontrack=e=>{ playRemote(e.streams[0]||new MediaStream([e.track])); };
@@ -161,7 +161,7 @@ window.AGBVoiceCore={create:function(cfg){
       dc.onopen=()=>{ ensureSayUI(); status('Listening…'); heardSpeech=false; stillAsked=false; userAct=Date.now(); /* silent start: no greeting, no response.create */
         if(Object.keys(props).length) send({type:'conversation.item.create',item:{type:'message',role:'user',content:[{type:'input_text',text:'(Context, do not reply: already set '+JSON.stringify(Object.fromEntries(Object.entries(props).map(([k,p])=>[k,p.v])))+')'}]}});
         setTimeout(()=>{ if(live()&&!heardSpeech) status('Listening… (not hearing anything yet — check mic permission: aA → Website Settings → Microphone)'); },15000); };
-      pc.onconnectionstatechange=()=>{ if(['failed','closed','disconnected'].includes(pc&&pc.connectionState)) stop('Voice ended.'); };
+      pc.onconnectionstatechange=()=>{ const st=pc&&pc.connectionState; if(st==='failed'||st==='closed') stop('Voice ended (connection lost). Tap Talk to keep going — the list is kept.'); else if(st==='disconnected') setTimeout(()=>{ if(pc&&pc.connectionState==='disconnected') stop('Voice ended (connection lost). Tap Talk to keep going — the list is kept.'); },10000); };
       const offer=await pc.createOffer(); await pc.setLocalDescription(offer);
       const r=await fetch('https://api.openai.com/v1/realtime/calls',{method:'POST',body:offer.sdp,headers:{Authorization:'Bearer '+tok.value,'Content-Type':'application/sdp'}});
       if(!r.ok) throw new Error('Voice connect failed ('+r.status+')');
@@ -176,19 +176,25 @@ window.AGBVoiceCore={create:function(cfg){
     if(s>=MAX_TOTAL) stop('Voice ended (15 min safety limit). Tap Talk to keep going — the list is kept.');
     else if(idle>MAX_IDLE) stop('Voice ended after 2 minutes of silence. Tap Talk to keep going — the list is kept.');
     else if(idle>STILL_THERE&&!stillAsked){ stillAsked=true; status('Still there? (voice ends after 2 min of quiet)'); } }
+  let lastUserTxt='';
+  /* Background noise often transcribes as nothing, a filler ("uh", "mm"), or a stock phrase ("Thank you.", "Bye.") — never act on those. */
+  function realSpeech(t){ const s=String(t||'').toLowerCase().replace(/[^a-z0-9 ]/g,' ').trim(); if(!s) return false;
+    if(/^(uh+|um+|mm+|hmm+|ah+|oh+|you|bye|thank you|thanks|thanks for watching|okay|ok|yeah|huh)( (uh+|um+|you|bye|thank you))*$/.test(s)&&!pendingQuestion()) return false;
+    lastUserTxt=t; heardSpeech=true; return true; }
+  function pendingQuestion(){ return (questions||[]).length>0||aiTalking; }
   function stop(msg){ clearInterval(tick); tick=null; window.agbVoiceDebug={heardSpeech,heard:heardTxt,at:new Date().toISOString()};
     try{ dc&&dc.close(); }catch(e){} try{ pc&&pc.close(); }catch(e){} try{ mic&&mic.getTracks().forEach(t=>t.stop()); }catch(e){}
     dc=pc=mic=null; aiTalking=false; clearTimeout(playChk); const sy=$('agbvSay'); if(sy) sy.classList.remove('talking'); $('agbvMic').classList.remove('live'); $('agbvMicTxt').textContent='Talk with the helper'; $('agbvTimer').hidden=true;
     if(msg) status(msg); }
   function onEvent(ev){
     const t=ev.type;
-    if(t==='input_audio_buffer.speech_started'){ lastAct=userAct=Date.now(); stillAsked=false; heardSpeech=true; if(aiTalking) setTalking(false); status('Hearing you…'); }
+    if(t==='input_audio_buffer.speech_started'){ if(!aiTalking) status('Hearing you…'); }
     else if(t==='output_audio_buffer.started'||t==='response.output_audio.delta'&&!aiTalking) setTalking(true);
     else if(t==='output_audio_buffer.stopped'||t==='output_audio_buffer.cleared') setTalking(false);
     else if(t==='response.output_audio_transcript.delta'&&ev.delta){ if(!sayBuf||sayNew){ sayBuf=''; sayNew=false; } sayBuf+=ev.delta; sayLine(sayBuf); }
-    else if(t==='input_audio_buffer.speech_stopped') status('Listening… (updating estimate)');
-    else if(t==='conversation.item.input_audio_transcription.completed'&&ev.transcript) { log('u',ev.transcript); lastAct=Date.now(); heardSpeech=true; heard(ev.transcript); voicedYes(ev.transcript); dimsFromSpeech(ev.transcript); extraFromSpeech(ev.transcript); render(); }
-    else if(t==='conversation.item.input_audio_transcription.failed') status('Could not make out that last part — say it again.');
+    else if(t==='input_audio_buffer.speech_stopped'){ if(!aiTalking) status('Listening…'); }
+    else if(t==='conversation.item.input_audio_transcription.completed'&&ev.transcript) { if(!realSpeech(ev.transcript)) return; lastAct=userAct=Date.now(); stillAsked=false; if(aiTalking){ send({type:'response.cancel'}); send({type:'output_audio_buffer.clear'}); setTalking(false); } send({type:'response.create'}); status('Listening… (updating estimate)'); log('u',ev.transcript); lastAct=Date.now(); heardSpeech=true; heard(ev.transcript); voicedYes(ev.transcript); dimsFromSpeech(ev.transcript); extraFromSpeech(ev.transcript); render(); }
+    else if(t==='conversation.item.input_audio_transcription.failed'){ /* usually noise: ignore quietly */ }
     else if(t==='response.output_audio_transcript.done'&&ev.transcript){ log('a',ev.transcript); sayLine(ev.transcript,true); sayNew=true; }
     else if(t==='response.function_call_arguments.done'){
       let a={}; try{ a=JSON.parse(ev.arguments||'{}'); }catch(e){}
@@ -197,6 +203,7 @@ window.AGBVoiceCore={create:function(cfg){
         Promise.resolve().then(()=>ev.name==='get_price_info'?(cfg.priceInfo?cfg.priceInfo(a):{error:'no pricing on this page'}):ev.name==='get_city_info'?(cfg.cityInfo?cfg.cityInfo(a.city):{error:'no city data'}):callFn({mode:'web',question:a.question}).then(d=>({answer:d.answer,source:'web (general info)'})))
           .catch(e=>({error:String(e.message||e)})).then(reply); return; }
       if(ev.name==='get_job_status'){ status('Looking up job…'); jobStatus(a.query).catch(e=>({error:String(e.message||e)})).then(r=>{ send({type:'conversation.item.create',item:{type:'function_call_output',call_id:ev.call_id,output:JSON.stringify(r).slice(0,4000)}}); send({type:'response.create'}); status('Listening…'); }); return; }
+      if(ev.name==='finish_estimate'&&!/\b(done|that'?s (it|all)|that is (it|all)|finished|all set|we'?re good|end (it|the conversation)|stop)\b/i.test(lastUserTxt)){ send({type:'conversation.item.create',item:{type:'function_call_output',call_id:ev.call_id,output:'He did not say he is done. Keep listening silently.'}}); return; }
       if(ev.name==='finish_estimate'){ send({type:'conversation.item.create',item:{type:'function_call_output',call_id:ev.call_id,output:'all set; everything is already on the estimate'}}); setTimeout(()=>stop('All set — everything you said is on the estimate. Fix anything in the list below, or tap Talk to add more.'),2500); return; }
       apply(a); const needQ=(a.questions||[]).length>0||(a.unknownPhrases||[]).length>0;
       send({type:'conversation.item.create',item:{type:'function_call_output',call_id:ev.call_id,output:needQ?'set; now ask your one short question out loud':'set on the estimate; stay silent'}});
@@ -253,5 +260,5 @@ window.AGBVoiceCore={create:function(cfg){
   function reset(){ props={}; doors=null; questions=[]; unknown=[]; pending={}; heardTxt=''; prevVals={}; doorsPrev=null; doorsApplied=false; const h=$('agbvHeard'); if(h) h.remove(); render(); }
   function fill(){ /* "Done": values are already on the estimate; just close the list */ if(live()) stop('Done — everything is on the estimate.'); else status('Done — everything is on the estimate.'); reset(); }
   function clear(){ /* "Undo all": revert every control voice changed */ Object.keys(props).forEach(id=>props[id].on=false); if(doors) doors.on=false; commit(); status('Undid everything voice set.'); reset(); }
-  return {toggle:()=>live()||pc?stop('Voice stopped.'):start(), sendText, fill, clear, catalog, _apply:apply, learned, _jobStatus:jobStatus, _state:()=>({props,doors,questions,unknown}), usage:()=>usage};
+  return {toggle:()=>live()||pc?stop('Voice stopped.'):start(), sendText, fill, clear, catalog, _apply:apply, learned, _jobStatus:jobStatus, _state:()=>({props,doors,questions,unknown}), usage:()=>usage, /* offline test hook: fake data channel, feed events */ _sim:()=>{ window.agbVoiceSent=[]; dc={readyState:'open',send:m=>window.agbVoiceSent.push(JSON.parse(m)),close(){}}; return onEvent; }};
 }};

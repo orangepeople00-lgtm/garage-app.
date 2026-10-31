@@ -12846,6 +12846,7 @@ window.agbVoice=AGBVoiceCore.create({
   extraCatalog:['side_doors (use the side_doors argument, not fields) | walk doors: type service/french/party, wall left/right/rear/front-left/front-right, french style 9light/fullview'],
   fillDoors:function(list){ const $=id=>document.getElementById(id); const on=$('sideDoorsListOn'); if(on&&!on.checked){ on.checked=true; on.dispatchEvent(new Event('change',{bubbles:true})); }
       const sj=$('sideDoorsJson'); if(sj){ sj.value=JSON.stringify(list.map(d=>d.type==='french'?{type:'french',wall:d.wall,style:d.style||'9light'}:d.type==='party'?{type:'party',wall:d.wall,w:6,h:7,windows:false}:{type:'service',wall:d.wall})); try{ agbDoorsToggle(); }catch(e){} } },
+  dims:['width','depth','customWidth','customDepth'], /* spoken sizes always land on the card */
   keepAsked:['width','depth','demoSlabPreset'], /* "two car" -> 20x20 proposed AND confirm question */
   /* Demo = remove old garage + slab. On an existing slab the SAME demo preset + existing demolition cost box ($1300 default)
      is used; the manual calculator then charges only demoCostInput (no slab removal, "slab and apron to remain"). */

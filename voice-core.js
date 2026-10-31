@@ -1,7 +1,7 @@
 /* voice-core.js — shared live-voice helper (SAMPLE). Used by estimator.html; repair.html can reuse with its own field list.
    AGBVoiceCore.create({page, fields:[[id,label]...], extraCatalog:[...], fillDoors(list), afterFill(), fnName}) -> controller.
    Expects the page to have the #agbVoice panel markup, garageSb, GARAGE_SB_URL, GARAGE_SB_KEY. */
-(function(){var st=document.createElement('style');st.textContent=".agbv{margin:0 0 16px;background:#0b1220;border:1px solid #1e3a5f;border-radius:16px;padding:12px;color:#e4e4e7;max-width:100%;box-sizing:border-box}\n.agbv *{box-sizing:border-box}\n.agbv-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}\n.agbv-mic{min-height:48px;padding:0 18px;border-radius:999px;background:#2563eb;color:#fff;font-weight:800;font-size:16px;border:0}\n.agbv-mic.live{background:#dc2626;animation:agbvp 1.4s infinite}\n@keyframes agbvp{50%{box-shadow:0 0 0 8px rgba(220,38,38,.25)}}\n.agbv-timer{font-size:13px;color:#fca5a5;font-variant-numeric:tabular-nums}\n.agbv-status{font-size:12px;color:#a1a1aa;margin:8px 0 6px;line-height:1.4}\n.agbv-type{display:flex;gap:6px}\n.agbv-type input{flex:1;min-width:0;min-height:44px;background:#18181b;border:1px solid #3f3f46;border-radius:12px;color:#fff;padding:0 10px;font-size:16px}\n.agbv-btn{min-height:44px;padding:0 14px;border-radius:12px;background:#27272a;border:1px solid #52525b;color:#f4f4f5;font-size:14px}\n.agbv-log{margin-top:8px;font-size:12px;max-height:120px;overflow:auto;background:#09090b;border-radius:10px;padding:6px 8px;line-height:1.45}\n.agbv-log .u{color:#93c5fd}.agbv-log .a{color:#86efac}\n.agbv-card{margin-top:10px;background:#111827;border:1px solid #334155;border-radius:14px;padding:10px}\n.agbv-h{font-weight:800;font-size:14px;margin-bottom:6px}.agbv-sub{font-weight:400;color:#a1a1aa;font-size:12px}\n.agbv-item{display:grid;grid-template-columns:28px minmax(0,1fr) minmax(0,1.2fr);gap:6px;align-items:center;padding:5px 0;border-top:1px solid #1f2937;font-size:13px}\n.agbv-item input[type=checkbox]{width:22px;height:22px}\n.agbv-item select,.agbv-item input[type=text]{width:100%;min-height:38px;background:#18181b;border:1px solid #3f3f46;border-radius:10px;color:#fff;font-size:14px;padding:0 6px}\n.agbv-q{margin-top:8px;padding:8px;background:#422006;border:1px solid #a16207;border-radius:12px;font-size:13px}\n.agbv-q .opts{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}\n.agbv-q button{min-height:40px;padding:0 12px;border-radius:999px;background:#fbbf24;color:#000;font-weight:700;border:0;font-size:14px}\n.agbv-unk{margin-top:6px;font-size:12px;color:#fca5a5}\n.agbv-actions{display:flex;gap:8px;margin-top:10px}\n.agbv-fill{flex:1;min-height:48px;border-radius:12px;background:#16a34a;color:#fff;font-weight:800;font-size:16px;border:0}\n";document.head.appendChild(st);})();
+(function(){var st=document.createElement('style');st.textContent=".agbv{margin:0 0 16px;background:#0b1220;border:1px solid #1e3a5f;border-radius:16px;padding:12px;color:#e4e4e7;max-width:100%;box-sizing:border-box}\n.agbv *{box-sizing:border-box}\n.agbv-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}\n.agbv-mic{min-height:48px;padding:0 18px;border-radius:999px;background:#2563eb;color:#fff;font-weight:800;font-size:16px;border:0}\n.agbv-mic.live{background:#dc2626;animation:agbvp 1.4s infinite}\n@keyframes agbvp{50%{box-shadow:0 0 0 8px rgba(220,38,38,.25)}}\n.agbv-timer{font-size:13px;color:#fca5a5;font-variant-numeric:tabular-nums}\n.agbv-status{font-size:12px;color:#a1a1aa;margin:8px 0 6px;line-height:1.4}\n.agbv-type{display:flex;gap:6px}\n.agbv-type input{flex:1;min-width:0;min-height:44px;background:#18181b;border:1px solid #3f3f46;border-radius:12px;color:#fff;padding:0 10px;font-size:16px}\n.agbv-btn{min-height:44px;padding:0 14px;border-radius:12px;background:#27272a;border:1px solid #52525b;color:#f4f4f5;font-size:14px}\n.agbv-log{margin-top:8px;font-size:12px;max-height:120px;overflow:auto;background:#09090b;border-radius:10px;padding:6px 8px;line-height:1.45}\n.agbv-log .u{color:#93c5fd}.agbv-log .a{color:#86efac}\n.agbv-card{margin-top:10px;background:#111827;border:1px solid #334155;border-radius:14px;padding:10px}\n.agbv-h{font-weight:800;font-size:14px;margin-bottom:6px}.agbv-sub{font-weight:400;color:#a1a1aa;font-size:12px}\n.agbv-item{display:grid;grid-template-columns:28px minmax(0,1fr) minmax(0,1.2fr);gap:6px;align-items:center;padding:5px 0;border-top:1px solid #1f2937;font-size:13px}\n.agbv-item input[type=checkbox]{width:22px;height:22px}\n.agbv-item select,.agbv-item input[type=text]{width:100%;min-height:38px;background:#18181b;border:1px solid #3f3f46;border-radius:10px;color:#fff;font-size:14px;padding:0 6px}\n.agbv-q{margin-top:8px;padding:8px;background:#422006;border:1px solid #a16207;border-radius:12px;font-size:13px}\n.agbv-q .opts{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}\n.agbv-q button{min-height:40px;padding:0 12px;border-radius:999px;background:#fbbf24;color:#000;font-weight:700;border:0;font-size:14px}\n.agbv-heard{font-size:12px;color:#93c5fd;background:#0b1220;border-radius:8px;padding:5px 8px;margin-bottom:6px;line-height:1.35;overflow-wrap:anywhere}\n.agbv-unk{margin-top:6px;font-size:12px;color:#fca5a5}\n.agbv-actions{display:flex;gap:8px;margin-top:10px}\n.agbv-fill{flex:1;min-height:48px;border-radius:12px;background:#16a34a;color:#fff;font-weight:800;font-size:16px;border:0}\n";document.head.appendChild(st);})();
 
 /* SAMPLE voice-estimate (branch voice-estimate-sample). Talks to OpenAI Realtime via an ephemeral key minted by the
    Supabase function estimate-voice-session. Proposals go to the summary card; "Fill estimate" sets the real controls
@@ -14,7 +14,7 @@ window.AGBVoiceCore={create:function(cfg){
   const FIELDS=cfg.fields;
   const LABEL=Object.fromEntries(FIELDS);
   let props={}, doors=null, questions=[], unknown=[];
-  let pc=null, dc=null, mic=null, audio=null, t0=0, lastAct=0, tick=null, usage={sessions:0,in_audio:0,in_text:0,in_cached:0,out_audio:0,out_text:0};
+  let heardSpeech=false; let pc=null, dc=null, mic=null, audio=null, t0=0, lastAct=0, tick=null, usage={sessions:0,in_audio:0,in_text:0,in_cached:0,out_audio:0,out_text:0};
 
   function optsOf(el){ return Array.from(el.options||[]).filter(o=>!o.disabled).map(o=>[o.value,o.textContent.trim()]); }
   function kindOf(el){ if(!el) return null; if(el.tagName==='SELECT') return 'select'; if(el.type==='checkbox') return 'bool'; if(el.type==='number'||el.type==='range') return 'number'; return 'text'; }
@@ -36,19 +36,19 @@ window.AGBVoiceCore={create:function(cfg){
 
   function apply(a){ // from set_estimate_fields
     const asked=new Set((a.questions||[]).map(q=>q&&q.fieldId));
-    (a.fields||[]).forEach(f=>{ if(asked.has(f.id)&&(/^(none|)$/i.test(String(f.value||'').trim())||!(cfg.keepAsked||[]).includes(f.id))) return; if(cfg.guard&&cfg.guard(f,a)===false) return;
+    (a.fields||[]).forEach(f=>{ if(asked.has(f.id)&&(/^(none|)$/i.test(String(f.value||'').trim())||!(cfg.keepAsked||[]).includes(f.id))){ const pv=norm(f.id,f.value); if(pv!==null&&!/^(none|)$/i.test(String(f.value||'').trim())) pending[f.id]=pv; return; } if(cfg.guard&&cfg.guard(f,a)===false) return;
       const v=norm(f.id,f.value); if(v===null){ if(f.id) unknown.push(f.id+': '+f.value); return; } props[f.id]={v,on:true,heard:f.heard||'',orig:v}; });
     if(Array.isArray(a.side_doors)) doors={list:a.side_doors.filter(d=>d&&d.type&&d.wall),on:true};
     if(Array.isArray(a.questions)) questions=a.questions.filter(q=>q&&q.question).map(q=>({fieldId:q.fieldId,question:q.question,options:(q.options||[]).slice(0,9)}));
     (a.unknownPhrases||[]).forEach(p=>unknown.push(p));
     // answered questions drop off
-    questions=questions.filter(q=>!(props[q.fieldId]&&a.fields&&a.fields.some(f=>f.id===q.fieldId)));
+    questions=questions.filter(q=>asked.has(q.fieldId)||!(props[q.fieldId]&&a.fields&&a.fields.some(f=>f.id===q.fieldId)));
     render();
   }
   function doorTxt(d){ return ({service:'Service door',french:'French doors',party:'Party door'}[d.type]||d.type)+' — '+d.wall+(d.style==='fullview'?' (full view)':''); }
   function render(){
     const ids=FIELDS.map(f=>f[0]).filter(id=>props[id]);
-    $('agbvCard').hidden=!(ids.length||doors||questions.length||unknown.length);
+    $('agbvCard').hidden=!(ids.length||doors||questions.length||unknown.length||heardTxt);
     $('agbvItems').innerHTML=ids.map(id=>{ const p=props[id], el=$(id), k=kindOf(el);
       let ed=k==='select'?'<select data-ed="'+id+'">'+optsOf(el).map(o=>'<option value="'+esc(o[0])+'"'+(o[0]===String(p.v)?' selected':'')+'>'+esc(o[1])+'</option>').join('')+'</select>'
         :k==='bool'?'<select data-ed="'+id+'"><option value="true"'+(p.v?' selected':'')+'>Yes</option><option value="false"'+(!p.v?' selected':'')+'>No</option></select>'
@@ -86,6 +86,29 @@ window.AGBVoiceCore={create:function(cfg){
     const r=await fetch(GARAGE_SB_URL+'/functions/v1/'+FN,{method:'POST',headers,body:JSON.stringify(body)}); const d=await r.json().catch(()=>({}));
     if(!r.ok||d.error) throw new Error(d.error||d.message||('HTTP '+r.status)); return d; }
 
+  /* Spoken/typed garage size -> width/depth (width first). Works on transcripts, so a size always lands on the card. */
+  const NUMW={zero:0,one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10,eleven:11,twelve:12,thirteen:13,fourteen:14,fifteen:15,sixteen:16,seventeen:17,eighteen:18,nineteen:19,twenty:20,thirty:30,forty:40,fifty:50};
+  function words2num(t){ return String(t).toLowerCase().replace(/\b(twenty|thirty|forty|fifty)[\s-]+(one|two|three|four|five|six|seven|eight|nine)\b/g,(m,a,b)=>String(NUMW[a]+NUMW[b]))
+      .replace(/\b(zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty)\b/g,m=>String(NUMW[m])); }
+  function parseDims(t){ const s=words2num(t).replace(/[′’']/g,' ').replace(/\b(feet|foot|ft)\b/g,' '); let m, r={};
+    if((m=s.match(/\b(\d{2}(?:\.5)?)\s*(?:x|×|by|bye|buy|times)\s*(\d{2}(?:\.5)?)\b/))){ r.w=+m[1]; r.d=+m[2]; r.heard=m[0]; }
+    else { if((m=s.match(/\b(\d{2}(?:\.5)?)\s*(?:wide|width|across)\b/))||(m=s.match(/\bwidth\s*(?:of|is)?\s*(\d{2}(?:\.5)?)\b/))){ r.w=+m[1]; r.heard=m[0]; }
+      if((m=s.match(/\b(\d{2}(?:\.5)?)\s*(?:deep|depth|long)\b/))||(m=s.match(/\bdepth\s*(?:of|is)?\s*(\d{2}(?:\.5)?)\b/))){ r.d=+m[1]; r.heard=(r.heard?r.heard+', ':'')+m[0]; } }
+    ['w','d'].forEach(k=>{ if(r[k]!=null&&(r[k]<8||r[k]>60)) delete r[k]; }); return (r.w!=null||r.d!=null)?r:null; }
+  function setDim(id,cid,n,heard){ const el=$(id); if(!el) return; const opt=optsOf(el).some(o=>o[0]===String(n));
+    if(opt){ props[id]={v:String(n),on:true,heard,orig:String(n)}; delete props[cid]; }
+    else if($(cid)&&optsOf(el).some(o=>o[0]==='custom')){ props[id]={v:'custom',on:true,heard,orig:'custom'}; props[cid]={v:n,on:true,heard,orig:n}; } }
+  function dimsFromSpeech(t){ if(!cfg.dims) return false; const r=parseDims(t); if(!r) return false; const [W,D,CW,CD]=cfg.dims;
+    if(r.w!=null) setDim(W,CW,r.w,r.heard); if(r.d!=null) setDim(D,CD,r.d,r.heard);
+    questions=questions.filter(q=>!((r.w!=null&&(q.fieldId===W||q.fieldId===CW))||(r.d!=null&&(q.fieldId===D||q.fieldId===CD))));
+    delete pending[W]; delete pending[D]; return true; }
+  let pending={}, heardTxt='';
+  function heard(t){ heardTxt=t; let h=$('agbvHeard'); if(!h){ h=document.createElement('div'); h.id='agbvHeard'; h.className='agbv-heard'; $('agbvCard').insertBefore(h,$('agbvCard').firstChild); }
+    h.textContent='What I heard: “'+t+'”'; }
+  function voicedYes(t){ if(!/^\s*(yes|yeah|yep|yup|correct|right|that'?s right|sure|ok(ay)?|confirm(ed)?)\b/i.test(t)) return false;
+    const q=questions[0]; if(!q) return false; let v=pending[q.fieldId]; if(v==null&&props[q.fieldId]) v=props[q.fieldId].v;
+    if(v==null){ const o=(q.options||[]).find(x=>!/^(no|yes)$/i.test(x)&&norm(q.fieldId,x)!==null); if(o) v=norm(q.fieldId,o); }
+    if(v==null) return false; props[q.fieldId]=Object.assign(props[q.fieldId]||{orig:v},{v,on:true,heard:t}); delete pending[q.fieldId]; questions.shift(); return true; }
   function live(){ return !!(dc&&dc.readyState==='open'); }
   function send(o){ if(live()) dc.send(JSON.stringify(o)); }
   function say(text){ send({type:'conversation.item.create',item:{type:'message',role:'user',content:[{type:'input_text',text}]}}); send({type:'response.create'}); lastAct=Date.now(); }
@@ -93,7 +116,7 @@ window.AGBVoiceCore={create:function(cfg){
   async function start(){
     if(!navigator.mediaDevices||!window.RTCPeerConnection){ status('Live voice is not supported in this browser — type the job below.'); return; }
     $('agbvMic').disabled=true; status('Starting… allow the microphone.');
-    audio=audio||document.createElement('audio'); audio.autoplay=true; audio.setAttribute('playsinline',''); try{ audio.play().catch(()=>{}); }catch(e){} // unlock on this tap (iPhone)
+    if(!audio){ audio=document.createElement('audio'); audio.style.display='none'; document.body.appendChild(audio); } audio.autoplay=true; audio.setAttribute('playsinline',''); try{ audio.play().catch(()=>{}); }catch(e){} // unlock on this tap (iPhone)
     try{
       mic=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}});
       const tok=await callFn({mode:'realtime',page:cfg.page||'',catalog:catalog(),current:current(),learned:learnedText()});
@@ -101,7 +124,8 @@ window.AGBVoiceCore={create:function(cfg){
       pc.ontrack=e=>{ audio.srcObject=e.streams[0]; audio.play().catch(()=>{}); };
       pc.addTrack(mic.getTracks()[0],mic);
       dc=pc.createDataChannel('oai-events'); dc.onmessage=e=>{ try{ onEvent(JSON.parse(e.data)); }catch(x){} };
-      dc.onopen=()=>{ status('Listening — talk normally. Say "done" or tap Fill estimate when finished.'); if(Object.keys(props).length) say('Already proposed: '+JSON.stringify(Object.fromEntries(Object.entries(props).map(([k,p])=>[k,p.v])))+'. Wait for the salesman.'); };
+      dc.onopen=()=>{ status('Listening — talk normally. Say "done" or tap Fill estimate when finished.'); heardSpeech=false; if(Object.keys(props).length) say('Already proposed: '+JSON.stringify(Object.fromEntries(Object.entries(props).map(([k,p])=>[k,p.v])))+'. If width/depth are not set, ask for the size out loud; otherwise wait for the salesman.'); else say('(Session started.) In one short sentence greet the salesman and ask out loud for the garage size, width by depth, plus roof style and city.');
+        setTimeout(()=>{ if(live()&&!heardSpeech) status('I am not hearing your voice. Check the mic permission (aA → Website Settings → Microphone), turn off Silent mode, then tap Stop and the mic again — or type below.'); },15000); };
       pc.onconnectionstatechange=()=>{ if(['failed','closed','disconnected'].includes(pc&&pc.connectionState)) stop('Voice ended.'); };
       const offer=await pc.createOffer(); await pc.setLocalDescription(offer);
       const r=await fetch('https://api.openai.com/v1/realtime/calls',{method:'POST',body:offer.sdp,headers:{Authorization:'Bearer '+tok.value,'Content-Type':'application/sdp'}});
@@ -115,14 +139,16 @@ window.AGBVoiceCore={create:function(cfg){
   function timer(){ const s=Math.floor((Date.now()-t0)/1000), idle=(Date.now()-lastAct)/1000, left=MAX_TOTAL-s;
     $('agbvTimer').textContent=Math.floor(left/60)+':'+String(Math.max(0,left%60)).padStart(2,'0')+' left';
     if(left<=0) stop('Voice auto-ended (5 min limit). Tap the mic to continue.'); else if(idle>MAX_IDLE) stop('Voice auto-ended (3 min quiet). Tap the mic to continue.'); }
-  function stop(msg){ clearInterval(tick); tick=null;
+  function stop(msg){ clearInterval(tick); tick=null; window.agbVoiceDebug={heardSpeech,heard:heardTxt,at:new Date().toISOString()};
     try{ dc&&dc.close(); }catch(e){} try{ pc&&pc.close(); }catch(e){} try{ mic&&mic.getTracks().forEach(t=>t.stop()); }catch(e){}
     dc=pc=mic=null; $('agbvMic').classList.remove('live'); $('agbvMicTxt').textContent='Talk to fill estimate'; $('agbvTimer').hidden=true;
     if(msg) status(msg); }
   function onEvent(ev){
     const t=ev.type;
-    if(t==='input_audio_buffer.speech_started') lastAct=Date.now();
-    else if(t==='conversation.item.input_audio_transcription.completed'&&ev.transcript) { log('u',ev.transcript); lastAct=Date.now(); }
+    if(t==='input_audio_buffer.speech_started'){ lastAct=Date.now(); heardSpeech=true; status('Hearing you…'); }
+    else if(t==='input_audio_buffer.speech_stopped') status('Got it — thinking…');
+    else if(t==='conversation.item.input_audio_transcription.completed'&&ev.transcript) { log('u',ev.transcript); lastAct=Date.now(); heardSpeech=true; heard(ev.transcript); voicedYes(ev.transcript); dimsFromSpeech(ev.transcript); render(); }
+    else if(t==='conversation.item.input_audio_transcription.failed') status('Could not make out that last part — say it again.');
     else if(t==='response.output_audio_transcript.done'&&ev.transcript) log('a',ev.transcript);
     else if(t==='response.function_call_arguments.done'){
       let a={}; try{ a=JSON.parse(ev.arguments||'{}'); }catch(e){}
@@ -164,9 +190,9 @@ window.AGBVoiceCore={create:function(cfg){
   }
   async function sendText(txt){
     txt=txt||$('agbvText').value.trim(); if(!txt) return; $('agbvText').value='';
-    if(live()){ log('u',txt); say(txt); return; }
+    if(live()){ log('u',txt); heard(txt); voicedYes(txt); dimsFromSpeech(txt); render(); say(txt); return; }
     status('Reading…');
-    try{ const d=await callFn({mode:'text',page:cfg.page||'',catalog:catalog(),current:current(),learned:learnedText(),transcript:txt}); window.agbVoiceLastText=d; apply(d); status(questions.length?'Answer the questions, check the list, then tap Fill estimate.':'Check the list, then tap Fill estimate.'); }
+    try{ const d=await callFn({mode:'text',page:cfg.page||'',catalog:catalog(),current:current(),learned:learnedText(),transcript:txt}); window.agbVoiceLastText=d; heard(txt); voicedYes(txt); apply(d); const W=(cfg.dims||[])[0]; if(!(d.fields||[]).some(f=>f.id===W)) dimsFromSpeech(txt); render(); status(questions.length?'Answer the questions, check the list, then tap Fill estimate.':'Check the list, then tap Fill estimate.'); }
     catch(e){ status('Could not read that ('+(e.message||e)+').'); }
   }
   function setEl(id,v){ const el=$(id); if(!el) return; const k=kindOf(el);
@@ -178,8 +204,8 @@ window.AGBVoiceCore={create:function(cfg){
     if(doors&&doors.on&&cfg.fillDoors) cfg.fillDoors(doors.list);
     try{ cfg.afterFill&&cfg.afterFill(); }catch(e){}
     if(live()) stop('Filled '+done.length+' items. Voice ended. Tap the mic to add or change things.'); else status('Filled '+done.length+' items. Talk or type again to add or change things.');
-    props={}; doors=null; questions=[]; unknown=[]; render();
+    props={}; doors=null; questions=[]; unknown=[]; pending={}; heardTxt=''; const h=$('agbvHeard'); if(h) h.remove(); render();
   }
-  function clear(){ props={}; doors=null; questions=[]; unknown=[]; render(); }
+  function clear(){ props={}; doors=null; questions=[]; unknown=[]; pending={}; heardTxt=''; const h=$('agbvHeard'); if(h) h.remove(); render(); }
   return {toggle:()=>live()||pc?stop('Voice stopped.'):start(), sendText, fill, clear, catalog, _apply:apply, learned, _jobStatus:jobStatus, _state:()=>({props,doors,questions,unknown}), usage:()=>usage};
 }};

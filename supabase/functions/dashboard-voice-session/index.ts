@@ -33,7 +33,7 @@ ROLE: MANAGER (Randy or Sam). They see all jobs.
 - A new job they describe -> propose_new_job (it lands in the pending list for approval).`;
 
 const CONVO = `
-LIVE VOICE: silent until spoken to; no greetings, no summaries, no "anything else". The user may interrupt. When he says done/that's it, call finish silently.`;
+LIVE VOICE: silent until spoken to; no greetings, no summaries, no "anything else". Ignore background noise, TV/radio or other people talking. Only when he clearly says done / that's it / finished / stop, call finish silently.`;
 
 const CATALOG_INTRO = "\n\nJOB STAGE FIELDS (id | allowed values):\n";
 const str = { type: "string" };
@@ -67,7 +67,7 @@ Deno.serve(async (req) => {
         method: "POST", headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
         body: JSON.stringify({ expires_after: { anchor: "created_at", seconds: 60 }, session: {
           type: "realtime", model: REALTIME_MODEL, instructions: instructions + CONVO, max_output_tokens: 800,
-          audio: { input: { turn_detection: { type: "semantic_vad", eagerness: "high" }, transcription: { model: "gpt-4o-mini-transcribe", language: "en" } }, output: { voice: "marin" } },
+          audio: { input: { noise_reduction: { type: "near_field" }, turn_detection: { type: "semantic_vad", eagerness: "low", create_response: false, interrupt_response: false }, transcription: { model: "gpt-4o-mini-transcribe", language: "en" } }, output: { voice: "marin" } },
           tools, tool_choice: "auto" } }),
       });
       const d = await r.json().catch(() => ({}));

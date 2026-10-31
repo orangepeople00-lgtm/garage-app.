@@ -226,19 +226,19 @@ function unlockAudio(){ try{ if(navigator.audioSession) navigator.audioSession.t
 function playRemote(s){ try{ audio.removeAttribute('src'); }catch(e){} audio.srcObject=s; const p=audio.play(); if(p&&p.catch) p.catch(soundWarn); }
 function soundWarn(){ let w=$('dvSoundWarn'); if(!w){ w=document.createElement('button'); w.type='button'; w.id='dvSoundWarn'; w.className='dv-warn'; w.onclick=()=>{ unlockAudio(); if(pc){ const r=pc.getReceivers().find(x=>x.track&&x.track.kind==='audio'); if(r) playRemote(new MediaStream([r.track])); } w.hidden=true; }; $('dvSay').after(w); }
   w.textContent="Can't play sound — check volume / Silent switch, then tap here."; w.hidden=false; }
-function setTalking(on){ aiTalking=on; $('dvSay').classList.toggle('talking',on); if(live()) stat(on?'AI talking… (you can interrupt)':'Listening…');
+function setTalking(on){ aiTalking=on; $('dvSay').classList.toggle('talking',on); if(live()) stat(on?'AI talking… (just keep talking to interrupt)':'Listening…');
   if(on){ clearTimeout(playChk); const a0=audio?audio.currentTime:0; playChk=setTimeout(()=>{ if(aiTalking&&audio&&(audio.paused||audio.currentTime<=a0)) soundWarn(); },1500); } }
 const live=()=>!!(dc&&dc.readyState==='open');
 function send(o){ if(live()) dc.send(JSON.stringify(o)); }
 function say(t){ send({type:'conversation.item.create',item:{type:'message',role:'user',content:[{type:'input_text',text:t}]}}); send({type:'response.create'}); userAct=Date.now(); }
 async function start(){ if(!navigator.mediaDevices||!window.RTCPeerConnection){ stat('Live voice is not supported here — type below.'); return; }
   $('dvMic').disabled=true; stat('Listening…'); unlockAudio();
-  try{ mic=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}});
+  try{ mic=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true,channelCount:1}});
     const tok=await callFn({mode:'realtime',...ctx()});
     pc=new RTCPeerConnection(); pc.ontrack=e=>playRemote(e.streams[0]||new MediaStream([e.track])); pc.addTrack(mic.getTracks()[0],mic);
     dc=pc.createDataChannel('oai-events'); dc.onmessage=e=>{ try{ onEvent(JSON.parse(e.data)); }catch(x){} };
     dc.onopen=()=>{ stat('Listening…'); stillAsked=false; userAct=Date.now(); }; /* silent start: no greeting */
-    pc.onconnectionstatechange=()=>{ if(['failed','closed','disconnected'].includes(pc&&pc.connectionState)) stop('Voice ended.'); };
+    pc.onconnectionstatechange=()=>{ const st=pc&&pc.connectionState; if(st==='failed'||st==='closed') stop('Voice ended (connection lost). Tap Talk to keep going.'); else if(st==='disconnected') setTimeout(()=>{ if(pc&&pc.connectionState==='disconnected') stop('Voice ended (connection lost). Tap Talk to keep going.'); },10000); };
     const offer=await pc.createOffer(); await pc.setLocalDescription(offer);
     const r=await fetch('https://api.openai.com/v1/realtime/calls',{method:'POST',body:offer.sdp,headers:{Authorization:'Bearer '+tok.value,'Content-Type':'application/sdp'}});
     if(!r.ok) throw new Error('Voice connect failed ('+r.status+')'); await pc.setRemoteDescription({type:'answer',sdp:await r.text()});
@@ -249,15 +249,26 @@ function timer(){ const s=Math.floor((Date.now()-t0)/1000), idle=aiTalking?0:(Da
   else if(idle>STILL_THERE&&!stillAsked){ stillAsked=true; stat('Still there? (voice ends after 2 min of quiet)'); } }
 function stop(msg){ clearInterval(tick); tick=null; try{ dc&&dc.close(); }catch(e){} try{ pc&&pc.close(); }catch(e){} try{ mic&&mic.getTracks().forEach(t=>t.stop()); }catch(e){}
   dc=pc=mic=null; aiTalking=false; clearTimeout(playChk); const m=$('dvMic'); if(m){ m.classList.remove('live'); $('dvMicTxt').textContent='🎤 Talk'; $('dvTimer').hidden=true; } if(msg) stat(msg); }
+let lastUserTxt='', lastAiTxt='';
+/* Background noise often transcribes as nothing, a filler ("uh", "mm"), or a stock phrase ("Thank you.", "Bye.") — never act on those
+   (okay/yeah only count right after a question: AI talking, a question just asked, or a confirm/pick card on screen). */
+function pendingQuestion(){ return aiTalking||/\?\s*$/.test(lastAiTxt)||!!document.querySelector('#dvCards .dv-card .dv-ok,#dvCards .dv-pick'); }
+function realSpeech(t){ const s=String(t||'').toLowerCase().replace(/[^a-z0-9 ]/g,' ').trim(); if(!s) return false;
+  if(/^(uh+|um+|mm+|hmm+|ah+|oh+|you|bye|thank you|thanks|thanks for watching|okay|ok|yeah|huh)( (uh+|um+|you|bye|thank you))*$/.test(s)&&!pendingQuestion()) return false;
+  lastUserTxt=t; return true; }
+const DONE_RE=/\b(done|that'?s (it|all)|that is (it|all)|finished|all set|we'?re good|end (it|the conversation)|stop)\b/i;
 function onEvent(ev){ const t=ev.type;
-  if(t==='input_audio_buffer.speech_started'){ userAct=Date.now(); stillAsked=false; if(aiTalking) setTalking(false); stat('Hearing you…'); }
+  if(t==='input_audio_buffer.speech_started'){ if(!aiTalking) stat('Hearing you…'); }
+  else if(t==='input_audio_buffer.speech_stopped'){ if(!aiTalking) stat('Listening…'); }
   else if(t==='output_audio_buffer.started') setTalking(true);
   else if(t==='output_audio_buffer.stopped'||t==='output_audio_buffer.cleared') setTalking(false);
   else if(t==='response.output_audio_transcript.delta'&&ev.delta){ if(sayNew){ sayBuf=''; sayNew=false; } sayBuf+=ev.delta; sayLine(sayBuf); }
-  else if(t==='response.output_audio_transcript.done'&&ev.transcript){ log('a',ev.transcript); sayLine(ev.transcript); sayNew=true; }
-  else if(t==='conversation.item.input_audio_transcription.completed'&&ev.transcript){ const tx=ev.transcript.replace(WAKE,''); log('u',tx); heard(tx); userAct=Date.now(); }
-  else if(t==='conversation.item.input_audio_transcription.failed') stat('Could not make out that last part — say it again.');
+  else if(t==='response.output_audio_transcript.done'&&ev.transcript){ lastAiTxt=ev.transcript; log('a',ev.transcript); sayLine(ev.transcript); sayNew=true; }
+  else if(t==='conversation.item.input_audio_transcription.completed'&&ev.transcript){ const tx=ev.transcript.replace(WAKE,''); if(!realSpeech(tx)) return; userAct=Date.now(); stillAsked=false;
+    if(aiTalking){ send({type:'response.cancel'}); send({type:'output_audio_buffer.clear'}); setTalking(false); } send({type:'response.create'}); log('u',tx); heard(tx); }
+  else if(t==='conversation.item.input_audio_transcription.failed'){ /* usually noise: ignore quietly */ }
   else if(t==='response.function_call_arguments.done'){ let a={}; try{ a=JSON.parse(ev.arguments||'{}'); }catch(e){}
+    if(ev.name==='finish'&&!DONE_RE.test(lastUserTxt)){ send({type:'conversation.item.create',item:{type:'function_call_output',call_id:ev.call_id,output:'He did not say he is done. Keep listening silently.'}}); return; }
     Promise.resolve().then(()=>runTool(ev.name,a)).catch(e=>({error:String(e.message||e)})).then(r=>{
       const out=ev.name==='get_job_status'?r:Object.assign({note:'Nothing saved yet. A confirm card is on screen; tell the user to check it and tap the button.'},r||{});
       send({type:'conversation.item.create',item:{type:'function_call_output',call_id:ev.call_id,output:JSON.stringify(out).slice(0,4000)}}); send({type:'response.create'}); }); }
@@ -267,5 +278,6 @@ function onEvent(ev){ const t=ev.type;
 function boot(){ const p=me(); if(!p||!$('appMain')||$('appMain').classList.contains('hidden')) return false; mount(); hint(); loadPending(); return true; }
 const iv=setInterval(()=>{ if(boot()) clearInterval(iv); },500);
 try{ const o=window.renderAll; if(typeof o==='function') window.renderAll=renderAll=function(){ const r=o.apply(this,arguments); try{ renderPending(); hint(); }catch(e){} return r; }; }catch(e){}
-window.AGBDashVoice={sendText,runTool,findJobs,jobStatus,loadPending,approve,reject,_state:()=>({pend}),stop};
+window.AGBDashVoice={sendText,runTool,findJobs,jobStatus,loadPending,approve,reject,_state:()=>({pend}),stop,
+  /* offline test hook: fake data channel, feed events */ _sim:()=>{ window.dvSent=[]; dc={readyState:'open',send:m=>window.dvSent.push(JSON.parse(m)),close(){}}; t0=userAct=Date.now(); return onEvent; }};
 })();

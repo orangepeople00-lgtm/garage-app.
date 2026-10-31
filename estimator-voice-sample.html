@@ -12846,11 +12846,18 @@ window.agbVoice=AGBVoiceCore.create({
   extraCatalog:['side_doors (use the side_doors argument, not fields) | walk doors: type service/french/party, wall left/right/rear/front-left/front-right, french style 9light/fullview'],
   fillDoors:function(list){ const $=id=>document.getElementById(id); const on=$('sideDoorsListOn'); if(on&&!on.checked){ on.checked=true; on.dispatchEvent(new Event('change',{bubbles:true})); }
       const sj=$('sideDoorsJson'); if(sj){ sj.value=JSON.stringify(list.map(d=>d.type==='french'?{type:'french',wall:d.wall,style:d.style||'9light'}:d.type==='party'?{type:'party',wall:d.wall,w:6,h:7,windows:false}:{type:'service',wall:d.wall})); try{ agbDoorsToggle(); }catch(e){} } },
-  keepAsked:['width','depth'], /* "two car" -> 20x20 proposed AND confirm question */
-  /* Demo = remove old garage + slab, except when building on the existing slab (no slab demo). */
-  guard:function(f,a){ const ex=(a.fields||[]).some(x=>x.id==='slabMode'&&/existing/i.test(x.value))||(document.getElementById('slabMode')||{}).value==='existing'&&!(a.fields||[]).some(x=>x.id==='slabMode');
-    if(f.id==='demoSlabPreset'&&ex&&String(f.value)!=='none') return false; if(f.id==='demoSlabPreset'&&String(f.value)==='none') return false; return true; },
-  afterFill:function(){ try{ calculateEstimate(); }catch(e){} }
+  keepAsked:['width','depth','demoSlabPreset'], /* "two car" -> 20x20 proposed AND confirm question */
+  /* Demo = remove old garage + slab. On an existing slab the SAME demo preset + existing demolition cost box ($1300 default)
+     is used; the manual calculator then charges only demoCostInput (no slab removal, "slab and apron to remain"). */
+  guard:function(f,a){
+    if(f.id==='demoSlabPreset'){ const v=String(f.value||'').trim().toLowerCase().replace(/[×\s]/g,'x').replace(/x+/g,'x');
+      if(v==='none'||v==='') return false;
+      const sel=document.getElementById('demoSlabPreset');
+      if(sel&&![...sel.options].some(o=>o.value===v)&&/^\d+x\d+$/.test(v)){ window._agbDemoOverride=v; f.value='custom'; }
+      else if(sel&&[...sel.options].some(o=>o.value===v)) f.value=v; }
+    if(f.id==='demoApronDepth'&&!/apron/i.test(f.heard||'')) return false;
+    return true; },
+  afterFill:function(){ const o=window._agbDemoOverride; if(o){ const el=document.getElementById('oldConcreteOverride'); if(el&&!el.value){ el.value=o; el.dispatchEvent(new Event('input',{bubbles:true})); } window._agbDemoOverride=null; try{ syncDemoPreset(); }catch(e){} } try{ calculateEstimate(); }catch(e){} }
 });
 </script>
 

@@ -1,0 +1,185 @@
+/* voice-core.js — shared live-voice helper (SAMPLE). Used by estimator.html; repair.html can reuse with its own field list.
+   AGBVoiceCore.create({page, fields:[[id,label]...], extraCatalog:[...], fillDoors(list), afterFill(), fnName}) -> controller.
+   Expects the page to have the #agbVoice panel markup, garageSb, GARAGE_SB_URL, GARAGE_SB_KEY. */
+(function(){var st=document.createElement('style');st.textContent=".agbv{margin:0 0 16px;background:#0b1220;border:1px solid #1e3a5f;border-radius:16px;padding:12px;color:#e4e4e7;max-width:100%;box-sizing:border-box}\n.agbv *{box-sizing:border-box}\n.agbv-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}\n.agbv-mic{min-height:48px;padding:0 18px;border-radius:999px;background:#2563eb;color:#fff;font-weight:800;font-size:16px;border:0}\n.agbv-mic.live{background:#dc2626;animation:agbvp 1.4s infinite}\n@keyframes agbvp{50%{box-shadow:0 0 0 8px rgba(220,38,38,.25)}}\n.agbv-timer{font-size:13px;color:#fca5a5;font-variant-numeric:tabular-nums}\n.agbv-status{font-size:12px;color:#a1a1aa;margin:8px 0 6px;line-height:1.4}\n.agbv-type{display:flex;gap:6px}\n.agbv-type input{flex:1;min-width:0;min-height:44px;background:#18181b;border:1px solid #3f3f46;border-radius:12px;color:#fff;padding:0 10px;font-size:16px}\n.agbv-btn{min-height:44px;padding:0 14px;border-radius:12px;background:#27272a;border:1px solid #52525b;color:#f4f4f5;font-size:14px}\n.agbv-log{margin-top:8px;font-size:12px;max-height:120px;overflow:auto;background:#09090b;border-radius:10px;padding:6px 8px;line-height:1.45}\n.agbv-log .u{color:#93c5fd}.agbv-log .a{color:#86efac}\n.agbv-card{margin-top:10px;background:#111827;border:1px solid #334155;border-radius:14px;padding:10px}\n.agbv-h{font-weight:800;font-size:14px;margin-bottom:6px}.agbv-sub{font-weight:400;color:#a1a1aa;font-size:12px}\n.agbv-item{display:grid;grid-template-columns:28px minmax(0,1fr) minmax(0,1.2fr);gap:6px;align-items:center;padding:5px 0;border-top:1px solid #1f2937;font-size:13px}\n.agbv-item input[type=checkbox]{width:22px;height:22px}\n.agbv-item select,.agbv-item input[type=text]{width:100%;min-height:38px;background:#18181b;border:1px solid #3f3f46;border-radius:10px;color:#fff;font-size:14px;padding:0 6px}\n.agbv-q{margin-top:8px;padding:8px;background:#422006;border:1px solid #a16207;border-radius:12px;font-size:13px}\n.agbv-q .opts{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}\n.agbv-q button{min-height:40px;padding:0 12px;border-radius:999px;background:#fbbf24;color:#000;font-weight:700;border:0;font-size:14px}\n.agbv-unk{margin-top:6px;font-size:12px;color:#fca5a5}\n.agbv-actions{display:flex;gap:8px;margin-top:10px}\n.agbv-fill{flex:1;min-height:48px;border-radius:12px;background:#16a34a;color:#fff;font-weight:800;font-size:16px;border:0}\n";document.head.appendChild(st);})();
+
+/* SAMPLE voice-estimate (branch voice-estimate-sample). Talks to OpenAI Realtime via an ephemeral key minted by the
+   Supabase function estimate-voice-session. Proposals go to the summary card; "Fill estimate" sets the real controls
+   and fires their normal input/change events, so prices/city rules/AI prompt/sheet update like manual entry. */
+window.AGBVoiceCore={create:function(cfg){
+  const $=id=>document.getElementById(id);
+  const FN=cfg.fnName||'estimate-voice-session';
+  const MAX_TOTAL=300, MAX_IDLE=180; // seconds
+  // id, plain label. Order = fill order (city first so city rules apply, parents before children).
+  const FIELDS=cfg.fields;
+  const LABEL=Object.fromEntries(FIELDS);
+  let props={}, doors=null, questions=[], unknown=[];
+  let pc=null, dc=null, mic=null, audio=null, t0=0, lastAct=0, tick=null, usage={sessions:0,in_audio:0,in_text:0,in_cached:0,out_audio:0,out_text:0};
+
+  function optsOf(el){ return Array.from(el.options||[]).filter(o=>!o.disabled).map(o=>[o.value,o.textContent.trim()]); }
+  function kindOf(el){ if(!el) return null; if(el.tagName==='SELECT') return 'select'; if(el.type==='checkbox') return 'bool'; if(el.type==='number'||el.type==='range') return 'number'; return 'text'; }
+  function catalog(){
+    const lines=[];
+    FIELDS.forEach(([id,lab])=>{ const el=$(id), k=kindOf(el); if(!k) return;
+      let a=k==='bool'?'true/false':k==='number'?('number'+(el.min?(' min '+el.min):'')+(el.max?(' max '+el.max):'')):k==='text'?'text':optsOf(el).map(o=>o[0]===o[1]?o[0]:o[0]+'='+o[1].replace(/\s*\(\+?\$[^)]*\)/g,'')).join('; ');
+      lines.push(id+' | '+lab+' | '+a); });
+    (cfg.extraCatalog||[]).forEach(l=>lines.push(l));
+    return lines.join('\n');
+  }
+  function current(){ return FIELDS.map(([id])=>{ const el=$(id),k=kindOf(el); if(!k) return ''; return id+'='+(k==='bool'?el.checked:el.value); }).filter(Boolean).join(', '); }
+  function norm(id,v){ const el=$(id),k=kindOf(el); if(!k) return null; v=String(v==null?'':v).trim(); if(k==='select'&&v.includes('=')) v=v.split('=')[0].trim();
+    if(k==='bool'){ if(/^(true|yes|1|on|checked)$/i.test(v)) return true; if(/^(false|no|0|off)$/i.test(v)) return false; return null; }
+    if(k==='number'){ const n=Number(v.replace(/[^0-9.\-]/g,'')); return isFinite(n)&&v!==''?n:null; }
+    if(k==='select'){ const o=optsOf(el), lv=v.toLowerCase(); const m=o.find(x=>x[0].toLowerCase()===lv)||o.find(x=>x[1].toLowerCase()===lv)||o.find(x=>x[1].toLowerCase().replace(/,\s*il$/,'')===lv); return m?m[0]:null; }
+    return v||null; }
+  function plain(id,v){ const el=$(id),k=kindOf(el); if(k==='bool') return v?'Yes':'No'; if(k==='select'){ const o=optsOf(el).find(x=>x[0]===String(v)); return o?o[1]:v; } return String(v); }
+
+  function apply(a){ // from set_estimate_fields
+    const asked=new Set((a.questions||[]).map(q=>q&&q.fieldId));
+    (a.fields||[]).forEach(f=>{ if(asked.has(f.id)) return;
+      const v=norm(f.id,f.value); if(v===null){ if(f.id) unknown.push(f.id+': '+f.value); return; } props[f.id]={v,on:true,heard:f.heard||'',orig:v}; });
+    if(Array.isArray(a.side_doors)) doors={list:a.side_doors.filter(d=>d&&d.type&&d.wall),on:true};
+    if(Array.isArray(a.questions)) questions=a.questions.filter(q=>q&&q.question).map(q=>({fieldId:q.fieldId,question:q.question,options:(q.options||[]).slice(0,9)}));
+    (a.unknownPhrases||[]).forEach(p=>unknown.push(p));
+    // answered questions drop off
+    questions=questions.filter(q=>!(props[q.fieldId]&&a.fields&&a.fields.some(f=>f.id===q.fieldId)));
+    render();
+  }
+  function doorTxt(d){ return ({service:'Service door',french:'French doors',party:'Party door'}[d.type]||d.type)+' — '+d.wall+(d.style==='fullview'?' (full view)':''); }
+  function render(){
+    const ids=FIELDS.map(f=>f[0]).filter(id=>props[id]);
+    $('agbvCard').hidden=!(ids.length||doors||questions.length||unknown.length);
+    $('agbvItems').innerHTML=ids.map(id=>{ const p=props[id], el=$(id), k=kindOf(el);
+      let ed=k==='select'?'<select data-ed="'+id+'">'+optsOf(el).map(o=>'<option value="'+esc(o[0])+'"'+(o[0]===String(p.v)?' selected':'')+'>'+esc(o[1])+'</option>').join('')+'</select>'
+        :k==='bool'?'<select data-ed="'+id+'"><option value="true"'+(p.v?' selected':'')+'>Yes</option><option value="false"'+(!p.v?' selected':'')+'>No</option></select>'
+        :'<input type="text" data-ed="'+id+'" value="'+esc(p.v)+'">';
+      return '<label class="agbv-item"><input type="checkbox" data-on="'+id+'"'+(p.on?' checked':'')+'><span>'+esc(LABEL[id])+(p.heard?'<br><i style="color:#a1a1aa;font-size:11px">heard as “'+esc(p.heard)+'”</i>':'')+'</span>'+ed+'</label>'; }).join('')
+      +(doors?'<label class="agbv-item"><input type="checkbox" data-on="__doors"'+(doors.on?' checked':'')+'><span>Side/rear doors</span><span>'+(doors.list.length?doors.list.map(doorTxt).map(esc).join('<br>'):'None')+'</span></label>':'');
+    $('agbvQs').innerHTML=questions.map((q,i)=>'<div class="agbv-q">'+esc(q.question)+'<div class="opts">'+q.options.map((o,j)=>'<button type="button" data-q="'+i+'" data-o="'+j+'">'+esc(o)+'</button>').join('')+'</div></div>').join('');
+    $('agbvUnknown').hidden=!unknown.length; $('agbvUnknown').textContent=unknown.length?'Not understood: '+unknown.join('; '):'';
+    $('agbvItems').querySelectorAll('[data-on]').forEach(c=>c.onchange=()=>{ if(c.dataset.on==='__doors') doors.on=c.checked; else { const p=props[c.dataset.on]; p.on=c.checked; if(!c.checked) learn(c.dataset.on,p,'(not this)'); } });
+    $('agbvItems').querySelectorAll('[data-ed]').forEach(c=>c.onchange=()=>{ const v=norm(c.dataset.ed,c.value); if(v!==null){ const p=props[c.dataset.ed]; p.v=v; learn(c.dataset.ed,p,v); } });
+    $('agbvQs').querySelectorAll('button').forEach(b=>b.onclick=()=>answer(Number(b.dataset.q),Number(b.dataset.o)));
+  }
+  /* LEARNING HOOK (sample): corrections stay on this device in localStorage 'agbVoiceLearned'. Record shape matches a
+     future Supabase table (e.g. voice_learned_terms: heard, field_id, from_value, to_value, salesman, created_at) — no DB yet. */
+  const LKEY='agbVoiceLearned:'+(cfg.page||'estimator');
+  function learned(){ try{ return JSON.parse(localStorage.getItem(LKEY)||'[]'); }catch(e){ return []; } }
+  function learn(id,p,to){ if(!p||String(p.orig)===String(to)) return; const a=learned();
+    a.push({heard:p.heard||'',field_id:id,from_value:String(p.orig),to_value:String(to),salesman:($('salesman')||{}).value||'',created_at:new Date().toISOString()});
+    try{ localStorage.setItem(LKEY,JSON.stringify(a.slice(-100))); }catch(e){} }
+  function learnedText(){ return learned().filter(r=>r.heard).slice(-40).map(r=>'"'+r.heard+'" -> '+r.field_id+'='+r.to_value+(r.to_value==='(not this)'?' (do NOT map to '+r.from_value+')':'')).join('\n'); }
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  function answer(i,j){ const q=questions[i]; if(!q) return; const o=q.options[j]; const v=norm(q.fieldId,o);
+    questions.splice(i,1);
+    if(v!==null){ props[q.fieldId]={v,on:true}; }
+    if(live()) say(q.question+' Answer: '+o); else if(v===null) sendText(q.question+' '+o);
+    render(); }
+  function log(cls,t){ const L=$('agbvLog'); L.hidden=false; const d=document.createElement('div'); d.className=cls; d.textContent=(cls==='u'?'You: ':'Helper: ')+t; L.appendChild(d); L.scrollTop=L.scrollHeight; }
+  function status(t){ $('agbvStatus').textContent=t; }
+
+  async function callFn(body){
+    const sb=(typeof garageSb!=='undefined')?garageSb:null;
+    if(sb&&sb.functions&&sb.functions.invoke){ const r=await sb.functions.invoke(FN,{body}); if(!r.error&&r.data) { if(r.data.error) throw new Error(r.data.error); return r.data; } }
+    const headers={'Content-Type':'application/json',apikey:GARAGE_SB_KEY};
+    try{ const s=await sb.auth.getSession(); const t=s&&s.data&&s.data.session&&s.data.session.access_token; if(t) headers.Authorization='Bearer '+t; }catch(e){}
+    const r=await fetch(GARAGE_SB_URL+'/functions/v1/'+FN,{method:'POST',headers,body:JSON.stringify(body)}); const d=await r.json().catch(()=>({}));
+    if(!r.ok||d.error) throw new Error(d.error||d.message||('HTTP '+r.status)); return d; }
+
+  function live(){ return !!(dc&&dc.readyState==='open'); }
+  function send(o){ if(live()) dc.send(JSON.stringify(o)); }
+  function say(text){ send({type:'conversation.item.create',item:{type:'message',role:'user',content:[{type:'input_text',text}]}}); send({type:'response.create'}); lastAct=Date.now(); }
+
+  async function start(){
+    if(!navigator.mediaDevices||!window.RTCPeerConnection){ status('Live voice is not supported in this browser — type the job below.'); return; }
+    $('agbvMic').disabled=true; status('Starting… allow the microphone.');
+    audio=audio||document.createElement('audio'); audio.autoplay=true; audio.setAttribute('playsinline',''); try{ audio.play().catch(()=>{}); }catch(e){} // unlock on this tap (iPhone)
+    try{
+      mic=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}});
+      const tok=await callFn({mode:'realtime',page:cfg.page||'',catalog:catalog(),current:current(),learned:learnedText()});
+      pc=new RTCPeerConnection();
+      pc.ontrack=e=>{ audio.srcObject=e.streams[0]; audio.play().catch(()=>{}); };
+      pc.addTrack(mic.getTracks()[0],mic);
+      dc=pc.createDataChannel('oai-events'); dc.onmessage=e=>{ try{ onEvent(JSON.parse(e.data)); }catch(x){} };
+      dc.onopen=()=>{ status('Listening — talk normally. Say "done" or tap Fill estimate when finished.'); if(Object.keys(props).length) say('Already proposed: '+JSON.stringify(Object.fromEntries(Object.entries(props).map(([k,p])=>[k,p.v])))+'. Wait for the salesman.'); };
+      pc.onconnectionstatechange=()=>{ if(['failed','closed','disconnected'].includes(pc&&pc.connectionState)) stop('Voice ended.'); };
+      const offer=await pc.createOffer(); await pc.setLocalDescription(offer);
+      const r=await fetch('https://api.openai.com/v1/realtime/calls',{method:'POST',body:offer.sdp,headers:{Authorization:'Bearer '+tok.value,'Content-Type':'application/sdp'}});
+      if(!r.ok) throw new Error('Voice connect failed ('+r.status+')');
+      await pc.setRemoteDescription({type:'answer',sdp:await r.text()});
+      usage.sessions++; t0=lastAct=Date.now(); $('agbvMic').classList.add('live'); $('agbvMicTxt').textContent='Stop'; $('agbvTimer').hidden=false;
+      tick=setInterval(timer,1000); timer();
+    }catch(e){ stop(); status('Voice did not start ('+(e.message||e)+'). Type the job below instead.'); }
+    finally{ $('agbvMic').disabled=false; }
+  }
+  function timer(){ const s=Math.floor((Date.now()-t0)/1000), idle=(Date.now()-lastAct)/1000, left=MAX_TOTAL-s;
+    $('agbvTimer').textContent=Math.floor(left/60)+':'+String(Math.max(0,left%60)).padStart(2,'0')+' left';
+    if(left<=0) stop('Voice auto-ended (5 min limit). Tap the mic to continue.'); else if(idle>MAX_IDLE) stop('Voice auto-ended (3 min quiet). Tap the mic to continue.'); }
+  function stop(msg){ clearInterval(tick); tick=null;
+    try{ dc&&dc.close(); }catch(e){} try{ pc&&pc.close(); }catch(e){} try{ mic&&mic.getTracks().forEach(t=>t.stop()); }catch(e){}
+    dc=pc=mic=null; $('agbvMic').classList.remove('live'); $('agbvMicTxt').textContent='Talk to fill estimate'; $('agbvTimer').hidden=true;
+    if(msg) status(msg); }
+  function onEvent(ev){
+    const t=ev.type;
+    if(t==='input_audio_buffer.speech_started') lastAct=Date.now();
+    else if(t==='conversation.item.input_audio_transcription.completed'&&ev.transcript) { log('u',ev.transcript); lastAct=Date.now(); }
+    else if(t==='response.output_audio_transcript.done'&&ev.transcript) log('a',ev.transcript);
+    else if(t==='response.function_call_arguments.done'){
+      let a={}; try{ a=JSON.parse(ev.arguments||'{}'); }catch(e){}
+      if(ev.name==='get_job_status'){ status('Looking up job…'); jobStatus(a.query).catch(e=>({error:String(e.message||e)})).then(r=>{ send({type:'conversation.item.create',item:{type:'function_call_output',call_id:ev.call_id,output:JSON.stringify(r).slice(0,4000)}}); send({type:'response.create'}); status('Listening…'); }); return; }
+      if(ev.name==='finish_estimate'){ send({type:'conversation.item.create',item:{type:'function_call_output',call_id:ev.call_id,output:'filled'}}); setTimeout(fill,300); return; }
+      apply(a); send({type:'conversation.item.create',item:{type:'function_call_output',call_id:ev.call_id,output:'shown on card'}}); send({type:'response.create'});
+    }
+    if(t==='response.done'&&ev.response&&ev.response.status&&ev.response.status!=='completed'){ window.agbVoiceLastBad=ev.response.status_details; status('Helper reply was cut off ('+ev.response.status+') — say it again or type it.'); }
+    else if(t==='response.done'&&ev.response&&ev.response.usage){ const u=ev.response.usage, i=u.input_token_details||{}, o=u.output_token_details||{}, c=i.cached_tokens_details||{};
+      usage.in_audio+=(i.audio_tokens||0); usage.in_text+=(i.text_tokens||0); usage.in_cached_audio=(usage.in_cached_audio||0)+(c.audio_tokens||0); usage.in_cached_text=(usage.in_cached_text||0)+(c.text_tokens||0);
+      usage.out_audio+=(o.audio_tokens||0); usage.out_text+=(o.text_tokens||0); usage.cost=cost(); window.agbVoiceUsage=usage; }
+    else if(t==='error') status('Voice error: '+((ev.error&&ev.error.message)||''));
+  }
+  function cost(){ const u=usage, ca=u.in_cached_audio||0, ct=u.in_cached_text||0; // gpt-realtime-2.1-mini $/1M
+    return ((u.in_audio-ca)*10+ca*0.3+(u.in_text-ct)*0.6+ct*0.06+u.out_audio*20+u.out_text*2.4)/1e6; }
+
+
+  /* READ-ONLY job status. Mirrors the dashboard/RLS rule: owner & business_manager see all jobs; everyone else only rows
+     where jobs.salesman_username = their staff_profiles.username. Filter is applied in the query (RLS "authorized read jobs"
+     enforces the same on the server). JOB_SCOPE is the hook to change the rule later. No writes. */
+  const JOB_SCOPE=me=>['owner','business_manager'].includes(me.role)?null:me.username;
+  async function jobStatus(q){
+    const sb=(typeof garageSb!=='undefined')?garageSb:null; if(!sb||!sb.auth) return {error:'database not available'};
+    const {data:{user}={}}=await sb.auth.getUser(); if(!user) return {error:'salesman is not signed in'};
+    const {data:me}=await sb.from('staff_profiles').select('username,role').eq('id',user.id).maybeSingle(); if(!me||!me.username) return {error:'no staff profile'};
+    const term=String(q||'').replace(/[%,().*\\]/g,' ').trim().slice(0,60); if(term.length<2) return {error:'need a name or address'};
+    let qy=sb.from('jobs').select('id,customer,address,city,sold_date,permit_status,permit_date,demolition_required,demo_status,demo_date,scheduled_demo,demo_crew,concrete_status,concrete_est,concrete_scheduled,concrete_poured,concrete_crew,carpentry_status,carpentry_est,carpentry_scheduled,built_date,carpentry_crew,electric_status,electric_date,electric_crew,inspection_status,inspection_date,extras_status,extras_scheduled,completed_date,hold_status,hold_reason,notes')
+      .is('deleted_at',null).or('customer.ilike.%'+term+'%,address.ilike.%'+term+'%').order('sold_date',{ascending:false}).limit(5);
+    const scope=JOB_SCOPE(me); if(scope) qy=qy.eq('salesman_username',scope);
+    const {data:jobs,error}=await qy; if(error) return {error:error.message};
+    if(!jobs||!jobs.length) return {found:0,say:'No job found for this salesman.'};
+    if(jobs.length>1) return {found:jobs.length,matches:jobs.map(j=>j.customer+' — '+(j.address||'')+(j.city?', '+j.city:''))};
+    const j=jobs[0]; const ids=[j.id];
+    const [{data:ca},{data:act}]=await Promise.all([
+      sb.from('crew_assignments').select('stage,crew,sched_date,show_up_time,notes').in('job_id',ids).order('sched_date',{ascending:true}).limit(10),
+      sb.from('job_activity').select('action,created_at').in('job_id',ids).order('created_at',{ascending:false}).limit(5)]);
+    const o={}; Object.entries(j).forEach(([k,v])=>{ if(v!==null&&v!==''&&k!=='id') o[k]=k==='notes'?String(v).slice(-400):v; });
+    return {found:1,today:new Date().toISOString().slice(0,10),job:o,crew_schedule:ca||[],recent_activity:act||[]};
+  }
+  async function sendText(txt){
+    txt=txt||$('agbvText').value.trim(); if(!txt) return; $('agbvText').value='';
+    if(live()){ log('u',txt); say(txt); return; }
+    status('Reading…');
+    try{ const d=await callFn({mode:'text',page:cfg.page||'',catalog:catalog(),current:current(),learned:learnedText(),transcript:txt}); window.agbVoiceLastText=d; apply(d); status(questions.length?'Answer the questions, check the list, then tap Fill estimate.':'Check the list, then tap Fill estimate.'); }
+    catch(e){ status('Could not read that ('+(e.message||e)+').'); }
+  }
+  function setEl(id,v){ const el=$(id); if(!el) return; const k=kindOf(el);
+    if(k==='bool'){ if(el.checked===!!v) return; el.checked=!!v; } else { if(String(el.value)===String(v)) return; el.value=String(v); }
+    el.dispatchEvent(new Event('input',{bubbles:true})); el.dispatchEvent(new Event('change',{bubbles:true})); }
+  function fill(){
+    const done=[];
+    FIELDS.forEach(([id])=>{ const p=props[id]; if(p&&p.on){ setEl(id,p.v); done.push(id); } });
+    if(doors&&doors.on&&cfg.fillDoors) cfg.fillDoors(doors.list);
+    try{ cfg.afterFill&&cfg.afterFill(); }catch(e){}
+    if(live()) stop('Filled '+done.length+' items. Voice ended. Tap the mic to add or change things.'); else status('Filled '+done.length+' items. Talk or type again to add or change things.');
+    props={}; doors=null; questions=[]; unknown=[]; render();
+  }
+  function clear(){ props={}; doors=null; questions=[]; unknown=[]; render(); }
+  return {toggle:()=>live()||pc?stop('Voice stopped.'):start(), sendText, fill, clear, catalog, _apply:apply, learned, _jobStatus:jobStatus, _state:()=>({props,doors,questions,unknown}), usage:()=>usage};
+}};

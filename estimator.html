@@ -792,6 +792,30 @@ body.bg-zinc-950{
         </div>
 
         <div class="agb-main px-8 pb-8">
+<!-- SAMPLE voice-estimate: live voice helper (fills the normal controls; manual estimator unchanged) -->
+<div id="agbVoice" class="agbv">
+  <div class="agbv-top">
+    <button type="button" id="agbvMic" class="agbv-mic" onclick="agbVoice.toggle()"><i class="fa-solid fa-microphone"></i> <span id="agbvMicTxt">Talk to fill estimate</span></button>
+    <span id="agbvTimer" class="agbv-timer" hidden></span>
+  </div>
+  <div id="agbvStatus" class="agbv-status">Tap and say the job, e.g. "20 by 20 hip, Chicago, gutters, aluminum soffit fascia, demo of the old one". Or type it:</div>
+  <div class="agbv-type">
+    <input id="agbvText" type="text" placeholder="Type the job instead…" onkeydown="if(event.key==='Enter'){event.preventDefault();agbVoice.sendText();}">
+    <button type="button" class="agbv-btn" onclick="agbVoice.sendText()">Go</button>
+  </div>
+  <div id="agbvLog" class="agbv-log" hidden></div>
+  <div id="agbvCard" class="agbv-card" hidden>
+    <div class="agbv-h">Will fill these <span class="agbv-sub">(uncheck or change anything)</span></div>
+    <div id="agbvItems"></div>
+    <div id="agbvQs"></div>
+    <div id="agbvUnknown" class="agbv-unk" hidden></div>
+    <div class="agbv-actions">
+      <button type="button" id="agbvFill" class="agbv-fill" onclick="agbVoice.fill()">Fill estimate</button>
+      <button type="button" class="agbv-btn" onclick="agbVoice.clear()">Clear</button>
+    </div>
+  </div>
+</div>
+
             <div class="mb-5 grid grid-cols-1 lg:grid-cols-3 gap-3">
 <div class="lg:col-span-2 rounded-2xl border border-zinc-700 bg-zinc-900 p-3"><label class="text-[10px] font-bold tracking-wider text-zinc-400 block mb-1">SEARCH ESTIMATOR</label><div class="flex gap-2"><input id="estimatorSearch" type="search" placeholder="Search retaining wall, EV, apron, window, demolition..." oninput="searchEstimatorOptions()" onkeydown="if(event.key==='Enter'){event.preventDefault();jumpToEstimatorSearchResult();}" class="calc-input flex-1 bg-zinc-950 border border-zinc-700 rounded-xl px-3 py-2 text-sm"><button type="button" onclick="jumpToEstimatorSearchResult()" class="px-3 py-2 rounded-xl bg-blue-700 text-xs font-bold">GO</button></div><div id="estimatorSearchStatus" class="text-[10px] text-zinc-500 mt-1">Type a feature name and press Go.</div></div>
 <!-- Estimate Health Check removed -->
@@ -12798,5 +12822,32 @@ run();setInterval(run,1500);document.addEventListener('change',run);})();
   }, false);
 })();
 </script>
+<script src="voice-core.js"></script>
+<script>
+/* SAMPLE voice-estimate: estimator field schema for the shared voice-core.js */
+window.agbVoice=AGBVoiceCore.create({
+  page:'estimator',
+  fields:[
+    ['city','City'],['customCity','City name (when city = Other)'],
+    ['width','Width ft'],['depth','Depth ft'],['customWidth','Custom width ft (width=custom)'],['customDepth','Custom depth ft (depth=custom)'],['carCapacity','Car capacity'],
+    ['roofType','Roof style'],['eaveDir','Gable direction (sides = reverse gable)'],['pitch','Roof pitch'],['eavesSize','Eaves'],
+    ['sidingType','Siding type'],['sidingColor','Siding color'],['shingleColor','Roof shingle color'],
+    ['ohDoorQty','Number of overhead doors'],['overheadDoorSizePreset','Overhead door size'],['overheadDoorStyle','Overhead door style'],['ohInsulated','Insulated overhead door'],['openerType','Opener'],['doorOffset','Overhead door position (1=left,2=center,3=right)'],
+    ['extraWindows','Number of windows'],['windowType','Window type'],['windowPlacement','Window placement'],
+    ['gutters','Gutters'],['aluminumSoffit','Aluminum soffit & fascia'],['showWoodSoffitNote','Wood soffit box'],
+    ['slabMode','Slab (new vs existing)'],['apronDepth','Apron depth'],['concreteThickness','Slab thickness'],
+    ['demoSlabPreset','Demo old garage — old slab size'],['oldConcreteOverride','Custom old slab size (demo=custom)'],['demoCostInput','Demo cost $ (only if said)'],['demoApronDepth','Demo apron depth'],['epaFee','EPA fee'],
+    ['roofPatioEnabled','Roof patio'],['roofPatioDepth','Roof patio depth'],['roofPatioSide','Side roof patio (unchecked = rear)'],
+    ['overhangEnabled','Front overhang'],['overhangSize','Overhang size'],
+    ['electricIncluded','Standard electric included'],['evCharger','EV charger'],['evPrep','EV prep'],
+    ['customerName','Customer name'],['customerAddress','Customer address'],['salesman','Salesman']
+  ],
+  extraCatalog:['side_doors (use the side_doors argument, not fields) | walk doors: type service/french/party, wall left/right/rear/front-left/front-right, french style 9light/fullview'],
+  fillDoors:function(list){ const $=id=>document.getElementById(id); const on=$('sideDoorsListOn'); if(on&&!on.checked){ on.checked=true; on.dispatchEvent(new Event('change',{bubbles:true})); }
+      const sj=$('sideDoorsJson'); if(sj){ sj.value=JSON.stringify(list.map(d=>d.type==='french'?{type:'french',wall:d.wall,style:d.style||'9light'}:d.type==='party'?{type:'party',wall:d.wall,w:6,h:7,windows:false}:{type:'service',wall:d.wall})); try{ agbDoorsToggle(); }catch(e){} } },
+  afterFill:function(){ try{ calculateEstimate(); }catch(e){} }
+});
+</script>
+
 </body>
 </html>

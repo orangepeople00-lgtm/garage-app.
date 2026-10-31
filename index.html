@@ -382,7 +382,7 @@ body.estimator-mode .estimator-exit{display:block}
     <div class="scan-paperwork-title" style="font-size:16px">Upload or scan files BEFORE you save the job</div>
     <div class="scan-paperwork-help">For Sam and Randy: choose the paperwork type, then scan with the phone camera or choose a PDF/photo. The files will be attached to this customer when you press Save Job.</div>
     <div class="scan-actions">
-     <div class="field"><label>Paperwork Type</label><select id="f_doc_type"><option>Contract</option><option>Deposit Check / Proof of Payment</option><option>Plat of Survey</option><option>Demolition Sheet</option><option>Concrete Sheet</option><option>Permit</option><option>Inspection</option><option>Photo</option><option>Other</option></select></div>
+     <div class="field"><label>Paperwork Type</label><select id="f_doc_type"><option>Contract</option><option>Deposit Check / Proof of Payment</option><option>Check/Payment</option><option>Plat of Survey</option><option>Demolition Sheet</option><option>Concrete Sheet</option><option>Permit</option><option>Inspection</option><option>Photo</option><option>Other</option></select></div>
      <button type="button" class="btn primary scan-btn" onclick="managerJobCamera()">📷 Scan with Camera</button>
      <button type="button" class="btn light scan-btn" onclick="managerJobChooseFiles()">Choose PDF / Photos</button>
      <input id="f_doc_camera" type="file" accept="image/*" capture="environment" style="display:none" onchange="showManagerJobFiles('f_doc_camera')">
@@ -442,7 +442,7 @@ body.estimator-mode .estimator-exit{display:block}
   <div class="field"><label>Garage Size</label><input id="r_garage_size" required></div><div class="field"><label>Demolition?</label><select id="r_demolition_required"><option value="true">Yes</option><option value="false">No</option></select></div><div class="field"><label>Gutters / Extras?</label><select id="r_extras_required"><option value="false">No</option><option value="true">Yes</option></select></div><div class="field"><label>Price</label><input id="r_price" type="number" step=".01"></div><div class="field"><label>Deposit</label><input id="r_deposit" type="number" step=".01"></div><div class="field"><label>Deposit Status</label><select id="r_deposit_status"><option>Pending</option><option>Received</option></select></div>
   <div class="field span4"><label>Notes</label><textarea id="r_notes" rows="4"></textarea></div>
   <div class="field span4"><label>Paperwork Uploads</label><div class="muted small" style="margin-bottom:7px">Upload the contract and any paperwork you already have. A contract is strongly required.</div><input id="r_files" type="file" multiple accept=".pdf,image/*"></div>
-  <div class="field span4"><label>Document Type For Selected Files</label><select id="r_doc_type"><option>Contract</option><option>Deposit Check / Proof of Payment</option><option>Plat of Survey</option><option>Demolition Sheet</option><option>Concrete Sheet</option><option>Permit</option><option>Inspection</option><option>Photo</option><option>Other</option></select></div>
+  <div class="field span4"><label>Document Type For Selected Files</label><select id="r_doc_type"><option>Contract</option><option>Deposit Check / Proof of Payment</option><option>Check/Payment</option><option>Plat of Survey</option><option>Demolition Sheet</option><option>Concrete Sheet</option><option>Permit</option><option>Inspection</option><option>Photo</option><option>Other</option></select></div>
  </div></div><div class="modalfoot"><button type="button" class="btn light" onclick="closeRequest()">Cancel</button><button class="btn primary">Submit for Approval</button></div></form>
 </div></div>
 
@@ -2820,15 +2820,15 @@ async function openDrawer(id){openJobId=id;const j=jobs.find(x=>x.id===id);if(!j
 <div class="card full" id="permitCard"><div class="split pc-headrow"><h4 style="margin:0">Permit checklist</h4><span id="pcBtnSlot"><button type="button" class="btn primary pc-btn" disabled>Permit Application</button></span></div><div id="permitBody"><div class="sub">Loading permit checklist…</div></div></div><div class="card"><h4>Files on this job</h4>${jobFileButtons(j)}<div class="sub" style="margin-top:8px">${estimatesForJob(j).length?'Last estimate saved':'No estimate saved yet'} · ${plansForJob(j).length?'Plan set saved':'No plan set yet'}</div></div>
 <div class="card"><h4>Next Action</h4><div style="font-size:18px;font-weight:900">${esc(next(j))}</div><div class="sub">Current stage: ${esc(status(j))}</div></div>
 <div class="card full"><h4>Key Dates</h4><div class="grid">${ibox('Demo Scheduled',fmt(j.scheduled_demo))}${ibox('Demo Crew',crewWithTime(j.demo_crew,j.demo_time)||'—')}${ibox('Concrete Scheduled',fmt(j.concrete_scheduled))}${ibox('Concrete Crew',crewWithTime(j.concrete_crew,j.concrete_time)||'—')}${ibox('Concrete Poured',fmt(j.concrete_poured))}${ibox('Carpentry Scheduled',fmt(j.carpentry_scheduled))}${ibox('Carpentry Crew',crewWithTime(j.carpentry_crew,j.carpentry_time)||'—')}${ibox('Garage Built',fmt(j.built_date))}${ibox('Electric',fmt(j.electric_date))}${ibox('Electric Crew',crewWithTime(j.electric_crew,j.electric_time)||'—')}${ibox('Inspection',fmt(j.inspection_date))}</div></div>
-<div class="card full ph-card"><div class="split" style="align-items:center;gap:8px"><h4 style="margin:0">Photos &amp; Paperwork</h4><button type="button" class="btn primary ph-add" onclick="phOpen('${j.id}')">📷 Add Photos</button></div><div id="phGrid" class="ph-gridwrap"></div></div><div class="card full"><h4>Contract & Paperwork</h4>${!docs.some(x=>x.document_type==='Contract')?`<div style="margin-bottom:10px;padding:12px;border:2px solid #b91c1c;background:#fef2f2;color:#b91c1c;font-size:19px;font-weight:1000;text-align:center;border-radius:9px">MISSING PAPERWORK</div>`:''}<div class="scan-paperwork-box"><div class="scan-paperwork-title">📷 Scan / Upload Paperwork</div><div class="scan-paperwork-help">On a phone, tap <b>Scan with Camera</b> to photograph handwritten paperwork. You can also choose an existing PDF or photo. Pick the paperwork type first so it is filed correctly under this customer.</div><div class="scan-actions"><div class="field"><label>Paperwork Type</label><select id="docType"><option>Contract</option><option>Deposit Check / Proof of Payment</option><option>Plat of Survey</option><option>Demolition Sheet</option><option>Concrete Sheet</option><option>Permit</option><option>Inspection</option><option>Photo</option><option>Other</option></select></div><button class="btn primary scan-btn" onclick="startPaperworkScan('${j.id}')">📷 Scan with Camera</button><button class="btn light scan-btn" onclick="choosePaperworkFiles('${j.id}')">Choose PDF / Photos</button><input id="docCameraFile" type="file" accept="image/*" capture="environment" style="display:none" onchange="uploadSelectedPaperwork('${j.id}','docCameraFile')"><input id="docFile" type="file" multiple accept=".pdf,image/*" style="display:none" onchange="uploadSelectedPaperwork('${j.id}','docFile')"></div></div><div class="list">${docs.length?docs.map(x=>`<div class="rowbox split"><div><strong>${esc(x.document_type||'Document')}: ${esc(x.file_name)}</strong><div class="sub">${new Date(x.created_at).toLocaleString()}</div></div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn light sm" onclick="viewDoc('${esc(x.storage_path)}','${esc(x.file_name)}')">Pop Up</button><button type="button" onclick="deleteSavedPaperwork('${x.id}','${j.id}')" style="display:inline-block!important;visibility:visible!important;opacity:1!important;background:#dc2626!important;color:#fff!important;border:2px solid #b91c1c!important;border-radius:8px!important;padding:9px 14px!important;font-weight:1000!important;cursor:pointer!important;min-width:88px!important">Delete</button></div></div>`).join(''):'<div class="muted small">No paperwork uploaded yet.</div>'}</div></div>
+<div class="card full ph-card pw-card" id="paperworkCard"><div class="split" style="align-items:center;gap:8px"><h4 style="margin:0">Paperwork</h4><button type="button" class="btn primary ph-add" onclick="phOpen('${j.id}')">📷 Add Photos</button></div>${!docs.some(x=>x.document_type==='Contract')?`<div style="margin-bottom:10px;padding:12px;border:2px solid #b91c1c;background:#fef2f2;color:#b91c1c;font-size:19px;font-weight:1000;text-align:center;border-radius:9px">MISSING PAPERWORK</div>`:''}<div class="pw-sub">Photos</div><div id="phGrid" class="ph-gridwrap"></div><div class="pw-sub" style="margin-top:12px">Contract &amp; documents</div><div class="scan-paperwork-box"><div class="scan-paperwork-title">📷 Scan / Upload Paperwork</div><div class="scan-paperwork-help">On a phone, tap <b>Scan with Camera</b> to photograph handwritten paperwork. You can also choose an existing PDF or photo. Pick the paperwork type first so it is filed correctly under this customer.</div><div class="scan-actions"><div class="field"><label>Paperwork Type</label><select id="docType"><option>Contract</option><option>Deposit Check / Proof of Payment</option><option>Check/Payment</option><option>Plat of Survey</option><option>Demolition Sheet</option><option>Concrete Sheet</option><option>Permit</option><option>Inspection</option><option>Photo</option><option>Other</option></select></div><button class="btn primary scan-btn" onclick="startPaperworkScan('${j.id}')">📷 Scan with Camera</button><button class="btn light scan-btn" onclick="choosePaperworkFiles('${j.id}')">Choose PDF / Photos</button><input id="docCameraFile" type="file" accept="image/*" capture="environment" style="display:none" onchange="uploadSelectedPaperwork('${j.id}','docCameraFile')"><input id="docFile" type="file" multiple accept=".pdf,image/*" style="display:none" onchange="uploadSelectedPaperwork('${j.id}','docFile')"></div></div><div class="list">${docs.length?docs.map(x=>`<div class="rowbox split"><div><strong>${esc(x.document_type||'Document')}: ${esc(x.file_name)}</strong><div class="sub">${new Date(x.created_at).toLocaleString()}</div></div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn light sm" onclick="viewDoc('${esc(x.storage_path)}','${esc(x.file_name)}')">Pop Up</button><button type="button" onclick="deleteSavedPaperwork('${x.id}','${j.id}')" style="display:inline-block!important;visibility:visible!important;opacity:1!important;background:#dc2626!important;color:#fff!important;border:2px solid #b91c1c!important;border-radius:8px!important;padding:9px 14px!important;font-weight:1000!important;cursor:pointer!important;min-width:88px!important">Delete</button></div></div>`).join(''):'<div class="muted small">No paperwork uploaded yet.</div>'}</div></div>
 <div class="card full"><h4>Activity History</h4><div class="list">${activity.length?activity.map(x=>`<div class="rowbox"><strong>${esc(x.action)}</strong><div class="sub">${new Date(x.created_at).toLocaleString()}</div></div>`).join(''):'<div class="muted small">No activity recorded yet.</div>'}</div></div>
 <div class="card full"><h4>Notes</h4><div style="white-space:pre-wrap">${esc(displayNotes(j.notes)||'No notes.')}</div>${!manager()?`<div class="request-box"><strong>Need Randy or Sam to change something?</strong><div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:8px"><button class="btn light sm" onclick="submitJobChangeRequest('${j.id}','Edit')">Request an Edit</button><button class="btn light sm" onclick="submitJobChangeRequest('${j.id}','Note')">Request a Note</button></div></div>`:''}</div>
 ${commissionCard(j)}
 </div>`;$('drawerBg').classList.add('show');try{phRenderGrid(id,docs)}catch(e){console.warn('photos',e)}}
 
 // 2026-10-15: Add Photos (job drawer). Reuses storage bucket 'job-documents' + table job_documents (document_type = category).
-const PH_CATS=[['Contract','Contract'],['Land/Site','Land/Site'],['Plat/Survey','Plat of Survey'],['Permit','Permit'],['Other','Other']];
-const PH_SCAN=new Set(['Contract','Plat of Survey','Permit']);
+const PH_CATS=[['Contract','Contract'],['Check/Payment','Check/Payment'],['Land/Site','Land/Site'],['Plat/Survey','Plat of Survey'],['Permit','Permit'],['Other','Other']];
+const PH_SCAN=new Set(['Contract','Plat of Survey','Permit','Check/Payment']);
 let ph={job:null,cat:'Contract',items:[],busy:false},phThumbCache={};
 function phCatLabel(t){const c=PH_CATS.find(x=>x[1]===t);return c?c[0]:'Other'}
 function phIsImg(n,t){return /^image\//.test(t||'')||/\.(jpe?g|png|gif|webp|heic|heif|bmp)$/i.test(n||'')}
@@ -2852,7 +2852,7 @@ function phLoadCanvas(file,max){return new Promise((res,rej)=>{const u=URL.creat
 function phDraw(){const b=$('phBody');if(!b)return;const n=ph.items.filter(i=>i.state!=='Uploaded').length;
  b.innerHTML=`<div class="ph-chips">${PH_CATS.map(([l,v])=>`<button type="button" class="ph-chip${ph.cat===v?' on':''}" onclick="phSetCat('${v}')">${l}</button>`).join('')}</div>
  <button type="button" class="btn primary ph-big" onclick="phPick()">📷 Take Photo or Choose Photos / PDF</button>
- <div class="muted small" style="margin:4px 0 8px">${PH_SCAN.has(ph.cat)?'Contract, Plat/Survey and Permit photos are auto-cropped like a scanner; you can adjust the corners.':'Land/Site and Other photos are kept as taken; tap Crop on a photo if you want.'} Photos are resized to 1600px JPEG.</div>
+ <div class="muted small" style="margin:4px 0 8px">${PH_SCAN.has(ph.cat)?'Contract, Check/Payment, Plat/Survey and Permit photos are auto-cropped like a scanner; you can adjust the corners.':'Land/Site and Other photos are kept as taken; tap Crop on a photo if you want.'} Photos are resized to 1600px JPEG.</div>
  <div class="ph-queue">${ph.items.map((it,i)=>`<div class="ph-q">${it.preview?`<img src="${it.preview}" alt="">`:'<span class="ph-file">📄</span>'}<div class="ph-qm"><b>${esc(it.name)}</b><div class="sub">${esc(phCatLabel(it.cat))}${it.cropped?' • cropped':''} • ${esc(it.state)}</div><div class="ph-prog"><i style="width:${it.pct}%"></i></div></div>${it.state==='Uploaded'?'':`<div class="ph-qa">${it.isImg?`<button type="button" class="btn light sm" onclick="phScanEdit(${i})">Crop</button>`:''}<button type="button" class="btn light sm" onclick="phRemove(${i})">Remove</button></div>`}</div>`).join('')}</div>
  <div class="ph-foot"><button type="button" class="btn light" onclick="phClose()">${ph.items.length&&!n?'Done':'Close'}</button><button type="button" class="btn primary" ${n&&!ph.busy?'':'disabled'} onclick="phUpload()">${ph.busy?'Uploading…':'Upload '+n+' file'+(n===1?'':'s')}</button></div>`}
 function phRemove(i){ph.items.splice(i,1);phDraw()}
@@ -3797,5 +3797,203 @@ async function pchkTap(li,id,k,comp,done){if(!id){alert('Save the job first, the
 .pc-auto{font-style:normal;font-weight:700;font-size:9px;background:#fff;color:#15803d;border:1px solid #86efac;border-radius:6px;padding:0 4px}
 .pc-scope{display:block;font-size:11px;color:#64748b;margin-top:2px}.pc-ok .pc-scope{color:#15803d}
 .pc-hint{font-size:12px;color:#64748b;margin:2px 0 4px}
+.pw-sub{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:#64748b;margin:10px 0 6px}
 </style>
+<style>
+/* 2026-10-31 SAMPLE (branch paperwork-tab): job view = one screen, all sections open, compact; desktop multi-column */
+#drawerContent .dw-jump{position:sticky;top:0;z-index:3;display:flex;gap:6px;overflow-x:auto;padding:6px 10px;background:#f8fafc;border-bottom:1px solid var(--line);scrollbar-width:none}
+#drawerContent .dw-jump::-webkit-scrollbar{display:none}
+#drawerContent .dw-jump button{flex:none;min-height:34px;padding:0 11px;border-radius:17px;border:1px solid #cbd5e1;background:#fff;font-size:12.5px;font-weight:700;color:#14233c;cursor:pointer;white-space:nowrap}
+#dwSections{padding:8px}
+#dwSections>.card{margin:0 0 8px!important;padding:10px 11px!important;break-inside:avoid;scroll-margin-top:110px;width:auto!important;min-width:0}
+#dwSections>.card h4{margin-bottom:6px!important;font-size:15px}
+#dwSections .pw-sub{font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:#64748b;margin:8px 0 5px}
+#dwSections .dc-sum{display:none!important}
+@media(min-width:1100px){.drawer.dw-wide{width:min(1280px,97vw)!important}#dwSections{column-count:3;column-gap:10px}}
+@media(min-width:760px) and (max-width:1099px){#dwSections{column-count:2;column-gap:10px}}
+.pm-bg{position:fixed;inset:0;background:#0f172a99;z-index:9999;display:flex;align-items:flex-start;justify-content:center;padding:14px;overflow:auto}
+.pm-box{background:#fff;border-radius:14px;max-width:460px;width:100%;padding:14px;box-shadow:0 20px 50px #0006}
+.pm-box h3{margin:0 0 4px}.pm-box img{display:block;max-width:100%;max-height:200px;margin:8px auto;border-radius:8px;border:1px solid #e2e8f0}
+.pm-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.pm-grid label{font-size:12px;font-weight:700;color:#475569;display:block}
+.pm-grid input,.pm-grid select{width:100%;min-height:42px;border:1px solid #cbd5e1;border-radius:9px;padding:0 8px;font-size:16px;box-sizing:border-box}
+.pm-grid .full{grid-column:1/-1}.pm-low{background:#fef3c7;border:1px solid #f59e0b;border-radius:9px;padding:7px 9px;font-size:13px;margin:6px 0}
+.pm-foot{display:flex;gap:8px;margin-top:12px}.pm-foot .btn{flex:1;min-height:46px}
+</style>
+<script>
+/* ===== 2026-10-31 SAMPLE (branch paperwork-tab) ===== */
+(function(){
+/* --- one-screen job view: no collapsing, sections in most-used order, jump links --- */
+const DW_ORDER=[['Job Folder','Folder'],['Crew assignments','Crews'],['Payment Schedule','Payments'],['Paperwork','Paperwork'],['Key Dates','Dates'],['Production Timeline','Timeline'],['Job Information','Info'],['Next Action','Next'],['Notes','Notes'],['Permit checklist','Permit'],['Files on this job','Files'],['Job Costs','Costs'],['Activity History','Activity']];
+const title=c=>{const h=c.querySelector(':scope > h4, :scope > h3, :scope > .split h4, :scope > .split h3, :scope > div > h4');return h?h.textContent.replace(/[^\w &/]/g,'').trim():''};
+window.dcApply=dcApply=function(){const dc=$('drawerContent');if(!dc)return;dc.querySelectorAll('.dc-closed').forEach(c=>c.classList.remove('dc-closed'));dc.querySelectorAll('.dc-tools').forEach(t=>t.remove())};
+function dwLayout(){const dc=$('drawerContent');if(!dc)return;const head=dc.querySelector('.drawerhead');
+  const cards=[...dc.querySelectorAll('.card')].filter(c=>!c.closest('.drawerhead')&&!c.parentElement.closest('.card')&&!c.closest('#dwSections'));
+  let wrap=$('dwSections');if(!wrap){wrap=document.createElement('div');wrap.id='dwSections';(head||dc.firstChild).after(wrap)}
+  const rank=c=>{const t=title(c).toLowerCase();const i=DW_ORDER.findIndex(o=>t.startsWith(o[0].toLowerCase()));return i<0?DW_ORDER.length:i};
+  cards.concat([...wrap.children]).sort((a,b)=>rank(a)-rank(b)).forEach(c=>wrap.appendChild(c));
+  [...wrap.children].forEach(c=>{const i=rank(c);if(i<DW_ORDER.length&&!c.dataset.dw)c.dataset.dw=DW_ORDER[i][1]});
+  dc.querySelectorAll(':scope > .grid:empty, :scope > div:empty:not([id])').forEach(e=>e.remove());
+  let bar=dc.querySelector('.dw-jump');if(!bar){bar=document.createElement('div');bar.className='dw-jump';wrap.before(bar)}
+  bar.innerHTML=[...wrap.children].filter(c=>c.dataset.dw).map(c=>`<button type="button" data-to="${c.dataset.dw}">${c.dataset.dw}</button>`).join('');
+  bar.onclick=e=>{const b=e.target.closest('[data-to]');if(!b)return;const c=wrap.querySelector(`[data-dw="${b.dataset.to}"]`);if(c)c.scrollIntoView({behavior:'smooth',block:'start'})};
+  const dr=dc.closest('.drawer');if(dr)dr.classList.add('dw-wide');
+  if(head){const hh=head.getBoundingClientRect().height;bar.style.top=Math.round(hh)+'px'}}
+window.dwLayout=dwLayout;
+const o=openDrawer;window.openDrawer=openDrawer=async function(id){const r=await o.apply(this,arguments);try{dwLayout();setTimeout(dwLayout,400)}catch(e){console.warn('dw layout',e)}return r};
+
+/* --- Check/Payment uploads: scan amount -> editable review -> Confirm records a real payment (Payment Schedule) --- */
+const PM_TYPE='Check/Payment';let pmQ=[],pmBusy=false,pmT=0;
+const canPay=()=>{try{return !!(manager()||privateAccessManager())}catch(e){return false}};
+const ou=uploadPaperworkFile;window.uploadPaperworkFile=uploadPaperworkFile=async function(a){const er=await ou.apply(this,arguments);
+  try{if(!er&&a&&a.type===PM_TYPE&&a.jobId&&canPay()&&/^image\//.test(a.file&&a.file.type||'')){pmQ.push({file:a.file,jobId:a.jobId});clearTimeout(pmT);pmT=setTimeout(pmNext,700)}}catch(e){}return er};
+function pmImg(file){return new Promise((res,rej)=>{const u=URL.createObjectURL(file),im=new Image();im.onload=()=>{const s=Math.min(1,1600/Math.max(im.naturalWidth,im.naturalHeight)),c=document.createElement('canvas');c.width=Math.round(im.naturalWidth*s);c.height=Math.round(im.naturalHeight*s);c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);res(c.toDataURL('image/jpeg',.85))};im.onerror=()=>{URL.revokeObjectURL(u);rej(new Error('image'))};im.src=u})}
+async function pmScan(dataUrl){const inv=await sb.functions.invoke('scan-payment',{body:{image:dataUrl}});if(inv.error)throw inv.error;const d=typeof inv.data==='string'?JSON.parse(inv.data):inv.data;if(d&&d.error)throw new Error(d.error);return d||{}}
+function pmModal(h){let bg=$('pmBg');if(!bg){bg=document.createElement('div');bg.id='pmBg';bg.className='pm-bg';document.body.appendChild(bg)}bg.innerHTML='<div class="pm-box">'+h+'</div>';bg.hidden=false}
+function pmClose(){const bg=$('pmBg');if(bg)bg.remove()}
+async function pmNext(){if(pmBusy||!pmQ.length)return;pmBusy=true;const it=pmQ.shift();const j=jobs.find(x=>x.id===it.jobId);
+  let img='';try{img=await pmImg(it.file)}catch(e){}
+  pmModal(`<h3>💵 Reading payment…</h3><div class="muted small">${esc(j?j.customer:'')}</div>${img?`<img src="${img}" alt="payment photo">`:''}<div class="muted small">Scanning the amount — nothing is recorded until you tap Confirm.</div>`);
+  let d={},err='';try{if(img)d=await pmScan(img);else err='Could not open the photo.'}catch(e){err=String(e&&e.message||e)}
+  window.pmLastScan=d;pmReview(it,j,img,d,err)}
+const PM_LOW=0.75;
+function pmReview(it,j,img,d,err){const rows=(j&&j._pay&&j._pay.length)?j._pay:PAY_DEFAULT.map(s=>({stage:s,paid:false}));
+  const nextUnpaid=(rows.find(r=>!r.paid)||{}).stage||'Deposit';const low=!(Number(d.confidence)>=PM_LOW);const amt=(!low&&Number(d.amount)>0)?Number(d.amount):'';
+  const today=(()=>{const x=new Date();return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0')})();
+  const date=/^\d{4}-\d{2}-\d{2}$/.test(d.date||'')?d.date:today;const stages=[...new Set(rows.map(r=>r.stage).concat(PAY_DEFAULT))];
+  pmModal(`<h3>💵 Review payment</h3><div class="muted small">${esc(j?(j.customer+' — '+(j.address||'')):'')}</div>${img?`<img src="${img}" alt="payment photo">`:''}
+   ${err?`<div class="pm-low">Could not read the amount automatically (${esc(err.slice(0,80))}). Type it below.</div>`:low?`<div class="pm-low">Not sure about the amount — please type it.</div>`:'<div class="muted small">Check what was read and fix anything that is wrong.</div>'}
+   <div class="pm-grid"><div><label>Amount ($)</label><input id="pmAmt" inputmode="decimal" value="${amt}"></div>
+   <div><label>Stage</label><select id="pmStage">${stages.map(s=>`<option${s===nextUnpaid?' selected':''}>${esc(s)}</option>`).join('')}<option value="__other">Other…</option></select></div>
+   <div><label>Method</label><select id="pmMethod">${['check','cash','card','zelle','financing','other'].map(m=>`<option${(d.method||'check')===m?' selected':''}>${m}</option>`).join('')}</select></div>
+   <div><label>Check #</label><input id="pmNo" value="${esc(d.check_number||'')}"></div>
+   <div class="full"><label>Date received</label><input id="pmDate" type="date" value="${date}"></div></div>
+   <div class="pm-foot"><button type="button" class="btn light" id="pmCancel">Cancel — keep file only</button><button type="button" class="btn primary" id="pmOk">Confirm payment</button></div>`);
+  $('pmCancel').onclick=()=>{pmClose();pmBusy=false;pmNext()};
+  $('pmOk').onclick=async()=>{const a=Number(String($('pmAmt').value).replace(/[^0-9.]/g,''));if(!(a>0)){$('pmAmt').focus();return alert('Enter the amount.')}
+    let stage=$('pmStage').value;if(stage==='__other'){stage=(prompt('Stage name')||'').trim();if(!stage)return}
+    const b=$('pmOk');b.disabled=true;b.textContent='Saving…';
+    try{await pmSave(it.jobId,{amount:a,stage,method:$('pmMethod').value+($('pmNo').value.trim()?' #'+$('pmNo').value.trim():''),paid_date:$('pmDate').value||today});pmClose();pmBusy=false;pmNext()}
+    catch(e){b.disabled=false;b.textContent='Confirm payment';alert('Payment not saved: '+(e.message||e))}}}
+/* same mechanism as the drawer's "Save payments" (paySaveDrawer -> [AGB-PAY] tag in jobs.notes + deposit columns) */
+async function pmSave(jobId,p){if(!canPay())throw new Error('Only Randy or Sam record payments');
+  if(openJobId!==jobId||!$('payDrawerHost'))await openDrawer(jobId);
+  for(let i=0;i<50&&!(PAY.payDrawerHost&&$('payDrawerHost'));i++)await new Promise(r=>setTimeout(r,80));
+  const R=PAY.payDrawerHost.rows;let row=R.find(x=>String(x.stage).toLowerCase()===p.stage.toLowerCase()&&!x.paid);
+  if(!row){row={stage:R.some(x=>String(x.stage).toLowerCase()===p.stage.toLowerCase())?p.stage+' (additional)':p.stage,amount:'',percent:'',due:'',paid:false,paid_date:'',method:''};R.push(row)}
+  Object.assign(row,{amount:p.amount,paid:true,paid_date:p.paid_date,method:p.method});payRender('payDrawerHost');
+  window.__agbAutoPay=true;try{await paySaveDrawer(jobId)}finally{window.__agbAutoPay=false}
+  try{const {data:{user}}=await sb.auth.getUser();await sb.from('job_activity').insert({job_id:jobId,actor_id:user.id,action:'Payment recorded from check scan',details:{stage:row.stage,amount:p.amount,method:p.method,paid_date:p.paid_date}})}catch(e){}
+  const c=$('payDrawerHost');if(c)c.closest('.card')?.scrollIntoView({block:'center'})}
+window.pmTest={pmReview,pmSave,queue:()=>pmQ};
+})();
+</script>
+
+<style>
+/* 2026-10-31 SAMPLE (branch paperwork-tab): Add/Edit Job = pinned Scan Contract + basics front page + tabs; salesman lock */
+.aj-scanbar{position:sticky;top:0;z-index:5;display:flex;gap:8px;align-items:center;padding:8px 14px;background:#eef6ff;border-bottom:1px solid #bfdbfe}
+.aj-scanbar .btn{min-height:44px;font-weight:800}.aj-scanbar small{color:#475569;line-height:1.25}
+#jobBg .ja-bar{display:none!important}
+.aj-front{border:2px solid #0f274b;border-radius:12px;padding:10px 12px;margin-bottom:10px;background:#fff}
+.aj-front h4{margin:0 0 6px;font-size:16px}
+.aj-tabbar{scroll-margin-top:150px;display:flex;gap:4px;overflow-x:auto;border-bottom:2px solid #d6dde8;margin:4px 0 8px;scrollbar-width:none}
+.aj-tabbar button{flex:1 1 auto;min-height:42px;padding:0 6px;font-size:13.5px!important;border:0;background:none;font:inherit;font-weight:800;color:#64748b;border-bottom:3px solid transparent;margin-bottom:-2px;cursor:pointer;white-space:nowrap}
+.aj-tabbar button.on{color:#0f274b;border-bottom-color:#0f274b}
+.aj-panel{display:none}.aj-panel.on{display:block}
+.aj-panel .ja-sec .ja-b{display:block!important}.aj-panel .ja-h{min-height:38px;cursor:default;background:#f4f6fa!important;color:#0f274b!important}.aj-panel .ja-c{display:none}
+.aj-lock{display:none;background:#f1f5f9;border:1px dashed #94a3b8;border-radius:9px;padding:7px 10px;font-size:13px;color:#334155;margin-bottom:8px}
+.aj-sales .aj-lock{display:block}
+.aj-sales .aj-panel input:disabled,.aj-sales .aj-panel select:disabled,.aj-sales .aj-panel textarea:disabled,.aj-sales .aj-panel button:disabled{background:#e9edf3!important;color:#64748b!important;cursor:not-allowed;opacity:.85}
+.aj-sugg{scroll-margin-top:160px;border:1px solid #f59e0b;background:#fffbeb;border-radius:12px;padding:10px 12px;margin-bottom:10px}
+.aj-sugg table{width:100%!important;min-width:0!important;table-layout:fixed;border-collapse:collapse;font-size:13px}.aj-sugg td{white-space:normal!important;padding:4px 6px;border-top:1px solid #fde68a;vertical-align:top;word-break:break-word}
+.aj-pend{margin:10px 0}.aj-pend .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px 0;border-top:1px solid #e2e8f0}
+.aj-pend .row .grow{flex:1;min-width:180px}
+</style>
+<script>
+/* ===== 2026-10-31 SAMPLE: Add/Edit Job layout + salesman basics-only (pending approval) ===== */
+(function(){
+const AJ_BASIC=['customer','salesman_username','sold_date','address','city','zip','phone','price','deposit','hold_status','garage_size'];
+const AJ_FRONT_IDS=['f_customer','f_salesman_username','f_sold_date','f_address','f_city','f_zip','f_phone','f_price','f_deposit_mirror','f_hold_status','f_garage_size'];
+const AJ_TABS=[['details','Job details',['sale','specs','permit','pay','close']],['sched','Schedule / Crew',['demo','concrete','carp','elec','gutters']],['paper','Paperwork',[]],['notes','Notes',['notes']]];
+const isSales=()=>!!profile&&!manager();
+window.ajIsSales=isSales;
+function ajBuild(){const modal=document.querySelector('#jobBg .modal'),body=modal&&modal.querySelector('.body');if(!body||!$('jaHost'))return;
+  if(!$('ajScanBar')){modal.querySelector('.modalhead').insertAdjacentHTML('afterend',`<div class="aj-scanbar" id="ajScanBar"><button type="button" class="btn primary" onclick="$('ajScanFile').value='';$('ajScanFile').click()">📄 Scan Contract</button><small>Reads the contract and fills this form — you confirm every value first.</small><input id="ajScanFile" type="file" accept=".pdf,image/*" style="display:none" onchange="ajScan(this)"></div>`)}
+  if(!$('ajFront')){const fr=document.createElement('div');fr.className='aj-front';fr.id='ajFront';fr.innerHTML='<h4>Job basics</h4><div class="grid"></div>';body.insertBefore(fr,body.firstChild);
+    const g=fr.querySelector('.grid');AJ_FRONT_IDS.forEach(id=>{const f=$(id)&&$(id).closest('.field');if(f)g.appendChild(f)});
+    const bar=document.createElement('div');bar.className='aj-tabbar';bar.id='ajTabs';bar.innerHTML=AJ_TABS.map(([k,t],i)=>`<button type="button" data-t="${k}" class="${i?'':'on'}">${t}</button>`).join('');fr.after(bar);
+    let prev=bar;AJ_TABS.forEach(([k,t,secs],i)=>{const p=document.createElement('div');p.className='aj-panel'+(i?'':' on');p.id='ajP_'+k;p.innerHTML='<div class="aj-lock">🔒 Set by Randy or Sam — salesmen fill only the Job basics above. Randy or Sam complete this after approving.</div>';
+      secs.forEach(s=>{const e=document.querySelector(`#jaHost .ja-sec[data-k="${s}"]`);if(e){e.classList.add('open');p.appendChild(e)}});prev.after(p);prev=p});
+    const paper=body.querySelector('.manager-paperwork-top');if(paper)$('ajP_paper').appendChild(paper);
+    bar.onclick=e=>{const b=e.target.closest('[data-t]');if(!b)return;bar.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));document.querySelectorAll('#jobBg .aj-panel').forEach(p=>p.classList.toggle('on',p.id==='ajP_'+b.dataset.t));if(e.isTrusted!==false&&b.dataset.t!=='details'||e.isTrusted)bar.scrollIntoView({block:'start'})};
+    const form=body.closest('form');form.addEventListener('invalid',e=>{const p=e.target.closest('.aj-panel');if(p)bar.querySelector(`[data-t="${p.id.slice(4)}"]`).click()},true)}
+  /* anything else added to the form later (payment schedule, job costs…) lives in Job details — nothing dropped */
+  [...body.children].forEach(c=>{if(!['ajFront','ajTabs','jaHost','f_id'].includes(c.id)&&!c.classList.contains('aj-panel')&&c.tagName!=='INPUT'&&!c.classList.contains('ja-bar'))$('ajP_details').appendChild(c)});
+  document.querySelectorAll('#jaHost .ja-sec').forEach(s=>$('ajP_details').appendChild(s));
+  const mv=()=>{document.querySelectorAll('#ajFront .grid > :not(.field), #ajFront > :not(h4):not(.grid)').forEach(x=>$('ajP_details').appendChild(x))};mv();setTimeout(mv,300);setTimeout(mv,1200);
+  const mh=modal.querySelector('.modalhead'),sb2=$('ajScanBar');if(mh&&sb2){const ps=getComputedStyle(mh).position;sb2.style.top=(ps==='sticky'?mh.offsetHeight:0)+'px'}
+  document.querySelectorAll('#jobBg .aj-panel .ja-sec').forEach(s=>{s.classList.add('open');if(!s.querySelector('.ja-b .field, .ja-b .formsec, .ja-b *:not(.grid)'))s.style.display='none'})}
+function ajLock(){const sales=isSales(),m=document.querySelector('#jobBg .modal');if(!m)return;m.classList.toggle('aj-sales',sales);
+  m.querySelectorAll('.aj-panel input,.aj-panel select,.aj-panel textarea,.aj-panel button').forEach(e=>{if(sales){if(!e.disabled){e.disabled=true;e.dataset.ajLocked='1'}}else if(e.dataset.ajLocked){e.disabled=false;delete e.dataset.ajLocked}});
+  const del=$('deleteJobBtn');if(del&&sales)del.classList.add('hidden');
+  const sub=m.querySelector('.modalfoot button[type=submit]');if(sub)sub.textContent=sales?'Send to Randy / Sam':'Save Job';
+  $('ajSendBtn')?.remove();if(sales&&$('f_id').value&&(!sub||!sub.offsetParent)){const f=m.querySelector('.modalfoot');if(f)f.insertAdjacentHTML('afterbegin','<button type="button" id="ajSendBtn" class="btn primary" onclick="saveJob({preventDefault(){}})">Send change to Randy / Sam</button>')}}
+window.ajBuild=ajBuild;window.ajLock=ajLock;
+/* salesmen may open the form (basics only); original form code is manager-gated, so run it with the manager view then lock */
+const oOpen=openJobForm;window.openJobForm=openJobForm=function(id=null){const sales=isSales();window.__ajSugg=null;
+  if(sales&&id){const j=jobs.find(x=>x.id===id);if(!j||ukey(j.salesman_username)!==ukey(profile.username))return}
+  let r;if(sales){const role=profile.role;profile.role='business_manager';try{r=oOpen.apply(this,arguments)}finally{profile.role=role}}else r=oOpen.apply(this,arguments);
+  try{ajBuild();if(sales&&!id){const ss=$('f_salesman_username');const u=profile.username;if(![...ss.options].some(o=>o.value===u)){const o=document.createElement('option');o.value=u;o.textContent=DISPLAY[ukey(u)]||u;o.dataset.extra='1';ss.appendChild(o)}ss.value=u}
+    $('ajTabs')?.querySelector('button').click();if($('ajTabs'))$('ajTabs').scrollLeft=0;ajLock();$('ajSugg')?.remove();
+    $('jobFormTitle').textContent=(id?'Edit Job':'Add Job')+(sales?' (to Randy/Sam)':'')}catch(e){console.warn('aj',e)}return r};
+window.ajScan=function(inp){const f=inp.files&&inp.files[0];if(!f)return;ffdStart(f,'job')};
+/* scan for a salesman: fill basics only; everything else becomes suggestions for Randy/Sam (stored in the pending payload) */
+const oApply=ffdApply;window.ffdApply=ffdApply=function(){if(isSales()&&ffd&&ffd.target==='job'){const s={};document.querySelectorAll('#ffdBody [id^="ffd_"]').forEach(e=>{const k=e.id.slice(4);if(['savedet','pay','salesman'].includes(k)||/^(customer|phone|address|city|zip|garage_size|price|deposit|sold_date)$/.test(k))return;const v=(e.value||'').trim();if(v&&e.type!=='checkbox')s[k]=v});
+    const ps=(ffd.result&&ffd.result.payment_schedule||[]).filter(p=>p&&p.stage);if(ps.length)s.payment_schedule=ps.map(p=>({stage:p.stage,amount:p.amount??null}));
+    const zip=(($('ffd_zip')||{}).value||'').trim();window.__ajSugg={fields:s,file:ffd.fileName||null};
+    if($('ffd_savedet'))$('ffd_savedet').checked=false;if($('ffd_pay'))$('ffd_pay').checked=false;
+    const dep=ffdMoney((($('ffd_deposit')||{}).value||'').trim());const keep={};document.querySelectorAll('#jobBg .aj-panel [id^="f_"]').forEach(e=>keep[e.id]=e.value);
+    const r=oApply.apply(this,arguments);Object.entries(keep).forEach(([id,v])=>{if($(id))$(id).value=v});if(dep!==''&&dep!=null&&$('f_deposit')){$('f_deposit').value=dep;if($('f_deposit_mirror'))$('f_deposit_mirror').value=dep}if(zip&&$('f_zip'))$('f_zip').value=zip;return r}
+  const r=oApply.apply(this,arguments);try{const zip=(($('ffd_zip')||{}).value||'').trim();if(zip&&$('f_zip')&&!$('f_zip').value)$('f_zip').value=zip}catch(e){}return r};
+/* save path: a salesman never writes jobs; basics go to pending_job_changes. Non-basic values are not read from the DOM at all. */
+const oSave=saveJob;window.saveJob=saveJob=async function(e){if(!isSales()){const pid=window.__ajApprove;await oSave.apply(this,arguments);
+    if(pid&&!$('jobBg').classList.contains('show')){try{const {data:{user}}=await sb.auth.getUser();await sb.from('pending_job_changes').update({status:'approved',reviewed_by:user.id,reviewed_at:new Date().toISOString()}).eq('id',pid).eq('status','pending')}catch(x){}window.__ajApprove=null;ajLoadPend()}return}
+  if(e&&e.preventDefault)e.preventDefault();if(window.__agbAuto)return;
+  const v=k=>($('f_'+k)||{}).value??'';const b={customer:v('customer').trim(),salesman_username:v('salesman_username'),sold_date:v('sold_date')||null,address:v('address').trim(),city:v('city').trim(),zip:v('zip').trim()||null,phone:v('phone').trim(),price:Number(v('price'))||0,deposit:Number(v('deposit'))||0,hold_status:v('hold_status')==='true',garage_size:v('garage_size').trim()};
+  if(!b.customer)return alert('Customer name is required.');
+  const id=$('f_id').value||null;const {data:{user}}=await sb.auth.getUser();let row;
+  if(id){const j=jobs.find(x=>x.id===id)||{};const ch={};AJ_BASIC.forEach(k=>{const o=k==='hold_status'?!!j[k]:(['price','deposit'].includes(k)?Number(j[k])||0:(j[k]??''));const n=b[k]??'';if(String(o).slice(0,10)!==String(n).slice(0,10))ch[k]=b[k]});
+    if(!Object.keys(ch).length&&!window.__ajSugg)return alert('Nothing changed.');
+    row={kind:'edit',job_id:id,payload:{request:'Basic info change from the job form: '+Object.keys(ch).join(', '),fields:ch,source:'job-form',scan_suggestions:window.__ajSugg||null}}}
+  else row={kind:'new_job',job_id:null,payload:{...b,notes:'',source:'add-job',scan_suggestions:window.__ajSugg||null}};
+  const btn=document.querySelector('#jobBg .modalfoot button[type=submit]');if(btn)btn.disabled=true;
+  const {error}=await sb.from('pending_job_changes').insert({...row,requested_by:user.id,salesman_username:profile.username,status:'pending'});if(btn)btn.disabled=false;
+  if(error)return alert('Not sent: '+error.message);window.__ajSugg=null;closeJobForm();alert(id?'Change sent to Randy / Sam for approval.':'Job sent to Randy / Sam for approval. They fill in the rest after approving.')};
+/* salesman Add Job button + drawer "Edit basics" */
+setInterval(()=>{try{const a=$('addBtn');if(a&&profile&&!manager()&&a.classList.contains('hidden'))a.classList.remove('hidden');if(profile&&manager()&&!$('ajPend')&&$('stats'))ajLoadPend()}catch(e){}},700);
+const oDr=openDrawer;window.openDrawer=openDrawer=async function(id){const r=await oDr.apply(this,arguments);try{if(isSales()){const h=document.querySelector('#drawerContent .drawerhead [onclick^="printJobSummary"]');if(h&&!$('ajEditBasics'))h.insertAdjacentHTML('afterend',`<button id="ajEditBasics" class="btn light sm" onclick="closeDrawer();openJobForm('${id}')">Edit basics</button>`)}}catch(e){}return r};
+/* manager approval view for add-job / job-form requests, with scanned suggestions */
+let ajPend=[];
+async function ajLoadPend(){if(!manager())return;let host=$('ajPend');if(!host){host=document.createElement('div');host.id='ajPend';host.className='card aj-pend';$('stats').after(host)}
+  try{const {data}=await sb.from('pending_job_changes').select('*').eq('status','pending').order('created_at',{ascending:false}).limit(50);ajPend=(data||[]).filter(p=>p.payload&&['add-job','job-form'].includes(p.payload.source))}catch(e){ajPend=[]}
+  host.style.display=ajPend.length?'':'none';
+  host.innerHTML=`<h4 style="margin:0 0 4px">🕓 Waiting for approval (from salesmen)</h4>`+ajPend.map(p=>{const pl=p.payload,j=p.job_id&&jobs.find(x=>x.id===p.job_id);const n=Object.keys((pl.scan_suggestions||{}).fields||{}).length;
+    return `<div class="row"><div class="grow"><b>${p.kind==='new_job'?'New job':'Edit'}: ${esc(pl.customer||(j&&j.customer)||'')}</b><div class="small muted">${esc(DISPLAY[ukey(p.salesman_username)]||p.salesman_username)} • ${p.kind==='new_job'?esc([pl.address,pl.city,pl.garage_size,pl.price?('$'+Number(pl.price).toLocaleString()):''].filter(Boolean).join(' • ')):esc(pl.request||'')}${n?` • 📄 ${n} scanned suggestion${n>1?'s':''}`:''}</div></div>
+    <button class="btn primary sm" onclick="ajReview('${p.id}')">Review &amp; approve</button><button class="btn light sm" onclick="ajReject('${p.id}')">Reject</button></div>`}).join('')}
+window.ajLoadPend=ajLoadPend;
+const SUG_MAP={demo:['f_demolition_required',v=>/^(no|none|n\/a)\b/i.test(v)?'false':'true'],gutters:['f_extras_notes',v=>v],extras:['f_extras_notes',v=>v],permit:['f_permit_status',v=>/approved/i.test(v)?'Approved':null]};
+window.ajReview=function(pid){const p=ajPend.find(x=>x.id===pid);if(!p)return;const pl=p.payload;openJobForm(p.kind==='edit'?p.job_id:null);window.__ajApprove=pid;
+  const src=p.kind==='edit'?(pl.fields||{}):pl;AJ_BASIC.forEach(k=>{if(src[k]===undefined||src[k]===null)return;const e=$('f_'+k);if(!e)return;let v=k==='hold_status'?String(!!src[k]):String(src[k]);if(e.tagName==='SELECT'&&![...e.options].some(o=>o.value===v)){const o=document.createElement('option');o.value=v;o.textContent=DISPLAY[ukey(v)]||v;o.dataset.extra='1';e.appendChild(o)}e.value=v;e.dispatchEvent(new Event('input',{bubbles:true}))});
+  if($('f_deposit_mirror'))$('f_deposit_mirror').value=$('f_deposit').value;
+  const s=(pl.scan_suggestions||{}).fields||{};const keys=Object.keys(s);$('jobFormTitle').textContent='Approve '+(p.kind==='new_job'?'new job':'edit')+' from '+(DISPLAY[ukey(p.salesman_username)]||p.salesman_username);
+  if(keys.length){const lab=Object.fromEntries((typeof FFD_FIELDS!=='undefined'?FFD_FIELDS:[]));$('ajFront').insertAdjacentHTML('afterend',`<div class="aj-sugg" id="ajSugg"><b>📄 Scanned details suggested by the contract (not applied yet)</b><table>${keys.map(k=>{const v=k==='payment_schedule'?s[k].map(x=>x.stage+(x.amount!=null?' $'+x.amount:'')).join(', '):String(s[k]);return `<tr><td style="width:38%;font-weight:700">${esc(lab[k]||k.replace(/_/g,' '))}</td><td>${esc(v)}</td></tr>`}).join('')}</table>
+    <button type="button" class="btn primary sm" style="margin-top:8px" onclick="ajApplySugg('${pid}')">Apply suggestions to the tabs</button> <span class="small muted">Adds them to Notes and sets Demo / Gutters where they match. Press Save Job to approve.</span></div>`)}};
+window.ajApplySugg=function(pid){const p=ajPend.find(x=>x.id===pid);const s=((p&&p.payload.scan_suggestions)||{}).fields||{};const lab=Object.fromEntries((typeof FFD_FIELDS!=='undefined'?FFD_FIELDS:[]));const lines=[];
+  Object.entries(s).forEach(([k,v])=>{const m=SUG_MAP[k];if(m&&typeof v==='string'){const val=m[1](v);const e=$(m[0]);if(e&&val!=null){if(m[0]==='f_extras_notes'){e.value=[e.value,v].filter(Boolean).join('; ');$('f_extras_required').value='true';try{syncExtrasRequirement()}catch(x){}}else{e.value=val;e.dispatchEvent(new Event('change',{bubbles:true}))}}}
+    lines.push((lab[k]||k)+': '+(k==='payment_schedule'?v.map(x=>x.stage+(x.amount!=null?' $'+x.amount:'')).join(', '):v))});
+  const n=$('f_notes');if(n&&lines.length)n.value=[n.value,'From contract scan:\n'+lines.join('\n')].filter(Boolean).join('\n\n');try{syncDemoRequirement();jaSummaries()}catch(x){}
+  const b=document.querySelector('#ajSugg button');if(b){b.disabled=true;b.textContent='Applied ✓'}};
+window.ajReject=async function(pid){if(!confirm('Reject this request?'))return;const {data:{user}}=await sb.auth.getUser();await sb.from('pending_job_changes').update({status:'rejected',reviewed_by:user.id,reviewed_at:new Date().toISOString()}).eq('id',pid).eq('status','pending');ajLoadPend()};
+})();
+</script>
+
 </body></html>

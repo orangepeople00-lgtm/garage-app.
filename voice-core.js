@@ -4,7 +4,7 @@
 (function(){var st=document.createElement('style');st.textContent=".agbv{margin:0 0 16px;background:#0b1220;border:1px solid #1e3a5f;border-radius:16px;padding:12px;color:#e4e4e7;max-width:100%;box-sizing:border-box}\n.agbv *{box-sizing:border-box}\n.agbv-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}\n.agbv-mic{min-height:48px;padding:0 18px;border-radius:999px;background:#2563eb;color:#fff;font-weight:800;font-size:16px;border:0}\n.agbv-mic.live{background:#dc2626;animation:agbvp 1.4s infinite}\n@keyframes agbvp{50%{box-shadow:0 0 0 8px rgba(220,38,38,.25)}}\n.agbv-timer{font-size:11px;color:#71717a;font-variant-numeric:tabular-nums}\n.agbv-status{font-size:12px;color:#a1a1aa;margin:8px 0 6px;line-height:1.4}\n.agbv-type{display:flex;gap:6px}\n.agbv-type input{flex:1;min-width:0;min-height:44px;background:#18181b;border:1px solid #3f3f46;border-radius:12px;color:#fff;padding:0 10px;font-size:16px}\n.agbv-btn{min-height:44px;padding:0 14px;border-radius:12px;background:#27272a;border:1px solid #52525b;color:#f4f4f5;font-size:14px}\n.agbv-log{margin-top:8px;font-size:12px;max-height:120px;overflow:auto;background:#09090b;border-radius:10px;padding:6px 8px;line-height:1.45}\n.agbv-log .u{color:#93c5fd}.agbv-log .a{color:#86efac}\n.agbv-card{margin-top:10px;background:#111827;border:1px solid #334155;border-radius:14px;padding:10px}\n.agbv-h{font-weight:800;font-size:14px;margin-bottom:6px}.agbv-sub{font-weight:400;color:#a1a1aa;font-size:12px}\n.agbv-item{display:grid;grid-template-columns:28px minmax(0,1fr) minmax(0,1.2fr);gap:6px;align-items:center;padding:5px 0;border-top:1px solid #1f2937;font-size:13px}\n.agbv-item input[type=checkbox]{width:22px;height:22px}\n.agbv-item select,.agbv-item input[type=text]{width:100%;min-height:38px;background:#18181b;border:1px solid #3f3f46;border-radius:10px;color:#fff;font-size:14px;padding:0 6px}\n.agbv-q{margin-top:8px;padding:8px;background:#422006;border:1px solid #a16207;border-radius:12px;font-size:13px}\n.agbv-q .opts{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}\n.agbv-q button{min-height:40px;padding:0 12px;border-radius:999px;background:#fbbf24;color:#000;font-weight:700;border:0;font-size:14px}\n.agbv-heard{font-size:12px;color:#93c5fd;background:#0b1220;border-radius:8px;padding:5px 8px;margin-bottom:6px;line-height:1.35;overflow-wrap:anywhere}\n.agbv-say{display:flex;gap:8px;align-items:flex-start;font-size:14px;line-height:1.4;color:#e4e4e7;background:#052e16;border:1px solid #166534;border-radius:12px;padding:8px 10px;margin:6px 0}\n.agbv-eq{display:inline-flex;gap:2px;align-items:flex-end;height:16px;margin-top:2px;flex:none}.agbv-eq i{width:3px;height:4px;background:#86efac;border-radius:2px}\n.agbv-say.talking .agbv-eq i{animation:agbveq .7s infinite ease-in-out}.agbv-say.talking .agbv-eq i:nth-child(2){animation-delay:.15s}.agbv-say.talking .agbv-eq i:nth-child(3){animation-delay:.3s}\n@keyframes agbveq{50%{height:16px}}\n.agbv-warn{display:block;width:100%;margin:4px 0;min-height:40px;border-radius:10px;background:#7f1d1d;color:#fff;border:0;font-size:13px;padding:6px 10px;text-align:left}\n.agbv-unk{margin-top:6px;font-size:12px;color:#fca5a5}\n.agbv-actions{display:flex;gap:8px;margin-top:10px}\n.agbv-fill{flex:1;min-height:48px;border-radius:12px;background:#16a34a;color:#fff;font-weight:800;font-size:16px;border:0}\n";document.head.appendChild(st);})();
 
 /* SAMPLE voice-estimate (branch voice-estimate-sample). Talks to OpenAI Realtime via an ephemeral key minted by the
-   Supabase function estimate-voice-session. Proposals go to the summary card; "Fill estimate" sets the real controls
+   Supabase function estimate-voice-session. Proposals go to the summary card; values go straight into the real controls (live fill)
    and fires their normal input/change events, so prices/city rules/AI prompt/sheet update like manual entry. */
 window.AGBVoiceCore={create:function(cfg){
   const $=id=>document.getElementById(id);
@@ -46,18 +46,30 @@ window.AGBVoiceCore={create:function(cfg){
     render();
   }
   function doorTxt(d){ return ({service:'Service door',french:'French doors',party:'Party door'}[d.type]||d.type)+' — '+d.wall+(d.style==='fullview'?' (full view)':''); }
-  function render(){
-    const ids=FIELDS.map(f=>f[0]).filter(id=>props[id]);
+  /* LIVE FILL: every understood value goes straight into the real calculator control (normal input/change events) so the
+     price updates while he talks. prevVals keeps each control's value from before voice touched it, so unchecking reverts it. */
+  let prevVals={}, doorsPrev=null, doorsApplied=false;
+  function curVal(id){ const el=$(id); if(!el) return undefined; return kindOf(el)==='bool'?el.checked:el.value; }
+  function commit(){ let changed=false; Object.entries(cfg.linked||{}).forEach(([lead,deps])=>{ if(props[lead]) deps.forEach(d=>{ if(props[d]) props[d].on=props[lead].on; }); });
+    FIELDS.forEach(([id])=>{ if(props[id]&&!(id in prevVals)) prevVals[id]=curVal(id); });
+    FIELDS.forEach(([id])=>{ const p=props[id]; if(!p) return;
+      const want=p.on?p.v:prevVals[id]; const before=curVal(id); setEl(id,want); if(String(curVal(id))!==String(before)) changed=true; });
+    if(doors&&cfg.fillDoors){ const sj=$('sideDoorsJson'); if(doorsPrev===null) doorsPrev=sj?sj.value:'';
+      if(doors.on&&!doorsApplied){ cfg.fillDoors(doors.list); doorsApplied=true; changed=true; }
+      else if(!doors.on&&doorsApplied){ if(sj){ sj.value=doorsPrev; try{ agbDoorsToggle(); }catch(e){} } doorsApplied=false; changed=true; } }
+    if(changed){ try{ cfg.afterFill&&cfg.afterFill(); }catch(e){} } try{ cfg.afterCommit&&cfg.afterCommit(props); }catch(e){} }
+  function render(){ commit();
+    const ids=FIELDS.map(f=>f[0]).filter(id=>props[id]&&!(cfg.hideOnCard||[]).includes(id));
     $('agbvCard').hidden=!(ids.length||doors||questions.length||unknown.length||heardTxt);
     $('agbvItems').innerHTML=ids.map(id=>{ const p=props[id], el=$(id), k=kindOf(el);
       let ed=k==='select'?'<select data-ed="'+id+'">'+optsOf(el).map(o=>'<option value="'+esc(o[0])+'"'+(o[0]===String(p.v)?' selected':'')+'>'+esc(o[1])+'</option>').join('')+'</select>'
         :k==='bool'?'<select data-ed="'+id+'"><option value="true"'+(p.v?' selected':'')+'>Yes</option><option value="false"'+(!p.v?' selected':'')+'>No</option></select>'
         :'<input type="text" data-ed="'+id+'" value="'+esc(p.v)+'">';
-      return '<label class="agbv-item"><input type="checkbox" data-on="'+id+'"'+(p.on?' checked':'')+'><span>'+esc(LABEL[id])+(p.heard?'<br><i style="color:#a1a1aa;font-size:11px">heard as “'+esc(p.heard)+'”</i>':'')+'</span>'+ed+'</label>'; }).join('')
+      return '<label class="agbv-item"><input type="checkbox" data-on="'+id+'"'+(p.on?' checked':'')+'><span>'+esc((cfg.itemLabel&&cfg.itemLabel(id,p))||LABEL[id])+(p.heard?'<br><i style="color:#a1a1aa;font-size:11px">heard as “'+esc(p.heard)+'”</i>':'')+'</span>'+ed+'</label>'; }).join('')
       +(doors?'<label class="agbv-item"><input type="checkbox" data-on="__doors"'+(doors.on?' checked':'')+'><span>Side/rear doors</span><span>'+(doors.list.length?doors.list.map(doorTxt).map(esc).join('<br>'):'None')+'</span></label>':'');
     $('agbvQs').innerHTML=questions.map((q,i)=>'<div class="agbv-q">'+esc(q.question)+'<div class="opts">'+q.options.map((o,j)=>'<button type="button" data-q="'+i+'" data-o="'+j+'">'+esc(o)+'</button>').join('')+'</div></div>').join('');
     $('agbvUnknown').hidden=!unknown.length; $('agbvUnknown').textContent=unknown.length?'Not understood: '+unknown.join('; '):'';
-    $('agbvItems').querySelectorAll('[data-on]').forEach(c=>c.onchange=()=>{ if(c.dataset.on==='__doors') doors.on=c.checked; else { const p=props[c.dataset.on]; p.on=c.checked; if(!c.checked) learn(c.dataset.on,p,'(not this)'); } });
+    $('agbvItems').querySelectorAll('[data-on]').forEach(c=>c.onchange=()=>{ if(c.dataset.on==='__doors') doors.on=c.checked; else { const p=props[c.dataset.on]; p.on=c.checked; if(!c.checked) learn(c.dataset.on,p,'(not this)'); } render(); });
     $('agbvItems').querySelectorAll('[data-ed]').forEach(c=>c.onchange=()=>{ const v=norm(c.dataset.ed,c.value); if(v!==null){ const p=props[c.dataset.ed]; p.v=v; learn(c.dataset.ed,p,v); } });
     $('agbvQs').querySelectorAll('button').forEach(b=>b.onclick=()=>answer(Number(b.dataset.q),Number(b.dataset.o)));
   }
@@ -98,6 +110,7 @@ window.AGBVoiceCore={create:function(cfg){
   function setDim(id,cid,n,heard){ const el=$(id); if(!el) return; const opt=optsOf(el).some(o=>o[0]===String(n));
     if(opt){ props[id]={v:String(n),on:true,heard,orig:String(n)}; delete props[cid]; }
     else if($(cid)&&optsOf(el).some(o=>o[0]==='custom')){ props[id]={v:'custom',on:true,heard,orig:'custom'}; props[cid]={v:n,on:true,heard,orig:n}; } }
+  function extraFromSpeech(t){ if(!cfg.extraParse) return false; const list=cfg.extraParse(t)||[]; list.forEach(f=>{ const v=norm(f.id,f.value); if(v!==null) props[f.id]={v,on:true,heard:f.heard||t,orig:v}; }); return list.length>0; }
   function dimsFromSpeech(t){ if(!cfg.dims) return false; const r=parseDims(t); if(!r) return false; const [W,D,CW,CD]=cfg.dims;
     if(r.w!=null) setDim(W,CW,r.w,r.heard); if(r.d!=null) setDim(D,CD,r.d,r.heard);
     questions=questions.filter(q=>!((r.w!=null&&(q.fieldId===W||q.fieldId===CW))||(r.d!=null&&(q.fieldId===D||q.fieldId===CD))));
@@ -126,7 +139,7 @@ window.AGBVoiceCore={create:function(cfg){
     w.textContent="Can't play sound — check volume / Silent switch, then tap here. (You can still read what the helper says above.)"; w.hidden=false; }
   function sayLine(txt,final){ const el=$('agbvSay'); el.hidden=false; $('agbvSayTxt').textContent=txt; }
   function setTalking(on){ aiTalking=on; const el=$('agbvSay'); if(el) el.classList.toggle('talking',on);
-    if(live()) status(on?'AI speaking… (you can interrupt)':'Listening… talk any time.');
+    if(live()) status(on?'AI asking… (you can interrupt)':'Listening…');
     if(on){ clearTimeout(playChk); const t0a=audio?audio.currentTime:0; playChk=setTimeout(()=>{ if(aiTalking&&audio&&(audio.paused||audio.currentTime<=t0a)) soundWarn(); else { const w=$('agbvSoundWarn'); if(w) w.hidden=true; } window.agbVoiceAudio={paused:audio.paused,currentTime:audio.currentTime,start:t0a}; },1500); } }
   function ensureSayUI(){ if($('agbvSay')) return; const d=document.createElement('div'); d.id='agbvSay'; d.className='agbv-say'; d.hidden=true;
     d.innerHTML='<span class="agbv-eq"><i></i><i></i><i></i></span><span><b>AI:</b> <span id="agbvSayTxt"></span></span>'; $('agbvStatus').after(d); }
@@ -136,7 +149,7 @@ window.AGBVoiceCore={create:function(cfg){
 
   async function start(){
     if(!navigator.mediaDevices||!window.RTCPeerConnection){ status('Live voice is not supported in this browser — type the job below.'); return; }
-    $('agbvMic').disabled=true; status('Starting… allow the microphone.');
+    $('agbvMic').disabled=true; status('Listening…');
     unlockAudio(); // must run inside the Talk tap (iPhone)
     try{
       mic=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}});
@@ -145,8 +158,9 @@ window.AGBVoiceCore={create:function(cfg){
       pc.ontrack=e=>{ playRemote(e.streams[0]||new MediaStream([e.track])); };
       pc.addTrack(mic.getTracks()[0],mic);
       dc=pc.createDataChannel('oai-events'); dc.onmessage=e=>{ try{ onEvent(JSON.parse(e.data)); }catch(x){} };
-      dc.onopen=()=>{ ensureSayUI(); status('Connected — the helper will greet you. Talk any time.'); heardSpeech=false; stillAsked=false; userAct=Date.now(); if(Object.keys(props).length) say('Already proposed: '+JSON.stringify(Object.fromEntries(Object.entries(props).map(([k,p])=>[k,p.v])))+'. If width/depth are not set, ask for the size out loud; otherwise wait for the salesman.'); else say('(Session started.) Greet the salesman in a few words and ask out loud for the garage size, width by depth.');
-        setTimeout(()=>{ if(live()&&!heardSpeech) status('I am not hearing your voice. Check the mic permission (aA → Website Settings → Microphone), turn off Silent mode, then tap Stop and the mic again — or type below.'); },15000); };
+      dc.onopen=()=>{ ensureSayUI(); status('Listening…'); heardSpeech=false; stillAsked=false; userAct=Date.now(); /* silent start: no greeting, no response.create */
+        if(Object.keys(props).length) send({type:'conversation.item.create',item:{type:'message',role:'user',content:[{type:'input_text',text:'(Context, do not reply: already set '+JSON.stringify(Object.fromEntries(Object.entries(props).map(([k,p])=>[k,p.v])))+')'}]}});
+        setTimeout(()=>{ if(live()&&!heardSpeech) status('Listening… (not hearing anything yet — check mic permission: aA → Website Settings → Microphone)'); },15000); };
       pc.onconnectionstatechange=()=>{ if(['failed','closed','disconnected'].includes(pc&&pc.connectionState)) stop('Voice ended.'); };
       const offer=await pc.createOffer(); await pc.setLocalDescription(offer);
       const r=await fetch('https://api.openai.com/v1/realtime/calls',{method:'POST',body:offer.sdp,headers:{Authorization:'Bearer '+tok.value,'Content-Type':'application/sdp'}});
@@ -161,7 +175,7 @@ window.AGBVoiceCore={create:function(cfg){
     $('agbvTimer').textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
     if(s>=MAX_TOTAL) stop('Voice ended (15 min safety limit). Tap Talk to keep going — the list is kept.');
     else if(idle>MAX_IDLE) stop('Voice ended after 2 minutes of silence. Tap Talk to keep going — the list is kept.');
-    else if(idle>STILL_THERE&&!stillAsked){ stillAsked=true; status('Still there?'); say('(The salesman has been quiet for a while. Ask "Still there?" in two words.)'); } }
+    else if(idle>STILL_THERE&&!stillAsked){ stillAsked=true; status('Still there? (voice ends after 2 min of quiet)'); } }
   function stop(msg){ clearInterval(tick); tick=null; window.agbVoiceDebug={heardSpeech,heard:heardTxt,at:new Date().toISOString()};
     try{ dc&&dc.close(); }catch(e){} try{ pc&&pc.close(); }catch(e){} try{ mic&&mic.getTracks().forEach(t=>t.stop()); }catch(e){}
     dc=pc=mic=null; aiTalking=false; clearTimeout(playChk); const sy=$('agbvSay'); if(sy) sy.classList.remove('talking'); $('agbvMic').classList.remove('live'); $('agbvMicTxt').textContent='Talk with the helper'; $('agbvTimer').hidden=true;
@@ -172,15 +186,21 @@ window.AGBVoiceCore={create:function(cfg){
     else if(t==='output_audio_buffer.started'||t==='response.output_audio.delta'&&!aiTalking) setTalking(true);
     else if(t==='output_audio_buffer.stopped'||t==='output_audio_buffer.cleared') setTalking(false);
     else if(t==='response.output_audio_transcript.delta'&&ev.delta){ if(!sayBuf||sayNew){ sayBuf=''; sayNew=false; } sayBuf+=ev.delta; sayLine(sayBuf); }
-    else if(t==='input_audio_buffer.speech_stopped') status('Got it — thinking…');
-    else if(t==='conversation.item.input_audio_transcription.completed'&&ev.transcript) { log('u',ev.transcript); lastAct=Date.now(); heardSpeech=true; heard(ev.transcript); voicedYes(ev.transcript); dimsFromSpeech(ev.transcript); render(); }
+    else if(t==='input_audio_buffer.speech_stopped') status('Listening… (updating estimate)');
+    else if(t==='conversation.item.input_audio_transcription.completed'&&ev.transcript) { log('u',ev.transcript); lastAct=Date.now(); heardSpeech=true; heard(ev.transcript); voicedYes(ev.transcript); dimsFromSpeech(ev.transcript); extraFromSpeech(ev.transcript); render(); }
     else if(t==='conversation.item.input_audio_transcription.failed') status('Could not make out that last part — say it again.');
     else if(t==='response.output_audio_transcript.done'&&ev.transcript){ log('a',ev.transcript); sayLine(ev.transcript,true); sayNew=true; }
     else if(t==='response.function_call_arguments.done'){
       let a={}; try{ a=JSON.parse(ev.arguments||'{}'); }catch(e){}
+      if(ev.name==='get_price_info'||ev.name==='get_city_info'||ev.name==='web_lookup'){ status(ev.name==='web_lookup'?'Looking that up…':'Checking…');
+        const reply=r=>{ send({type:'conversation.item.create',item:{type:'function_call_output',call_id:ev.call_id,output:JSON.stringify(r).slice(0,3000)}}); send({type:'response.create'}); };
+        Promise.resolve().then(()=>ev.name==='get_price_info'?(cfg.priceInfo?cfg.priceInfo(a):{error:'no pricing on this page'}):ev.name==='get_city_info'?(cfg.cityInfo?cfg.cityInfo(a.city):{error:'no city data'}):callFn({mode:'web',question:a.question}).then(d=>({answer:d.answer,source:'web (general info)'})))
+          .catch(e=>({error:String(e.message||e)})).then(reply); return; }
       if(ev.name==='get_job_status'){ status('Looking up job…'); jobStatus(a.query).catch(e=>({error:String(e.message||e)})).then(r=>{ send({type:'conversation.item.create',item:{type:'function_call_output',call_id:ev.call_id,output:JSON.stringify(r).slice(0,4000)}}); send({type:'response.create'}); status('Listening…'); }); return; }
-      if(ev.name==='finish_estimate'){ send({type:'conversation.item.create',item:{type:'function_call_output',call_id:ev.call_id,output:'filled'}}); setTimeout(fill,300); return; }
-      apply(a); send({type:'conversation.item.create',item:{type:'function_call_output',call_id:ev.call_id,output:'shown on card'}}); send({type:'response.create'});
+      if(ev.name==='finish_estimate'){ send({type:'conversation.item.create',item:{type:'function_call_output',call_id:ev.call_id,output:'all set; everything is already on the estimate'}}); setTimeout(()=>stop('All set — everything you said is on the estimate. Fix anything in the list below, or tap Talk to add more.'),2500); return; }
+      apply(a); const needQ=(a.questions||[]).length>0||(a.unknownPhrases||[]).length>0;
+      send({type:'conversation.item.create',item:{type:'function_call_output',call_id:ev.call_id,output:needQ?'set; now ask your one short question out loud':'set on the estimate; stay silent'}});
+      if(needQ) send({type:'response.create'}); /* otherwise stay silent and keep listening */
     }
     if(t==='response.done'&&ev.response&&ev.response.status&&ev.response.status!=='completed'){ window.agbVoiceLastBad=ev.response.status_details; status('Helper reply was cut off ('+ev.response.status+') — say it again or type it.'); }
     else if(t==='response.done'&&ev.response&&ev.response.usage){ const u=ev.response.usage, i=u.input_token_details||{}, o=u.output_token_details||{}, c=i.cached_tokens_details||{};
@@ -216,22 +236,22 @@ window.AGBVoiceCore={create:function(cfg){
   }
   async function sendText(txt){
     txt=txt||$('agbvText').value.trim(); if(!txt) return; $('agbvText').value='';
-    if(live()){ log('u',txt); heard(txt); voicedYes(txt); dimsFromSpeech(txt); render(); say(txt); return; }
+    if(live()){ log('u',txt); heard(txt); voicedYes(txt); dimsFromSpeech(txt); extraFromSpeech(txt); render(); say(txt); return; }
     status('Reading…');
-    try{ const d=await callFn({mode:'text',page:cfg.page||'',catalog:catalog(),current:current(),learned:learnedText(),transcript:txt}); window.agbVoiceLastText=d; heard(txt); voicedYes(txt); apply(d); const W=(cfg.dims||[])[0]; if(!(d.fields||[]).some(f=>f.id===W)) dimsFromSpeech(txt); render(); status(questions.length?'Answer the questions, check the list, then tap Fill estimate.':'Check the list, then tap Fill estimate.'); }
+    try{ const d=await callFn({mode:'text',page:cfg.page||'',catalog:catalog(),current:current(),learned:learnedText(),transcript:txt}); window.agbVoiceLastText=d; heard(txt); voicedYes(txt); apply(d); const W=(cfg.dims||[])[0]; if(!(d.fields||[]).some(f=>f.id===W)) dimsFromSpeech(txt); extraFromSpeech(txt); answerTyped(d); render(); status(questions.length?'Answer the questions below — everything else is already on the estimate.':'Set on the estimate — uncheck anything that is wrong.'); }
     catch(e){ status('Could not read that ('+(e.message||e)+').'); }
   }
+  async function answerTyped(d){ if(!d) return; let parts=[];
+    if(d.price_check&&cfg.priceInfo){ const r=cfg.priceInfo(d.price_check); window.agbVoicePrice=r; parts.push(r.error?r.error:r.difference_text!=null?('Company pricing: '+r.difference_text+(r.pinned_total?' at standard pricing (your total stays pinned at $'+r.pinned_total.toLocaleString()+')':' (total would be $'+Math.round(r.with_change_price).toLocaleString()+')')):('Current project price '+r.project_price_text)); }
+    if(d.city_check&&cfg.cityInfo){ const r=cfg.cityInfo(d.city_check); window.agbVoiceCity=r; parts.push(r.error||((r.notes||'')+(r.code_year?' Code year '+r.code_year+'.':'')).slice(0,400)); }
+    if(d.answer) parts.push(d.answer);
+    if(d.web_query){ try{ const w=await callFn({mode:'web',question:d.web_query}); window.agbVoiceWeb=w; if(w.answer) parts.push('General info: '+w.answer); }catch(e){ parts.push('Web lookup failed.'); } }
+    if(parts.length){ ensureSayUI(); sayLine(parts.join(' ')); window.agbVoiceAnswer=parts.join(' '); } }
   function setEl(id,v){ const el=$(id); if(!el) return; const k=kindOf(el);
     if(k==='bool'){ if(el.checked===!!v) return; el.checked=!!v; } else { if(String(el.value)===String(v)) return; el.value=String(v); }
     el.dispatchEvent(new Event('input',{bubbles:true})); el.dispatchEvent(new Event('change',{bubbles:true})); }
-  function fill(){
-    const done=[];
-    FIELDS.forEach(([id])=>{ const p=props[id]; if(p&&p.on){ setEl(id,p.v); done.push(id); } });
-    if(doors&&doors.on&&cfg.fillDoors) cfg.fillDoors(doors.list);
-    try{ cfg.afterFill&&cfg.afterFill(); }catch(e){}
-    if(live()) stop('Filled '+done.length+' items. Voice ended. Tap the mic to add or change things.'); else status('Filled '+done.length+' items. Talk or type again to add or change things.');
-    props={}; doors=null; questions=[]; unknown=[]; pending={}; heardTxt=''; const h=$('agbvHeard'); if(h) h.remove(); render();
-  }
-  function clear(){ props={}; doors=null; questions=[]; unknown=[]; pending={}; heardTxt=''; const h=$('agbvHeard'); if(h) h.remove(); render(); }
+  function reset(){ props={}; doors=null; questions=[]; unknown=[]; pending={}; heardTxt=''; prevVals={}; doorsPrev=null; doorsApplied=false; const h=$('agbvHeard'); if(h) h.remove(); render(); }
+  function fill(){ /* "Done": values are already on the estimate; just close the list */ if(live()) stop('Done — everything is on the estimate.'); else status('Done — everything is on the estimate.'); reset(); }
+  function clear(){ /* "Undo all": revert every control voice changed */ Object.keys(props).forEach(id=>props[id].on=false); if(doors) doors.on=false; commit(); status('Undid everything voice set.'); reset(); }
   return {toggle:()=>live()||pc?stop('Voice stopped.'):start(), sendText, fill, clear, catalog, _apply:apply, learned, _jobStatus:jobStatus, _state:()=>({props,doors,questions,unknown}), usage:()=>usage};
 }};

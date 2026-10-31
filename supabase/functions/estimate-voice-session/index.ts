@@ -46,7 +46,8 @@ Rules:
 const OWNER = `
 
 COMPANY KNOWLEDGE (owner facts; use FIRST, before general knowledge):
-- Internal COST adders (before profit — NEVER quote these as the price): 1st service door included in base; 2nd service door $600 cost; French doors with a service door: 9 Light $1,150, Full View $1,450 cost; top windows $350 cost. For any "how much more" question ALWAYS call get_price_info and say its difference_text (customer price incl. profit) — never the cost figure.
+- 1st service door included in base. A 2nd service door is quoted at $600 FLAT (owner's price) — say "$600", no profit added, regardless of what get_price_info's calculator difference shows.
+- Internal COST adders (before profit — NEVER quote these as the price): French doors with a service door: 9 Light $1,150, Full View $1,450 cost; top windows $350 cost. For any other "how much more" question ALWAYS call get_price_info and say its difference_text (customer price incl. profit) — never the cost figure.
 - Garage-only demo (build on existing slab, old garage torn down) $1,300 (demo cost box default). LP Smart Side = same price as Hardie/cement board.
 - All other prices ONLY from get_price_info (the estimator's own tables). Never invent a price; if the tool can't price it, say you don't have that price.
 - Internal: Profit Control default 24.75% of internal cost. Internal cost/profit is staff-only: mention ONLY if the salesman explicitly asks about margin/profit, never in a customer-facing way.

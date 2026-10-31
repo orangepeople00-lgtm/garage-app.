@@ -31,28 +31,48 @@ Rules:
 - Never ask about demo apron depth, demo cost, EPA, or excavation unless he brings them up; leave demoApronDepth unset unless he says an apron number.
 - SIZE (most important): whenever the salesman says a size, call set_estimate_fields with width AND depth right away. "A by B" / "A x B" / "A-by-B" = width A, depth B (first number is ALWAYS width). Spoken numbers count ("twenty two by twenty four" = 22 x 24). "24 deep"/"24 long" = depth only; "22 wide" = width only. Sizes not in the width/depth options (e.g. 21, 25, 23.5) -> width/depth = custom plus customWidth/customDepth numbers. Only ask if truly ambiguous (e.g. a single number with no wide/deep).
 - "two car" with only a depth (e.g. "two car, 24 deep") -> width 20 plus that depth, and ask to confirm the width. Do not ask about overhead door count, car capacity or other items he did not mention.
-- If no size has been given yet, ASK OUT LOUD for it ("What size — width by depth?") before anything else; keep asking politely until you have it or he says done.
+- PRICE OVERRIDE: "I want the price to be 29,000" / "make it 29 thousand" / "set total to 27,500" -> set profitMode total AND profitValue 29000 (exact dollars). Silent; ask only if the number is unclear. This is not a question.
+- If no size at all was given, ask for it ONCE ("What size?").
 - When the salesman answers yes / correct / that's right to your confirm question, immediately call set_estimate_fields with that field set to the value you proposed (no question). When he answers with a different number, set that number.
 - Old slab sizes that match a demoSlabPreset option (20x20, 22x22, 24x24...) use that exact option; use custom + oldConcreteOverride only for other sizes.
-- (Typed mode; in LIVE CONVERSATION follow its checklist instead) Do not ask about extras the salesman did not mention (patio, windows, electric...). Only ask about something he said that is unclear, or the essentials if missing: size, roof style, city.
-- Typed mode: when he says done / fill it, call finish_estimate right away. (Live conversation: see LIVE CONVERSATION.)
+- Do not ask about extras the salesman did not mention (patio, windows, electric, siding...). Not mentioned = standard default.
+- When he says done / that's it, call finish_estimate.
 - carCapacity only when "oversized two car" or "three car" is said.
 - Use ONLY the field ids and allowed values from the catalog. Values are option values (left of '=') or numbers/true/false.
 - NEVER say or set prices or money except demoCostInput when the salesman says a demo dollar amount. Prices come from the calculator.
 - Call set_estimate_fields every time you learn something (only the new/changed fields).
 - Keep replies short and friendly, like a coworker. Never say prices.`;
 
+const OWNER = `
+
+COMPANY KNOWLEDGE (owner facts; use FIRST, before general knowledge):
+- 1st service door included in base. 2nd service door +$600. French doors with a service door: 9 Light $1,150, Full View $1,450. Top windows +$350.
+- Garage-only demo (build on existing slab, old garage torn down) $1,300 (demo cost box default). LP Smart Side = same price as Hardie/cement board.
+- All other prices ONLY from get_price_info (the estimator's own tables). Never invent a price; if the tool can't price it, say you don't have that price.
+- Internal: Profit Control default 24.75% of internal cost. Internal cost/profit is staff-only: mention ONLY if the salesman explicitly asks about margin/profit, never in a customer-facing way.
+- Headers: always 2 LVL by default (owner considers LVL stronger than 2x12), even when city code says 2x12; 2-2x12 with 1/2" flitch plate can be chosen manually.
+- Defaults: pre-finished wood soffit/fascia unless aluminum; vinyl siding; standard rough patio/apron (auto-added, one tap to remove for slab-only); wall height 8 ft; slab 4".
+- "Two car" = 20 ft wide by default (get dimensions). "Demo" = garage AND slab removal unless building on the existing slab.
+- Roofed patios: no slant/lean-to; hip continues roof lines; gable extends flush; side patio ~1/3 garage size, open front/side/back. Gable + roofed patio -> ask about reverse gable.
+- Subs: electric = All Electric, Current Electric. Concrete/demo = Freddy, Romero. Carpentry = Christain.
+- Chicago: setbacks 2' rear, 2' one side, 3' other side; closer needs architect/expediter + fire-retardant siding with metal studs. 600 sq ft+ needs a footing (auto-added). Other cities: use get_city_info.`;
+
 const CONVO = `
 
-LIVE CONVERSATION (you are talking out loud with the salesman; lead a natural back-and-forth):
-- Speak in 1-2 short sentences per turn, English. He may interrupt you; stop and listen.
-- Start: greet in a few words and ask for the size (width by depth). Then roof style and city if not given.
-- After each answer: call set_estimate_fields, confirm in a few words ("Got it, 22 by 24 hip in Berwyn."), then ask the NEXT missing item, ONE at a time, in this order, skipping anything already said or already in CURRENT VALUES that he confirmed: siding (vinyl standard, LP Smart Side or Hardie), overhead door (style / size), service door or other side doors and which wall, windows, gutters, soffit and fascia (aluminum or wood), new slab vs building on the existing slab and whether the old garage comes down, roofed patio, electric. Ask each as a quick yes/no or short choice ("Vinyl siding, or an upgrade?"). If he says standard / no / skip, accept it and move on; never ask the same item twice and don't push extras.
-- Never ask about detail items he didn't bring up (demo apron depth, demo cost, EPA, excavation, permit fees, colors unless he mentions them).
-- Offer at most 2-3 choices per question ("Standard raised panel, or something else?"); never list every option.
-- When the list is covered, ask "Anything else?" If he says no / that's everything / that's it, do NOT fill yet: read back a SHORT summary (size, roof, city, main options) and ask "Want me to fill it in?". Call finish_estimate only after he says yes / fill it, or if he explicitly says "fill it in" at any time.
-- If the app says the salesman went quiet, ask "Still there?" once.`;
+LIVE MODE (voice):
+- NEVER speak before or while calling a tool: no preambles like "Got it", "let me confirm", "let me think". Call set_estimate_fields with NO spoken text; speak only after a tool result says to.
+- Stay SILENT when the session starts: no greeting. Wait for him to talk.
+- Everything not mentioned stays at the estimator's standard default. NEVER walk through a checklist and NEVER ask about anything he didn't bring up (siding, patio, doors, windows, gutters, apron, EPA, colors...).
+- After he finishes a turn: call set_estimate_fields with what you understood; it goes straight onto the estimate. Do NOT speak a confirmation.
+- Speak ONLY when (a) something he mentioned is ambiguous/incomplete (e.g. French doors without style, a city not in the list, "two car" without a depth) - ask ONE short question; (b) no size at all after he described the job - ask once "What size?"; (c) he asked you a question.
+- QUESTIONS he asks: never change fields. Pricing -> call get_price_info (company facts above first) and answer with those numbers only, say it's company pricing. City codes -> get_city_info. Garage/building facts -> answer briefly from company knowledge, else general knowledge (say "generally"); if unsure or needs current info -> web_lookup once, then answer in 1-2 sentences and say it's general info.
+- 1-2 short sentences when you do speak. He may interrupt. No "anything else", no summaries. If he says done / that's it, call finish_estimate silently.`;
 
+
+
+const TYPED = `
+
+TYPED MODE: everything not mentioned stays standard; ask questions only about things he mentioned that are ambiguous, or the size if none was given. If he ASKS something: put a short reply in answer and leave fields empty (questions never change fields). Pricing questions -> price_check (and answer with only company-fact prices, else leave the number to the app). City code questions -> city_check. Unsure general info -> web_query.`;
 
 const SET_TOOL = {
   type: "function",
@@ -73,10 +93,17 @@ const SET_TOOL = {
       questions: { type: "array", items: { type: "object", properties: {
         fieldId: { type: "string" }, question: { type: "string" }, options: { type: "array", items: { type: "string" } } }, required: ["fieldId", "question", "options"] } },
       unknownPhrases: { type: "array", items: { type: "string" } },
+      answer: { type: "string", description: "Typed mode only: short answer if the salesman ASKED a question (company knowledge first; say 'generally' for general info). Leave fields empty for pure questions." },
+      price_check: { type: "object", description: "Typed mode only: pricing question -> hypothetical changes to price with the estimator (never invent a number)", properties: { changes: { type: "array", items: { type: "object", properties: { id: { type: "string" }, value: { type: "string" } } } }, add_side_door: { type: "object", properties: { type: { type: "string" }, wall: { type: "string" }, style: { type: "string" } } } } },
+      city_check: { type: "string", description: "Typed mode only: city name if he asked about a city's codes" },
+      web_query: { type: "string", description: "Typed mode only: a web search query if the question needs current/general info you are unsure of" },
     },
     required: ["fields"],
   },
 };
+const PRICE_TOOL = { type: "function", name: "get_price_info", description: "READ-ONLY. Current project price + main line items from the estimator, and optionally the price difference of a hypothetical change computed with the estimator's own pricing (the form is not changed).", parameters: { type: "object", properties: { changes: { type: "array", description: "hypothetical field changes (catalog ids/values), e.g. [{id:'sidingType',value:'lp'}]", items: { type: "object", properties: { id: { type: "string" }, value: { type: "string" } }, required: ["id", "value"] } }, add_side_door: { type: "object", properties: { type: { type: "string", enum: ["service", "french", "party"] }, wall: { type: "string" }, style: { type: "string", enum: ["9light", "fullview"] } } } } } };
+const CITY_TOOL = { type: "function", name: "get_city_info", description: "READ-ONLY. The estimator's saved code/requirement notes for a city (setbacks, max size/height, slab, footing, code year).", parameters: { type: "object", properties: { city: { type: "string" } }, required: ["city"] } };
+const WEB_TOOL = { type: "function", name: "web_lookup", description: "One short web search for a general garage/building question you can't answer from company knowledge. Not for company prices.", parameters: { type: "object", properties: { question: { type: "string" } }, required: ["question"] } };
 const JOB_TOOL = { type: "function", name: "get_job_status", description: "READ-ONLY: look up the status of one of the salesman's own sold jobs by customer name or address. Call when asked how a job is going / where a job stands.", parameters: { type: "object", properties: { query: { type: "string", description: "customer name or part of the address" } }, required: ["query"] } };
 const FINISH_TOOL = { type: "function", name: "finish_estimate", description: "Salesman is done; fill the estimate now.", parameters: { type: "object", properties: {} } };
 
@@ -100,13 +127,13 @@ Deno.serve(async (req) => {
           session: {
             type: "realtime",
             model: String(body.model || REALTIME_MODEL).replace(/[^a-z0-9.\-]/gi, ""),
-            instructions: instructions + CONVO,
+            instructions: instructions + OWNER + CONVO,
             max_output_tokens: 1200,
             audio: {
               input: { turn_detection: { type: "semantic_vad", eagerness: "high" }, transcription: { model: "gpt-4o-mini-transcribe", language: "en" } },
               output: { voice: "marin" },
             },
-            tools: [SET_TOOL, FINISH_TOOL, JOB_TOOL],
+            tools: [SET_TOOL, FINISH_TOOL, JOB_TOOL, PRICE_TOOL, CITY_TOOL, WEB_TOOL],
             tool_choice: "auto",
           },
         }),
@@ -114,6 +141,26 @@ Deno.serve(async (req) => {
       const d = await r.json().catch(() => ({}));
       if (!r.ok) return json({ error: d?.error?.message || ("OpenAI " + r.status) }, 502);
       return json({ value: d.value, expires_at: d.expires_at, model: d.session?.model });
+    }
+
+    if (body.mode === "web") {
+      const q = String(body.question || "").slice(0, 300);
+      if (!q) return json({ error: "question required" }, 400);
+      let role = "";
+      try { const t = (req.headers.get("authorization") || "").split(" ")[1] || ""; role = JSON.parse(atob(t.split(".")[1].replace(/-/g, "+").replace(/_/g, "/"))).role || ""; } catch { role = ""; }
+      if (role !== "authenticated") return json({ error: "Web lookup needs a signed-in user" }, 403);
+      const r = await fetch("https://api.openai.com/v1/responses", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ model: TEXT_MODEL, tools: [{ type: "web_search", search_context_size: "low" }], max_tool_calls: 1, max_output_tokens: 250,
+          instructions: "Answer a garage contractor's question in 1-2 short sentences of general info (Chicago area US if relevant). No prices unless widely published; say it's general info.",
+          input: q }),
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) return json({ error: d?.error?.message || ("OpenAI " + r.status) }, 502);
+      let text = d.output_text || "";
+      if (!text) { try { text = d.output.filter((o: any) => o.type === "message").flatMap((o: any) => o.content).map((c: any) => c.text || "").join(" "); } catch { text = ""; } }
+      return json({ answer: text.slice(0, 600), usage: d.usage, model: d.model });
     }
 
     // typed fallback: one small call
@@ -124,7 +171,7 @@ Deno.serve(async (req) => {
       headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         model: TEXT_MODEL, max_tokens: 500, temperature: 0,
-        messages: [{ role: "system", content: instructions }, { role: "user", content: transcript }],
+        messages: [{ role: "system", content: instructions + OWNER + TYPED }, { role: "user", content: transcript }],
         tools: [{ type: "function", function: { name: SET_TOOL.name, description: SET_TOOL.description, parameters: SET_TOOL.parameters } }],
         tool_choice: { type: "function", function: { name: "set_estimate_fields" } },
       }),
@@ -133,7 +180,7 @@ Deno.serve(async (req) => {
     if (!r.ok) return json({ error: d?.error?.message || ("OpenAI " + r.status) }, 502);
     let out: any = {};
     try { out = JSON.parse(d.choices[0].message.tool_calls[0].function.arguments); } catch { out = {}; }
-    return json({ fields: out.fields || [], side_doors: out.side_doors, questions: out.questions || [], unknownPhrases: out.unknownPhrases || [], usage: d.usage, model: d.model });
+    return json({ fields: out.fields || [], side_doors: out.side_doors, questions: out.questions || [], unknownPhrases: out.unknownPhrases || [], answer: out.answer || "", price_check: out.price_check || null, city_check: out.city_check || "", web_query: out.web_query || "", usage: d.usage, model: d.model });
   } catch (e) {
     return json({ error: String((e as Error)?.message || e) }, 500);
   }

@@ -43,6 +43,7 @@ window.AGBVoiceCore={create:function(cfg){
   function plain(id,v){ const el=$(id),k=kindOf(el); if(k==='bool') return v?'Yes':'No'; if(k==='select'){ const o=optsOf(el).find(x=>x[0]===String(v)); return o?o[1]:v; } return String(v); }
 
   function apply(a){ // from set_estimate_fields
+    let pre=[]; try{ pre=cfg.preApply?(cfg.preApply(a)||[]):[]; }catch(e){}
     refreshFields(); const ambig=[]; const noteTxt=String(a.notes||window._agbLastNote||'').toLowerCase();
     if(a.notes) addNote(a.notes,a.notes);
     const asked=new Set((a.questions||[]).map(q=>q&&q.fieldId));
@@ -50,6 +51,7 @@ window.AGBVoiceCore={create:function(cfg){
       const v=norm(f.id,f.value); if(v===null){ const el=$(f.id); if(el&&kindOf(el)==='select'){ const fz=fuzzyOpt(el,f.value); if(fz.many.length>1){ ambig.push({fieldId:f.id,question:'Which '+String(LABEL[f.id]||f.id).replace(/\s*\(.*$/,'').toLowerCase()+' — '+fz.many.slice(0,8).map(x=>x[1].replace(/\s*\(\+?\$[^)]*\)/g,'')).join(', ')+'?',options:fz.many.slice(0,9).map(x=>x[1])}); return; } } if(f.id) unknown.push(f.id+': '+f.value); return; } props[f.id]={v,on:true,heard:f.heard||'',orig:v}; });
     if(Array.isArray(a.side_doors)) doors={list:a.side_doors.filter(d=>d&&d.type&&d.wall),on:true};
     if(Array.isArray(a.questions)||ambig.length) questions=(a.questions||[]).filter(q=>q&&q.question).map(q=>({fieldId:q.fieldId,question:q.question,options:(q.options||[]).slice(0,9)})).concat(ambig.filter(x=>!(a.questions||[]).some(q=>q&&q.fieldId===x.fieldId)));
+    pre.forEach(q=>{ questions=questions.filter(x=>x.fieldId!==q.fieldId); questions.push(q); });
     a._ambig=ambig;
     (a.unknownPhrases||[]).forEach(p=>unknown.push(p));
     // answered questions drop off
@@ -121,7 +123,7 @@ window.AGBVoiceCore={create:function(cfg){
   function setDim(id,cid,n,heard){ const el=$(id); if(!el) return; const opt=optsOf(el).some(o=>o[0]===String(n));
     if(opt){ props[id]={v:String(n),on:true,heard,orig:String(n)}; delete props[cid]; }
     else if($(cid)&&optsOf(el).some(o=>o[0]==='custom')){ props[id]={v:'custom',on:true,heard,orig:'custom'}; props[cid]={v:n,on:true,heard,orig:n}; } }
-  function extraFromSpeech(t){ if(!cfg.extraParse) return false; const list=cfg.extraParse(t)||[]; list.forEach(f=>{ const v=norm(f.id,f.value); if(v!==null) props[f.id]={v,on:true,heard:f.heard||t,orig:v}; }); return list.length>0; }
+  function extraFromSpeech(t){ if(!cfg.extraParse) return false; const list=cfg.extraParse(t)||[]; list.forEach(f=>{ const v=norm(f.id,f.value); if(v!==null) props[f.id]={v,on:true,heard:f.heard||t,orig:v}; questions=questions.filter(q=>q.fieldId!==f.id); }); return list.length>0; }
   function dimsFromSpeech(t){ if(!cfg.dims) return false; const r=parseDims(t); if(!r) return false; const [W,D,CW,CD]=cfg.dims;
     if(r.w!=null) setDim(W,CW,r.w,r.heard); if(r.d!=null) setDim(D,CD,r.d,r.heard);
     questions=questions.filter(q=>!((r.w!=null&&(q.fieldId===W||q.fieldId===CW))||(r.d!=null&&(q.fieldId===D||q.fieldId===CD))));

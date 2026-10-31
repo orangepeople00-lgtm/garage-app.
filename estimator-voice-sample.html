@@ -12826,7 +12826,7 @@ run();setInterval(run,1500);document.addEventListener('change',run);})();
   }, false);
 })();
 </script>
-<script src="voice-core.js?v=20261031g"></script>
+<script src="voice-core.js?v=20261031h"></script>
 <script>
 /* SAMPLE voice-estimate: estimator field schema for the shared voice-core.js */
 /* Contact info from speech: "his number is 708-555-1234", "seven oh eight five five five ...", "email bob at gmail dot com" */
@@ -12857,9 +12857,9 @@ window.agbNumbersSaid=function(t){ let s=String(t||'').toLowerCase().replace(/(\
   const out=[]; (s.match(/\$?\d+(?:\.\d+)?\s*(?:k\b|thousand|grand|hundred)?/g)||[]).forEach(m=>{ let n=parseFloat(m.replace(/[^0-9.]/g,'')); if(/k\b|thousand|grand/.test(m)) n*=1000; else if(/hundred/.test(m)) n*=100; out.push(n); });
   // spoken words: "two thousand", "fifteen hundred", "twenty five hundred", "two thousand five hundred"
   const toks=s.replace(/-/g,' ').split(/[^a-z0-9]+/); let cur=0,total=0,any=false; const flush=()=>{ if(any) out.push(total+cur); cur=0; total=0; any=false; };
-  toks.forEach(w=>{ if(w in W){ cur+=W[w]; any=true; } else if(w==='hundred'&&any){ cur*=100; } else if((w==='thousand'||w==='grand')&&any){ total+=cur*1000; cur=0; } else if(w==='and'&&any){} else flush(); }); flush();
+  let prevSmall=false; toks.forEach(w=>{ if(w in W&&prevSmall&&W[w]>=20&&W[w]%10===0&&cur<100&&total===0){ cur=cur*100+W[w]; prevSmall=false; } else if(w in W){ prevSmall=(cur===0&&W[w]>0&&W[w]<20); cur+=W[w]; any=true; } else if(w==='hundred'&&any){ cur*=100; } else if((w==='thousand'||w==='grand')&&any){ total+=cur*1000; cur=0; } else if(w==='and'&&any){} else flush(); }); flush();
   return out; };
-window.agbIsDollarField=function(id){ if(/^lineov_/.test(id)) return true; const el=document.getElementById(id); if(!el||el.tagName==='SELECT'||el.type==='checkbox') return false;
+window.agbIsDollarField=function(id){ if(/^lineov_/.test(id)) return true; if(/^xtra_/.test(id)) return false; const el=document.getElementById(id); if(!el||el.tagName==='SELECT'||el.type==='checkbox') return false;
   const L=(window.agbFieldLabel(el)+' '+id).toLowerCase(); return /(cost|price|fee|charge|amount|\$)/.test(L)&&!/(count|qty|quantity|sq ?ft|feet|ft\b|inch|depth|width|height|length)/.test(L); };
 window.agbFieldLabel=function(el){ let t=''; try{ if(el.labels&&el.labels[0]) t=el.labels[0].textContent; }catch(e){}
   if(!t){ let p=el.parentElement; for(let k=0;k<4&&p&&!t;k++,p=p.parentElement){ const l=p.querySelector('label'); if(l&&!l.contains(el)) t=l.textContent; else if(l&&l.contains(el)) t=l.textContent; } }
@@ -12874,6 +12874,7 @@ window.agbAutoFields=function(known){ const have=new Set(known.map(f=>f[0])); co
     out.push([id,lab]); have.add(id); });
   // every cost-sheet line (computed ones too): voice override = the same "edited" override as typing on the cost summary
   let box=document.getElementById('agbLineOvBox'); if(!box){ box=document.createElement('div'); box.id='agbLineOvBox'; box.hidden=true; document.body.appendChild(box); }
+  document.querySelectorAll('#agbLineOvBox input[id^=xtra_]').forEach(x=>out.push([x.id,'Voice custom extra "'+x.dataset.name+'" ('+(x.dataset.kind==='option'?'option, customer price':'extra, internal cost')+') — use the extras argument to change/remove']));
   const lines=((window._agbCostSheetData||{}).lines||[]).filter(L=>L.key);
   lines.forEach(L=>{ const id='lineov_'+L.key.replace(/[^A-Za-z0-9_]/g,'_'); let inp=document.getElementById(id);
     if(!inp){ inp=document.createElement('input'); inp.type='number'; inp.id=id; inp.dataset.key=L.key; inp.addEventListener('change',()=>window.agbSetLineOverride(inp.dataset.key,inp.value)); box.appendChild(inp); }
@@ -12925,6 +12926,31 @@ window.agbSearchInfo=function(query){ const q=String(query||'').toLowerCase(); c
   const sc=t=>{ const l=t.toLowerCase(); return terms.reduce((s,w)=>s+(l.includes(w)?1:0),0); };
   const hits=[...new Set(docs)].map(t=>[sc(t),t]).filter(x=>x[0]>0).sort((a,b)=>b[0]-a[0]).slice(0,5).map(x=>x[1].slice(0,600));
   return hits.length?{source:'company estimator',results:hits}:{error:'Nothing in the estimator about that.'}; };
+/* ===== Voice: custom extras rows (anything he names as an option / extra) ===== */
+window.agbExtraParse0=function(t){ return window.agbContactFromSpeech(t).concat(window.agbPriceFromSpeech(t)); };
+window.agbXtraSlug=n=>'xtra_'+String(n||'').toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'').slice(0,40);
+window.agbXtraInput=function(name,kind){ let box=document.getElementById('agbLineOvBox'); if(!box){ box=document.createElement('div'); box.id='agbLineOvBox'; box.hidden=true; document.body.appendChild(box); }
+  const id=window.agbXtraSlug(name); let inp=document.getElementById(id);
+  if(!inp){ inp=document.createElement('input'); inp.type='text'; inp.id=id; inp.value=''; inp.addEventListener('change',()=>window.agbXtraSync(inp)); box.appendChild(inp); }
+  inp.dataset.name=String(name).trim().replace(/^./,c=>c.toUpperCase()); if(kind) inp.dataset.kind=kind; return inp; };
+window.agbXtraSync=function(inp){ const c=document.getElementById('extrasContainer'); if(!c) return; let row=[...c.querySelectorAll('.custom-extra-row')].find(r=>r.dataset.agbx===inp.id);
+  const v=parseFloat(String(inp.value).replace(/[$,\s]/g,''));
+  if(!isFinite(v)){ if(row) row.remove(); try{ calculateEstimate(); }catch(e){} return; }
+  if(!row){ addExtraRow(); const rows=c.querySelectorAll('.custom-extra-row'); row=rows[rows.length-1]; row.dataset.agbx=inp.id; }
+  row.querySelector('.extra-desc').value=inp.dataset.name; row.querySelector('.extra-cost').value=String(v); row.querySelector('.extra-display').value=inp.dataset.kind==='option'?'option':'included';
+  try{ calculateEstimate(); }catch(e){} };
+/* AI "extras" argument -> virtual fields; missing / unstated price -> ask first, never invent */
+window.agbPreApply=function(a){ const qs=[]; const said=window.agbNumbersSaid(window._agbLastUtter||'');
+  (a.extras||[]).forEach(x=>{ if(!x||!x.name) return; const kind=/option/i.test(x.kind||'')?'option':'extra'; const inp=window.agbXtraInput(x.name,kind);
+    const nm=inp.dataset.name.toLowerCase(); a.fields=(a.fields||[]).filter(f=>!(f&&f.heard&&String(f.heard).toLowerCase().includes(nm))&&!(f&&f.id==='additionalEstimateNotes'&&String(f.value).toLowerCase().includes(nm)));
+    if(a.notes&&String(a.notes).toLowerCase().includes(nm)) a.notes='';
+    if(window._agbLastNote&&window._agbLastNote.toLowerCase().includes(nm)) window._agbLastNote='';
+    if(x.remove){ a.fields.push({id:inp.id,value:'remove',heard:x.heard||('remove '+nm)}); return; }
+    const n=Number(String(x.price==null?'':x.price).replace(/[^0-9.]/g,''));
+    if(x.price!=null&&String(x.price).trim()!==''&&n>=0&&said.some(s=>Math.abs(s-n)<0.5)) a.fields.push({id:inp.id,value:String(n),heard:x.heard||nm});
+    else { window._agbXtraPending=inp.id; qs.push({fieldId:inp.id,question:'How much for the '+nm+'?',options:[]}); } });
+  if(a.questions) a.questions=a.questions.filter(q=>!qs.some(x=>x.fieldId===q.fieldId)&&!(q&&/how much/i.test(q.question||'')&&qs.length));
+  return qs; };
 window.agbVoice=AGBVoiceCore.create({
   page:'estimator',
   fields:[
@@ -13000,9 +13026,11 @@ window.agbVoice=AGBVoiceCore.create({
   /* Spoken total price ("I want the price to be 29,000") reuses Profit Control "Total Project Price" mode: the total stays pinned
      while other items change; unchecking the card item restores the previous profit mode/value. */
   autoFields:function(known){ return window.agbAutoFields(known); }, splitNote:function(t){ return window.agbSplitNote(t); },
+  preApply:function(a){ return window.agbPreApply(a); },
   knowledgePack:function(){ return window.agbKnowledgePack(); }, breakdown:function(){ return window.agbBreakdown(); }, searchInfo:function(q){ return window.agbSearchInfo(q); },
   hideOnCard:['profitMode'], linked:{profitValue:['profitMode']},
-  extraParse:function(t){ const contact=window.agbContactFromSpeech(t); return contact.concat(window.agbPriceFromSpeech(t)); },
+  extraParse:function(t){ const pend=window._agbXtraPending; if(pend&&document.getElementById(pend)){ const n=window.agbNumbersSaid(t).filter(x=>x>0); const nm=((document.getElementById(pend)||{}).dataset||{}).name||''; const OK=new Set(('it its it\'s is make about around for the a dollars dollar bucks and um uh okay ok so hundred thousand grand k say lets let\'s one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen twenty thirty forty fifty sixty seventy eighty ninety '+nm.toLowerCase()).split(/\s+/)); const rest=String(t).toLowerCase().replace(/[$,.!?]/g,' ').split(/\s+/).filter(w=>w&&!/^\d+(\.\d+)?k?$/.test(w)&&!OK.has(w));
+      if(n.length===1&&rest.length===0){ window._agbXtraPending=null; return [{id:pend,value:String(n[0]),heard:t}].concat(window.agbExtraParse0(t)); } } return window.agbExtraParse0(t); },
   afterCommit:function(props){ let re=false; Object.keys(props).forEach(id=>{ if(!/^lineov_/.test(id)||!props[id].on) return; const el=document.getElementById(id); const k=el&&el.dataset.key; const o=window._summaryLineOverrides||{}; if(k&&Number(o[k])!==Number(props[id].v)){ o[k]=Number(props[id].v); window._summaryLineOverrides=o; re=true; } }); if(re){ try{ saveSummaryOverrides(); calculateEstimate(); }catch(e){} }
     const card=document.getElementById('agbvCard'); let w=document.getElementById('agbvTotalWarn');
     const p=props.profitValue, on=p&&p.on&&(props.profitMode||{}).v==='total';
@@ -13016,6 +13044,7 @@ window.agbVoice=AGBVoiceCore.create({
     },
   itemLabel:function(id,p,prev){ if(id==='profitValue') return 'Total set to $'+Number(p.v).toLocaleString()+' (uncheck for calculated price)';
     const money=x=>'$'+Math.round(Number(x)||0).toLocaleString();
+    if(/^xtra_/.test(id)){ const el=document.getElementById(id); const nm=el?el.dataset.name:id; if(p.v==='remove') return 'Remove extra: '+nm; return (el&&el.dataset.kind==='option')?nm+' — option '+money(p.v)+' (customer price, not in total)':nm+' — extra '+money(p.v)+' (internal cost, in the price)'; }
     if(/^lineov_/.test(id)){ const el=document.getElementById(id); return (el?el.dataset.label:id)+' '+money(p.v)+' (was '+money(el?el.dataset.base:0)+')'; }
     if(window.agbIsDollarField(id)){ const el=document.getElementById(id); return window.agbFieldLabel(el).replace(/\s*\(.*$/,'')+' '+money(p.v)+(prev!==undefined&&prev!==''?' (was '+money(prev)+')':''); }
     if(id==='additionalEstimateNotes') return 'Estimate sheet note: '+String(p.v).split('\n').pop();

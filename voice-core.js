@@ -1,7 +1,7 @@
 /* voice-core.js — shared live-voice helper (SAMPLE). Used by estimator.html; repair.html can reuse with its own field list.
    AGBVoiceCore.create({page, fields:[[id,label]...], extraCatalog:[...], fillDoors(list), afterFill(), fnName}) -> controller.
    Expects the page to have the #agbVoice panel markup, garageSb, GARAGE_SB_URL, GARAGE_SB_KEY. */
-(function(){var st=document.createElement('style');st.textContent=".agbv{margin:0 0 16px;background:#0b1220;border:1px solid #1e3a5f;border-radius:16px;padding:12px;color:#e4e4e7;max-width:100%;box-sizing:border-box}\n.agbv *{box-sizing:border-box}\n.agbv-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}\n.agbv-mic{min-height:48px;padding:0 18px;border-radius:999px;background:#2563eb;color:#fff;font-weight:800;font-size:16px;border:0}\n.agbv-mic.live{background:#dc2626;animation:agbvp 1.4s infinite}\n@keyframes agbvp{50%{box-shadow:0 0 0 8px rgba(220,38,38,.25)}}\n.agbv-timer{font-size:13px;color:#fca5a5;font-variant-numeric:tabular-nums}\n.agbv-status{font-size:12px;color:#a1a1aa;margin:8px 0 6px;line-height:1.4}\n.agbv-type{display:flex;gap:6px}\n.agbv-type input{flex:1;min-width:0;min-height:44px;background:#18181b;border:1px solid #3f3f46;border-radius:12px;color:#fff;padding:0 10px;font-size:16px}\n.agbv-btn{min-height:44px;padding:0 14px;border-radius:12px;background:#27272a;border:1px solid #52525b;color:#f4f4f5;font-size:14px}\n.agbv-log{margin-top:8px;font-size:12px;max-height:120px;overflow:auto;background:#09090b;border-radius:10px;padding:6px 8px;line-height:1.45}\n.agbv-log .u{color:#93c5fd}.agbv-log .a{color:#86efac}\n.agbv-card{margin-top:10px;background:#111827;border:1px solid #334155;border-radius:14px;padding:10px}\n.agbv-h{font-weight:800;font-size:14px;margin-bottom:6px}.agbv-sub{font-weight:400;color:#a1a1aa;font-size:12px}\n.agbv-item{display:grid;grid-template-columns:28px minmax(0,1fr) minmax(0,1.2fr);gap:6px;align-items:center;padding:5px 0;border-top:1px solid #1f2937;font-size:13px}\n.agbv-item input[type=checkbox]{width:22px;height:22px}\n.agbv-item select,.agbv-item input[type=text]{width:100%;min-height:38px;background:#18181b;border:1px solid #3f3f46;border-radius:10px;color:#fff;font-size:14px;padding:0 6px}\n.agbv-q{margin-top:8px;padding:8px;background:#422006;border:1px solid #a16207;border-radius:12px;font-size:13px}\n.agbv-q .opts{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}\n.agbv-q button{min-height:40px;padding:0 12px;border-radius:999px;background:#fbbf24;color:#000;font-weight:700;border:0;font-size:14px}\n.agbv-heard{font-size:12px;color:#93c5fd;background:#0b1220;border-radius:8px;padding:5px 8px;margin-bottom:6px;line-height:1.35;overflow-wrap:anywhere}\n.agbv-unk{margin-top:6px;font-size:12px;color:#fca5a5}\n.agbv-actions{display:flex;gap:8px;margin-top:10px}\n.agbv-fill{flex:1;min-height:48px;border-radius:12px;background:#16a34a;color:#fff;font-weight:800;font-size:16px;border:0}\n";document.head.appendChild(st);})();
+(function(){var st=document.createElement('style');st.textContent=".agbv{margin:0 0 16px;background:#0b1220;border:1px solid #1e3a5f;border-radius:16px;padding:12px;color:#e4e4e7;max-width:100%;box-sizing:border-box}\n.agbv *{box-sizing:border-box}\n.agbv-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}\n.agbv-mic{min-height:48px;padding:0 18px;border-radius:999px;background:#2563eb;color:#fff;font-weight:800;font-size:16px;border:0}\n.agbv-mic.live{background:#dc2626;animation:agbvp 1.4s infinite}\n@keyframes agbvp{50%{box-shadow:0 0 0 8px rgba(220,38,38,.25)}}\n.agbv-timer{font-size:11px;color:#71717a;font-variant-numeric:tabular-nums}\n.agbv-status{font-size:12px;color:#a1a1aa;margin:8px 0 6px;line-height:1.4}\n.agbv-type{display:flex;gap:6px}\n.agbv-type input{flex:1;min-width:0;min-height:44px;background:#18181b;border:1px solid #3f3f46;border-radius:12px;color:#fff;padding:0 10px;font-size:16px}\n.agbv-btn{min-height:44px;padding:0 14px;border-radius:12px;background:#27272a;border:1px solid #52525b;color:#f4f4f5;font-size:14px}\n.agbv-log{margin-top:8px;font-size:12px;max-height:120px;overflow:auto;background:#09090b;border-radius:10px;padding:6px 8px;line-height:1.45}\n.agbv-log .u{color:#93c5fd}.agbv-log .a{color:#86efac}\n.agbv-card{margin-top:10px;background:#111827;border:1px solid #334155;border-radius:14px;padding:10px}\n.agbv-h{font-weight:800;font-size:14px;margin-bottom:6px}.agbv-sub{font-weight:400;color:#a1a1aa;font-size:12px}\n.agbv-item{display:grid;grid-template-columns:28px minmax(0,1fr) minmax(0,1.2fr);gap:6px;align-items:center;padding:5px 0;border-top:1px solid #1f2937;font-size:13px}\n.agbv-item input[type=checkbox]{width:22px;height:22px}\n.agbv-item select,.agbv-item input[type=text]{width:100%;min-height:38px;background:#18181b;border:1px solid #3f3f46;border-radius:10px;color:#fff;font-size:14px;padding:0 6px}\n.agbv-q{margin-top:8px;padding:8px;background:#422006;border:1px solid #a16207;border-radius:12px;font-size:13px}\n.agbv-q .opts{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}\n.agbv-q button{min-height:40px;padding:0 12px;border-radius:999px;background:#fbbf24;color:#000;font-weight:700;border:0;font-size:14px}\n.agbv-heard{font-size:12px;color:#93c5fd;background:#0b1220;border-radius:8px;padding:5px 8px;margin-bottom:6px;line-height:1.35;overflow-wrap:anywhere}\n.agbv-say{display:flex;gap:8px;align-items:flex-start;font-size:14px;line-height:1.4;color:#e4e4e7;background:#052e16;border:1px solid #166534;border-radius:12px;padding:8px 10px;margin:6px 0}\n.agbv-eq{display:inline-flex;gap:2px;align-items:flex-end;height:16px;margin-top:2px;flex:none}.agbv-eq i{width:3px;height:4px;background:#86efac;border-radius:2px}\n.agbv-say.talking .agbv-eq i{animation:agbveq .7s infinite ease-in-out}.agbv-say.talking .agbv-eq i:nth-child(2){animation-delay:.15s}.agbv-say.talking .agbv-eq i:nth-child(3){animation-delay:.3s}\n@keyframes agbveq{50%{height:16px}}\n.agbv-warn{display:block;width:100%;margin:4px 0;min-height:40px;border-radius:10px;background:#7f1d1d;color:#fff;border:0;font-size:13px;padding:6px 10px;text-align:left}\n.agbv-unk{margin-top:6px;font-size:12px;color:#fca5a5}\n.agbv-actions{display:flex;gap:8px;margin-top:10px}\n.agbv-fill{flex:1;min-height:48px;border-radius:12px;background:#16a34a;color:#fff;font-weight:800;font-size:16px;border:0}\n";document.head.appendChild(st);})();
 
 /* SAMPLE voice-estimate (branch voice-estimate-sample). Talks to OpenAI Realtime via an ephemeral key minted by the
    Supabase function estimate-voice-session. Proposals go to the summary card; "Fill estimate" sets the real controls
@@ -9,12 +9,12 @@
 window.AGBVoiceCore={create:function(cfg){
   const $=id=>document.getElementById(id);
   const FN=cfg.fnName||'estimate-voice-session';
-  const MAX_TOTAL=300, MAX_IDLE=180; // seconds
+  const MAX_TOTAL=900, MAX_IDLE=120, STILL_THERE=80; // seconds: quiet safety caps (15 min total, 2 min silence)
   // id, plain label. Order = fill order (city first so city rules apply, parents before children).
   const FIELDS=cfg.fields;
   const LABEL=Object.fromEntries(FIELDS);
   let props={}, doors=null, questions=[], unknown=[];
-  let heardSpeech=false; let pc=null, dc=null, mic=null, audio=null, t0=0, lastAct=0, tick=null, usage={sessions:0,in_audio:0,in_text:0,in_cached:0,out_audio:0,out_text:0};
+  let heardSpeech=false, sayBuf='', sayNew=true; let pc=null, dc=null, mic=null, audio=null, t0=0, lastAct=0, tick=null, usage={sessions:0,in_audio:0,in_text:0,in_cached:0,out_audio:0,out_text:0};
 
   function optsOf(el){ return Array.from(el.options||[]).filter(o=>!o.disabled).map(o=>[o.value,o.textContent.trim()]); }
   function kindOf(el){ if(!el) return null; if(el.tagName==='SELECT') return 'select'; if(el.type==='checkbox') return 'bool'; if(el.type==='number'||el.type==='range') return 'number'; return 'text'; }
@@ -109,6 +109,27 @@ window.AGBVoiceCore={create:function(cfg){
     const q=questions[0]; if(!q) return false; let v=pending[q.fieldId]; if(v==null&&props[q.fieldId]) v=props[q.fieldId].v;
     if(v==null){ const o=(q.options||[]).find(x=>!/^(no|yes)$/i.test(x)&&norm(q.fieldId,x)!==null); if(o) v=norm(q.fieldId,o); }
     if(v==null) return false; props[q.fieldId]=Object.assign(props[q.fieldId]||{orig:v},{v,on:true,heard:t}); delete pending[q.fieldId]; questions.shift(); return true; }
+  /* iPhone Safari: unlock playback inside the tap, keep the element in the DOM, ask for play-and-record routing (speaker). */
+  const SILENT='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YQAAAAA=';
+  let actx=null, aiTalking=false, playChk=null, stillAsked=false, userAct=0;
+  function unlockAudio(){
+    try{ if(navigator.audioSession) navigator.audioSession.type='play-and-record'; }catch(e){}
+    if(!audio){ audio=document.createElement('audio'); audio.id='agbvAudio'; audio.style.cssText='position:absolute;width:1px;height:1px;opacity:0;pointer-events:none'; document.body.appendChild(audio); }
+    audio.autoplay=true; audio.muted=false; audio.volume=1; audio.setAttribute('playsinline',''); audio.setAttribute('webkit-playsinline','');
+    try{ audio.srcObject=null; audio.src=SILENT; audio.play().catch(()=>{}); }catch(e){}
+    try{ const AC=window.AudioContext||window.webkitAudioContext; if(AC){ actx=actx||new AC(); actx.resume&&actx.resume(); const b=actx.createBuffer(1,1,22050), src=actx.createBufferSource(); src.buffer=b; src.connect(actx.destination); src.start(0); } }catch(e){}
+  }
+  function playRemote(stream){ try{ audio.removeAttribute('src'); }catch(e){} audio.srcObject=stream; audio.muted=false; const p=audio.play(); if(p&&p.catch) p.catch(()=>soundWarn()); }
+  function soundWarn(){ let w=$('agbvSoundWarn'); if(!w){ w=document.createElement('button'); w.type='button'; w.id='agbvSoundWarn'; w.className='agbv-warn';
+      w.onclick=()=>{ unlockAudio(); if(pc){ const r=pc.getReceivers().find(x=>x.track&&x.track.kind==='audio'); if(r) playRemote(new MediaStream([r.track])); } w.hidden=true; };
+      $('agbvSay').after(w); }
+    w.textContent="Can't play sound — check volume / Silent switch, then tap here. (You can still read what the helper says above.)"; w.hidden=false; }
+  function sayLine(txt,final){ const el=$('agbvSay'); el.hidden=false; $('agbvSayTxt').textContent=txt; }
+  function setTalking(on){ aiTalking=on; const el=$('agbvSay'); if(el) el.classList.toggle('talking',on);
+    if(live()) status(on?'AI speaking… (you can interrupt)':'Listening… talk any time.');
+    if(on){ clearTimeout(playChk); const t0a=audio?audio.currentTime:0; playChk=setTimeout(()=>{ if(aiTalking&&audio&&(audio.paused||audio.currentTime<=t0a)) soundWarn(); else { const w=$('agbvSoundWarn'); if(w) w.hidden=true; } window.agbVoiceAudio={paused:audio.paused,currentTime:audio.currentTime,start:t0a}; },1500); } }
+  function ensureSayUI(){ if($('agbvSay')) return; const d=document.createElement('div'); d.id='agbvSay'; d.className='agbv-say'; d.hidden=true;
+    d.innerHTML='<span class="agbv-eq"><i></i><i></i><i></i></span><span><b>AI:</b> <span id="agbvSayTxt"></span></span>'; $('agbvStatus').after(d); }
   function live(){ return !!(dc&&dc.readyState==='open'); }
   function send(o){ if(live()) dc.send(JSON.stringify(o)); }
   function say(text){ send({type:'conversation.item.create',item:{type:'message',role:'user',content:[{type:'input_text',text}]}}); send({type:'response.create'}); lastAct=Date.now(); }
@@ -116,40 +137,45 @@ window.AGBVoiceCore={create:function(cfg){
   async function start(){
     if(!navigator.mediaDevices||!window.RTCPeerConnection){ status('Live voice is not supported in this browser — type the job below.'); return; }
     $('agbvMic').disabled=true; status('Starting… allow the microphone.');
-    if(!audio){ audio=document.createElement('audio'); audio.style.display='none'; document.body.appendChild(audio); } audio.autoplay=true; audio.setAttribute('playsinline',''); try{ audio.play().catch(()=>{}); }catch(e){} // unlock on this tap (iPhone)
+    unlockAudio(); // must run inside the Talk tap (iPhone)
     try{
       mic=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}});
       const tok=await callFn({mode:'realtime',page:cfg.page||'',catalog:catalog(),current:current(),learned:learnedText()});
       pc=new RTCPeerConnection();
-      pc.ontrack=e=>{ audio.srcObject=e.streams[0]; audio.play().catch(()=>{}); };
+      pc.ontrack=e=>{ playRemote(e.streams[0]||new MediaStream([e.track])); };
       pc.addTrack(mic.getTracks()[0],mic);
       dc=pc.createDataChannel('oai-events'); dc.onmessage=e=>{ try{ onEvent(JSON.parse(e.data)); }catch(x){} };
-      dc.onopen=()=>{ status('Listening — talk normally. Say "done" or tap Fill estimate when finished.'); heardSpeech=false; if(Object.keys(props).length) say('Already proposed: '+JSON.stringify(Object.fromEntries(Object.entries(props).map(([k,p])=>[k,p.v])))+'. If width/depth are not set, ask for the size out loud; otherwise wait for the salesman.'); else say('(Session started.) In one short sentence greet the salesman and ask out loud for the garage size, width by depth, plus roof style and city.');
+      dc.onopen=()=>{ ensureSayUI(); status('Connected — the helper will greet you. Talk any time.'); heardSpeech=false; stillAsked=false; userAct=Date.now(); if(Object.keys(props).length) say('Already proposed: '+JSON.stringify(Object.fromEntries(Object.entries(props).map(([k,p])=>[k,p.v])))+'. If width/depth are not set, ask for the size out loud; otherwise wait for the salesman.'); else say('(Session started.) Greet the salesman in a few words and ask out loud for the garage size, width by depth.');
         setTimeout(()=>{ if(live()&&!heardSpeech) status('I am not hearing your voice. Check the mic permission (aA → Website Settings → Microphone), turn off Silent mode, then tap Stop and the mic again — or type below.'); },15000); };
       pc.onconnectionstatechange=()=>{ if(['failed','closed','disconnected'].includes(pc&&pc.connectionState)) stop('Voice ended.'); };
       const offer=await pc.createOffer(); await pc.setLocalDescription(offer);
       const r=await fetch('https://api.openai.com/v1/realtime/calls',{method:'POST',body:offer.sdp,headers:{Authorization:'Bearer '+tok.value,'Content-Type':'application/sdp'}});
       if(!r.ok) throw new Error('Voice connect failed ('+r.status+')');
       await pc.setRemoteDescription({type:'answer',sdp:await r.text()});
-      usage.sessions++; t0=lastAct=Date.now(); $('agbvMic').classList.add('live'); $('agbvMicTxt').textContent='Stop'; $('agbvTimer').hidden=false;
+      usage.sessions++; t0=lastAct=Date.now(); $('agbvMic').classList.add('live'); $('agbvMicTxt').textContent='End conversation'; $('agbvTimer').hidden=false; userAct=Date.now();
       tick=setInterval(timer,1000); timer();
     }catch(e){ stop(); status('Voice did not start ('+(e.message||e)+'). Type the job below instead.'); }
     finally{ $('agbvMic').disabled=false; }
   }
-  function timer(){ const s=Math.floor((Date.now()-t0)/1000), idle=(Date.now()-lastAct)/1000, left=MAX_TOTAL-s;
-    $('agbvTimer').textContent=Math.floor(left/60)+':'+String(Math.max(0,left%60)).padStart(2,'0')+' left';
-    if(left<=0) stop('Voice auto-ended (5 min limit). Tap the mic to continue.'); else if(idle>MAX_IDLE) stop('Voice auto-ended (3 min quiet). Tap the mic to continue.'); }
+  function timer(){ const s=Math.floor((Date.now()-t0)/1000), idle=aiTalking?0:(Date.now()-userAct)/1000;
+    $('agbvTimer').textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
+    if(s>=MAX_TOTAL) stop('Voice ended (15 min safety limit). Tap Talk to keep going — the list is kept.');
+    else if(idle>MAX_IDLE) stop('Voice ended after 2 minutes of silence. Tap Talk to keep going — the list is kept.');
+    else if(idle>STILL_THERE&&!stillAsked){ stillAsked=true; status('Still there?'); say('(The salesman has been quiet for a while. Ask "Still there?" in two words.)'); } }
   function stop(msg){ clearInterval(tick); tick=null; window.agbVoiceDebug={heardSpeech,heard:heardTxt,at:new Date().toISOString()};
     try{ dc&&dc.close(); }catch(e){} try{ pc&&pc.close(); }catch(e){} try{ mic&&mic.getTracks().forEach(t=>t.stop()); }catch(e){}
-    dc=pc=mic=null; $('agbvMic').classList.remove('live'); $('agbvMicTxt').textContent='Talk to fill estimate'; $('agbvTimer').hidden=true;
+    dc=pc=mic=null; aiTalking=false; clearTimeout(playChk); const sy=$('agbvSay'); if(sy) sy.classList.remove('talking'); $('agbvMic').classList.remove('live'); $('agbvMicTxt').textContent='Talk with the helper'; $('agbvTimer').hidden=true;
     if(msg) status(msg); }
   function onEvent(ev){
     const t=ev.type;
-    if(t==='input_audio_buffer.speech_started'){ lastAct=Date.now(); heardSpeech=true; status('Hearing you…'); }
+    if(t==='input_audio_buffer.speech_started'){ lastAct=userAct=Date.now(); stillAsked=false; heardSpeech=true; if(aiTalking) setTalking(false); status('Hearing you…'); }
+    else if(t==='output_audio_buffer.started'||t==='response.output_audio.delta'&&!aiTalking) setTalking(true);
+    else if(t==='output_audio_buffer.stopped'||t==='output_audio_buffer.cleared') setTalking(false);
+    else if(t==='response.output_audio_transcript.delta'&&ev.delta){ if(!sayBuf||sayNew){ sayBuf=''; sayNew=false; } sayBuf+=ev.delta; sayLine(sayBuf); }
     else if(t==='input_audio_buffer.speech_stopped') status('Got it — thinking…');
     else if(t==='conversation.item.input_audio_transcription.completed'&&ev.transcript) { log('u',ev.transcript); lastAct=Date.now(); heardSpeech=true; heard(ev.transcript); voicedYes(ev.transcript); dimsFromSpeech(ev.transcript); render(); }
     else if(t==='conversation.item.input_audio_transcription.failed') status('Could not make out that last part — say it again.');
-    else if(t==='response.output_audio_transcript.done'&&ev.transcript) log('a',ev.transcript);
+    else if(t==='response.output_audio_transcript.done'&&ev.transcript){ log('a',ev.transcript); sayLine(ev.transcript,true); sayNew=true; }
     else if(t==='response.function_call_arguments.done'){
       let a={}; try{ a=JSON.parse(ev.arguments||'{}'); }catch(e){}
       if(ev.name==='get_job_status'){ status('Looking up job…'); jobStatus(a.query).catch(e=>({error:String(e.message||e)})).then(r=>{ send({type:'conversation.item.create',item:{type:'function_call_output',call_id:ev.call_id,output:JSON.stringify(r).slice(0,4000)}}); send({type:'response.create'}); status('Listening…'); }); return; }

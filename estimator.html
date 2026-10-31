@@ -795,10 +795,10 @@ body.bg-zinc-950{
 <!-- SAMPLE voice-estimate: live voice helper (fills the normal controls; manual estimator unchanged) -->
 <div id="agbVoice" class="agbv">
   <div class="agbv-top">
-    <button type="button" id="agbvMic" class="agbv-mic" onclick="agbVoice.toggle()"><i class="fa-solid fa-microphone"></i> <span id="agbvMicTxt">Talk to fill estimate</span></button>
+    <button type="button" id="agbvMic" class="agbv-mic" onclick="agbVoice.toggle()"><i class="fa-solid fa-microphone"></i> <span id="agbvMicTxt">Talk with the helper</span></button>
     <span id="agbvTimer" class="agbv-timer" hidden></span>
   </div>
-  <div id="agbvStatus" class="agbv-status">Tap and say the job, e.g. "20 by 20 hip, Chicago, gutters, aluminum soffit fascia, demo of the old one". Or type it:</div>
+  <div id="agbvStatus" class="agbv-status">Tap Talk and have a conversation — the helper greets you, asks for the size, roof and city, then walks through the options one at a time. Or type the job:</div>
   <div class="agbv-type">
     <input id="agbvText" type="text" placeholder="Type the job instead…" onkeydown="if(event.key==='Enter'){event.preventDefault();agbVoice.sendText();}">
     <button type="button" class="agbv-btn" onclick="agbVoice.sendText()">Go</button>
@@ -12823,7 +12823,7 @@ run();setInterval(run,1500);document.addEventListener('change',run);})();
   }, false);
 })();
 </script>
-<script src="voice-core.js?v=20261031b"></script>
+<script src="voice-core.js?v=20261031c"></script>
 <script>
 /* SAMPLE voice-estimate: estimator field schema for the shared voice-core.js */
 window.agbVoice=AGBVoiceCore.create({

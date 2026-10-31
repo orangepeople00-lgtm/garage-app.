@@ -792,6 +792,30 @@ body.bg-zinc-950{
         </div>
 
         <div class="agb-main px-8 pb-8">
+<!-- Voice estimate: live voice helper (fills the normal controls; manual estimator unchanged) -->
+<div id="agbVoice" class="agbv">
+  <div class="agbv-top">
+    <button type="button" id="agbvMic" class="agbv-mic" onclick="agbVoice.toggle()"><i class="fa-solid fa-microphone"></i> <span id="agbvMicTxt">Talk with the helper</span></button>
+    <span id="agbvTimer" class="agbv-timer" hidden></span>
+  </div>
+  <div id="agbvStatus" class="agbv-status">Tap Talk and just describe the job — everything you say goes on the estimate right away (anything not mentioned stays standard). The helper only asks when something is unclear. Or type it:</div>
+  <div class="agbv-type">
+    <input id="agbvText" type="text" placeholder="Type the job instead…" onkeydown="if(event.key==='Enter'){event.preventDefault();agbVoice.sendText();}">
+    <button type="button" class="agbv-btn" onclick="agbVoice.sendText()">Go</button>
+  </div>
+  <div id="agbvLog" class="agbv-log" hidden></div>
+  <div id="agbvCard" class="agbv-card" hidden>
+    <div class="agbv-h">What I set <span class="agbv-sub">(already on the estimate — tap to fix or uncheck to undo)</span></div>
+    <div id="agbvItems"></div>
+    <div id="agbvQs"></div>
+    <div id="agbvUnknown" class="agbv-unk" hidden></div>
+    <div class="agbv-actions">
+      <button type="button" id="agbvFill" class="agbv-btn" onclick="agbVoice.fill()">Done</button>
+      <button type="button" class="agbv-btn" onclick="agbVoice.clear()">Undo all</button>
+    </div>
+  </div>
+</div>
+
             <div class="mb-5 grid grid-cols-1 lg:grid-cols-3 gap-3">
 <div class="lg:col-span-2 rounded-2xl border border-zinc-700 bg-zinc-900 p-3"><label class="text-[10px] font-bold tracking-wider text-zinc-400 block mb-1">SEARCH ESTIMATOR</label><div class="flex gap-2"><input id="estimatorSearch" type="search" placeholder="Search retaining wall, EV, apron, window, demolition..." oninput="searchEstimatorOptions()" onkeydown="if(event.key==='Enter'){event.preventDefault();jumpToEstimatorSearchResult();}" class="calc-input flex-1 bg-zinc-950 border border-zinc-700 rounded-xl px-3 py-2 text-sm"><button type="button" onclick="jumpToEstimatorSearchResult()" class="px-3 py-2 rounded-xl bg-blue-700 text-xs font-bold">GO</button></div><div id="estimatorSearchStatus" class="text-[10px] text-zinc-500 mt-1">Type a feature name and press Go.</div></div>
 <!-- Estimate Health Check removed -->
@@ -1850,6 +1874,7 @@ body.bg-zinc-950{
                                         <select id="sidingType" onchange="calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2 text-sm">
                                             <option value="vinyl">Vinyl (included - $0)</option>
                                             <option value="hardie">Hardieboard / Cement Board (upgrade)</option>
+                                            <option value="lp">LP Smart Side (upgrade - same price as cement board)</option>
                                         </select>
                                     </div>
                                     <div>
@@ -3471,7 +3496,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             let hardieSidingCost = 0;
             let sidingAreaNet = 0;
             let hardieSheets = 0;
-            if (sidingType === 'hardie') {
+            if (sidingType === 'hardie' || sidingType === 'lp') { /* LP Smart Side priced exactly like cement board */
                 const perimeter = 2 * (width + depth);
                 const wallArea = perimeter * wallHeight;
                 const doorArea = (Number(document.getElementById('overheadDoorWidth')?.value)||16) * overheadDoorHeight; // main overhead opening
@@ -3484,7 +3509,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             // Update Hardie calc UI
             const hardieBox = document.getElementById('hardieCalcBox');
             if (hardieBox) {
-                if (sidingType === 'hardie') {
+                if (sidingType === 'hardie' || sidingType === 'lp') { /* LP Smart Side priced exactly like cement board */
                     hardieBox.classList.remove('hidden');
                     const sidingAreaEl = document.getElementById('sidingAreaDisplay');
                     const doorEl = document.getElementById('doorOpeningDisplay');
@@ -4582,7 +4607,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                 lines.push({ label: `Aluminum soffit + fascia (${data.soffitFt.toFixed(1)} lf × $10.75)`, amount: data.soffitCost, section: 'structural' });
             }
             if (data.hardieSidingCost > 0) {
-                lines.push({ label: `Hardieboard / Cement Board siding upgrade (${data.hardieSheets} sheets)`, amount: data.hardieSidingCost, section: 'structural' });
+                lines.push({ label: `${data.sidingType==='lp'?'LP Smart Side':'Hardieboard / Cement Board'} siding upgrade (${data.hardieSheets} sheets)`, amount: data.hardieSidingCost, section: 'structural' });
             }
             
             // ADD-ONS
@@ -6405,8 +6430,8 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             const target={
                 roof:val('roofType')==='gable'?'gable':'hip',
                 gableOrientation:val('eaveDir')==='sides'?'reverse':'standard',
-                siding:val('sidingType')==='hardie'?'hardie':'vinyl',
-                color:normalizePhotoColor(selectedText(val('sidingType')==='hardie'?'hardieColor':'vinylColor')),
+                siding:['hardie','lp'].includes(val('sidingType'))?'hardie':'vinyl',
+                color:normalizePhotoColor(selectedText(['hardie','lp'].includes(val('sidingType'))?'hardieColor':'vinylColor')),
                 doorStyle,
                 doorWindows:styleVal==='windows',
                 serviceLoc:['left','back'].includes(serviceLoc)?'hidden':serviceLoc,
@@ -6526,8 +6551,8 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             const wallHeight = Number(val('wallHeight') || 8);
             const roofType = val('roofType') === 'gable' ? 'gable roof' : 'hip roof';
             const pitch = val('pitch') || '4/12';
-            const sidingType = val('sidingType') === 'hardie' ? 'fiber cement HardieBoard horizontal lap siding, definitely not vinyl siding' : 'premium horizontal vinyl siding';
-            const sidingColor = txt(val('sidingType') === 'hardie' ? 'hardieColor' : 'vinylColor') || 'White';
+            const sidingType = val('sidingType') === 'hardie' ? 'fiber cement HardieBoard horizontal lap siding, definitely not vinyl siding' : val('sidingType') === 'lp' ? 'LP SmartSide engineered wood horizontal lap siding with subtle cedar grain, definitely not vinyl siding' : 'premium horizontal vinyl siding';
+            const sidingColor = txt(['hardie','lp'].includes(val('sidingType')) ? 'hardieColor' : 'vinylColor') || 'White';
             const doorW = Number(val('overheadDoorWidth') || 16);
             const doorH = Number(val('overheadDoorHeight') || 7);
             const doorStyle = txt('overheadDoorStyle') || 'Steel Raised Panel';
@@ -6604,7 +6629,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             const get=id=>{const e=document.getElementById(id); if(!e) return ''; return (e.options&&e.selectedIndex>=0)?e.options[e.selectedIndex].text:e.value;};
             const roof=get('roofType')||'hip';
             const sidingType=(document.getElementById('sidingType')?.value||'vinyl');
-            const colorId=sidingType==='hardie'?'hardieColor':'vinylColor';
+            const colorId=(sidingType==='hardie'||sidingType==='lp')?'hardieColor':'vinylColor';
             const colorTxt=get(colorId)||'White';
             const doorW=get('overheadDoorWidth')||'16';
             const doorH=get('overheadDoorHeight')||'7';
@@ -6613,7 +6638,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             const syncLine=[
                 'MATCH SHEET EXACTLY:',
                 roof+' roof',
-                colorTxt+' '+(sidingType==='hardie'?'Hardie fiber cement':'vinyl')+' siding all around',
+                colorTxt+' '+(sidingType==='hardie'?'Hardie fiber cement':sidingType==='lp'?'LP SmartSide engineered wood lap':'vinyl')+' siding all around',
                 "overhead door "+doorW+"' x "+doorH+"' "+doorStyle+" on the FRONT wall when front is visible",
                 'camera view: '+view
             ].join('; ');
@@ -6649,7 +6674,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             } else if(/\bhip\b/.test(q)) setVal('roofType','hip','roof: hip');
 
             // Siding type + color (handles "change siding", "siding to hardie", "make it white", etc.)
-            if(/hardie|cement\s*board|hardieboard/.test(q)) setVal('sidingType','hardie','HardieBoard siding');
+            if(/\blp\b|smart\s*side/.test(q)) setVal('sidingType','lp','LP Smart Side siding'); else if(/hardie|cement\s*board|hardieboard/.test(q)) setVal('sidingType','hardie','HardieBoard siding');
             else if(/\bvinyl\b/.test(q)) setVal('sidingType','vinyl','vinyl siding');
             else if(/\b(change|update|switch|set)\s+siding\b/.test(q) || /\bsiding\s+to\b/.test(q)){
                 // Vague "change siding" still forces a photo edit even if type not named
@@ -6661,7 +6686,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             if(color){
                 const label=color==='grey'||color==='light grey'?(color.includes('light')?'Light Gray':'Gray'):(color==='light gray'?'Light Gray':color.replace(/\b\w/g,ch=>ch.toUpperCase()));
                 const sc=document.getElementById('sidingColor');
-                const sid=(document.getElementById('sidingType')||{}).value==='hardie'?'hardieColor':'vinylColor';
+                const sid=['hardie','lp'].includes((document.getElementById('sidingType')||{}).value)?'hardieColor':'vinylColor';
                 let ok=false;
                 if(sc && typeof selectOptionByText==='function') ok=!!selectOptionByText('sidingColor', label);
                 if(!ok && typeof selectOptionByText==='function') ok=!!selectOptionByText(sid, label);
@@ -7350,7 +7375,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
         function buildEstimateTextForChatGPT(){
             const get=id=>{const e=document.getElementById(id); if(!e) return ''; return e.options&&e.selectedIndex>=0?e.options[e.selectedIndex].text:e.value;};
             const checked=id=>!!((document.getElementById(id)||{}).checked);
-            return `Absolute Garage Builders estimate currently selected:\nCustomer: ${get('customerName')}\nEmail: ${get('customerEmail')}\nPhone 1: ${get('customerPhone1')}\nPhone 2: ${get('customerPhone2')}\nAddress: ${get('customerAddress')}\nSalesman: ${get('salesman')}\nGarage: ${get('width')}' x ${get('depth')}', ${get('wallHeight')}' walls\nRoof: ${get('roofType')} ${get('pitch')}/12\nSiding: ${get('sidingType')} - ${get((get('sidingType')||'').toLowerCase().includes('hardie')?'hardieColor':'vinylColor')}\nOverhead door: ${get('overheadDoorWidth')}' x ${get('overheadDoorHeight')}' - ${get('overheadDoorStyle')}\nService door location: ${get('serviceDoorLocation')}\nGutters: ${checked('gutters')?'Yes':'No'}\nAluminum soffit/fascia: ${checked('aluminumSoffit')?'Yes':'No'}\nCustomer quote: ${(document.getElementById('customerQuote')||{}).textContent||''}\n\nPlease help me make changes to this estimate while preserving the standard ABG estimate-sheet wording and layout.`;
+            return `Absolute Garage Builders estimate currently selected:\nCustomer: ${get('customerName')}\nEmail: ${get('customerEmail')}\nPhone 1: ${get('customerPhone1')}\nPhone 2: ${get('customerPhone2')}\nAddress: ${get('customerAddress')}\nSalesman: ${get('salesman')}\nGarage: ${get('width')}' x ${get('depth')}', ${get('wallHeight')}' walls\nRoof: ${get('roofType')} ${get('pitch')}/12\nSiding: ${get('sidingType')} - ${get(/hardie|lp/.test((get('sidingType')||'').toLowerCase())?'hardieColor':'vinylColor')}\nOverhead door: ${get('overheadDoorWidth')}' x ${get('overheadDoorHeight')}' - ${get('overheadDoorStyle')}\nService door location: ${get('serviceDoorLocation')}\nGutters: ${checked('gutters')?'Yes':'No'}\nAluminum soffit/fascia: ${checked('aluminumSoffit')?'Yes':'No'}\nCustomer quote: ${(document.getElementById('customerQuote')||{}).textContent||''}\n\nPlease help me make changes to this estimate while preserving the standard ABG estimate-sheet wording and layout.`;
         }
 
         async function copyEstimateForChatGPT(){
@@ -7750,8 +7775,8 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
         function agbSpecLines(){
             const L=[];
             const sid=(document.getElementById('sidingType')||{}).value||'vinyl';
-            const col=agbSelText('sidingColor')||(sid==='hardie'?agbSelText('hardieColor'):agbSelText('vinylColor')); // same priority as buildGarageAIPromptInner
-            L.push('SIDING: '+(sid==='hardie'?'James Hardie fiber-cement lap':'vinyl lap')+' siding, color '+(col||'as selected')+', on every wall'+(((document.getElementById('roofType')||{}).value==='hip')?'':' incl. gable ends'));
+            const col=agbSelText('sidingColor')||((sid==='hardie'||sid==='lp')?agbSelText('hardieColor'):agbSelText('vinylColor')); // same priority as buildGarageAIPromptInner
+            L.push('SIDING: '+(sid==='hardie'?'James Hardie fiber-cement lap':sid==='lp'?'LP SmartSide engineered wood lap (cedar-grain texture, painted finish, not vinyl)':'vinyl lap')+' siding, color '+(col||'as selected')+', on every wall'+(((document.getElementById('roofType')||{}).value==='hip')?'':' incl. gable ends'));
             L.push('ROOF SHINGLES: '+(agbSelText('shingleColor')||'Black')+' architectural asphalt shingles');
             const q=Math.max(1,Math.round(Number((document.getElementById('ohDoorQty')||{}).value)||1));
             L.push('OVERHEAD DOOR'+(q>1?'S':'')+': exactly '+q+' white '+(agbSelText('overheadDoorStyle')||'raised panel')+' door'+(q>1?'s':'')+', each '+String(agbSelText('overheadDoorWidth')||'16').replace(/[^0-9.]/g,'')+' ft wide x '+String(agbSelText('overheadDoorHeight')||'7').replace(/[^0-9.]/g,'')+' ft tall, on the FRONT wall only');
@@ -7862,7 +7887,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             let colorTxt = 'Light Gray';
             if (sidingColorEl && sidingColorEl.selectedIndex >= 0) {
                 colorTxt = sidingColorEl.options[sidingColorEl.selectedIndex].text || sidingColorEl.value || colorTxt;
-            } else if (sidingType === 'hardie' && hardieEl && hardieEl.selectedIndex >= 0) {
+            } else if ((sidingType === 'hardie' || sidingType === 'lp') && hardieEl && hardieEl.selectedIndex >= 0) {
                 colorTxt = hardieEl.options[hardieEl.selectedIndex].text || hardieEl.value || colorTxt;
             } else if (vinylEl && vinylEl.selectedIndex >= 0) {
                 colorTxt = vinylEl.options[vinylEl.selectedIndex].text || vinylEl.value || colorTxt;
@@ -7896,7 +7921,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             const extra = '';
             const q = extra.toLowerCase();
             if (/vinyl/.test(q)) sidingType = 'vinyl';
-            if (/hardie|cement\s*board/.test(q)) sidingType = 'hardie';
+            if (/\blp\b|smart\s*side/.test(q)) sidingType = 'lp'; else if (/hardie|cement\s*board/.test(q)) sidingType = 'hardie';
             const colorMap = {
                 red:'Red', white:'White', 'light gray':'Light Gray', 'light grey':'Light Gray',
                 gray:'Gray', grey:'Gray', charcoal:'Charcoal', black:'Black',
@@ -7940,7 +7965,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                         'ridge runs from the front peak to the back peak (front-to-back)',
                         'left and right side walls are rectangles under the long side eaves'
                       ].join(', '));
-            const sidingWords = sidingType==='hardie' ? 'Hardie fiber cement siding' : 'vinyl siding';
+            const sidingWords = sidingType==='hardie' ? 'Hardie fiber cement siding' : sidingType==='lp' ? 'LP SmartSide engineered wood lap siding' : 'vinyl siding';
             let doorStyleWords = 'solid raised-panel overhead garage door';
             const ds = String(doorStyle||'').toLowerCase();
             if (/window/.test(ds) || /window/i.test(doorStyleLabel)) {
@@ -8514,7 +8539,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                 } else {
                     lines.push('NO ROOFED PATIO');
                 }
-                lines.push('Siding '+colorTxt+' '+(sidingType==='hardie'?'Hardie':'vinyl')+' all around including gable ends; architectural '+shingleTxt+' shingles');
+                lines.push('Siding '+colorTxt+' '+(sidingType==='hardie'?'Hardie':sidingType==='lp'?'LP SmartSide engineered wood lap':'vinyl')+' all around including gable ends; architectural '+shingleTxt+' shingles');
                 lines.push(gutters ? 'Gutters and downspouts visible' : 'No gutters');
                 lines.push(alum ? 'White aluminum soffit and fascia' : 'Painted wood soffit/fascia');
                 lines.push('Photoreal new Midwest detached garage, sharp high detail, soft daylight, no text no people no logo');
@@ -8536,7 +8561,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             const q=raw.toLowerCase();
             try{
                 if(/vinyl/.test(q)) { const e=document.getElementById('sidingType'); if(e) e.value='vinyl'; }
-                if(/hardie|cement\s*board/.test(q)) { const e=document.getElementById('sidingType'); if(e) e.value='hardie'; }
+                if(/\blp\b|smart\s*side/.test(q)) { const e=document.getElementById('sidingType'); if(e) e.value='lp'; } else if(/hardie|cement\s*board/.test(q)) { const e=document.getElementById('sidingType'); if(e) e.value='hardie'; }
 
                 const colorPairs=[['light gray','Light Gray'],['light grey','Light Gray'],['white','White'],['gray','Gray'],['grey','Gray'],['charcoal','Charcoal'],['black','Black'],['brown','Brown'],['tan','Tan'],['beige','Beige'],['almond','Almond'],['cream','Cream'],['blue','Blue'],['navy','Navy'],['green','Green'],['sage','Sage'],['red','Red'],['yellow','Yellow'],['clay','Clay'],['pearl','Pearl']];
                 for(const [key,label] of colorPairs){
@@ -9125,7 +9150,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             try{ if(typeof syncWindowQtyFromExtras==='function') syncWindowQtyFromExtras(); }catch(e){}
             const windowPlacement = val('windowPlacement') || 'service';
             const sidingType = val('sidingType');
-            const sidingColorId = sidingType === 'hardie' ? 'hardieColor' : 'vinylColor';
+            const sidingColorId = (sidingType === 'hardie' || sidingType === 'lp') ? 'hardieColor' : 'vinylColor';
             const sidingColor = selectedText(sidingColorId) || 'White';
             const sidingHex = val(sidingColorId) || '#F5F5F5';
             const slabMode = val('slabMode') || (checked('newConcrete') ? 'new' : 'existing');
@@ -9201,7 +9226,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                 addSpec('Rafters', '2x6 16" O.C.');
                 addSpec('Wall Height', `${wallHeight}'`);
                 // Never print chosen color on the estimate sheet — material wording only
-                addSpec('Siding', sidingType === 'hardie' ? hardieWally : vinylWally);
+                addSpec('Siding', sidingType === 'lp' ? 'LP Smart Side Siding' : sidingType === 'hardie' ? hardieWally : vinylWally);
                 addSpec(salesman.wally ? 'Wall Sheathing' : 'Double Wall', salesman.wally
                     ? (typeof sheathingSheetText==='function'?sheathingSheetText('wall'):((val('wallSheathSize')||'7/16"')+' '+(val('wallSheathType')||'OSB')))
                     : ((typeof sheathingSheetText==='function'?sheathingSheetText('wall'):((val('wallSheathSize')||'7/16"')+' '+(val('wallSheathType')||'OSB')))));
@@ -9260,7 +9285,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                 addSpec('Wall Height', `${wallHeight} Feet`);
                 addSpec('Roof Style', `${roofType === 'gable' ? ((val('eaveDir') === 'sides' ? 'Reverse Gable' : 'Standard Gable')) : 'Hip'} - ${pitch} Pitch with Vents`);
                 // Never print chosen color on the estimate sheet — material wording only
-                addSpec('Siding', sidingType === 'hardie' ? 'Hardieboard / Cement Board Siding' : 'Premium Vinyl Siding');
+                addSpec('Siding', sidingType === 'lp' ? 'LP Smart Side Siding' : sidingType === 'hardie' ? 'Hardieboard / Cement Board Siding' : 'Premium Vinyl Siding');
                 addSpec('Double Wall', (typeof sheathingSheetText==='function'?sheathingSheetText('wall'):((val('wallSheathSize')||'7/16"')+' '+(val('wallSheathType')||'OSB'))));
                 addSpec('Roof Sheathing', (typeof sheathingSheetText==='function'?sheathingSheetText('roof'):((val('roofSheathSize')||'7/16"')+' '+(val('roofSheathType')||'OSB'))));
                 addSpec('Eaves', `${getEavesInches()}" Eaves - 4 Sides Boxed`);
@@ -10869,7 +10894,7 @@ document.addEventListener('click', function(e){
 
             if (saveToHistory) {
                 // History list: material only — no color wording on customer-facing sheets either
-                const sidingLabel = sidingType === 'hardie' ? 'Hardieboard / Cement Board Siding' : 'Premium Vinyl Siding';
+                const sidingLabel = sidingType === 'lp' ? 'LP Smart Side Siding' : sidingType === 'hardie' ? 'Hardieboard / Cement Board Siding' : 'Premium Vinyl Siding';
                 const savedId=await saveEstimateHistoryRecord({
                     customer: customerName,
                     address: customerAddress,
@@ -12645,6 +12670,9 @@ run();setInterval(run,1500);document.addEventListener('change',run);})();
     if(d.type==='party'){ const pw=Math.max(1,Number(d.w)||6), ph=Math.max(1,Number(d.h)||7); return 800+Math.max(0,Math.ceil((pw-6)+(ph-7)))*100+(d.windows?300:0); }
     return null;
   }
+  function doorName(d,i,arr){ if(d.type==='service'){ const n=arr.slice(0,i+1).filter(x=>x.type==='service').length; return n<=1?'Service door':(['','','Second','Third','Fourth','Fifth'][n]||(n+'th'))+' service door'; }
+    if(d.type==='french') return 'French doors ('+(d.style==='fullview'?'Full View':'9 Light')+')'; return 'Party door'; }
+  window.agbDoorAddonLines=function(){ if(!on()) return []; const arr=list(); return arr.map((d,i)=>({name:doorName(d,i,arr),wall:wallTxt(d.wall),cost:price(d,i,arr)})).filter(x=>x.cost>0); };
   function price(d,i,arr){ if(d.price!==undefined && d.price!==null && String(d.price)!=='') return Number(d.price)||0; return autoPrice(d,i,arr); }
   function wallTxt(w){ return (WALLS.find(x=>x[0]===w)||[0,w])[1]; }
   function desc(d){
@@ -12735,7 +12763,7 @@ run();setInterval(run,1500);document.addEventListener('change',run);})();
     const arr=list(); if(read()) syncLegacy(arr); else { lastLegacySig=legacySig(); lastJson=''; }
     let cost=0, missing=0;
     arr.forEach((d,i)=>{ const p=price(d,i,arr); if(p===null) missing++; else cost+=p; });
-    const label=arr.length?('Side/rear doors: '+arr.map(desc).join('; ')):'No side/rear door';
+    const label=arr.length?('Side/rear doors: '+arr.map((d,i)=>{ const p=price(d,i,arr); return p>0?doorName(d,i,arr)+' +$'+p.toLocaleString()+' (cost) — '+wallTxt(d.wall):desc(d); }).join('; ')):'No side/rear door';
     setTimeout(()=>render(false),0);
     return {cost,label,missing,doors:arr};
   };
@@ -12798,5 +12826,99 @@ run();setInterval(run,1500);document.addEventListener('change',run);})();
   }, false);
 })();
 </script>
+<script src="voice-core.js?v=20261031e"></script>
+<script>
+/* Voice estimate: estimator field schema for the shared voice-core.js */
+window.agbVoice=AGBVoiceCore.create({
+  page:'estimator',
+  fields:[
+    ['city','City'],['customCity','City name (when city = Other)'],
+    ['width','Width ft'],['depth','Depth ft'],['customWidth','Custom width ft (width=custom)'],['customDepth','Custom depth ft (depth=custom)'],['carCapacity','Car capacity'],
+    ['roofType','Roof style'],['eaveDir','Gable direction (sides = reverse gable)'],['pitch','Roof pitch'],['eavesSize','Eaves'],
+    ['sidingType','Siding type'],['sidingColor','Siding color'],['shingleColor','Roof shingle color'],
+    ['ohDoorQty','Number of overhead doors'],['overheadDoorSizePreset','Overhead door size'],['overheadDoorStyle','Overhead door style'],['ohInsulated','Insulated overhead door'],['openerType','Opener'],['doorOffset','Overhead door position (1=left,2=center,3=right)'],
+    ['extraWindows','Number of windows'],['windowType','Window type'],['windowPlacement','Window placement'],
+    ['gutters','Gutters'],['aluminumSoffit','Aluminum soffit & fascia'],['showWoodSoffitNote','Wood soffit box'],
+    ['slabMode','Slab (new vs existing)'],['apronDepth','Apron depth'],['concreteThickness','Slab thickness'],
+    ['demoSlabPreset','Demo old garage — old slab size'],['oldConcreteOverride','Custom old slab size (demo=custom)'],['demoCostInput','Demo cost $ (only if said)'],['demoApronDepth','Demo apron depth'],['epaFee','EPA fee'],
+    ['roofPatioEnabled','Roof patio'],['roofPatioDepth','Roof patio depth'],['roofPatioSide','Side roof patio (unchecked = rear)'],
+    ['overhangEnabled','Front overhang'],['overhangSize','Overhang size'],
+    ['electricIncluded','Standard electric included'],['evCharger','EV charger'],['evPrep','EV prep'],
+    ['customerName','Customer name'],['customerAddress','Customer address'],['salesman','Salesman'],
+    ['profitMode','Price by (total = pinned Total Project Price)'],['profitValue','Total price set to $ (with profitMode total)']
+  ],
+  extraCatalog:['side_doors (use the side_doors argument, not fields) | walk doors: type service/french/party, wall left/right/rear/front-left/front-right, french style 9light/fullview'],
+  fillDoors:function(list){ const $=id=>document.getElementById(id); const on=$('sideDoorsListOn'); if(on&&!on.checked){ on.checked=true; on.dispatchEvent(new Event('change',{bubbles:true})); }
+      const sj=$('sideDoorsJson'); if(sj){ sj.value=JSON.stringify(list.map(d=>d.type==='french'?{type:'french',wall:d.wall,style:d.style||'9light'}:d.type==='party'?{type:'party',wall:d.wall,w:6,h:7,windows:false}:{type:'service',wall:d.wall})); try{ agbDoorsToggle(); }catch(e){} } },
+  dims:['width','depth','customWidth','customDepth'], /* spoken sizes always land on the card */
+  keepAsked:['width','depth','demoSlabPreset'], /* "two car" -> 20x20 proposed AND confirm question */
+  /* Demo = remove old garage + slab. On an existing slab the SAME demo preset + existing demolition cost box ($1300 default)
+     is used; the manual calculator then charges only demoCostInput (no slab removal, "slab and apron to remain"). */
+  guard:function(f,a){
+    if(f.id==='demoSlabPreset'){ const v=String(f.value||'').trim().toLowerCase().replace(/[×\s]/g,'x').replace(/x+/g,'x');
+      if(v==='none'||v==='') return false;
+      const sel=document.getElementById('demoSlabPreset');
+      if(sel&&![...sel.options].some(o=>o.value===v)&&/^\d+x\d+$/.test(v)){ window._agbDemoOverride=v; f.value='custom'; }
+      else if(sel&&[...sel.options].some(o=>o.value===v)) f.value=v; }
+    if(f.id==='demoApronDepth'&&!/apron/i.test(f.heard||'')) return false;
+    return true; },
+  /* READ-ONLY price lookup for spoken/typed pricing questions: computes with the estimator's own calculateEstimate(),
+     temporarily applying hypothetical changes WITHOUT firing events, then restores every control and recalculates. */
+  priceInfo:function(q){ const $=id=>document.getElementById(id); q=q||{};
+    const money=()=>parseFloat(String(($('customerQuote')||{}).textContent||'0').replace(/[^0-9.]/g,''))||0;
+    const items=()=>[...(($('breakdown')||{}).querySelectorAll?$('breakdown').querySelectorAll('div,li,tr'):[])].map(e=>e.childElementCount?'':e.textContent.replace(/\$?[\d,]+(\.\d+)?/g,'').replace(/\s+/g,' ').trim()).filter(t=>t&&t.length<70).slice(0,30);
+    const pm=$('profitMode'), pv=$('profitValue'), pinned=pm&&pm.value==='total', pin0=pinned?[pm.value,pv.value]:null;
+    try{ calculateEstimate(); }catch(e){}
+    const cost=()=>parseFloat(String(($('internalTotal')||{}).textContent||'0').replace(/[^0-9.]/g,''))||0; const base=money(), cost0=cost(), out={project_price:base, project_price_text:'$'+base.toLocaleString(), line_items:[...new Set(items())]};
+    const ch=(q.changes||[]).filter(c=>c&&$(c.id)); const door=q.add_side_door&&q.add_side_door.type?q.add_side_door:null;
+    if(!ch.length&&!door) return out;
+    const saved=[]; const save=id=>{ const el=$(id); if(el&&!saved.some(x=>x[0]===id)) saved.push([id,el.type==='checkbox'?el.checked:el.value]); };
+    try{
+      ch.forEach(c=>{ const el=$(c.id); save(c.id); let v=String(c.value); if(el.type==='checkbox') el.checked=/^(true|yes|1|on)$/i.test(v); else { if(el.tagName==='SELECT'&&![...el.options].some(o=>o.value===v)){ const o=[...el.options].find(o=>o.textContent.trim().toLowerCase().startsWith(v.toLowerCase())); if(!o) throw new Error('unknown option '+c.id+'='+v); v=o.value; } el.value=v; } });
+      if(door){ save('sideDoorsListOn'); save('sideDoorsJson'); const sj=$('sideDoorsJson'); let list=[]; try{ list=JSON.parse(sj.value||'[]'); }catch(e){}
+        if(!Array.isArray(list)) list=[]; const dt=($('doorType')||{}).value||'standard'; if(!list.length&&dt!=='no'){ const loc=($('serviceDoorLocation')||{}).value||'left'; list.push(dt==='french'?{type:'french',wall:loc==='back'?'rear':loc,style:($('frenchDoorStyle')||{}).value||'9light'}:{type:'service',wall:loc==='back'?'rear':(loc==='front'?'left':loc)}); }
+        list.push(door.type==='french'?{type:'french',wall:door.wall||'right',style:door.style||'9light'}:door.type==='party'?{type:'party',wall:door.wall||'right',w:6,h:7,windows:false}:{type:'service',wall:door.wall||'right'});
+        $('sideDoorsListOn').checked=true; sj.value=JSON.stringify(list); }
+      calculateEstimate(); const after=money(), costDiff=Math.round(cost()-cost0);
+      let label='This change'; if(door){ const svc=(()=>{ try{ return JSON.parse($('sideDoorsJson').value||'[]'); }catch(e){ return []; } })(); const n=svc.filter(x=>x.type==='service').length;
+        label=door.type==='service'?(n<=1?'Service door':(['','','Second','Third','Fourth'][n]||'Another')+' service door'):door.type==='french'?'French doors ('+(door.style==='fullview'?'Full View':'9 Light')+')':'Party door'; }
+      out.addon_label=label; out.cost_difference=costDiff; out.with_change_price=after; out.difference=Math.round((after-base)*100)/100;
+      if(pinned){ out.difference_text=label+' adds $'+costDiff.toLocaleString()+' to cost; the total stays locked at $'+Number(pv.value).toLocaleString()+' (profit drops by $'+costDiff.toLocaleString()+').'; }
+      else out.difference_text=label+' adds $'+Math.round(after-base).toLocaleString()+' to the customer price ($'+costDiff.toLocaleString()+' cost + profit); new total $'+Math.round(after).toLocaleString()+'.';
+    }catch(e){ out.error='Could not price that change ('+(e.message||e)+')'; }
+    finally{ saved.forEach(([id,v])=>{ const el=$(id); if(el.type==='checkbox') el.checked=v; else el.value=v; }); try{ calculateEstimate(); }catch(e){} }
+    if(pinned) out.locked_total=Number(pv.value);
+    if(money()!==base) out.warning='restore mismatch';
+    return out; },
+  cityInfo:function(city){ city=String(city||'').trim(); const pick=o=>{ if(!o) return null; const k=Object.keys(o).find(k=>k.toLowerCase()===city.toLowerCase()); return k?o[k]:null; };
+    const g=n=>{ try{ return eval('typeof '+n+'!=="undefined"?'+n+':null'); }catch(e){ return null; } };
+    const r={city, notes:pick(g('CITY_CODE_NOTES')), rules:pick(g('CITY_CODE_RULES')), code_year:pick(g('PC_CODE_YEARS')), code_year_status:pick(g('PC_CODE_YEAR_STATUS')), upcoming:pick(g('PC_CODE_YEAR_UPCOMING'))};
+    const sh=pick(g('CITY_CODE_SHEETS')); if(sh) r.sheet=JSON.stringify(sh).slice(0,1500);
+    if(!r.notes&&!r.rules&&!sh) r.error='No saved code info for that city in the estimator.'; return r; },
+  /* Spoken total price ("I want the price to be 29,000") reuses Profit Control "Total Project Price" mode: the total stays pinned
+     while other items change; unchecking the card item restores the previous profit mode/value. */
+  hideOnCard:['profitMode'], linked:{profitValue:['profitMode']},
+  extraParse:function(t){ const s=String(t).toLowerCase().replace(/twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety/g,m=>({twenty:'20 ',thirty:'30 ',forty:'40 ',fifty:'50 ',sixty:'60 ',seventy:'70 ',eighty:'80 ',ninety:'90 '}[m]))
+      .replace(/\b(\d0) (one|two|three|four|five|six|seven|eight|nine)\b/g,(m,a,b)=>String(+a+{one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9}[b]));
+    if(!(/\b(price|total|sell it|charge|quote)\b/.test(s)||/\bmake it \$?\d[\d.,]*\s*(k|thousand|grand)\b/.test(s))||!/(\bmake it\b|\bset\b|\bwant\b|\bput\b|\bshould be\b|\bto be\b|\bat\b)/.test(s)) return [];
+    let m=s.match(/\$?\s*(\d{1,3}(?:,\d{3})+|\d{4,6})(?:\.\d+)?\b/), n=null;
+    if(m) n=+m[1].replace(/,/g,''); else if((m=s.match(/(\d+(?:\.\d+)?)\s*(k|thousand|grand)(?:\s*(?:and\s*)?(\d)\s*hundred|\s*(\d{3}))?/))) n=Math.round(+m[1]*1000+(m[3]?+m[3]*100:0)+(m[4]?+m[4]:0));
+    if(!n||n<5000||n>500000) return [];
+    return [{id:'profitMode',value:'total',heard:m[0]},{id:'profitValue',value:String(n),heard:m[0]}]; },
+  afterCommit:function(props){ const card=document.getElementById('agbvCard'); let w=document.getElementById('agbvTotalWarn');
+    const p=props.profitValue, on=p&&p.on&&(props.profitMode||{}).v==='total';
+    const internal=parseFloat(((document.getElementById('internalTotal')||{}).textContent||'').replace(/[^0-9.]/g,''))||0;
+    const bad=on&&internal>Number(p.v);
+    if(!w&&bad){ w=document.createElement('div'); w.id='agbvTotalWarn'; w.className='agbv-unk'; card.insertBefore(w,document.getElementById('agbvQs')); }
+    let a=document.getElementById('agbvAddons'); const lines=on&&window.agbDoorAddonLines?window.agbDoorAddonLines():[];
+    if(!a&&lines.length){ a=document.createElement('div'); a.id='agbvAddons'; a.className='agbv-unk'; a.style.color='#fbbf24'; card.insertBefore(a,document.getElementById('agbvQs')); }
+    if(a){ a.hidden=!lines.length; a.innerHTML=lines.map(l=>l.name+' +$'+l.cost.toLocaleString()+' (cost) — total stays $'+Number(p.v).toLocaleString()).map(t=>'<div>'+t.replace(/[<>&]/g,'')+'</div>').join(''); }
+    if(w){ w.hidden=!bad; if(bad) w.textContent='⚠ Pinned total $'+Number(p.v).toLocaleString()+' is below internal cost $'+Math.round(internal).toLocaleString()+' — profit is negative.'; }
+    },
+  itemLabel:function(id,p){ return id==='profitValue'?'Total set to $'+Number(p.v).toLocaleString()+' (uncheck for calculated price)':null; },
+  afterFill:function(){ const o=window._agbDemoOverride; if(o){ const el=document.getElementById('oldConcreteOverride'); if(el&&!el.value){ el.value=o; el.dispatchEvent(new Event('input',{bubbles:true})); } window._agbDemoOverride=null; try{ syncDemoPreset(); }catch(e){} } try{ calculateEstimate(); }catch(e){} }
+});
+</script>
+
 </body>
 </html>

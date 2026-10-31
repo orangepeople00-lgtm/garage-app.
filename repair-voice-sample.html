@@ -1,0 +1,1498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta name="robots" content="noindex"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Absolute Garage Builders • Garage Repair Estimator</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&family=Dancing+Script:wght@600&display=swap');
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:'Inter',system-ui,sans-serif;background:#09090b;color:#e4e4e7;-webkit-text-size-adjust:100%}
+.font-display{font-family:'Space Grotesk','Inter',sans-serif;font-weight:600}
+div.topnav{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding-right:14px}a.hist-btn{display:inline-block;margin:10px 0 0;padding:9px 16px;border-radius:999px;background:#f59e0b;color:#111;font-weight:800;font-size:14px;text-decoration:none;min-height:40px;box-sizing:border-box}
+a.back{display:inline-block;margin:10px 14px 0;color:#93c5fd;font-size:14px;text-decoration:none;padding:8px 0}
+.wrap{max-width:1280px;margin:0 auto;padding:0 14px 120px}
+.head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 0 16px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px}
+.brand .ic{width:44px;height:44px;background:#2563eb;border-radius:16px;display:flex;align-items:center;justify-content:center}
+.brand .t1{font-family:'Space Grotesk';font-size:28px;font-weight:600;color:#fff;letter-spacing:-1px;line-height:1}
+.brand .t2{font-size:10px;color:#60a5fa;letter-spacing:2px;font-weight:500}
+.pill{padding:6px 12px;background:#18181b;border-radius:16px;font-size:12px;color:#facc15;display:flex;gap:6px;align-items:center}
+.dot{width:8px;height:8px;border-radius:50%;background:#facc15;animation:p 1.5s infinite}@keyframes p{50%{opacity:.3}}
+.btn{min-height:46px;padding:10px 16px;border-radius:16px;border:1px solid #3f3f46;background:#18181b;color:#e4e4e7;font-weight:600;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;justify-content:center}
+.btn:hover{background:#27272a}.btn.primary{background:#2563eb;border-color:#2563eb;color:#fff}.btn.yellow{background:#facc15;border-color:#facc15;color:#111}.btn.green{background:#166534;border-color:#166534;color:#fff}
+.banner{background:#422006;border:2px solid #f59e0b;color:#fde68a;border-radius:16px;padding:12px 14px;font-weight:700;margin-bottom:14px;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.grid{display:grid;grid-template-columns:1fr;gap:16px}
+@media(min-width:1100px){.grid{grid-template-columns:7fr 5fr}.sumcol{position:sticky;top:10px;align-self:start}}
+.card{background:#18181b;border:1px solid #27272a;border-radius:24px;padding:16px}
+.sh{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#4ade80;font-weight:700;margin:0 0 10px;display:flex;align-items:center;gap:8px}
+.f2{display:grid;grid-template-columns:1fr;gap:10px}@media(min-width:600px){.f2{grid-template-columns:1fr 1fr}}
+.f3{display:grid;grid-template-columns:1fr 1fr;gap:8px}@media(min-width:600px){.f3{grid-template-columns:1fr 1fr 1fr}}
+label.l{font-size:12px;color:#a1a1aa;display:block;margin-bottom:3px}
+input.c,select.c,textarea.c{width:100%;background:#09090b;border:1px solid #3f3f46;color:#fff;border-radius:12px;padding:10px 12px;font-size:16px;min-height:46px;font-family:inherit}
+textarea.c{min-height:70px}
+input.c:focus,select.c:focus,textarea.c:focus{outline:none;border-color:#3b82f6}
+.grp{margin-top:14px;font-size:11px;letter-spacing:.1em;color:#a1a1aa;font-weight:700;text-transform:uppercase;border-bottom:1px solid #27272a;padding-bottom:4px}
+.item{border:1px solid #27272a;border-radius:18px;margin-top:8px;background:#0f0f12;overflow:hidden}
+.item.on{border-color:#16a34a;background:#0c1a10}
+.ihead{display:flex;align-items:center;gap:12px;padding:10px 12px;cursor:pointer;min-height:60px;user-select:none}
+.ihead .ico{width:42px;height:42px;background:#fff;border-radius:10px;display:flex;align-items:center;justify-content:center;flex:0 0 42px;color:#000}
+.ihead .ico svg{width:30px;height:30px}
+.ihead .nm{flex:1;font-weight:700;font-size:15px;color:#fff}.ihead .nm small{display:block;font-weight:400;color:#a1a1aa;font-size:12px}
+.chk{width:34px;height:34px;border-radius:50%;border:2px solid #52525b;display:flex;align-items:center;justify-content:center;flex:0 0 34px;color:#fff}
+.item.on .chk{background:#000;border-color:#4ade80}.chk svg{width:20px;height:20px;display:none}.item.on .chk svg{display:block}
+.ibody{display:none;padding:4px 12px 12px}.item.on .ibody{display:block}
+.icost{font-family:ui-monospace,monospace;color:#facc15;font-size:13px;margin-top:6px}
+.sumline{display:flex;justify-content:space-between;gap:8px;font-size:14px;padding:5px 0;border-bottom:1px dashed #27272a}
+.sumline span:last-child{font-family:ui-monospace,monospace;white-space:nowrap}
+.big{font-family:ui-monospace,monospace;font-size:30px;font-weight:800;color:#facc15}
+.sticky{position:fixed;left:0;right:0;bottom:0;background:#18181bf2;border-top:1px solid #3f3f46;padding:10px 14px;display:flex;gap:10px;align-items:center;justify-content:space-between;z-index:30}
+.sticky .v{font-family:ui-monospace,monospace;font-weight:800;color:#facc15;font-size:20px}
+.muted{color:#a1a1aa;font-size:12px}
+.exrow{display:grid;grid-template-columns:1fr;gap:6px;border:1px solid #27272a;border-radius:14px;padding:8px;margin-top:8px}@media(min-width:600px){.exrow{grid-template-columns:2fr 1fr 1fr auto}}
+.ptab{width:100%;border-collapse:collapse;font-size:14px}.ptab td{padding:5px 4px;border-bottom:1px solid #27272a;vertical-align:middle}.ptab input{min-height:40px;padding:6px 8px}
+.ptab td.u{color:#a1a1aa;font-size:12px;white-space:nowrap}
+.modal{position:fixed;inset:0;background:#000c;z-index:50;display:none;overflow:auto;-webkit-overflow-scrolling:touch}
+.modal.open{display:block}
+.mbar{position:sticky;top:0;display:flex;gap:8px;padding:10px;background:#18181b;z-index:2;flex-wrap:wrap}
+.panel{max-width:900px;margin:14px auto;background:#18181b;border-radius:20px;padding:16px}
+.cond{display:grid;grid-template-columns:1fr auto;gap:6px;align-items:center;padding:4px 0;border-bottom:1px solid #27272a}
+.cond select{min-height:42px;width:110px}
+.photos{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ph{border:1px dashed #52525b;border-radius:14px;padding:6px;text-align:center}
+.ph img{width:100%;height:120px;object-fit:cover;border-radius:10px;display:block}
+.ph .empty{height:120px;display:flex;align-items:center;justify-content:center;color:#71717a;font-size:13px}
+#sheetHost{background:#e5e7eb;padding:12px 0;overflow:auto}
+.sheetScale{transform-origin:top left}
+.warn{color:#fca5a5;font-size:13px}
+#toast{position:fixed;top:12px;left:50%;transform:translateX(-50%);background:#166534;color:#fff;padding:10px 16px;border-radius:12px;z-index:99;display:none;max-width:92vw;font-weight:600}
+#toast.err{background:#991b1b}
+.profit-card{background:#09090b;border:1px solid #3f3f46;border-radius:18px;padding:12px}
+.profit-slider{width:100%;accent-color:#facc15;margin-top:12px;height:34px;cursor:pointer}.profit-slider.ineligible{accent-color:#ef4444}
+.profit-status{margin-top:10px;border:1px solid;border-radius:12px;padding:8px 10px}.pst{height:8px;border-radius:999px;background:#27272a;margin:6px 0;overflow:hidden}.psf{height:100%;border-radius:999px}.psl{font-size:12px;font-weight:700}
+.profit-status.eligible{border-color:rgba(34,197,94,.45);background:rgba(20,83,45,.17)}.profit-status.eligible .psf{background:#22c55e}.profit-status.eligible .psl{color:#4ade80}
+.profit-status.ineligible{border-color:rgba(239,68,68,.45);background:rgba(127,29,29,.16)}.profit-status.ineligible .psf{background:#ef4444}.profit-status.ineligible .psl{color:#f87171}
+/* ================= CUSTOMER SHEET ================= */
+.rs{width:8.5in;height:11in;background:#fff;color:#111;font-family:Arial,Helvetica,sans-serif;margin:0 auto;position:relative;overflow:hidden;-webkit-print-color-adjust:exact;print-color-adjust:exact;border:6px solid #F5A623}
+.rs-in{width:100%;transform-origin:top left}
+.rs-top{display:flex;align-items:center;justify-content:space-between;padding:12px 18px 8px;gap:12px}
+.rs-logo{display:flex;align-items:center;gap:10px}
+.rs-logo svg{width:112px;height:92px}
+.rs-abs{font-family:'Arial Black',Arial,sans-serif;font-weight:900;font-size:50px;line-height:.9;letter-spacing:-1px;color:#111}
+.rs-gb{font-family:'Arial Black',Arial,sans-serif;font-weight:900;font-size:24px;color:#F5A623;letter-spacing:.5px;margin-top:4px;white-space:nowrap}
+.rs-tag{font-size:10.5px;letter-spacing:1.6px;margin-top:5px;color:#111;white-space:nowrap}
+.rs-contact{font-size:12.5px;line-height:1.35;min-width:2.3in}
+.rs-contact .r{display:flex;gap:7px;align-items:flex-start;margin-bottom:6px}
+.rs-contact svg{width:16px;height:16px;flex:0 0 16px;color:#F5A623;margin-top:1px}
+.rs-lic{border-top:1px solid #F5A623;padding-top:5px;margin-top:4px;font-weight:700;font-size:12px}.rs-lic b{display:block;color:#F5A623;font-size:14px}
+.rs-band{background:#F5A623;display:grid;grid-template-columns:1fr 1.08fr 1fr;padding:9px 14px;align-items:center}
+.rs-bc{display:flex;gap:10px;align-items:center;min-width:0;padding:0 8px}
+.rs-bc+.rs-bc{border-left:1.5px solid #fff8}
+.rs-circ{width:50px;height:50px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;flex:0 0 50px}
+.rs-circ svg{width:30px;height:30px;color:#F5A623}
+.rs-bl{font-weight:800;font-size:11.5px;color:#111}
+.rs-bv{font-size:15px;font-weight:700;color:#111;line-height:1.2;word-break:break-word}
+.rs-bs{font-size:11.5px;color:#111;display:flex;gap:5px;align-items:center;margin-top:2px;word-break:break-all}.rs-bs svg{width:12px;height:12px;flex:0 0 12px}
+.rs-sales{border:1.5px solid #111;padding:5px 9px;flex:1;min-width:0}
+.rs-title{text-align:center;margin-top:9px}
+.rs-title h1{margin:0;font-family:'Arial Black',Arial,sans-serif;font-size:33px;font-weight:900;letter-spacing:.5px;display:flex;align-items:center;justify-content:center;gap:18px}
+.rs-title h1:before,.rs-title h1:after{content:"";width:80px;height:2px;background:#F5A623}
+.rs-sub{font-style:italic;font-size:15px;margin-top:1px;letter-spacing:.5px}
+.rs-pillw{text-align:center;margin-top:6px}
+.rs-pill{display:inline-block;background:#111;color:#F5A623;border-radius:22px;padding:4px 44px;font-weight:900;font-size:15px;line-height:1.15;text-transform:uppercase}
+.rs-photos{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:9px 18px 0}
+.rs-photo{position:relative;height:2.35in;background:#e5e7eb;overflow:hidden}
+.rs-photos.one{grid-template-columns:1fr;justify-items:center}.rs-photos.one .rs-photo{width:68%}
+.rs-photo img{width:100%;height:100%;object-fit:cover;display:block}
+.rs-cap{position:absolute;left:0;bottom:6px;background:#111;color:#fff;font-weight:800;font-size:11.5px;padding:3px 9px;line-height:1.2}.rs-cap small{display:block;font-size:8px;font-weight:600}
+.rs-ph-tools{position:absolute;top:6px;right:6px;display:flex;gap:4px;z-index:2}
+.rs-ph-btn{background:rgba(17,17,17,.85);color:#fff;border:1px solid #F5A623;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer}
+.rs-ph-btn:hover{background:#000}
+.rs-nophoto-bar{margin:8px 18px 0;padding:8px 12px;border:1.5px dashed #9ca3af;border-radius:8px;background:#f9fafb;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:12px;color:#374151}
+.rs-row-tools{display:none;gap:4px;margin-top:4px;justify-content:center;flex-wrap:wrap}
+.sheet-editing .rs-row-tools{display:flex}
+.rs-rt-btn{background:#fff;border:1px solid #94a3b8;border-radius:5px;padding:2px 6px;font-size:10.5px;font-weight:700;color:#111;cursor:pointer}
+.rs-rt-btn.del{color:#b91c1c;border-color:#fca5a5}
+.rs-tbl-foot{display:none;margin:4px 18px 0;gap:8px}
+.sheet-editing .rs-tbl-foot{display:flex}
+.rs-std{margin:8px auto 0;width:82%;border:1.5px solid #111;border-radius:5px;padding:5px 12px;display:flex;align-items:center;gap:14px;font-size:12.5px}
+.rs-std .ck{width:24px;height:24px;border-radius:50%;background:#F5A623;border:2px solid #111;display:flex;align-items:center;justify-content:center;flex:0 0 24px}.rs-std .ck svg{width:14px;height:14px}
+.rs-tbl{width:calc(100% - 36px);margin:8px 18px 0;border-collapse:collapse;font-size:12px}
+.rs-tbl th{background:#F5A623;font-weight:800;font-size:13px;padding:6px;border:1.5px solid #F5A623}
+.rs-tbl td{border:1.5px solid #F5A623;padding:4px 8px;vertical-align:middle}
+.rs-tbl td.cat{width:2.3in}
+.rs-cat{display:flex;align-items:center;gap:12px;font-weight:800;font-size:12.5px;text-transform:uppercase}
+.rs-cat svg{width:38px;height:30px;flex:0 0 38px;color:#111}
+.rs-tbl ul{margin:0;padding-left:16px}.rs-tbl li{margin:1px 0;line-height:1.25}
+.rs-tbl td.inc{width:1.25in;text-align:center}
+.bchk{display:inline-flex;width:28px;height:28px;border-radius:50%;background:#111;align-items:center;justify-content:center}.bchk svg{width:17px;height:17px;color:#fff}
+.optlbl{font-weight:900;font-size:12px;color:#111;border:1.5px solid #111;padding:2px 6px;display:inline-block}.optp{font-weight:800;font-size:12.5px;margin-top:2px}
+tr.optrow td{background:#fff7e6}
+.rs-total{display:grid;grid-template-columns:1.55fr 1fr;margin:10px 18px 0;height:.58in}
+.rs-total .a{background:#F5A623;font-family:'Arial Black',Arial,sans-serif;font-weight:900;font-size:29px;display:flex;align-items:center;justify-content:center}
+.rs-total .b{background:#111;color:#fff;font-family:'Arial Black',Arial,sans-serif;font-weight:900;font-size:32px;display:flex;align-items:center;justify-content:center}
+.rs-optnote{margin:3px 18px 0;font-size:10px;text-align:right;font-style:italic}
+.rs-optnote.rs-optnote-off{display:none!important}
+.rs-notes{display:grid;grid-template-columns:1fr 2.25in;border:1.5px solid #9ca3af;margin:7px 18px 0;padding:7px 10px;gap:10px;font-size:10.5px;line-height:1.3}
+.rs-notes .n{display:flex;gap:10px}.rs-ex{width:30px;height:30px;border-radius:50%;background:#F5A623;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:20px;flex:0 0 30px}
+.rs-notes .rb{display:flex;gap:10px;align-items:center;border-left:1.5px solid #9ca3af;padding-left:10px}.rs-notes .rb svg{width:34px;height:40px;flex:0 0 34px}
+.rs-foot{display:grid;grid-template-columns:2.15in 2.05in 1fr;gap:10px;align-items:center;margin:8px 18px 10px}
+.rs-thank{display:flex;gap:9px;align-items:center;font-weight:800;font-size:12px;line-height:1.2}.rs-thank b{color:#F5A623;display:block}
+.rs-thank .s{width:38px;height:38px;border-radius:50%;background:#F5A623;display:flex;align-items:center;justify-content:center;flex:0 0 38px}.rs-thank svg{width:24px;height:24px}
+.rs-script{font-family:'Dancing Script',cursive;color:#F5A623;font-size:19px;border-left:2px solid #F5A623;padding-left:10px}
+.rs-sig{font-size:9.5px}.rs-sig .ln{display:grid;grid-template-columns:2fr 1fr;gap:12px;margin-top:9px}.rs-sig .ln div{border-bottom:1px solid #111;height:16px}
+.rs-sig .lb{display:grid;grid-template-columns:2fr 1fr;gap:12px}
+.rs [contenteditable]{cursor:text;border-radius:2px}
+.rs [contenteditable]:hover{outline:1px dashed #2563eb;background:rgba(59,130,246,.05)}
+.rs [contenteditable]:focus{outline:2px solid #2563eb;background:rgba(254,249,195,.45)}
+.rs [contenteditable][data-ph]:empty:before{content:attr(data-ph);color:#6b7280;font-style:italic;font-weight:400}
+@media print{
+  .rs [contenteditable][data-ph]:empty:before{content:""!important}
+  @page{size:Letter portrait;margin:0}
+  html,body{background:#fff!important;margin:0!important;padding:0!important;width:8.5in!important;height:11in!important;min-height:11in!important;max-height:11in!important;overflow:hidden!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  body>*:not(#sheetModal){display:none!important}
+  #sheetModal{display:block!important;position:static!important;inset:auto!important;margin:0!important;padding:0!important;width:8.5in!important;height:11in!important;max-height:11in!important;background:#fff!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;filter:none!important;overflow:hidden!important;transform:none!important;zoom:1!important}
+  #sheetModal .mbar,.rsd-bar,.noprint,.rs-row-tools,.rs-tbl-foot,.rs-ph-tools{display:none!important}
+  .no-print,.rs-nophoto-bar,.rs-nopic,#sheetPhotoSection:not(:has(img)),.rs-photos:not(:has(img)),.rs-photo:not(:has(img)){display:none!important}
+  #sheetHost{padding:0!important;margin:0!important;width:8.5in!important;height:11in!important;max-height:11in!important;background:#fff!important;overflow:hidden!important;transform:none!important;zoom:1!important}
+  #sheetScale,.sheetScale{transform:none!important;-webkit-transform:none!important;zoom:1!important;width:8.5in!important;height:11in!important;max-height:11in!important;margin:0!important;padding:0!important}
+  .rs,#repairSheet{margin:0!important;width:8.5in!important;height:11in!important;min-height:11in!important;max-height:11in!important;box-shadow:none!important;page-break-after:avoid!important;page-break-inside:avoid!important;break-inside:avoid!important;overflow:hidden!important}
+  .rs [contenteditable]:hover,.rs [contenteditable]:focus{outline:none!important;background:transparent!important;box-shadow:none!important}
+}
+</style><style>.rl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}.rl-sec{grid-column:1/-1;font-weight:800;color:#fbbf24;border-bottom:1px solid #3f3f46;padding:6px 0 4px;margin-top:6px}.rl-card{border:2px solid #3f3f46;border-radius:12px;overflow:hidden;cursor:pointer;background:#18181b}.rl-card.rl-sel{border-color:#10b981}.rl-card img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block;background:#27272a}.rl-tags{font-size:11px;padding:5px 7px;color:#d4d4d8}
+/* iOS Safari fix: grid inside flex column collapsed card heights */
+.pl-dialog,#rlModal .rl-dialog{overflow:hidden}
+.pl-grid,.rl-grid{flex:1 1 auto;min-height:0;grid-auto-rows:max-content;align-content:start;-webkit-overflow-scrolling:touch}
+.pl-card,.rl-card,.pl-sec,.rl-sec{flex-shrink:0;min-height:min-content}
+.pl-card img,.rl-card img{height:auto;min-height:120px;max-height:none;flex-shrink:0}
+@supports not (aspect-ratio:1){.pl-card img,.rl-card img{height:130px}}
+@media (max-width:600px){.pl-grid,.rl-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:8px}.pl-card img,.rl-card img{height:120px;min-height:120px;aspect-ratio:auto}.pl-tags,.rl-tags{font-size:10px;line-height:1.3;word-break:break-word}}
+</style>
+</head>
+<body>
+<div class="topnav"><a class="back" href="index.html?v=20260818v2">← Back To Dashboard</a><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><button class="hist-btn" type="button" onclick="openGarageEstimatorFromRepair()" style="background:#1e3a8a;border-color:#3b82f6;color:#fff;cursor:pointer">🏠 Garage Estimator</button><a class="hist-btn" href="index.html?history=repair#history-repair">Repair History</a></div></div>
+<div id="toast"></div>
+<div class="wrap">
+  <div class="head">
+    <div class="brand"><div class="ic"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"><path d="M2 10l10-6 10 6v11H2z"/><path d="M6 21v-8h12v8M6 16h12M6 18.5h12"/></svg></div>
+      <div><div class="t1">ABSOLUTE</div><div class="t2">GARAGE BUILDERS</div></div></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <div class="pill"><span class="dot"></span>REPAIR ESTIMATOR</div>
+      <button class="btn" type="button" onclick="openSettings()">⚙ Settings / Prices</button>
+      <button class="btn" type="button" onclick="newEstimate()">＋ New</button>
+    </div>
+  </div>
+  <div class="banner" id="priceBanner"><span>⚠ Example prices — set real prices in Settings. These placeholder numbers are NOT real Absolute Garage Builders prices.</span><button class="btn yellow" type="button" onclick="openSettings()">Open Settings</button></div>
+<!-- SAMPLE: live voice for the repair estimator (unlinked; repair.html is unchanged) -->
+<div id="agbVoice" class="agbv">
+  <div class="agbv-top">
+    <button type="button" id="agbvMic" class="agbv-mic" onclick="agbVoice.toggle()">🎤 <span id="agbvMicTxt">Talk with the helper</span></button>
+    <span id="agbvTimer" class="agbv-timer" hidden></span>
+  </div>
+  <div id="agbvStatus" class="agbv-status">Tap Talk and just describe the repair — everything you say goes on the estimate right away (anything not mentioned stays standard). The helper only speaks to ask when something is unclear or to answer your question. Say “done” when finished. Or type it:</div>
+  <div class="agbv-type">
+    <input id="agbvText" type="text" placeholder="Type the repair instead…" onkeydown="if(event.key==='Enter'){event.preventDefault();agbVoice.sendText();}">
+    <button type="button" class="agbv-btn" onclick="agbVoice.sendText()">Go</button>
+  </div>
+  <div id="agbvLog" class="agbv-log" hidden></div>
+  <div id="agbvCard" class="agbv-card" hidden>
+    <div class="agbv-h">What I set <span class="agbv-sub">(already on the estimate — tap to fix or uncheck to undo)</span></div>
+    <div id="agbvItems"></div>
+    <div id="agbvQs"></div>
+    <div id="agbvUnknown" class="agbv-unk" hidden></div>
+    <div class="agbv-actions">
+      <button type="button" id="agbvFill" class="agbv-btn" onclick="agbVoice.fill()">Done</button>
+      <button type="button" class="agbv-btn" onclick="agbVoice.clear()">Undo all</button>
+    </div>
+  </div>
+</div>
+  <div class="grid">
+   <div>
+    <div class="card">
+      <div class="sh">👤 Customer &amp; job</div>
+      <div class="f2">
+        <div><label class="l">Salesman</label><select id="salesman" class="c" onchange="calc()">
+          <option value="ramsey" selected>Ramsey Barakat</option><option value="sam">Sam Barakat</option><option value="samer">Samer Barakat</option><option value="wally">Wally</option><option value="tom">Tom Milan</option><option value="tomb">Tom Bartyzel</option></select></div>
+        <div><label class="l">Customer Name</label><input id="customerName" class="c" placeholder="Name" oninput="calc()"></div>
+        <div><label class="l">Phone</label><input id="customerPhone" class="c" type="tel" placeholder="(773) 555-0000" oninput="calc()"></div>
+        <div><label class="l">Email</label><input id="customerEmail" class="c" type="email" placeholder="email@example.com" oninput="calc()"></div>
+        <div><label class="l">Street Address</label><input id="customerAddress" class="c" placeholder="1234 N. Main St." oninput="calc()"></div>
+        <div><label class="l">City, State ZIP</label><input id="customerCity" class="c" placeholder="Chicago, IL 60618" oninput="calc()"></div>
+        <div><label class="l">Existing garage size (W x D ft)</label><div class="f3" style="grid-template-columns:1fr 1fr"><input id="gW" class="c" type="number" inputmode="decimal" value="20" oninput="calc()"><input id="gD" class="c" type="number" inputmode="decimal" value="20" oninput="calc()"></div></div>
+        <div><label class="l">Roof style</label><select id="roofStyle" class="c" onchange="calc()"><option>Gable Roof</option><option selected>Hip Roof</option><option>Flat Roof</option><option>Shed Roof</option><option>Gambrel Roof</option></select></div>
+        <div><label class="l">Roof pitch</label><select id="pitch" class="c" onchange="calc()"><option value="1.031">3/12</option><option value="1.054" selected>4/12</option><option value="1.083">5/12</option><option value="1.118">6/12</option><option value="1.202">8/12</option><option value="1.302">10/12</option><option value="1.414">12/12</option></select></div>
+        <div><label class="l">Show size / roof pill on sheet</label><select id="showPill" class="c" onchange="calc()"><option value="1" selected>Yes</option><option value="0">No</option></select></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <div class="sh">🔧 Repair items <span class="muted" style="text-transform:none;letter-spacing:0;font-weight:400">tap a row to include it ✔</span></div>
+      <div id="items"></div>
+      <div class="grp">Custom extras</div>
+      <div class="muted" style="margin-top:6px">Included in Price: internal cost is marked up into the project price (shows with a ✔ on the sheet). Option price: type the CUSTOMER price — shown as an OPTION, never added to the total.</div>
+      <div id="extras"></div>
+      <button class="btn" type="button" style="margin-top:8px" onclick="addExtra()">＋ Add custom item</button>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <div class="sh">📷 Sheet picture <span class="muted" style="text-transform:none;letter-spacing:0;font-weight:400">upload or pick a picture — or leave empty for no picture on the sheet</span></div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px"><label class="l" for="photoCount" style="margin:0">Pictures on the sheet</label><select id="photoCount" class="c" style="width:auto" onchange="renderPhotos();calc();saveDraft()"><option value="0">No picture</option><option value="1" selected>Up to 1 picture</option><option value="2">Up to 2 pictures (side by side)</option></select></div>
+      <div class="photos" id="sheetPhotos"></div>
+      <label style="display:flex;gap:8px;align-items:center;margin-top:8px;font-size:14px;min-height:44px"><input type="checkbox" id="exampleTag" onchange="calc()" style="width:22px;height:22px"> Add "EXAMPLE PHOTO - STYLE MAY VARY" tag</label>
+      <label style="display:flex;gap:8px;align-items:center;margin-top:4px;font-size:14px;min-height:44px"><input type="checkbox" id="insuranceJob" onchange="calc();saveDraft()" style="width:22px;height:22px"> Insurance job <span class="muted" style="font-size:12px">(sheet states it is for insurance)</span></label>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <div class="sh">📝 Damage photos &amp; notes <span class="muted" style="text-transform:none;letter-spacing:0;font-weight:400">internal — not printed</span></div>
+      <textarea id="damageNotes" class="c" placeholder="What you saw on site: rot at bottom plate south wall, roof sag, cracked apron..." oninput="saveDraft()"></textarea>
+      <input type="file" id="damageFile" accept="image/*" capture="environment" multiple style="display:none" onchange="addDamagePhotos(this)">
+      <button class="btn" type="button" style="margin-top:8px" onclick="document.getElementById('damageFile').click()">📷 Add damage photos</button>
+      <div class="photos" id="damagePhotos" style="margin-top:8px"></div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <div class="sh">✅ Condition checklist <span class="muted" style="text-transform:none;letter-spacing:0;font-weight:400">internal</span></div>
+      <div id="condList"></div>
+    </div>
+   </div>
+   <div class="sumcol">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px"><span class="muted" style="font-size:14px">Internal Cost</span><span id="internalTotal" style="font-family:ui-monospace,monospace;font-size:20px;font-weight:700;color:#fff">$0.00</span></div>
+      <div class="profit-card">
+        <div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:8px"><span style="font-size:12px;font-weight:700;color:#facc15;letter-spacing:.06em">PROFIT CONTROL</span><span id="profitAppliedDisplay" style="font-family:ui-monospace,monospace;font-size:13px;color:#93c5fd">+$0.00</span></div>
+        <div class="f2">
+          <div><label class="l">PRICE BY</label><select id="profitMode" class="c" onchange="onProfitModeChange()"><option value="percent" selected>Profit Percentage</option><option value="amount">Profit Dollar Amount</option><option value="total">Total Project Price ($ on sheet)</option></select></div>
+          <div><label class="l" id="profitValueLabel">PROFIT %</label><div style="display:flex;gap:8px;align-items:center"><input id="profitValue" class="c" type="number" inputmode="decimal" value="24.75" min="0" step="0.25" oninput="onProfitValueInput()"><span id="profitUnit" style="font-weight:700;color:#a1a1aa">%</span></div></div>
+        </div>
+        <input id="profitSlider" class="profit-slider" type="range" min="0" max="100" step="0.25" value="24.75" oninput="onProfitSliderInput()">
+        <div style="display:flex;justify-content:space-between;gap:8px" class="muted"><span id="profitFormula">Internal cost + 24.75%</span><span>Slider + manual entry</span></div>
+        <div class="f3" style="margin-top:10px">
+          <div><label class="l">Profit %</label><input id="qPct" class="c" type="number" inputmode="decimal" step="0.25" onchange="onQuickEdit('percent',this.value)"></div>
+          <div><label class="l">Profit $</label><input id="qAmt" class="c" type="number" inputmode="decimal" step="1" onchange="onQuickEdit('amount',this.value)"></div>
+          <div><label class="l">Total price $</label><input id="qTot" class="c" type="number" inputmode="decimal" step="1" onchange="onQuickEdit('total',this.value)"></div>
+        </div>
+        <div class="muted" style="margin-top:4px">Type in any box — the other two update. Total price is the exact $ on the customer sheet (permit included).</div>
+        <div id="profitStatus" class="profit-status eligible"><div style="display:flex;justify-content:space-between"><span id="profitStatusLabel" class="psl">BONUS ELIGIBLE</span><span id="profitEffectivePercent" class="psl" style="font-family:ui-monospace,monospace">24.75%</span></div><div class="pst"><div id="profitStatusFill" class="psf" style="width:49.5%"></div></div><div class="muted" style="font-size:10px">Effective profit percentage • 20% minimum for bonus eligibility</div></div>
+        <div id="profitWarn" class="warn"></div>
+      </div>
+      <div style="margin-top:10px;background:#1e3a8a99;border:1px solid #1e40af;border-radius:16px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;gap:8px"><div><div style="color:#facc15;font-size:12px;font-weight:600">CUSTOMER QUOTE</div><div id="customerQuoteFormula" style="font-size:10px;color:#93c5fdb0">Internal cost + 24.75% profit</div></div><div id="customerQuote" class="font-display" style="font-size:32px;font-weight:800;color:#facc15">$0</div></div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <div class="sh">📊 Summary</div>
+      <div id="summary"></div>
+      <div style="display:flex;justify-content:space-between;align-items:end;margin-top:10px"><div><div class="muted">TOTAL PROJECT PRICE</div><div class="big" id="sumTotal">$0</div></div><div style="text-align:right"><div class="muted">Internal cost</div><div id="sumInternal" style="font-family:monospace;font-weight:700">$0</div></div></div>
+      <div id="sumOpts" style="margin-top:8px"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px">
+        <button class="btn yellow" type="button" onclick="openSheet()">📄 Customer Sheet</button>
+        <button class="btn primary" type="button" onclick="openSheet(true)">🖨 Print / PDF</button>
+        <button class="btn green" type="button" onclick="saveLocal()">💾 Save on device</button>
+        <button class="btn" type="button" onclick="saveToHistory()">☁ Save to History</button>
+        <button class="btn" type="button" style="grid-column:span 2" onclick="openSaved()">📂 Saved repair estimates</button>
+      </div>
+      <div id="saveNote" class="muted" style="margin-top:8px"></div>
+    </div>
+   </div>
+  </div>
+</div>
+<div class="sticky noprint"><div><div class="muted">Project price</div><div class="v" id="stickyTotal">$0</div></div><button class="btn yellow" type="button" onclick="openSheet()">📄 Sheet</button></div>
+<div class="modal" id="sheetModal"><div class="mbar"><button class="btn" type="button" onclick="closeModal('sheetModal')">✕ Close</button><button class="btn green" type="button" id="repairSheetSaveBtn" onclick="repairSheetSaveNow(true)">💾 Save Changes</button><button class="btn" type="button" id="repairEditRowsBtn" onclick="toggleRepairRowEdit()">✏ Edit Rows</button><button class="btn" type="button" onclick="sheetAddRow()">＋ Add Row</button><button class="btn" type="button" onclick="triggerSheetPhotoUpload(0)">📷 Picture</button><button class="btn" type="button" id="repairUndoBtn" onclick="undoSheetEdit()" style="display:none">↩ Undo</button><button class="btn primary" type="button" onclick="printRepairSheet()">🖨 Print</button><button class="btn primary" type="button" onclick="rsDownloadPdf(this)">⬇ Download PDF</button><input type="file" id="sheetQuickPhotoInput" accept="image/*" style="display:none" onchange="onSheetQuickPhoto(this)"><span class="muted" style="align-self:center">Tap any text, cell, or price on the sheet to edit.</span><span id="repairAutoPill" class="muted" style="align-self:center;font-weight:700"></span></div><div id="sheetHost"><div class="sheetScale" id="sheetScale"></div></div></div>
+<div class="modal" id="settingsModal"><div class="mbar"><button class="btn" type="button" onclick="closeModal('settingsModal');calc()">✓ Done</button><button class="btn" type="button" onclick="resetPrices()">Reset to example prices</button></div>
+ <div class="panel"><h2 class="font-display" style="margin:0 0 4px;color:#fff">PRICE TABLE (internal unit costs)</h2>
+ <div class="banner" style="margin-top:8px">These are EXAMPLE placeholder prices only. Replace every value with real costs. Saved on this device (localStorage).</div>
+ <table class="ptab" id="priceTable"></table></div></div>
+<div class="modal" id="savedModal"><div class="mbar"><button class="btn" type="button" onclick="closeModal('savedModal')">✕ Close</button></div><div class="panel" id="savedList"></div></div>
+<script>
+// ================= Supabase (same project, key and auth handling as estimator.html) =================
+const GARAGE_SB_URL='https://iomcekniylxfptswcxoi.supabase.co';
+const GARAGE_SB_KEY='sb_publishable_G_ZAnQ_CoJjWsn8-HgduLw_IziPWEmn';
+function makeOfflineSupabaseStub(){
+    const err={message:'Offline — the Supabase database library could not load.'};
+    const chain=(result)=>{const p=Promise.resolve(result);let proxy;proxy=new Proxy(function(){},{get(t,k){if(k==='then')return p.then.bind(p);if(k==='catch')return p.catch.bind(p);if(k==='finally')return p.finally.bind(p);return ()=>proxy;},apply(){return proxy;}});return proxy;};
+    const q=()=>chain({data:null,error:err,count:0});
+    const authRes={data:{user:null,session:null},error:err};
+    return {_offline:true,from:()=>q(),rpc:()=>q(),
+        storage:{from:()=>({upload:()=>q(),download:()=>q(),remove:()=>q(),list:()=>q(),createSignedUrl:()=>q(),getPublicUrl:()=>({data:{publicUrl:''}})})},
+        auth:new Proxy({},{get(t,k){if(k==='onAuthStateChange')return ()=>({data:{subscription:{unsubscribe(){}}}});return ()=>Promise.resolve(authRes);}}),
+        channel:()=>chain({}),removeChannel:()=>{}};
+}
+const garageSb=(function(){
+    try{ if(window.supabase && typeof window.supabase.createClient==='function'){
+        return window.supabase.createClient(GARAGE_SB_URL,GARAGE_SB_KEY,{auth:{persistSession:true,autoRefreshToken:true}}); } }
+    catch(e){ console.warn('Supabase client could not be created — running offline', e); }
+    window._agbOffline=true; return makeOfflineSupabaseStub();
+})();
+const AGB_OFFLINE_SAVE_MSG='Offline — database unavailable. Repair estimate NOT saved to History (saved on this device instead).';
+function agbWithTimeout(promise, ms, label){let t;return Promise.race([Promise.resolve(promise).finally(()=>clearTimeout(t)),new Promise((_,rej)=>{t=setTimeout(()=>rej(Object.assign(new Error((label||'Request')+' timed out'),{agbTimeout:true})),ms);})]);}
+function agbFriendlySaveError(err){
+    if(window._agbOffline) return 'You are offline — the database could not be reached. Saved on this device instead.';
+    const raw=String((err&&(err.message||err.error_description||err.details||err.hint))||err||'');
+    const code=String((err&&(err.code||err.status||err.statusCode))||'');const m=(raw+' '+code).toLowerCase();
+    if(err&&err.agbReason==='signin' || /jwt|token|expired|not authenticated|auth session|401|pgrst30[0-3]|refresh/.test(m)) return 'You are not signed in (or sign-in expired). Open the Dashboard in another tab, sign in, then press Save again.';
+    if(err&&err.agbTimeout || /timed? ?out|timeout|57014/.test(m)) return 'The save took too long. Wait a moment and try again.';
+    if(/payload|too large|413/.test(m)) return 'Too large to save (usually big photos). Try smaller photos.';
+    if(/failed to fetch|network|load failed|fetch|connection|offline|503|502|504/.test(m)) return 'Could not reach the database. Check the connection and try again.';
+    if(/permission|row-level|rls|42501|403|policy/.test(m)) return 'The database refused this save (permissions). Ask Sam or Ramsey.';
+    return 'The database did not accept the save'+(raw?' ('+raw.slice(0,140)+')':'')+'.';
+}
+async function agbEnsureSignedIn(){
+    if(window._agbOffline) throw Object.assign(new Error('offline'),{agbReason:'offline'});
+    let user=null;
+    try{
+        const sess=await agbWithTimeout(garageSb.auth.getSession(),15000,'Sign-in check');
+        const se=sess&&sess.data&&sess.data.session;
+        const expSoon=se && se.expires_at && (se.expires_at*1000 - Date.now() < 60000);
+        if(!se || expSoon){ try{ await agbWithTimeout(garageSb.auth.refreshSession(),15000,'Sign-in refresh'); }catch(e){} }
+        const u=await agbWithTimeout(garageSb.auth.getUser(),15000,'Sign-in check');
+        user=u&&u.data&&u.data.user||null;
+        if(!user && u && u.error && !/session|jwt|auth/i.test(String(u.error.message||''))) throw u.error;
+    }catch(e){ if(e && (e.agbTimeout || /fetch|network/i.test(String(e.message||'')))) throw e; }
+    if(!user) throw Object.assign(new Error('not signed in'),{agbReason:'signin'});
+    return user;
+}
+function estimatorStaffName(user, staffUsername){
+    const fromStaff=String(staffUsername||'').toLowerCase().trim(); if(fromStaff) return fromStaff;
+    const email=String(user&&user.email||''); return email.replace(/@absolute-garage\.local$/i,'').split('@')[0].toLowerCase().trim();
+}
+async function syncSignedInSalesman(){
+    try{
+        if(window._agbOffline) return;
+        const s=await agbWithTimeout(garageSb.auth.getSession(),8000,'Session'); const user=s&&s.data&&s.data.session&&s.data.session.user; if(!user) return;
+        let un=''; try{ const r=await garageSb.from('staff_profiles').select('username').eq('id',user.id).maybeSingle(); un=r.data?.username||''; }catch(e){}
+        const name=estimatorStaffName(user,un);
+        const sel=document.getElementById('salesman'); if(SALESMEN[name] && !window._hadDraft){ sel.value=name; calc(); }
+    }catch(e){}
+}
+// ================= Salesmen (same profiles as estimator.html) =================
+const SALESMEN={
+    ramsey:{name:'Ramsey Barakat',title:'Sales Manager',phone:'708-663-0197',email:'ramsey.barakat@outlook.com'},
+    sam:{name:'Sam Barakat',title:'Owner',phone:'708-351-6287',email:'samgarageman@yahoo.com'},
+    samer:{name:'Samer Barakat',title:'Sales Consultant',phone:'708-351-6287',email:'samgarageman@yahoo.com'},
+    wally:{name:'Wally B.',title:'Sales Manager/Consultant',phone:'708-205-2882',email:'wally.absolutegarages@gmail.com'},
+    tom:{name:'Tom',title:'Sales Consultant',phone:'708-334-9470',email:''},
+    tomb:{name:'Tom Bartyzel',title:'Sales Consultant',phone:'224-628-8710',email:'agbtombartyzel@gmail.com'}
+};
+// ================= ICONS (inline SVG line icons, consistent stroke) =================
+const IP={
+ post:'<rect x="9" y="4" width="6" height="16"/><path d="M7 3h10M7 21h10M12 7v10"/>',
+ jamb:'<path d="M5 21V3h14v18"/><path d="M8 21V6h8v15"/>',
+ weather:'<path d="M4 16L16 4l4 4L8 20z"/><path d="M7 13l4 4M10 10l4 4M13 7l4 4"/>',
+ jch:'<path d="M7 3v16h14"/><path d="M11 3v12h10"/>',
+ siding:'<rect x="3" y="4" width="18" height="16"/><path d="M3 8h18M3 12h18M3 16h18"/>',
+ roofframe:'<path d="M1 18L9 7l8 11"/><path d="M7 18l8-11 8 11"/><path d="M4 14h4M14 14h4"/>',
+ wallframe:'<rect x="3" y="4" width="18" height="16"/><path d="M3 9h18M3 13h18M3 17h18M8 4v16"/>',
+ soffit:'<path d="M2 5h20v4H2z"/><path d="M4 9v5l3-3M20 9v4M8 9v3M12 9v3M16 9v3"/>',
+ gutter:'<path d="M2 6h17v5H2z"/><path d="M16 11v9M13 20h6"/>',
+ permit:'<path d="M5 3h9l4 4v8"/><path d="M5 3v18h7"/><path d="M14 3v4h4M8 10h7M8 14h5"/><circle cx="17" cy="18" r="4"/><path d="M15.3 18l1.2 1.2 2.3-2.4"/>',
+ broom:'<path d="M21 3l-8 8"/><path d="M10 9l5 5-3 7H4l1-7z"/><path d="M7 21l1-4M10 21l1-3"/>',
+ shingles:'<path d="M1 12L12 3l11 9"/><path d="M4 10v10h16V10"/><path d="M4 14h16M4 17h16M8 14v3M12 14v3M16 14v3M10 17v3M14 17v3"/>',
+ decking:'<path d="M2 7h20v10H2z"/><path d="M2 12h20M9 7v5M15 12v5"/>',
+ sill:'<path d="M2 16h20v4H2z"/><path d="M6 16V4M12 16V4M18 16V4M3 4h18"/>',
+ curb:'<path d="M2 20h20"/><path d="M5 20v-7h14v7"/><path d="M5 13l2-3h10l2 3M9 20v-7M15 20v-7"/>',
+ raise:'<path d="M3 21h18M6 17h12"/><path d="M12 14V3M8 7l4-4 4 4"/>',
+ ohdoor:'<path d="M2 10l10-6 10 6v11H2z"/><path d="M6 21v-9h12v9M6 15h12M6 18h12"/>',
+ opener:'<rect x="4" y="3" width="16" height="7" rx="1"/><path d="M12 10v4M7 6.5h3"/><path d="M7 14h10l-2 6H9z"/>',
+ sdoor:'<path d="M6 21V3h12v18M3 21h18"/><circle cx="15" cy="12" r="1"/>',
+ window:'<rect x="4" y="3" width="16" height="18"/><path d="M12 3v18M4 12h16"/>',
+ crack:'<rect x="2" y="5" width="20" height="14"/><path d="M9 5l2 4-3 3 3 3-1 4"/>',
+ slab:'<path d="M2 15l5-6h15l-5 6z"/><path d="M2 15v4h15v-4M22 9v4l-5 6"/><path d="M9 9l-2 6M14 9l-2 6"/>',
+ apron:'<path d="M6 4h12l4 16H2z"/><path d="M12 4v16M4 12h16"/>',
+ mudjack:'<path d="M2 11h20v4H2z"/><path d="M7 19v-4M12 21v-6M17 19v-4"/><path d="M12 3v5M9 5l3-3 3 3"/>',
+ sidewalk:'<path d="M8 2L4 22M16 2l4 20M7 8h10M6 14h12"/>',
+ electric:'<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>',
+ paint:'<rect x="3" y="3" width="14" height="6" rx="1"/><path d="M17 6h3v6h-8v3"/><rect x="10.5" y="15" width="3" height="6"/>',
+ dumpster:'<path d="M3 9h18l-2 10H5z"/><path d="M2 9l3-4h14l3 4M7 19v2M17 19v2M9 12v4M15 12v4"/>',
+ trim:'<path d="M4 20V4h4v12h12v4z"/>',
+ custom:'<path d="M14.5 5.5a4 4 0 0 0 5 5L11 19l-3 1 1-3 8.5-8.5"/><path d="M4 4l5 5"/>',
+ check:'<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+ house:'<path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/>',
+ person:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.5 3.6-7 8-7s8 2.5 8 7"/>',
+ phone:'<path d="M5 3h4l2 5-3 2a11 11 0 0 0 6 6l2-3 5 2v4a2 2 0 0 1-2 2A17 17 0 0 1 3 5a2 2 0 0 1 2-2z"/>',
+ mail:'<rect x="3" y="5" width="18" height="14"/><path d="M3 6l9 7 9-7"/>',
+ pin:'<path d="M12 22s7-7 7-12a7 7 0 0 0-14 0c0 5 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/>',
+ globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>',
+ shield:'<path d="M12 2l8 3v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V5z"/><path d="M8 12l3 3 5-6"/>',
+ ribbon:'<circle cx="12" cy="9" r="6"/><circle cx="12" cy="9" r="3"/><path d="M8 14l-2 8 4-2 2 2M16 14l2 8-4-2-2 2"/>'
+};
+function icon(k,sw){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="'+(sw||1.7)+'" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(IP[k]||IP.custom)+'</svg>';}
+// ================= PRICE TABLE — EXAMPLE PLACEHOLDERS ONLY (not real prices) =================
+const DEFAULT_PRICES={
+ corner_post:['Corner post replace','each',120], door_jamb:['Door jamb replace (aluminum-wrapped)','each',175],
+ sill_lf:['Sill / bottom plate replace (treated)','lin ft',28], stud:['Sister / replace wall stud','each',65], top_plate_lf:['Double top plate replace','lin ft',18], sheath_sheet:['Wall sheathing (OSB 4x8) remove & replace','sheet',90],
+ rafter:['Sister rafter (2x6)','each',110], cross_tie:['New cross tie / collar tie','each',85], roof_straighten:['Roof sag repair / straighten (labor allowance)','job',900],
+ raise_flat:['Raise / level garage (jack & shim)','job',4500], curb_lf:['Concrete curb / knee wall (up to 2 ft high)','lin ft',85],
+ shingle_sq:['Tear-off & reshingle (arch. shingles, felt, ice & water)','square (100 sf)',450], extra_layer_sq:['Extra tear-off layer','square',75], deck_sheet:['Roof decking replace (OSB 4x8)','sheet',95],
+ siding_sf:['Vinyl siding remove & replace','sq ft',7.5], siding_reinstall_sf:['Reinstall existing siding','sq ft',3], jch_lf:['J-channel install','lin ft',6], trim_lf:['Trim / aluminum wrap','lin ft',10],
+ soffit_lf:['Aluminum soffit remove & replace','lin ft',16], fascia_lf:['Aluminum fascia remove & replace','lin ft',14], gutter_lf:['Seamless gutter (5")','lin ft',12], downspout:['Downspout','each',85],
+ paint_sf:['Exterior painting','sq ft',2.5],
+ oh_8x7:['Overhead door 8x7 (installed)','each',900], oh_9x7:['Overhead door 9x7 (installed)','each',950], oh_16x7:['Overhead door 16x7 (installed)','each',1450], oh_16x8:['Overhead door 16x8 (installed)','each',1650], oh_18x7:['Overhead door 18x7 (installed)','each',1750], oh_repair:['Overhead door repair (springs/rollers/cables)','job',275],
+ op_8500:['Opener LiftMaster 8500 wall-mount','each',725], op_belt:['Opener belt drive','each',550], op_chain:['Opener chain drive','each',450],
+ weather_lf:['Overhead door weather strip','lin ft',9],
+ sdoor:['Service door replace (pre-hung steel)','each',650], window:['Window replace','each',375],
+ crack_lf:['Concrete crack repair (rout & seal)','lin ft',12], slab_sf:['Slab section remove & replace','sq ft',14], apron_sf:['Apron remove & replace','sq ft',15], mudjack_sf:['Mudjacking / slab leveling','sq ft',6], sidewalk_sf:['Sidewalk remove & replace','sq ft',13],
+ outlet:['Outlet add / replace','each',125], light:['Light fixture add / replace','each',165], elec_service:['New electrical service / subpanel','job',2200],
+ dumpster:['Dumpster / haul-away','each',550], cleanup:['Cleanup labor','job',250], demo_flat:['Demo labor allowance','job',400]
+};
+let PRICES={};
+function loadPrices(){ PRICES={}; let saved={}; try{ saved=JSON.parse(localStorage.getItem('agb_repair_prices')||'{}')||{}; }catch(e){}
+  Object.keys(DEFAULT_PRICES).forEach(k=>{ const d=DEFAULT_PRICES[k]; const v=Number(saved[k]); PRICES[k]={label:d[0],unit:d[1],price:(saved[k]!=null&&saved[k]!==''&&Number.isFinite(v))?v:d[2]}; });
+  window._pricesCustomized=Object.keys(saved).some(k=>DEFAULT_PRICES[k] && Number(saved[k])!==DEFAULT_PRICES[k][2]);
+}
+const P=k=>(PRICES[k]?PRICES[k].price:0);
+// ================= REPAIR ITEMS (structure → roof → walls → doors/windows → concrete → electrical → permits → cleanup) =================
+const n=v=>{const x=parseFloat(v);return Number.isFinite(x)&&x>0?x:0;};
+const GROUPS=['Structure & framing','Roof','Walls, siding & trim','Doors & windows','Concrete','Electrical','Permits','Demo & cleanup'];
+const ITEMS=[
+ {id:'corner_posts',g:0,ic:'post',cat:'Corner posts',f:[{k:'qty',l:'How many',v:2}],
+  cost:f=>[['Corner posts',n(f.qty),'corner_post']], scope:f=>['Replace ('+n(f.qty)+') corner posts']},
+ {id:'door_jambs',g:0,ic:'jamb',cat:'Door jambs',f:[{k:'qty',l:'How many',v:2},{k:'mat',l:'Material',t:'sel',o:['aluminum','PVC','wood'],v:'aluminum'}],
+  cost:f=>[['Door jambs',n(f.qty),'door_jamb']], scope:f=>['Replace '+(n(f.qty)>2?'('+n(f.qty)+') ':'')+f.mat+' door jambs']},
+ {id:'sill',g:0,ic:'sill',cat:'Sill / bottom plate',f:[{k:'lf',l:'Lin ft',v:20},{k:'walls',l:'Which walls',t:'text',v:'north/south wall'}],
+  cost:f=>[['Bottom plate',n(f.lf),'sill_lf']], scope:f=>['Replace rotted treated bottom plate along '+(f.walls||'walls')+' as necessary ('+n(f.lf)+' lf)']},
+ {id:'wall_framing',g:0,ic:'wallframe',cat:'Wall framing & sheathing',f:[{k:'studs',l:'Studs to sister',v:4},{k:'sheets',l:'Sheathing sheets',v:0},{k:'tp',l:'Top plate lin ft',v:0},{k:'wall',l:'Wall',t:'text',v:'south wall'}],
+  cost:f=>[['Studs',n(f.studs),'stud'],['Sheathing',n(f.sheets),'sheath_sheet'],['Top plate',n(f.tp),'top_plate_lf']],
+  scope:f=>{const s=[];if(n(f.sheets))s.push('Remove existing sheathing on '+f.wall+' and replace with OSB');if(n(f.tp))s.push('Remove double top plate along '+f.wall+' and replace');if(n(f.studs))s.push('Sister 2 x 4 studs as necessary');return s;}},
+ {id:'roof_framing',g:0,ic:'roofframe',cat:'Roof framing repairs',f:[{k:'sag',l:'Roof sag repair',t:'sel',o:['yes','no'],v:'yes'},{k:'rafters',l:'Rafters to sister',v:2},{k:'ties',l:'New cross ties',v:3}],
+  cost:f=>[['Roof straighten',f.sag==='yes'?1:0,'roof_straighten'],['Rafters',n(f.rafters),'rafter'],['Cross ties',n(f.ties),'cross_tie']],
+  scope:(f,c)=>{const s=[];if(f.sag==='yes')s.push('Repair existing '+c.roof.toLowerCase()+' (roof sagging)');if(n(f.rafters))s.push('Sister 2 x 6 rafters as necessary');if(n(f.ties))s.push('Install '+n(f.ties)+' new 2 x 8 cross ties to secure wall');return s;}},
+ {id:'raise',g:0,ic:'raise',cat:'Garage raising / leveling',f:[{k:'qty',l:'Jobs (1 = whole garage)',v:1}],
+  cost:f=>[['Raise/level',n(f.qty),'raise_flat']], scope:()=>['Raise and level existing garage on existing slab','Shim and re-secure walls to foundation']},
+ {id:'curb',g:0,ic:'curb',cat:'Concrete curb / knee wall',f:[{k:'lf',l:'Lin ft',v:72},{k:'h',l:'Height (in)',v:12}],
+  cost:f=>[['Curb',n(f.lf),'curb_lf']], scope:f=>['Form and pour new '+n(f.h)+'" concrete curb / knee wall ('+n(f.lf)+' lf)','Re-anchor walls to new curb']},
+ {id:'reroof',g:1,ic:'shingles',cat:'Roof tear-off & reshingle',f:[{k:'sf',l:'Roof sq ft (0 = auto from size & pitch)',v:0},{k:'oh',l:'Overhang (in)',v:12},{k:'layers',l:'Layers to tear off',v:1}],
+  cost:(f,c)=>{const sq=c.roofSquares(f);return [['Reshingle '+sq.toFixed(1)+' sq',sq,'shingle_sq'],['Extra layers',sq*Math.max(0,n(f.layers)-1),'extra_layer_sq']];},
+  scope:(f,c)=>{const sq=c.roofSquares(f);return ['Tear off '+(n(f.layers)>1?n(f.layers)+' layers of ':'')+'existing shingles down to decking','Install ice & water shield, synthetic felt and drip edge','Install new architectural shingles (approx. '+Math.ceil(sq)+' squares)'];}},
+ {id:'decking',g:1,ic:'decking',cat:'Roof decking',f:[{k:'sheets',l:'Sheets (4x8)',v:6}],
+  cost:f=>[['Decking',n(f.sheets),'deck_sheet']], scope:f=>['Replace rotted roof decking with new OSB ('+n(f.sheets)+' sheets) as necessary']},
+ {id:'siding',g:2,ic:'siding',cat:'Siding',f:[{k:'mode',l:'Work',t:'sel',o:['remove & replace','reinstall existing'],v:'remove & replace'},{k:'sf',l:'Sq ft (0 = auto)',v:0},{k:'walls',l:'Walls',t:'sel',o:['all walls','front wall','rear wall','left wall','right wall','side walls'],v:'all walls'}],
+  cost:(f,c)=>{const sf=n(f.sf)||c.wallSf(f.walls);return [['Siding '+Math.round(sf)+' sf',sf,f.mode==='reinstall existing'?'siding_reinstall_sf':'siding_sf']];},
+  scope:f=>[f.mode==='reinstall existing'?'Reinstall existing vinyl siding':'Remove and replace vinyl siding on '+f.walls]},
+ {id:'front_siding',g:2,ic:'siding',cat:'Front wall siding',f:[{k:'sf',l:'Sq ft (0 = auto)',v:0}],
+  cost:(f,c)=>{const sf=n(f.sf)||c.wallSf('front wall');return [['Front siding',sf,'siding_sf']];}, scope:()=>['Remove and replace all vinyl siding on front wall']},
+ {id:'jchannel',g:2,ic:'jch',cat:'J-channel',f:[{k:'lf',l:'Lin ft',v:40}],
+  cost:f=>[['J-channel',n(f.lf),'jch_lf']], scope:()=>['Install new J-channel']},
+ {id:'trim',g:2,ic:'trim',cat:'Trim',f:[{k:'lf',l:'Lin ft',v:40}],
+  cost:f=>[['Trim',n(f.lf),'trim_lf']], scope:()=>['Wrap door / window trim with aluminum as necessary']},
+ {id:'soffit',g:2,ic:'soffit',cat:'Soffit & fascia',f:[{k:'lf',l:'Lin ft (0 = perimeter)',v:0},{k:'which',l:'Replace',t:'sel',o:['soffit & fascia','fascia only','soffit only'],v:'soffit & fascia'}],
+  cost:(f,c)=>{const lf=n(f.lf)||c.perim;return [['Soffit',f.which==='fascia only'?0:lf,'soffit_lf'],['Fascia',f.which==='soffit only'?0:lf,'fascia_lf']];},
+  scope:f=>['Remove and replace 8" aluminum '+f.which+' as necessary']},
+ {id:'gutters',g:2,ic:'gutter',cat:'Gutters',f:[{k:'lf',l:'Gutter lin ft (0 = auto)',v:0},{k:'ds',l:'Downspouts',v:2}],
+  cost:(f,c)=>[['Gutters',n(f.lf)||c.gutterLf,'gutter_lf'],['Downspouts',n(f.ds),'downspout']], scope:()=>['Remove existing gutters and replace with all new gutters']},
+ {id:'painting',g:2,ic:'paint',cat:'Painting',f:[{k:'sf',l:'Sq ft (0 = all walls)',v:0},{k:'what',l:'What',t:'text',v:'exterior walls & trim'}],
+  cost:(f,c)=>[['Painting',n(f.sf)||c.wallSf('all walls'),'paint_sf']], scope:f=>['Prep and paint '+f.what+' (2 coats)']},
+ {id:'ohdoor',g:3,ic:'ohdoor',cat:'Overhead door',f:[{k:'type',l:'Work',t:'sel',o:['replace','repair'],v:'replace'},{k:'size',l:'Size',t:'sel',o:['16x7','16x8','18x7','9x7','8x7'],v:'16x7'},{k:'qty',l:'Qty',v:1}],
+  cost:f=>[[f.type==='repair'?'Door repair':'OH door '+f.size,n(f.qty),f.type==='repair'?'oh_repair':'oh_'+f.size]],
+  scope:f=>[f.type==='repair'?'Service / repair existing overhead door (springs, rollers, cables as needed)':'Remove existing and install ('+n(f.qty)+') new '+f.size.replace('x',"' x ")+"' insulated steel overhead door"]},
+ {id:'opener',g:3,ic:'opener',cat:'Garage door opener',f:[{k:'model',l:'Model',t:'sel',o:['LiftMaster 8500 wall-mount','Belt drive','Chain drive'],v:'LiftMaster 8500 wall-mount'},{k:'qty',l:'Qty',v:1}],
+  cost:f=>[['Opener',n(f.qty),f.model.indexOf('8500')>=0?'op_8500':(f.model==='Belt drive'?'op_belt':'op_chain')]], scope:f=>['Install new '+f.model+' opener with remotes & keypad']},
+ {id:'weather',g:3,ic:'weather',cat:'Weather strip',f:[{k:'lf',l:'Lin ft',v:30}],
+  cost:f=>[['Weather strip',n(f.lf),'weather_lf']], scope:()=>['Install new weather strip']},
+ {id:'sdoor',g:3,ic:'sdoor',cat:'Service door',f:[{k:'qty',l:'Qty',v:1}],
+  cost:f=>[['Service door',n(f.qty),'sdoor']], scope:f=>['Remove and replace ('+n(f.qty)+') service door with new pre-hung steel door & lockset']},
+ {id:'windows',g:3,ic:'window',cat:'Windows',f:[{k:'qty',l:'Qty',v:1}],
+  cost:f=>[['Windows',n(f.qty),'window']], scope:f=>['Remove and replace ('+n(f.qty)+') window(s)']},
+ {id:'crack',g:4,ic:'crack',cat:'Concrete crack repair',f:[{k:'lf',l:'Lin ft',v:20}],
+  cost:f=>[['Crack repair',n(f.lf),'crack_lf']], scope:f=>['Rout and seal cracks in existing slab ('+n(f.lf)+' lf)']},
+ {id:'slab',g:4,ic:'slab',cat:'Slab section replace',f:[{k:'sf',l:'Sq ft',v:80}],
+  cost:f=>[['Slab section',n(f.sf),'slab_sf']], scope:f=>['Saw-cut, remove and replace damaged slab section (approx. '+n(f.sf)+' sf)']},
+ {id:'apron',g:4,ic:'apron',cat:'Apron',f:[{k:'sf',l:'Sq ft',v:100}],
+  cost:f=>[['Apron',n(f.sf),'apron_sf']], scope:f=>['Remove and replace concrete apron (approx. '+n(f.sf)+' sf)']},
+ {id:'mudjack',g:4,ic:'mudjack',cat:'Mudjacking / leveling',f:[{k:'sf',l:'Sq ft',v:100}],
+  cost:f=>[['Mudjacking',n(f.sf),'mudjack_sf']], scope:()=>['Mudjack / raise and level sunken concrete','Seal injection holes']},
+ {id:'sidewalk',g:4,ic:'sidewalk',cat:'Sidewalk',f:[{k:'sf',l:'Sq ft',v:60}],
+  cost:f=>[['Sidewalk',n(f.sf),'sidewalk_sf']], scope:f=>['Remove and replace concrete sidewalk (approx. '+n(f.sf)+' sf)']},
+ {id:'electrical',g:5,ic:'electric',cat:'Electrical',f:[{k:'outlets',l:'Outlets',v:2},{k:'lights',l:'Lights',v:2},{k:'service',l:'New service',t:'sel',o:['no','yes'],v:'no'}],
+  cost:f=>[['Outlets',n(f.outlets),'outlet'],['Lights',n(f.lights),'light'],['New service',f.service==='yes'?1:0,'elec_service']],
+  scope:f=>{const s=[];if(n(f.outlets))s.push('Add / replace ('+n(f.outlets)+') outlets');if(n(f.lights))s.push('Add / replace ('+n(f.lights)+') light fixtures');if(f.service==='yes')s.push('Install new electrical service to garage');return s;}},
+ {id:'permit',g:6,ic:'permit',cat:'Building permits',f:[{k:'fee',l:'Permit fee $ (added at cost, no markup)',v:150},{k:'txt',l:'Sheet text',t:'text',v:'As necessary'}],
+  permit:true, cost:()=>[], scope:f=>[f.txt||'As necessary']},
+ {id:'demo',g:7,ic:'dumpster',cat:'Demo & haul-away',f:[{k:'dump',l:'Dumpsters',v:1},{k:'demo',l:'Demo allowance',t:'sel',o:['no','yes'],v:'no'}],
+  cost:f=>[['Dumpster',n(f.dump),'dumpster'],['Demo',f.demo==='yes'?1:0,'demo_flat']], scope:()=>['Demo and haul away removed materials (dumpster provided)']},
+ {id:'cleanup',g:7,ic:'broom',cat:'Cleanup',f:[], cost:()=>[['Cleanup',1,'cleanup']], scope:()=>['Clean up all debris and haul away']}
+];
+const CONDITIONS=['Roof shingles','Roof decking / sag','Rafters / ceiling joists','Fascia / soffit','Gutters / downspouts','Siding','Corner posts / trim','Wall studs','Sill / bottom plate (rot)','Overhead door','Opener','Service door','Windows','Slab / floor','Apron','Curb / foundation','Electrical','Drainage / grading'];
+// ================= STATE / UI =================
+let S={};
+function defState(){const s={items:{},extras:[],photos:[{src:'',cap:'FRONT VIEW'},{src:'',cap:'REAR VIEW'}],damagePhotos:[],cond:{}};
+  ITEMS.forEach(it=>{const f={};it.f.forEach(x=>f[x.k]=x.v);s.items[it.id]={on:false,mode:'inc',f,ov:'',add:''};});return s;}
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const money=v=>'$'+Math.round(Number(v)||0).toLocaleString('en-US');
+const money2=v=>'$'+(Number(v)||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const FIELDS=['salesman','customerName','customerPhone','customerEmail','customerAddress','customerCity','gW','gD','roofStyle','pitch','showPill','profitMode','profitValue','exampleTag','insuranceJob','photoCount','damageNotes'];
+function renderItems(){
+  let h='',lastG=-1;
+  ITEMS.forEach(it=>{ if(it.g!==lastG){h+='<div class="grp">'+GROUPS[it.g]+'</div>';lastG=it.g;}
+    const st=S.items[it.id];
+    h+='<div class="item'+(st.on?' on':'')+'" id="it_'+it.id+'"><div class="ihead" onclick="toggleItem(\''+it.id+'\')"><div class="ico">'+icon(it.ic)+'</div><div class="nm">'+esc(it.cat)+'<small id="sm_'+it.id+'"></small></div><div class="chk">'+icon('check',3)+'</div></div><div class="ibody"><div class="f3">';
+    it.f.forEach(x=>{const v=st.f[x.k];const id='f_'+it.id+'_'+x.k;const on='setF(\''+it.id+'\',\''+x.k+'\',this.value)';
+      if(x.t==='sel') h+='<div><label class="l">'+esc(x.l)+'</label><select class="c" id="'+id+'" onchange="'+on+'">'+x.o.map(o=>'<option'+(o===v?' selected':'')+'>'+esc(o)+'</option>').join('')+'</select></div>';
+      else if(x.t==='text') h+='<div><label class="l">'+esc(x.l)+'</label><input class="c" id="'+id+'" value="'+esc(v)+'" oninput="'+on+'"></div>';
+      else h+='<div><label class="l">'+esc(x.l)+'</label><input class="c" type="number" inputmode="decimal" min="0" id="'+id+'" value="'+esc(v)+'" oninput="'+on+'"></div>';});
+    h+='<div><label class="l">On sheet as</label><select class="c" id="m_'+it.id+'" onchange="S.items[\''+it.id+'\'].mode=this.value;calc()"><option value="inc"'+(st.mode==='inc'?' selected':'')+'>Included in total ✔</option><option value="opt"'+(st.mode==='opt'?' selected':'')+'>Option (not in total)</option></select></div></div>';
+    h+='<label class="l" style="margin-top:8px">Scope lines on sheet (one per line — blank = automatic)</label><textarea class="c" id="ov_'+it.id+'" oninput="S.items[\''+it.id+'\'].ov=this.value;calc()">'+esc(st.ov)+'</textarea>';
+    h+='<label class="l" style="margin-top:6px">Extra bullet lines (separate with ;)</label><input class="c" id="ad_'+it.id+'" value="'+esc(st.add)+'" placeholder="e.g. Match existing color" oninput="S.items[\''+it.id+'\'].add=this.value;calc()">';
+    h+='<div class="icost" id="ic_'+it.id+'"></div></div></div>';});
+  $('items').innerHTML=h;
+}
+function toggleItem(id){S.items[id].on=!S.items[id].on;$('it_'+id).classList.toggle('on',S.items[id].on);calc();}
+function setF(id,k,v){S.items[id].f[k]=v;calc();}
+function renderExtras(){ $('extras').innerHTML=S.extras.map((e,i)=>'<div class="exrow custom-extra-row"><input class="c" placeholder="Description (shows on sheet)" value="'+esc(e.desc)+'" oninput="S.extras['+i+'].desc=this.value;calc()"><input class="c" type="number" inputmode="decimal" min="0" placeholder="'+(e.disp==='option'?'Customer price $':'Internal cost $')+'" value="'+esc(e.cost)+'" oninput="S.extras['+i+'].cost=this.value;calc()"><select class="c" onchange="S.extras['+i+'].disp=this.value;renderExtras();calc()"><option value="included"'+(e.disp!=='option'?' selected':'')+'>Included in Price</option><option value="option"'+(e.disp==='option'?' selected':'')+'>Option price (not in total)</option></select><button class="btn" type="button" onclick="S.extras.splice('+i+',1);renderExtras();calc()">✕</button></div>').join(''); }
+function addExtra(){S.extras.push({desc:'',cost:'',disp:'included'});renderExtras();calc();}
+function renderCond(){ $('condList').innerHTML=CONDITIONS.map((c,i)=>'<div class="cond"><span>'+esc(c)+'</span><select class="c" onchange="S.cond[CONDITIONS['+i+']]=this.value;saveDraft()">'+['—','Good','Fair','Poor','Replace'].map(o=>'<option'+((S.cond[c]||'—')===o?' selected':'')+'>'+o+'</option>').join('')+'</select></div>').join(''); }
+function photoCount(){const v=$('photoCount')?$('photoCount').value:'1';return v==='0'?0:(v==='2'?2:1);}
+function renderPhotos(){
+  const nPh=photoCount();
+  if(nPh===0){
+    $('sheetPhotos').innerHTML='<div class="muted" style="grid-column:1/-1;padding:10px;border:1px dashed #3f3f46;border-radius:12px;text-align:center">No picture will be shown on the repair estimate sheet. Change dropdown above or <button class="btn" type="button" style="min-height:32px;padding:4px 10px;font-size:12px;margin-left:6px" onclick="$(\'photoCount\').value=\'1\';renderPhotos();calc();saveDraft()">📷 Add a picture</button></div>';
+  } else {
+    $('sheetPhotos').innerHTML=S.photos.slice(0,nPh).map((p,i)=>'<div class="ph">'+(p.src?'<img src="'+p.src+'" alt="">':'<div class="empty" style="flex-direction:column;gap:4px;padding:8px;color:#a1a1aa"><span>📷 No picture selected</span><small style="font-size:11px;color:#71717a">Upload a picture or leave blank to show nothing on sheet</small></div>')+'<input type="file" accept="image/*" id="pf'+i+'" style="display:none" onchange="loadPhoto(this,'+i+')"><div style="display:flex;gap:4px;margin-top:6px"><button class="btn" type="button" style="flex:1;padding:6px" onclick="$(\'pf'+i+'\').click()">📷 '+(p.src?'Change picture':'Add picture')+'</button><button class="btn" type="button" style="flex:1;padding:6px" onclick="openRepairLibrary('+i+')">📚 Library</button>'+(p.src?'<button class="btn" type="button" title="Remove picture" style="padding:6px" onclick="removeSheetPhoto('+i+')">✕</button>':'')+'</div><select class="c" style="margin-top:6px" onchange="S.photos['+i+'].cap=this.value;invalidateSheetCache();calc()">'+['FRONT VIEW','REAR VIEW','DETAIL VIEW','LEFT SIDE VIEW','RIGHT SIDE VIEW'].map(o=>'<option'+(o===p.cap?' selected':'')+'>'+o+'</option>').join('')+'</select></div>').join('');
+  }
+  $('damagePhotos').innerHTML=S.damagePhotos.map((p,i)=>'<div class="ph"><img src="'+p.src+'" alt=""><input class="c" style="margin-top:6px" placeholder="Note" value="'+esc(p.note)+'" oninput="S.damagePhotos['+i+'].note=this.value;saveDraft()"><button class="btn" type="button" style="margin-top:6px;width:100%" onclick="S.damagePhotos.splice('+i+',1);renderPhotos();saveDraft()">Remove</button></div>').join('');
+}
+const LIBRARY_SEED=[
+  {id:'seed:garage-01',file:'garage-01.jpg',tags:{carSize:2,roof:'hip',ohDoors:1,doorStyle:'raised panel',color:'white',trim:'aluminum',offCenter:false,patio:false}},
+  {id:'seed:garage-02',file:'garage-02.jpg',tags:{carSize:2,roof:'gable',ohDoors:1,doorStyle:'raised panel w/ windows',color:'gray',trim:'aluminum',offCenter:false,patio:false}},
+  {id:'seed:garage-03',file:'garage-03.jpg',tags:{carSize:2.5,roof:'hip',ohDoors:2,doorStyle:'raised panel',color:'tan',trim:'aluminum',offCenter:false,patio:false}},
+  {id:'seed:garage-04',file:'garage-04.jpg',tags:{carSize:2,roof:'hip',ohDoors:1,doorStyle:'raised panel',color:'green',trim:'aluminum',offCenter:false,patio:false}},
+  {id:'seed:garage-05',file:'garage-05.jpg',tags:{carSize:2,roof:'hip',ohDoors:1,doorStyle:'raised panel',color:'red',trim:'aluminum',offCenter:false,patio:false}},
+  {id:'seed:garage-06',file:'garage-06.jpg',tags:{carSize:2,roof:'gable',ohDoors:1,doorStyle:'flush',color:'tan',trim:'aluminum',offCenter:false,patio:false}},
+  {id:'seed:garage-07',file:'garage-07.jpg',tags:{carSize:1,roof:'gable',ohDoors:1,doorStyle:'raised panel + service door',color:'white',trim:'aluminum',offCenter:true,patio:false}},
+  {id:'seed:garage-08',file:'garage-08.jpg',tags:{carSize:2,roof:'gable',ohDoors:1,doorStyle:'flush',color:'navy',trim:'aluminum',offCenter:false,patio:false}},
+  {id:'seed:garage-09',file:'garage-09.jpg',tags:{carSize:2,roof:'hip',ohDoors:1,doorStyle:'raised panel carriage',color:'green',trim:'wood',offCenter:false,patio:false}},
+  {id:'seed:garage-10',file:'garage-10.jpg',tags:{carSize:2,roof:'gable',ohDoors:0,doorStyle:'rear view (no overhead door)',color:'white',trim:'wood',offCenter:false,patio:true}},
+  {id:'seed:garage-11',file:'garage-11.jpg',tags:{carSize:1,roof:'gable',ohDoors:1,doorStyle:'raised panel + service door + window',color:'gray',trim:'aluminum',offCenter:true,patio:false}},
+  {id:'seed:garage-12',file:'garage-12.jpg',tags:{carSize:2,roof:'gable',ohDoors:1,doorStyle:'wood-look',color:'navy',trim:'wood',offCenter:false,patio:false}},
+  {id:'seed:garage-13',file:'garage-13.jpg',tags:{carSize:2,roof:'hip',ohDoors:0,doorStyle:'rear view (no overhead door)',color:'tan',trim:'aluminum',offCenter:false,patio:true}},
+  {id:'seed:garage-14',file:'garage-14.jpg',tags:{carSize:2,roof:'hip',ohDoors:1,doorStyle:'raised panel w/ windows',color:'tan',trim:'aluminum',offCenter:false,patio:false}},
+  {id:'seed:garage-15',file:'garage-15.jpg',tags:{carSize:2,roof:'hip',ohDoors:1,doorStyle:'flush black + service door',color:'white',trim:'aluminum',offCenter:true,patio:false}},
+  {id:'seed:garage-16',file:'garage-16.jpg',tags:{carSize:2.5,roof:'gable',ohDoors:2,doorStyle:'carriage black w/ windows',color:'white',trim:'wood',offCenter:false,patio:false}},
+  {id:'seed:garage-17',file:'garage-17.jpg',tags:{carSize:2,roof:'gable',ohDoors:0,doorStyle:'rear view (no overhead door)',color:'navy',trim:'wood',offCenter:false,patio:true}},
+  {id:'seed:garage-18',file:'garage-18.jpg',tags:{carSize:2,roof:'hip',ohDoors:1,doorStyle:'raised panel w/ windows',color:'brown',trim:'aluminum',offCenter:false,patio:false}},
+  {id:'seed:garage-19',file:'garage-19.jpg',tags:{carSize:2,roof:'gable',ohDoors:1,doorStyle:'flush',color:'red',trim:'aluminum',offCenter:true,patio:false}},
+  {id:'seed:garage-20',file:'garage-20.jpg',tags:{carSize:2,roof:'hip',ohDoors:2,doorStyle:'wood-look',color:'gray',trim:'wood',offCenter:false,patio:false}},
+  {id:'seed:garage-21',file:'garage-21.jpg',tags:{carSize:2,roof:'hip',ohDoors:0,doorStyle:'rear view (no overhead door)',color:'white',trim:'aluminum',offCenter:false,patio:true}},
+  {id:'seed:garage-22',file:'garage-22.jpg',tags:{carSize:2,roof:'gable',ohDoors:1,doorStyle:'carriage w/ arched windows',color:'green',trim:'aluminum',offCenter:false,patio:false}},
+  {id:'seed:garage-23',file:'garage-23.jpg',tags:{carSize:2,roof:'hip',ohDoors:1,doorStyle:'raised panel + service door',color:'tan',trim:'aluminum',offCenter:true,patio:false}},
+  {id:'seed:garage-24',file:'garage-24.jpg',tags:{carSize:2,roof:'gable',ohDoors:1,doorStyle:'raised panel w/ windows',color:'charcoal',trim:'aluminum',offCenter:false,patio:false}},
+  {id:'seed:garage-25',file:'garage-25.jpg',tags:{carSize:2,roof:'gable',ohDoors:0,doorStyle:'rear view (no overhead door)',color:'gray',trim:'wood',offCenter:false,patio:true}},
+  {id:'seed:garage-26',file:'garage-26.jpg',tags:{carSize:2,roof:'hip',ohDoors:1,doorStyle:'raised panel',color:'brown',trim:'aluminum',offCenter:false,patio:false}},
+  {id:'seed:garage-27',file:'garage-27.jpg',tags:{carSize:3,roof:'hip',ohDoors:3,doorStyle:'carriage black w/ windows',color:'gray',trim:'wood',offCenter:false,patio:false}},
+  {id:'seed:garage-28',file:'garage-28.jpg',tags:{carSize:2,roof:'gable',ohDoors:1,doorStyle:'black w/ windows + service door',color:'white',trim:'aluminum',offCenter:true,patio:false}}
+];
+/* ===== Photo library picker (same library as the estimator; picking only, no AI) ===== */
+const RL_TABLE='garage_photo_library', RL_LOCAL='agb_photo_library_local_v1';
+let rlSlot=0, rlEntries=[], rlSharedOk=null;
+function rlTags(){const c=ctx();const r=/Gable/.test(c.roof)?'gable':/Hip/.test(c.roof)?'hip':'';const W=c.W;return {carSize:W<=14?1:(W<=24?2:(W<30?2.5:3)),roof:r,patio:false};}
+function rlScore(t,cur){t=t||{};if(t.carSize==null)return null;if(Number(t.carSize)!==Number(cur.carSize))return null;if(!!t.patio!==!!cur.patio)return null;let sc=0;if(cur.roof&&String(t.roof||'').toLowerCase()===cur.roof)sc+=40;else if(cur.roof==='gable'&&/gable/.test(t.roof||''))sc+=15;if(t.ohDoors>0)sc+=5;return sc;}
+function rlLocal(){try{return JSON.parse(localStorage.getItem(RL_LOCAL))||[]}catch(e){return []}}
+async function rlShared(){try{if(window._agbOffline||!garageSb||garageSb._offline){rlSharedOk=false;return []}const {data,error}=await garageSb.from(RL_TABLE).select('id,thumb_data,image_url,tags,deleted').eq('deleted',false).order('created_at',{ascending:false}).limit(200);if(error){rlSharedOk=false;return []}rlSharedOk=true;return data||[]}catch(e){rlSharedOk=false;return []}}
+function rlEnsure(){let m=$('rlModal');if(m)return m;m=document.createElement('div');m.id='rlModal';m.className='modal';m.innerHTML='<div class="mbar"><button class="btn" type="button" onclick="closeModal(\'rlModal\')">✕ Close</button><span class="muted" id="rlNote" style="align-self:center"></span></div><div class="panel"><div id="rlGrid" class="rl-grid"></div></div>';document.body.appendChild(m);return m;}
+function rlCard(e){const t=e.tags||{};const bits=[t.carSize?t.carSize+'-car':'',t.roof,t.color,t.ohDoors?t.ohDoors+' door'+(t.ohDoors>1?'s':''):'',t.doorStyle,t.trim?t.trim+' trim':'',t.offCenter?'off-center':'',t.patio?'rear patio':''].filter(Boolean).map(esc).join(' · ');
+  const sel=(S.photos[rlSlot]||{}).libId===e.id;return '<div class="rl-card'+(sel?' rl-sel':'')+'" data-id="'+esc(e.id)+'"><img alt="" decoding="async" src="'+esc(e.thumb||e.src)+'"><div class="rl-tags"><b>'+esc(e.kind)+'</b> '+bits+'</div></div>';}
+async function openRepairLibrary(slot){rlSlot=slot;const m=rlEnsure();m.classList.add('open');$('rlNote').textContent='Loading photos…';
+  const shared=await rlShared();
+  rlEntries=[].concat(LIBRARY_SEED.map(p=>({id:p.id,kind:'Approved',src:new URL('library/'+p.file,document.baseURI).href,thumb:new URL('library/thumbs/'+p.file,document.baseURI).href,tags:p.tags})),
+    shared.map(r=>({id:r.id,kind:'AI library',thumb:r.thumb_data||r.image_url,src:'',tags:r.tags||{}})),
+    rlLocal().map(r=>({id:r.id,kind:'AI (this device)',thumb:r.thumb_data||r.image_data,src:r.image_data||r.image_url,tags:r.tags||{}})));
+  const cur=rlTags();const rec=rlEntries.map(e=>({e,sc:rlScore(e.tags,cur)})).filter(x=>x.sc!=null).sort((a,b)=>b.sc-a.sc).slice(0,8);
+  $('rlNote').textContent='Photo '+(slot+1)+' — tap a photo to put it on the sheet'+(rlSharedOk?'':' · shared AI library not available, showing approved photos and this device');
+  $('rlGrid').innerHTML='<div class="rl-sec">Recommended for this repair ('+cur.carSize+'-car'+(cur.roof?' · '+cur.roof:'')+')</div>'+(rec.length?rec.map(x=>rlCard(x.e)).join(''):'<div class="muted">No close matches — pick from all photos below.</div>')+'<div class="rl-sec">All photos</div>'+rlEntries.map(rlCard).join('');
+  $('rlGrid').querySelectorAll('.rl-card').forEach(el=>el.addEventListener('click',()=>rlPick(el.getAttribute('data-id'))));}
+async function rlPick(id){const e=rlEntries.find(x=>x.id===id);if(!e)return;let src=e.src;
+  if(!src){try{const {data}=await garageSb.from(RL_TABLE).select('image_data,image_url').eq('id',id).maybeSingle();src=(data&&(data.image_data||data.image_url))||''}catch(_){}}
+  if(!src){toast('Could not load that photo.',true);return;}
+  if($('photoCount')&&$('photoCount').value==='0')$('photoCount').value='1';
+  S.photos[rlSlot]=Object.assign({},S.photos[rlSlot]||{cap:rlSlot?'REAR VIEW':'FRONT VIEW'},{src,libId:id});
+  closeModal('rlModal');invalidateSheetCache();renderPhotos();calc();if($('sheetModal').classList.contains('open'))refreshSheetPhotosInDom();saveDraft();}
+function shrink(file,max){return new Promise(res=>{const r=new FileReader();r.onload=()=>{const img=new Image();img.onload=()=>{const sc=Math.min(1,max/Math.max(img.width,img.height));const c=document.createElement('canvas');c.width=Math.round(img.width*sc);c.height=Math.round(img.height*sc);c.getContext('2d').drawImage(img,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',.8));};img.onerror=()=>res('');img.src=r.result;};r.readAsDataURL(file);});}
+async function loadPhoto(inp,i){const f=inp.files&&inp.files[0];if(!f)return;if($('photoCount')&&$('photoCount').value==='0')$('photoCount').value=i>=1?'2':'1';S.photos[i].src=await shrink(f,1200);S.photos[i].libId='';inp.value='';invalidateSheetCache();renderPhotos();calc();if($('sheetModal').classList.contains('open'))refreshSheetPhotosInDom();saveDraft();}
+function removeSheetPhoto(i){if(!S.photos[i])return;S.photos[i].src='';S.photos[i].libId='';invalidateSheetCache();renderPhotos();calc();if($('sheetModal').classList.contains('open'))refreshSheetPhotosInDom();saveDraft();}
+let _sheetPhotoSlot=0;
+function triggerSheetPhotoUpload(slot){
+  const nPh=photoCount();
+  if(typeof slot==='number') _sheetPhotoSlot=slot;
+  else {
+    const active=(S.photos||[]).slice(0,Math.max(1,nPh));
+    _sheetPhotoSlot=(active[0]&&active[0].src&&nPh===2&&!(active[1]&&active[1].src))?1:0;
+  }
+  const inp=$('sheetQuickPhotoInput');if(inp)inp.click();
+}
+async function onSheetQuickPhoto(inp){
+  const f=inp.files&&inp.files[0];if(!f)return;
+  const slot=_sheetPhotoSlot||0;
+  if($('photoCount')&&$('photoCount').value==='0')$('photoCount').value=slot>=1?'2':'1';
+  if(!S.photos[slot])S.photos[slot]={src:'',cap:slot?'REAR VIEW':'FRONT VIEW'};
+  S.photos[slot].src=await shrink(f,1200);S.photos[slot].libId='';inp.value='';
+  invalidateSheetCache();renderPhotos();calc();
+  if($('sheetModal').classList.contains('open')){refreshSheetPhotosInDom();repairSheetSaveNow(true);}
+}
+function invalidateSheetCache(){S.sheet_sig='';}
+async function addDamagePhotos(inp){for(const f of Array.from(inp.files||[])){const s=await shrink(f,1000);if(s)S.damagePhotos.push({src:s,note:''});}inp.value='';renderPhotos();saveDraft();}
+// ================= CALCULATION =================
+function ctx(){
+  const W=n($('gW').value)||20,D=n($('gD').value)||20,h=8,roof=$('roofStyle').value;
+  return {W,D,roof,perim:2*(W+D),gutterLf:/Hip/.test(roof)?2*(W+D):2*D,
+    wallSf:w=>{const front=W*h,side=D*h;return (w==='front wall'||w==='rear wall')?front:(w==='left wall'||w==='right wall')?side:w==='side walls'?2*side:2*front+2*side;},
+    roofSquares:f=>{const sf=n(f.sf);if(sf)return sf/100*1.1;const o=(Number(f.oh)||0)/12;return (W+2*o)*(D+2*o)*(Number($('pitch').value)||1)/100*1.1;}};
+}
+function profitOf(internal,permit){
+  const mode=$('profitMode').value;let v=parseFloat($('profitValue').value);if(!Number.isFinite(v)||v<0)v=0;
+  let profit=0,quote=internal;
+  // Same three modes as the estimator. "total" = the exact price on the sheet (permit is inside it).
+  if(mode==='total'){quote=v-(permit||0);profit=quote-internal;}else if(mode==='amount'){profit=v;quote=internal+v;}else{profit=internal*v/100;quote=internal+profit;}
+  return {mode,v,profit,quote};
+}
+function compute(){
+  const c=ctx();const R={rows:[],opts:[],internal:0,permit:0};
+  ITEMS.forEach(it=>{const st=S.items[it.id];if(!st.on)return;
+    let cost=0;const ls=[];
+    it.cost(st.f,c).forEach(([lb,q,k])=>{if(!q)return;const a=q*P(k);cost+=a;ls.push({lb,q,k,a});});
+    const permit=it.permit?n(st.f.fee):0;
+    let scope=(st.ov||'').trim()?st.ov.split(/\n+/).map(s=>s.trim()).filter(Boolean):it.scope(st.f,c);
+    if((st.add||'').trim()) scope=scope.concat(st.add.split(/;|\n/).map(s=>s.trim()).filter(Boolean));
+    const row={id:it.id,ic:it.ic,cat:it.cat,scope,cost,permit,ls,opt:st.mode==='opt'};
+    if(row.opt) R.opts.push(row); else {R.rows.push(row);R.internal+=cost;R.permit+=permit;}
+  });
+  S.extras.forEach(e=>{const v=n(e.cost);if(!(e.desc||'').trim()&&!v)return;const opt=e.disp==='option';
+    const row={id:'x',ic:'custom',cat:opt?'Option':'Additional work',scope:[e.desc||'Custom item'],cost:opt?0:v,permit:0,ls:[{lb:e.desc||'Custom',q:1,k:'',a:v}],opt,custPrice:opt?v:null};
+    if(opt) R.opts.push(row); else {R.rows.push(row);R.internal+=v;}});
+  const pf=profitOf(R.internal,R.permit);R.pf=pf;
+  R.total=pf.mode==='total'?Math.round(pf.v):Math.round(pf.quote+R.permit);
+  const ratio=R.internal>0?pf.quote/R.internal:(1+(pf.mode==='percent'?pf.v/100:0.2475));
+  R.opts.forEach(o=>{o.price=Math.round(o.custPrice!=null?o.custPrice:o.cost*ratio+o.permit);});
+  R.c=c;return R;
+}
+let LAST=null;
+function calc(){
+  const R=compute();LAST=R;
+  ITEMS.forEach(it=>{const el=$('ic_'+it.id),sm=$('sm_'+it.id);
+    const row=R.rows.concat(R.opts).find(r=>r.id===it.id);
+    if(el) el.textContent=row?('Internal cost '+money2(row.cost)+(row.permit?' + permit '+money2(row.permit):'')+(row.opt?' • OPTION (not in total)':'')+(row.ls.length?' — '+row.ls.map(l=>l.lb+': '+(+l.q.toFixed(2))+' × '+money2(P(l.k))).join('; '):'')):'';
+    if(sm) sm.textContent=row?(row.scope[0]||''):'';});
+  let h='';R.rows.forEach(r=>{h+='<div class="sumline"><span>✔ '+esc(r.cat==='Additional work'?r.scope[0]:r.cat)+'</span><span>'+money2(r.cost)+'</span></div>';});
+  if(!R.rows.length) h='<div class="muted">No repair items selected yet.</div>';
+  h+='<div class="sumline" style="font-weight:700"><span>Internal subtotal</span><span>'+money2(R.internal)+'</span></div>';
+  h+='<div class="sumline"><span>Profit / markup'+(R.pf.mode==='percent'?' ('+R.pf.v+'%)':'')+'</span><span>'+money2(R.pf.profit)+'</span></div>';
+  if(R.permit) h+='<div class="sumline"><span>Permit fee (at cost)</span><span>'+money2(R.permit)+'</span></div>';
+  $('summary').innerHTML=h;
+  $('sumTotal').textContent=money(R.total);$('stickyTotal').textContent=money(R.total);$('sumInternal').textContent=money2(R.internal);
+  $('sumOpts').innerHTML=R.opts.length?'<div class="muted" style="margin-top:6px">OPTIONS (not in total)</div>'+R.opts.map(o=>'<div class="sumline"><span>'+esc(o.cat==='Option'?o.scope[0]:o.cat)+'</span><span>'+money(o.price)+'</span></div>').join(''):'';
+  $('profitWarn').textContent=(R.internal>0&&R.pf.profit<0)?'⚠ Project price is below internal cost.':'';
+  updateProfitUI(R);
+  saveDraft();
+  return R;
+}
+// ===== Profit control — same behavior as estimator.html (mode convert, slider sync, bonus status) + quick-edit boxes =====
+function fmt2(v){return (Number(v)||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function updateProfitUI(R){
+  $('internalTotal').textContent='$'+fmt2(R.internal);$('customerQuote').textContent=money(R.total);
+  $('profitAppliedDisplay').textContent=(R.pf.profit<0?'-$':'+$')+fmt2(Math.abs(R.pf.profit));
+  const txt=R.pf.mode==='total'?'Customer project price locked at $'+fmt2(R.pf.v):R.pf.mode==='amount'?'Internal cost + $'+fmt2(R.pf.profit)+' profit':'Internal cost + '+R.pf.v.toLocaleString('en-US',{maximumFractionDigits:2})+'% profit';
+  $('customerQuoteFormula').textContent=txt+(R.permit&&R.pf.mode!=='total'?' + permit':'');$('profitFormula').textContent=R.pf.mode==='total'?'Total project price $'+fmt2(R.pf.v):txt;
+  const eff=R.internal>0?R.pf.profit/R.internal*100:0, ok=eff>=20;
+  $('profitStatus').classList.toggle('eligible',ok);$('profitStatus').classList.toggle('ineligible',!ok);
+  $('profitStatusLabel').textContent=ok?'BONUS ELIGIBLE':'NOT ELIGIBLE FOR BONUS';$('profitEffectivePercent').textContent=fmt2(eff)+'%';
+  $('profitStatusFill').style.width=Math.max(0,Math.min(100,eff*2)).toFixed(2)+'%';
+  $('profitSlider').classList.toggle('ineligible',!ok);
+  const a=document.activeElement;
+  if(a!==$('qPct'))$('qPct').value=(Math.round(eff*100)/100);
+  if(a!==$('qAmt'))$('qAmt').value=Math.round(R.pf.profit);
+  if(a!==$('qTot'))$('qTot').value=R.total;
+  if(a!==$('profitSlider'))syncProfitSliderToValue();
+}
+function syncProfitSliderToValue(){
+  const mode=$('profitMode').value,valueEl=$('profitValue'),slider=$('profitSlider');
+  const value=Math.max(0,parseFloat(valueEl.value)||0);
+  if(mode==='percent'){slider.min='0';slider.step='0.25';slider.max=String(Math.max(100,Math.ceil(value/10)*10||100));}
+  else{slider.min='0';slider.step=mode==='total'?'50':'50';const internal=(LAST&&LAST.internal)||5000;
+    slider.max=String(Math.max(mode==='total'?internal*2:internal,10000,Math.ceil(value/5000)*5000));}
+  slider.value=String(Math.min(Math.max(value,parseFloat(slider.min)),parseFloat(slider.max)));
+}
+function setModeUI(mode){const value=$('profitValue');
+  if(mode==='amount'){value.step='100';$('profitValueLabel').textContent='PROFIT AMOUNT ($)';$('profitUnit').textContent='$';}
+  else if(mode==='total'){value.step='100';$('profitValueLabel').textContent='TOTAL PROJECT PRICE ($)';$('profitUnit').textContent='$';}
+  else{value.step='0.25';$('profitValueLabel').textContent='PROFIT %';$('profitUnit').textContent='%';}
+  value.dataset.prevMode=mode;}
+function onProfitModeChange(){
+  const mode=$('profitMode').value,value=$('profitValue');
+  const internal=(LAST&&LAST.internal)||0,permit=(LAST&&LAST.permit)||0;
+  const current=parseFloat(value.value)||0,prev=value.dataset.prevMode||'percent';
+  // convert the current number into the new mode so the price does not jump
+  let profit=prev==='percent'?internal*current/100:prev==='amount'?current:(current-permit-internal);
+  if(mode==='amount') value.value=Math.max(0,profit).toFixed(2);
+  else if(mode==='total') value.value=Math.max(0,internal+profit+permit).toFixed(2);
+  else value.value=(internal>0?Math.max(0,profit/internal*100):24.75).toFixed(2);
+  setModeUI(mode);syncProfitSliderToValue();calc();
+}
+function onProfitValueInput(){syncProfitSliderToValue();calc();}
+function onProfitSliderInput(){$('profitValue').value=$('profitSlider').value;calc();}
+// Quick-edit: type profit %, profit $ or the total price directly — switches mode to match and everything else syncs.
+function onQuickEdit(mode,raw){const v=parseFloat(String(raw).replace(/[$,\s]/g,''));if(!Number.isFinite(v))return calc();
+  $('profitMode').value=mode;$('profitValue').value=String(Math.max(mode==='amount'?-1e12:0,v));setModeUI(mode);if(document.activeElement)document.activeElement.blur();syncProfitSliderToValue();calc();}
+function onProfitMode(){setModeUI($('profitMode').value);syncProfitSliderToValue();calc();}
+// ================= CUSTOMER SHEET =================
+// Logo: same garage mark geometry as estimator.html's sheet logo, recolored black/orange for the white header.
+const LOGO='<svg viewBox="0 0 160 130" aria-hidden="true"><polyline points="12,55 80,10 148,55" fill="none" stroke="#111" stroke-width="11"/><polyline points="25,56 25,120 135,120 135,56" fill="none" stroke="#111" stroke-width="7"/><polyline points="36,56 80,27 124,56" fill="none" stroke="#F5A623" stroke-width="6"/><rect x="40" y="57" width="80" height="63" fill="none" stroke="#F5A623" stroke-width="6"/><rect x="47" y="64" width="66" height="56" fill="#111"/><g stroke="#fff" stroke-width="2.5"><line x1="47" y1="78" x2="113" y2="78"/><line x1="47" y1="92" x2="113" y2="92"/><line x1="47" y1="106" x2="113" y2="106"/><line x1="69" y1="64" x2="69" y2="120"/><line x1="91" y1="64" x2="91" y2="120"/></g></svg>';
+// Photo rendering on the repair estimate sheet:
+// Never renders a fake/cartoon garage placeholder. If picture(s) are provided, renders them with editable captions and on-screen Replace/Remove buttons.
+// If no picture is provided, renders nothing in print/PDF and a compact non-printing "Add picture" bar on screen.
+function buildSheetPhotosBlock(){
+  const nPh=photoCount();
+  const ex=$('exampleTag')&&$('exampleTag').checked;
+  const ce=(t,attr)=>'<span contenteditable="true"'+(attr?' '+attr:'')+'>'+t+'</span>';
+  const active=(S.photos||[]).slice(0,nPh).map((p,idx)=>({p,idx})).filter(x=>x.p&&x.p.src);
+  if(!active.length){
+    return '<div id="sheetPhotoSection" class="noprint"><div class="rs-nophoto-bar"><span>📷 No picture on this sheet (prints without a picture).</span><span style="display:flex;gap:6px"><button type="button" class="rs-rt-btn" onclick="triggerSheetPhotoUpload(0)">＋ Upload / Take Picture</button><button type="button" class="rs-rt-btn" onclick="openRepairLibrary(0)">📚 Pick from Library</button></span></div></div>';
+  }
+  const cards=active.map(({p,idx})=>'<div class="rs-photo" data-photo-slot="'+idx+'"><img src="'+esc(p.src)+'" alt=""><div class="rs-ph-tools noprint"><button type="button" class="rs-ph-btn" onclick="triggerSheetPhotoUpload('+idx+')">📷 Change</button><button type="button" class="rs-ph-btn" onclick="openRepairLibrary('+idx+')">📚 Library</button><button type="button" class="rs-ph-btn" onclick="removeSheetPhoto('+idx+')">✕ Remove</button></div><div class="rs-cap">'+ce(esc(p.cap||'FRONT VIEW'),'data-photo-cap="'+idx+'"')+(ex?'<small contenteditable="true">(EXAMPLE PHOTO - STYLE MAY VARY)</small>':'')+'</div></div>').join('');
+  const addSecond=(nPh===2&&active.length===1)?'<div class="noprint" style="grid-column:1/-1;text-align:right;padding-top:2px"><button type="button" class="rs-rt-btn" onclick="triggerSheetPhotoUpload(1)">＋ Add 2nd Picture</button> <button type="button" class="rs-rt-btn" onclick="openRepairLibrary(1)">📚 2nd from Library</button></div>':'';
+  return '<div id="sheetPhotoSection"><div class="rs-photos'+(active.length===1?' one':'')+'">'+cards+'</div>'+addSecond+'</div>';
+}
+function refreshSheetPhotosInDom(){
+  const sec=$('sheetPhotoSection');
+  if(sec){
+    sec.outerHTML=buildSheetPhotosBlock();
+    updateOptNoteVisibility();
+    fitSheet();
+    repSched(200);
+  }
+}
+function rowToolsHtml(){
+  return '<div class="rs-row-tools noprint"><button type="button" class="rs-rt-btn" data-act="bullet" title="Add bullet line">+ Bullet</button><button type="button" class="rs-rt-btn" data-act="row" title="Add row below">+ Row</button><button type="button" class="rs-rt-btn" data-act="mode" title="Toggle Included / Option">✔/Opt</button><button type="button" class="rs-rt-btn del" data-act="del" title="Delete row">✕</button></div>';
+}
+function buildSheet(R){
+  const sm=SALESMEN[$('salesman').value]||SALESMEN.ramsey;
+  const v=id=>esc($(id).value.trim());
+  const showPill=$('showPill').value==='1';
+  const ce=(t,attr)=>'<span contenteditable="true"'+(attr?' '+attr:'')+'>'+t+'</span>';
+  const chk='<span class="bchk">'+icon('check',3.2)+'</span>';
+  const catCell=r=>'<td class="cat"><div class="rs-cat">'+icon(r.ic||'custom',1.6)+ce(esc(r.cat))+'</div></td>';
+  const ul=r=>'<td><ul>'+(r.scope&&r.scope.length?r.scope:['Describe the repair work']).map(s=>'<li>'+ce(esc(s))+'</li>').join('')+'</ul></td>';
+  const rowsHtml=R.rows.map(r=>'<tr class="inc-row" data-item-id="'+esc(r.id||'')+'">'+catCell(r)+ul(r)+'<td class="inc"><div class="rs-inc-wrap">'+chk+'</div>'+rowToolsHtml()+'</td></tr>').join('')
+   + R.opts.map(o=>'<tr class="optrow" data-item-id="'+esc(o.id||'')+'">'+catCell(o)+ul(o)+'<td class="inc"><div class="rs-inc-wrap"><span class="optlbl" contenteditable="true">OPTION</span><div class="optp sheet-opt-price" contenteditable="true">'+money(o.price)+'</div></div>'+rowToolsHtml()+'</td></tr>').join('');
+  const defaultRow='<tr class="inc-row" data-item-id="custom"><td class="cat"><div class="rs-cat">'+icon('custom',1.6)+ce('REPAIR WORK')+'</div></td><td><ul><li>'+ce('Tap to describe repair scope and materials')+'</li></ul></td><td class="inc"><div class="rs-inc-wrap">'+chk+'</div>'+rowToolsHtml()+'</td></tr>';
+  const phoneVal=v('customerPhone'), emailVal=v('customerEmail');
+  return '<div class="rs" id="repairSheet"><div class="rs-in" id="rsIn">'
+  +'<div class="rs-top"><div class="rs-logo">'+LOGO+'<div><div class="rs-abs" contenteditable="true">ABSOLUTE</div><div class="rs-gb" contenteditable="true">– GARAGE BUILDERS –</div><div class="rs-tag" contenteditable="true">QUALITY GARAGES. STRONGER COMMUNITIES.</div></div></div>'
+  +'<div class="rs-contact"><div class="r">'+icon('pin',2)+'<span contenteditable="true">3050 W. Irving Park Rd.<br>Chicago, IL 60618</span></div><div class="r">'+icon('phone',2)+'<span contenteditable="true">(773) 583-8800</span></div><div class="r">'+icon('globe',2)+'<span contenteditable="true">www.absolutegaragebuilders.com</span></div><div class="rs-lic"><span contenteditable="true">LICENSE NUMBER:</span><b contenteditable="true">TGC068760</b></div></div></div>'
+  +'<div class="rs-band"><div class="rs-bc"><div class="rs-circ">'+icon('house',2.2)+'</div><div style="min-width:0;flex:1"><div class="rs-bl" contenteditable="true">PROJECT ADDRESS:</div><div class="rs-bv">'+ce(v('customerAddress'),'data-bind="customerAddress" data-ph="Street Address"')+'<br>'+ce(v('customerCity'),'data-bind="customerCity" data-ph="City, State ZIP"')+'</div></div></div>'
+  +'<div class="rs-bc"><div class="rs-circ">'+icon('person',2.2)+'</div><div style="min-width:0;flex:1"><div class="rs-bl" contenteditable="true">CUSTOMER NAME:</div><div class="rs-bv">'+ce(v('customerName'),'data-bind="customerName" data-ph="Customer Name"')+'</div><div class="rs-bs'+(phoneVal?'':' noprint')+'">'+icon('phone',2)+ce(phoneVal,'data-bind="customerPhone" data-ph="Phone"')+'</div><div class="rs-bs'+(emailVal?'':' noprint')+'">'+icon('mail',2)+ce(emailVal,'data-bind="customerEmail" data-ph="Email"')+'</div></div></div>'
+  +'<div class="rs-bc"><div class="rs-sales"><div class="rs-bl" contenteditable="true">SALESMAN:</div><div class="rs-bv" style="font-size:16px">'+ce(esc(sm.name),'data-bind-salesman="name"')+'</div>'+(sm.phone?'<div class="rs-bs">'+icon('phone',2)+ce(esc(sm.phone),'data-bind-salesman="phone"')+'</div>':'')+(sm.email?'<div class="rs-bs">'+icon('mail',2)+ce(esc(sm.email),'data-bind-salesman="email"')+'</div>':'')+'</div></div></div>'
+  +'<div class="rs-title"><h1>'+ce('REPAIR ESTIMATE')+'</h1><div class="rs-sub">'+ce('REPAIR OF EXISTING GARAGE')+'</div>'+($('insuranceJob')&&$('insuranceJob').checked?'<div class="rs-insurance" contenteditable="true" style="margin:6px auto 0;display:inline-block;border:2px solid #b91c1c;color:#b91c1c;background:#fef2f2;font-weight:800;font-size:15px;padding:4px 14px;border-radius:6px;-webkit-print-color-adjust:exact;print-color-adjust:exact">This estimate is prepared for insurance purposes.</div>':'')+'</div>'
+  +(showPill?'<div class="rs-pillw"><span class="rs-pill" contenteditable="true">'+R.c.W+'’ x '+R.c.D+'’ EXISTING GARAGE<br>'+esc(R.c.roof)+'</span></div>':'')
+  +buildSheetPhotosBlock()
+  +'<div class="rs-std"><span class="ck">'+icon('check',3.2)+'</span>'+ce('All work will be completed in accordance with industry standards and local building codes.')+'</div>'
+  +'<table class="rs-tbl" id="repairSheetTable"><thead><tr><th contenteditable="true">CATEGORY</th><th contenteditable="true">SCOPE OF WORK / MATERIALS</th><th contenteditable="true">INCLUDED</th></tr></thead><tbody>'+(rowsHtml||defaultRow)+'</tbody></table>'
+  +'<div class="rs-tbl-foot noprint"><button type="button" class="rs-rt-btn" onclick="sheetAddRow(false)">＋ Add Included Line Item</button><button type="button" class="rs-rt-btn" onclick="sheetAddRow(true)">＋ Add Option Line Item</button></div>'
+  +'<div class="rs-total"><div class="a" contenteditable="true">TOTAL PROJECT PRICE</div><div class="b total-price" id="sheetTotal" contenteditable="true" data-bind="totalPrice">'+money(R.total)+'</div></div>'
+  +'<div class="rs-optnote'+(R.opts.length?'':' noprint')+'" id="sheetOptNote" contenteditable="true">Items marked OPTION are not included in the Total Project Price.</div>'
+  +'<div class="rs-notes"><div class="n"><div class="rs-ex" contenteditable="true">!</div><div style="flex:1"><b contenteditable="true">NOTES:</b><br>'+ce('This estimate includes all labor, materials, taxes, permits (if required), and cleanup as listed above. Any additional work discovered during the repair process that is outside the scope of this estimate will be brought to your attention before any further work is performed.')+'</div></div><div class="rb">'+icon('ribbon',1.6)+'<div style="flex:1">'+ce('We appreciate the opportunity to provide this estimate and look forward to working with you!')+'</div></div></div>'
+  +'<div class="rs-foot"><div class="rs-thank"><div class="s">'+icon('shield',2)+'</div><div><span contenteditable="true">THANK YOU FOR CHOOSING</span><b contenteditable="true">ABSOLUTE GARAGE BUILDERS!</b></div></div><div class="rs-script" contenteditable="true">Building Garages. Building Trust.</div><div class="rs-sig"><div class="ln"><div></div><div></div></div><div class="lb"><span contenteditable="true">Customer Signature</span><span contenteditable="true">Date</span></div><div class="ln"><div></div><div></div></div><div class="lb"><span contenteditable="true">Customer Signature</span><span contenteditable="true">Date</span></div></div></div>'
+  +'</div></div>';
+}
+// Keep everything on ONE Letter page: if content is taller than 11in, scale the inner block down uniformly.
+function fitSheet(skipPreview){
+  const sheet=$('repairSheet'),inn=$('rsIn'),sc=$('sheetScale');if(!sheet||!inn)return;
+  const prevT=sc?sc.style.transform:'',prevW=sc?sc.style.width:'',prevH=sc?sc.style.height:'',prevM=sc?sc.style.margin:'',prevZ=sc?sc.style.zoom:'';
+  if(sc){sc.style.transform='';sc.style.webkitTransform='';sc.style.zoom='';sc.style.width=(96*8.5)+'px';sc.style.height=(96*11)+'px';sc.style.margin='0 auto';}
+  inn.style.transform='';inn.style.width='';
+  const phs=sheet.querySelectorAll('.rs-photo');phs.forEach(e=>e.style.height='');
+  const avail=sheet.clientHeight||1044;let h=inn.scrollHeight;
+  // First give back space from the photos (down to 1.45in), then scale the whole page uniformly if still too tall.
+  if(h>avail&&phs.length){const cur=phs[0].offsetHeight||Math.round(96*2.35);const nh=Math.max(Math.round(96*1.45),cur-(h-avail));phs.forEach(e=>e.style.height=nh+'px');h=inn.scrollHeight;}
+  if(h>avail){const s=avail/h;inn.style.transform='scale('+s+')';inn.style.width=(100/s)+'%';}
+  if(skipPreview || window._isPrintingSheet || (window.matchMedia && window.matchMedia('print').matches)){
+    if(sc){sc.style.transform='';sc.style.webkitTransform='';sc.style.zoom='';sc.style.width='';sc.style.height='';sc.style.margin='';}
+  }else{
+    if(sc){sc.style.transform=prevT;sc.style.width=prevW;sc.style.height=prevH;sc.style.margin=prevM;sc.style.zoom=prevZ;}
+    fitPreview();
+  }
+}
+function fitPreview(){
+  const host=$('sheetHost'),sc=$('sheetScale');if(!sc)return;
+  if(window._isPrintingSheet || (window.matchMedia && window.matchMedia('print').matches)){
+    sc.style.transform='';sc.style.webkitTransform='';sc.style.zoom='';sc.style.width='';sc.style.height='';sc.style.margin='';
+    return;
+  }
+  if(!host)return;
+  const pw=96*8.5,ph=96*11;const k=Math.min(1,Math.max(0.2,(host.clientWidth-8)/pw));
+  sc.style.transform=k<1?'scale('+k+')':'';sc.style.width=pw+'px';sc.style.height=(ph*k)+'px';sc.style.margin=k<1?'0 4px':'0 auto';
+}
+function sheetItemsSig(R){try{return JSON.stringify([R.rows.map(r=>[r.id,r.cat,r.scope]),R.opts.map(o=>[o.id,o.cat,o.scope,o.price])]);}catch(e){return '';}}
+function sheetSig(R){try{return JSON.stringify([R.total,R.rows.map(r=>[r.cat,r.scope]),R.opts.map(o=>[o.cat,o.price]),FIELDS.map(id=>{const el=$(id);return el?(el.type==='checkbox'?el.checked:el.value):''}),(S.photos||[]).map(p=>(p.src||'').length+p.cap)])}catch(e){return ''}}
+
+// ===== Interactive Row & Field Editing on the Repair Sheet =====
+let _sheetUndoStack=[];
+function pushSheetUndo(){
+  const sc=$('sheetScale');if(!sc)return;
+  const h=repairSheetHtml();
+  if(!h||(_sheetUndoStack.length&&_sheetUndoStack[_sheetUndoStack.length-1]===h))return;
+  _sheetUndoStack.push(h);if(_sheetUndoStack.length>25)_sheetUndoStack.shift();
+  const b=$('repairUndoBtn');if(b)b.style.display='';
+}
+function undoSheetEdit(){
+  if(!_sheetUndoStack.length)return;
+  const prev=_sheetUndoStack.pop();
+  $('sheetScale').innerHTML=prev;
+  if(!$('repairUndoBtn'))return;
+  $('repairUndoBtn').style.display=_sheetUndoStack.length?'':'none';
+  syncSheetEditsToCalculator();
+  fitSheet();
+  repairSheetSaveNow(true);
+}
+function toggleRepairRowEdit(force){
+  const m=$('sheetModal');if(!m)return;
+  const on=typeof force==='boolean'?force:!m.classList.contains('sheet-editing');
+  m.classList.toggle('sheet-editing',on);
+  const b=$('repairEditRowsBtn');if(b)b.textContent=on?'✓ Done Rows':'✏ Edit Rows';
+  fitSheet();
+}
+function ensureRowToolsInDom(){
+  const sc=$('sheetScale');if(!sc)return;
+  // Remove any legacy fake svg placeholders if present from old saved sheets
+  sc.querySelectorAll('svg.phs').forEach(svg=>{const ph=svg.closest('.rs-photo');if(ph)ph.remove();});
+  rsNormalizeSheet(sc);
+  sc.querySelectorAll('.rs-tbl tbody tr').forEach(tr=>{
+    const td=tr.querySelector('td.inc')||tr.lastElementChild;
+    if(td && !td.querySelector('.rs-row-tools')){
+      td.insertAdjacentHTML('beforeend',rowToolsHtml());
+    }
+  });
+  const tbl=sc.querySelector('.rs-tbl');
+  if(tbl && !sc.querySelector('.rs-tbl-foot')){
+    tbl.insertAdjacentHTML('afterend','<div class="rs-tbl-foot noprint"><button type="button" class="rs-rt-btn" onclick="sheetAddRow(false)">＋ Add Included Line Item</button><button type="button" class="rs-rt-btn" onclick="sheetAddRow(true)">＋ Add Option Line Item</button></div>');
+  }
+  const tot=sc.querySelector('#sheetTotal');
+  if(tot){tot.classList.add('total-price');tot.setAttribute('contenteditable','true');tot.setAttribute('data-bind','totalPrice');}
+}
+function sheetAddRow(isOpt,afterTr){
+  pushSheetUndo();
+  const tbody=document.querySelector('#sheetScale .rs-tbl tbody');if(!tbody)return;
+  const chk='<span class="bchk">'+icon('check',3.2)+'</span>';
+  const tr=document.createElement('tr');
+  tr.className=isOpt?'optrow':'inc-row';
+  tr.setAttribute('data-item-id','custom');
+  tr.innerHTML='<td class="cat"><div class="rs-cat">'+icon('custom',1.6)+'<span contenteditable="true">'+(isOpt?'OPTIONAL WORK':'ADDITIONAL REPAIR')+'</span></div></td>'
+    +'<td><ul><li><span contenteditable="true">Describe the repair work and materials</span></li></ul></td>'
+    +'<td class="inc"><div class="rs-inc-wrap">'+(isOpt?'<span class="optlbl" contenteditable="true">OPTION</span><div class="optp sheet-opt-price" contenteditable="true">$0</div>':chk)+'</div>'+rowToolsHtml()+'</td>';
+  if(afterTr&&afterTr.parentNode===tbody) afterTr.after(tr); else tbody.appendChild(tr);
+  updateOptNoteVisibility();
+  fitSheet();
+  repairSheetSaveNow(true);
+}
+function rsNormalizeSheet(root){
+  root=root||document;var has=false;
+  try{
+    root.querySelectorAll('#sheetPhotoSection,.rs-photos,.rs-photo').forEach(function(el){
+      if(el.querySelector('img')){el.classList.remove('rs-nopic');if(el.id==='sheetPhotoSection')el.classList.remove('noprint');}
+      else{el.classList.add('rs-nopic','noprint');}
+    });
+    root.querySelectorAll('.rs-nophoto-bar').forEach(function(el){el.classList.add('noprint');});
+    root.querySelectorAll('.rs-tbl tbody tr').forEach(function(tr){
+      var lbl=tr.querySelector('.optlbl');
+      if(!(tr.classList.contains('optrow')||(lbl&&/option/i.test(lbl.textContent))))return;
+      var pe=tr.querySelector('.optp,.sheet-opt-price');var t=pe?pe.textContent.trim():'';if(!t)return;
+      var n=t.replace(/[^0-9.]/g,'');
+      if(n===''){if(/[a-z]/i.test(t))has=true;return;}
+      if(parseFloat(n)>0)has=true;
+    });
+    root.querySelectorAll('#sheetOptNote,.rs-optnote').forEach(function(el){el.classList.toggle('rs-optnote-off',!has);el.classList.toggle('noprint',!has);});
+  }catch(e){}
+  return has;
+}
+async function rsDownloadPdf(btn){
+  var sheet=document.getElementById('repairSheet');if(!sheet){alert('Open the repair sheet first.');return;}
+  var old=btn&&btn.textContent;if(btn){btn.disabled=true;btn.textContent='Making PDF…';}
+  var host=null;
+  try{
+    try{if(typeof window.rsNormalizeSheet==='function')window.rsNormalizeSheet(document);}catch(_){}
+    if(typeof window.html2pdf!=='function'){await new Promise(function(res,rej){var s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';s.onload=res;s.onerror=function(){rej(new Error('PDF library did not load. Check the internet connection and try again.'));};document.head.appendChild(s);});}
+    host=document.createElement('div');host.className='noprint';host.style.cssText='position:fixed;left:-20000px;top:0;width:816px;height:1056px;background:#fff;overflow:hidden;z-index:-1';
+    var clone=sheet.cloneNode(true);clone.id='repairSheetPdf';
+    var oSv=sheet.querySelectorAll('svg'),cSv=clone.querySelectorAll('svg');
+    var PROPS=['fill','stroke','stroke-width','stroke-linecap','stroke-linejoin','stroke-miterlimit','fill-opacity','stroke-opacity','opacity','fill-rule'];
+    for(var si=0;si<oSv.length&&si<cSv.length;si++){try{
+      var os=oSv[si],cs=cSv[si];var on=[os].concat([].slice.call(os.querySelectorAll('*'))),cn=[cs].concat([].slice.call(cs.querySelectorAll('*')));
+      for(var k=0;k<on.length&&k<cn.length;k++){var st=getComputedStyle(on[k]);PROPS.forEach(function(pr){var v=st.getPropertyValue(pr);if(v)cn[k].setAttribute(pr,v);});}
+      var oc=getComputedStyle(os);var w=parseFloat(oc.width)||os.getBoundingClientRect().width,h=parseFloat(oc.height)||os.getBoundingClientRect().height;
+      if(!w||!h)continue;
+      cs.setAttribute('xmlns','http://www.w3.org/2000/svg');cs.setAttribute('width',w*2);cs.setAttribute('height',h*2);
+      var im=document.createElement('img');im.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(new XMLSerializer().serializeToString(cs));
+      im.style.cssText='width:'+w+'px;height:'+h+'px;display:'+(oc.display==='inline'?'inline-block':oc.display)+';vertical-align:'+oc.verticalAlign+';flex:none;margin:'+oc.margin;
+      cs.parentNode.replaceChild(im,cs);
+    }catch(_){}}
+    clone.querySelectorAll('.bchk').forEach(function(b){var im=document.createElement('img');im.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="112" height="112" viewBox="0 0 28 28"><circle cx="14" cy="14" r="14" fill="#111"/><polyline points="8,14.5 12.2,18.5 20,10" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>');im.style.cssText='width:28px;height:28px;display:inline-block;vertical-align:middle';b.parentNode.replaceChild(im,b);});
+    clone.querySelectorAll('li').forEach(function(li){if(/^(Tap to describe repair scope and materials|Describe the repair work( and materials)?)$/i.test((li.textContent||'').trim()))li.remove();});
+    clone.querySelectorAll('.noprint,.no-print,.rs-nophoto-bar,.rs-nopic,.rs-optnote-off,.rs-row-tools,.rs-tbl-foot,.rs-ph-tools,.rsd-bar,#sheetAutoPill,#sheetSaveBanner,input,button').forEach(function(el){el.remove();});
+    clone.querySelectorAll('#sheetPhotoSection').forEach(function(el){if(!el.querySelector('img'))el.remove();});
+    clone.querySelectorAll('[contenteditable]').forEach(function(el){el.removeAttribute('contenteditable');});
+    clone.querySelectorAll('[data-ph]').forEach(function(el){el.removeAttribute('data-ph');});
+    clone.style.cssText+=';width:816px!important;height:1056px!important;min-height:1056px!important;max-height:1056px!important;margin:0!important;box-shadow:none!important;transform:none!important;zoom:1!important;overflow:hidden!important';
+    host.appendChild(clone);document.body.appendChild(host);
+    await new Promise(function(r){setTimeout(r,60);});
+    var worker=window.html2pdf().set({margin:0,html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff',logging:false,scrollX:0,scrollY:0,x:0,y:0,width:816,height:1056,windowWidth:816,windowHeight:1056},jsPDF:{unit:'in',format:'letter',orientation:'portrait',compress:true}}).from(clone).toCanvas();
+    var canvas=await worker.get('canvas');
+    if(!canvas||!canvas.width)throw new Error('The sheet could not be rendered.');
+    var img=canvas.toDataURL('image/jpeg',0.95);
+    var pdf=await worker.toPdf().get('pdf');
+    var c=pdf.internal.getNumberOfPages();while(c>1){pdf.deletePage(c);c--;}
+    pdf.setFillColor(255,255,255);pdf.rect(0,0,8.5,11,'F');
+    pdf.addImage(img,'JPEG',0,0,8.5,11,undefined,'FAST');
+    var t=function(sel){var e=sheet.querySelector(sel);return e?(e.textContent||'').trim():'';};
+    var name=['Repair Estimate',t('[data-bind="customerName"]'),t('[data-bind="customerAddress"]')].filter(Boolean).join(' - ');
+    pdf.save(name.replace(/[\\/:*?"<>|]+/g,'-')+'.pdf');
+  }catch(err){console.error('Repair PDF failed',err);alert('Could not download the PDF. '+(err&&err.message?err.message:err));}
+  finally{if(host&&host.parentNode)host.parentNode.removeChild(host);if(btn){btn.disabled=false;btn.textContent=old;}}
+}
+window.rsDownloadPdf=rsDownloadPdf;window.rsNormalizeSheet=rsNormalizeSheet;
+function updateOptNoteVisibility(){
+  const sc=$('sheetScale');if(!sc)return;
+  return rsNormalizeSheet(sc);
+}
+function syncSheetEditsToCalculator(){
+  const sc=$('sheetScale');if(!sc||!sc.querySelector('#repairSheet'))return;
+  ['customerAddress','customerCity','customerName','customerPhone','customerEmail'].forEach(k=>{
+    const el=sc.querySelector('[data-bind="'+k+'"]');
+    if(el && $(k)){
+      const txt=el.textContent.replace(/\u00a0/g,' ').trim();
+      if($(k).value!==txt) $(k).value=txt;
+      const bs=el.closest('.rs-bs');
+      if(bs) bs.classList.toggle('noprint',!txt);
+    }
+  });
+  sc.querySelectorAll('[data-photo-cap]').forEach(el=>{
+    const idx=Number(el.getAttribute('data-photo-cap'));
+    if(S.photos&&S.photos[idx]) S.photos[idx].cap=el.textContent.trim();
+  });
+  const totEl=sc.querySelector('#sheetTotal');
+  if(totEl){
+    const raw=parseFloat(totEl.textContent.replace(/[^0-9.]/g,''));
+    if(Number.isFinite(raw)&&raw>=0){
+      const cur=compute().total;
+      if(Math.round(raw)!==Math.round(cur)){
+        $('profitMode').value='total';
+        $('profitValue').value=String(Math.round(raw));
+        setModeUI('total');
+        syncProfitSliderToValue();
+        const R=compute();LAST=R;
+        $('sumTotal').textContent=money(R.total);$('stickyTotal').textContent=money(R.total);
+        updateProfitUI(R);
+      }
+    }
+  }
+  const h=repairSheetHtml();
+  if(h) S.sheet_html=h;
+  const Rnow=compute();
+  S.sheet_items_sig=sheetItemsSig(Rnow);
+  S.sheet_sig=sheetSig(Rnow);
+}
+function captureRepairSheetEditsSync(){
+  const sc=$('sheetScale');
+  if(!sc||!sc.querySelector('#repairSheet')) return S.sheet_html||'';
+  syncSheetEditsToCalculator();
+  const h=repairSheetHtml();
+  if(h){
+    S.sheet_html=h;
+    const R=compute();
+    S.sheet_items_sig=sheetItemsSig(R);
+    S.sheet_sig=sheetSig(R);
+  }
+  return h||'';
+}
+// Sync calculator changes into an existing edited sheet without wiping out user edits (custom rows, edited bullets, notes, etc.)
+function syncCalculatorToExistingSheet(R){
+  const sc=$('sheetScale');if(!sc||!sc.querySelector('#repairSheet'))return;
+  ['customerAddress','customerCity','customerName','customerPhone','customerEmail'].forEach(k=>{
+    const el=sc.querySelector('[data-bind="'+k+'"]');
+    if(el && $(k)){
+      const val=($(k).value||'').trim();
+      if(el.textContent.replace(/\u00a0/g,' ').trim()!==val) el.textContent=val;
+      const bs=el.closest('.rs-bs');
+      if(bs) bs.classList.toggle('noprint',!val);
+    }
+  });
+  const sm=SALESMEN[$('salesman').value]||SALESMEN.ramsey;
+  const smName=sc.querySelector('[data-bind-salesman="name"]'); if(smName) smName.textContent=sm.name||'';
+  const smPhone=sc.querySelector('[data-bind-salesman="phone"]'); if(smPhone) smPhone.textContent=sm.phone||'';
+  const smEmail=sc.querySelector('[data-bind-salesman="email"]'); if(smEmail) smEmail.textContent=sm.email||'';
+  const totEl=sc.querySelector('#sheetTotal');
+  if(totEl){
+    const curSheetNum=parseFloat((totEl.textContent||'').replace(/[^0-9.]/g,''));
+    if(!Number.isFinite(curSheetNum) || Math.round(curSheetNum)!==Math.round(R.total)){
+      totEl.textContent=money(R.total);
+    }
+  }
+  const itemsSig=sheetItemsSig(R);
+  if(S.sheet_items_sig && S.sheet_items_sig!==itemsSig){
+    const tbody=sc.querySelector('.rs-tbl tbody');
+    if(tbody){
+      const existingById={};
+      const customRows=[];
+      tbody.querySelectorAll('tr').forEach(tr=>{
+        const id=tr.getAttribute('data-item-id')||'';
+        const txt=(tr.textContent||'').trim();
+        if(!id || id==='custom'){
+          if(!/Tap to describe repair scope and materials/i.test(txt)){
+            customRows.push(tr.outerHTML);
+          }
+        }else{
+          existingById[id]=tr.outerHTML;
+        }
+      });
+      const tmp=document.createElement('div');
+      tmp.innerHTML=buildSheet(R);
+      const newTbody=tmp.querySelector('.rs-tbl tbody');
+      if(newTbody){
+        const merged=[];
+        newTbody.querySelectorAll('tr').forEach(ntr=>{
+          const id=ntr.getAttribute('data-item-id')||'';
+          if(id && id!=='custom' && existingById[id]){
+            merged.push(existingById[id]);
+          }else if(id!=='custom' || (!R.rows.length && !R.opts.length && !customRows.length)){
+            merged.push(ntr.outerHTML);
+          }
+        });
+        customRows.forEach(cr=>merged.push(cr));
+        tbody.innerHTML=merged.join('');
+      }
+    }
+  }
+  updateOptNoteVisibility();
+  ensureRowToolsInDom();
+  const h=repairSheetHtml();
+  if(h) S.sheet_html=h;
+  S.sheet_items_sig=itemsSig;
+  S.sheet_sig=sheetSig(R);
+}
+
+function prepareRepairPrintLayout(){
+  window._isPrintingSheet=true;
+  try{updateOptNoteVisibility();}catch(e){}
+  if(!$('sheetModal').classList.contains('open')){
+    const R=calc();
+    if(S.sheet_html){
+      $('sheetScale').innerHTML=S.sheet_html;
+      syncCalculatorToExistingSheet(R);
+    }else{
+      $('sheetScale').innerHTML=buildSheet(R);
+      ensureRowToolsInDom();
+    }
+    $('sheetModal').classList.add('open');
+  }else{
+    captureRepairSheetEditsSync();
+  }
+  window._wasRowEditingBeforePrint=$('sheetModal').classList.contains('sheet-editing');
+  $('sheetModal').classList.remove('sheet-editing');
+  window.scrollTo(0,0);
+  if(document.documentElement) document.documentElement.scrollTop=0;
+  if(document.body) document.body.scrollTop=0;
+  if($('sheetModal')) $('sheetModal').scrollTop=0;
+  if($('sheetHost')) $('sheetHost').scrollTop=0;
+  fitSheet(true);
+}
+function restoreRepairPrintLayout(){
+  window._isPrintingSheet=false;
+  if(window._wasRowEditingBeforePrint && $('sheetModal')){
+    $('sheetModal').classList.add('sheet-editing');
+    window._wasRowEditingBeforePrint=false;
+  }
+  if($('sheetModal') && $('sheetModal').classList.contains('open')){
+    fitSheet(false);
+  }
+}
+function printRepairSheet(){
+  if($('sheetModal') && $('sheetModal').classList.contains('open')){
+    captureRepairSheetEditsSync();
+    repairSheetSaveNow(true);
+    prepareRepairPrintLayout();
+    setTimeout(()=>{ window.print(); }, 40);
+  }else{
+    openSheet(true);
+  }
+}
+try{
+  const mq=window.matchMedia && window.matchMedia('print');
+  if(mq && mq.addEventListener){
+    mq.addEventListener('change', e=>{ if(e.matches) prepareRepairPrintLayout(); else restoreRepairPrintLayout(); });
+  }
+}catch(e){}
+window.addEventListener('beforeprint', prepareRepairPrintLayout);
+window.addEventListener('afterprint', restoreRepairPrintLayout);
+
+function openSheet(print){
+  const isAlreadyOpen=$('sheetModal').classList.contains('open') && !!$('repairSheet');
+  if(isAlreadyOpen){
+    captureRepairSheetEditsSync();
+    if(print){ printRepairSheet(); return; }
+  }
+  const R=calc();const sig=sheetSig(R);const itemsSig=sheetItemsSig(R);
+  if(!isAlreadyOpen){
+    if(S.sheet_html){
+      $('sheetScale').innerHTML=S.sheet_html;
+      if(S.sheet_sig!==sig) syncCalculatorToExistingSheet(R);
+      else ensureRowToolsInDom();
+    }else{
+      $('sheetScale').innerHTML=buildSheet(R);
+      ensureRowToolsInDom();
+    }
+  }
+  const curHtml=repairSheetHtml();
+  if(curHtml) S.sheet_html=curHtml;
+  S.sheet_items_sig=itemsSig;
+  S.sheet_sig=sheetSig(compute());
+  _repLastSheet=S.sheet_html||'';
+  if(!$('sheetModal').classList.contains('open')){
+    window._savedPageScrollY=window.scrollY||document.documentElement.scrollTop||0;
+  }
+  $('sheetModal').classList.add('open');
+  window.scrollTo(0,0);
+  if(document.documentElement) document.documentElement.scrollTop=0;
+  if(document.body) document.body.scrollTop=0;
+  if($('sheetModal')) $('sheetModal').scrollTop=0;
+  setTimeout(startRepairSheetAutosave,0);
+  // fix 2026-10-14: creating the sheet saves it to Estimate History right away (insert first time, update the same row after)
+  setTimeout(()=>saveSheetToHistoryNow(),0);
+  const go=()=>{
+    fitSheet(!!print);
+    if(print){
+      prepareRepairPrintLayout();
+      setTimeout(()=>window.print(),120);
+    }
+  };
+  if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>requestAnimationFrame(go));else requestAnimationFrame(go);
+}
+window.addEventListener('resize',()=>{if($('sheetModal').classList.contains('open') && !window._isPrintingSheet && !(window.matchMedia&&window.matchMedia('print').matches))fitPreview();});
+function closeModal(id){
+  if(id==='sheetModal'){
+    captureRepairSheetEditsSync();
+    repairSheetSaveNow(true);
+  }
+  $(id).classList.remove('open');
+  if(id==='sheetModal' && typeof window._savedPageScrollY==='number'){
+    const y=window._savedPageScrollY;
+    requestAnimationFrame(()=>window.scrollTo(0,y));
+  }
+}
+
+// ===== Standalone, editable repair sheet document stored in History (estimate_snapshot.sheet_html) =====
+function repairSheetDoc(inner){
+  const css=Array.from(document.querySelectorAll('style')).map(x=>x.textContent).join('\n');
+  const tools='<div class="noprint rsd-bar"><button type="button" id="sheetSaveBtn" onclick="window.saveSheetEditsNow(true)" style="background:#16a34a">💾 Save Changes</button><button type="button" id="sheetEditRowsBtn" onclick="rsdToggle()">✏ Edit Rows</button><button type="button" onclick="rsdAddRow(false)">＋ Add Row</button><button type="button" onclick="rsdTriggerPhoto()">📷 Picture</button><button type="button" onclick="window.rsdPrint()">🖨 Print</button><button type="button" onclick="window.rsDownloadPdf(this)">⬇ Download PDF</button><input type="file" id="rsdPhotoInput" accept="image/*" style="display:none" onchange="rsdLoadPhoto(this)"><span id="popupChangeStatus">Tap any text or price to edit</span></div>';
+  const js="<scr"+"ipt>(function(){"
+   +rsNormalizeSheet.toString()+rsDownloadPdf.toString()+"window.rsDownloadPdf=rsDownloadPdf;window.rsNormalizeSheet=rsNormalizeSheet;function norm(){rsNormalizeSheet(document);}norm();window.addEventListener('load',norm);document.addEventListener('input',norm,true);document.addEventListener('click',function(){setTimeout(norm,0);},true);"
+   +"var _printing=false;"
+   +"function isPrint(){return _printing||!!(window.matchMedia&&window.matchMedia('print').matches);}"
+   +"window.rsdToggle=function(f){var m=document.getElementById('sheetModal')||document.body;var on=typeof f==='boolean'?f:!m.classList.contains('sheet-editing');m.classList.toggle('sheet-editing',on);document.body.classList.toggle('sheet-editing',on);var b=document.getElementById('sheetEditRowsBtn');if(b)b.textContent=on?'✓ Done Rows':'✏ Edit Rows';fit();};"
+   +"function fit(){var sh=document.getElementById('repairSheet'),inn=document.getElementById('rsIn'),s=document.getElementById('sheetScale');if(!sh||!inn)return;var z=s?s.style.zoom:'';if(s)s.style.zoom='';inn.style.transform='';inn.style.width='';var phs=sh.querySelectorAll('.rs-photo');phs.forEach(function(e){e.style.height='';});var av=sh.clientHeight||1044,h=inn.scrollHeight;if(h>av&&phs.length){var cur=phs[0].offsetHeight||225;var nh=Math.max(139,cur-(h-av));phs.forEach(function(e){e.style.height=nh+'px';});h=inn.scrollHeight;}if(h>av){var k=av/h;inn.style.transform='scale('+k+')';inn.style.transformOrigin='top left';inn.style.width=(100/k)+'%';}if(s&&!isPrint())s.style.zoom=z;}window.addEventListener('load',fit);setTimeout(fit,300);"
+   +"function vw(){var s=document.getElementById('sheetScale');if(!s)return;if(isPrint()){s.style.zoom='';s.style.transform='';return;}s.style.zoom='';var k=Math.min(1,(window.innerWidth-8)/Math.max(816,s.scrollWidth));if(k<1)s.style.zoom=k;}window.addEventListener('load',vw);window.addEventListener('resize',vw);"
+   +"function prepPrint(){_printing=true;norm();var s=document.getElementById('sheetScale');if(s){s.style.zoom='';s.style.transform='';}window.scrollTo(0,0);fit();if(_t)window.saveSheetEditsNow(false);}"
+   +"function donePrint(){_printing=false;vw();}"
+   +"window.addEventListener('beforeprint',prepPrint);window.addEventListener('afterprint',donePrint);"
+   +"try{var mq=window.matchMedia&&window.matchMedia('print');if(mq&&mq.addEventListener)mq.addEventListener('change',function(e){if(e.matches)prepPrint();else donePrint();});}catch(_){}"
+   +"setTimeout(vw,320);"
+   +"window.rsdPrint=async function(){try{await window.saveSheetEditsNow(true);}catch(_){}prepPrint();setTimeout(function(){window.print();},40);};"
+   +"window.rsdAddRow=function(isOpt,afterTr){var tb=document.querySelector('.rs-tbl tbody');if(!tb)return;var tr=document.createElement('tr');tr.className=isOpt?'optrow':'inc-row';tr.setAttribute('data-item-id','custom');tr.innerHTML='<td class=cat><div class=rs-cat><span contenteditable=true>'+(isOpt?'OPTIONAL WORK':'ADDITIONAL REPAIR')+'</span></div></td><td><ul><li><span contenteditable=true>Describe the repair work</span></li></ul></td><td class=inc><div class=rs-inc-wrap>'+(isOpt?'<span class=optlbl contenteditable=true>OPTION</span><div class=\"optp sheet-opt-price\" contenteditable=true>$0</div>':'<span class=bchk>✔</span>')+'</div><div class=\"rs-row-tools noprint\"><button type=button class=rs-rt-btn data-act=bullet>+ Bullet</button><button type=button class=rs-rt-btn data-act=row>+ Row</button><button type=button class=rs-rt-btn data-act=mode>✔/Opt</button><button type=button class=\"rs-rt-btn del\" data-act=del>✕</button></div></td>';if(afterTr&&afterTr.parentNode===tb)afterTr.after(tr);else tb.appendChild(tr);fit();sched(250);};"
+   +"var _phSlot=0;window.rsdTriggerPhoto=function(s){_phSlot=typeof s==='number'?s:0;var i=document.getElementById('rsdPhotoInput');if(i)i.click();};"
+   +"window.triggerSheetPhotoUpload=window.rsdTriggerPhoto;"
+   +"window.removeSheetPhoto=function(s){var el=document.querySelector('.rs-photo[data-photo-slot=\"'+s+'\"]')||document.querySelector('.rs-photo');if(el)el.remove();var rem=document.querySelectorAll('.rs-photo');if(!rem.length){var sec=document.getElementById('sheetPhotoSection');if(sec)sec.outerHTML='<div id=sheetPhotoSection class=noprint><div class=rs-nophoto-bar><span>📷 No picture on this sheet (prints without a picture).</span><span style=display:flex;gap:6px><button type=button class=rs-rt-btn onclick=rsdTriggerPhoto(0)>＋ Upload / Take Picture</button></span></div></div>';}fit();sched(250);};"
+   +"window.rsdLoadPhoto=function(inp){var f=inp.files&&inp.files[0];if(!f)return;var r=new FileReader();r.onload=function(){var img=new Image();img.onload=function(){var sc=Math.min(1,1200/Math.max(img.width,img.height));var c=document.createElement('canvas');c.width=Math.round(img.width*sc);c.height=Math.round(img.height*sc);c.getContext('2d').drawImage(img,0,0,c.width,c.height);var url=c.toDataURL('image/jpeg',0.82);var sec=document.getElementById('sheetPhotoSection');if(sec){sec.className='';sec.innerHTML='<div class=\"rs-photos one\"><div class=rs-photo data-photo-slot=0><img src=\"'+url+'\" alt=\"\"><div class=\"rs-ph-tools noprint\"><button type=button class=rs-ph-btn onclick=rsdTriggerPhoto(0)>📷 Change</button><button type=button class=rs-ph-btn onclick=removeSheetPhoto(0)>✕ Remove</button></div><div class=rs-cap><span contenteditable=true>FRONT VIEW</span></div></div></div>';}fit();sched(250);};img.src=r.result;};r.readAsDataURL(f);inp.value='';};"
+   +"document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('.rs-rt-btn[data-act]');if(!b)return;var act=b.getAttribute('data-act'),tr=b.closest('tr');if(!tr)return;if(act==='del'){tr.remove();fit();sched(250);}else if(act==='row'){window.rsdAddRow(false,tr);}else if(act==='bullet'){var ul=tr.querySelector('ul');if(ul){var li=document.createElement('li');li.innerHTML='<span contenteditable=true>Additional scope detail</span>';ul.appendChild(li);fit();sched(250);}}else if(act==='mode'){var isOpt=tr.classList.toggle('optrow');tr.classList.toggle('inc-row',!isOpt);var w=tr.querySelector('.rs-inc-wrap');if(w)w.innerHTML=isOpt?'<span class=optlbl contenteditable=true>OPTION</span><div class=\"optp sheet-opt-price\" contenteditable=true>$0</div>':'<span class=bchk>✔</span>';fit();sched(250);}});"
+   +"function findHost(){try{if(window.opener&&!window.opener.closed&&typeof window.opener.saveEditedEstimateSheetHtml==='function')return window.opener;}catch(_){}try{if(window.parent&&window.parent!==window&&typeof window.parent.saveEditedEstimateSheetHtml==='function')return window.parent;}catch(_){}return null;}"
+   +"var _t=null;function sched(ms){clearTimeout(_t);_t=setTimeout(function(){window.saveSheetEditsNow(false);},ms||900);}"
+   +"window.saveSheetEditsNow=async function(manual){clearTimeout(_t);_t=null;var st=document.getElementById('popupChangeStatus');var host=findHost();var pEl=document.querySelector('#sheetTotal,.total-price');var price=pEl?(parseFloat(pEl.textContent.replace(/[^0-9.]/g,''))||0):0;var s=document.getElementById('sheetScale');var kz=s?s.style.zoom:'';if(s)s.style.zoom='';var html='<!DOCTYPE html>\\n'+document.documentElement.outerHTML;if(s&&!isPrint())s.style.zoom=kz;if(host){if(st)st.textContent='Saving…';var ok=await host.saveEditedEstimateSheetHtml(html,{price:price});if(st)st.textContent=ok?'Saved ✓':'Save failed';return ok;}else if(st){st.textContent=manual?'Changes ready on sheet ✓':'Edited ✓';}return true;};"
+   +"document.addEventListener('input',function(){sched(900);},true);"
+   +"document.addEventListener('focusout',function(){if(_t)window.saveSheetEditsNow(false);},true);"
+   +"})();</scr"+"ipt>";
+  return '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Repair Estimate</title><style>'+css
+   +'\nbody{background:#e5e7eb!important;margin:0;padding:0}#sheetModal{display:block!important;position:static!important;background:#e5e7eb!important;overflow:visible;padding:0;backdrop-filter:none;-webkit-backdrop-filter:none}#sheetHost{padding:10px 0}.sheetScale{margin:0 auto;width:8.5in}'
+   +'.rsd-bar{position:sticky;top:0;z-index:5;display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px;background:#0f172a}.rsd-bar button{background:#1d4ed8;color:#fff;border:0;border-radius:8px;padding:6px 12px;font-weight:700;cursor:pointer}#popupChangeStatus{color:#86efac;font:600 12px Arial}'
+   +'@media print{.rsd-bar,.noprint,.no-print,.rs-nophoto-bar,.rs-nopic,#sheetPhotoSection:not(:has(img)),.rs-photos:not(:has(img)),.rs-photo:not(:has(img)),.rs-row-tools,.rs-tbl-foot,.rs-ph-tools{display:none!important}html,body{background:#fff!important;margin:0!important;padding:0!important;width:8.5in!important;height:11in!important;overflow:hidden!important}#sheetModal{background:#fff!important;padding:0!important;margin:0!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;width:8.5in!important;height:11in!important;overflow:hidden!important}#sheetHost{padding:0!important;margin:0!important;background:#fff!important;width:8.5in!important;height:11in!important;overflow:hidden!important}#sheetScale,.sheetScale{zoom:1!important;transform:none!important;-webkit-transform:none!important;width:8.5in!important;height:11in!important;margin:0!important;padding:0!important}.rs,#repairSheet{margin:0!important;width:8.5in!important;height:11in!important;overflow:hidden!important}}</style></head><body>'+tools
+   +'<div id="sheetModal" class="modal open"><div id="sheetHost"><div class="sheetScale" id="sheetScale">'+inner+'</div></div></div>'+js+'</body></html>';
+}
+function currentRepairSheetInner(){
+  if($('sheetModal')&&$('sheetModal').classList.contains('open')) captureRepairSheetEditsSync();
+  if(S.sheet_html) return S.sheet_html;
+  return buildSheet(compute());
+}
+// ===== audit-fix 2026-10-14: sheet autosave (typing ~1s, structural/photo changes right away, blur/print/close too) =====
+let _repAutoT=null,_repLastSheet='',_repSaving=false,_repPending=false,_repObs=null;
+function repPill(m,k){const p=$('repairAutoPill');if(!p)return;p.textContent=m;p.style.color=k==='ok'?'#86efac':k==='err'?'#fca5a5':'';p.style.cursor=k==='err'?'pointer':'';p.onclick=k==='err'?()=>(window._repairHistoryId?repairSheetSaveNow(true):saveSheetToHistoryNow()):null;}
+function repairSheetHtml(){const sc=$('sheetScale');if(!sc||!sc.querySelector('#repairSheet'))return '';const inn=$('rsIn');const keep=inn?[inn.style.transform,inn.style.width]:null;const phs=[...sc.querySelectorAll('.rs-photo')].map(e=>e.style.height);if(inn){inn.style.transform='';inn.style.width='';}sc.querySelectorAll('.rs-photo').forEach(e=>e.style.height='');const h=sc.innerHTML;if(inn){inn.style.transform=keep[0];inn.style.width=keep[1];}sc.querySelectorAll('.rs-photo').forEach((e,i)=>e.style.height=phs[i]);return h;}
+async function repairSheetSaveNow(force){
+  clearTimeout(_repAutoT);_repAutoT=null;
+  // ALWAYS capture live DOM edits synchronously before checking _repSaving so S.sheet_html and localStorage are never stale
+  const html=captureRepairSheetEditsSync();
+  if(!html) return;
+  try{localStorage.setItem('agb_repair_voice_sample_draft',JSON.stringify(snapshot()));}catch(e){try{localStorage.setItem('agb_repair_voice_sample_draft',JSON.stringify(stripPhotos(snapshot())));}catch(_){}}
+  saveLocal(true);
+  if(_repSaving){_repPending=true;return;}
+  if(!force&&html===_repLastSheet)return;
+  _repSaving=true;repPill('Saving…');
+  try{
+    _repLastSheet=html;
+    let ok=true;
+    if(!window._repairHistoryId && !window._agbOffline){
+      _repSaving=false;
+      await saveSheetToHistoryNow();
+      _repSaving=true;
+    }
+    const latestHtml=captureRepairSheetEditsSync()||html;
+    _repLastSheet=latestHtml;
+    if(window._repairHistoryId && !window._agbOffline){
+      try{const {data:row,error:le}=await garageSb.from('estimate_history').select('estimate_snapshot').eq('id',window._repairHistoryId).maybeSingle();if(le)throw le;
+        const R=compute();
+        const snap=Object.assign({},(row&&row.estimate_snapshot)||{});
+        snap.sheet_html=repairSheetDoc(latestHtml);
+        snap.sheet_edits_at=new Date().toISOString();
+        snap.insurance_job=!!($("insuranceJob")&&$("insuranceJob").checked);
+        snap.customer_quote=R.total;
+        snap.final_project_price=R.total;
+        snap.repair_state=stripPhotos(snapshot());
+        if(window._linkedJobId) snap.job_id=window._linkedJobId;
+        const patch={
+          customer:$('customerName').value||'Customer',
+          address:$('customerAddress').value||'',
+          city:$('customerCity').value||'',
+          estimate_price:R.total,
+          estimate_snapshot:snap
+        };
+        const {error}=await garageSb.from('estimate_history').update(patch).eq('id',window._repairHistoryId);if(error)throw error;}
+      catch(e){ok=false;console.warn('repair sheet autosave',e);}
+    }
+    repPill(ok?(window._repairHistoryId?'Saved ✓':'Saved on this device ✓'):'Save failed – retry',ok?'ok':'err');
+    if(force&&ok)toast('Sheet changes saved.');
+  }finally{_repSaving=false;if(_repPending){_repPending=false;setTimeout(()=>repairSheetSaveNow(false),50);}}
+}
+let _histP=null;
+function saveSheetToHistoryNow(){
+  if(_histP) return _histP;
+  repPill('Saving to History…');
+  _histP=(async()=>{try{const r=await saveToHistory();
+      if(r&&r.id) repPill('Saved to History ✓','ok');
+      else repPill(($('saveNote').textContent||'Not saved to History')+' – tap to retry','err');
+      return r;}
+    finally{_histP=null;}})();
+  return _histP;
+}
+function repSched(ms){clearTimeout(_repAutoT);_repAutoT=setTimeout(()=>repairSheetSaveNow(false),ms);}
+function startRepairSheetAutosave(){
+  const sc=$('sheetScale');if(!sc||_repObs)return;
+  _repObs=new MutationObserver(list=>{let st=false,ty=false;for(const m of list){const el=m.target.nodeType===1?m.target:m.target.parentElement;if(!el)continue;if(m.type==='attributes'&&m.attributeName==='style')continue;if(m.type==='characterData'||el.isContentEditable)ty=true;else st=true;}if(st)repSched(250);else if(ty)repSched(900);});
+  _repObs.observe(sc,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['src','class','hidden']});
+  sc.addEventListener('focusin',e=>{if(e.target&&e.target.isContentEditable)pushSheetUndo();},true);
+  sc.addEventListener('input',()=>{syncSheetEditsToCalculator();repSched(900);},true);
+  sc.addEventListener('input',()=>updateOptNoteVisibility(),true);
+  sc.addEventListener('focusout',()=>{syncSheetEditsToCalculator();if(_repAutoT)repairSheetSaveNow(false);},true);
+  sc.addEventListener('click',e=>{
+    const btn=e.target.closest&&e.target.closest('.rs-rt-btn[data-act]');
+    if(!btn)return;
+    const act=btn.getAttribute('data-act');
+    const tr=btn.closest('tr');if(!tr)return;
+    pushSheetUndo();
+    if(act==='del'){
+      tr.remove();
+      updateOptNoteVisibility();
+      fitSheet();
+      repairSheetSaveNow(true);
+    }else if(act==='row'){
+      sheetAddRow(tr.classList.contains('optrow'),tr);
+    }else if(act==='bullet'){
+      let ul=tr.querySelector('ul');
+      if(!ul){const td=tr.children[1];if(td){ul=document.createElement('ul');td.appendChild(ul);}}
+      if(ul){
+        const li=document.createElement('li');
+        li.innerHTML='<span contenteditable="true">Additional repair scope item</span>';
+        ul.appendChild(li);
+        fitSheet();
+        const sp=li.querySelector('span');if(sp)sp.focus();
+        repairSheetSaveNow(true);
+      }
+    }else if(act==='mode'){
+      const isOpt=tr.classList.toggle('optrow');
+      tr.classList.toggle('inc-row',!isOpt);
+      const wrap=tr.querySelector('.rs-inc-wrap')||tr.querySelector('td.inc');
+      if(wrap){
+        const chk='<span class="bchk">'+icon('check',3.2)+'</span>';
+        if(wrap.classList.contains('rs-inc-wrap')){
+          wrap.innerHTML=isOpt?'<span class="optlbl" contenteditable="true">OPTION</span><div class="optp sheet-opt-price" contenteditable="true">$0</div>':chk;
+        }
+      }
+      updateOptNoteVisibility();
+      fitSheet();
+      repairSheetSaveNow(true);
+    }
+  });
+  window.addEventListener('beforeprint',()=>{if(_repAutoT)repairSheetSaveNow(false);});
+  window.addEventListener('pagehide',()=>{if(_repAutoT)repairSheetSaveNow(false);});
+  window.addEventListener('beforeunload',()=>{if(_repAutoT)repairSheetSaveNow(false);});
+}
+// ================= SETTINGS / PRICE TABLE =================
+function openSettings(){
+  $('priceTable').innerHTML='<tr><td><b>Item</b></td><td class="u"><b>Unit</b></td><td><b>Unit cost $</b></td></tr>'+Object.keys(PRICES).map(k=>'<tr><td>'+esc(PRICES[k].label)+'</td><td class="u">'+esc(PRICES[k].unit)+'</td><td style="width:130px"><input class="c" type="number" inputmode="decimal" min="0" step="0.01" data-k="'+k+'" value="'+PRICES[k].price+'" oninput="setPrice(this)"></td></tr>').join('');
+  $('settingsModal').classList.add('open');
+}
+function setPrice(inp){const k=inp.dataset.k;const v=parseFloat(inp.value);PRICES[k].price=Number.isFinite(v)&&v>=0?v:0;const o={};Object.keys(PRICES).forEach(x=>o[x]=PRICES[x].price);try{localStorage.setItem('agb_repair_prices',JSON.stringify(o));}catch(e){}window._pricesCustomized=true;calc();}
+function resetPrices(){if(!confirm('Reset all prices to the example placeholders?'))return;try{localStorage.removeItem('agb_repair_prices');}catch(e){}loadPrices();openSettings();calc();}
+// ================= SAVE / LOAD =================
+function snapshot(){if($('sheetModal')&&$('sheetModal').classList.contains('open')){const h=repairSheetHtml();if(h)S.sheet_html=h;}const o={v:1,type:'repair',saved_at:new Date().toISOString(),fields:{},state:S,history_id:window._repairHistoryId||null,local_id:window._repairLocalId||null,job_id:window._linkedJobId||null};FIELDS.forEach(id=>{const el=$(id);o.fields[id]=el.type==='checkbox'?el.checked:el.value;});return o;}
+function stripPhotos(s){
+  const c=JSON.parse(JSON.stringify(s));
+  c.state.damagePhotos=(c.state.damagePhotos||[]).map(p=>({src:'',note:p.note}));
+  // Keep sheet photos (c.state.photos) intact so uploaded pictures persist with the repair estimate!
+  if(c.state.sheet_html&&c.state.sheet_html.length>900000)c.state.sheet_html='';
+  return c;
+}
+function applySnap(o){if(!o)return;window._repairHistoryId=o.history_id||null;window._repairLocalId=o.local_id||null;const d=defState();S=Object.assign(d,JSON.parse(JSON.stringify(o.state||{})));
+  ITEMS.forEach(it=>{if(!S.items[it.id])S.items[it.id]=d.items[it.id];else S.items[it.id].f=Object.assign({},d.items[it.id].f,S.items[it.id].f);});
+  S.damagePhotos=(S.damagePhotos||[]).filter(p=>p.src);
+  if($('insuranceJob'))$('insuranceJob').checked=false; // older estimates without the field = not insurance
+  if($('photoCount')){ const f=o.fields||{}; const st=o.state||{}; $('photoCount').value=(f.photoCount==null)?(((st.photos||[]).filter(p=>p&&p.src).length>=2)?'2':'1'):String(f.photoCount); }
+  Object.keys(o.fields||{}).forEach(id=>{const el=$(id);if(!el)return;if(el.type==='checkbox')el.checked=!!o.fields[id];else el.value=o.fields[id];});
+  renderItems();renderExtras();renderCond();renderPhotos();onProfitMode();
+  if(S.sheet_html){S.sheet_sig=sheetSig(compute());}
+}
+let _dt;function saveDraft(){clearTimeout(_dt);_dt=setTimeout(()=>{try{localStorage.setItem('agb_repair_voice_sample_draft',JSON.stringify(snapshot()));}catch(e){try{localStorage.setItem('agb_repair_voice_sample_draft',JSON.stringify(stripPhotos(snapshot())));}catch(e2){}}},300);}
+function toast(m,err){const t=$('toast');t.textContent=m;t.className=err?'err':'';t.style.display='block';clearTimeout(t._t);t._t=setTimeout(()=>t.style.display='none',5000);}
+function readSaved(){try{return JSON.parse(localStorage.getItem('agb_repair_saved')||'[]')||[];}catch(e){return [];}}
+function saveLocal(quiet){const R=compute();const list=readSaved();const s=snapshot();
+  const lid=window._repairLocalId||('r'+Date.now());window._repairLocalId=lid;s.local_id=lid;
+  const rec={id:lid,customer:$('customerName').value||'Customer',address:$('customerAddress').value,total:R.total,saved_at:s.saved_at,snap:s};
+  const at=list.findIndex(x=>x.id===lid);if(at>=0)list.splice(at,1);
+  list.unshift(rec);
+  try{localStorage.setItem('agb_repair_saved',JSON.stringify(list.slice(0,30)));}
+  catch(e){rec.snap=stripPhotos(rec.snap);try{localStorage.setItem('agb_repair_saved',JSON.stringify(list.slice(0,30)));}catch(e2){toast('Could not save on device (storage full).',true);return null;}}
+  if(!quiet)toast('Saved on this device.');$('saveNote').textContent='Saved on device '+new Date().toLocaleString();return rec;}
+function openSaved(){const list=readSaved();
+  $('savedList').innerHTML='<h2 class="font-display" style="margin:0 0 10px;color:#fff">Saved repair estimates (this device)</h2>'+(list.length?list.map((r,i)=>'<div class="sumline" style="align-items:center"><span><b>'+esc(r.customer)+'</b> — '+esc(r.address||'')+'<br><span class="muted">'+new Date(r.saved_at).toLocaleString()+' • '+money(r.total)+'</span></span><span style="display:flex;gap:6px"><button class="btn" type="button" onclick="loadSaved('+i+')">Open</button><button class="btn" type="button" onclick="delSaved('+i+')">✕</button></span></div>').join(''):'<div class="muted">Nothing saved yet.</div>');
+  $('savedModal').classList.add('open');}
+function loadSaved(i){const list=readSaved();if(list[i]){applySnap(list[i].snap);window._repairLocalId=list[i].id;closeModal('savedModal');toast('Loaded.');}}
+function delSaved(i){if(!confirm('Delete this saved estimate from this device?'))return;const list=readSaved();list.splice(i,1);localStorage.setItem('agb_repair_saved',JSON.stringify(list));openSaved();}
+// Save into the EXISTING estimate_history table (same table/columns the Quick Estimator writes). Repair rows are tagged
+// estimate_snapshot.estimate_type='repair' and siding='Repair estimate'. Always also saved on the device first.
+async function saveToHistory(){
+  if($('sheetModal')&&$('sheetModal').classList.contains('open')){
+    syncSheetEditsToCalculator();
+    const h=repairSheetHtml();if(h){S.sheet_html=h;S.sheet_sig=sheetSig(compute());}
+  }
+  const R=compute();saveLocal(true);
+  if(window._agbOffline){toast(AGB_OFFLINE_SAVE_MSG,true);$('saveNote').textContent=AGB_OFFLINE_SAVE_MSG;return null;}
+  let user;try{user=await agbEnsureSignedIn();}catch(e){const m='Not saved to History: '+agbFriendlySaveError(e)+' (Saved on this device.)';toast(m,true);$('saveNote').textContent=m;return null;}
+  let un='';try{const r=await garageSb.from('staff_profiles').select('username').eq('id',user.id).maybeSingle();un=r.data?.username||'';}catch(e){}
+  const light=stripPhotos(snapshot());
+  const record={created_by:user.id,salesman_username:estimatorStaffName(user,un)||$('salesman').value,customer:$('customerName').value||'Customer',address:$('customerAddress').value||'',city:$('customerCity').value||'',
+    garage_size:'REPAIR '+R.c.W+'x'+R.c.D,roof_type:R.c.roof,wall_height:'',siding:'Repair estimate',estimate_price:R.total,
+    estimate_snapshot:{estimate_type:'repair',app:'repair.html',job_id:window._linkedJobId||undefined,insurance_job:!!($('insuranceJob')&&$('insuranceJob').checked),repair_state:light,repair_rows:R.rows.map(r=>({cat:r.cat,scope:r.scope,internal_cost:r.cost})),repair_options:R.opts.map(o=>({cat:o.cat,scope:o.scope,price:o.price})),internal_total:R.internal,permit_fee:R.permit,customer_quote:R.total,final_project_price:R.total,prices_are_examples:!window._pricesCustomized}};
+  try{ record.estimate_snapshot.sheet_html=repairSheetDoc(currentRepairSheetInner()); }catch(e){ console.warn('repair sheet doc',e); }
+  try{let res;
+    if(window._repairHistoryId){
+      // audit-fix 2026-10-14: same estimate -> update its row (no duplicate History rows)
+      res=await agbWithTimeout(garageSb.from('estimate_history').update(Object.assign({},record,{created_by:undefined})).eq('id',window._repairHistoryId).select('id').maybeSingle(),45000,'Saving to History');
+      if(!res.error && !res.data){ window._repairHistoryId=null; }
+    }
+    if(!window._repairHistoryId){ res=await agbWithTimeout(garageSb.from('estimate_history').insert(record).select('id').maybeSingle(),45000,'Saving to History'); if(!res.error && res.data && res.data.id) window._repairHistoryId=res.data.id; }
+    if(res.error) throw res.error; saveDraft(); if(window._repairLocalId) saveLocal(true); const m='Saved to History'+(res.data&&res.data.id?' (#'+res.data.id+')':'')+'.';toast(m);$('saveNote').textContent=m;return res.data;}
+  catch(e){const m='Not saved to History: '+agbFriendlySaveError(e)+' (Saved on this device.)';toast(m,true);$('saveNote').textContent=m;return null;}
+}
+function newEstimate(){if(!confirm('Start a new repair estimate? Unsaved work is cleared.'))return;try{localStorage.removeItem('agb_repair_voice_sample_draft');}catch(e){}window._repairHistoryId=null;window._repairLocalId=null;S=defState();['customerName','customerPhone','customerEmail','customerAddress','customerCity','damageNotes'].forEach(id=>$(id).value='');if($('insuranceJob'))$('insuranceJob').checked=false;renderItems();renderExtras();renderCond();renderPhotos();calc();}
+function openGarageEstimatorFromRepair(){
+  captureRepairSheetEditsSync();
+  saveDraft();
+  const p=new URLSearchParams();
+  if(window._linkedJobId) p.set('jobId', window._linkedJobId);
+  const cname=($('customerName').value||'').trim();
+  const caddr=($('customerAddress').value||'').trim();
+  const ccity=($('customerCity').value||'').trim();
+  const cphone=($('customerPhone').value||'').trim();
+  const cemail=($('customerEmail').value||'').trim();
+  const sales=($('salesman').value||'').trim();
+  const w=n($('gW').value)||20, d=n($('gD').value)||20;
+  const roof=($('roofStyle').value||'').trim();
+  if(cname) p.set('customer', cname);
+  if(caddr) p.set('address', caddr);
+  if(ccity) p.set('city', ccity);
+  if(cphone) p.set('phone', cphone);
+  if(cemail) p.set('email', cemail);
+  if(sales) p.set('sales', sales);
+  if(w&&d) p.set('size', w+'x'+d);
+  if(roof) p.set('roof', /gable/i.test(roof)?'gable':'hip');
+  p.set('v', Date.now());
+  window.location.href='estimator.html?'+p.toString();
+}
+function applyIncomingUrlOrHandoff(){
+  const q=new URLSearchParams(location.search);
+  let ho=null;
+  try{ ho=JSON.parse(sessionStorage.getItem('agb_estimator_to_repair_handoff')||'null'); sessionStorage.removeItem('agb_estimator_to_repair_handoff'); }catch(e){}
+  const hasParams=q.get('customer')||q.get('address')||q.get('jobId')||q.get('size')||q.get('W')||ho;
+  if(!hasParams || q.get('editRepair')) return false;
+  const pick=(k,hk)=>(q.get(k)||(ho&&ho[hk||k])||'').trim();
+  const jobId=pick('jobId','jobId');
+  if(jobId) window._linkedJobId=jobId;
+  const cname=pick('customer','customer');
+  const caddr=pick('address','address');
+  const ccity=pick('city','city');
+  const cphone=pick('phone','phone');
+  const cemail=pick('email','email');
+  const sales=pick('sales','sales').toLowerCase();
+  const size=pick('size','size');
+  const wParam=pick('W','width'), dParam=pick('D','depth');
+  const roof=pick('roof','roof');
+  // If switching with a different customer/address than the local draft, start fresh for this customer
+  const draftName=($('customerName').value||'').trim().toLowerCase();
+  const draftAddr=($('customerAddress').value||'').trim().toLowerCase();
+  if((cname && draftName && cname.toLowerCase()!==draftName) || (caddr && draftAddr && caddr.toLowerCase()!==draftAddr)){
+    window._repairHistoryId=null; window._repairLocalId=null; S=defState();
+    ['customerName','customerPhone','customerEmail','customerAddress','customerCity','damageNotes'].forEach(id=>$(id).value='');
+    if($('insuranceJob')) $('insuranceJob').checked=false;
+    renderItems();renderExtras();renderCond();renderPhotos();
+  }
+  if(cname) $('customerName').value=cname;
+  if(caddr) $('customerAddress').value=caddr;
+  if(ccity) $('customerCity').value=ccity;
+  if(cphone) $('customerPhone').value=cphone;
+  if(cemail) $('customerEmail').value=cemail;
+  if(sales && SALESMEN[sales]){ $('salesman').value=sales; window._hadDraft=true; }
+  if(wParam && dParam){ $('gW').value=String(Number(wParam)||20); $('gD').value=String(Number(dParam)||20); }
+  else if(size){
+    const m=String(size).match(/([0-9.]+)\D*?[x×]\D*([0-9.]+)/i);
+    if(m){ $('gW').value=String(Number(m[1])||20); $('gD').value=String(Number(m[2])||20); }
+  }
+  if(roof){
+    if(/gable/i.test(roof)) $('roofStyle').value='Gable Roof';
+    else if(/hip/i.test(roof)) $('roofStyle').value='Hip Roof';
+    else if(/flat/i.test(roof)) $('roofStyle').value='Flat Roof';
+    else if(/shed/i.test(roof)) $('roofStyle').value='Shed Roof';
+    else if(/gambrel/i.test(roof)) $('roofStyle').value='Gambrel Roof';
+  }
+  calc();
+  return true;
+}
+// ================= INIT =================
+loadPrices();S=defState();
+// Opening the Repair Estimator normally ALWAYS starts a fresh sheet. The local draft is only restored when this same tab
+// is reloaded or reached with Back/Forward (so an accidental refresh doesn't lose work). Saved estimates in History are untouched.
+function repairNavRestoresDraft(){try{const nv=performance.getEntriesByType&&performance.getEntriesByType('navigation')[0];const t=nv?nv.type:(performance.navigation&&performance.navigation.type===1?'reload':performance.navigation&&performance.navigation.type===2?'back_forward':'navigate');return t==='reload'||t==='back_forward';}catch(e){return false;}}
+(function(){let d=null;if(repairNavRestoresDraft()&&!new URLSearchParams(location.search).get('editRepair')){try{d=JSON.parse(localStorage.getItem('agb_repair_voice_sample_draft')||'null');}catch(e){}}else{try{localStorage.removeItem('agb_repair_voice_sample_draft');}catch(e){}}window._hadDraft=!!d;if(d){if(d.job_id)window._linkedJobId=d.job_id;applySnap(d);}else{renderItems();renderExtras();renderCond();renderPhotos();calc();}applyIncomingUrlOrHandoff();})();
+syncSignedInSalesman();
+(async function(){ const id=new URLSearchParams(location.search).get('editRepair'); if(!id) return;
+  try{ const {data,error}=await garageSb.from('estimate_history').select('id,customer,address,city,estimate_price,estimate_snapshot').eq('id',id).maybeSingle(); if(error||!data) { toast('Could not load that repair estimate.',true); return; }
+    const snap=data.estimate_snapshot||{};
+    const st=snap.repair_state;
+    if(st){
+      // Also recover inner sheet_html if the estimate was edited inside Estimate History viewer
+      if(snap.sheet_html){
+        const tmp=document.createElement('div');tmp.innerHTML=snap.sheet_html;
+        const innerSc=tmp.querySelector('#sheetScale');
+        if(innerSc&&innerSc.innerHTML.trim()){
+          st.state=st.state||{};
+          st.state.sheet_html=innerSc.innerHTML;
+        }
+      }
+      applySnap(st);
+    }
+    window._repairHistoryId=data.id;
+    calc();
+    if(S.sheet_html) S.sheet_sig=sheetSig(compute());
+    toast('Loaded repair estimate from History.');
+  }catch(e){ toast('Could not load that repair estimate.',true); } })();
+</script>
+<script src="voice-core.js?v=20261031f"></script>
+<script src="repair-voice.js?v=20261031a"></script>
+</body></html>

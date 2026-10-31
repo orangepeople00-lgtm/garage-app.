@@ -46,7 +46,7 @@ Rules:
 const OWNER = `
 
 COMPANY KNOWLEDGE (owner facts; use FIRST, before general knowledge):
-- 1st service door included in base. 2nd service door +$600. French doors with a service door: 9 Light $1,150, Full View $1,450. Top windows +$350.
+- Internal COST adders (before profit — NEVER quote these as the price): 1st service door included in base; 2nd service door $600 cost; French doors with a service door: 9 Light $1,150, Full View $1,450 cost; top windows $350 cost. For any "how much more" question ALWAYS call get_price_info and say its difference_text (customer price incl. profit) — never the cost figure.
 - Garage-only demo (build on existing slab, old garage torn down) $1,300 (demo cost box default). LP Smart Side = same price as Hardie/cement board.
 - All other prices ONLY from get_price_info (the estimator's own tables). Never invent a price; if the tool can't price it, say you don't have that price.
 - Internal: Profit Control default 24.75% of internal cost. Internal cost/profit is staff-only: mention ONLY if the salesman explicitly asks about margin/profit, never in a customer-facing way.
@@ -65,7 +65,7 @@ LIVE MODE (voice):
 - Everything not mentioned stays at the estimator's standard default. NEVER walk through a checklist and NEVER ask about anything he didn't bring up (siding, patio, doors, windows, gutters, apron, EPA, colors...).
 - After he finishes a turn: call set_estimate_fields with what you understood; it goes straight onto the estimate. Do NOT speak a confirmation.
 - Speak ONLY when (a) something he mentioned is ambiguous/incomplete (e.g. French doors without style, a city not in the list, "two car" without a depth) - ask ONE short question; (b) no size at all after he described the job - ask once "What size?"; (c) he asked you a question.
-- QUESTIONS he asks: never change fields. Pricing -> call get_price_info (company facts above first) and answer with those numbers only, say it's company pricing. City codes -> get_city_info. Garage/building facts -> answer briefly from company knowledge, else general knowledge (say "generally"); if unsure or needs current info -> web_lookup once, then answer in 1-2 sentences and say it's general info.
+- QUESTIONS he asks: never change fields. Pricing -> ALWAYS call get_price_info and quote its difference_text exactly and answer with those numbers only, say it's company pricing. City codes -> get_city_info. Garage/building facts -> answer briefly from company knowledge, else general knowledge (say "generally"); if unsure or needs current info -> web_lookup once, then answer in 1-2 sentences and say it's general info.
 - 1-2 short sentences when you do speak. He may interrupt. No "anything else", no summaries. If he says done / that's it, call finish_estimate silently.`;
 
 

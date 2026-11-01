@@ -24,7 +24,24 @@ const css=`.mb{margin:0 0 12px;background:#0b1220;border:1px solid #1e3a5f;borde
 .mb-btn.sec{background:#27272a;border:1px solid #52525b;color:#f4f4f5;font-weight:600}.mb-btn.playing{background:#16a34a}
 .mb-st{font-size:12px;color:#a1a1aa;margin:6px 0}.mb-sec{margin-top:8px;font-size:13px;line-height:1.45}.mb-sec b{color:#fff}
 .mb-sec ul{margin:2px 0 0 18px;padding:0}.mb-empty{color:#a1a1aa}.mb-close{margin-left:auto}`;
-const st=document.createElement('style'); st.textContent=css; document.head.appendChild(st);
+/* compact briefing + attention box (always on via html.mb-compact) */
+const cssC=`.mb-compact .mb{padding:8px 10px;border-radius:12px;margin:0 0 10px}
+.mb-compact .mb-top{gap:6px;flex-wrap:nowrap}.mb-compact .mb-h{font-size:13px;flex:1 1 auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mb-compact .mb-btn{min-height:32px;padding:0 10px;font-size:12px;white-space:nowrap;flex:0 0 auto}@media(max-width:480px){.mb-compact .mb-btn{padding:0 8px;font-size:11px}.mb-compact .mb-h{font-size:12px}}.mb-compact .mb-btn.sec{padding:0 8px}
+.mb-compact .mb-st{font-size:11px;margin:3px 0}.mb-compact .mb-st:empty{display:none}
+.mb-compact #mbText{margin-top:4px;font-size:12px;line-height:1.35;max-height:3.9em;overflow-y:auto;overscroll-behavior:contain}
+.mb-compact #mbList{max-height:170px;overflow-y:auto;overscroll-behavior:contain;margin-top:6px;border-top:1px solid #1e3a5f;padding-top:2px}
+.mb-compact #mbList .mb-sec{margin-top:4px;font-size:12px;line-height:1.3}.mb-compact #mbList .mb-sec b{font-size:11px;letter-spacing:.03em;text-transform:uppercase;color:#93c5fd}
+.mb-compact #mbList ul{list-style:none;margin:1px 0 0;padding:0}.mb-compact #mbList li{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:1px 0}
+.mb-compact .home-panels>*,.mb-compact .home-panels .card{min-width:0;max-width:100%}.mb-compact #mbPanel,.mb-compact #mbList,.mb-compact #mbList ul{min-width:0;max-width:100%}
+.mb-compact #homeAttention{min-width:0;max-width:100%;max-height:220px;overflow-y:auto;overscroll-behavior:contain}
+.mb-compact #homeAttention .home-row{display:flex;gap:6px;align-items:baseline;padding:5px 2px;font-size:12px;white-space:nowrap;overflow:hidden;min-width:0}
+.mb-compact #homeAttention .home-row>*{display:inline;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;margin:0}
+.mb-compact #homeAttention .home-row>b{flex:0 0 auto;max-width:38%}.mb-compact #homeAttention .home-row>.sub:first-of-type{flex:1 1 auto}
+.mb-compact #homeAttention .home-row>.hold,.mb-compact #homeAttention .home-row>.overdue{flex:0 1 auto;max-width:42%;order:-1;font-size:11px}
+.mb-compact #homeAttention .home-row>.sub:last-child:not(.hold):not(.overdue){display:none}`;
+document.documentElement.classList.add('mb-compact');
+const st=document.createElement('style'); st.textContent=css+'\n'+cssC; document.head.appendChild(st);
 
 /* ---------- data (read only) ---------- */
 const d10=v=>String(v||'').slice(0,10);

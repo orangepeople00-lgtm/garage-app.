@@ -2,6 +2,8 @@
    AGBVoiceCore.create({page, fields:[[id,label]...], extraCatalog:[...], fillDoors(list), afterFill(), fnName}) -> controller.
    Expects the page to have the #agbVoice panel markup, garageSb, GARAGE_SB_URL, GARAGE_SB_KEY. */
 (function(){var st=document.createElement('style');st.textContent=".agbv{margin:0 0 16px;background:#0b1220;border:1px solid #1e3a5f;border-radius:16px;padding:12px;color:#e4e4e7;max-width:100%;box-sizing:border-box}\n.agbv *{box-sizing:border-box}\n.agbv-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}\n.agbv-mic{min-height:48px;padding:0 18px;border-radius:999px;background:#2563eb;color:#fff;font-weight:800;font-size:16px;border:0}\n.agbv-mic.live{background:#dc2626;animation:agbvp 1.4s infinite}\n@keyframes agbvp{50%{box-shadow:0 0 0 8px rgba(220,38,38,.25)}}\n.agbv-timer{font-size:11px;color:#71717a;font-variant-numeric:tabular-nums}\n.agbv-status{font-size:12px;color:#a1a1aa;margin:8px 0 6px;line-height:1.4}\n.agbv-type{display:flex;gap:6px}\n.agbv-type input{flex:1;min-width:0;min-height:44px;background:#18181b;border:1px solid #3f3f46;border-radius:12px;color:#fff;padding:0 10px;font-size:16px}\n.agbv-btn{min-height:44px;padding:0 14px;border-radius:12px;background:#27272a;border:1px solid #52525b;color:#f4f4f5;font-size:14px}\n.agbv-log{margin-top:8px;font-size:12px;max-height:120px;overflow:auto;background:#09090b;border-radius:10px;padding:6px 8px;line-height:1.45}\n.agbv-log .u{color:#93c5fd}.agbv-log .a{color:#86efac}\n.agbv-card{margin-top:10px;background:#111827;border:1px solid #334155;border-radius:14px;padding:10px}\n.agbv-h{font-weight:800;font-size:14px;margin-bottom:6px}.agbv-sub{font-weight:400;color:#a1a1aa;font-size:12px}\n.agbv-item{display:grid;grid-template-columns:28px minmax(0,1fr) minmax(0,1.2fr);gap:6px;align-items:center;padding:5px 0;border-top:1px solid #1f2937;font-size:13px}\n.agbv-item input[type=checkbox]{width:22px;height:22px}\n.agbv-item select,.agbv-item input[type=text]{width:100%;min-height:38px;background:#18181b;border:1px solid #3f3f46;border-radius:10px;color:#fff;font-size:14px;padding:0 6px}\n.agbv-q{margin-top:8px;padding:8px;background:#422006;border:1px solid #a16207;border-radius:12px;font-size:13px}\n.agbv-q .opts{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}\n.agbv-q button{min-height:40px;padding:0 12px;border-radius:999px;background:#fbbf24;color:#000;font-weight:700;border:0;font-size:14px}\n.agbv-heard{font-size:12px;color:#93c5fd;background:#0b1220;border-radius:8px;padding:5px 8px;margin-bottom:6px;line-height:1.35;overflow-wrap:anywhere}\n.agbv-say{display:flex;gap:8px;align-items:flex-start;font-size:14px;line-height:1.4;color:#e4e4e7;background:#052e16;border:1px solid #166534;border-radius:12px;padding:8px 10px;margin:6px 0}\n.agbv-eq{display:inline-flex;gap:2px;align-items:flex-end;height:16px;margin-top:2px;flex:none}.agbv-eq i{width:3px;height:4px;background:#86efac;border-radius:2px}\n.agbv-say.talking .agbv-eq i{animation:agbveq .7s infinite ease-in-out}.agbv-say.talking .agbv-eq i:nth-child(2){animation-delay:.15s}.agbv-say.talking .agbv-eq i:nth-child(3){animation-delay:.3s}\n@keyframes agbveq{50%{height:16px}}\n.agbv-warn{display:block;width:100%;margin:4px 0;min-height:40px;border-radius:10px;background:#7f1d1d;color:#fff;border:0;font-size:13px;padding:6px 10px;text-align:left}\n.agbv-unk{margin-top:6px;font-size:12px;color:#fca5a5}\n.agbv-actions{display:flex;gap:8px;margin-top:10px}\n.agbv-fill{flex:1;min-height:48px;border-radius:12px;background:#16a34a;color:#fff;font-weight:800;font-size:16px;border:0}\n";document.head.appendChild(st);})();
+/* fixed-size transcript boxes (sample pages only for now: html.agbv-fixbox) — text scrolls inside, the page never moves */
+(function(){ if(!/sample/i.test(location.pathname)) return; document.documentElement.classList.add('agbv-fixbox'); var st=document.createElement('style'); st.textContent='.agbv-fixbox #agbvSay{height:88px;overflow-y:auto;overflow-anchor:none}.agbv-fixbox #agbvSay[hidden]{display:flex;visibility:hidden}.agbv-fixbox #agbvLog{height:120px;max-height:120px;overflow-y:auto;overflow-anchor:none}.agbv-fixbox #agbvLog[hidden]{display:block;visibility:hidden}.agbv-fixbox #agbvHeard{max-height:34px;overflow-y:auto;overflow-anchor:none}@media(min-width:900px){.agbv-fixbox #agbvSay{height:72px}.agbv-fixbox #agbvLog{height:140px;max-height:140px}}'; document.head.appendChild(st); })();
 
 /* SAMPLE voice-estimate (branch voice-estimate-sample). Talks to OpenAI Realtime via an ephemeral key minted by the
    Supabase function estimate-voice-session. Proposals go to the summary card; values go straight into the real controls (live fill)
@@ -150,8 +152,8 @@ window.AGBVoiceCore={create:function(cfg){
       w.onclick=()=>{ unlockAudio(); if(pc){ const r=pc.getReceivers().find(x=>x.track&&x.track.kind==='audio'); if(r) playRemote(new MediaStream([r.track])); } w.hidden=true; };
       $('agbvSay').after(w); }
     w.textContent="Can't play sound — check volume / Silent switch, then tap here. (You can still read what the helper says above.)"; w.hidden=false; }
-  function sayLine(txt,final){ const el=$('agbvSay'); el.hidden=false; $('agbvSayTxt').textContent=txt; }
-  function setTalking(on){ aiTalking=on; const el=$('agbvSay'); if(el) el.classList.toggle('talking',on);
+  function sayLine(txt,final){ const el=$('agbvSay'); if(!el) return; el.hidden=false; $('agbvSayTxt').textContent=txt; el.scrollTop=el.scrollHeight; }
+  function setTalking(on){ if(aiTalking&&!on) aiStopAt=Date.now(); aiTalking=on; const el=$('agbvSay'); if(el) el.classList.toggle('talking',on);
     if(live()) status(on?'AI talking… (just keep talking to interrupt)':'Listening…');
     if(on){ clearTimeout(playChk); const t0a=audio?audio.currentTime:0; playChk=setTimeout(()=>{ if(aiTalking&&audio&&(audio.paused||audio.currentTime<=t0a)) soundWarn(); else { const w=$('agbvSoundWarn'); if(w) w.hidden=true; } window.agbVoiceAudio={paused:audio.paused,currentTime:audio.currentTime,start:t0a}; },1500); } }
   function ensureSayUI(){ if($('agbvSay')) return; const d=document.createElement('div'); d.id='agbvSay'; d.className='agbv-say'; d.hidden=true;
@@ -167,7 +169,7 @@ window.AGBVoiceCore={create:function(cfg){
     $('agbvMic').disabled=true; status('Listening…');
     unlockAudio(); // must run inside the Talk tap (iPhone)
     try{
-      mic=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true,channelCount:1}});
+      mic=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:false,channelCount:1}});
       const tok=await callFn({mode:'realtime',page:cfg.page||'',catalog:catalog(),current:current(),knowledge:(cfg.knowledgePack?cfg.knowledgePack():''),breakdown:(cfg.breakdown?cfg.breakdown():''),learned:learnedText()});
       pc=new RTCPeerConnection();
       pc.ontrack=e=>{ playRemote(e.streams[0]||new MediaStream([e.track])); };
@@ -191,7 +193,13 @@ window.AGBVoiceCore={create:function(cfg){
     if(s>=MAX_TOTAL) stop('Voice ended (15 min safety limit). Tap Talk to keep going — the list is kept.');
     else if(idle>MAX_IDLE) stop('Voice ended after 2 minutes of silence. Tap Talk to keep going — the list is kept.');
     else if(idle>STILL_THERE&&!stillAsked){ stillAsked=true; status('Still there? (voice ends after 2 min of quiet)'); } }
-  let lastUserTxt='';
+  let lastUserTxt='', aiStopAt=0, lastAiTxt='';
+  /* BARGE-IN FIX (2026-10-31): the AI's own voice leaking into the mic was transcribed as a sentence and cancelled the reply.
+     Echo = most words of the transcript are words the AI is saying / just said; ignored. Only a real user sentence cuts it off. */
+  const ewords=t=>String(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9 ]/g,' ').split(/\s+/).filter(w=>w.length>1);
+  function isEcho(t){ if(!aiTalking&&Date.now()-aiStopAt>2500) return false; const w=ewords(t); if(!w.length) return true; const ref=new Set(ewords((sayBuf||'')+' '+lastAiTxt)); if(!ref.size) return false;
+    return w.filter(x=>ref.has(x)).length/w.length>=0.6; }
+  function bargeOk(t){ if(isEcho(t)) return false; const w=ewords(t).filter(x=>!/^(uh+|um+|mm+|hmm+|ah+|oh+|ok|okay|yeah|yep|yes|no|huh|right|sure|thanks|thank|you|bye|so|well|like)$/.test(x)); return w.length>=3||w.some(x=>/\d/.test(x)); }
   /* Background noise often transcribes as nothing, a filler ("uh", "mm"), or a stock phrase ("Thank you.", "Bye.") — never act on those. */
   let aiAskedAt=0;
   /* Noise/filler never interrupts the AI. While it talks, only a real utterance (2+ words or a number) counts.
@@ -221,16 +229,16 @@ window.AGBVoiceCore={create:function(cfg){
     else if(t==='output_audio_buffer.stopped'||t==='output_audio_buffer.cleared') setTalking(false);
     else if(t==='response.output_audio_transcript.delta'&&ev.delta){ if(!sayBuf||sayNew){ sayBuf=''; sayNew=false; } sayBuf+=ev.delta; sayLine(sayBuf); }
     else if(t==='input_audio_buffer.speech_stopped'){ if(!aiTalking) status('Listening…'); }
-    else if(t==='conversation.item.input_audio_transcription.completed'&&ev.transcript) { if(!realSpeech(ev.transcript)) return; lastAct=userAct=Date.now(); stillAsked=false; if(aiTalking){ send({type:'response.cancel'}); send({type:'output_audio_buffer.clear'}); setTalking(false); } send({type:'response.create'}); status('Listening… (updating estimate)'); log('u',ev.transcript); lastAct=Date.now(); heardSpeech=true; heard(ev.transcript); voicedYes(ev.transcript); localParse(ev.transcript); render(); }
+    else if(t==='conversation.item.input_audio_transcription.completed'&&ev.transcript) { if(isEcho(ev.transcript)){ window.agbEchoIgnored=(window.agbEchoIgnored||0)+1; return; } if(!realSpeech(ev.transcript)) return; if(aiTalking&&!bargeOk(ev.transcript)) return; lastAct=userAct=Date.now(); stillAsked=false; if(aiTalking){ send({type:'response.cancel'}); send({type:'output_audio_buffer.clear'}); setTalking(false); } send({type:'response.create'}); status('Listening… (updating estimate)'); log('u',ev.transcript); lastAct=Date.now(); heardSpeech=true; heard(ev.transcript); voicedYes(ev.transcript); localParse(ev.transcript); render(); }
     else if(t==='conversation.item.input_audio_transcription.failed'){ /* usually noise: ignore quietly */ }
-    else if(t==='response.output_audio_transcript.done'&&ev.transcript){ if(/\?\s*$/.test(ev.transcript)) aiAskedAt=Date.now(); log('a',ev.transcript); sayLine(ev.transcript,true); sayNew=true; }
+    else if(t==='response.output_audio_transcript.done'&&ev.transcript){ lastAiTxt=ev.transcript; if(/\?\s*$/.test(ev.transcript)) aiAskedAt=Date.now(); log('a',ev.transcript); sayLine(ev.transcript,true); sayNew=true; }
     else if(t==='response.function_call_arguments.done'){
       let a={}; try{ a=JSON.parse(ev.arguments||'{}'); }catch(e){}
       if(ev.name==='get_price_info'||ev.name==='get_city_info'||ev.name==='web_lookup'||ev.name==='search_page_info'){ status(ev.name==='web_lookup'?'Looking that up…':'Checking…');
         const reply=r=>{ send({type:'conversation.item.create',item:{type:'function_call_output',call_id:ev.call_id,output:JSON.stringify(r).slice(0,3000)}}); send({type:'response.create'}); };
         Promise.resolve().then(()=>ev.name==='get_price_info'?(cfg.priceInfo?cfg.priceInfo(a):{error:'no pricing on this page'}):ev.name==='get_city_info'?(cfg.cityInfo?cfg.cityInfo(a.city):{error:'no city data'}):ev.name==='search_page_info'?(cfg.searchInfo?cfg.searchInfo(a.query):{error:'no page search'}):callFn({mode:'web',question:a.question}).then(d=>({answer:d.answer,source:'web (general info)'})))
           .catch(e=>({error:String(e.message||e)})).then(reply); return; }
-      if(ev.name==='get_job_status'){ status('Looking up job…'); jobStatus(a.query).catch(e=>({error:String(e.message||e)})).then(r=>{ send({type:'conversation.item.create',item:{type:'function_call_output',call_id:ev.call_id,output:JSON.stringify(r).slice(0,4000)}}); send({type:'response.create'}); status('Listening…'); }); return; }
+      if(ev.name==='get_job_status'){ status('Looking up job…'); jobStatus(a.query,a.search).catch(e=>({error:String(e.message||e)})).then(r=>{ send({type:'conversation.item.create',item:{type:'function_call_output',call_id:ev.call_id,output:JSON.stringify(r).slice(0,4000)}}); send({type:'response.create'}); status('Listening…'); }); return; }
       if(ev.name==='finish_estimate'&&!/\b(done|that'?s (it|all)|that is (it|all)|finished|all set|we'?re good|end (it|the conversation)|stop)\b/i.test(lastUserTxt)){ send({type:'conversation.item.create',item:{type:'function_call_output',call_id:ev.call_id,output:'He did not say he is done. Keep listening silently.'}}); return; }
       if(ev.name==='finish_estimate'){ send({type:'conversation.item.create',item:{type:'function_call_output',call_id:ev.call_id,output:'all set; everything is already on the estimate'}}); setTimeout(()=>stop('All set — everything you said is on the estimate. Fix anything in the list below, or tap Talk to add more.'),2500); return; }
       apply(a); const needQ=(a.questions||[]).length>0||(a.unknownPhrases||[]).length>0||(a._ambig||[]).length>0;
@@ -251,23 +259,39 @@ window.AGBVoiceCore={create:function(cfg){
      where jobs.salesman_username = their staff_profiles.username. Filter is applied in the query (RLS "authorized read jobs"
      enforces the same on the server). JOB_SCOPE is the hook to change the rule later. No writes. */
   const JOB_SCOPE=me=>['owner','business_manager'].includes(me.role)?null:me.username;
-  async function jobStatus(q){
+  /* shared search (voice-jobsearch.js): fuzzy/phonetic names, street/house no./city, status filters, OPEN jobs by default */
+  function needSearchLib(){ if(window.AGBJobSearch) return Promise.resolve(); return new Promise(res=>{ let sc=document.getElementById('agbJobSearchJs');
+    if(!sc){ sc=document.createElement('script'); sc.id='agbJobSearchJs'; sc.src='voice-jobsearch.js?v=20261031b'; document.head.appendChild(sc); }
+    sc.addEventListener('load',()=>res()); sc.addEventListener('error',()=>res()); setTimeout(res,4000); }); }
+  needSearchLib();
+  async function jobStatus(q,srch){
     const sb=(typeof garageSb!=='undefined')?garageSb:null; if(!sb||!sb.auth) return {error:'database not available'};
     const {data:{user}={}}=await sb.auth.getUser(); if(!user) return {error:'salesman is not signed in'};
     const {data:me}=await sb.from('staff_profiles').select('username,role').eq('id',user.id).maybeSingle(); if(!me||!me.username) return {error:'no staff profile'};
-    const term=String(q||'').replace(/[%,().*\\]/g,' ').trim().slice(0,60); if(term.length<2) return {error:'need a name or address'};
-    let qy=sb.from('jobs').select('id,customer,address,city,sold_date,permit_status,permit_date,demolition_required,demo_status,demo_date,scheduled_demo,demo_crew,concrete_status,concrete_est,concrete_scheduled,concrete_poured,concrete_crew,carpentry_status,carpentry_est,carpentry_scheduled,built_date,carpentry_crew,electric_status,electric_date,electric_crew,inspection_status,inspection_date,extras_status,extras_scheduled,completed_date,hold_status,hold_reason,notes')
-      .is('deleted_at',null).or('customer.ilike.%'+term+'%,address.ilike.%'+term+'%').order('sold_date',{ascending:false}).limit(5);
-    const scope=JOB_SCOPE(me); if(scope) qy=qy.eq('salesman_username',scope);
-    const {data:jobs,error}=await qy; if(error) return {error:error.message};
-    if(!jobs||!jobs.length) return {found:0,say:'No job found for this salesman.'};
-    if(jobs.length>1) return {found:jobs.length,matches:jobs.map(j=>j.customer+' — '+(j.address||'')+(j.city?', '+j.city:''))};
-    const j=jobs[0]; const ids=[j.id];
-    const [{data:ca},{data:act}]=await Promise.all([
+    await needSearchLib(); if(!window.AGBJobSearch) return {error:'search not loaded'};
+    let qy=sb.from('jobs').select('*').is('deleted_at',null).order('sold_date',{ascending:false}).limit(1500);
+    const scope=JOB_SCOPE(me); if(scope) qy=qy.eq('salesman_username',scope); /* scope in the query + RLS */
+    const {data:all,error}=await qy; if(error) return {error:error.message};
+    const r=AGBJobSearch.search(all||[],Object.assign({},srch&&typeof srch==='object'?srch:{},{query:String(q||'').slice(0,120)}));
+    if(!r.jobs.length) return {found:0,say:r.say,did_you_mean:[...r.close,...(r.closedMatches||[])].map(AGBJobSearch.label)};
+    if(r.jobs.length>1) return {found:r.jobs.length,say:r.say,matches:r.jobs.map(AGBJobSearch.label)};
+    const j=r.jobs[0]; const ids=[j.id];
+    const [{data:ca},{data:act},{data:docs}]=await Promise.all([
       sb.from('crew_assignments').select('stage,crew,sched_date,show_up_time,notes').in('job_id',ids).order('sched_date',{ascending:true}).limit(10),
-      sb.from('job_activity').select('action,created_at').in('job_id',ids).order('created_at',{ascending:false}).limit(5)]);
-    const o={}; Object.entries(j).forEach(([k,v])=>{ if(v!==null&&v!==''&&k!=='id') o[k]=k==='notes'?String(v).slice(-400):v; });
-    return {found:1,today:new Date().toISOString().slice(0,10),job:o,crew_schedule:ca||[],recent_activity:act||[]};
+      sb.from('job_activity').select('action,created_at').in('job_id',ids).order('created_at',{ascending:false}).limit(5),
+      sb.from('job_documents').select('doc_type,file_name').in('job_id',ids).limit(20)]);
+    let est=null, how='';
+    try{ const cols='id,customer,address,city,garage_size,roof_type,wall_height,siding,estimate_price,created_at,calc:estimate_snapshot->calculator_state,sold:estimate_snapshot->sold,enotes:estimate_snapshot->notes,fpp:estimate_snapshot->final_project_price,sjob:estimate_snapshot->job_id';
+      const link=(String(j.notes||'').match(/\[AGB-ESTLINK:([^\]\s]+)\]/)||[])[1];
+      if(link){ const {data}=await sb.from('estimate_history').select(cols).eq('id',link).maybeSingle(); if(data){ est=data; how='linked to this job'; } }
+      if(!est){ const last=String(j.customer||'').trim().split(/\s+/).pop(); if(last&&last.length>1){ const {data}=await sb.from('estimate_history').select(cols).ilike('customer','%'+last.replace(/[%,()*\\]/g,'')+'%').order('created_at',{ascending:false}).limit(10);
+        const N=AGBJobSearch.norm; const num=x=>(N(x).match(/\d+/)||[''])[0];
+        const byJob=(data||[]).find(e=>String(e.sjob||(e.sold&&e.sold.job_id)||'')===String(j.id));
+        const byAddr=(data||[]).find(e=>num(e.address)&&num(e.address)===num(j.address));
+        if(byJob){ est=byJob; how='linked to this job'; } else if(byAddr){ est=byAddr; how='same customer name and house number'; } } } }catch(e){}
+    if(est) est.estimate_snapshot={calculator_state:est.calc||{},sold:est.sold||null,notes:est.enotes||'',final_project_price:est.fpp||null};
+    const rec=AGBJobSearch.describe(j,{crews:ca||[],docs:(docs||[]).map(d=>[d.doc_type,d.file_name].filter(Boolean).join(': ')),activity:(act||[]).map(a=>String(a.created_at||'').slice(0,10)+' '+a.action),estimate:est?AGBJobSearch.estimate(est,how):''});
+    return {found:1,today:new Date().toISOString().slice(0,10),say:r.say,record:rec};
   }
   async function sendText(txt){
     txt=txt||$('agbvText').value.trim(); if(!txt) return; $('agbvText').value='';

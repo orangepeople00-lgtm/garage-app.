@@ -1,4 +1,4 @@
-// morning-briefing (SAMPLE): reads an already-built briefing text aloud with OpenAI TTS.
+// morning-briefing (live in index.html for owner/business_manager; the page sends only items that exist today): reads an already-built briefing text aloud with OpenAI TTS.
 // Signed-in owner / business_manager only. Text capped at 1200 chars. Returns audio/mpeg.
 // Cost: gpt-4o-mini-tts ≈ $0.015 per minute of audio (~$0.01 for a 40 s briefing).
 const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type", "Access-Control-Allow-Methods": "POST, OPTIONS" };
@@ -23,7 +23,7 @@ Deno.serve(async (req) => {
   const r = await fetch("https://api.openai.com/v1/audio/speech", {
     method: "POST", headers: { Authorization: "Bearer " + key, "Content-Type": "application/json" },
     body: JSON.stringify({ model: "gpt-4o-mini-tts", voice: "ash", input: text, response_format: "mp3",
-      instructions: "Friendly, clear, brisk foreman giving a short morning rundown. Do not add words." }),
+      instructions: "Friendly, clear, brisk foreman giving a short morning rundown. Read the text exactly as written. Do not add, remove or invent anything: no greetings beyond the text, no 'nothing scheduled', 'no jobs' or other filler about things that are not in the text." }),
   });
   if (!r.ok) return j({ error: "TTS failed " + r.status }, 502);
   return new Response(r.body, { headers: { ...CORS, "Content-Type": "audio/mpeg", "Cache-Control": "no-store" } });

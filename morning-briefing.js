@@ -55,17 +55,17 @@ function build(g){ const name=(()=>{ try{ return DISPLAY[String(me().username).t
   const hr=new Date().getHours(), hi=hr<12?'Good morning':hr<17?'Good afternoon':'Good evening';
   const S=[hi+(name?' '+name:'')+'. Here is the briefing for '+new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})+'.'];
   const stg=(x,verb)=>who(x.j)+(x.crew?' with '+x.crew:'')+(x.time?' at '+x.time:'')+(x.done?' ('+verb+')':'');
-  S.push(g.demos.length?plural(g.demos.length,'demo')+' today: '+andJoin(list(g.demos,5).map(x=>stg(x,'marked done')))+(g.demos.length>5?', and '+(g.demos.length-5)+' more':'')+'.':'No demos scheduled today.');
-  S.push(g.pours.length?plural(g.pours.length,'pour')+' today: '+andJoin(list(g.pours,5).map(x=>stg(x,'marked poured')))+(g.pours.length>5?', and '+(g.pours.length-5)+' more':'')+'.':'No concrete pours scheduled today.');
-  S.push(g.insp.length?plural(g.insp.length,'inspection')+' today: '+andJoin(list(g.insp,5).map(x=>who(x.j)+(x.st&&x.st!=='Scheduled'?' ('+x.st+')':'')))+(g.insp.length>5?', and '+(g.insp.length-5)+' more':'')+'.':'No inspections scheduled today.');
-  S.push(g.crews.length?'Crew assignments: '+list(g.crews,6).map(x=>x.crew+' — '+x.stage.toLowerCase()+' at '+(x.j.customer||'a job')+(x.time?' at '+x.time:'')).join('; ')+(g.crews.length>6?', and '+(g.crews.length-6)+' more':'')+'.':'No crews assigned today.');
+  S.push(g.demos.length?plural(g.demos.length,'demo')+' today: '+andJoin(list(g.demos,5).map(x=>stg(x,'marked done')))+(g.demos.length>5?', and '+(g.demos.length-5)+' more':'')+'.':'');
+  S.push(g.pours.length?plural(g.pours.length,'pour')+' today: '+andJoin(list(g.pours,5).map(x=>stg(x,'marked poured')))+(g.pours.length>5?', and '+(g.pours.length-5)+' more':'')+'.':'');
+  S.push(g.insp.length?plural(g.insp.length,'inspection')+' today: '+andJoin(list(g.insp,5).map(x=>who(x.j)+(x.st&&x.st!=='Scheduled'?' ('+x.st+')':'')))+(g.insp.length>5?', and '+(g.insp.length-5)+' more':'')+'.':'');
+  S.push(g.crews.length?'Crew assignments: '+list(g.crews,6).map(x=>x.crew+' — '+x.stage.toLowerCase()+' at '+(x.j.customer||'a job')+(x.time?' at '+x.time:'')).join('; ')+(g.crews.length>6?', and '+(g.crews.length-6)+' more':'')+'.':'');
   if(g.permits.length){ const fix=g.permits.filter(x=>x.fix); S.push(plural(g.permits.length,'permit')+' pending'+(fix.length?', '+fix.length+' with corrections needed: '+andJoin(list(fix,4).map(x=>who(x.j)))+(fix.length>4?' and '+(fix.length-4)+' more':''):'')+'.'); }
-  else S.push('No permits pending.');
-  S.push(g.notSub.length?plural(g.notSub.length,'job')+(g.notSub.length===1?' still needs':' still need')+' a permit submitted'+(g.notSub.length<=3?': '+andJoin(g.notSub.map(x=>who(x.j))):'')+'.':'No permits waiting to be submitted.');
-  S.push(g.od.length?plural(g.od.length,'job')+' overdue: '+andJoin(list(g.od,4).map(x=>who(x.j)+(x.why[0]?', '+x.why[0]:'')))+(g.od.length>4?', and '+(g.od.length-4)+' more':'')+'.':'Nothing overdue.');
-  return S.join(' '); }
+  S.push(g.notSub.length?plural(g.notSub.length,'job')+(g.notSub.length===1?' still needs':' still need')+' a permit submitted'+(g.notSub.length<=3?': '+andJoin(g.notSub.map(x=>who(x.j))):'')+'.':'');
+  S.push(g.od.length?plural(g.od.length,'job')+' overdue: '+andJoin(list(g.od,4).map(x=>who(x.j)+(x.why[0]?', '+x.why[0]:'')))+(g.od.length>4?', and '+(g.od.length-4)+' more':'')+'.':'');
+  const items=S.slice(1).filter(Boolean); /* only things that exist today — never 'no X' filler */
+  return items.length?S[0]+' '+items.join(' '):S[0].replace(/ Here is the briefing for [^.]*\./,'')+' All clear today.'; }
 function html(g){ const row=(x,extra)=>'<li>'+esc(x.j.customer||'Job')+(x.j.address?' — '+esc(x.j.address):'')+(x.j.city?', '+esc(x.j.city):'')+esc(extra||'')+'</li>';
-  const sec=(t,a,f,empty)=>'<div class="mb-sec"><b>'+t+' ('+a.length+')</b>'+(a.length?'<ul>'+a.slice(0,12).map(f).join('')+(a.length>12?'<li>… '+(a.length-12)+' more</li>':'')+'</ul>':'<div class="mb-empty">'+empty+'</div>')+'</div>';
+  const sec=(t,a,f)=>a.length?'<div class="mb-sec"><b>'+t+' ('+a.length+')</b><ul>'+a.slice(0,12).map(f).join('')+(a.length>12?'<li>… '+(a.length-12)+' more</li>':'')+'</ul></div>':''; /* empty categories are skipped */
   return sec('Demos today',g.demos,x=>row(x,(x.crew?' • '+x.crew:'')+(x.time?' • '+x.time:'')+(x.done?' • done':'')),'No demos scheduled today.')
     +sec('Pours today',g.pours,x=>row(x,(x.crew?' • '+x.crew:'')+(x.time?' • '+x.time:'')+(x.done?' • poured':'')),'No concrete pours scheduled today.')
     +sec('Inspections today',g.insp,x=>row(x,(x.type?' • '+x.type:'')+(x.st?' • '+x.st:'')),'No inspections scheduled today.')
@@ -73,6 +73,7 @@ function html(g){ const row=(x,extra)=>'<li>'+esc(x.j.customer||'Job')+(x.j.addr
     +sec('Permits pending',g.permits,x=>row(x,' • '+(x.fix?'Corrections needed':x.j.permit_status)+(x.since?' since '+x.since:'')),'No permits pending.')
     +sec('Permits not submitted',g.notSub,x=>row(x,''),'No permits waiting to be submitted.')
     +sec('Overdue',g.od,x=>row(x,x.why.length?' • '+x.why.join('; '):''),'Nothing overdue.'); }
+function htmlOrClear(g){ const h=html(g); return h||'<div class="mb-sec"><b>All clear today.</b></div>'; }
 
 /* ---------- audio ---------- */
 let audio=null, blobUrl='', text='', usedTts='', playing=false;
@@ -110,7 +111,7 @@ function mount(){ if($('mbPanel')||!isMgr()) return false; const main=$('appMain
   $('mbHide').onclick=()=>{ stopAudio(); d.hidden=true; };
   return true; }
 function render(){ const g=gather(); text=build(g); blobUrl=blobUrl&&window._mbText===text?blobUrl:''; window._mbText=text; window.mbBriefing={text,data:{insp:g.insp.length,crews:g.crews.length,notSub:g.notSub.length,demos:g.demos.length,pours:g.pours.length,permits:g.permits.length,overdue:g.od.length}};
-  $('mbText').textContent=text; $('mbList').innerHTML=html(g); setBtn(); }
+  $('mbText').textContent=text; $('mbList').innerHTML=htmlOrClear(g); setBtn(); }
 let booted=false; const t0=Date.now();
 function boot(){ if(booted) return true; const p=me(); if(!p||!$('appMain')||$('appMain').classList.contains('hidden')) return false;
   const ss=$('syncState'); if(ss&&!/Connected|blocked|error|fail/i.test(ss.textContent)&&Date.now()-t0<15000) return false; /* wait for refresh() to finish loading jobs */

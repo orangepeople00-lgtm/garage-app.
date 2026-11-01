@@ -3969,11 +3969,11 @@ const oSave=saveJob;window.saveJob=saveJob=async function(e){if(!isSales()){cons
   const {error}=await sb.from('pending_job_changes').insert({...row,requested_by:user.id,salesman_username:profile.username,status:'pending'});if(btn)btn.disabled=false;
   if(error)return alert('Not sent: '+error.message);window.__ajSugg=null;closeJobForm();alert(id?'Change sent to Randy / Sam for approval.':'Job sent to Randy / Sam for approval. They fill in the rest after approving.')};
 /* salesman Add Job button + drawer "Edit basics" */
-setInterval(()=>{try{const a=$('addBtn');if(a&&profile&&!manager()&&a.classList.contains('hidden'))a.classList.remove('hidden');if(profile&&manager()&&!$('ajPend')&&$('stats'))ajLoadPend()}catch(e){}},700);
+setInterval(()=>{try{const a=$('addBtn');if(a&&profile&&!manager()&&a.classList.contains('hidden'))a.classList.remove('hidden');if(profile&&manager()&&!$('ajPend')&&!$('dvPending')&&$('stats'))ajLoadPend();if($('dvPending'))$('ajPend')?.remove()}catch(e){}},700);
 const oDr=openDrawer;window.openDrawer=openDrawer=async function(id){const r=await oDr.apply(this,arguments);try{if(isSales()){const h=document.querySelector('#drawerContent .drawerhead [onclick^="printJobSummary"]');if(h&&!$('ajEditBasics'))h.insertAdjacentHTML('afterend',`<button id="ajEditBasics" class="btn light sm" onclick="closeDrawer();openJobForm('${id}')">Edit basics</button>`)}}catch(e){}return r};
 /* manager approval view for add-job / job-form requests, with scanned suggestions */
 let ajPend=[];
-async function ajLoadPend(){if(!manager())return;let host=$('ajPend');if(!host){host=document.createElement('div');host.id='ajPend';host.className='card aj-pend';$('stats').after(host)}
+async function ajLoadPend(){if(!manager())return;if($('dvPending')&&window.AGBDashVoice){$('ajPend')?.remove();try{await window.AGBDashVoice.loadPending()}catch(e){}return}let host=$('ajPend');if(!host){host=document.createElement('div');host.id='ajPend';host.className='card aj-pend';$('stats').after(host)}
   try{const {data}=await sb.from('pending_job_changes').select('*').eq('status','pending').order('created_at',{ascending:false}).limit(50);ajPend=(data||[]).filter(p=>p.payload&&['add-job','job-form'].includes(p.payload.source))}catch(e){ajPend=[]}
   host.style.display=ajPend.length?'':'none';
   host.innerHTML=`<h4 style="margin:0 0 4px">🕓 Waiting for approval (from salesmen)</h4>`+ajPend.map(p=>{const pl=p.payload,j=p.job_id&&jobs.find(x=>x.id===p.job_id);const n=Object.keys((pl.scan_suggestions||{}).fields||{}).length;
@@ -3981,7 +3981,7 @@ async function ajLoadPend(){if(!manager())return;let host=$('ajPend');if(!host){
     <button class="btn primary sm" onclick="ajReview('${p.id}')">Review &amp; approve</button><button class="btn light sm" onclick="ajReject('${p.id}')">Reject</button></div>`}).join('')}
 window.ajLoadPend=ajLoadPend;
 const SUG_MAP={demo:['f_demolition_required',v=>/^(no|none|n\/a)\b/i.test(v)?'false':'true'],gutters:['f_extras_notes',v=>v],extras:['f_extras_notes',v=>v],permit:['f_permit_status',v=>/approved/i.test(v)?'Approved':null]};
-window.ajReview=function(pid){const p=ajPend.find(x=>x.id===pid);if(!p)return;const pl=p.payload;openJobForm(p.kind==='edit'?p.job_id:null);window.__ajApprove=pid;
+window.ajReview=function(pid,list){if(list&&list.length)list.forEach(x=>{if(!ajPend.some(y=>y.id===x.id))ajPend.push(x)});const p=ajPend.find(x=>x.id===pid);if(!p)return;const pl=p.payload;openJobForm(p.kind==='edit'?p.job_id:null);window.__ajApprove=pid;
   const src=p.kind==='edit'?(pl.fields||{}):pl;AJ_BASIC.forEach(k=>{if(src[k]===undefined||src[k]===null)return;const e=$('f_'+k);if(!e)return;let v=k==='hold_status'?String(!!src[k]):String(src[k]);if(e.tagName==='SELECT'&&![...e.options].some(o=>o.value===v)){const o=document.createElement('option');o.value=v;o.textContent=DISPLAY[ukey(v)]||v;o.dataset.extra='1';e.appendChild(o)}e.value=v;e.dispatchEvent(new Event('input',{bubbles:true}))});
   if($('f_deposit_mirror'))$('f_deposit_mirror').value=$('f_deposit').value;
   const s=(pl.scan_suggestions||{}).fields||{};const keys=Object.keys(s);$('jobFormTitle').textContent='Approve '+(p.kind==='new_job'?'new job':'edit')+' from '+(DISPLAY[ukey(p.salesman_username)]||p.salesman_username);
@@ -3996,4 +3996,7 @@ window.ajReject=async function(pid){if(!confirm('Reject this request?'))return;c
 })();
 </script>
 
+<!-- 2026-10-31 owner-approved: live dashboard voice + morning briefing (owner/business_manager) -->
+<script src="dashboard-voice.js?v=20261031d"></script>
+<script src="morning-briefing.js?v=20261031c"></script>
 </body></html>

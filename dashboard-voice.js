@@ -49,7 +49,7 @@ function mount(){ if($('dvPanel')) return; const main=$('appMain'), stats=$('sta
   $('dvMic').onclick=()=>live()||pc?stop('Voice stopped.'):start();
   $('dvSend').onclick=()=>sendText(); $('dvText').onkeydown=e=>{ if(e.key==='Enter') sendText(); };
   hint(); }
-function hint(){ const h=$('dvHint'); if(!h) return; h.textContent=isMgr()?'Status, notes, payments, close-out — or ask how a job is going. (“Hey dashboard” optional)':'Describe a new job, ask how your jobs are going, or request a change. Randy or Sam approve. (“Hey dashboard” optional)'; }
+function hint(){ const h=$('dvHint'); if(!h) return; h.textContent=isMgr()?'Status, notes, payments, close-out — or ask how a job is going. (“Hey dashboard” optional)':'Describe a new job or a change to the basics (name, address, phone, price, deposit, size, hold), or ask how your jobs are going. Randy or Sam approve. (“Hey dashboard” optional)'; }
 function stat(t){ const s=$('dvStatus'); if(s) s.textContent=t; }
 function log(c,t){ const L=$('dvLog'); L.hidden=false; const d=document.createElement('div'); d.className=c; d.textContent=(c==='u'?'You: ':'Helper: ')+t; L.appendChild(d); L.scrollTop=L.scrollHeight; }
 function sayLine(t){ $('dvSay').hidden=false; $('dvSayTxt').textContent=t; }
@@ -113,7 +113,12 @@ function proposeNew(a){ const p=me(); if(!p) return {error:'not signed in'};
 /* --- salesman: edit request on OWN job -> pending --- */
 function requestEdit(a){ const p=me(); return withJob(a.query,j=>{
   if(!isMgr()&&uk(j.salesman_username)!==uk(p.username)){ card('<h4>Not your job</h4>'); return; }
-  const {out}=cleanFields(a.fields); const pay={request:String(a.request||'').slice(0,1000),fields:out,heard:a.heard||''};
+  let {out}=cleanFields(a.fields); let extra='', basics={}; if(!isMgr()){ /* salesmen: basics only (same list as the Add Job front page) */
+    const B=['customer','address','city','zip','phone','price','deposit','hold_status','garage_size'], drop=[];
+    Object.entries(a.fields||{}).forEach(([k,v])=>{ k=String(k).replace(/^f_/,''); v=String(v==null?'':v).trim().slice(0,200); if(!v) return;
+      if(B.includes(k)){ if(k==='price'||k==='deposit'){ const n=Number(v.replace(/[$,\s]/g,'')); if(isFinite(n)) basics[k]=n; else drop.push(plainKey(k)+' → '+v); } else basics[k]=v; } else drop.push(plainKey(k)+' → '+v); });
+    out={}; if(drop.length) extra=' (not a salesman field — Randy/Sam decide: '+drop.join('; ')+')'; Object.entries(basics).forEach(([k,v])=>out[k]=v); }
+  const pay={request:(String(a.request||'')+extra).slice(0,1000),fields:out,basics,heard:a.heard||'',source:'voice'};
   card('<h4>Edit request → pending approval</h4><div class="k">'+esc(jobLabel(j))+'</div><ul><li>'+esc(pay.request)+'</li>'+Object.entries(out).map(([k,v])=>'<li>'+esc(plainKey(k))+' → '+esc(v)+'</li>').join('')+'</ul><div class="k">The job does not change until Randy or Sam approve.</div>',
     async()=>{ const {error}=await sb.from('pending_job_changes').insert({kind:'edit',job_id:j.id,payload:pay,requested_by:await uid(),salesman_username:p.username,status:'pending'}); if(error) throw error; await loadPending(); return 'Edit request sent to Randy and Sam.'; },'Send for approval'); }); }
 /* --- manager: status/dates/note --- */
@@ -160,14 +165,15 @@ let pend=[];
 async function loadPending(){ try{ const {data,error}=await sb.from('pending_job_changes').select('*').order('created_at',{ascending:false}).limit(100); if(!error) pend=data||[]; }catch(e){} renderPending(); }
 function renderPending(){ const box=$('dvPending'); if(!box) return; const p=me(); if(!p){ box.classList.add('hidden'); return; } const mgr=isMgr();
   const L=mgr?pend.filter(r=>r.status==='pending'):pend.filter(r=>uk(r.salesman_username)===uk(p.username)).slice(0,10);
-  box.classList.toggle('hidden',!L.length); $('dvPendTitle').textContent=mgr?'Pending voice requests (approve / reject)':'My voice requests'; $('dvPendCount').textContent=mgr?L.length:L.filter(r=>r.status==='pending').length;
+  box.classList.toggle('hidden',!L.length); $('dvPendTitle').textContent=mgr?'🕓 Waiting for approval (voice + Add Job)':'My requests to Randy / Sam'; $('dvPendCount').textContent=mgr?L.length:L.filter(r=>r.status==='pending').length;
   $('dvPendList').innerHTML=L.map(r=>{ const j=r.job_id?(jobs||[]).find(x=>x.id===r.job_id):null, pl=r.payload||{};
     const title=r.kind==='new_job'?'New job — '+(pl.customer||'(no name)'):'Edit — '+(j?j.customer:'job');
     const body=r.kind==='new_job'?[[pl.address,pl.city].filter(Boolean).join(', '),pl.phone,pl.garage_size,pl.price!=null?'$'+Number(pl.price).toLocaleString():'',pl.notes].filter(Boolean).join(' • '):[pl.request,...Object.entries(pl.fields||{}).map(([k,v])=>plainKey(k)+' → '+v)].filter(Boolean).join(' • ');
     const pill=r.status==='pending'?'<span class="pill yellow">pending</span>':r.status==='approved'?'<span class="pill green">approved</span>':'<span class="pill red">rejected</span>';
     return '<div class="rowbox"><div class="split" style="flex-wrap:wrap;gap:8px"><div style="min-width:0;flex:1 1 220px"><strong>'+esc(title)+'</strong> '+pill+'<div class="sub">'+esc((DISPLAY[uk(r.salesman_username)]||r.salesman_username)+' • '+String(r.created_at||'').slice(0,10))+'</div><div style="margin-top:6px;white-space:pre-wrap">'+esc(body)+'</div></div>'
-      +(mgr&&r.status==='pending'?'<div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn primary sm" data-ap="'+r.id+'">Approve</button><button class="btn light sm" data-rj="'+r.id+'">Reject</button>'+(r.job_id?'<button class="btn light sm" data-vj="'+r.job_id+'">View Job</button>':'')+'</div>':'')+'</div></div>'; }).join('');
+      +(mgr&&r.status==='pending'?'<div style="display:flex;gap:6px;flex-wrap:wrap">'+(['add-job','job-form'].includes(pl.source)&&typeof window.ajReview==='function'?'<button class="btn primary sm" data-rv="'+r.id+'">Review &amp; approve</button>':'<button class="btn primary sm" data-ap="'+r.id+'">Approve</button>')+'<button class="btn light sm" data-rj="'+r.id+'">Reject</button>'+(r.job_id?'<button class="btn light sm" data-vj="'+r.job_id+'">View Job</button>':'')+'</div>':'')+'</div></div>'; }).join('');
   $('dvPendList').querySelectorAll('[data-ap]').forEach(b=>b.onclick=()=>approve(b.dataset.ap,b));
+  $('dvPendList').querySelectorAll('[data-rv]').forEach(b=>b.onclick=()=>window.ajReview(b.dataset.rv,pend));
   $('dvPendList').querySelectorAll('[data-rj]').forEach(b=>b.onclick=()=>reject(b.dataset.rj));
   $('dvPendList').querySelectorAll('[data-vj]').forEach(b=>b.onclick=()=>openDrawer(b.dataset.vj)); }
 async function approve(id,btn){ if(!isMgr()) return; const r=pend.find(x=>x.id===id); if(!r) return; const pl=r.payload||{}; const user=await uid(); if(btn) btn.disabled=true;
@@ -177,7 +183,7 @@ async function approve(id,btn){ if(!isMgr()) return; const r=pend.find(x=>x.id==
       await activity(j.id,'Voice job request approved',{pending_id:id});
       await mark(id,'approved',user); try{ await refresh(); }catch(e){} if(j&&j.id) try{ openJobForm(j.id); }catch(e){}
     } else { const j=(jobs||[]).find(x=>x.id===r.job_id); if(!j) throw new Error('job not found');
-      const {out}=cleanFields(pl.fields); const who=DISPLAY[uk(r.salesman_username)]||r.salesman_username;
+      const B=['customer','address','city','zip','phone','price','deposit','hold_status','garage_size']; const out={}; /* salesman requests: basics only */ Object.entries(pl.basics||{}).forEach(([k,v])=>{ if(B.includes(k)) out[k]=v; }); const who=DISPLAY[uk(r.salesman_username)]||r.salesman_username;
       const patch={...out}; if(pl.request) patch.notes=withProfitTag((String(j.notes||'').trim()?String(j.notes).trim()+'\n\n':'')+'['+who+' voice request approved] '+pl.request,j);
       const {error}=await sb.from('jobs').update(patch).eq('id',j.id); if(error) throw error;
       await activity(j.id,'Salesman voice edit approved',{pending_id:id,changes:out,request:pl.request});

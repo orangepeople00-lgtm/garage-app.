@@ -1,4 +1,4 @@
-/* morning-briefing.js — SAMPLE spoken morning briefing (morning-briefing-sample.html only; index.html is unchanged).
+/* morning-briefing.js — spoken morning briefing (live in index.html for owner/business_manager; also used by morning-briefing-sample.html).
    Only for owner / business_manager (manager()). Uses the dashboard's own loaded data (read only, nothing is written):
      jobs (refresh(): jobs where deleted_at is null) + the dashboard's own status() / overdue() rules.
    Categories (local date = todayISO()):
@@ -102,7 +102,7 @@ async function play(fromTap){ if(playing) return stopAudio(); if(muted()&&!fromT
 /* ---------- UI ---------- */
 function mount(){ if($('mbPanel')||!isMgr()) return false; const main=$('appMain'), stats=$('stats'); if(!main||!stats) return false;
   const d=document.createElement('div'); d.id='mbPanel'; d.className='mb';
-  d.innerHTML='<div class="mb-top"><div class="mb-h">☀️ Morning briefing <span class="mb-empty" style="font-weight:400;font-size:12px">sample</span></div><button type="button" class="mb-btn" id="mbPlay">▶ Play briefing</button><button type="button" class="mb-btn sec" id="mbMute">🔊 Sound on</button><button type="button" class="mb-btn sec mb-close" id="mbHide" aria-label="Hide briefing">✕</button></div>'
+  d.innerHTML='<div class="mb-top"><div class="mb-h">☀️ Morning briefing</div><button type="button" class="mb-btn" id="mbPlay">▶ Play briefing</button><button type="button" class="mb-btn sec" id="mbMute">🔊 Sound on</button><button type="button" class="mb-btn sec mb-close" id="mbHide" aria-label="Hide briefing">✕</button></div>'
     +'<div class="mb-st" id="mbStatus"></div><div class="mb-sec" id="mbText"></div><div id="mbList"></div>';
   main.insertBefore(d,stats);
   $('mbPlay').onclick=()=>play(true);

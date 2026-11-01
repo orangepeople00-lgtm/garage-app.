@@ -23,7 +23,7 @@ let css=`.dv{margin:0 0 12px;background:#0b1220;border:1px solid #1e3a5f;border-
 .dv-type{display:flex;gap:6px}.dv-type input{flex:1;min-width:0;min-height:44px;background:#18181b;border:1px solid #3f3f46;border-radius:12px;color:#fff;padding:0 10px;font-size:16px}
 .dv-btn{min-height:44px;padding:0 14px;border-radius:12px;background:#27272a;border:1px solid #52525b;color:#f4f4f5;font-size:14px;cursor:pointer}
 .dv-say{display:flex;gap:8px;font-size:14px;line-height:1.4;background:#052e16;border:1px solid #166534;border-radius:12px;padding:8px 10px;margin:6px 0;overflow-wrap:anywhere}
-.dv-say.talking b{color:#86efac}.dv-heard{font-size:12px;color:#93c5fd;margin:4px 0;overflow-wrap:anywhere}
+.dv-say.talking b{color:#86efac}.dv-say[hidden]{display:none}.dv-heard{font-size:12px;color:#93c5fd;margin:4px 0;overflow-wrap:anywhere}
 .dv-log{margin-top:8px;font-size:12px;max-height:110px;overflow:auto;background:#09090b;border-radius:10px;padding:6px 8px;line-height:1.45}.dv-log .u{color:#93c5fd}.dv-log .a{color:#86efac}
 .dv-card{margin-top:10px;background:#111827;border:1px solid #334155;border-radius:14px;padding:10px;overflow-wrap:anywhere}
 .dv-card h4{margin:0 0 6px;font-size:14px;color:#fff}.dv-card .k{color:#a1a1aa;font-size:12px}.dv-card ul{margin:4px 0 0 18px;padding:0;font-size:13px}

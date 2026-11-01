@@ -32,7 +32,7 @@ let css=`.dv{margin:0 0 12px;background:#0b1220;border:1px solid #1e3a5f;border-
 .dv-pick{display:block;width:100%;text-align:left;margin-top:6px;min-height:42px;border-radius:10px;background:#1f2937;color:#fff;border:1px solid #374151;padding:6px 10px;font-size:14px;cursor:pointer}
 .dv-warn{display:block;width:100%;margin:4px 0;min-height:40px;border-radius:10px;background:#7f1d1d;color:#fff;border:0;font-size:13px;padding:6px 10px;text-align:left}
 .dv-pend .rowbox{overflow-wrap:anywhere}.dv-flash{outline:3px solid #f59e0b;outline-offset:3px;border-radius:12px;transition:outline-color 2s}`;
-css+='\n/* fixed-size transcript boxes (html.agbv-fixbox) — text scrolls inside, the page never moves */\n.agbv-fixbox #dvSay{height:88px;overflow-y:auto;overflow-anchor:none;align-items:flex-start}.agbv-fixbox #dvSay[hidden]{display:flex;visibility:hidden}\n.agbv-fixbox #dvHeard{height:34px;overflow-y:auto;overflow-anchor:none}.agbv-fixbox #dvHeard[hidden]{display:block;visibility:hidden}\n.agbv-fixbox #dvLog{height:120px;max-height:120px;overflow-y:auto;overflow-anchor:none}.agbv-fixbox #dvLog[hidden]{display:block;visibility:hidden}\n@media(min-width:900px){.agbv-fixbox #dvSay{height:72px}.agbv-fixbox #dvLog{height:140px;max-height:140px}}\n';
+css+='\n/* fixed-size transcript boxes (html.agbv-fixbox) — text scrolls inside, the page never moves */\n.agbv-fixbox #dvSay{height:88px;overflow-y:auto;overflow-anchor:none;align-items:flex-start}.agbv-fixbox.agbv-on #dvSay[hidden]{display:flex;visibility:hidden}\n.agbv-fixbox #dvHeard{height:34px;overflow-y:auto;overflow-anchor:none}.agbv-fixbox.agbv-on #dvHeard[hidden]{display:block;visibility:hidden}\n.agbv-fixbox #dvLog{height:120px;max-height:120px;overflow-y:auto;overflow-anchor:none}.agbv-fixbox.agbv-on #dvLog[hidden]{display:block;visibility:hidden}\n@media(min-width:900px){.agbv-fixbox #dvSay{height:72px}.agbv-fixbox #dvLog{height:140px;max-height:140px}}\n';
 document.documentElement.classList.add('agbv-fixbox');
 const st=document.createElement('style');st.textContent=css;document.head.appendChild(st);
 
@@ -53,9 +53,9 @@ function mount(){ if($('dvPanel')) return; const main=$('appMain'), stats=$('sta
   hint(); }
 function hint(){ const h=$('dvHint'); if(!h) return; h.textContent=isMgr()?'Status, notes, payments, close-out — or ask how a job is going. (“Hey dashboard” optional)':'Describe a new job or a change to the basics (name, address, phone, price, deposit, size, hold), or ask how your jobs are going. Randy or Sam approve. (“Hey dashboard” optional)'; }
 function stat(t){ const s=$('dvStatus'); if(s) s.textContent=t; }
-function log(c,t){ const L=$('dvLog'); L.hidden=false; const d=document.createElement('div'); d.className=c; d.textContent=(c==='u'?'You: ':'Helper: ')+t; L.appendChild(d); L.scrollTop=L.scrollHeight; }
-function sayLine(t){ const el=$('dvSay'); el.hidden=false; $('dvSayTxt').textContent=t; el.scrollTop=el.scrollHeight; }
-function heard(t){ const h=$('dvHeard'); h.hidden=false; h.textContent='What I heard: “'+t+'”'; h.scrollTop=h.scrollHeight; }
+function log(c,t){ const L=$('dvLog'); L.hidden=false; document.documentElement.classList.add('agbv-on'); const d=document.createElement('div'); d.className=c; d.textContent=(c==='u'?'You: ':'Helper: ')+t; L.appendChild(d); L.scrollTop=L.scrollHeight; }
+function sayLine(t){ const el=$('dvSay'); el.hidden=false; document.documentElement.classList.add('agbv-on'); $('dvSayTxt').textContent=t; el.scrollTop=el.scrollHeight; }
+function heard(t){ const h=$('dvHeard'); h.hidden=false; document.documentElement.classList.add('agbv-on'); h.textContent='What I heard: “'+t+'”'; h.scrollTop=h.scrollHeight; }
 
 /* ---------- jobs + scope ---------- */
 // Same rule as RLS "authorized read jobs": managers see all; everyone else only salesman_username = their username.

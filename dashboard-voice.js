@@ -275,10 +275,15 @@ let lastUserTxt='', lastAiTxt='', aiStopAt=0;
 /* BARGE-IN FIX (2026-10-31): the AI's own voice leaks from the speaker into the mic, gets transcribed as a full sentence and
    was treated as the user interrupting. Echo = most words of the transcript are words the AI is saying / just said. */
 const ewords=t=>String(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9 ]/g,' ').split(/\s+/).filter(w=>w.length>1);
-function isEcho(t){ if(!aiTalking&&Date.now()-aiStopAt>2500) return false; const w=ewords(t); if(!w.length) return true; const ref=new Set(ewords(sayBuf+' '+lastAiTxt)); if(!ref.size) return false;
-  return w.filter(x=>ref.has(x)).length/w.length>=0.6; }
+/* 2026-11-10: only speech that BEGAN while the AI was talking (or within 0.6 s after) and closely matches its phrase is echo; a normal
+   answer after the AI stops ("yes 20 by 20" after "Confirm 20 by 20?") always passes. Only when there is no speech-start info, late echo must be a long near-verbatim copy. */
+const spk={}; const overlap=(w,ref)=>w.length?w.filter(x=>ref.has(x)).length/w.length:0;
+function isEcho(t,sp){ const w=ewords(t); const during=sp?sp.during:(aiTalking||Date.now()-aiStopAt<=600); const ref=new Set(ewords(aiTalking?(sayBuf||lastAiTxt):(lastAiTxt||sayBuf)));
+  if(during){ if(!w.length) return true; if(!ref.size) return false; return overlap(w,ref)>=0.7; }
+  if(!sp&&w.length>=4&&Date.now()-aiStopAt<=2500&&ref.size) return overlap(w,ref)>=0.85;
+  return false; }
 /* while the AI talks only a real sentence of the USER cuts it off: 3+ non-filler words (or a number), not echo */
-function bargeOk(t){ if(isEcho(t)) return false; const w=ewords(t).filter(x=>!/^(uh+|um+|mm+|hmm+|ah+|oh+|ok|okay|yeah|yep|yes|no|huh|right|sure|thanks|thank|you|bye|so|well|like)$/.test(x)); return w.length>=3||w.some(x=>/\d/.test(x)); }
+function bargeOk(t,sp){ if(isEcho(t,sp)) return false; const w=ewords(t).filter(x=>!/^(uh+|um+|mm+|hmm+|ah+|oh+|ok|okay|yeah|yep|yes|no|huh|right|sure|thanks|thank|you|bye|so|well|like)$/.test(x)); return w.length>=3||w.some(x=>/\d/.test(x)); }
 /* Background noise often transcribes as nothing, a filler ("uh", "mm"), or a stock phrase ("Thank you.", "Bye.") — never act on those
    (okay/yeah only count right after a question once the AI has finished speaking, or with a confirm/pick card on screen; filler never interrupts the AI). */
 function pendingQuestion(){ return !aiTalking&&(/\?\s*$/.test(lastAiTxt)||!!document.querySelector('#dvCards .dv-card .dv-ok,#dvCards .dv-pick')); }
@@ -287,14 +292,14 @@ function realSpeech(t){ const s=String(t||'').toLowerCase().replace(/[^a-z0-9 ]/
   lastUserTxt=t; return true; }
 const DONE_RE=/\b(done|that'?s (it|all)|that is (it|all)|finished|all set|we'?re good|end (it|the conversation)|stop)\b/i;
 function onEvent(ev){ const t=ev.type;
-  if(t==='input_audio_buffer.speech_started'){ if(!aiTalking) stat('Hearing you…'); }
+  if(t==='input_audio_buffer.speech_started'){ if(ev.item_id){ spk[ev.item_id]={during:aiTalking||Date.now()-aiStopAt<=600}; const ks=Object.keys(spk); if(ks.length>30) delete spk[ks[0]]; } if(!aiTalking) stat('Hearing you…'); }
   else if(t==='input_audio_buffer.speech_stopped'){ if(!aiTalking) stat('Listening…'); }
   else if(t==='output_audio_buffer.started') setTalking(true);
   else if(t==='output_audio_buffer.stopped'||t==='output_audio_buffer.cleared') setTalking(false);
   else if(t==='response.output_audio_transcript.delta'&&ev.delta){ if(sayNew){ sayBuf=''; sayNew=false; } sayBuf+=ev.delta; sayLine(sayBuf); }
   else if(t==='response.output_audio_transcript.done'&&ev.transcript){ lastAiTxt=ev.transcript; log('a',ev.transcript); sayLine(ev.transcript); sayNew=true; }
-  else if(t==='conversation.item.input_audio_transcription.completed'&&ev.transcript){ const tx=ev.transcript.replace(WAKE,''); if(isEcho(tx)){ window.dvEchoIgnored=(window.dvEchoIgnored||0)+1; return; } if(!realSpeech(tx)) return;
-    if(aiTalking&&!bargeOk(tx)) return; userAct=Date.now(); stillAsked=false;
+  else if(t==='conversation.item.input_audio_transcription.completed'&&ev.transcript){ const tx=ev.transcript.replace(WAKE,''), sp=spk[ev.item_id]||null; if(isEcho(tx,sp)){ window.dvEchoIgnored=(window.dvEchoIgnored||0)+1; return; } if(!realSpeech(tx)) return;
+    if(aiTalking&&!bargeOk(tx,sp)) return; userAct=Date.now(); stillAsked=false;
     if(aiTalking){ send({type:'response.cancel'}); send({type:'output_audio_buffer.clear'}); setTalking(false); } send({type:'response.create'}); log('u',tx); heard(tx); }
   else if(t==='conversation.item.input_audio_transcription.failed'){ /* usually noise: ignore quietly */ }
   else if(t==='response.function_call_arguments.done'){ let a={}; try{ a=JSON.parse(ev.arguments||'{}'); }catch(e){}

@@ -10,6 +10,29 @@
    and fires their normal input/change events, so prices/city rules/AI prompt/sheet update like manual entry. */
 window.AGBVoiceCore={create:function(cfg){
   const $=id=>document.getElementById(id);
+  const VCV='20261110b'; window.agbVoiceVersion=VCV;
+  /* SESSION LOG (for the "Report problem" button): what he said, what the helper said, every tool call and result, errors.
+     Kept in memory, mirrored to this device's localStorage (last session only). No database. */
+  const sess=[]; let sessMeta={model:'',started:''}, savedAt=0;
+  function slog(k,t){ try{ sess.push({t:new Date().toISOString().slice(11,23),k,x:String(t==null?'':t).slice(0,700)}); if(sess.length>500) sess.shift();
+      if(Date.now()-savedAt>4000){ savedAt=Date.now(); saveSess(); } }catch(e){} }
+  function saveSess(){ try{ localStorage.setItem('agbVoiceSess:'+(cfg.page||'estimator'),JSON.stringify({meta:sessMeta,log:sess.slice(-300)}).slice(0,60000)); }catch(e){} }
+  function reportText(){ let log=sess, meta=sessMeta; if(!log.length){ try{ const o=JSON.parse(localStorage.getItem('agbVoiceSess:'+(cfg.page||'estimator'))||'null'); if(o){ log=o.log||[]; meta=o.meta||meta; } }catch(e){} }
+    const st={}; try{ Object.entries(props).forEach(([k,v])=>{ if(v&&v.on) st[k]=v.v; }); }catch(e){}
+    return ['AGB voice problem report','page: '+(cfg.page||'estimator')+'   voice-core: '+VCV+'   when: '+new Date().toString(),
+      'model: '+(meta.model||'?')+'   session started: '+(meta.started||'?')+'   echo-ignored: '+(window.agbEchoIgnored||0)+'   cost so far: $'+((usage&&usage.cost)||0).toFixed(3),
+      'browser: '+navigator.userAgent+'   screen: '+innerWidth+'x'+innerHeight,
+      'set on the estimate by voice: '+JSON.stringify(st),'--- conversation and events ---']
+      .concat(log.map(e=>'['+e.t+'] '+e.k.toUpperCase()+': '+e.x)).join('\n'); }
+  async function reportProblem(){ const txt=reportText(); let ok=false;
+    try{ if(navigator.clipboard&&navigator.clipboard.writeText){ await navigator.clipboard.writeText(txt); ok=true; } }catch(e){}
+    if(!ok){ try{ const ta=document.createElement('textarea'); ta.value=txt; ta.style.cssText='position:fixed;left:0;top:0;width:1px;height:1px;opacity:0'; document.body.appendChild(ta); ta.focus(); ta.select(); ok=document.execCommand('copy'); ta.remove(); }catch(e){} }
+    const old=$('agbvRepBox'); if(old) old.remove();
+    if(ok){ status('Copied the voice log. Paste it into a text or message and send it so we can see what went wrong.'); }
+    else { const ta=document.createElement('textarea'); ta.id='agbvRepBox'; ta.readOnly=true; ta.value=txt; ta.rows=6; ta.style.cssText='width:100%;max-width:100%;font-size:12px;margin-top:6px;background:#09090b;color:#e4e4e7;border:1px solid #3f3f46;border-radius:8px'; $('agbvStatus').after(ta); ta.focus(); ta.select(); status('Could not copy automatically. The log is below. Select all, copy it and send it.'); } }
+  (function(){ try{ const top=document.querySelector('#agbVoice .agbv-top')||($('agbvMic')&&$('agbvMic').parentNode); if(!top||$('agbvReport')) return;
+    const st=document.createElement('style'); st.textContent='.agbv-rep{min-height:36px;padding:0 10px;font-size:12px;margin-left:auto;white-space:nowrap}.agbv-got{color:#4ade80!important;font-weight:700}'; document.head.appendChild(st);
+    const b=document.createElement('button'); b.type='button'; b.id='agbvReport'; b.className='agbv-btn agbv-rep'; b.textContent='Report problem'; b.title='Copies what you said, what the helper said and every step so it can be fixed'; b.onclick=reportProblem; top.appendChild(b); }catch(e){} })();
   const FN=cfg.fnName||'estimate-voice-session';
   const MAX_TOTAL=900, MAX_IDLE=120, STILL_THERE=80; // seconds: quiet safety caps (15 min total, 2 min silence)
   // id, plain label. Order = fill order (city first so city rules apply, parents before children).
@@ -45,6 +68,7 @@ window.AGBVoiceCore={create:function(cfg){
   function plain(id,v){ const el=$(id),k=kindOf(el); if(k==='bool') return v?'Yes':'No'; if(k==='select'){ const o=optsOf(el).find(x=>x[0]===String(v)); return o?o[1]:v; } return String(v); }
 
   function apply(a){ // from set_estimate_fields
+    const snap0=Object.fromEntries(Object.entries(props).map(([k,p])=>[k,p.v+'|'+p.on])), doors0=doors?JSON.stringify(doors.list):'';
     let pre=[]; try{ pre=cfg.preApply?(cfg.preApply(a)||[]):[]; }catch(e){}
     refreshFields(); const ambig=[]; const noteTxt=String(a.notes||window._agbLastNote||'').toLowerCase();
     if(a.notes) addNote(a.notes,a.notes);
@@ -59,6 +83,9 @@ window.AGBVoiceCore={create:function(cfg){
     // answered questions drop off
     questions=questions.filter(q=>asked.has(q.fieldId)||!(props[q.fieldId]&&a.fields&&a.fields.some(f=>f.id===q.fieldId)));
     render();
+    try{ const chg=Object.keys(props).filter(k=>snap0[k]!==props[k].v+'|'+props[k].on&&props[k].on&&!(cfg.hideOnCard||[]).includes(k)); const bits=chg.slice(0,4).map(id=>String(LABEL[id]||id).replace(/\s*\(.*$/,'')+' '+plain(id,props[id].v));
+      if(doors&&JSON.stringify(doors.list)!==doors0) bits.push('side doors'); if(a.notes) bits.push('note'); (a.extras||[]).slice(0,2).forEach(x=>x&&x.name&&bits.push('extra '+x.name));
+      if(bits.length) gotIt(bits.join(', ')+(chg.length>4?' +'+(chg.length-4)+' more':'')); }catch(e){}
   }
   function doorTxt(d){ return ({service:'Service door',french:'French doors',party:'Party door'}[d.type]||d.type)+' — '+d.wall+(d.style==='fullview'?' (full view)':''); }
   /* LIVE FILL: every understood value goes straight into the real calculator control (normal input/change events) so the
@@ -103,7 +130,11 @@ window.AGBVoiceCore={create:function(cfg){
     if(live()) say(q.question+' Answer: '+o); else if(v===null) sendText(q.question+' '+o);
     render(); }
   function log(cls,t){ const L=$('agbvLog'); L.hidden=false; document.documentElement.classList.add('agbv-on'); const d=document.createElement('div'); d.className=cls; d.textContent=(cls==='u'?'You: ':'Helper: ')+t; L.appendChild(d); L.scrollTop=L.scrollHeight; }
-  function status(t){ $('agbvStatus').textContent=t; }
+  let gotT=null;
+  function status(t){ const el=$('agbvStatus'); el.textContent=t; el.classList.remove('agbv-got'); clearTimeout(gotT); }
+  /* "GOT IT" feedback (2026-11-10): the helper stays silent when it understands, so a green line says what just landed on the estimate. */
+  function gotIt(msg){ const el=$('agbvStatus'); if(!el||!msg) return; el.textContent='✓ Got it: '+msg; el.classList.add('agbv-got'); slog('got-it',msg); clearTimeout(gotT);
+    gotT=setTimeout(()=>{ el.classList.remove('agbv-got'); if(live()&&el.textContent.indexOf('✓ Got it')===0) el.textContent='Listening…'; },3500); }
 
   async function callFn(body){
     const sb=(typeof garageSb!=='undefined')?garageSb:null;
@@ -153,16 +184,23 @@ window.AGBVoiceCore={create:function(cfg){
       $('agbvSay').after(w); }
     w.textContent="Can't play sound — check volume / Silent switch, then tap here. (You can still read what the helper says above.)"; w.hidden=false; }
   function sayLine(txt,final){ const el=$('agbvSay'); if(!el) return; el.hidden=false; document.documentElement.classList.add('agbv-on'); $('agbvSayTxt').textContent=txt; el.scrollTop=el.scrollHeight; }
-  function setTalking(on){ if(aiTalking&&!on) aiStopAt=Date.now(); aiTalking=on; const el=$('agbvSay'); if(el) el.classList.toggle('talking',on);
+  let deferTx=null; /* a real short answer ("yes") he gave while the AI was still talking: answered as soon as it finishes */
+  function setTalking(on){ if(aiTalking&&!on) aiStopAt=Date.now(); aiTalking=on;
+    if(!on&&deferTx){ const d=deferTx; deferTx=null; if(Date.now()-d.at<9000&&live()) setTimeout(()=>{ if(live()&&!aiTalking) userTurn(d.t,d.sp); },250); } const el=$('agbvSay'); if(el) el.classList.toggle('talking',on);
     if(live()) status(on?'AI talking… (just keep talking to interrupt)':'Listening…');
-    if(on){ clearTimeout(playChk); const t0a=audio?audio.currentTime:0; playChk=setTimeout(()=>{ if(aiTalking&&audio&&(audio.paused||audio.currentTime<=t0a)) soundWarn(); else { const w=$('agbvSoundWarn'); if(w) w.hidden=true; } window.agbVoiceAudio={paused:audio.paused,currentTime:audio.currentTime,start:t0a}; },1500); } }
+    if(on){ clearTimeout(playChk); const t0a=audio?audio.currentTime:0; playChk=setTimeout(()=>{ if(aiTalking&&audio&&(audio.paused||audio.currentTime<=t0a)) soundWarn(); else { const w=$('agbvSoundWarn'); if(w) w.hidden=true; } window.agbVoiceAudio={paused:audio?audio.paused:null,currentTime:audio?audio.currentTime:0,start:t0a}; },1500); } }
   function ensureSayUI(){ if($('agbvSay')) return; const d=document.createElement('div'); d.id='agbvSay'; d.className='agbv-say'; d.hidden=true;
     d.innerHTML='<span class="agbv-eq"><i></i><i></i><i></i></span><span><b>AI:</b> <span id="agbvSayTxt"></span></span>'; $('agbvStatus').after(d); }
   let lastBd='', bdT=null;
   function pushBreakdown(){ if(!live()||!cfg.breakdown){ clearInterval(bdT); return; } const b=cfg.breakdown(); if(!b||b===lastBd) return; lastBd=b; send({type:'conversation.item.create',item:{type:'message',role:'system',content:[{type:'input_text',text:'CURRENT ESTIMATE (replaces earlier): '+b}]}}); }
   function live(){ return !!(dc&&dc.readyState==='open'); }
   function send(o){ if(live()) dc.send(JSON.stringify(o)); }
-  function say(text){ send({type:'conversation.item.create',item:{type:'message',role:'user',content:[{type:'input_text',text}]}}); send({type:'response.create'}); lastAct=Date.now(); }
+  function say(text){ slog('typed',text); send({type:'conversation.item.create',item:{type:'message',role:'user',content:[{type:'input_text',text}]}}); askResponse(); lastAct=Date.now(); }
+  /* RESPONSE GATE: one response.create at a time. A request made while a response is still running (e.g. a tool result arrives
+     before response.done) waits for it, so two replies never pile up and the server never rejects a create. */
+  let respActive=false, respPending=false, respT=0;
+  function askResponse(){ if(!live()) return; if(respActive&&Date.now()-respT<12000){ respPending=true; return; } respActive=true; respT=Date.now(); send({type:'response.create'}); }
+  function respDone(){ respActive=false; if(respPending){ respPending=false; askResponse(); } }
 
   async function start(){
     if(!navigator.mediaDevices||!window.RTCPeerConnection){ status('Live voice is not supported in this browser — type the job below.'); return; }
@@ -170,7 +208,9 @@ window.AGBVoiceCore={create:function(cfg){
     unlockAudio(); // must run inside the Talk tap (iPhone)
     try{
       mic=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:false,channelCount:1}});
-      const tok=await callFn({mode:'realtime',page:cfg.page||'',catalog:catalog(),current:current(),knowledge:(cfg.knowledgePack?cfg.knowledgePack():''),breakdown:(cfg.breakdown?cfg.breakdown():''),learned:learnedText()});
+      const ov={}; try{ ['Tx','Effort','Model'].forEach(k=>{ const v=localStorage.getItem('agbVoice'+k); if(v) ov[k.toLowerCase()]=v; }); }catch(e){}
+      sess.length=0; sessMeta={model:'',started:new Date().toString()}; slog('start','voice-core '+VCV+' page '+(cfg.page||'estimator')+(Object.keys(ov).length?' overrides '+JSON.stringify(ov):''));
+      const tok=await callFn(Object.assign({mode:'realtime',page:cfg.page||'',catalog:catalog(),current:current(),knowledge:(cfg.knowledgePack?cfg.knowledgePack():''),breakdown:(cfg.breakdown?cfg.breakdown():''),learned:learnedText()},ov)); sessMeta.model=tok.model||''; slog('token','model '+(tok.model||'?'));
       pc=new RTCPeerConnection();
       pc.ontrack=e=>{ playRemote(e.streams[0]||new MediaStream([e.track])); };
       pc.addTrack(mic.getTracks()[0],mic);
@@ -197,59 +237,95 @@ window.AGBVoiceCore={create:function(cfg){
   /* BARGE-IN FIX (2026-10-31): the AI's own voice leaking into the mic was transcribed as a sentence and cancelled the reply.
      Echo = most words of the transcript are words the AI is saying / just said; ignored. Only a real user sentence cuts it off. */
   const ewords=t=>String(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9 ]/g,' ').split(/\s+/).filter(w=>w.length>1);
-  function isEcho(t){ if(!aiTalking&&Date.now()-aiStopAt>2500) return false; const w=ewords(t); if(!w.length) return true; const ref=new Set(ewords((sayBuf||'')+' '+lastAiTxt)); if(!ref.size) return false;
-    return w.filter(x=>ref.has(x)).length/w.length>=0.6; }
-  function bargeOk(t){ if(isEcho(t)) return false; const w=ewords(t).filter(x=>!/^(uh+|um+|mm+|hmm+|ah+|oh+|ok|okay|yeah|yep|yes|no|huh|right|sure|thanks|thank|you|bye|so|well|like)$/.test(x)); return w.length>=3||w.some(x=>/\d/.test(x)); }
+  /* ECHO (rewritten 2026-11-10): the old rule threw away any answer that reused words from the AI's question ("yes 20 by 20" after
+     "Confirm 20 by 20?") and then the AI never replied. Now a transcript counts as echo ONLY if his speech began while the AI was
+     talking (or within 0.6 s after) AND it closely matches the AI's current phrase. A normal answer after the AI stops always passes.
+     Speaker echo that arrives after the AI stopped must be a long near-verbatim copy (85%+ of 4+ words, within 2.5 s). */
+  const overlap=(w,ref)=>w.length?w.filter(x=>ref.has(x)).length/w.length:0;
+  function isEcho(t,sp){ const w=ewords(t); const during=sp?sp.during:(aiTalking||Date.now()-aiStopAt<=600);
+    const ref=new Set(ewords(aiTalking?(sayBuf||lastAiTxt):(lastAiTxt||sayBuf)));
+    if(during){ if(!w.length) return true; if(!ref.size) return false; return overlap(w,ref)>=0.7; }
+    if(!sp&&w.length>=4&&Date.now()-aiStopAt<=2500&&ref.size) return overlap(w,ref)>=0.85;
+    return false; }
+  function bargeOk(t,sp){ if(isEcho(t,sp)) return false; const w=ewords(t).filter(x=>!/^(uh+|um+|mm+|hmm+|ah+|oh+|ok|okay|yeah|yep|yes|no|huh|right|sure|thanks|thank|you|bye|so|well|like)$/.test(x)); return w.length>=3||w.some(x=>/\d/.test(x)); }
   /* Background noise often transcribes as nothing, a filler ("uh", "mm"), or a stock phrase ("Thank you.", "Bye.") — never act on those. */
   let aiAskedAt=0;
   /* Noise/filler never interrupts the AI. While it talks, only a real utterance (2+ words or a number) counts.
      Short "yes/okay/no" count only as an answer after the AI (or the card) asked something and the AI has finished. */
-  function realSpeech(t){ const s=String(t||'').toLowerCase().replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim(); if(!s) return false;
+  function realSpeech(t,sp){ const s=String(t||'').toLowerCase().replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim(); if(!s) return false;
     const words=s.split(' '), noise=/^((uh+|um+|mm+|hmm+|ah+|oh+|huh|you|bye|thank you|thanks|thanks for watching)\s*)+$/.test(s),
       short=/^((yes|yeah|yep|no|nope|okay|ok|sure|right|correct)\s*)+$/.test(s);
     if(noise) return false;
     if(aiTalking&&(short||(words.length<2&&!/\d/.test(s)))) return false;
-    if(short&&!((questions||[]).length||Date.now()-aiAskedAt<30000)) return false;
+    if(short&&!((questions||[]).length||Date.now()-aiAskedAt<90000)) return false;
     lastUserTxt=t; window._agbLastUtter=t; heardSpeech=true; return true; }
   /* Local safety-net parsing of one utterance: open card questions, note text (kept apart so it never sets fields),
      spoken sizes, contact info, price phrases. The AI's set_estimate_fields stays primary. */
-  function localParse(txt,dims){ const ns=cfg.splitNote?cfg.splitNote(txt):null; window._agbLastNote=ns&&ns.note?ns.note:''; const body=ns?ns.before:txt;
+  /* QUESTIONS NEVER CHANGE FIELDS: "can we do a 24 by 26 in Berwyn, what are the setbacks?" must not set 24x26. Only the statement
+     part of an utterance is parsed locally (the question part is dropped); the helper answers it from the data. */
+  const Q_START=/^\W*(?:(?:and|so|ok|okay|hey|um+|uh+|well)\s+)*(?:what|what's|whats|how|how's|hows|which|who|why|when|where|can|could|would|should|will|is|are|was|were|does|did|do you|do we|do they|am i|any idea|tell me|explain)\b/i;
+  const Q_EMB=/[,;]\s*(?:(?:and|so|but|also)\s+)?(?=(?:what|what's|whats|how|which|can|could|would|should|does|do you|is there|are there|will)\b)|\s(?=(?:what(?:'s| is| are| does)|how (?:much|many)|can (?:i|we)|could (?:i|we)|is there|are there|do you|does it|would it|will it|tell me)\b)/i;
+  const SIZEISH=/^\W*(?:(?:it'?s|it is|make it|a|an|the)\s+)?\d{2}\b/i;
+  function statementOnly(t){ const parts=String(t||'').replace(/\s+/g,' ').trim().split(/(?<=[.!?])\s+/), keep=[];
+    parts.forEach(p=>{ if(!p) return; if(Q_START.test(p)) return; const i=p.search(Q_EMB); if(i>0){ keep.push(p.slice(0,i)); return; }
+      if(/\?\s*$/.test(p)&&!SIZEISH.test(p)) return; keep.push(p); });
+    return keep.join(' '); }
+  window._agbStatementOnly=statementOnly;
+  function localParse(txt,dims){ const ns=cfg.splitNote?cfg.splitNote(txt):null; window._agbLastNote=ns&&ns.note?ns.note:''; const body=statementOnly(ns?ns.before:txt); if(!body&&!(ns&&ns.note)) return;
     answerFromSpeech(body); if(dims!==false) dimsFromSpeech(body); extraFromSpeech(body); if(ns&&ns.note) addNote(ns.note,ns.heard); }
   function addNote(n,h){ const f={id:'additionalEstimateNotes',value:String(n||'').trim(),heard:h||n}; if(!f.value||!$(f.id)) return; if(cfg.guard&&cfg.guard(f,{})===false) return; props[f.id]={v:f.value,on:true,heard:f.heard,orig:f.value}; }
   function answerFromSpeech(t){ const N=x=>String(x||'').toLowerCase().replace(/\(\+?\$[^)]*\)/g,'').replace(/\bby\b/g,'x').replace(/[^a-z0-9]/g,''); const T=N(t); if(!T) return;
     for(let i=questions.length-1;i>=0;i--){ const q=questions[i]; if(!q.fieldId||!q.options||!q.options.length) continue; const hit=q.options.map((o,j)=>[N(o),j]).filter(([o])=>o&&T.includes(o)); if(hit.length===1) answer(i,hit[0][1]); } }
-  function stop(msg){ clearInterval(tick); tick=null; window.agbVoiceDebug={heardSpeech,heard:heardTxt,at:new Date().toISOString()};
+  function stop(msg){ clearInterval(tick); tick=null; slog('stop',msg||'ended'); saveSess(); deferTx=null; respActive=false; respPending=false; Object.values(spk).forEach(x=>{ if(x.timer) clearTimeout(x.timer); }); window.agbVoiceDebug={heardSpeech,heard:heardTxt,at:new Date().toISOString()};
     try{ dc&&dc.close(); }catch(e){} try{ pc&&pc.close(); }catch(e){} try{ mic&&mic.getTracks().forEach(t=>t.stop()); }catch(e){}
     dc=pc=mic=null; aiTalking=false; clearTimeout(playChk); const sy=$('agbvSay'); if(sy) sy.classList.remove('talking'); $('agbvMic').classList.remove('live'); $('agbvMicTxt').textContent='Talk with the helper'; $('agbvTimer').hidden=true;
     if(msg) status(msg); }
+  const spk={}; let curResp=null; /* spoken-turn bookkeeping by item_id: did his speech start while the AI talked, was a reply already requested */
+  function userTurn(tx,sp){ /* an accepted turn of his: real speech, not echo */
+    lastUserTxt=tx; window._agbLastUtter=tx; lastAct=userAct=Date.now(); stillAsked=false;
+    if(aiTalking){ send({type:'response.cancel'}); send({type:'output_audio_buffer.clear'}); setTalking(false); respActive=false; respPending=false; }
+    if(!(sp&&sp.responded)) askResponse(); if(sp) sp.responded=true;
+    status('Listening… (updating estimate)'); log('u',tx); lastAct=Date.now(); heardSpeech=true; heard(tx); voicedYes(tx); localParse(tx); render(); }
   function onEvent(ev){
     const t=ev.type;
-    if(t==='input_audio_buffer.speech_started'){ if(!aiTalking) status('Hearing you…'); }
+    if(t==='input_audio_buffer.speech_started'){ heardSpeech=true; const id=ev.item_id; if(id){ spk[id]={during:aiTalking||Date.now()-aiStopAt<=600,timer:0,responded:false}; const ks=Object.keys(spk); if(ks.length>30) delete spk[ks[0]]; } if(!aiTalking) status('Hearing you…'); }
     else if(t==='output_audio_buffer.started'||t==='response.output_audio.delta'&&!aiTalking) setTalking(true);
     else if(t==='output_audio_buffer.stopped'||t==='output_audio_buffer.cleared') setTalking(false);
     else if(t==='response.output_audio_transcript.delta'&&ev.delta){ if(!sayBuf||sayNew){ sayBuf=''; sayNew=false; } sayBuf+=ev.delta; sayLine(sayBuf); }
-    else if(t==='input_audio_buffer.speech_stopped'){ if(!aiTalking) status('Listening…'); }
-    else if(t==='conversation.item.input_audio_transcription.completed'&&ev.transcript) { if(isEcho(ev.transcript)){ window.agbEchoIgnored=(window.agbEchoIgnored||0)+1; return; } if(!realSpeech(ev.transcript)) return; if(aiTalking&&!bargeOk(ev.transcript)) return; lastAct=userAct=Date.now(); stillAsked=false; if(aiTalking){ send({type:'response.cancel'}); send({type:'output_audio_buffer.clear'}); setTalking(false); } send({type:'response.create'}); status('Listening… (updating estimate)'); log('u',ev.transcript); lastAct=Date.now(); heardSpeech=true; heard(ev.transcript); voicedYes(ev.transcript); localParse(ev.transcript); render(); }
-    else if(t==='conversation.item.input_audio_transcription.failed'){ /* usually noise: ignore quietly */ }
-    else if(t==='response.output_audio_transcript.done'&&ev.transcript){ lastAiTxt=ev.transcript; if(/\?\s*$/.test(ev.transcript)) aiAskedAt=Date.now(); log('a',ev.transcript); sayLine(ev.transcript,true); sayNew=true; }
+    else if(t==='input_audio_buffer.speech_stopped'){ if(!aiTalking) status('Listening…');
+      /* His turn ended (server end-of-speech). Ask for the reply now instead of waiting for the transcript to finish (a slow or failed
+         transcript used to mean no reply at all). A short grace lets a fast transcript filter out noise first. Never for speech that
+         began while the AI was talking (could be its own echo): that one waits for its transcript. One request per turn. */
+      const sp=spk[ev.item_id]; if(sp&&!sp.during&&!sp.responded&&!sp.timer){ sp.timer=setTimeout(()=>{ sp.timer=0; if(sp.responded||!live()) return; sp.responded=true; slog('turn','end of speech: asking for the reply (transcript not back yet)'); lastAct=userAct=Date.now(); askResponse(); },700); } }
+    else if(t==='conversation.item.input_audio_transcription.completed'&&ev.transcript){ const tx=ev.transcript, sp=spk[ev.item_id]||null; if(sp&&sp.timer){ clearTimeout(sp.timer); sp.timer=0; }
+      slog('user',tx+(sp&&sp.during?'   [his speech began while the helper was talking]':''));
+      if(isEcho(tx,sp)){ window.agbEchoIgnored=(window.agbEchoIgnored||0)+1; slog('ignored','echo of the helper\'s own voice'); return; }
+      if(!realSpeech(tx,sp)){ slog('ignored','noise / filler / short answer with no question open'); if(aiTalking&&/^\W*(yes|yeah|yep|no|nope|okay|ok|sure|right|correct)\b/i.test(tx)) deferTx={t:tx,sp,at:Date.now()}; return; }
+      if(aiTalking&&!bargeOk(tx,sp)){ slog('ignored','too short to interrupt the helper; will answer when it finishes'); deferTx={t:tx,sp,at:Date.now()}; return; }
+      userTurn(tx,sp); }
+    else if(t==='conversation.item.input_audio_transcription.failed'){ slog('event','transcription failed (usually noise)'); }
+    else if(t==='response.output_audio_transcript.done'&&ev.transcript){ lastAiTxt=ev.transcript; if(/\?\s*$/.test(ev.transcript)) aiAskedAt=Date.now(); slog('ai',ev.transcript); log('a',ev.transcript); sayLine(ev.transcript,true); sayNew=true; }
+    else if(t==='response.created'){ respActive=true; respT=Date.now(); curResp=ev.response&&ev.response.id||null; }
     else if(t==='response.function_call_arguments.done'){
       let a={}; try{ a=JSON.parse(ev.arguments||'{}'); }catch(e){}
+      slog('tool',ev.name+' '+String(ev.arguments||'').slice(0,500));
       if(ev.name==='get_price_info'||ev.name==='get_city_info'||ev.name==='web_lookup'||ev.name==='search_page_info'){ status(ev.name==='web_lookup'?'Looking that up…':'Checking…');
-        const reply=r=>{ send({type:'conversation.item.create',item:{type:'function_call_output',call_id:ev.call_id,output:JSON.stringify(r).slice(0,3000)}}); send({type:'response.create'}); };
+        const reply=r=>{ slog('result',ev.name+' -> '+JSON.stringify(r).slice(0,400)); send({type:'conversation.item.create',item:{type:'function_call_output',call_id:ev.call_id,output:JSON.stringify(r).slice(0,3000)}}); askResponse(); };
         Promise.resolve().then(()=>ev.name==='get_price_info'?(cfg.priceInfo?cfg.priceInfo(a):{error:'no pricing on this page'}):ev.name==='get_city_info'?(cfg.cityInfo?cfg.cityInfo(a.city):{error:'no city data'}):ev.name==='search_page_info'?(cfg.searchInfo?cfg.searchInfo(a.query):{error:'no page search'}):callFn({mode:'web',question:a.question}).then(d=>({answer:d.answer,source:'web (general info)'})))
           .catch(e=>({error:String(e.message||e)})).then(reply); return; }
-      if(ev.name==='get_job_status'){ status('Looking up job…'); jobStatus(a.query,a.search).catch(e=>({error:String(e.message||e)})).then(r=>{ send({type:'conversation.item.create',item:{type:'function_call_output',call_id:ev.call_id,output:JSON.stringify(r).slice(0,4000)}}); send({type:'response.create'}); status('Listening…'); }); return; }
+      if(ev.name==='get_job_status'){ status('Looking up job…'); jobStatus(a.query,a.search).catch(e=>({error:String(e.message||e)})).then(r=>{ slog('result','get_job_status -> '+JSON.stringify(r).slice(0,300)); send({type:'conversation.item.create',item:{type:'function_call_output',call_id:ev.call_id,output:JSON.stringify(r).slice(0,4000)}}); askResponse(); status('Listening…'); }); return; }
       if(ev.name==='finish_estimate'&&!/\b(done|that'?s (it|all)|that is (it|all)|finished|all set|we'?re good|end (it|the conversation)|stop)\b/i.test(lastUserTxt)){ send({type:'conversation.item.create',item:{type:'function_call_output',call_id:ev.call_id,output:'He did not say he is done. Keep listening silently.'}}); return; }
       if(ev.name==='finish_estimate'){ send({type:'conversation.item.create',item:{type:'function_call_output',call_id:ev.call_id,output:'all set; everything is already on the estimate'}}); setTimeout(()=>stop('All set — everything you said is on the estimate. Fix anything in the list below, or tap Talk to add more.'),2500); return; }
       apply(a); const needQ=(a.questions||[]).length>0||(a.unknownPhrases||[]).length>0||(a._ambig||[]).length>0;
       send({type:'conversation.item.create',item:{type:'function_call_output',call_id:ev.call_id,output:needQ?('set; now ask your one short question out loud'+((a._ambig||[]).length?(': '+a._ambig.map(x=>x.question).join(' ')):'')):'set on the estimate; stay silent'}});
-      if(needQ) send({type:'response.create'}); /* otherwise stay silent and keep listening */
+      if(needQ) askResponse(); /* otherwise stay silent and keep listening */
     }
-    if(t==='response.done'&&ev.response&&ev.response.status&&ev.response.status!=='completed'){ window.agbVoiceLastBad=ev.response.status_details; status('Helper reply was cut off ('+ev.response.status+') — say it again or type it.'); }
+    if(t==='response.done'&&ev.response&&ev.response.status&&ev.response.status!=='completed'){ window.agbVoiceLastBad=ev.response.status_details; slog('event','response '+ev.response.status+' '+JSON.stringify(ev.response.status_details||'').slice(0,200)); if(ev.response.status!=='cancelled') status('Helper reply was cut off ('+ev.response.status+') — say it again or type it.'); }
     else if(t==='response.done'&&ev.response&&ev.response.usage){ const u=ev.response.usage, i=u.input_token_details||{}, o=u.output_token_details||{}, c=i.cached_tokens_details||{};
       usage.in_audio+=(i.audio_tokens||0); usage.in_text+=(i.text_tokens||0); usage.in_cached_audio=(usage.in_cached_audio||0)+(c.audio_tokens||0); usage.in_cached_text=(usage.in_cached_text||0)+(c.text_tokens||0);
       usage.out_audio+=(o.audio_tokens||0); usage.out_text+=(o.text_tokens||0); usage.cost=cost(); window.agbVoiceUsage=usage; }
-    else if(t==='error') status('Voice error: '+((ev.error&&ev.error.message)||''));
+    else if(t==='error'){ slog('error',JSON.stringify(ev.error||ev).slice(0,400)); status('Voice error: '+((ev.error&&ev.error.message)||'')); }
+    if(t==='response.done'&&(!curResp||!ev.response||ev.response.id===curResp)) respDone();
   }
   function cost(){ const u=usage, ca=u.in_cached_audio||0, ct=u.in_cached_text||0; // gpt-realtime-2.1-mini $/1M
     return ((u.in_audio-ca)*10+ca*0.3+(u.in_text-ct)*0.6+ct*0.06+u.out_audio*20+u.out_text*2.4)/1e6; }

@@ -2001,7 +2001,7 @@ body.bg-zinc-950{
                             
                             <label id="wheelingContainer" class="flex items-center cursor-pointer px-4 py-2.5 bg-zinc-950 border border-zinc-700 rounded-2xl">
                                 <input type="checkbox" id="wheelingCharge" onchange="calculateEstimate()" class="accent-blue-500 w-4 h-4 mr-2">
-                                <span>Wheeling charge (+$500)</span>
+                                <span>Wheeling (+$500)</span>
                             </label>
                             
                             <label id="arlingtonContainer" class="flex items-center cursor-pointer px-4 py-2.5 bg-zinc-950 border border-zinc-700 rounded-2xl">
@@ -2969,24 +2969,24 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             const key = `${w}x${d}`;
             const prices = {
                 "20x20": 7040,
-                "20x22": 7540,
-                "22x22": 8040,
-                "24x20": 8040,
-                "24x22": 8540,
-                "24x24": 9040,
-                "24x26": 9540,
-                "24x30": 10540,
-                "30x20": 9540
+                "20x22": 7590,
+                "22x22": 8140,
+                "24x20": 8140,
+                "24x22": 8690,
+                "24x24": 9240,
+                "24x26": 9790,
+                "24x30": 10840,
+                "30x20": 9790
             };
             
             if (prices[key]) {
                 return prices[key];
             }
             
-            // Fallback: base + $500 per 2ft total dimension increase (fits most examples)
+            // Owner 11/15/2026: material upgrade is $550 (was $500) for every 2 ft over 20x20. Table above = 7040 + 550 per 2 ft.
             const delta = w + d - 40;
             const increments = Math.max(0, Math.floor(delta / 2));
-            return 7040 + (increments * 500);
+            return 7040 + (increments * 550);
         }
 
         // ---- City defaults only fill fields the salesperson has not touched ----
@@ -3725,8 +3725,9 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             
             // Retaining wall
             const perimeterLf = 2 * (width + depth);
-            const retainRate = (retainType === 'none' || retainType === 'existing') ? 0 : 95;
-            // Charge only the inches ABOVE 8" (e.g. 24" wall = 16" × $95 = $1,520), matching the summary label
+            // Owner 11/15/2026: standard retaining wall $90/inch (was $95); reverse and 4-sided stay $95.
+            const retainRate = (retainType === 'none' || retainType === 'existing') ? 0 : (retainType === 'standard' ? 90 : 95);
+            // Charge only the inches ABOVE 8" (e.g. standard 24" wall = 16" × $90 = $1,440), matching the summary label
             const retainInchesAbove8 = Math.max(0, retainInches - 8);
             const retainCost = retainRate > 0 && retainInchesAbove8 > 0 ? retainInchesAbove8 * retainRate : 0;
             const frostFootingCost = frostProtectedFooting ? perimeterLf * 200 : 0;
@@ -4201,6 +4202,57 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             });
             return out;
         }
+        // fix 2026-11-15 (owner): Create / View Estimate Sheet builds the sheet for EVERY saved option, not only the
+        // one that was pressed, so History shows all option sheets. Other options are rebuilt quietly from their
+        // saved calculator data, then the calculator is put back exactly as it was before the active sheet is made.
+        function agbSheetTargetSlot(){
+            if(activeComparisonSlot) return activeComparisonSlot;
+            try{ const d=getGarageDimensions(); return ['A','B','C'].find(k=>estimateComparison[k] && Number(estimateComparison[k].width)===d.width && Number(estimateComparison[k].depth)===d.depth)||null; }catch(e){ return null; }
+        }
+        async function agbBuildOtherOptionSheets(activeSlot, statusWindow){
+            if(typeof estimateComparison!=='object' || !estimateComparison) return;
+            const others=['A','B','C'].filter(k=>k!==activeSlot && estimateComparison[k] && estimateComparison[k].formState);
+            if(!others.length) return;
+            const keep={
+                state:captureFormState(), active:activeComparisonSlot, pending:window._pendingOptionSlot,
+                photo:window._lastAiGaragePhotoUrl||null, photoSS:(function(){ try{ return sessionStorage.getItem('agb_last_ai_garage_photo'); }catch(e){ return null; } })(),
+                mode:window._sheetPhotoMode, editPrompt:window._sheetPhotoEditPrompt, printedKey:window._lastPrintedOptionKey, missOk:window._agbMissOkAt
+            };
+            const contactKeys=Object.keys(keep.state).filter(k=>/^customer|^salesman|^estimateSalesman/i.test(k));
+            window._agbBuildingAllOptions=true;
+            try{
+                for(const k of others){
+                    try{
+                        try{ if(statusWindow && !statusWindow.closed){ const h=statusWindow.document.querySelector('h2'); if(h) h.textContent='Building Option '+k+' sheet…'; } }catch(_){}
+                        restoreFormState(estimateComparison[k].formState);
+                        // contact info is the same customer for every option: always use what is on screen now
+                        const contact={}; contactKeys.forEach(c=>contact[c]=keep.state[c]); restoreFormState(contact);
+                        activeComparisonSlot=k; window._pendingOptionSlot=k;
+                        try{ loadSheetPresentationSession(); }catch(_){}
+                        // never carry another option's photo into this one (same specs reuse it through the option photo cache)
+                        window._lastAiGaragePhotoUrl=null; try{ sessionStorage.removeItem('agb_last_ai_garage_photo'); }catch(_){}
+                        window._sheetPhotoMode='generate'; window._sheetPhotoEditPrompt='';
+                        window._agbMissOkAt=Date.now();
+                        try{ calculateEstimate(); }catch(_){}
+                        const r=await printEstimateSheet(false, null, {renderOnly:true});
+                        if(r && r.html) rememberOptionSheet(k, r.html, r.quote, r.internal);
+                    }catch(err){ console.warn('option '+k+' sheet', err); }
+                }
+            } finally {
+                window._agbBuildingAllOptions=false;
+                restoreFormState(keep.state);
+                activeComparisonSlot=keep.active; window._pendingOptionSlot=keep.pending;
+                try{ loadSheetPresentationSession(); }catch(_){}
+                window._lastAiGaragePhotoUrl=keep.photo;
+                try{ if(keep.photoSS) sessionStorage.setItem('agb_last_ai_garage_photo', keep.photoSS); else sessionStorage.removeItem('agb_last_ai_garage_photo'); }catch(_){}
+                window._sheetPhotoMode=keep.mode; window._sheetPhotoEditPrompt=keep.editPrompt; window._lastPrintedOptionKey=keep.printedKey; window._agbMissOkAt=keep.missOk;
+                try{ calculateEstimate(); }catch(_){}
+                try{ renderEstimateComparison(); }catch(_){}
+                try{ if(statusWindow && !statusWindow.closed){ const h=statusWindow.document.querySelector('h2'); if(h) h.textContent='Building your sheet…'; } }catch(_){}
+            }
+        }
+        window.agbBuildOtherOptionSheets=agbBuildOtherOptionSheets;
+
         function viewEstimateComparisonSheet(slot){
             const s=estimateComparison[slot];
             if(!s){ alert('Option '+slot+' is not saved yet. Tap Save Current on Option '+slot+' first.'); return; }
@@ -4253,6 +4305,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             setTimeout(async ()=>{
                 try{
                     if(typeof printEstimateSheet==='function'){
+                        try{ await agbBuildOtherOptionSheets(slot, estimateWindow); }catch(e){ console.warn('all option sheets', e); }
                         await printEstimateSheet(true, estimateWindow, { updateExisting:true });
                     } else if(typeof safePrintEstimateSheet==='function'){
                         try{ estimateWindow.close(); }catch(_){}
@@ -4627,7 +4680,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             if (data.overheadCustomExtra > 0) lines.push({ label: 'Custom overhead door (internal extra)', amount: data.overheadCustomExtra, section: 'addons' });
             if (data.firewall > 0) lines.push({ label: `Firewall (${data.firewall / 600} wall${data.firewall > 600 ? 's' : ''})`, amount: data.firewall, section: 'addons' });
             if (data.hurricane > 0) lines.push({ label: 'Hurricane ties', amount: data.hurricane, section: 'addons' });
-            if (data.wheeling > 0) lines.push({ label: 'Wheeling charge', amount: data.wheeling, section: 'addons' });
+            if (data.wheeling > 0) lines.push({ label: 'Wheeling', amount: data.wheeling, section: 'addons' });
             if (data.arlingtonSurvey > 0) lines.push({ label: 'Topographical survey', amount: data.arlingtonSurvey, section: 'addons', key: 'topo_survey' });
             if (data.andrewPermit > 0) lines.push({ label: 'Andrew for Permit', amount: data.andrewPermit, section: 'addons' });
             document.querySelectorAll('#extrasContainer > div').forEach(row=>{const desc=String(row.querySelector('.extra-desc')?.value||'Custom Extra / Option').trim()||'Custom Extra / Option';const cost=parseFloat(row.querySelector('.extra-cost')?.value)||0;const display=row.querySelector('.extra-display')?.value||'included';if(cost>0&&display!=='option')lines.push({label:`${desc} — included in price`,amount:cost,section:'addons'});});
@@ -7574,6 +7627,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             try {
                 const boundId=(new URLSearchParams(location.search).get('editEstimate')||window._lastEstimateHistoryId||'');
                 const updateExisting= (opts && opts.forceNew) ? false : (opts && opts.updateExisting===false ? false : !!boundId);
+                if(saveToHistory){ try{ await agbBuildOtherOptionSheets(agbSheetTargetSlot(), estimateWindow); }catch(e){ console.warn('all option sheets', e); } }
                 await printEstimateSheet(saveToHistory, estimateWindow, { updateExisting });
             } catch (err) {
                 console.error('Estimate sheet error:', err);
@@ -9092,6 +9146,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                 const okGo = await agbMissingInfoConfirm(agbMissingList(customerName, customerAddress));
                 if (!okGo) { if (estimateWindow && !estimateWindow.closed) estimateWindow.close(); return; }
             }
+            const renderOnly = !!(histOpts && histOpts.renderOnly);
 
             calculateEstimate();
             if (window._customSizeInvalid) {
@@ -9102,7 +9157,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             {
                 const itNow = estimateNumberFromText(document.getElementById('internalTotal')?.textContent || '0');
                 const cqNow = estimateNumberFromText(document.getElementById('customerQuote')?.textContent || '0');
-                if (cqNow < itNow - 0.005) {
+                if (cqNow < itNow - 0.005 && !renderOnly) {
                     const f = n => '$' + Number(n).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
                     if (!confirm('WARNING: The customer price ' + f(cqNow) + ' is BELOW the internal cost ' + f(itNow) + ' (a loss of ' + f(itNow - cqNow) + ').\n\nCreate the estimate sheet anyway?')) {
                         if (estimateWindow && !estimateWindow.closed) estimateWindow.close();
@@ -10880,6 +10935,14 @@ document.addEventListener('click', function(e){
 </body>
 </html>`;
 
+            // fix 2026-11-15: build-only mode (used to make the sheet for every saved option at once)
+            if (renderOnly) {
+                return {
+                    html: sheetHtml,
+                    quote: estimateNumberFromText(document.getElementById('customerQuote')?.textContent || quote || '0'),
+                    internal: estimateNumberFromText(document.getElementById('internalTotal')?.textContent || '0')
+                };
+            }
             const printWindow = estimateWindow || window.open('', '_blank', 'width=1000,height=1000');
             if (!printWindow) {
                 alert('Your browser blocked the estimate sheet. Please allow popups for this site and try again.');
@@ -12207,7 +12270,7 @@ window.agbSaveAiPhotoToLibrary=async function(url, hash){
 function builtins(){
   const out=[];
   try{ LIBRARY_SEED.forEach(p=>out.push({id:p.id,kind:'Approved',src:new URL('library/'+p.file,document.baseURI).href,thumb:new URL('library/thumbs/'+p.file,document.baseURI).href,tags:p.tags})); }catch(e){}
-  try{ (GARAGE_PHOTO_LIBRARY||[]).forEach(p=>{ if(!p||!p.src) return; const file=String(p.src).replace(/^.*\//,''); out.push({id:'lib:'+p.id,kind:'Example',src:new URL('images/'+file,document.baseURI).href,alt:new URL(file,document.baseURI).href,tags:{roof:p.reverseGable?'reverse gable':p.roof,siding:p.siding,color:p.color,ohDoors:/two_doors|double/.test(p.id)?2:1}}); }); }catch(e){}
+  try{ (GARAGE_PHOTO_LIBRARY||[]).forEach(p=>{ if(!p||!p.src) return; const file=String(p.src).replace(/^.*\//,''); out.push({id:'lib:'+p.id,kind:'Example',src:new URL(file,document.baseURI).href,alt:new URL('images/'+file,document.baseURI).href,tags:{roof:p.reverseGable?'reverse gable':p.roof,siding:p.siding,color:p.color,ohDoors:/two_doors|double/.test(p.id)?2:1}}); }); }catch(e){}
   try{ (REVERSE_GABLE_PRESETS||[]).forEach(p=>{ const t=(typeof RG_PRESET_TAGS!=='undefined'&&RG_PRESET_TAGS[p.id])||{}; out.push({id:'rg:'+p.id,kind:'Reverse gable',src:p.src,tags:{roof:'reverse gable',color:(p.label||'').split(',')[0],ohDoors:t.ohDoors||1,offCenter:/-(left|right)$/.test(p.id),doorSide:(p.id.match(/-(left|right)$/)||[])[1]}}); }); }catch(e){}
   return out;
 }
@@ -12229,7 +12292,10 @@ async function resolveChoiceSrc(){
 window.agbLibraryPhotoForSheet=async function(){
   if(val('photoSource')!=='library') return null;
   const src=await resolveChoiceSrc();
-  return src?{primary:src,fallbacks:[],source:'library',aiSource:'library',prompt:'(library photo — no AI)'}:null;
+  // fix 2026-11-15: example photos live in the site root (there is no images/ folder); keep images/ only as a fallback
+  const b=builtins().find(x=>x.id===val('libraryPhotoId'));
+  const fbs=b?[b.src,b.alt].filter(u=>u&&u!==src):[];
+  return src?{primary:src,fallbacks:fbs,source:'library',aiSource:'library',prompt:'(library photo — no AI)'}:null;
 };
 function updateRow(){
   const src=val('photoSource')||'ai';
@@ -12299,6 +12365,17 @@ async function plDelete(id){
   if(val('libraryPhotoId')===id) choiceSet(null);
   await openPhotoLibrary(true);
 }
+// fix 2026-11-15: never offer an example photo whose file is not on the site (it would leave the sheet with no picture)
+const _fileOk={};
+function fileOk(u){
+  if(!u || /^data:/i.test(u) || !/^https?:/i.test(u)) return Promise.resolve(true);
+  if(_fileOk[u]) return _fileOk[u];
+  return _fileOk[u]=fetch(u,{method:'HEAD',cache:'force-cache'}).then(r=>r.ok||r.status===0).catch(()=>true);
+}
+async function dropMissingFiles(list){
+  const keep=await Promise.all(list.map(async e=>{ if(e.kind!=='Example') return true; if(await fileOk(e.src)) return true; if(e.alt && await fileOk(e.alt)){ const t=e.src; e.src=e.alt; e.alt=t; return true; } return false; }));
+  return list.filter((e,i)=>keep[i]);
+}
 window.openPhotoLibrary=async function(keepFilters){
   const m=ensureModal(); m.classList.remove('hidden');
   const note=document.getElementById('plNote'); note.textContent='Loading photos…';
@@ -12308,7 +12385,7 @@ window.openPhotoLibrary=async function(keepFilters){
   allEntries=[].concat(
     shared.map(r=>({id:r.id,kind:'AI',thumb:r.thumb_data||r.image_url,src:'',tags:r.tags||{}})),
     local.map(r=>({id:r.id,kind:'AI',local:true,thumb:r.thumb_data||r.image_data,src:r.image_data||r.image_url,tags:r.tags||{}})),
-    builtins());
+    await dropMissingFiles(builtins()));
   note.textContent=sharedOk?(shared.length+' shared AI photos · tap a photo to use it (no AI call)'):'Shared AI library is not set up yet (run photo-library.sql) — showing example photos and AI photos saved on this device.';
   if(!keepFilters) plClearFilters(); else renderGrid();
 };
@@ -12905,7 +12982,7 @@ window.agbRateCard=function(){ const PI=window.agbVoice&&window.agbVoice._priceI
     ['+1 window','extraWindows','+1'],['Standard retaining wall 24" (16" above 8")','retainType','standard',[['retainWallHeight','24']]],['42" frost protected footing','frostProtectedFooting','true'],['5" concrete','concreteThickness','5'],['6" concrete','concreteThickness','6'],
     ['EPA fee','epaFee','true'],['30 amp subpanel','electricSubpanel','1000'],['60 amp subpanel','electricSubpanel','1200'],['100 amp subpanel','electricSubpanel','3000'],['EV charger','evCharger','true'],['EV prep','evPrep','true'],
     ['+1 interior light','extraLightsInterior','+1'],['+1 exterior light','extraLightsExterior','+1'],['+1 interior outlet','extraOutletsInterior','+1'],['+1 exterior outlet','extraOutletsExterior','+1'],['3-way switch','threeWaySwitch','true'],['Hurricane ties','hurricaneTies','true'],
-    ['+1 firewall wall','firewallWalls','+1'],['9 ft walls','wallHeight','9'],['10 ft walls','wallHeight','10'],['12" eaves','eavesSize','12'],['Front overhang','overhangEnabled','true'],['Wheeling charge','wheelingCharge','true'],['Arlington survey','arlingtonSurvey','true'],['Andrew permit','andrewPermit','true'],
+    ['+1 firewall wall','firewallWalls','+1'],['9 ft walls','wallHeight','9'],['10 ft walls','wallHeight','10'],['12" eaves','eavesSize','12'],['Front overhang','overhangEnabled','true'],['Wheeling','wheelingCharge','true'],['Arlington survey','arlingtonSurvey','true'],['Andrew permit','andrewPermit','true'],
     ['+2 ft width','width','+2'],['+2 ft depth','depth','+2'],['Aluminum soffit','aluminumSoffit','true']];
   const out=[]; P.forEach(([lab,id,v,extra])=>{ const el=document.getElementById(id); if(!el) return; let val=v; if(/^\+/.test(v)) val=String((parseFloat(el.value)||0)+parseFloat(v)); if(el.type==='checkbox'&&el.checked) return; if(String(el.value)===val) return;
     const r=PI({changes:[{id,value:val}].concat((extra||[]).map(([a,b])=>({id:a,value:b})))}); if(r&&r.cost_difference!=null) out.push(lab+': '+(r.cost_difference>=0?'+':'')+'$'+r.cost_difference.toLocaleString()); });
@@ -12918,7 +12995,7 @@ window.agbCityPack=function(){ const N=window.agbGlobal('CITY_CODE_NOTES')||{}, 
   const rows=Object.keys(Object.assign({},N,S)).sort().map(c=>{ if(c==='Chicago') return ''; const sh=S[c]||{}; const v=[pick(sh,['maxSize','height','setHouse','setRearAlley','setRearNoAlley','setSide']),Y[c]?'code '+Y[c]:''].filter(Boolean).join('; '); return v?c+': '+v:''; }).filter(Boolean);
   return {chicagoSide, chicago:full('Chicago'), current:(cur&&cur!=='Chicago'&&cur!=='Other')?full(cur):'', table:rows.join('\n')}; };
 window.agbKnowledgePack=function(){ const C=window.agbCityPack(); const M=window.agbGlobal('MONEY_INPUT_DEFAULTS')||{};
-  const fixed=['Retaining wall: $95 per inch of wall height ABOVE 8" (standard, reverse or 4-sided; existing/none $0), e.g. 24" wall = 16" x $95 = $1,520 cost',
+  const fixed=['Retaining wall per inch of wall height ABOVE 8": standard $90, reverse $95, 4-sided $95 (existing/none $0), e.g. standard 24" wall = 16" x $90 = $1,440 cost',
     'Excavation/stone: $1.50 per sq ft (auto) or entered sq ft / $ amount','42" frost protected footing: $200 per linear ft of perimeter','Firewall: $600 per wall','Demolition: the salesman enters the demo cost (demoCostInput)','First service door included; each extra service door adds $600 cost',
     'Default money inputs: '+Object.keys(M).map(k=>k+' $'+M[k]).join(', ')].join('. ');
   return 'RATES (internal cost; customer price = cost + profit unless total locked): '+fixed+'.\nMEASURED FROM THE CALCULATOR on the current estimate (cost change): '+window.agbRateCard()+
@@ -13056,6 +13133,31 @@ window.agbVoice=AGBVoiceCore.create({
     return null; },
   afterFill:function(){ const o=window._agbDemoOverride; if(o){ const el=document.getElementById('oldConcreteOverride'); if(el&&!el.value){ el.value=o; el.dispatchEvent(new Event('input',{bubbles:true})); } window._agbDemoOverride=null; try{ syncDemoPreset(); }catch(e){} } try{ calculateEstimate(); }catch(e){} }
 });
+</script>
+
+<script>
+/* fix 2026-11-15: opened from History "Build missing option sheets" — one tap builds and saves every option's sheet */
+(function(){
+  if(!new URLSearchParams(location.search).get('buildOptionSheets')) return;
+  let tries=0;
+  const t=setInterval(()=>{
+    tries++;
+    let saved=[]; try{ saved=['A','B','C'].filter(k=>estimateComparison&&estimateComparison[k]); }catch(e){}
+    if(!(saved.length>1) && tries<40) return;
+    clearInterval(t);
+    try{ const u=new URL(location.href); u.searchParams.delete('buildOptionSheets'); history.replaceState({},'',u.toString()); }catch(e){}
+    if(saved.length<2) return;
+    const missing=saved.filter(k=>!(estimateComparison[k].sheet_html));
+    const bar=document.createElement('div'); bar.id='agbBuildAllBar';
+    bar.style.cssText='position:fixed;left:10px;right:10px;bottom:10px;z-index:2147482000;max-width:620px;margin:0 auto;background:#0f172a;color:#fff;border:1px solid #10b981;border-radius:14px;padding:12px 14px;font:14px/1.35 system-ui,Arial,sans-serif;box-shadow:0 10px 30px rgba(0,0,0,.45);box-sizing:border-box';
+    bar.innerHTML='<div style="margin-bottom:8px"><b>'+(missing.length?('Option '+missing.join(', ')+' '+(missing.length>1?'have':'has')+' no sheet yet.'):'All options loaded.')+'</b> Tap below to build the sheet for every option (A'+(saved.length>2?', B and C':' and B')+') and save them all to History.</div>'
+      +'<div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" id="agbBuildAllGo" style="flex:1 1 200px;background:#059669;color:#fff;border:0;border-radius:10px;padding:10px 12px;font-weight:800;font-size:14px">Build all option sheets</button>'
+      +'<button type="button" id="agbBuildAllX" style="flex:0 0 auto;background:#3f3f46;color:#fff;border:0;border-radius:10px;padding:10px 12px;font-weight:700;font-size:14px">Not now</button></div>';
+    document.body.appendChild(bar);
+    document.getElementById('agbBuildAllX').onclick=()=>bar.remove();
+    document.getElementById('agbBuildAllGo').onclick=()=>{ bar.remove(); safePrintEstimateSheet(true); };
+  },500);
+})();
 </script>
 
 </body>

@@ -2496,17 +2496,22 @@ async function viewEstimateHistory(id){
    if(sum && optionSheets.length>1){
     const box=w.document.createElement('div');
     box.style.cssText='max-width:1050px;margin:0 auto 14px;background:#fff;border:1px solid #dbe2ea;border-radius:12px;padding:14px';
-    box.innerHTML='<h3 style="margin:0 0 10px">Saved options</h3>'+optionSheets.map(o=>`<div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:8px 0;border-bottom:1px solid #edf1f6"><div><b>${o.label}</b> ${o.size||''} ${o.roof||''}</div><div><b>${money(o.quote)}</b>${o.internal?` <span style="color:#64748b">internal ${money(o.internal)}</span>`:''}</div></div>`).join('');
+    // fix 2026-11-15: show which options have a sheet, link to each, and offer to build the missing ones
+    const missing=optionSheets.filter(o=>!o.html);
+    box.innerHTML='<h3 style="margin:0 0 10px">Saved options</h3>'+optionSheets.map(o=>`<div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:8px 0;border-bottom:1px solid #edf1f6"><div><b>${o.label}</b> ${esc(o.size||'')} ${esc(o.roof||'')} ${o.html?`<a href="#optSheet${o.slot}" onclick="var t=document.getElementById('optSheet${o.slot}');if(t){t.scrollIntoView({behavior:'smooth'});return false;}" style="margin-left:6px;font-size:12px;color:#1d4ed8;font-weight:700">View sheet ↓</a>`:'<span style="margin-left:6px;font-size:12px;color:#b45309;font-weight:700">No sheet yet</span>'}</div><div><b>${money(o.quote)}</b>${o.internal?` <span style="color:#64748b">internal ${money(o.internal)}</span>`:''}</div></div>`).join('')
+     +(missing.length&&!isRepairEstimate(e)?`<div style="margin-top:10px;font-size:13px;color:#334155">${missing.map(o=>o.label).join(', ')} ${missing.length>1?'were':'was'} saved before sheets were made for every option. <button type="button" class="save" onclick="buildMissingOptionSheets()" style="margin-top:6px">Build missing option sheets</button></div>`:'');
     sum.after(box);
+    w.buildMissingOptionSheets=function(){ try{ window.focus(); }catch(_){} try{ w.close(); }catch(_){} editEstimateHistory(id,{buildOptionSheets:true}); };
    }
    const first=w.document.getElementById('savedEstimateFrame');
    const host=first&&first.parentNode;
    const sheetFrames=optionSheets.filter(o=>o.html);
    (sheetFrames.length?sheetFrames:optionSheets).forEach((o,i)=>{
     let frame=i===0?first:null;
+    if(frame){ try{ frame.parentNode.id='optSheet'+o.slot; }catch(_){} }
     if(!frame && host){
      const wrap=w.document.createElement('div');
-     wrap.className='frame-wrap';
+     wrap.className='frame-wrap'; wrap.id='optSheet'+o.slot;
      wrap.innerHTML=`<div style="font-weight:800;margin:0 0 8px">${o.label}${o.size?' — '+o.size:''}${o.quote?` — ${money(o.quote)}`:''}</div><iframe title="${o.label}" style="width:100%;height:1250px;border:0;background:#fff;border-radius:6px"></iframe>`;
      host.parentNode.appendChild(wrap);
      frame=wrap.querySelector('iframe');
@@ -2591,13 +2596,13 @@ async function viewEstimateHistory(id){
  };
  w.focus();
 }
-async function editEstimateHistory(id){
+async function editEstimateHistory(id,opts){
  const e=await fetchFullEstimateRecord(id);if(!e)return alert('Estimate not found.');
  const own=!!(profile&&String(e.salesman_username||'').toLowerCase()===String(profile.username||'').toLowerCase());
  if(!own&&!privateAccessManager()&&!manager())return alert('You can edit your own estimates. Sam and Ramsey can edit any salesperson’s estimate.');
  if(isRepairEstimate(e)){ window.location.href='repair.html?editRepair='+encodeURIComponent(id)+'&v='+Date.now(); return; }
  try{sessionStorage.setItem('garage_edit_estimate_record',JSON.stringify(e));}catch(err){console.warn('Could not cache estimate edit record',err)}
- window.location.href=`estimator.html?editEstimate=${encodeURIComponent(id)}&v=20260820edit3`;
+ window.location.href=`estimator.html?editEstimate=${encodeURIComponent(id)}${opts&&opts.buildOptionSheets?'&buildOptionSheets=1':''}&v=${Date.now()}`;
 }
 function isGaragePlanRow(e){ return String(e&&e.siding||'')==='PLAN SET'; }
 function planHistoryRows(){ return (Array.isArray(estimateHistory)?estimateHistory:[]).filter(isGaragePlanRow); }

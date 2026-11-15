@@ -148,6 +148,11 @@ function agbMissingList(name,addr){const m=[];if(!String(name||'').trim())m.push
             scrollbar-gutter: stable;
         }
 
+        /* fix 2026-11-15: the Customer Quote number always fits its card (phones cut off 5-6 digit prices).
+           The label side may wrap; the price never wraps and shrinks only as much as needed (see agbFitQuote). */
+        #customerQuote { white-space: nowrap; flex: 0 0 auto; }
+        :has(> #customerQuote) > div:first-child { min-width: 0; flex: 1 1 auto; }
+
         @media (max-width: 767px) {
             body {
                 overflow-x: hidden;
@@ -13162,6 +13167,29 @@ window.agbVoice=AGBVoiceCore.create({
     document.getElementById('agbBuildAllX').onclick=()=>bar.remove();
     document.getElementById('agbBuildAllGo').onclick=()=>{ bar.remove(); safePrintEstimateSheet(true); };
   },500);
+})();
+</script>
+
+<script>
+/* fix 2026-11-15: shrink the Customer Quote font only when the price would not fit (keeps the normal size otherwise) */
+(function(){
+  function fit(){
+    const e=document.getElementById('customerQuote'); if(!e) return;
+    const card=e.parentElement; const label=card&&card.firstElementChild!==e?card.firstElementChild:null;
+    e.style.removeProperty('font-size');
+    const over=()=>{ const cs=getComputedStyle(card); const inner=card.getBoundingClientRect().right-parseFloat(cs.paddingRight||0)-parseFloat(cs.borderRightWidth||0);
+      return e.getBoundingClientRect().right>inner+0.5 || card.scrollWidth>card.clientWidth+1 || (label && label.scrollWidth>label.clientWidth+1); };
+    let fs=parseFloat(getComputedStyle(e).fontSize)||36; const min=16; let guard=0;
+    while(over() && fs>min && guard++<40){ fs-=1; e.style.setProperty('font-size',fs+'px','important'); }
+  }
+  window.agbFitQuote=fit;
+  function init(){
+    const e=document.getElementById('customerQuote'); if(!e) return;
+    try{ new MutationObserver(()=>requestAnimationFrame(fit)).observe(e,{childList:true,characterData:true,subtree:true}); }catch(_){}
+    window.addEventListener('resize',()=>requestAnimationFrame(fit));
+    fit();
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
 })();
 </script>
 

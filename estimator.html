@@ -1333,8 +1333,8 @@ body.bg-zinc-950{
                                     </select>
                                 </div>
                                 <div>
-                                    <label class="text-xs text-zinc-400 block mb-1">Retaining Wall Above 8"</label>
-<input id="retainWallHeight" type="number" value="0" min="0" step="1" oninput="calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm" placeholder='Extra inches above 8"'><div class="text-[10px] text-zinc-500 mt-0.5">$95 × each inch entered above 8".</div>
+                                    <label class="text-xs text-zinc-400 block mb-1">Retaining Wall Total Height (in)</label>
+<input id="retainWallHeight" type="number" value="0" min="0" step="1" oninput="calculateEstimate()" class="calc-input w-full bg-zinc-950 border border-zinc-700 rounded-2xl px-3 py-2.5 text-sm" placeholder='Total inches, e.g. 24'><div class="text-[10px] text-zinc-500 mt-0.5">Enter the TOTAL inches. First 6" free; each inch over 6" is $90 standard, $95 reverse / 4-sided.</div>
                                 </div>
                             </div>
                         </div>
@@ -3788,9 +3788,11 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             const perimeterLf = 2 * (width + depth);
             // Owner 11/15/2026: standard retaining wall $90/inch (was $95); reverse and 4-sided stay $95.
             const retainRate = (retainType === 'none' || retainType === 'existing') ? 0 : (retainType === 'standard' ? 90 : 95);
-            // Charge only the inches ABOVE 8" (e.g. standard 24" wall = 16" × $90 = $1,440), matching the summary label
-            const retainInchesAbove8 = Math.max(0, retainInches - 8);
-            const retainCost = retainRate > 0 && retainInchesAbove8 > 0 ? retainInchesAbove8 * retainRate : 0;
+            // Owner 11/18/2026: input is the TOTAL wall height in inches; the first 6" are free for every type
+            // (e.g. standard 24" wall = 18" × $90 = $1,620; reverse/4-sided 24" = 18" × $95 = $1,710).
+            const retainFreeInches = 6;
+            const retainInchesOver = Math.max(0, retainInches - retainFreeInches);
+            const retainCost = retainRate > 0 && retainInchesOver > 0 ? retainInchesOver * retainRate : 0;
             const frostFootingCost = frostProtectedFooting ? perimeterLf * 200 : 0;
             
             // Gutters
@@ -4710,7 +4712,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             }
             if (data.retainCost > 0) {
                 const retainName=data.retainType==='standard'?'Standard Retaining Wall':data.retainType==='reverse'?'Reverse Retaining Wall':'4 Sided Retaining Wall';
-                lines.push({ label: `${retainName} (${Math.max(0,data.retainInches-8)} in above 8" × $${data.retainRate})`, amount: data.retainCost, section: 'concrete' });
+                lines.push({ label: `${retainName} (${data.retainInches} in total, ${Math.max(0,data.retainInches-6)} in over 6" × $${data.retainRate})`, amount: data.retainCost, section: 'concrete' });
             }
             if (data.frostFootingCost > 0) {
                 lines.push({ label: `42" Frost Protected Footing (${data.perimeterLf} lf × $200)`, amount: data.frostFootingCost, section: 'concrete' });
@@ -5486,7 +5488,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             city:'City',width:'Garage Width',depth:'Garage Depth',customWidth:'Custom Garage Width',customDepth:'Custom Garage Depth',
             wallHeight:'Wall Height',roofType:'Roof Style',eaveDir:'Gable Eaves',rgPresetId:'Reverse Gable Example Photo',pitch:'Roof Pitch',eavesSize:'Eaves',manualEavesSize:'Manual Eaves Size',roofPatioEnabled:'Roof Patio',roofPatioDepth:'Roof Patio Depth',manualRoofPatioDepth:'Manual Roof Patio Depth',roofPatioSide:'Side Roof Patio',overhangEnabled:'Overhang',overhangSize:'Overhang Size',overhangMaterial:'Overhang Material',
             slabMode:'Slab Mode',newConcrete:'New Concrete',apronDepth:'Apron Depth',apronManual:'Manual Apron Depth',concreteThickness:'Concrete Thickness',excavation:'Excavation / Stone Loads',demoCostInput:'Demolition Cost',
-            frostProtectedFooting:'42" Frost Protected Footing',retainType:'Retaining Wall Type',retainWallHeight:'Retaining Wall Above 8 Inches',
+            frostProtectedFooting:'42" Frost Protected Footing',retainType:'Retaining Wall Type',retainWallHeight:'Retaining Wall Total Inches',
             demoSlabPreset:'Demo Garage / Slab Size',demoApronDepth:'Demo Apron Depth',demoApronManual:'Manual Demo Apron Depth',
             oldConcreteOverride:'Custom Demo Slab Size',additionalRemovalDims:'Additional Concrete Removal',
             doorType:'Service Door',serviceDoorLocation:'Service Door Location',addlOverheadDoors:'Additional Overhead Doors',
@@ -11337,7 +11339,7 @@ document.addEventListener('click', function(e){
             document.getElementById('extraWindows').value = '0';
             
             document.getElementById('retainType').value = 'none';
-            document.getElementById('retainWallHeight').value = '8';
+            document.getElementById('retainWallHeight').value = '0';
             document.getElementById('gutters').checked = false;
             document.getElementById('aluminumSoffit').checked = false;
             if (document.getElementById('showWoodSoffitNote')) document.getElementById('showWoodSoffitNote').checked = false;
@@ -13047,7 +13049,7 @@ window.agbBreakdown=function(){ const d=window._agbCostSheetData||{}; const m=x=
   return 'Size '+(($('width')||{}).value)+'x'+(($('depth')||{}).value)+', city '+(($('city')||{}).value||'?')+'. Internal cost lines: '+L.join('; ')+'. INTERNAL COST TOTAL '+(($('internalTotal')||{}).textContent||'')+'; CUSTOMER PRICE '+(($('customerQuote')||{}).textContent||'')+'; price mode '+(pm==='total'?'LOCKED total $'+pv:pm==='amount'?'profit $'+pv:'profit '+pv+'%')+'.'; };
 window.agbRateCard=function(){ const PI=window.agbVoice&&window.agbVoice._priceInfo; if(!PI) return '';
   const P=[['Hip roof instead of gable','roofType','hip'],['Hardie siding','sidingType','hardie'],['Gutters','gutters','true'],['18x7 overhead door instead of 16x7','overheadDoorSizePreset','18x7'],['Insulated overhead door','ohInsulated','true'],
-    ['+1 window','extraWindows','+1'],['Standard retaining wall 24" (16" above 8")','retainType','standard',[['retainWallHeight','24']]],['42" frost protected footing','frostProtectedFooting','true'],['5" concrete','concreteThickness','5'],['6" concrete','concreteThickness','6'],
+    ['+1 window','extraWindows','+1'],['Standard retaining wall 24" total (18" over 6")','retainType','standard',[['retainWallHeight','24']]],['42" frost protected footing','frostProtectedFooting','true'],['5" concrete','concreteThickness','5'],['6" concrete','concreteThickness','6'],
     ['EPA fee','epaFee','true'],['30 amp subpanel','electricSubpanel','1000'],['60 amp subpanel','electricSubpanel','1200'],['100 amp subpanel','electricSubpanel','3000'],['EV charger','evCharger','true'],['EV prep','evPrep','true'],
     ['+1 interior light','extraLightsInterior','+1'],['+1 exterior light','extraLightsExterior','+1'],['+1 interior outlet','extraOutletsInterior','+1'],['+1 exterior outlet','extraOutletsExterior','+1'],['3-way switch','threeWaySwitch','true'],['Hurricane ties','hurricaneTies','true'],
     ['+1 firewall wall','firewallWalls','+1'],['9 ft walls','wallHeight','9'],['10 ft walls','wallHeight','10'],['12" eaves','eavesSize','12'],['Front overhang','overhangEnabled','true'],['Wheeling','wheelingCharge','true'],['Arlington survey','arlingtonSurvey','true'],['Andrew permit','andrewPermit','true'],
@@ -13064,7 +13066,7 @@ window.agbCityPack=function(){ const N=window.agbGlobal('CITY_CODE_NOTES')||{}, 
   return {chicagoSide, chicago:full('Chicago'), current:(cur&&cur!=='Chicago'&&cur!=='Other')?full(cur):'', table:rows.join('\n')}; };
 /* Voice trim 11/18/2026: the voice session gets only Chicago + the estimate's current city; any other city is looked up with get_city_info. agbKnowledgePack(true) keeps the ALL CITIES table (page search). */
 window.agbKnowledgePack=function(allCities){ const C=window.agbCityPack(); const M=window.agbGlobal('MONEY_INPUT_DEFAULTS')||{};
-  const fixed=['Retaining wall per inch of wall height ABOVE 8": standard $90, reverse $95, 4-sided $95 (existing/none $0), e.g. standard 24" wall = 16" x $90 = $1,440 cost',
+  const fixed=['Retaining wall: retainWallHeight is the TOTAL wall height in inches; first 6" free for every type, then per inch over 6": standard $90, reverse $95, 4-sided $95 (existing/none $0), e.g. standard 24" wall = 18" x $90 = $1,620 cost',
     'Excavation/stone: $1.50 per sq ft (auto) or entered sq ft / $ amount','42" frost protected footing: $200 per linear ft of perimeter','Firewall: $600 per wall','Demolition: the salesman enters the demo cost (demoCostInput)','First service door included; each extra service door adds $600 cost',
     'Default money inputs: '+Object.keys(M).filter(k=>k!=='demoCostInput').map(k=>k+' $'+M[k]).join(', ')+'. Demo cost box (demoCostInput) defaults to $1,300 on the page: set it ONLY when he says a dollar amount for the demo; never set it to 0 or a guess'].join('. ');
   return 'RATES (internal cost; customer price = cost + profit unless total locked): '+fixed+'.\nMEASURED FROM THE CALCULATOR on the current estimate (cost change): '+window.agbRateCard()+

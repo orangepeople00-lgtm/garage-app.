@@ -1096,13 +1096,19 @@ body.bg-zinc-950{
                             <i class="fa-solid fa-arrows-alt-v w-3.5"></i> 
                             <span>WALL HEIGHT (ft)</span>
                         </label>
-                        <select id="wallHeight" onchange="calculateEstimate()" 
+                        <select id="wallHeight" data-custom-number="1" onchange="onWallHeightSelect()" 
                                 class="calc-input w-full bg-zinc-950 border border-zinc-700 text-white rounded-2xl px-4 py-3 text-sm focus:border-blue-500">
                             <option value="8" selected>8 ft (standard)</option>
                             <option value="9">9 ft (+$1.50 × garage sq ft)</option>
                             <option value="10">10 ft (+$3.00 × garage sq ft)</option>
                             <option value="11">11 ft (+$4.50 × garage sq ft)</option>
+                            <option value="custom">Custom / decimal (e.g. 8.5)</option>
                         </select>
+                        <div id="customWallHeightWrap" class="hidden mt-2 bg-zinc-950 border border-yellow-700/60 rounded-2xl p-3">
+                            <label for="customWallHeight" class="block text-[10px] font-bold text-yellow-400 mb-1">CUSTOM WALL HEIGHT (ft) — decimals OK</label>
+                            <input id="customWallHeight" type="number" min="7" max="20" step="0.1" inputmode="decimal" placeholder="e.g. 8.5" oninput="onCustomWallHeightInput()" class="calc-input w-full bg-zinc-900 border border-zinc-700 text-white rounded-xl px-3 py-2 text-sm">
+                            <div id="customWallHeightNote" class="text-[10px] text-zinc-400 mt-1">Priced at the next whole foot (8.2 or 8.5 ft prices as 9 ft).</div>
+                        </div>
                         <div id="autoWallHeightMessage" class="hidden text-[10px] font-bold text-yellow-400 mt-1"></div>
                         <div id="chicagoWallHeightWarning" class="hidden text-[10px] font-extrabold text-red-500 mt-1">Typically in Chicago 10ft Walls are Max</div>
                         <div class="text-[9px] text-zinc-500 mt-0.5">Each foot above 8' adds $1.50 × garage square footage.</div>
@@ -2703,6 +2709,50 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                 notesEl.textContent=n;
             }
         }
+        /* 2026-11-18 custom / decimal wall height. The select keeps the typed value (an extra "custom" option is added on demand),
+           so every reader of #wallHeight (sheet, plans, history, voice) sees e.g. "8.5". Cost rounds UP to the next whole foot. */
+        let _whLastNum='8';
+        function ensureWallHeightOption(v){
+            const el=document.getElementById('wallHeight'); if(!el) return String(v);
+            let t=String(v==null?'':v).trim().replace(/\s*(ft|feet|foot|')\.?$/i,'');
+            if(t==='custom'||!/^\d{1,2}(\.\d+)?$/.test(t)) return t;
+            const n=Number(t); if(!(n>=6&&n<=30)) return t;
+            t=String(n);
+            const has=[...el.options].find(o=>o.value===t);
+            [...el.options].forEach(o=>{ if(o.dataset.customWh==='1' && o.value!==t) o.remove(); });
+            if(!has){ const o=document.createElement('option'); o.value=t; o.dataset.customWh='1';
+                const up=Math.ceil(n-1e-9); o.textContent=t+' ft (custom'+(up!==n?', priced as '+up+' ft':'')+')';
+                const c=[...el.options].find(x=>x.value==='custom'); el.insertBefore(o,c||null); }
+            return t;
+        }
+        function syncWallHeightCustomUI(){
+            const el=document.getElementById('wallHeight'), wrap=document.getElementById('customWallHeightWrap'), inp=document.getElementById('customWallHeight'); if(!el||!wrap) return;
+            const opt=el.options[el.selectedIndex]; const custom=!!(opt&&opt.dataset.customWh==='1');
+            if(custom){ wrap.classList.remove('hidden'); if(inp&&document.activeElement!==inp) inp.value=el.value; }
+            else if(!wrap.dataset.keepOpen) wrap.classList.add('hidden');
+            if(/^\d/.test(el.value)) _whLastNum=el.value;
+        }
+        (function(){
+            const el=document.getElementById('wallHeight'); if(!el) return;
+            const d=Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,'value'); if(!d||!d.set) return;
+            Object.defineProperty(el,'value',{configurable:true,get(){return d.get.call(this);},set(v){ const t=ensureWallHeightOption(v); d.set.call(this,t); try{syncWallHeightCustomUI();}catch(e){} }});
+        })();
+        function onWallHeightSelect(){
+            const el=document.getElementById('wallHeight'), wrap=document.getElementById('customWallHeightWrap'), inp=document.getElementById('customWallHeight');
+            if(el&&el.value==='custom'){
+                el.value=_whLastNum||'8';
+                if(wrap){ wrap.dataset.keepOpen='1'; wrap.classList.remove('hidden'); }
+                if(inp){ inp.value=el.value; try{inp.focus();}catch(e){} }
+            } else if(wrap){ delete wrap.dataset.keepOpen; syncWallHeightCustomUI(); }
+            calculateEstimate();
+        }
+        function onCustomWallHeightInput(){
+            const inp=document.getElementById('customWallHeight'), el=document.getElementById('wallHeight'); if(!inp||!el) return;
+            const n=parseFloat(inp.value); if(!(n>=7&&n<=20)) return;
+            const wrap=document.getElementById('customWallHeightWrap'); if(wrap) wrap.dataset.keepOpen='1';
+            el.value=String(Math.round(n*100)/100);
+            calculateEstimate();
+        }
         function isChicagoCity(){
             return String(document.getElementById('city')?.value||'').trim()==='Chicago';
         }
@@ -3268,7 +3318,8 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             const depth=garageDims.depth;
             try{ elmhurstFrostAuto(city,width,depth); }catch(e){ console.warn('elmhurst frost',e); }
             try{ chicagoFootingAuto(city,width,depth); }catch(e){ console.warn('chicago footing',e); }
-            let wallHeight = parseInt(document.getElementById('wallHeight').value) || 8;
+            let wallHeight = parseFloat(document.getElementById('wallHeight').value) || 8; /* typed height (decimals OK); cost uses wallHeightPriced() = next whole foot */
+            const wallHeightPriced=()=>Math.ceil(wallHeight-1e-9);
             const roofType = document.getElementById('roofType').value;
             const eaveDir = document.getElementById('eaveDir').value;
             const pitchStr = document.getElementById('pitch').value;
@@ -3513,7 +3564,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             let hardieSheets = 0;
             if (sidingType === 'hardie' || sidingType === 'lp') { /* LP Smart Side priced exactly like cement board */
                 const perimeter = 2 * (width + depth);
-                const wallArea = perimeter * wallHeight;
+                const wallArea = perimeter * wallHeightPriced();
                 const doorArea = (Number(document.getElementById('overheadDoorWidth')?.value)||16) * overheadDoorHeight; // main overhead opening
                 sidingAreaNet = Math.max(0, wallArea - doorArea);
                 const sheetCoverage = 99; // approx to match user example (592 sq ft → 6 sheets)
@@ -3549,7 +3600,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             const framingCost = floorArea * 6;
             
             // Wall height surcharge: each foot above 8' adds $1.50 × garage sq ft.
-            let wallHeightSurcharge = Math.max(0, wallHeight - 8) * 1.5 * floorArea;
+            let wallHeightSurcharge = Math.max(0, wallHeightPriced() - 8) * 1.5 * floorArea;
             
             // Roof upgrade
             const roofUpgrade = (roofType === 'gable') ? 600 : 0;
@@ -4551,7 +4602,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                 lines.push({label:`Roof patio materials (${data.roofPatioMaterialUnits} × $550 per 2 ft; includes 4 support posts)`,amount:data.roofPatioMaterialCost,section:'core',key:'roof_patio_materials'});
             }
             if (data.wallHeightSurcharge > 0) {
-                lines.push({ label: `Wall height surcharge (${data.wallHeight} ft)`, amount: data.wallHeightSurcharge, section: 'core', key: 'wall_height' });
+                lines.push({ label: `Wall height surcharge (${data.wallHeight} ft${Number.isInteger(Number(data.wallHeight))?'':', priced as '+Math.ceil(Number(data.wallHeight)-1e-9)+' ft'})`, amount: data.wallHeightSurcharge, section: 'core', key: 'wall_height' });
             }
             
             // Electrical line amount = base electric + subpanel only (EV, EV prep, 3-way, extra lights/outlets are separate add-on lines below)
@@ -6834,7 +6885,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                 if(preset){ preset.value='16x7'; try{applyOverheadDoorSizePreset()}catch(e){} changed.push("overhead door 16'×7' (sheet + photo)"); }
             }
 
-            const h=q.match(/(?:wall height|height)\s*(?:to|=|at)?\s*(8|9|10|11|12)\s*(?:ft|feet|foot)?/);
+            const h=q.match(/(?:wall height|height)\s*(?:to|=|at)?\s*((?:7|8|9|1[0-9])(?:\.\d+)?)\s*(?:ft|feet|foot)?/);
             if(h) setVal('wallHeight',h[1],'wall height: '+h[1]+' ft');
 
             // Garage SIZE (width × depth) — calculator + photo
@@ -12925,7 +12976,7 @@ run();setInterval(run,1500);document.addEventListener('change',run);})();
   }, false);
 })();
 </script>
-<script src="voice-core.js?v=20261110b"></script>
+<script src="voice-core.js?v=20261118a"></script>
 <script>
 /* Voice estimate: estimator field schema for the shared voice-core.js */
 /* Contact info from speech: "his number is 708-555-1234", "seven oh eight five five five ...", "email bob at gmail dot com" */
@@ -13066,7 +13117,7 @@ window.agbVoice=AGBVoiceCore.create({
     ['roofPatioEnabled','Roof patio'],['roofPatioDepth','Roof patio depth'],['roofPatioSide','Side roof patio (unchecked = rear)'],
     ['overhangEnabled','Front overhang'],['overhangSize','Overhang size'],
     ['electricIncluded','Standard electric included'],['evCharger','EV charger'],['evPrep','EV prep'],
-    ['wallHeight','Wall height ft'],['extraLightsInterior','Extra interior lights (count)'],['extraLightsExterior','Extra exterior lights (count)'],['extraOutletsInterior','Extra interior outlets (count)'],['extraOutletsExterior','Extra exterior outlets (count)'],['electricSubpanel','Electric subpanel'],['threeWaySwitch','3-way switch'],['hurricaneTies','Hurricane ties'],['firewallWalls','Firewall (fire-rated) walls'],
+    ['wallHeight','Wall height ft (any number, decimals OK e.g. 8.5)'],['extraLightsInterior','Extra interior lights (count)'],['extraLightsExterior','Extra exterior lights (count)'],['extraOutletsInterior','Extra interior outlets (count)'],['extraOutletsExterior','Extra exterior outlets (count)'],['electricSubpanel','Electric subpanel'],['threeWaySwitch','3-way switch'],['hurricaneTies','Hurricane ties'],['firewallWalls','Firewall (fire-rated) walls'],
     ['customerName','Customer name'],['customerAddress','Customer / job street address (city goes in city)'],['customerPhone1','Customer phone'],['customerPhone2','Customer 2nd phone (spouse/other contact)'],['customerEmail','Customer email'],['salesman','Salesman'],['additionalEstimateNotes','Notes for the estimate sheet (only when he says note/add a note)'],
     ['profitMode','Price by (total = pinned Total Project Price)'],['profitValue','Total price set to $ (with profitMode total)']
   ],
@@ -13104,7 +13155,7 @@ window.agbVoice=AGBVoiceCore.create({
     if(!ch.length&&!door) return out;
     const saved=[]; const save=id=>{ const el=$(id); if(el&&!saved.some(x=>x[0]===id)) saved.push([id,el.type==='checkbox'?el.checked:el.value]); };
     try{
-      ch.forEach(c=>{ const el=$(c.id); save(c.id); let v=String(c.value); if(el.type==='checkbox') el.checked=/^(true|yes|1|on)$/i.test(v); else { if(el.tagName==='SELECT'&&![...el.options].some(o=>o.value===v)){ const o=[...el.options].find(o=>o.textContent.trim().toLowerCase().startsWith(v.toLowerCase())); if(!o) throw new Error('unknown option '+c.id+'='+v); v=o.value; } el.value=v; } });
+      ch.forEach(c=>{ const el=$(c.id); save(c.id); let v=String(c.value); if(el.type==='checkbox') el.checked=/^(true|yes|1|on)$/i.test(v); else { if(el.tagName==='SELECT'&&![...el.options].some(o=>o.value===v)&&!(el.dataset.customNumber==='1'&&/^\d{1,2}(\.\d+)?$/.test(v.trim()))){ const o=[...el.options].find(o=>o.textContent.trim().toLowerCase().startsWith(v.toLowerCase())); if(!o) throw new Error('unknown option '+c.id+'='+v); v=o.value; } el.value=v; } });
       if(door){ save('sideDoorsListOn'); save('sideDoorsJson'); const sj=$('sideDoorsJson'); let list=[]; try{ list=JSON.parse(sj.value||'[]'); }catch(e){}
         if(!Array.isArray(list)) list=[]; const dt=($('doorType')||{}).value||'standard'; if(!list.length&&dt!=='no'){ const loc=($('serviceDoorLocation')||{}).value||'left'; list.push(dt==='french'?{type:'french',wall:loc==='back'?'rear':loc,style:($('frenchDoorStyle')||{}).value||'9light'}:{type:'service',wall:loc==='back'?'rear':(loc==='front'?'left':loc)}); }
         list.push(door.type==='french'?{type:'french',wall:door.wall||'right',style:door.style||'9light'}:door.type==='party'?{type:'party',wall:door.wall||'right',w:6,h:7,windows:false}:{type:'service',wall:door.wall||'right'});

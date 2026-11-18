@@ -63,6 +63,7 @@ window.AGBVoiceCore={create:function(cfg){
   function norm(id,v){ const el=$(id),k=kindOf(el); if(!k) return null; v=String(v==null?'':v).trim(); if(k==='select'&&v.includes('=')) v=v.split('=')[0].trim();
     if(k==='bool'){ if(/^(true|yes|1|on|checked)$/i.test(v)) return true; if(/^(false|no|0|off)$/i.test(v)) return false; return null; }
     if(k==='number'){ const n=Number(v.replace(/[^0-9.\-]/g,'')); return isFinite(n)&&v!==''?n:null; }
+    if(k==='select'&&el.dataset&&el.dataset.customNumber==='1'){ const m=v.match(/^(\d{1,2}(?:\.\d+)?)\s*(?:ft|feet|foot|')?\.?$/i); if(m&&!optsOf(el).some(x=>x[0]===v)) return String(Number(m[1])); }
     if(k==='select'){ const o=optsOf(el), lv=v.toLowerCase(); const m=o.find(x=>x[0].toLowerCase()===lv)||o.find(x=>x[1].toLowerCase()===lv)||o.find(x=>x[1].toLowerCase().replace(/,\s*il$/,'')===lv)||o.find(x=>x[1].toLowerCase().replace(/\s*\(.*\)\s*$/,'')===lv); if(m) return m[0]; const fz=fuzzyOpt(el,v); return fz.one; }
     return v||null; }
   function plain(id,v){ const el=$(id),k=kindOf(el); if(k==='bool') return v?'Yes':'No'; if(k==='select'){ const o=optsOf(el).find(x=>x[0]===String(v)); return o?o[1]:v; } return String(v); }

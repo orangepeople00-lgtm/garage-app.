@@ -275,7 +275,7 @@ Demo jobs in suburban Cook County also need a Cook County Dept. of Environment &
 
 ## Supplemental, Electrical & Demolition PDFs Mapped (2026-10-23)
 
-All mapped supplemental, electrical, and demolition PDFs below are pre-filled via `pdf-lib` with `NeedAppearances` enabled, zero read-only fields, real interactive checkboxes, and contractor/subcontractor license fields left blank for manual entry:
+All mapped supplemental, electrical, and demolition PDFs below are pre-filled via `pdf-lib` with `NeedAppearances` enabled, zero read-only fields, real interactive checkboxes, and contractor/subcontractor license fields left blank for manual entry (since 2026-11-18 the GC license # TGC068760 is filled where a form has a GC/builder license box: Grayslake, Villa Park demolition, Evergreen Park garage package and demolition):
 
 | City | Mapped Supplemental / Electrical / Demolition Forms |
 |---|---|

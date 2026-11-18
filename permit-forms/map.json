@@ -4826,6 +4826,18 @@
         ],
         "src": "blank",
         "size": 9
+      },
+      {
+        "name": "agb_gc_lic",
+        "page": 3,
+        "rect": [
+          237,
+          419,
+          300,
+          429
+        ],
+        "src": "contractorLicense",
+        "size": 8
       }
     ],
     "portal_url": null,
@@ -5318,6 +5330,18 @@
           ],
           "src": "contractorPhone",
           "size": 9
+        },
+        {
+          "name": "gc_lic",
+          "page": 1,
+          "rect": [
+            243,
+            420,
+            304,
+            430
+          ],
+          "src": "contractorLicense",
+          "size": 8
         }
       ],
       "checks": [
@@ -5333,7 +5357,7 @@
           "on": true
         }
       ],
-      "note": "Demolition Permit Application (Garage checked on p. 2); GC license left blank."
+      "note": "Demolition Permit Application (Garage checked on p. 2); GC license # filled in the Contractor List General row."
     },
     "cook_county": {
       "type": "demolition",
@@ -17312,7 +17336,7 @@
           "on": true
         }
       ],
-      "note": "Demolition Permit Application (DEMOLISH checked); GC license left blank."
+      "note": "Demolition Permit Application (DEMOLISH checked); form has no GC license # box."
     },
     "supplemental": [
       {
@@ -25944,7 +25968,7 @@
           "src": "contractorFull"
         }
       ],
-      "note": "Demolition Submittal Checklist (Detached garage ticked); GC license left blank."
+      "note": "Demolition Submittal Checklist (Detached garage ticked); form has no GC license # box."
     },
     "electrical": {
       "required": "separate",
@@ -32005,7 +32029,7 @@
           "src": "price"
         }
       ],
-      "note": "Demolition Permit Application (Residential & Demolition checked); GC license left blank."
+      "note": "Demolition Permit Application (Residential & Demolition checked); form has no GC license # box."
     },
     "supplemental": [
       {
@@ -33932,7 +33956,7 @@
           "on": true
         }
       ],
-      "note": "Application for Permit to Demolish Building (Garage checked, normalized upright); GC license left blank."
+      "note": "Application for Permit to Demolish Building (Garage checked, normalized upright); form has no GC license # box."
     },
     "cook_county": {
       "type": "demolition",
@@ -34348,6 +34372,10 @@
       {
         "name": "Drain Tile",
         "src": "price"
+      },
+      {
+        "name": "Builder's License Number",
+        "src": "contractorLicense"
       }
     ],
     "auto_mapped": {
@@ -36391,7 +36419,7 @@
             575,
             322
           ],
-          "src": "blank",
+          "src": "contractorLicense",
           "size": 9
         },
         {
@@ -36525,7 +36553,7 @@
           "on": true
         }
       ],
-      "note": "Demolition Permit Application (Residential & Accessory Structure checked); GC license left blank."
+      "note": "Demolition Permit Application (Residential & Accessory Structure checked); GC license # filled (TGC068760)."
     },
     "supplemental": [
       {
@@ -37231,7 +37259,7 @@
           "size": 9
         }
       ],
-      "note": "Application for Demolition Permit; GC license left blank."
+      "note": "Application for Demolition Permit; form has no GC license # box."
     },
     "cook_county": {
       "type": "demolition",

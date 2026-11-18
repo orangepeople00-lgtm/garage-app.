@@ -156,3 +156,11 @@
 - Knowledge pack no longer lists "demoCostInput $0" as a default (it now says the box defaults to $1,300 and is set only from a spoken demo amount). Function: one DEMO COST sentence added to the PRICES rule. Page guard: a voice demo cost is ignored unless it is $100+, the words mention demo/tear/remove/haul, and the number was actually said.
 - Rollback of v28: /workspace/w3/rollback/prod_v28_index.ts.
 - Tests (3 capped text-mode calls on the test function): tear-down with no price -> demo cost stays $1,300; "The demo is 1800" -> $1,800; "Sam is the salesman" -> sam. Offline guard: model 0 or 20 -> ignored; "demo is fifteen hundred" -> 1500; a non-demo sentence -> ignored.
+
+## 2026-11-18 — GC license # TGC068760 filled in
+- Owner confirmed (11/18/2026) the GC license # is TGC068760.
+- GaragePlans.html: GP_PERMIT_CO.license = 'TGC068760'; gpPermitData().contractorLicense now uses it; plan title block contractor cell reads "GC LIC. TGC068760 · ROOFING LIC. 104.016731 · 105.006803"; cover sheet header adds "GC LIC. TGC068760"; permit dialog note updated (village registration numbers stay blank).
+- index.html: permit-form data gets contractorLicense 'TGC068760'; the "GC license # left blank" note is removed.
+- permit-forms/map.json: Grayslake building permit "Builder's License Number" filled; Villa Park demolition License Number (gc_lic) filled; Evergreen Park garage package p.4 and demolition p.2 Contractor List "General" license cell added and filled. Demolition notes for Burbank, Downers Grove, Geneva, Glenwood and Westchester now say the form has no GC license # box.
+- Not filled on purpose: city/village/county registration or business license numbers (e.g. Aurora, Beecher, Bourbonnais, Bedford Park, Burbank), electrician/plumber/roofer license boxes, and office-use columns.
+- repair.html already showed LICENSE NUMBER TGC068760; estimator.html sheet shows only the roofing licenses (no GC box, not changed). Carpenter.html, Crew.html and Drawing.html have no license fields.

@@ -1788,7 +1788,7 @@ function tblock(name, num, of, scale){
   const cityRaw=(val('cityManual')||val('city')||'').trim();const village=cityRaw?jurisdictionLabel(cityRaw) : '';
   const repEl=$('rep'); const drawn=repEl&&repEl.selectedOptions&&repEl.selectedOptions[0]&&repEl.value?repEl.selectedOptions[0].textContent:(val('rep')||'');
   return `<div class="tblock tb-a">
-    <div class="tb-c1"><span class="tb-k">CONTRACTOR</span><b>ABSOLUTE GARAGE BUILDERS</b><br>3050 W. IRVING PARK RD.<br>CHICAGO, IL 60618<br>(773) 583-8800 · (847) 759-8877<br><small>ROOFING LIC. 104.016731 · 105.006803</small></div>
+    <div class="tb-c1"><span class="tb-k">CONTRACTOR</span><b>ABSOLUTE GARAGE BUILDERS</b><br>3050 W. IRVING PARK RD.<br>CHICAGO, IL 60618<br>(773) 583-8800 · (847) 759-8877<br><small>GC LIC. TGC068760 · ROOFING LIC. 104.016731 · 105.006803</small></div>
     <div class="tb-c2"><span class="tb-k">PROJECT</span><b class="jobtitle">DETACHED GARAGE — ${esc(roofLabel())} ROOF</b><br>${esc([val('address'),village].filter(Boolean).join(', ')||' ')}<br>OWNER: ${esc(customerLabel())}<br>PIN: ${esc(val('pin')||'')}</div>
     <div class="tb-c3"><span class="tb-k">ISSUE</span>DATE: ${esc(psFmtDate(val('planDate')))}<br>REV: ${esc(val('planRev')||'0')}<br>DRAWN: ${esc(drawn)}<br>SCALE: ${esc(scale||'AS NOTED')}</div>
     <div class="tb-c4"><span class="ps-sheetid">${esc(num)}</span><span class="sheetno">SHEET ${num} OF ${of}</span><b>${esc(name)}</b></div>
@@ -3016,7 +3016,7 @@ function pageCover(){
     <div style="display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #111;padding-bottom:6px;margin-bottom:8px">
       <div><div style="font-size:22px;font-weight:800">PERMIT DRAWING SET — DETACHED GARAGE</div>
       <div style="font-size:13px;font-weight:700">${esc(jobTitleLine())} · ${esc(roofLabel())} ROOF${val('address')?' · '+esc(val('address')):''}</div></div>
-      <div style="text-align:right;font-size:12px"><b>ABSOLUTE GARAGE BUILDERS</b><br>3050 W. IRVING PARK RD., CHICAGO, IL 60618<br>(773) 583-8800</div>
+      <div style="text-align:right;font-size:12px"><b>ABSOLUTE GARAGE BUILDERS</b><br>3050 W. IRVING PARK RD., CHICAGO, IL 60618<br>(773) 583-8800 · GC LIC. TGC068760</div>
     </div>
     <div class="cover-grid cover-nosite">
       <div>${codeDataHTML()}</div>
@@ -4253,7 +4253,7 @@ function precheckGate(){
 <script>setInterval(()=>{try{const m=agbSizeMsgs(sqft(),patioSqft(),cityName(),isChicago()?'':((code()||{}).maxSize));const pick=k=>m.filter(x=>k.includes(x.k));const a=$('depth')&&$('depth').parentNode.parentNode;agbAmber(a,'sizeWarnGP',m);agbAmber(patioOn()&&$('patioSize')?$('patioSize'):null,'sizeWarnGPpatio',patioOn()?pick(['frost','max']):[]);if(!patioOn()){const x=$('sizeWarnGPpatio');if(x)x.remove()}}catch(e){}},800)</script>
 <script>
 // 2026-10-17: Permit Application — fills the city's official detached-garage form (editable AcroForm fields, not flattened) from job data
-const GP_PERMIT_CO={name:'Absolute Garage Builders',street:'3050 W. Irving Park Rd.',city:'Chicago',state:'IL',zip:'60618',phone:'(773) 583-8800'}; // same as plan title block; license # not in app data -> left blank
+const GP_PERMIT_CO={name:'Absolute Garage Builders',street:'3050 W. Irving Park Rd.',city:'Chicago',state:'IL',zip:'60618',phone:'(773) 583-8800',license:'TGC068760'}; // same as plan title block; GC license # TGC068760 (owner confirmed 11/18/2026)
 let _gpPermitMap=null;
 async function gpPermitShowBtn(){ try{ const st=await currentStaff(); const b=document.getElementById('permitAppBtn'); if(b&&st&&st.user) b.style.display='block'; }catch(e){} }
 function gpPermitCity(){ const m=(($('cityManual')&&$('cityManual').value)||'').trim(); const c=val('city'); const v=(m||(c&&c!=='Other'?c:'')||((window._gpJob||{}).city)||'').replace(/^(village|city|town) of\s+/i,'').trim(); return v; }
@@ -4268,7 +4268,7 @@ function gpPermitData(){
     wallH:g('wallH'),roof,doorW:dm?dm[1]:'',doorH:dm?dm[2]:'',price,
     description:(w&&d)?('New detached frame garage '+w+"' x "+d+"' ("+Math.round(w*d)+' sq ft)'+(roof?', '+roof.toLowerCase()+' roof':'')):'',
     contractor:GP_PERMIT_CO.name,contractorStreet:GP_PERMIT_CO.street,contractorCity:GP_PERMIT_CO.city,contractorState:GP_PERMIT_CO.state,contractorZip:GP_PERMIT_CO.zip,contractorPhone:GP_PERMIT_CO.phone,
-    contractorLicense:'',detachedWord:'Detached',garageWord:'Garage',generalWord:'General',residentialWord:'Residential',singleFamilyWord:'Single Family',concreteWord:'Concrete',carpentryWord:'Carpentry',roofingWord:'Roofing',demoDescription:'Demolish existing detached garage',X:'X',blank:'',ownerState:city?'IL':'',cityStateZip:city?(city+', IL'+(j.zip?' '+j.zip:'')):'',contractorCSZ:'Chicago, IL 60618',contractorFull:'3050 W. Irving Park Rd., Chicago, IL 60618',ownerEmail:/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(String(j.email||'').trim())?String(j.email||'').trim():''};
+    contractorLicense:GP_PERMIT_CO.license,detachedWord:'Detached',garageWord:'Garage',generalWord:'General',residentialWord:'Residential',singleFamilyWord:'Single Family',concreteWord:'Concrete',carpentryWord:'Carpentry',roofingWord:'Roofing',demoDescription:'Demolish existing detached garage',X:'X',blank:'',ownerState:city?'IL':'',cityStateZip:city?(city+', IL'+(j.zip?' '+j.zip:'')):'',contractorCSZ:'Chicago, IL 60618',contractorFull:'3050 W. Irving Park Rd., Chicago, IL 60618',ownerEmail:/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(String(j.email||'').trim())?String(j.email||'').trim():''};
 }
 function gpPermitLib(){ if(window.PDFLib) return Promise.resolve(window.PDFLib); return new Promise((ok,no)=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js';s.onload=()=>ok(window.PDFLib);s.onerror=()=>no(new Error('pdf-lib failed to load'));document.head.appendChild(s);}); }
 async function gpPermitMap(){ if(_gpPermitMap) return _gpPermitMap; const r=await fetch('permit-forms/map.json?v='+Date.now()); _gpPermitMap=await r.json(); return _gpPermitMap; }
@@ -4286,7 +4286,7 @@ function agbIsIOS(){ return /iP(hone|ad|od)/.test(navigator.userAgent)||(navigat
 async function agbDeliverPdf(bytes,name){ const b=new Blob([bytes],{type:'application/pdf'});
   if(agbIsIOS()&&navigator.canShare){ try{ const f=new File([b],name,{type:'application/pdf'}); if(navigator.canShare({files:[f]})){ await navigator.share({files:[f],title:name}); return 'shared'; } }catch(e){ if(e&&e.name==='AbortError') return 'cancelled'; } }
   const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=name; a.rel='noopener'; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},60000); return 'downloaded'; }
-/* JotForm city portals (Algonquin): prefill via URL params (field unique names). Blank job data stays blank; GC license never filled; never submitted. */
+/* JotForm city portals (Algonquin): prefill via URL params (field unique names). Blank job data stays blank; never submitted. */
 function agbJotUrl(base,d){ const p=new URLSearchParams(), s=(k,v)=>{ if(v!=null&&String(v).trim()!=='') p.set(k,String(v).trim()); };
   const nm=String(d.customer||'').trim().split(/\s+/).filter(Boolean); if(nm.length){ s('name[first]',nm.length>1?nm.slice(0,-1).join(' '):nm[0]); if(nm.length>1) s('name[last]',nm[nm.length-1]); }
   s('phoneNumber[full]',d.phone);
@@ -4338,7 +4338,7 @@ async function gpPermitOpen(){
   else { h+='<p style="margin:6px 0"><b>Permit application link not found for '+_pe(e?e.key:city)+'.</b></p>'; const u=e&&(e.link_url||e.pdf_url||e.portal_url||e.info_url); if(u) h+='<p><a href="'+_pe(u)+'" target="_blank" rel="noopener">Official permit page</a></p>'; }
   if(e&&e.checklist_url&&(e.template||e.info_sheet)) h+='<p style="font-size:12px;margin:4px 0"><a href="'+_pe(e.checklist_url)+'" target="_blank" rel="noopener">City garage checklist / requirements</a></p>';
   if(e&&e.handout_url) h+='<a href="'+_pe(e.handout_url)+'" target="_blank" rel="noopener" style="'+B+';background:#fff;color:#1d4ed8;text-align:center;text-decoration:none">'+_pe(e.handout_name||'City handout')+'</a>';
-  if(e&&e.submittal) h+='<p style="font-size:12px;color:#555;margin:4px 0">Submit: '+_pe(e.submittal)+'. Contractor license # is left blank — fill in before submitting.</p>';
+  if(e&&e.submittal) h+='<p style="font-size:12px;color:#555;margin:4px 0">Submit: '+_pe(e.submittal)+'. GC license # TGC068760 is filled where the form has a GC license box; village registration numbers are left blank.</p>';
   if(e){ const j=window._gpJob||{}, es=j.electric_status, eh=(es==='Not Included'||es==='N/A')?false:((['Scheduled','In Progress','Complete'].includes(es)||j.electric_crew||j.electric_date)?true:null), extra=[];
     const add=(k,lab)=>{ const x=e[k]; if(!x) return; if(x.template) extra.push('<button type="button" style="'+B+';background:#fff;color:#1d4ed8" onclick="gpPermitGo(\''+k+'\')">Download '+_pe(lab)+' (prefilled, editable PDF)</button>'); else { const u=x.pdf_url||x.portal_url; if(u) extra.push('<a href="'+_pe(u)+'" target="_blank" rel="noopener" style="'+B+';background:#fff;color:#1d4ed8;text-align:center;text-decoration:none">Open '+_pe(lab)+(x.pdf_url?' (PDF)':' (online)')+'</a>'); } };
     if(e.electrical&&e.electrical.required==='separate'&&eh!==false) add('electrical','electrical permit application'+(eh===null?' (if electrical)':''));

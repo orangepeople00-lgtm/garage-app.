@@ -1137,7 +1137,7 @@ body.bg-zinc-950{
                                     <div>
                                         <label class="text-[10px] text-zinc-500 block mb-1">Type</label>
                                         <select id="wallSheathType" onchange="sheathingSheetText('wall');calculateEstimate()" class="calc-input w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm">
-                                            <option value="OSB" selected>OSB</option><option value="Plywood">Plywood</option><option value="CDX Plywood">CDX Plywood</option><option value="Zip System wall sheathing">Zip System</option><option value="T1-11 plywood siding panel">T1-11 Plywood Siding Panel</option><option value="None">None</option><option value="Other">Other (custom)</option>
+                                            <option value="OSB" selected>OSB</option><option value="Plywood">Plywood</option><option value="CDX Plywood">CDX Plywood</option><option value="CDX or Plywood Type Material">CDX or Plywood Type Material</option><option value="Zip System wall sheathing">Zip System</option><option value="T1-11 plywood siding panel">T1-11 Plywood Siding Panel</option><option value="None">None</option><option value="Other">Other (custom)</option>
                                         </select>
                                         <input id="wallSheathCustom" type="text" placeholder="Custom wall sheathing" oninput="calculateEstimate()" class="calc-input hidden w-full mt-2 bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-sm">
                                     </div>
@@ -1158,7 +1158,7 @@ body.bg-zinc-950{
                                     <div>
                                         <label class="text-[10px] text-zinc-500 block mb-1">Type</label>
                                         <select id="roofSheathType" onchange="sheathingSheetText('roof');calculateEstimate()" class="calc-input w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm">
-                                            <option value="OSB" selected>OSB</option><option value="OSB T&amp;G">OSB T&amp;G</option><option value="Plywood">Plywood</option><option value="CDX Plywood">CDX Plywood</option><option value="Zip System roof sheathing">Zip System</option><option value="Other">Other (custom)</option>
+                                            <option value="OSB" selected>OSB</option><option value="OSB T&amp;G">OSB T&amp;G</option><option value="Plywood">Plywood</option><option value="CDX Plywood">CDX Plywood</option><option value="CDX or Plywood Type Material">CDX or Plywood Type Material</option><option value="Zip System roof sheathing">Zip System</option><option value="Other">Other (custom)</option>
                                         </select>
                                         <input id="roofSheathCustom" type="text" placeholder="Custom roof sheathing" oninput="calculateEstimate()" class="calc-input hidden w-full mt-2 bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-sm">
                                     </div>
@@ -2753,6 +2753,37 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             el.value=String(Math.round(n*100)/100);
             calculateEstimate();
         }
+        /* 2026-11-18 (owner): Sam's estimates default to pre-finished wood soffit/fascia (unchecked when aluminum soffit/fascia is on)
+           and "CDX or Plywood Type Material" for double wall + roof sheathing. The option is in the dropdowns for every salesman
+           (no price change: sheathing type is not priced). Never applied to an estimate loaded from History. */
+        const SAM_SHEATH_DEFAULT='CDX or Plywood Type Material';
+        function isLoadedSavedEstimate(){ try{ return !!(new URLSearchParams(location.search).get('editEstimate')||window._lastEstimateHistoryId); }catch(e){ return false; } }
+        function samDefaultsActive(){ return (document.getElementById('salesman')?.value||'')==='sam' && !isLoadedSavedEstimate(); }
+        function applySamDefaults(){
+            if(!samDefaultsActive()) return false;
+            const al=document.getElementById('aluminumSoffit'), wd=document.getElementById('showWoodSoffitNote');
+            if(wd && !(al&&al.checked)) wd.checked=true;
+            ['wall','roof'].forEach(k=>{
+                const el=document.getElementById(k+'SheathType'); if(!el || (typeof cityFieldTouched==='function'&&cityFieldTouched(k+'SheathType'))) return;
+                const city=document.getElementById('city')?.value||'';
+                const code=(typeof sheathCodeFor==='function')?sheathCodeFor(city,k):null;
+                if(code) return; // a city sheathing code sets its own default
+                if([...el.options].some(o=>o.value===SAM_SHEATH_DEFAULT)) el.value=SAM_SHEATH_DEFAULT;
+                try{ sheathingSheetText(k); }catch(e){}
+            });
+            return true;
+        }
+        document.addEventListener('change',function(ev){
+            const t=ev.target; if(!t||!t.id) return;
+            if(t.id==='salesman'){ if(applySamDefaults()) try{calculateEstimate();}catch(e){} }
+            else if(t.id==='aluminumSoffit'){
+                const wd=document.getElementById('showWoodSoffitNote'); if(!wd) return;
+                if(t.checked) wd.checked=false; else if(samDefaultsActive()) wd.checked=true;
+                try{calculateEstimate();}catch(e){}
+            } else if(t.id==='showWoodSoffitNote' && t.checked){
+                const al=document.getElementById('aluminumSoffit'); if(al&&al.checked){ al.checked=false; try{calculateEstimate();}catch(e){} }
+            }
+        });
         function isChicagoCity(){
             return String(document.getElementById('city')?.value||'').trim()==='Chicago';
         }
@@ -2996,7 +3027,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             const setSel=(id,val)=>{ const el=document.getElementById(id); if(!el || cityFieldTouched(id)) return; if([...el.options].some(o=>o.value===val)) el.value=val; };
             ['wall','roof'].forEach(k=>{
                 const c=(typeof sheathCodeFor==='function')?sheathCodeFor(city,k):null;
-                let size='7/16"', type='OSB', custom=null;
+                let size='7/16"', type=(typeof samDefaultsActive==='function'&&samDefaultsActive())?SAM_SHEATH_DEFAULT:'OSB', custom=null;
                 if(c){ const d=sheathCodeDefault(c); const t=(d.match(/^(\d+\/\d+")/)||[])[1];
                     if(t && /CDX plywood$/.test(d)){ size=t; type='CDX Plywood'; } else if(t && /OSB$/.test(d)){ size=t; type='OSB'; } else { type='Other'; custom=d; } }
                 if(cityFieldTouched(k+'SheathType')) return;
@@ -3916,7 +3947,8 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
         function updateInfoLines(gutterFt, hasGutters, soffitFt, hasSoffit) {
             const gutterInfo = document.getElementById('gutterInfo');
             const soffitInfo = document.getElementById('soffitInfo');
-            { const ww=document.getElementById('woodSoffitNoteWrap'); if(ww) ww.style.display=document.getElementById('aluminumSoffit')?.checked?'none':''; }
+            { const ww=document.getElementById('woodSoffitNoteWrap'); if(ww) ww.style.display=document.getElementById('aluminumSoffit')?.checked?'none':'';
+              try{ const al=document.getElementById('aluminumSoffit'), wd=document.getElementById('showWoodSoffitNote'); if(al&&wd&&al.checked&&wd.checked&&!isLoadedSavedEstimate()) wd.checked=false; }catch(e){} }
             
             if (hasGutters && gutterFt > 0) {
                 gutterInfo.textContent = `${gutterFt.toFixed(0)} lf @ $10`;
@@ -5481,6 +5513,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
                 const map={ramsey:'ramsey',wally:'wally',tom:'tom',tomb:'tomb',sam:'sam'};
                 const target=map[staff.username];
                 if(target && Array.from(select.options).some(o=>o.value===target)) select.value=target;
+                try{ applySamDefaults(); calculateEstimate(); }catch(e){}
             }catch(e){console.warn('Could not auto-select signed-in salesman',e)}
         }
 
@@ -5628,6 +5661,7 @@ h2{font-size:13px;letter-spacing:.08em;margin:14px 0 6px;border-bottom:1px solid
             const el=document.getElementById(id); if(!el||value===undefined||value===null)return;
             if(el.type==='checkbox'||el.type==='radio') el.checked=!!value;
             else el.value=String(value);
+            if(id==='salesman'){ try{ applySamDefaults(); }catch(e){} }
         }
 
         function restoreCustomExtras(items){
@@ -11381,6 +11415,8 @@ document.addEventListener('click', function(e){
             document.getElementById('gableConfig').classList.add('hidden');
             const chicagoOptionsEl = document.getElementById('chicagoOptions');
             if (chicagoOptionsEl) chicagoOptionsEl.classList.add('hidden');
+            // 2026-11-18: new estimate keeps the signed-in salesman (Sam gets his defaults)
+            try{ applySamDefaults(); syncSignedInSalesman(); }catch(e){}
             
             if (runCalc) {
                 calculateEstimate();

@@ -144,3 +144,9 @@
 
 ### Estimator auto-pick photos (AI photos off)
 - GARAGE_PHOTO_LIBRARY entries for every photo in the picker now carry the picker's tags (EXAMPLE_PHOTO_TAGS): roof (garage_003/004 are reverse gables and are no longer used for standard gables), service-door spot and side, overhead-door windows, side windows, door off-center, color where the picker names one. All picker photos are approved for auto-pick (was only garage_001–008). Reverse-gable (garage_001) and basic-hip (garage_002) preferred rules unchanged. Entries for missing files (garage_012–064, 108) untouched per owner.
+
+## 2026-11-18 — Voice estimate: city list trimmed (estimate-voice-session v28)
+- Owner approved "Yes, trim the voice city list". The estimator's voice knowledge pack no longer sends the ALL CITIES table (about 4-5k tokens); it sends Chicago + the estimate's current city only. For any other city (or after the city changes mid-call) the instructions now require a get_city_info lookup before answering. The page search (search_page_info) still searches every city.
+- get_city_info results now start with the city's key fields (size, height, basis, setbacks) so typed and spoken answers lead with them.
+- Function change is one sentence in the knowledge header; everything else in v27 is unchanged. Rollback copy of v27: /workspace/w3/rollback/prod_v27_index.ts (same as commit 4ad16b6).
+- Tests (text mode, gpt-4.1-mini, 4 calls on the test function + 1 baseline on v27): "Sam" → sam; 22x24 demo → custom demo size (no 22x24 preset); two car on existing slab → demo 20x20; Berwyn setbacks answered from the current-city block; "max height in Aurora" while the estimate is in Berwyn → get_city_info("Aurora"). Prompt tokens on the same utterance: 15,926 (v27, full pack) → 10,807 (v28).

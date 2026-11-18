@@ -13011,16 +13011,17 @@ window.agbCityPack=function(){ const N=window.agbGlobal('CITY_CODE_NOTES')||{}, 
   const pick=(o,ks)=>ks.filter(k=>o&&o[k]).map(k=>k+' '+o[k]).join(', ');
   const rows=Object.keys(Object.assign({},N,S)).sort().map(c=>{ if(c==='Chicago') return ''; const sh=S[c]||{}; const v=[pick(sh,['maxSize','height','setHouse','setRearAlley','setRearNoAlley','setSide']),Y[c]?'code '+Y[c]:''].filter(Boolean).join('; '); return v?c+': '+v:''; }).filter(Boolean);
   return {chicagoSide, chicago:full('Chicago'), current:(cur&&cur!=='Chicago'&&cur!=='Other')?full(cur):'', table:rows.join('\n')}; };
-window.agbKnowledgePack=function(){ const C=window.agbCityPack(); const M=window.agbGlobal('MONEY_INPUT_DEFAULTS')||{};
+/* Voice trim 11/18/2026: the voice session gets only Chicago + the estimate's current city; any other city is looked up with get_city_info. agbKnowledgePack(true) keeps the ALL CITIES table (page search). */
+window.agbKnowledgePack=function(allCities){ const C=window.agbCityPack(); const M=window.agbGlobal('MONEY_INPUT_DEFAULTS')||{};
   const fixed=['Retaining wall per inch of wall height ABOVE 8": standard $90, reverse $95, 4-sided $95 (existing/none $0), e.g. standard 24" wall = 16" x $90 = $1,440 cost',
     'Excavation/stone: $1.50 per sq ft (auto) or entered sq ft / $ amount','42" frost protected footing: $200 per linear ft of perimeter','Firewall: $600 per wall','Demolition: the salesman enters the demo cost (demoCostInput)','First service door included; each extra service door adds $600 cost',
     'Default money inputs: '+Object.keys(M).map(k=>k+' $'+M[k]).join(', ')].join('. ');
   return 'RATES (internal cost; customer price = cost + profit unless total locked): '+fixed+'.\nMEASURED FROM THE CALCULATOR on the current estimate (cost change): '+window.agbRateCard()+
-    '\nCITY CODES — '+C.chicagoSide+'\n'+C.chicago.slice(0,2500)+(C.current?'\nCURRENT CITY '+C.current.slice(0,2500):'')+'\nALL CITIES (key fields):\n'+C.table; };
+    '\nCITY CODES — '+C.chicagoSide+'\n'+C.chicago.slice(0,2500)+(C.current?'\nCURRENT CITY '+C.current.slice(0,2500):'')+(allCities?'\nALL CITIES (key fields):\n'+C.table:'\nOTHER CITIES: not included here. For any other city (or if the estimate city changed), call get_city_info for that city before answering.'); };
 window.agbSearchInfo=function(query){ const q=String(query||'').toLowerCase(); const terms=q.split(/[^a-z0-9]+/).filter(w=>w.length>2&&!/^(the|what|how|many|much|from|does|for|and|are|cost)$/.test(w));
   const docs=[]; const N=window.agbGlobal('CITY_CODE_NOTES')||{}, S=window.agbGlobal('CITY_CODE_SHEETS')||{}, R=window.agbGlobal('CITY_CODE_RULES')||{};
   Object.keys(N).forEach(c=>docs.push(c+' code notes: '+N[c])); Object.keys(S).forEach(c=>docs.push(c+' code sheet: '+JSON.stringify(S[c]))); Object.keys(R).forEach(c=>docs.push(c+' rules: '+JSON.stringify(R[c])));
-  window.agbKnowledgePack().split(/\.\s|\n|; /).forEach(t=>docs.push(t));
+  window.agbKnowledgePack(true).split(/\.\s|\n|; /).forEach(t=>docs.push(t));
   document.querySelectorAll('label,option,[title],h2,h3,.text-xs,.text-\\[10px\\]').forEach(e=>{ const t=(e.getAttribute('title')||e.textContent||'').replace(/\s+/g,' ').trim(); if(t.length>8&&t.length<400) docs.push(t); });
   const sc=t=>{ const l=t.toLowerCase(); return terms.reduce((s,w)=>s+(l.includes(w)?1:0),0); };
   const hits=[...new Set(docs)].map(t=>[sc(t),t]).filter(x=>x[0]>0).sort((a,b)=>b[0]-a[0]).slice(0,5).map(x=>x[1].slice(0,600));
@@ -13120,7 +13121,7 @@ window.agbVoice=AGBVoiceCore.create({
   cityInfo:function(city){ city=String(city||'').trim(); const pick=o=>{ if(!o) return null; const k=Object.keys(o).find(k=>k.toLowerCase()===city.toLowerCase()); return k?o[k]:null; };
     const g=n=>{ try{ return eval('typeof '+n+'!=="undefined"?'+n+':null'); }catch(e){ return null; } };
     const r={city, notes:pick(g('CITY_CODE_NOTES')), rules:pick(g('CITY_CODE_RULES')), code_year:pick(g('PC_CODE_YEARS')), code_year_status:pick(g('PC_CODE_YEAR_STATUS')), upcoming:pick(g('PC_CODE_YEAR_UPCOMING'))};
-    const sh=pick(g('CITY_CODE_SHEETS')); if(sh) r.sheet=JSON.stringify(sh).slice(0,1500);
+    const sh=pick(g('CITY_CODE_SHEETS')); if(sh){ r.key=['maxSize','height','heightBasis','setHouse','setRearAlley','setRearNoAlley','setSide','setCorner'].filter(k=>sh[k]).map(k=>k+' '+sh[k]).join(', '); if(r.key) r.notes='Key fields: '+r.key+'. '+(r.notes||''); r.sheet=JSON.stringify(sh).slice(0,1500); }
     if(!r.notes&&!r.rules&&!sh) r.error='No saved code info for that city in the estimator.'; return r; },
   /* Spoken total price ("I want the price to be 29,000") reuses Profit Control "Total Project Price" mode: the total stays pinned
      while other items change; unchecking the card item restores the previous profit mode/value. */

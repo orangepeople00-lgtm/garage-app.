@@ -1,4 +1,4 @@
-// Supabase Edge Function: estimate-voice-session  (v27: rewritten instructions + transcription vocabulary hints + reasoning effort (default medium) + eagerness auto)
+// Supabase Edge Function: estimate-voice-session  (v28: knowledge pack carries only the current city; other cities via get_city_info. v27: rewritten instructions + transcription vocabulary hints + reasoning effort (default medium) + eagerness auto)
 // OPENAI_API_KEY stays server-side. Two modes:
 //   { mode:"realtime", catalog:"<field catalog text>" } -> mints a short-lived OpenAI Realtime client secret
 //        (ephemeral ek_..., 60s to connect) with the AGB instructions + set_estimate_fields / finish_estimate tools.
@@ -161,7 +161,7 @@ Deno.serve(async (req) => {
     const catalog = String(body.catalog || "").slice(0, 18000);
     const instructions = BASE_RULES + "\n\nFIELD CATALOG (id | label | allowed values):\n" + catalog +
       (body.learned ? "\n\nLEARNED TERMS for this salesman/device (heard -> meaning; trust these):\n" + String(body.learned).slice(0, 2000) : "") +
-      (body.knowledge ? "\n\nCOMPANY ESTIMATOR KNOWLEDGE (from the estimator app's own data and calculator; answer reference/price/code questions from this FIRST, instantly, no tool call; say it's from the company estimator):\n" + String(body.knowledge).slice(0, 20000) : "") +
+      (body.knowledge ? "\n\nCOMPANY ESTIMATOR KNOWLEDGE (from the estimator app's own data and calculator; answer reference/price/code questions from this FIRST, instantly, no tool call; say it's from the company estimator. CITY CODES here cover ONLY Chicago and the estimate's CURRENT CITY. If he asks about any OTHER city, or the estimate's city was changed after this was built, call get_city_info for that city FIRST and answer from its result; never answer another city's codes from memory or from the current city's data):\n" + String(body.knowledge).slice(0, 20000) : "") +
       (body.breakdown ? "\n\nCURRENT ESTIMATE BREAKDOWN (live; newer 'CURRENT ESTIMATE' system messages replace this):\n" + String(body.breakdown).slice(0, 3000) : "") +
       (body.current ? "\n\nCURRENT VALUES:\n" + String(body.current).slice(0, 3000) : "");
 

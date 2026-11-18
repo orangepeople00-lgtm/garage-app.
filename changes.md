@@ -101,3 +101,46 @@
 - **Wheeling** — 2 code-check note item(s) added to the code sheet, estimator note and plan checklist
 - **Zion** — height: 18' → 18' TO HIGHEST POINT (ABOVE AVERAGE FINISHED GRADE OF LOT; NOT TALLER THAN HOUSE); heightBasis: unspecified → peak
 - **Berwyn** — year note: added
+
+## 2026-11-18 — City code check reports 11/11 – 11/15 applied (70 cities); 5 cities added to Garage Plans; auto-pick photos retagged
+- Approved by the owner 11/18/2026 ("1 y 2 y … 5 y"). Sources: daily city code check reports 2026-11-11 through 2026-11-15 (a later report wins, e.g. Cary Romex). Every note added is labeled "CODE CHECK 11/18/2026 (source)". Only FINDING items were applied; the reports' "Unclear" items are on the sheets as "CONFIRM WITH VILLAGE/CITY" notes.
+- Files: estimator.html, GaragePlans.html, Carpenter.html (code sheets, notes, code-year maps, sheathing codes); estimator.html only: frost auto-tick rules and auto-pick photo tags; GaragePlans.html only: plan checklist items, electrical rules and the city dropdown.
+- Supabase URL/keys, schema and the GC license # are untouched.
+
+### Code years
+- **Grayslake — EFFECTIVE 11/23/2026** (Ord. 2026-0-24, adopted 10/20/2026): 2021 IRC/IBC + 2020 NEC. Added as an "upcoming edition" flag (plans still print the on-file 2018 IRC / 2011 NEC until then); new rules on the sheet are marked "EFFECTIVE 11/23/2026" (floor drains prohibited, permits expire after 1 year, no masonry/stone/wood footings, conduit-only wiring).
+- **Elburn**: not_found → confirmed, 2021 IRC (§1420.01) / 2020 NEC (§1428.01).
+
+### Heights / sizes / setbacks (old → new)
+- Aurora: size "OPEN (OVER 768 SF NEEDS" → 768 (≤75% of house foundation, max 36' wall); height blank → 21' to PEAK or house height (sidewalls max 9'); house setback blank → 6'.
+- Batavia: height blank → 25' MEAN; house setback → 10' (district setbacks listed as a confirm note).
+- Belvidere: 15' → 20' MEAN (zoning §150.105 confirms the handout's 20').
+- Calumet City: 14' → 13' in a required rear yard (mean).
+- Burbank: "816 34W 24L" → 816 (max 34' wide x 25' deep); 15' → 15'/18' by lot width; rear (no alley) 10' → 3'.
+- East Hazel Crest: "22X 24 528" → 625 SF (768 on R-1 lots over 7,200 SF); 14' → 14' or one story (15' on larger R-1 lots), PEAK.
+- Franklin Park: height blank → 20' MEAN; rear 10' → 3'; house setback blank → 3'.
+- Algonquin: house setback blank → 10'; basis MEAN.
+- Height basis set (was "unspecified"/"confirm mean vs. peak"): MEAN — Algonquin, Bartlett (average roof height), Batavia, Bellwood (zoning measures from curb; datum confirm note kept), Belvidere, Bloomingdale, Calumet City, Carol Stream, Carpentersville, Cary, Franklin Park, Glendale Heights, Golf, Wheeling; PEAK — Aurora, Barrington, East Hazel Crest, Midlothian.
+
+### Frost auto-tick (estimator)
+- East Dundee: frost footing over 600 SF (slab-on-grade grade beam only allowed at 600 SF or less, §151.009).
+- Clarendon Hills: frost footing over 660 SF (frost exemption only for one-story accessory buildings ≤660 SF).
+
+### Sheathing
+- Zion wall 1/2" min (R703.2.1); Niles roof 1/2" min with H-clips when rafters are over 16" OC; Barrington Hills wall and roof 1/2" min.
+
+### Electrical rules / notes (Garage Plans electrical box + sheets)
+- Conduit/no-Romex rules added for: Carol Stream, East Hazel Crest (EMT), Glen Ellyn, Riverside, Algonquin, Wheaton, Frankfort (main breaker in every subpanel), Glenview, Aurora, Joliet, Westmont, Lansing, Addison (GFCI per bay, switched lights at the service door, underground feed), Bartlett (two 20A GFCI circuits incl. EV), Bannockburn, Bensenville (MC-AC confirm), Belvidere, Deerfield, Zion, Arlington Heights, Barrington Hills, Bellwood, Brookfield (NM clause confirm), Clarendon Hills, Cicero, Buffalo Grove, Carpentersville, Alsip (30" burial), Grayslake (from 11/23/2026), Elgin, Niles (EV raceway), Mount Prospect, Palatine, Skokie, Downers Grove, Elk Grove Village, East Dundee, Northbrook, Hoffman Estates, Gurnee, Elmhurst, Park Ridge, South Holland, Forest View, Crestwood, Elwood, Crest Hill, Crystal Lake, Schaumburg (EV conduit), Waukegan, Villa Park, Westchester, Wheeling, Cary (Romex not permitted — corrects 11/12 "NM kept"), Oak Park (outside receptacle).
+
+### Construction notes (sheets/checklists)
+- Slab/footing specs added: Glen Ellyn (R403.5 monolithic, 6x6 W1.4 WWF, 20" edge 12" below grade, #4 top & bottom), Riverside (4" stone + 4" reinforced, 18" footing), Algonquin (WWF top third, CA-6, 16x8 footing, soil test, service door required), Wheaton (10" foundation, 1/2" gypsum <10' from house, snow 36), Elgin (16" OC over 490 SF, grade beam 16"/20"/10" 2 #4), Palatine (14"x20" edge at the OH door, 2 #5), Waukegan (16" OC studs, 4,000 psi floor), Elburn (WWF mid-depth, footing 2x wall/18"), East Dundee, Bellwood, Bloomingdale (3,500 psi), Berkeley (WWM mid-depth), Brookfield (6x6 10 ga mesh), Clarendon Hills (mesh), Big Rock (16x8), Zion, Barrington Hills, Joliet (cold-weather pour, 16" OC with vinyl), Bolingbrook (28°F rising), Aurora (8" footing, 1" deadbolt), Westchester (36" side-hinged door), Villa Park (5' roof discharge), Downers Grove (roof drainage ≥400 SF), Evanston (spot survey in 5 days), Libertyville (one garage per lot; detention over 400 SF net impervious), snow loads (Deerfield 36, Oak Park 36.4, Frankfort 34, Glen Ellyn/Riverside/Glenview/Evanston/Palatine/Skokie 30, East Dundee/Downers Grove 25).
+
+### Left as "confirm with the village/city" (nothing guessed)
+- Wheeling 528 SF/30% vs 800 SF; Waukegan R403.1.1 trench + R702.3.2 gypsum for small slab garages; Joliet 10"x20" footing; Skokie R403.1.1 vs handout; Downers Grove R703.2; Buffalo Grove 42" footing vs handout; Brookfield NM clause; Belvidere NM in U occupancy; Bensenville MC-AC; Batavia §9-5-2 conduit; Bartlett footprint vs floor area; Bellwood curb datum; Calumet City R806.1 vents; Barrington Hills winter flatwork; Westchester frost 42" vs 48" (48" kept); East Hazel Crest code edition; Arlington Heights rules now in force.
+- Not applied (unverified): DeKalb County 21'/30' accessory height (PDF behind captcha), Alsip height basis.
+
+### Garage Plans city dropdown
+- Added Joliet, Libertyville, Villa Park, Waukegan and Westmont (their checklist items, code years and electrical rules were already on file; this batch added more).
+
+### Estimator auto-pick photos (AI photos off)
+- GARAGE_PHOTO_LIBRARY entries for every photo in the picker now carry the picker's tags (EXAMPLE_PHOTO_TAGS): roof (garage_003/004 are reverse gables and are no longer used for standard gables), service-door spot and side, overhead-door windows, side windows, door off-center, color where the picker names one. All picker photos are approved for auto-pick (was only garage_001–008). Reverse-gable (garage_001) and basic-hip (garage_002) preferred rules unchanged. Entries for missing files (garage_012–064, 108) untouched per owner.

@@ -150,3 +150,9 @@
 - get_city_info results now start with the city's key fields (size, height, basis, setbacks) so typed and spoken answers lead with them.
 - Function change is one sentence in the knowledge header; everything else in v27 is unchanged. Rollback copy of v27: /workspace/w3/rollback/prod_v27_index.ts (same as commit 4ad16b6).
 - Tests (text mode, gpt-4.1-mini, 4 calls on the test function + 1 baseline on v27): "Sam" → sam; 22x24 demo → custom demo size (no 22x24 preset); two car on existing slab → demo 20x20; Berwyn setbacks answered from the current-city block; "max height in Aurora" while the estimate is in Berwyn → get_city_info("Aurora"). Prompt tokens on the same utterance: 15,926 (v27, full pack) → 10,807 (v28).
+
+## 2026-11-18 — Voice estimate: demo cost only from a spoken amount (estimate-voice-session v29)
+- Owner approved "Yes, fix the voice demo cost". The voice never sets demoCostInput unless he says a dollar amount for the demo; otherwise the page default ($1,300) stays.
+- Knowledge pack no longer lists "demoCostInput $0" as a default (it now says the box defaults to $1,300 and is set only from a spoken demo amount). Function: one DEMO COST sentence added to the PRICES rule. Page guard: a voice demo cost is ignored unless it is $100+, the words mention demo/tear/remove/haul, and the number was actually said.
+- Rollback of v28: /workspace/w3/rollback/prod_v28_index.ts.
+- Tests (3 capped text-mode calls on the test function): tear-down with no price -> demo cost stays $1,300; "The demo is 1800" -> $1,800; "Sam is the salesman" -> sam. Offline guard: model 0 or 20 -> ignored; "demo is fifteen hundred" -> 1500; a non-demo sentence -> ignored.

@@ -1,4 +1,4 @@
-// Supabase Edge Function: estimate-voice-session  (v28: knowledge pack carries only the current city; other cities via get_city_info. v27: rewritten instructions + transcription vocabulary hints + reasoning effort (default medium) + eagerness auto)
+// Supabase Edge Function: estimate-voice-session  (v29: demoCostInput only from a spoken demo dollar amount. v28: knowledge pack carries only the current city; other cities via get_city_info. v27: rewritten instructions + transcription vocabulary hints + reasoning effort (default medium) + eagerness auto)
 // OPENAI_API_KEY stays server-side. Two modes:
 //   { mode:"realtime", catalog:"<field catalog text>" } -> mints a short-lived OpenAI Realtime client secret
 //        (ephemeral ek_..., 60s to connect) with the AGB instructions + set_estimate_fields / finish_estimate tools.
@@ -54,7 +54,7 @@ RULES (follow all):
 - NOTES: anything he wants written on the sheet ("write down that...", "let them know...", "customer wants to start in summer, put that on there", "note: ...") -> the notes argument, not fields. If unsure whether it's a note or a change, ask briefly.
 - CUSTOMER INFO: map spoken name, phone (customerPhone1; a 2nd/spouse/other number -> customerPhone2), email (spell out 'at'/'dot' -> real address), street address (customerAddress; town -> city) and salesman straight to those fields in one call, silently. Never say you can't enter contact info.
 - PRICE OVERRIDE: "I want the price to be 29,000" / "make it 29 thousand" / "set total to 27,500" -> set profitMode total AND profitValue 29000 (exact dollars). Silent; ask only if the number is unclear. This is not a question.
-- PRICES: you never invent, estimate or work out a price yourself, and you never set a price except demoCostInput / cost-line overrides he states and a total he states. Every dollar figure you say must come from get_price_info, COMPANY KNOWLEDGE or the CURRENT ESTIMATE breakdown. Prices otherwise come from the calculator.
+- PRICES: you never invent, estimate or work out a price yourself, and you never set a price except demoCostInput / cost-line overrides he states and a total he states. DEMO COST: set demoCostInput ONLY when he says a dollar amount for the demo ("demo is 1800" -> 1800); never set it to 0 or a guess, and never because demo/tear-down was mentioned - otherwise leave it (the page default is $1,300). Every dollar figure you say must come from get_price_info, COMPANY KNOWLEDGE or the CURRENT ESTIMATE breakdown. Prices otherwise come from the calculator.
 - REFERENCE QUESTIONS (codes, setbacks, rates, 'what does X cost', 'cost of materials'): answer from COMPANY ESTIMATOR KNOWLEDGE and the CURRENT ESTIMATE breakdown first; line amounts there are internal cost unless called customer price.
 - When he says done / that's it, call finish_estimate.`;
 

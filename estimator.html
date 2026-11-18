@@ -13015,7 +13015,7 @@ window.agbCityPack=function(){ const N=window.agbGlobal('CITY_CODE_NOTES')||{}, 
 window.agbKnowledgePack=function(allCities){ const C=window.agbCityPack(); const M=window.agbGlobal('MONEY_INPUT_DEFAULTS')||{};
   const fixed=['Retaining wall per inch of wall height ABOVE 8": standard $90, reverse $95, 4-sided $95 (existing/none $0), e.g. standard 24" wall = 16" x $90 = $1,440 cost',
     'Excavation/stone: $1.50 per sq ft (auto) or entered sq ft / $ amount','42" frost protected footing: $200 per linear ft of perimeter','Firewall: $600 per wall','Demolition: the salesman enters the demo cost (demoCostInput)','First service door included; each extra service door adds $600 cost',
-    'Default money inputs: '+Object.keys(M).map(k=>k+' $'+M[k]).join(', ')].join('. ');
+    'Default money inputs: '+Object.keys(M).filter(k=>k!=='demoCostInput').map(k=>k+' $'+M[k]).join(', ')+'. Demo cost box (demoCostInput) defaults to $1,300 on the page: set it ONLY when he says a dollar amount for the demo; never set it to 0 or a guess'].join('. ');
   return 'RATES (internal cost; customer price = cost + profit unless total locked): '+fixed+'.\nMEASURED FROM THE CALCULATOR on the current estimate (cost change): '+window.agbRateCard()+
     '\nCITY CODES — '+C.chicagoSide+'\n'+C.chicago.slice(0,2500)+(C.current?'\nCURRENT CITY '+C.current.slice(0,2500):'')+(allCities?'\nALL CITIES (key fields):\n'+C.table:'\nOTHER CITIES: not included here. For any other city (or if the estimate city changed), call get_city_info for that city before answering.'); };
 window.agbSearchInfo=function(query){ const q=String(query||'').toLowerCase(); const terms=q.split(/[^a-z0-9]+/).filter(w=>w.length>2&&!/^(the|what|how|many|much|from|does|for|and|are|cost)$/.test(w));
@@ -13079,6 +13079,8 @@ window.agbVoice=AGBVoiceCore.create({
      is used; the manual calculator then charges only demoCostInput (no slab removal, "slab and apron to remain"). */
   guard:function(f,a){
     /* Dollar fields / cost-line overrides: only a dollar amount he actually said (the number must be in his words). */
+    /* Owner 11/18/2026: demo cost only from a spoken demo dollar amount (never 0 / a guess); otherwise the $1,300 page default stays. */
+    if(f.id==='demoCostInput'){ const n=Number(String(f.value).replace(/[^0-9.]/g,'')); const u=String(window._agbLastUtter||''); if(!(n>=100)||!/demo|tear|remov|haul|wreck|knock/i.test(u)||!window.agbNumbersSaid(u).some(x=>Math.abs(x-n)<0.5)) return false; }
     if(window.agbIsDollarField(f.id)){ const n=Number(String(f.value).replace(/[^0-9.]/g,'')); const said=window.agbNumbersSaid(window._agbLastUtter||''); if(!(n>=0)||!said.some(x=>Math.abs(x-n)<0.5)) return false; f.value=String(n); }
     if(f.id==='customerPhone1'||f.id==='customerPhone2'){ const v=window.agbNormPhone(f.value); if(!v) return false; f.value=v; }
     if(f.id==='customerEmail'){ const v=window.agbNormEmail(f.value); if(!v) return false; f.value=v; }

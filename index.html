@@ -4051,17 +4051,16 @@ window.ajReject=async function(pid){if(!confirm('Reject this request?'))return;c
 <script src="morning-briefing.js?v=20261031e"></script>
 
 <script type="text/plain" id="agbSheetFitSource">
-/* Estimate sheet print/PDF fit v2: keep the full sheet (especially the price
-   and footer) inside a 0.5in safe inset on Letter paper so browser print
-   margins and printer unprintable areas cannot clip the total. Long sheets
-   scale down to one page until 0.70, then break to a second page without
-   splitting the total box. This installer always wins over older baked-in
-   Download PDF functions in saved History sheets, and captures the sheet
-   inside the viewport so a short laptop popup cannot clip the price. */
+/* Estimate sheet print/PDF fit v3: keep the full sheet (especially the price
+   and footer) inside a 0.6in safe inset on Letter paper. Download PDF captures
+   the sheet in a dedicated iframe at letter width, unclamped from the 11in
+   overflow:hidden styles, so a short laptop popup or History iframe cannot
+   clip the total. PDFs are built on a blank jsPDF page (the html2pdf default
+   page, which fills the letter and clips the price, is discarded). */
 (function(global){
-  var SAFE_MARGIN = 0.5; // inches
+  var SAFE_MARGIN = 0.6; // inches — a little more than a typical 0.5in printer margin
   var MIN_FIT = 0.70;
-  var AGB_SHEET_FIT_V = '2';
+  var AGB_SHEET_FIT_V = '3';
 
   function pageSize(){
     var landscape=false;
@@ -4083,6 +4082,28 @@ window.ajReject=async function(pid){if(!confirm('Reject this request?'))return;c
     var n=d.getBoundingClientRect().width;
     d.parentNode.removeChild(d);
     return (n>0)?n:96;
+  }
+
+  function unclampCss(pg){
+    pg=pg||pageSize();
+    return (
+      'html,body{margin:0!important;padding:0!important;width:'+pg.w+'in!important;height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;background:#fff!important;}'+
+      '.sheet,#pdfExportSheet{width:'+pg.w+'in!important;min-width:'+pg.w+'in!important;max-width:none!important;height:auto!important;min-height:'+pg.h+'in!important;max-height:none!important;overflow:visible!important;margin:0!important;transform:none!important;box-shadow:none!important;}'+
+      '.main,.left,.right,.notes-panel,.notes,.total-box,.total-price,.total-label,.footer{height:auto!important;max-height:none!important;overflow:visible!important;}'+
+      '.footer{margin-top:10px!important;flex:0 0 auto!important;position:relative!important;top:auto!important;bottom:auto!important;}'+
+      '.actions,.estimate-assistant,.no-print,.noprint,.sheet-ai-panel{display:none!important;}'
+    );
+  }
+
+  function applyUnclamp(doc, pg){
+    if(!doc) return;
+    var st=doc.getElementById('agbPdfUnclamp');
+    if(!st){
+      st=doc.createElement('style');
+      st.id='agbPdfUnclamp';
+      (doc.head||doc.documentElement).appendChild(st);
+    }
+    st.textContent=unclampCss(pg);
   }
 
   function installPrintCss(doc){
@@ -4142,10 +4163,16 @@ window.ajReject=async function(pid){if(!confirm('Reject this request?'))return;c
       main.style.setProperty('max-height','none','important');
       main.style.setProperty('height','auto','important');
     }
-    sheet.querySelectorAll('.notes-panel,.left,.right').forEach(function(el){
+    sheet.querySelectorAll('.notes-panel,.left,.right,.total-box,.footer').forEach(function(el){
       el.style.setProperty('overflow','visible','important');
       el.style.setProperty('max-height','none','important');
     });
+    var footer=sheet.querySelector('.footer');
+    if(footer){
+      footer.style.setProperty('margin-top','10px','important');
+      footer.style.setProperty('flex','0 0 auto','important');
+      footer.style.setProperty('position','relative','important');
+    }
     void sheet.offsetHeight;
   }
 
@@ -4156,9 +4183,15 @@ window.ajReject=async function(pid){if(!confirm('Reject this request?'))return;c
     installPrintCss(document);
     var pg=pageSize();
     var ppi=pxPerIn(document);
+    applyUnclamp(document, pg);
     unclampSheet(sheet, pg);
     var maxW=pg.w-2*SAFE_MARGIN, maxH=pg.h-2*SAFE_MARGIN;
     var hIn=Math.max(sheet.scrollHeight, sheet.getBoundingClientRect().height)/ppi;
+    var footer=sheet.querySelector('.footer');
+    if(footer){
+      var fb=(footer.getBoundingClientRect().bottom-sheet.getBoundingClientRect().top)/ppi;
+      if(fb>hIn) hIn=fb;
+    }
     if(!(hIn>0)) hIn=pg.h;
     var fit=Math.min(maxW/pg.w, maxH/hIn, 1);
 
@@ -4212,14 +4245,151 @@ window.ajReject=async function(pid){if(!confirm('Reject this request?'))return;c
     }
   }
 
+  function hostDocument(){
+    try{
+      if(window.frameElement && window.parent && window.parent.document && window.parent.document.body)
+        return window.parent.document;
+    }catch(_){}
+    return document;
+  }
+
+  function copyStyles(fromDoc, toDoc){
+    var head=toDoc.head||toDoc.documentElement;
+    var nodes=fromDoc.querySelectorAll('style, link[rel="stylesheet"]');
+    for(var i=0;i<nodes.length;i++){
+      try{
+        var n=nodes[i];
+        if(n.id==='agbPdfUnclamp' || n.id==='agbSheetPrintFit') continue;
+        if(n.tagName==='STYLE'){
+          var st=toDoc.createElement('style');
+          st.textContent=n.textContent||'';
+          head.appendChild(st);
+        }else if(n.href){
+          var ln=toDoc.createElement('link');
+          ln.rel='stylesheet';
+          ln.href=n.href;
+          head.appendChild(ln);
+        }
+      }catch(_){}
+    }
+  }
+
+  function measureSheet(sheet){
+    var rect=sheet.getBoundingClientRect();
+    var ppi=pxPerIn(sheet.ownerDocument);
+    var width=Math.ceil(Math.max(rect.width, sheet.scrollWidth||0, ppi*8.5));
+    var height=Math.ceil(Math.max(rect.height, sheet.scrollHeight||0));
+    var nodes=sheet.querySelectorAll('*');
+    for(var i=0;i<nodes.length;i++){
+      try{
+        var r=nodes[i].getBoundingClientRect();
+        var b=r.bottom-rect.top;
+        var right=r.right-rect.left;
+        if(b>height) height=b;
+        if(right>width) width=right;
+      }catch(_){}
+    }
+    var total=sheet.querySelector('.total-box');
+    var footer=sheet.querySelector('.footer');
+    var pad=Math.round(0.12*ppi);
+    if(footer){
+      var fb=footer.getBoundingClientRect().bottom-rect.top;
+      if(fb+pad>height) height=fb+pad;
+    }
+    if(total){
+      var tb=total.getBoundingClientRect().bottom-rect.top;
+      if(tb+pad>height) height=tb+pad;
+    }
+    return {width:Math.ceil(width), height:Math.ceil(height+pad), ppi:ppi, total:total, footer:footer, rect:rect};
+  }
+
+  function buildCaptureIframe(sheet, pg){
+    var srcDoc=sheet.ownerDocument||document;
+    var hostDoc=hostDocument();
+    var iframe=hostDoc.createElement('iframe');
+    iframe.id='agbPdfCaptureFrame';
+    iframe.setAttribute('aria-hidden','true');
+    iframe.style.cssText='position:fixed;left:0;top:0;width:'+pg.w+'in;height:'+pg.h+'in;border:0;opacity:0;pointer-events:none;background:#fff;z-index:2147483646;';
+    (hostDoc.body||hostDoc.documentElement).appendChild(iframe);
+    var idoc=iframe.contentDocument;
+    idoc.open();
+    idoc.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Estimate PDF</title></head><body style="margin:0;background:#fff"></body></html>');
+    idoc.close();
+    copyStyles(srcDoc, idoc);
+    applyUnclamp(idoc, pg);
+    var clone=sheet.cloneNode(true);
+    clone.id='pdfExportSheet';
+    clone.querySelectorAll('.no-print, .noprint, .rs-nophoto-bar, .rs-optnote-off, .sheet-row-remove, .sheet-row-add, .sheet-row-tools, .sheet-add-row, .sheet-note-add-bar, .actions, .sheet-ai-panel').forEach(function(el){
+      try{ el.remove(); }catch(_){}
+    });
+    clone.querySelectorAll('[contenteditable]').forEach(function(el){
+      try{ el.removeAttribute('contenteditable'); }catch(_){}
+    });
+    (idoc.body||idoc.documentElement).appendChild(idoc.adoptNode ? idoc.adoptNode(clone) : clone);
+    applyUnclamp(idoc, pg);
+    unclampSheet(idoc.querySelector('.sheet')||idoc.getElementById('pdfExportSheet'), pg);
+    return iframe;
+  }
+
+  async function waitImages(doc){
+    var imgs=[].slice.call(doc.querySelectorAll('img'));
+    await Promise.all(imgs.map(async function(img){
+      try{
+        var src=img.getAttribute('src')||'';
+        if(!src || src.indexOf('data:')===0){
+          if(!img.complete){
+            await new Promise(function(resolve){
+              img.addEventListener('load',resolve,{once:true});
+              img.addEventListener('error',resolve,{once:true});
+              setTimeout(resolve,2000);
+            });
+          }
+          return;
+        }
+        if(!img.complete){
+          await new Promise(function(resolve){
+            img.addEventListener('load',resolve,{once:true});
+            img.addEventListener('error',resolve,{once:true});
+            setTimeout(resolve,3000);
+          });
+        }
+        var res=await fetch(src,{mode:'cors',credentials:'omit'}).catch(function(){return null;});
+        if(res && res.ok){
+          var blob=await res.blob();
+          var dataUrl=await new Promise(function(resolve,reject){
+            var fr=new FileReader();
+            fr.onload=function(){resolve(fr.result);};
+            fr.onerror=reject;
+            fr.readAsDataURL(blob);
+          });
+          img.setAttribute('src', dataUrl);
+          img.crossOrigin='anonymous';
+        }else{
+          img.crossOrigin='anonymous';
+        }
+      }catch(_){
+        try{ img.crossOrigin='anonymous'; }catch(__){}
+      }
+    }));
+  }
+
+  async function blankPdf(worker, pg){
+    var J=(global.jspdf && (global.jspdf.jsPDF||global.jspdf.default)) || global.jsPDF;
+    if(typeof J==='function'){
+      return new J({unit:'in',format:'letter',orientation:pg.orient,compress:true});
+    }
+    var pdf=await worker.toPdf().get('pdf');
+    if(typeof pdf.addPage==='function') pdf.addPage('letter', pg.orient);
+    var n=pdf.internal.getNumberOfPages();
+    while(n>1){ pdf.deletePage(1); n--; }
+    return pdf;
+  }
+
   async function downloadEstimatePdf(){
     var sheet=document.querySelector('.sheet');
     if(!sheet) return;
     var filename=(document.title||'Absolute Garage Builders Estimate').replace(/[\\/:*?"<>|]+/g,'-')+'.pdf';
-    var exportHost=null;
-    var prevHtmlOverflow='';
-    var prevBodyOverflow='';
-    var prevScrollX=0, prevScrollY=0;
+    var iframe=null;
     var isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
     var canvasScale=isIOS?1.5:2;
     try{
@@ -4230,119 +4400,40 @@ window.ajReject=async function(pid){if(!confirm('Reject this request?'))return;c
       }
       if(typeof global.html2pdf!=='function') throw new Error('PDF library did not load.');
 
-      exportHost=document.createElement('div');
-      exportHost.id='pdfExportHost';
-      exportHost.style.cssText='position:absolute;left:0;top:0;background:#fff;overflow:visible;z-index:2147483646;';
-      document.body.appendChild(exportHost);
-
-      var clone=sheet.cloneNode(true);
-      clone.id='pdfExportSheet';
-      clone.querySelectorAll('.no-print, .noprint, .rs-nophoto-bar, .rs-optnote-off, .sheet-row-remove, .sheet-row-add, .sheet-row-tools, .sheet-add-row, .sheet-note-add-bar, .actions, .sheet-ai-panel').forEach(function(el){
-        try{ el.remove(); }catch(_){}
-      });
       var pg=pageSize();
-      clone.style.setProperty('width',pg.w+'in','important');
-      clone.style.setProperty('min-width',pg.w+'in','important');
-      clone.style.setProperty('max-width','none','important');
-      clone.style.setProperty('height','auto','important');
-      clone.style.setProperty('min-height',pg.h+'in','important');
-      clone.style.setProperty('max-height','none','important');
-      clone.style.setProperty('overflow','visible','important');
-      clone.style.setProperty('margin','0','important');
-      clone.style.transform='';
-      try{ clone.style.zoom=''; }catch(_){}
-      exportHost.appendChild(clone);
+      iframe=buildCaptureIframe(sheet, pg);
+      var idoc=iframe.contentDocument;
+      var clone=idoc.querySelector('.sheet')||idoc.getElementById('pdfExportSheet');
+      if(!clone) throw new Error('Estimate could not be rendered.');
 
-      var main=clone.querySelector('.main');
-      if(main){
-        main.style.setProperty('height','auto','important');
-        main.style.setProperty('min-height','0','important');
-        main.style.setProperty('overflow','visible','important');
-      }
-      clone.querySelectorAll('.left,.right,.notes-panel,.notes,.total-box,.footer').forEach(function(el){
-        el.style.setProperty('height','auto','important');
-        el.style.setProperty('max-height','none','important');
-        el.style.setProperty('overflow','visible','important');
-      });
-
-      var imgs=[].slice.call(clone.querySelectorAll('img'));
-      await Promise.all(imgs.map(async function(img){
-        try{
-          var src=img.getAttribute('src')||'';
-          if(!src || src.indexOf('data:')===0) return;
-          if(!img.complete){
-            await new Promise(function(resolve){
-              img.addEventListener('load',resolve,{once:true});
-              img.addEventListener('error',resolve,{once:true});
-              setTimeout(resolve,3000);
-            });
-          }
-          var res=await fetch(src,{mode:'cors',credentials:'omit'}).catch(function(){return null;});
-          if(res && res.ok){
-            var blob=await res.blob();
-            var dataUrl=await new Promise(function(resolve,reject){
-              var fr=new FileReader();
-              fr.onload=function(){resolve(fr.result);};
-              fr.onerror=reject;
-              fr.readAsDataURL(blob);
-            });
-            img.setAttribute('src', dataUrl);
-            img.crossOrigin='anonymous';
-          } else {
-            img.crossOrigin='anonymous';
-          }
-        }catch(_){
-          try{ img.crossOrigin='anonymous'; }catch(__){}
-        }
-      }));
+      await waitImages(idoc);
       await new Promise(function(resolve){requestAnimationFrame(function(){requestAnimationFrame(resolve);});});
 
-      var ppi=pxPerIn(document);
-      var rect=clone.getBoundingClientRect();
-      var fullWidth=Math.ceil(Math.max(
-        rect.width, clone.scrollWidth||0,
-        Math.max.apply(null, [0].concat([].slice.call(clone.querySelectorAll('*')).map(function(el){
-          try{ return el.getBoundingClientRect().right-rect.left; }catch(_){ return 0; }
-        })))
-      ));
-      var fullHeight=Math.ceil(Math.max(
-        rect.height, clone.scrollHeight||0,
-        Math.max.apply(null, [0].concat([].slice.call(clone.querySelectorAll('*')).map(function(el){
-          try{ return el.getBoundingClientRect().bottom-rect.top; }catch(_){ return 0; }
-        })))
-      ));
-      var pad=Math.round(0.08*ppi);
-      var footer=clone.querySelector('.footer');
-      var total=clone.querySelector('.total-box');
-      if(footer){
-        var fb=footer.getBoundingClientRect().bottom-rect.top;
-        if(fb+pad>fullHeight) fullHeight=Math.ceil(fb+pad);
-      }else if(total){
-        var tb=total.getBoundingClientRect().bottom-rect.top;
-        if(tb+pad>fullHeight) fullHeight=Math.ceil(tb+pad);
+      var meas=measureSheet(clone);
+      iframe.style.width=meas.width+'px';
+      iframe.style.height=meas.height+'px';
+      if(idoc.documentElement){
+        idoc.documentElement.style.height=meas.height+'px';
+        idoc.body.style.height=meas.height+'px';
+        idoc.body.style.overflow='visible';
       }
-      fullHeight=Math.ceil(fullHeight+pad);
-      exportHost.style.width=fullWidth+'px';
-      exportHost.style.height=fullHeight+'px';
+      void clone.offsetHeight;
+      meas=measureSheet(clone);
+      iframe.style.height=meas.height+'px';
 
-      // Keep the clone in the viewport during capture. html2canvas otherwise
-      // clips a full letter sheet to a short popup (window.open 1000x1000).
-      prevHtmlOverflow=document.documentElement.style.overflow;
-      prevBodyOverflow=document.body.style.overflow;
-      prevScrollX=window.scrollX||0;
-      prevScrollY=window.scrollY||0;
-      document.documentElement.style.overflow='visible';
-      document.body.style.overflow='visible';
-      window.scrollTo(0,0);
       var crect=clone.getBoundingClientRect();
-
       var worker=global.html2pdf().set({
         margin:0,
         image:{type:'jpeg', quality:0.92},
         html2canvas:{
           scale:canvasScale, useCORS:true, allowTaint:false, backgroundColor:'#ffffff',
           logging:false, scrollX:-crect.left, scrollY:-crect.top, x:0, y:0,
-          width:fullWidth, height:fullHeight, windowWidth:fullWidth, windowHeight:fullHeight
+          width:meas.width, height:meas.height, windowWidth:meas.width, windowHeight:meas.height,
+          onclone:function(doc){
+            applyUnclamp(doc, pg);
+            var sh=doc.querySelector('.sheet')||doc.getElementById('pdfExportSheet');
+            if(sh) unclampSheet(sh, pg);
+          }
         },
         jsPDF:{unit:'in',format:'letter',orientation:pg.orient,compress:true}
       }).from(clone).toCanvas();
@@ -4357,14 +4448,11 @@ window.ajReject=async function(pid){if(!confirm('Reject this request?'))return;c
 
       var pageW=pg.w, pageH=pg.h, margin=SAFE_MARGIN;
       var maxW=pageW-2*margin, maxH=pageH-2*margin;
-      var widthIn=fullWidth/ppi, heightIn=fullHeight/ppi;
-      if(!widthIn || !heightIn){ widthIn=canvas.width/(canvasScale*ppi/2||96); heightIn=canvas.height/(canvasScale*ppi/2||96); }
+      var widthIn=meas.width/meas.ppi, heightIn=meas.height/meas.ppi;
+      if(!widthIn || !heightIn){ widthIn=pageW; heightIn=canvas.height/canvas.width*pageW; }
       var fit=Math.min(maxW/widthIn, maxH/heightIn);
 
-      var pdf=await worker.toPdf().get('pdf');
-      var count=pdf.internal.getNumberOfPages();
-      while(count>1){ pdf.deletePage(count); count--; }
-
+      var pdf=await blankPdf(worker, pg);
       function fillPage(){
         pdf.setFillColor(255,255,255);
         pdf.rect(0,0,pageW,pageH,'F');
@@ -4382,7 +4470,9 @@ window.ajReject=async function(pid){if(!confirm('Reject this request?'))return;c
         var pxPerInC=canvas.height/heightIn;
         var sliceCanvasPx=maxH/s*pxPerInC;
         var cloneRect=clone.getBoundingClientRect();
-        var scaleY=canvas.height/fullHeight;
+        var scaleY=canvas.height/meas.height;
+        var total=clone.querySelector('.total-box');
+        var footer=clone.querySelector('.footer');
         var keepTop=total ? (total.getBoundingClientRect().top-cloneRect.top)*scaleY : canvas.height;
         var keepBottom=footer ? (footer.getBoundingClientRect().bottom-cloneRect.top)*scaleY : (total? (total.getBoundingClientRect().bottom-cloneRect.top)*scaleY : canvas.height);
         var y0=0, first=true;
@@ -4391,7 +4481,7 @@ window.ajReject=async function(pid){if(!confirm('Reject this request?'))return;c
           if(y0<keepTop && y1>keepTop && y1<keepBottom){ y1=keepTop; }
           if(y0>=keepTop && y0<keepBottom){ y1=Math.max(y1, keepBottom); }
           var sliceH=Math.max(1, y1-y0);
-          var slice=document.createElement('canvas');
+          var slice=idoc.createElement('canvas');
           slice.width=canvas.width;
           slice.height=Math.ceil(sliceH);
           slice.getContext('2d').drawImage(canvas, 0, y0, canvas.width, sliceH, 0, 0, canvas.width, sliceH);
@@ -4420,12 +4510,7 @@ window.ajReject=async function(pid){if(!confirm('Reject this request?'))return;c
           : msg
       ));
     }finally{
-      try{
-        document.documentElement.style.overflow=prevHtmlOverflow;
-        document.body.style.overflow=prevBodyOverflow;
-        window.scrollTo(prevScrollX, prevScrollY);
-      }catch(_){}
-      if(exportHost && exportHost.parentNode) exportHost.parentNode.removeChild(exportHost);
+      if(iframe && iframe.parentNode) iframe.parentNode.removeChild(iframe);
     }
   }
 

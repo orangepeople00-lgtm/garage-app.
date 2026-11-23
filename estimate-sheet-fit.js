@@ -1,13 +1,10 @@
-/* Estimate sheet print/PDF fit v3: keep the full sheet (especially the price
-   and footer) inside a 0.6in safe inset on Letter paper. Download PDF captures
-   the sheet in a dedicated iframe at letter width, unclamped from the 11in
-   overflow:hidden styles, so a short laptop popup or History iframe cannot
-   clip the total. PDFs are built on a blank jsPDF page (the html2pdf default
-   page, which fills the letter and clips the price, is discarded). */
+/* Estimate sheet print/PDF fit v4: capture the designed 8.5x11 professional
+   letter sheet (footer and full bottom bar included) and place that exact
+   page on Letter paper inside a 0.5in safe inset so printers cannot clip
+   the border or footer wording. Do not reflow or restyle the sheet. */
 (function(global){
-  var SAFE_MARGIN = 0.6; // inches — a little more than a typical 0.5in printer margin
-  var MIN_FIT = 0.70;
-  var AGB_SHEET_FIT_V = '3';
+  var SAFE_MARGIN = 0.5; // inches
+  var AGB_SHEET_FIT_V = '4';
 
   function pageSize(){
     var landscape=false;
@@ -31,26 +28,25 @@
     return (n>0)?n:96;
   }
 
-  function unclampCss(pg){
-    pg=pg||pageSize();
+  /* Keep the designed letter page: fixed size, footer pinned to the bottom. */
+  function designCss(pg){
     return (
-      'html,body{margin:0!important;padding:0!important;width:'+pg.w+'in!important;height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;background:#fff!important;}'+
-      '.sheet,#pdfExportSheet{width:'+pg.w+'in!important;min-width:'+pg.w+'in!important;max-width:none!important;height:auto!important;min-height:'+pg.h+'in!important;max-height:none!important;overflow:visible!important;margin:0!important;transform:none!important;box-shadow:none!important;}'+
-      '.main,.left,.right,.notes-panel,.notes,.total-box,.total-price,.total-label,.footer{height:auto!important;max-height:none!important;overflow:visible!important;}'+
-      '.footer{margin-top:10px!important;flex:0 0 auto!important;position:relative!important;top:auto!important;bottom:auto!important;}'+
+      'html,body{margin:0!important;padding:0!important;width:'+pg.w+'in!important;height:'+pg.h+'in!important;min-height:'+pg.h+'in!important;max-height:'+pg.h+'in!important;overflow:hidden!important;background:#fff!important;}'+
+      '.sheet,#pdfExportSheet{width:'+pg.w+'in!important;min-width:'+pg.w+'in!important;max-width:'+pg.w+'in!important;height:'+pg.h+'in!important;min-height:'+pg.h+'in!important;max-height:'+pg.h+'in!important;margin:0!important;transform:none!important;box-shadow:none!important;overflow:hidden!important;display:flex!important;flex-direction:column!important;}'+
+      '.footer{margin-top:auto!important;flex:0 0 auto!important;position:relative!important;top:auto!important;bottom:auto!important;display:flex!important;}'+
       '.actions,.estimate-assistant,.no-print,.noprint,.sheet-ai-panel{display:none!important;}'
     );
   }
 
-  function applyUnclamp(doc, pg){
+  function applyDesign(doc, pg){
     if(!doc) return;
-    var st=doc.getElementById('agbPdfUnclamp');
+    var st=doc.getElementById('agbPdfDesign');
     if(!st){
       st=doc.createElement('style');
-      st.id='agbPdfUnclamp';
+      st.id='agbPdfDesign';
       (doc.head||doc.documentElement).appendChild(st);
     }
-    st.textContent=unclampCss(pg);
+    st.textContent=designCss(pg);
   }
 
   function installPrintCss(doc){
@@ -61,17 +57,22 @@
       st.id='agbSheetPrintFit';
       (doc.head||doc.documentElement).appendChild(st);
     }
+    var fit=Math.min((8.5-2*SAFE_MARGIN)/8.5, (11-2*SAFE_MARGIN)/11, 1);
+    var pg=pageSize();
+    fit=Math.min((pg.w-2*SAFE_MARGIN)/pg.w, (pg.h-2*SAFE_MARGIN)/pg.h, 1);
     st.textContent=
       '@page{size:Letter;margin:0 !important;}'+
       '@media print{'+
-        'html,body,html body{width:auto!important;height:auto!important;min-height:0!important;max-height:none!important;margin:0!important;padding:0!important;overflow:visible!important;background:#fff!important;}'+
-        '#agbPrintFitWrap{display:block;margin:0 auto;background:#fff;overflow:hidden;page-break-inside:avoid!important;break-inside:avoid!important;page-break-after:avoid!important;page-break-before:avoid!important;}'+
-        'html.agb-print-multipage #agbPrintFitWrap{overflow:visible!important;height:auto!important;page-break-inside:auto!important;break-inside:auto!important;page-break-after:auto!important;}'+
-        'html body .sheet,.sheet{overflow:visible!important;max-height:none!important;height:auto!important;}'+
-        'html body .main,.main{overflow:visible!important;max-height:none!important;height:auto!important;}'+
-        'html body .notes-panel,.notes-panel,html body .left,html body .right{overflow:visible!important;max-height:none!important;}'+
-        'html body .total-box,.total-box,html body .footer,.footer{break-inside:avoid!important;page-break-inside:avoid!important;overflow:visible!important;}'+
-        'html.agb-print-multipage .footer{break-before:avoid!important;page-break-before:avoid!important;}'+
+        'html,body,html body{width:'+pg.w+'in!important;height:'+pg.h+'in!important;min-height:0!important;max-height:none!important;margin:0!important;padding:0!important;overflow:hidden!important;background:#fff!important;}'+
+        '#agbPrintFitWrap{display:block;margin:0 auto;background:#fff;overflow:hidden;width:'+pg.w+'in;height:'+pg.h+'in;page-break-inside:avoid!important;break-inside:avoid!important;}'+
+        'html body .sheet,.sheet,html body #agbPrintFitWrap .sheet{'+
+          'width:'+pg.w+'in!important;height:'+pg.h+'in!important;min-height:'+pg.h+'in!important;max-height:'+pg.h+'in!important;'+
+          'overflow:hidden!important;margin:0!important;'+
+          'position:absolute!important;top:0!important;left:0!important;'+
+          'transform-origin:top left!important;'+
+          'transform:translate('+SAFE_MARGIN+'in,'+SAFE_MARGIN+'in) scale('+fit+') !important;'+
+        '}'+
+        '.footer{margin-top:auto!important;flex:0 0 auto!important;overflow:visible!important;}'+
         '.actions,.estimate-assistant,.no-print,.sheet-ai-panel{display:none!important;}'+
       '}';
   }
@@ -95,30 +96,23 @@
     sheet.style.marginRight='';
     sheet.style.position='';
     try{ sheet.style.zoom=''; }catch(_){}
-    try{ document.documentElement.classList.remove('agb-print-multipage'); }catch(_){}
   }
 
-  function unclampSheet(sheet, pg){
-    sheet.style.setProperty('height','auto','important');
-    sheet.style.setProperty('min-height',pg.h+'in','important');
-    sheet.style.setProperty('max-height','none','important');
-    sheet.style.setProperty('overflow','visible','important');
+  function restoreDesignSize(sheet, pg){
     sheet.style.setProperty('width',pg.w+'in','important');
-    var main=sheet.querySelector('.main');
-    if(main){
-      main.style.setProperty('overflow','visible','important');
-      main.style.setProperty('max-height','none','important');
-      main.style.setProperty('height','auto','important');
-    }
-    sheet.querySelectorAll('.notes-panel,.left,.right,.total-box,.footer').forEach(function(el){
-      el.style.setProperty('overflow','visible','important');
-      el.style.setProperty('max-height','none','important');
-    });
+    sheet.style.setProperty('height',pg.h+'in','important');
+    sheet.style.setProperty('min-height',pg.h+'in','important');
+    sheet.style.setProperty('max-height',pg.h+'in','important');
+    sheet.style.setProperty('overflow','hidden','important');
+    sheet.style.setProperty('margin','0','important');
+    sheet.style.transform='';
+    try{ sheet.style.zoom=''; }catch(_){}
     var footer=sheet.querySelector('.footer');
     if(footer){
-      footer.style.setProperty('margin-top','10px','important');
+      footer.style.setProperty('margin-top','auto','important');
       footer.style.setProperty('flex','0 0 auto','important');
       footer.style.setProperty('position','relative','important');
+      footer.style.setProperty('display','flex','important');
     }
     void sheet.offsetHeight;
   }
@@ -129,42 +123,20 @@
     clearSheetPrintScale();
     installPrintCss(document);
     var pg=pageSize();
-    var ppi=pxPerIn(document);
-    applyUnclamp(document, pg);
-    unclampSheet(sheet, pg);
-    var maxW=pg.w-2*SAFE_MARGIN, maxH=pg.h-2*SAFE_MARGIN;
-    var hIn=Math.max(sheet.scrollHeight, sheet.getBoundingClientRect().height)/ppi;
-    var footer=sheet.querySelector('.footer');
-    if(footer){
-      var fb=(footer.getBoundingClientRect().bottom-sheet.getBoundingClientRect().top)/ppi;
-      if(fb>hIn) hIn=fb;
-    }
-    if(!(hIn>0)) hIn=pg.h;
-    var fit=Math.min(maxW/pg.w, maxH/hIn, 1);
-
+    applyDesign(document, pg);
+    restoreDesignSize(sheet, pg);
+    try{ if(typeof global.agbFitNoPhotoNotes==='function') global.agbFitNoPhotoNotes(document); }catch(_){}
+    var fit=Math.min((pg.w-2*SAFE_MARGIN)/pg.w, (pg.h-2*SAFE_MARGIN)/pg.h, 1);
     var wrap=document.createElement('div');
     wrap.id='agbPrintFitWrap';
     sheet.parentNode.insertBefore(wrap, sheet);
     wrap.appendChild(sheet);
-
-    if(fit<MIN_FIT){
-      document.documentElement.classList.add('agb-print-multipage');
-      var sw=Math.min(maxW/pg.w, 1);
-      wrap.style.width=pg.w+'in';
-      wrap.style.height='auto';
-      wrap.style.overflow='visible';
-      sheet.style.transformOrigin='top left';
-      sheet.style.transform='translate('+SAFE_MARGIN+'in,'+SAFE_MARGIN+'in) scale('+sw+')';
-      sheet.style.marginBottom=((sw-1)*hIn*ppi+SAFE_MARGIN*ppi)+'px';
-      return;
-    }
-
     wrap.style.width=pg.w+'in';
     wrap.style.height=pg.h+'in';
-    var tx=SAFE_MARGIN, ty=(pg.h-hIn*fit)/2;
-    if(ty<SAFE_MARGIN) ty=SAFE_MARGIN;
+    wrap.style.overflow='hidden';
+    wrap.style.background='#fff';
     sheet.style.transformOrigin='top left';
-    sheet.style.transform='translate('+tx+'in,'+ty+'in) scale('+fit+')';
+    sheet.style.transform='translate('+SAFE_MARGIN+'in,'+SAFE_MARGIN+'in) scale('+fit+')';
   }
 
   function isDownloadPdfControl(el){
@@ -206,7 +178,7 @@
     for(var i=0;i<nodes.length;i++){
       try{
         var n=nodes[i];
-        if(n.id==='agbPdfUnclamp' || n.id==='agbSheetPrintFit') continue;
+        if(n.id==='agbPdfUnclamp' || n.id==='agbPdfDesign' || n.id==='agbSheetPrintFit') continue;
         if(n.tagName==='STYLE'){
           var st=toDoc.createElement('style');
           st.textContent=n.textContent||'';
@@ -221,35 +193,6 @@
     }
   }
 
-  function measureSheet(sheet){
-    var rect=sheet.getBoundingClientRect();
-    var ppi=pxPerIn(sheet.ownerDocument);
-    var width=Math.ceil(Math.max(rect.width, sheet.scrollWidth||0, ppi*8.5));
-    var height=Math.ceil(Math.max(rect.height, sheet.scrollHeight||0));
-    var nodes=sheet.querySelectorAll('*');
-    for(var i=0;i<nodes.length;i++){
-      try{
-        var r=nodes[i].getBoundingClientRect();
-        var b=r.bottom-rect.top;
-        var right=r.right-rect.left;
-        if(b>height) height=b;
-        if(right>width) width=right;
-      }catch(_){}
-    }
-    var total=sheet.querySelector('.total-box');
-    var footer=sheet.querySelector('.footer');
-    var pad=Math.round(0.12*ppi);
-    if(footer){
-      var fb=footer.getBoundingClientRect().bottom-rect.top;
-      if(fb+pad>height) height=fb+pad;
-    }
-    if(total){
-      var tb=total.getBoundingClientRect().bottom-rect.top;
-      if(tb+pad>height) height=tb+pad;
-    }
-    return {width:Math.ceil(width), height:Math.ceil(height+pad), ppi:ppi, total:total, footer:footer, rect:rect};
-  }
-
   function buildCaptureIframe(sheet, pg){
     var srcDoc=sheet.ownerDocument||document;
     var hostDoc=hostDocument();
@@ -260,10 +203,10 @@
     (hostDoc.body||hostDoc.documentElement).appendChild(iframe);
     var idoc=iframe.contentDocument;
     idoc.open();
-    idoc.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Estimate PDF</title></head><body style="margin:0;background:#fff"></body></html>');
+    idoc.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Estimate PDF</title></head><body></body></html>');
     idoc.close();
     copyStyles(srcDoc, idoc);
-    applyUnclamp(idoc, pg);
+    applyDesign(idoc, pg);
     var clone=sheet.cloneNode(true);
     clone.id='pdfExportSheet';
     clone.querySelectorAll('.no-print, .noprint, .rs-nophoto-bar, .rs-optnote-off, .sheet-row-remove, .sheet-row-add, .sheet-row-tools, .sheet-add-row, .sheet-note-add-bar, .actions, .sheet-ai-panel').forEach(function(el){
@@ -273,8 +216,16 @@
       try{ el.removeAttribute('contenteditable'); }catch(_){}
     });
     (idoc.body||idoc.documentElement).appendChild(idoc.adoptNode ? idoc.adoptNode(clone) : clone);
-    applyUnclamp(idoc, pg);
-    unclampSheet(idoc.querySelector('.sheet')||idoc.getElementById('pdfExportSheet'), pg);
+    applyDesign(idoc, pg);
+    var sh=idoc.querySelector('.sheet')||idoc.getElementById('pdfExportSheet');
+    if(sh) restoreDesignSize(sh, pg);
+    try{
+      if(typeof idoc.defaultView!=='undefined' && srcDoc.defaultView && typeof srcDoc.defaultView.agbFitNoPhotoNotes==='function'){
+        srcDoc.defaultView.agbFitNoPhotoNotes(idoc);
+      }else if(typeof global.agbFitNoPhotoNotes==='function'){
+        global.agbFitNoPhotoNotes(idoc);
+      }
+    }catch(_){}
     return iframe;
   }
 
@@ -348,6 +299,7 @@
       if(typeof global.html2pdf!=='function') throw new Error('PDF library did not load.');
 
       var pg=pageSize();
+      try{ if(typeof global.agbFitNoPhotoNotes==='function') global.agbFitNoPhotoNotes(document); }catch(_){}
       iframe=buildCaptureIframe(sheet, pg);
       var idoc=iframe.contentDocument;
       var clone=idoc.querySelector('.sheet')||idoc.getElementById('pdfExportSheet');
@@ -355,18 +307,16 @@
 
       await waitImages(idoc);
       await new Promise(function(resolve){requestAnimationFrame(function(){requestAnimationFrame(resolve);});});
-
-      var meas=measureSheet(clone);
-      iframe.style.width=meas.width+'px';
-      iframe.style.height=meas.height+'px';
-      if(idoc.documentElement){
-        idoc.documentElement.style.height=meas.height+'px';
-        idoc.body.style.height=meas.height+'px';
-        idoc.body.style.overflow='visible';
-      }
+      restoreDesignSize(clone, pg);
+      applyDesign(idoc, pg);
+      try{ if(typeof global.agbFitNoPhotoNotes==='function') global.agbFitNoPhotoNotes(idoc); }catch(_){}
       void clone.offsetHeight;
-      meas=measureSheet(clone);
-      iframe.style.height=meas.height+'px';
+
+      var ppi=pxPerIn(idoc);
+      var fullWidth=Math.round(pg.w*ppi);
+      var fullHeight=Math.round(pg.h*ppi);
+      iframe.style.width=fullWidth+'px';
+      iframe.style.height=fullHeight+'px';
 
       var crect=clone.getBoundingClientRect();
       var worker=global.html2pdf().set({
@@ -375,11 +325,11 @@
         html2canvas:{
           scale:canvasScale, useCORS:true, allowTaint:false, backgroundColor:'#ffffff',
           logging:false, scrollX:-crect.left, scrollY:-crect.top, x:0, y:0,
-          width:meas.width, height:meas.height, windowWidth:meas.width, windowHeight:meas.height,
+          width:fullWidth, height:fullHeight, windowWidth:fullWidth, windowHeight:fullHeight,
           onclone:function(doc){
-            applyUnclamp(doc, pg);
+            applyDesign(doc, pg);
             var sh=doc.querySelector('.sheet')||doc.getElementById('pdfExportSheet');
-            if(sh) unclampSheet(sh, pg);
+            if(sh) restoreDesignSize(sh, pg);
           }
         },
         jsPDF:{unit:'in',format:'letter',orientation:pg.orient,compress:true}
@@ -395,53 +345,17 @@
 
       var pageW=pg.w, pageH=pg.h, margin=SAFE_MARGIN;
       var maxW=pageW-2*margin, maxH=pageH-2*margin;
-      var widthIn=meas.width/meas.ppi, heightIn=meas.height/meas.ppi;
-      if(!widthIn || !heightIn){ widthIn=pageW; heightIn=canvas.height/canvas.width*pageW; }
-      var fit=Math.min(maxW/widthIn, maxH/heightIn);
+      // The capture is the designed letter page. Scale it uniformly into the safe inset.
+      var widthIn=pageW, heightIn=pageH;
+      var fit=Math.min(maxW/widthIn, maxH/heightIn, 1);
+      var drawW=widthIn*fit, drawH=heightIn*fit;
+      var x=(pageW-drawW)/2, y=(pageH-drawH)/2;
 
       var pdf=await blankPdf(worker, pg);
-      function fillPage(){
-        pdf.setFillColor(255,255,255);
-        pdf.rect(0,0,pageW,pageH,'F');
-      }
+      pdf.setFillColor(255,255,255);
+      pdf.rect(0,0,pageW,pageH,'F');
+      pdf.addImage(imgData, 'JPEG', x, y, drawW, drawH, undefined, 'FAST');
 
-      if(fit>=MIN_FIT){
-        var drawW=widthIn*fit, drawH=heightIn*fit;
-        var x=(pageW-drawW)/2, y=(pageH-drawH)/2;
-        if(y<margin) y=margin;
-        if(x<margin) x=margin;
-        fillPage();
-        pdf.addImage(imgData, 'JPEG', x, y, drawW, drawH, undefined, 'FAST');
-      }else{
-        var s=Math.min(maxW/widthIn, 1);
-        var pxPerInC=canvas.height/heightIn;
-        var sliceCanvasPx=maxH/s*pxPerInC;
-        var cloneRect=clone.getBoundingClientRect();
-        var scaleY=canvas.height/meas.height;
-        var total=clone.querySelector('.total-box');
-        var footer=clone.querySelector('.footer');
-        var keepTop=total ? (total.getBoundingClientRect().top-cloneRect.top)*scaleY : canvas.height;
-        var keepBottom=footer ? (footer.getBoundingClientRect().bottom-cloneRect.top)*scaleY : (total? (total.getBoundingClientRect().bottom-cloneRect.top)*scaleY : canvas.height);
-        var y0=0, first=true;
-        while(y0<canvas.height-0.5){
-          var y1=Math.min(canvas.height, y0+sliceCanvasPx);
-          if(y0<keepTop && y1>keepTop && y1<keepBottom){ y1=keepTop; }
-          if(y0>=keepTop && y0<keepBottom){ y1=Math.max(y1, keepBottom); }
-          var sliceH=Math.max(1, y1-y0);
-          var slice=idoc.createElement('canvas');
-          slice.width=canvas.width;
-          slice.height=Math.ceil(sliceH);
-          slice.getContext('2d').drawImage(canvas, 0, y0, canvas.width, sliceH, 0, 0, canvas.width, sliceH);
-          var sliceImg=slice.toDataURL('image/jpeg', 0.92);
-          var drawW=widthIn*s;
-          var drawH=(sliceH/canvas.height)*heightIn*s;
-          if(!first && typeof pdf.addPage==='function') pdf.addPage('letter', pg.orient);
-          first=false;
-          fillPage();
-          pdf.addImage(sliceImg, 'JPEG', (pageW-drawW)/2, margin, drawW, drawH, undefined, 'FAST');
-          y0=y1;
-        }
-      }
       if(global.__agbPdfCapture){
         global.__agbPdfResult=pdf.output('datauristring');
         global.__agbPdfPages=pdf.internal.getNumberOfPages();

@@ -13340,7 +13340,7 @@ run();setInterval(run,1500);document.addEventListener('change',run);})();
   }, false);
 })();
 </script>
-<script src="voice-core.js?v=20261118a"></script>
+<script src="voice-core.js?v=20261123a"></script>
 <script>
 /* Voice estimate: estimator field schema for the shared voice-core.js */
 /* Contact info from speech: "his number is 708-555-1234", "seven oh eight five five five ...", "email bob at gmail dot com" */
@@ -13366,14 +13366,14 @@ window.agbPriceFromSpeech=function(t){ const s=String(t).toLowerCase().replace(/
     if(!n||n<5000||n>500000) return [];
     return [{id:'profitMode',value:'total',heard:m[0]},{id:'profitValue',value:String(n),heard:m[0]}]; };
 /* ===== Voice: schema-driven field catalog (every calculator control, scraped from the page) ===== */
-window.agbNumbersSaid=function(t){ let s=String(t||'').toLowerCase().replace(/(\d),(\d{3})/g,'$1$2');
+window.agbNumbersSaid=function(t){ let s=String(t||'').toLowerCase().replace(/(\d),(\d{3})/g,'$1$2').replace(/\ba (hundred|thousand|grand)\b/g,'one $1').replace(/\b(\d+(?:\.\d+)?)\s*grand\b/g,'$1 thousand');
   const W={zero:0,one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10,eleven:11,twelve:12,thirteen:13,fourteen:14,fifteen:15,sixteen:16,seventeen:17,eighteen:18,nineteen:19,twenty:20,thirty:30,forty:40,fifty:50,sixty:60,seventy:70,eighty:80,ninety:90};
   const out=[]; (s.match(/\$?\d+(?:\.\d+)?\s*(?:k\b|thousand|grand|hundred)?/g)||[]).forEach(m=>{ let n=parseFloat(m.replace(/[^0-9.]/g,'')); if(/k\b|thousand|grand/.test(m)) n*=1000; else if(/hundred/.test(m)) n*=100; out.push(n); });
   // spoken words: "two thousand", "fifteen hundred", "twenty five hundred", "two thousand five hundred"
   const toks=s.replace(/-/g,' ').split(/[^a-z0-9]+/); let cur=0,total=0,any=false; const flush=()=>{ if(any) out.push(total+cur); cur=0; total=0; any=false; };
   let prevSmall=false; toks.forEach(w=>{ if(w in W&&prevSmall&&W[w]>=20&&W[w]%10===0&&cur<100&&total===0){ cur=cur*100+W[w]; prevSmall=false; } else if(w in W){ prevSmall=(cur===0&&W[w]>0&&W[w]<20); cur+=W[w]; any=true; } else if(w==='hundred'&&any){ cur*=100; } else if((w==='thousand'||w==='grand')&&any){ total+=cur*1000; cur=0; } else if(w==='and'&&any){} else flush(); }); flush();
   return out; };
-window.agbIsDollarField=function(id){ if(/^lineov_/.test(id)) return true; if(/^xtra_/.test(id)) return false; const el=document.getElementById(id); if(!el||el.tagName==='SELECT'||el.type==='checkbox') return false;
+window.agbIsDollarField=function(id){ if(/^lineov_/.test(id)) return true; if(/^(elecBase|ohDoorOpenerPrice|demoCostInput|suburbPermitFee|overheadDoorCustomExtraCost)$/.test(id)) return true; if(/^xtra_/.test(id)) return false; const el=document.getElementById(id); if(!el||el.tagName==='SELECT'||el.type==='checkbox') return false;
   const L=(window.agbFieldLabel(el)+' '+id).toLowerCase(); return /(cost|price|fee|charge|amount|\$)/.test(L)&&!/(count|qty|quantity|sq ?ft|feet|ft\b|inch|depth|width|height|length)/.test(L); };
 window.agbFieldLabel=function(el){ let t=''; try{ if(el.labels&&el.labels[0]) t=el.labels[0].textContent; }catch(e){}
   if(!t){ let p=el.parentElement; for(let k=0;k<4&&p&&!t;k++,p=p.parentElement){ const l=p.querySelector('label'); if(l&&!l.contains(el)) t=l.textContent; else if(l&&l.contains(el)) t=l.textContent; } }
@@ -13442,7 +13442,32 @@ window.agbSearchInfo=function(query){ const q=String(query||'').toLowerCase(); c
   const hits=[...new Set(docs)].map(t=>[sc(t),t]).filter(x=>x[0]>0).sort((a,b)=>b[0]-a[0]).slice(0,5).map(x=>x[1].slice(0,600));
   return hits.length?{source:'company estimator',results:hits}:{error:'Nothing in the estimator about that.'}; };
 /* ===== Voice: custom extras rows (anything he names as an option / extra) ===== */
-window.agbExtraParse0=function(t){ return window.agbContactFromSpeech(t).concat(window.agbPriceFromSpeech(t)); };
+/* Price boxes from speech (owner 11/23/2026): "demo charge will be 2000" / "electric 1800" -> that box = the amount (as if typed);
+   "bump demo up 100" / "add a hundred to demo" / "take 200 off electric" -> "+100" / "-200" (voice-core adds it to the box's current amount). */
+window.agbBoxPriceFromSpeech=function(t){ const out=[]; const ITEMS=[['demoCostInput',/\b(demo|demolition|tear[\s-]?(?:down|off|out)|knock[\s-]?down|wreck(?:ing)?)\b/i],['elecBase',/\b(electric|electrical|electricity|wiring)\b/i]];
+  String(t||'').split(/(?<=[.!?;])\s+|,?\s*\b(?:and|also|plus)\s+(?=(?:the\s+|make\s+(?:the\s+)?)?(?:demo|electric))|,\s*(?=(?:the\s+)?(?:demo|electric))/i).forEach(cl=>{ const c=cl.toLowerCase(); const hit=ITEMS.filter(([,re])=>re.test(c)); if(hit.length!==1) return;
+    const [id,re]=hit[0]; if(/\?\s*$/.test(c)||/^\W*(what|how|can|could|would|is|does|do)\b/.test(c)) return;
+    const body=c.replace(/\b\d{2}(?:\.5)?\s*(?:x|by)\s*\d{2}(?:\.5)?\b/g,' ').replace(re,' ITEM ');
+    const nums=window.agbNumbersSaid(body).filter(n=>n>=10&&n<=100000); if(nums.length!==1) return; const n=nums[0];
+    const money=/(\$|dollars?|bucks|charge|price|cost|fee|amount|will be|is|should be|at|for|make|set|put|grand|thousand|hundred|higher|lower|more|less|up|down|raise|bump|add|plus|minus|take|knock|drop|reduce|increase|decrease)/.test(body.replace(/\bITEM\b/g,''));
+    if(!money&&!/ITEM\W*\$?\d/.test(body)) return;
+    const rel=/\b(higher|more|raise|bump|increase|add|plus|extra|up)\b/.test(body)&&!/\b(up\s+to|to\s+\$?\d)/.test(body)||/\bby\s+\$?\d|\bby\s+(a|one|two|three|four|five|fifty|\d)/.test(body);
+    const neg=/\b(lower|less|drop|reduce|decrease|minus|subtract|cut|off|down)\b/.test(body);
+    if(rel||(neg&&!/\b(to\s+\$?\d)/.test(body))){ out.push({id,value:(neg&&!/\b(higher|more|raise|bump|increase|add|plus|up)\b/.test(body)?'-':'+')+n,heard:cl.trim(),box:true}); }
+    else if(n>=50) out.push({id,value:String(n),heard:cl.trim(),box:true}); });
+  return out; };
+/* Lingo safety net for voice (only fills what the AI missed): siding, roof style, gutters. Negated mentions ("not hardie", "no gutters") are skipped / set false. */
+window.agbLingoFromSpeech=function(t){ const s=' '+String(t||'').toLowerCase().replace(/[^a-z0-9' ]/g,' ').replace(/\s+/g,' ')+' '; const out=[];
+  const NEG=/\b(no|not|without|scratch|remove|drop|nix|never mind|instead of|skip|take off|get rid of)\s+(?:the\s+|any\s+)?$/;
+  const pick=(pairs)=>{ let win=null; pairs.forEach(([re,val])=>{ let m; re.lastIndex=0; while((m=re.exec(s))){ const pre=s.slice(Math.max(0,m.index-22),m.index); if(NEG.test(pre)) continue; if(!win||m.index>win.i) win={i:m.index,val,txt:m[0].trim()}; } }); return win; };
+  const sd=pick([[/\b(lp|l p|el pee|smart ?side|lp smart ?side)\b/g,'lp'],[/\b(hardie|hardy|hardiplank|hardie ?board|hardy ?board|cement board|fiber cement)\b/g,'hardie'],[/\bvinyl\b/g,'vinyl']]);
+  if(sd) out.push({id:'sidingType',value:sd.val,heard:sd.txt});
+  const rf=pick([[/\b(reverse|side|sideways) (gable|gabled|cable)\b|\bgable(?:s)? (?:on|to) the sides\b/g,'rev'],[/\b(gable|gabled)\b(?! on the sides| to the sides)/g,'gable'],[/\bhip(?:ped)?(?: roof)?\b/g,'hip']]);
+  if(rf){ if(rf.val==='gable'&&/\b(reverse|side|sideways)\s$/.test(s.slice(Math.max(0,rf.i-12),rf.i))) rf.val='rev'; if(rf.val==='rev'){ out.push({id:'roofType',value:'gable',heard:rf.txt},{id:'eaveDir',value:'sides',heard:rf.txt}); } else if(rf.val==='gable'){ if(!/\b(reverse|side|sideways) (gable|gabled|cable)\b/.test(s)) out.push({id:'roofType',value:'gable',heard:rf.txt},{id:'eaveDir',value:'front-back',heard:rf.txt}); } else out.push({id:'roofType',value:'hip',heard:rf.txt}); }
+  let m, gw=null; const gre=/\bgutters?\b/g; while((m=gre.exec(s))){ const pre=s.slice(Math.max(0,m.index-22),m.index); gw={neg:NEG.test(pre),txt:m[0]}; }
+  if(gw&&!/\bgutters?\b[^.]{0,30}\b(extra|option|optional)\b|\b(extra|option)\b[^.]{0,20}\bgutters?\b/.test(s)) out.push({id:'gutters',value:gw.neg?'false':'true',heard:gw.txt});
+  return out; };
+window.agbExtraParse0=function(t){ return window.agbContactFromSpeech(t).concat(window.agbPriceFromSpeech(t)).concat(window.agbBoxPriceFromSpeech(t)); };
 window.agbXtraSlug=n=>'xtra_'+String(n||'').toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'').slice(0,40);
 window.agbXtraInput=function(name,kind){ let box=document.getElementById('agbLineOvBox'); if(!box){ box=document.createElement('div'); box.id='agbLineOvBox'; box.hidden=true; document.body.appendChild(box); }
   const id=window.agbXtraSlug(name); let inp=document.getElementById(id);
@@ -13480,7 +13505,7 @@ window.agbVoice=AGBVoiceCore.create({
     ['demoSlabPreset','Demo old garage — old slab size'],['oldConcreteOverride','Custom old slab size (demo=custom)'],['demoCostInput','Demo cost $ (only if said)'],['demoApronDepth','Demo apron depth'],['epaFee','EPA fee'],
     ['roofPatioEnabled','Roof patio'],['roofPatioDepth','Roof patio depth'],['roofPatioSide','Side roof patio (unchecked = rear)'],
     ['overhangEnabled','Front overhang'],['overhangSize','Overhang size'],
-    ['electricIncluded','Standard electric included'],['evCharger','EV charger'],['evPrep','EV prep'],
+    ['electricIncluded','Standard electric included'],['elecBase','Electric price $ (electrical base box, default $1,500; only if he says an amount)'],['evCharger','EV charger'],['evPrep','EV prep'],
     ['wallHeight','Wall height ft (any number, decimals OK e.g. 8.5)'],['extraLightsInterior','Extra interior lights (count)'],['extraLightsExterior','Extra exterior lights (count)'],['extraOutletsInterior','Extra interior outlets (count)'],['extraOutletsExterior','Extra exterior outlets (count)'],['electricSubpanel','Electric subpanel'],['threeWaySwitch','3-way switch'],['hurricaneTies','Hurricane ties'],['firewallWalls','Firewall (fire-rated) walls'],
     ['customerName','Customer name'],['customerAddress','Customer / job street address (city goes in city)'],['customerPhone1','Customer phone'],['customerPhone2','Customer 2nd phone (spouse/other contact)'],['customerEmail','Customer email'],['salesman','Salesman'],['additionalEstimateNotes','Notes for the estimate sheet (only when he says note/add a note)'],
     ['profitMode','Price by (total = pinned Total Project Price)'],['profitValue','Total price set to $ (with profitMode total)']
@@ -13495,8 +13520,8 @@ window.agbVoice=AGBVoiceCore.create({
   guard:function(f,a){
     /* Dollar fields / cost-line overrides: only a dollar amount he actually said (the number must be in his words). */
     /* Owner 11/18/2026: demo cost only from a spoken demo dollar amount (never 0 / a guess); otherwise the $1,300 page default stays. */
-    if(f.id==='demoCostInput'){ const n=Number(String(f.value).replace(/[^0-9.]/g,'')); const u=String(window._agbLastUtter||''); if(!(n>=100)||!/demo|tear|remov|haul|wreck|knock/i.test(u)||!window.agbNumbersSaid(u).some(x=>Math.abs(x-n)<0.5)) return false; }
-    if(window.agbIsDollarField(f.id)){ const n=Number(String(f.value).replace(/[^0-9.]/g,'')); const said=window.agbNumbersSaid(window._agbLastUtter||''); if(!(n>=0)||!said.some(x=>Math.abs(x-n)<0.5)) return false; f.value=String(n); }
+    if(f.id==='demoCostInput'){ const n=Number(String(f.value).replace(/[^0-9.]/g,'')); const u=String(window._agbLastUtter||''); const said=f.delta!=null?Math.abs(f.delta):n; if(!(n>=100)||!/demo|tear|remov|haul|wreck|knock/i.test(u)||!window.agbNumbersSaid(u).some(x=>Math.abs(x-said)<0.5)) return false; }
+    if(window.agbIsDollarField(f.id)){ const n=Number(String(f.value).replace(/[^0-9.]/g,'')); const said=window.agbNumbersSaid(window._agbLastUtter||''); const chk=f.delta!=null?Math.abs(f.delta):n; if(!(n>=0)||!said.some(x=>Math.abs(x-chk)<0.5)) return false; f.value=String(n); }
     if(f.id==='customerPhone1'||f.id==='customerPhone2'){ const v=window.agbNormPhone(f.value); if(!v) return false; f.value=v; }
     if(f.id==='customerEmail'){ const v=window.agbNormEmail(f.value); if(!v) return false; f.value=v; }
     if(f.id==='additionalEstimateNotes'){ const cur=(document.getElementById('additionalEstimateNotes')||{}).value||''; const add=String(f.value||'').trim(); if(!add) return false; if(cur.includes(add)) return false; if(cur) f.value=cur.replace(/\s+$/,'')+'\n'+add; }
@@ -13546,6 +13571,8 @@ window.agbVoice=AGBVoiceCore.create({
   preApply:function(a){ return window.agbPreApply(a); },
   knowledgePack:function(){ return window.agbKnowledgePack(); }, breakdown:function(){ return window.agbBreakdown(); }, searchInfo:function(q){ return window.agbSearchInfo(q); },
   hideOnCard:['profitMode'], linked:{profitValue:['profitMode']},
+  lingo:function(t){ return window.agbLingoFromSpeech(t); },
+  isDollar:function(id){ return window.agbIsDollarField(id); },
   extraParse:function(t){ const pend=window._agbXtraPending; if(pend&&document.getElementById(pend)){ const n=window.agbNumbersSaid(t).filter(x=>x>0); const nm=((document.getElementById(pend)||{}).dataset||{}).name||''; const OK=new Set(('it its it\'s is make about around for the a dollars dollar bucks and um uh okay ok so hundred thousand grand k say lets let\'s one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen twenty thirty forty fifty sixty seventy eighty ninety '+nm.toLowerCase()).split(/\s+/)); const rest=String(t).toLowerCase().replace(/[$,.!?]/g,' ').split(/\s+/).filter(w=>w&&!/^\d+(\.\d+)?k?$/.test(w)&&!OK.has(w));
       if(n.length===1&&rest.length===0){ window._agbXtraPending=null; return [{id:pend,value:String(n[0]),heard:t}].concat(window.agbExtraParse0(t)); } } return window.agbExtraParse0(t); },
   afterCommit:function(props){ let re=false; Object.keys(props).forEach(id=>{ if(!/^lineov_/.test(id)||!props[id].on) return; const el=document.getElementById(id); const k=el&&el.dataset.key; const o=window._summaryLineOverrides||{}; if(k&&Number(o[k])!==Number(props[id].v)){ o[k]=Number(props[id].v); window._summaryLineOverrides=o; re=true; } }); if(re){ try{ saveSummaryOverrides(); calculateEstimate(); }catch(e){} }

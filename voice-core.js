@@ -10,7 +10,7 @@
    and fires their normal input/change events, so prices/city rules/AI prompt/sheet update like manual entry. */
 window.AGBVoiceCore={create:function(cfg){
   const $=id=>document.getElementById(id);
-  const VCV='20261110b'; window.agbVoiceVersion=VCV;
+  const VCV='20261123a'; window.agbVoiceVersion=VCV;
   /* SESSION LOG (for the "Report problem" button): what he said, what the helper said, every tool call and result, errors.
      Kept in memory, mirrored to this device's localStorage (last session only). No database. */
   const sess=[]; let sessMeta={model:'',started:''}, savedAt=0;
@@ -66,6 +66,18 @@ window.AGBVoiceCore={create:function(cfg){
     if(k==='select'&&el.dataset&&el.dataset.customNumber==='1'){ const m=v.match(/^(\d{1,2}(?:\.\d+)?)\s*(?:ft|feet|foot|')?\.?$/i); if(m&&!optsOf(el).some(x=>x[0]===v)) return String(Number(m[1])); }
     if(k==='select'){ const o=optsOf(el), lv=v.toLowerCase(); const m=o.find(x=>x[0].toLowerCase()===lv)||o.find(x=>x[1].toLowerCase()===lv)||o.find(x=>x[1].toLowerCase().replace(/,\s*il$/,'')===lv)||o.find(x=>x[1].toLowerCase().replace(/\s*\(.*\)\s*$/,'')===lv); if(m) return m[0]; const fz=fuzzyOpt(el,v); return fz.one; }
     return v||null; }
+  /* RELATIVE PRICE BOXES (owner 11/23/2026): "bump demo up 100" arrives as value "+100" -> current box amount (default or already
+     entered) + 100, entered like typing. The same instruction heard by BOTH the local parser and the AI (within 8 s) is applied once; a repeat from the same source is a new bump. */
+  /* HELD PRICES: the AI's tool call often lands before his transcript, so the "amount must be in his words" check saw the
+     previous sentence and dropped "demo is 1800". A blocked price is held and re-checked once his transcript arrives (7 s). */
+  let held=[];
+  function retryHeld(){ const now=Date.now(), list=held.filter(x=>now-x.at<7000); held=[]; if(list.length){ slog('held','re-check '+list.map(x=>x.f.id+'='+x.f.value).join(', ')); apply({fields:list.map(x=>x.f)}); } }
+  const relLast={}, aiSetAt={}; window._agbAiSetAt=aiSetAt;
+  function relApply(f){ if(!f) return true; const raw=String(f.value==null?'':f.value).trim(); const m=raw.match(/^([+\-])\s*\$?\s*(\d[\d,]*(?:\.\d+)?)$/); if(!m) return true;
+    const el=$(f.id); if(!el||kindOf(el)!=='number') return false; const d=(m[1]==='-'?-1:1)*Number(m[2].replace(/,/g,'')); if(!isFinite(d)||!d) return false;
+    const src=f.box?'local':'ai', L=relLast[f.id]; if(L&&L.d===d&&L.src!==src&&!L.paired&&Date.now()-L.at<8000){ L.paired=true; return false; } relLast[f.id]={d,at:Date.now(),src};
+    let cur=parseFloat(String(el.value).replace(/[$,\s]/g,'')); if(!isFinite(cur)) cur=parseFloat(el.dataset&&el.dataset.base)||0;
+    f.delta=d; f.base=cur; f.value=String(Math.max(0,Math.round((cur+d)*100)/100)); slog('relative',f.id+' '+cur+' '+(d>0?'+':'')+d+' -> '+f.value); return true; }
   function plain(id,v){ const el=$(id),k=kindOf(el); if(k==='bool') return v?'Yes':'No'; if(k==='select'){ const o=optsOf(el).find(x=>x[0]===String(v)); return o?o[1]:v; } return String(v); }
 
   function apply(a){ // from set_estimate_fields
@@ -74,8 +86,12 @@ window.AGBVoiceCore={create:function(cfg){
     refreshFields(); const ambig=[]; const noteTxt=String(a.notes||window._agbLastNote||'').toLowerCase();
     if(a.notes) addNote(a.notes,a.notes);
     const asked=new Set((a.questions||[]).map(q=>q&&q.fieldId));
-    (a.fields||[]).forEach(f=>{ if(f&&f.id==='additionalEstimateNotes'&&a.notes) return; if(f&&f.id!=='additionalEstimateNotes'&&noteTxt&&f.heard&&noteTxt.includes(String(f.heard).toLowerCase().trim())) return; if(asked.has(f.id)&&(/^(none|)$/i.test(String(f.value||'').trim())||!(cfg.keepAsked||[]).includes(f.id))){ const pv=norm(f.id,f.value); if(pv!==null&&!/^(none|)$/i.test(String(f.value||'').trim())) pending[f.id]=pv; return; } if(cfg.guard&&cfg.guard(f,a)===false) return;
-      const v=norm(f.id,f.value); if(v===null){ const el=$(f.id); if(el&&kindOf(el)==='select'){ const fz=fuzzyOpt(el,f.value); if(fz.many.length>1){ ambig.push({fieldId:f.id,question:'Which '+String(LABEL[f.id]||f.id).replace(/\s*\(.*$/,'').toLowerCase()+' — '+fz.many.slice(0,8).map(x=>x[1].replace(/\s*\(\+?\$[^)]*\)/g,'')).join(', ')+'?',options:fz.many.slice(0,9).map(x=>x[1])}); return; } } if(f.id) unknown.push(f.id+': '+f.value); return; } props[f.id]={v,on:true,heard:f.heard||'',orig:v}; });
+    (a.fields||[]).forEach(f=>{ if(f&&f.id==='additionalEstimateNotes'&&a.notes) return; if(f&&f.id!=='additionalEstimateNotes'&&noteTxt&&f.heard&&noteTxt.includes(String(f.heard).toLowerCase().trim())) return; if(asked.has(f.id)&&(/^(none|)$/i.test(String(f.value||'').trim())||!(cfg.keepAsked||[]).includes(f.id))){ const pv=norm(f.id,f.value); if(pv!==null&&!/^(none|)$/i.test(String(f.value||'').trim())) pending[f.id]=pv; return; } const f0=Object.assign({},f); if(relApply(f)===false) return; if(cfg.guard&&cfg.guard(f,a)===false){ if(!f.box&&!f._held&&cfg.isDollar&&cfg.isDollar(f.id)) held.push({f:Object.assign(f0,{_held:true}),at:Date.now()}); return; }
+      const v=norm(f.id,f.value); if(v!==null&&!f.box) aiSetAt[f.id]=Date.now(); if(v===null){ const el=$(f.id); if(el&&kindOf(el)==='select'){ const fz=fuzzyOpt(el,f.value); if(fz.many.length>1){ ambig.push({fieldId:f.id,question:'Which '+String(LABEL[f.id]||f.id).replace(/\s*\(.*$/,'').toLowerCase()+' — '+fz.many.slice(0,8).map(x=>x[1].replace(/\s*\(\+?\$[^)]*\)/g,'')).join(', ')+'?',options:fz.many.slice(0,9).map(x=>x[1])}); return; } } if(f.id) unknown.push(f.id+': '+f.value); return; } props[f.id]={v,on:true,heard:f.heard||'',orig:v}; });
+    /* models sometimes put the walk-door list into fields (id side_doors) or say wall "back": normalise before use */
+    (a.fields||[]).forEach(f=>{ if(f&&f.id==='side_doors'&&!Array.isArray(a.side_doors)){ let v=f.value; if(typeof v==='string'){ try{ v=JSON.parse(v); }catch(e){ try{ v=JSON.parse(v.replace(/'/g,'"').replace(/\bNone\b/g,'null').replace(/\bTrue\b/g,'true').replace(/\bFalse\b/g,'false')); }catch(e2){ v=null; } } } if(Array.isArray(v)) a.side_doors=v; } });
+    if(a.fields) a.fields=a.fields.filter(f=>!(f&&f.id==='side_doors'));
+    if(Array.isArray(a.side_doors)) a.side_doors=a.side_doors.map(d=>d&&Object.assign({},d,{wall:({back:'rear',rear:'rear',behind:'rear','front left':'front-left','front right':'front-right'})[String(d.wall||'').toLowerCase()]||d.wall}));
     if(Array.isArray(a.side_doors)) doors={list:a.side_doors.filter(d=>d&&d.type&&d.wall),on:true};
     if(Array.isArray(a.questions)||ambig.length) questions=(a.questions||[]).filter(q=>q&&q.question).map(q=>({fieldId:q.fieldId,question:q.question,options:(q.options||[]).slice(0,9)})).concat(ambig.filter(x=>!(a.questions||[]).some(q=>q&&q.fieldId===x.fieldId)));
     pre.forEach(q=>{ questions=questions.filter(x=>x.fieldId!==q.fieldId); questions.push(q); });
@@ -98,7 +114,8 @@ window.AGBVoiceCore={create:function(cfg){
     FIELDS.forEach(([id])=>{ const p=props[id]; if(!p) return;
       const want=p.on?p.v:prevVals[id]; const before=curVal(id); setEl(id,want); if(String(curVal(id))!==String(before)) changed=true; });
     if(doors&&cfg.fillDoors){ const sj=$('sideDoorsJson'); if(doorsPrev===null) doorsPrev=sj?sj.value:'';
-      if(doors.on&&!doorsApplied){ cfg.fillDoors(doors.list); doorsApplied=true; changed=true; }
+      /* a NEW door list later in the session ("put a party door in the back too") must be applied too, not only the first one */
+      if(doors.on&&(!doorsApplied||doorsApplied!==JSON.stringify(doors.list))){ cfg.fillDoors(doors.list); doorsApplied=JSON.stringify(doors.list); changed=true; }
       else if(!doors.on&&doorsApplied){ if(sj){ sj.value=doorsPrev; try{ agbDoorsToggle(); }catch(e){} } doorsApplied=false; changed=true; } }
     if(changed){ try{ cfg.afterFill&&cfg.afterFill(); }catch(e){} } try{ cfg.afterCommit&&cfg.afterCommit(props,doors); }catch(e){} }
   function render(){ commit();
@@ -149,15 +166,28 @@ window.AGBVoiceCore={create:function(cfg){
   const NUMW={zero:0,one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10,eleven:11,twelve:12,thirteen:13,fourteen:14,fifteen:15,sixteen:16,seventeen:17,eighteen:18,nineteen:19,twenty:20,thirty:30,forty:40,fifty:50};
   function words2num(t){ return String(t).toLowerCase().replace(/\b(twenty|thirty|forty|fifty)[\s-]+(one|two|three|four|five|six|seven|eight|nine)\b/g,(m,a,b)=>String(NUMW[a]+NUMW[b]))
       .replace(/\b(zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty)\b/g,m=>String(NUMW[m])); }
-  function parseDims(t){ const s=words2num(t).replace(/[′’']/g,' ').replace(/\b(feet|foot|ft)\b/g,' '); let m, r={};
-    if((m=s.match(/\b(\d{2}(?:\.5)?)\s*(?:x|×|by|bye|buy|times)\s*(\d{2}(?:\.5)?)\b/))){ r.w=+m[1]; r.d=+m[2]; r.heard=m[0]; }
-    else { if((m=s.match(/\b(\d{2}(?:\.5)?)\s*(?:wide|width|across)\b/))||(m=s.match(/\bwidth\s*(?:of|is)?\s*(\d{2}(?:\.5)?)\b/))){ r.w=+m[1]; r.heard=m[0]; }
-      if((m=s.match(/\b(\d{2}(?:\.5)?)\s*(?:deep|depth|long)\b/))||(m=s.match(/\bdepth\s*(?:of|is)?\s*(\d{2}(?:\.5)?)\b/))){ r.d=+m[1]; r.heard=(r.heard?r.heard+', ':'')+m[0]; } }
+  /* Sizes (11/23/2026): "20 by 20", "20x20", "20-by-20", "twenty twenty two", "24 30" -> width/depth without saying "garage size".
+     Every size in the sentence is checked: old-slab / demo / door / pad / sidewalk sizes are skipped; the last garage size wins (a correction). */
+  const DIM_SKIP=/^(old|existing|current|demo|demolish|demolition|tear|torn|remove|removal|haul|slab|pad|patio|sidewalk|driveway|parkway|door|doors|opening|window|lot|yard|house|room|shed|deck|overhang|apron)$/, DIM_KEEP=/^(new|build|make|it'?s|its|actually|instead|change|garage|size)$/;
+  /* context of a size: walk back over the last 6 words; a demo/old-slab/door/pad word means it is not the new garage size ("old garage" too) */
+  function dimSkip(pre){ const w=String(pre||'').toLowerCase().replace(/[^a-z0-9' ]/g,' ').split(/\s+/).filter(Boolean).slice(-6);
+    for(let i=w.length-1;i>=0;i--){ const x=w[i]; if(x==='garage'&&/^(old|existing|current)$/.test(w[i-1]||'')) return true; if(x==='one'&&/^(old|existing)$/.test(w[i-1]||'')) return true; if(DIM_SKIP.test(x)) return !(x==='slab'&&w[i-1]==='new'); if(DIM_KEEP.test(x)) return false; } return false; }
+  function parseDims(t){ const s=words2num(t).replace(/[′’']/g,' ').replace(/(\d)\s*-\s*(by|x)\s*-\s*(\d)/gi,'$1 $2 $3').replace(/\b(feet|foot|ft)\b/g,' '); let m, r={};
+    const N='(\\d{2}(?:\\.5)?)', re=new RegExp('\\b'+N+'\\s*(?:x|×|by|bye|buy|times)\\s*'+N+'\\b','g'); const cand=[];
+    while((m=re.exec(s))){ const pre=s.slice(Math.max(0,m.index-40),m.index).toLowerCase(); if(dimSkip(pre)) continue; cand.push(m); }
+    if(!cand.length){ const re2=new RegExp('(?:^|[^\\d.$#])'+N+'\\s+'+N+'(?![\\d.]|\\s*(?:hundred|thousand|grand|k\\b|dollars?|bucks|%|percent|inch|inches|in\\b|amp|minutes|years|am\\b|pm\\b|street|st\\b|ave|avenue|road|rd\\b|lane|drive|court|place|way|blvd))','g');
+      if(!/\b(phone|number|call|cell|address|street|avenue|dollars?|bucks|\$|price|cost|charge)\b/i.test(s)) while((m=re2.exec(s))){ const a=+m[1], b=+m[2]; const pre=s.slice(Math.max(0,m.index-40),m.index+1).toLowerCase(); if(a>=10&&a<=60&&b>=10&&b<=60&&!dimSkip(pre)){ cand.push([m[0].replace(/^[^\d]+/,''),m[1],m[2]]); } } }
+    if(!cand.length&&!/\b(phone|number|call|cell|address|street|avenue|dollars?|bucks|\$|price|cost|charge|year)\b/i.test(s)){ const re4=/(?:^|[^\d.$#])((1[2-9]|[2-5]\d)(1[2-9]|[2-5]\d))(?![\d.]|\s*(?:n\b|s\b|e\b|w\b|north|south|east|west|street|st\b|ave|avenue|road|rd\b|lane|drive|court|place|way|blvd|dollars?|bucks|hundred))/g;
+      while((m=re4.exec(s))){ const pre=s.slice(Math.max(0,m.index-40),m.index+1); if(/\b(at|on|lives|address)\W*$/i.test(pre)||dimSkip(pre)) continue; cand.push([m[1],m[2],m[3]]); } }
+    if(cand.length){ const c=cand[cand.length-1]; r.w=+c[1]; r.d=+c[2]; r.heard=c[0]; }
+    else { if((m=s.match(/\b(\d{2}(?:\.5)?)\s*(?:wide|width|across)\b/))||(m=s.match(/\bwidth\s*(?:of|is|to)?\s*(\d{2}(?:\.5)?)\b/))){ r.w=+m[1]; r.heard=m[0]; }
+      if((m=s.match(/\b(\d{2}(?:\.5)?)\s*(?:deep|depth|long|back)\b/))||(m=s.match(/\bdepth\s*(?:of|is|to)?\s*(\d{2}(?:\.5)?)\b/))){ r.d=+m[1]; r.heard=(r.heard?r.heard+', ':'')+m[0]; } }
     ['w','d'].forEach(k=>{ if(r[k]!=null&&(r[k]<8||r[k]>60)) delete r[k]; }); return (r.w!=null||r.d!=null)?r:null; }
+  window._agbParseDims=parseDims;
   function setDim(id,cid,n,heard){ const el=$(id); if(!el) return; const opt=optsOf(el).some(o=>o[0]===String(n));
     if(opt){ props[id]={v:String(n),on:true,heard,orig:String(n)}; delete props[cid]; }
     else if($(cid)&&optsOf(el).some(o=>o[0]==='custom')){ props[id]={v:'custom',on:true,heard,orig:'custom'}; props[cid]={v:n,on:true,heard,orig:n}; } }
-  function extraFromSpeech(t){ if(!cfg.extraParse) return false; const list=cfg.extraParse(t)||[]; list.forEach(f=>{ const v=norm(f.id,f.value); if(v!==null) props[f.id]={v,on:true,heard:f.heard||t,orig:v}; questions=questions.filter(q=>q.fieldId!==f.id); }); return list.length>0; }
+  function extraFromSpeech(t){ if(!cfg.extraParse) return false; const list=cfg.extraParse(t)||[]; list.forEach(f=>{ if(f.box){ if(relApply(f)===false) return; if(cfg.guard&&cfg.guard(f,{})===false) return; } const v=norm(f.id,f.value); if(v!==null) props[f.id]={v,on:true,heard:f.heard||t,orig:v}; questions=questions.filter(q=>q.fieldId!==f.id); }); return list.length>0; }
   function dimsFromSpeech(t){ if(!cfg.dims) return false; const r=parseDims(t); if(!r) return false; const [W,D,CW,CD]=cfg.dims;
     if(r.w!=null) setDim(W,CW,r.w,r.heard); if(r.d!=null) setDim(D,CD,r.d,r.heard);
     questions=questions.filter(q=>!((r.w!=null&&(q.fieldId===W||q.fieldId===CW))||(r.d!=null&&(q.fieldId===D||q.fieldId===CD))));
@@ -208,10 +238,10 @@ window.AGBVoiceCore={create:function(cfg){
     $('agbvMic').disabled=true; status('Listening…');
     unlockAudio(); // must run inside the Talk tap (iPhone)
     try{
-      mic=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:false,channelCount:1}});
+      mic=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true,channelCount:1}});
       const ov={}; try{ ['Tx','Effort','Model'].forEach(k=>{ const v=localStorage.getItem('agbVoice'+k); if(v) ov[k.toLowerCase()]=v; }); }catch(e){}
       sess.length=0; sessMeta={model:'',started:new Date().toString()}; slog('start','voice-core '+VCV+' page '+(cfg.page||'estimator')+(Object.keys(ov).length?' overrides '+JSON.stringify(ov):''));
-      const tok=await callFn(Object.assign({mode:'realtime',page:cfg.page||'',catalog:catalog(),current:current(),knowledge:(cfg.knowledgePack?cfg.knowledgePack():''),breakdown:(cfg.breakdown?cfg.breakdown():''),learned:learnedText()},ov)); sessMeta.model=tok.model||''; slog('token','model '+(tok.model||'?'));
+      const tok=await callFn(Object.assign({mode:'realtime',vc:VCV,page:cfg.page||'',catalog:catalog(),current:current(),knowledge:(cfg.knowledgePack?cfg.knowledgePack():''),breakdown:(cfg.breakdown?cfg.breakdown():''),learned:learnedText()},ov)); sessMeta.model=tok.model||''; slog('token','model '+(tok.model||'?'));
       pc=new RTCPeerConnection();
       pc.ontrack=e=>{ playRemote(e.streams[0]||new MediaStream([e.track])); };
       pc.addTrack(mic.getTracks()[0],mic);
@@ -273,7 +303,12 @@ window.AGBVoiceCore={create:function(cfg){
     return keep.join(' '); }
   window._agbStatementOnly=statementOnly;
   function localParse(txt,dims){ const ns=cfg.splitNote?cfg.splitNote(txt):null; window._agbLastNote=ns&&ns.note?ns.note:''; const body=statementOnly(ns?ns.before:txt); if(!body&&!(ns&&ns.note)) return;
-    answerFromSpeech(body); if(dims!==false) dimsFromSpeech(body); extraFromSpeech(body); if(ns&&ns.note) addNote(ns.note,ns.heard); }
+    answerFromSpeech(body); if(dims!==false) dimsFromSpeech(body); extraFromSpeech(body); lingoFromSpeech(body); if(ns&&ns.note) addNote(ns.note,ns.heard); }
+  /* LINGO SAFETY NET (11/23/2026): clear garage words the AI sometimes skips in a long sentence ("reverse gable, smart side",
+     "throw gutters on it"). Fills only fields the AI did not set in the last 6 s; the AI's own values always win. */
+  function lingoFromSpeech(t){ if(!cfg.lingo) return; let list=[]; try{ list=cfg.lingo(t)||[]; }catch(e){ return; }
+    list.forEach(f=>{ if(!f||!$(f.id)) return; if(aiSetAt[f.id]&&Date.now()-aiSetAt[f.id]<6000) return; const v=norm(f.id,f.value); if(v===null) return;
+      if(props[f.id]&&String(props[f.id].v)===String(v)) return; props[f.id]={v,on:true,heard:f.heard||t,orig:v}; slog('lingo',f.id+'='+v); }); }
   function addNote(n,h){ const f={id:'additionalEstimateNotes',value:String(n||'').trim(),heard:h||n}; if(!f.value||!$(f.id)) return; if(cfg.guard&&cfg.guard(f,{})===false) return; props[f.id]={v:f.value,on:true,heard:f.heard,orig:f.value}; }
   function answerFromSpeech(t){ const N=x=>String(x||'').toLowerCase().replace(/\(\+?\$[^)]*\)/g,'').replace(/\bby\b/g,'x').replace(/[^a-z0-9]/g,''); const T=N(t); if(!T) return;
     for(let i=questions.length-1;i>=0;i--){ const q=questions[i]; if(!q.fieldId||!q.options||!q.options.length) continue; const hit=q.options.map((o,j)=>[N(o),j]).filter(([o])=>o&&T.includes(o)); if(hit.length===1) answer(i,hit[0][1]); } }
@@ -286,7 +321,7 @@ window.AGBVoiceCore={create:function(cfg){
     lastUserTxt=tx; window._agbLastUtter=tx; lastAct=userAct=Date.now(); stillAsked=false;
     if(aiTalking){ send({type:'response.cancel'}); send({type:'output_audio_buffer.clear'}); setTalking(false); respActive=false; respPending=false; }
     if(!(sp&&sp.responded)) askResponse(); if(sp) sp.responded=true;
-    status('Listening… (updating estimate)'); log('u',tx); lastAct=Date.now(); heardSpeech=true; heard(tx); voicedYes(tx); localParse(tx); render(); }
+    status('Listening… (updating estimate)'); log('u',tx); lastAct=Date.now(); heardSpeech=true; heard(tx); voicedYes(tx); localParse(tx); render(); retryHeld(); }
   function onEvent(ev){
     const t=ev.type;
     if(t==='input_audio_buffer.speech_started'){ heardSpeech=true; const id=ev.item_id; if(id){ spk[id]={during:aiTalking||Date.now()-aiStopAt<=600,timer:0,responded:false}; const ks=Object.keys(spk); if(ks.length>30) delete spk[ks[0]]; } if(!aiTalking) status('Hearing you…'); }
@@ -375,7 +410,7 @@ window.AGBVoiceCore={create:function(cfg){
     if(live()){ log('u',txt); heard(txt); voicedYes(txt); localParse(txt); render(); say(txt); return; }
     status('Reading…');
     window._agbLastUtter=txt;
-    try{ const d=await callFn({mode:'text',page:cfg.page||'',catalog:catalog(),current:current(),knowledge:(cfg.knowledgePack?cfg.knowledgePack():''),breakdown:(cfg.breakdown?cfg.breakdown():''),learned:learnedText(),transcript:txt}); window.agbVoiceLastText=d; heard(txt); voicedYes(txt); const ns0=cfg.splitNote?cfg.splitNote(txt):null; window._agbLastNote=(d.notes||(ns0&&ns0.note)||''); apply(d); const W=(cfg.dims||[])[0]; const hadNote=!!d.notes; localParse(txt,!(d.fields||[]).some(f=>f.id===W)); if(hadNote&&ns0&&ns0.note&&props.additionalEstimateNotes){}  answerTyped(d); render(); status(questions.length?'Answer the questions below — everything else is already on the estimate.':'Set on the estimate — uncheck anything that is wrong.'); }
+    try{ const d=await callFn({mode:'text',vc:VCV,page:cfg.page||'',catalog:catalog(),current:current(),knowledge:(cfg.knowledgePack?cfg.knowledgePack():''),breakdown:(cfg.breakdown?cfg.breakdown():''),learned:learnedText(),transcript:txt}); window.agbVoiceLastText=d; heard(txt); voicedYes(txt); const ns0=cfg.splitNote?cfg.splitNote(txt):null; window._agbLastNote=(d.notes||(ns0&&ns0.note)||''); apply(d); const W=(cfg.dims||[])[0]; const hadNote=!!d.notes; localParse(txt,!(d.fields||[]).some(f=>f.id===W)); if(hadNote&&ns0&&ns0.note&&props.additionalEstimateNotes){}  answerTyped(d); render(); status(questions.length?'Answer the questions below — everything else is already on the estimate.':'Set on the estimate — uncheck anything that is wrong.'); }
     catch(e){ status('Could not read that ('+(e.message||e)+').'); }
   }
   async function answerTyped(d){ if(!d) return; let parts=[];
@@ -390,5 +425,5 @@ window.AGBVoiceCore={create:function(cfg){
   function reset(){ props={}; doors=null; questions=[]; unknown=[]; pending={}; heardTxt=''; prevVals={}; doorsPrev=null; doorsApplied=false; const h=$('agbvHeard'); if(h) h.remove(); render(); }
   function fill(){ /* "Done": values are already on the estimate; just close the list */ if(live()) stop('Done — everything is on the estimate.'); else status('Done — everything is on the estimate.'); reset(); }
   function clear(){ /* "Undo all": revert every control voice changed */ Object.keys(props).forEach(id=>props[id].on=false); if(doors) doors.on=false; commit(); status('Undid everything voice set.'); reset(); }
-  return {toggle:()=>live()||pc?stop('Voice stopped.'):start(), sendText, fill, clear, catalog, _apply:apply, learned, _jobStatus:jobStatus, _state:()=>({props,doors,questions,unknown}), usage:()=>usage, /* offline test hook: fake data channel, feed events */ _pushBreakdown:pushBreakdown, _priceInfo:q=>cfg.priceInfo?cfg.priceInfo(q):null, _sim:()=>{ window.agbVoiceSent=[]; dc={readyState:'open',send:m=>window.agbVoiceSent.push(JSON.parse(m)),close(){}}; return onEvent; }};
+  return {toggle:()=>live()||pc?stop('Voice stopped.'):start(), sendText, fill, clear, catalog, _apply:apply, learned, _jobStatus:jobStatus, _state:()=>({props,doors,questions,unknown}), usage:()=>usage, /* offline test hook: fake data channel, feed events */ _pushBreakdown:pushBreakdown, _priceInfo:q=>cfg.priceInfo?cfg.priceInfo(q):null, _rel:relApply, _sim:()=>{ window.agbVoiceSent=[]; dc={readyState:'open',send:m=>window.agbVoiceSent.push(JSON.parse(m)),close(){}}; return onEvent; }};
 }};

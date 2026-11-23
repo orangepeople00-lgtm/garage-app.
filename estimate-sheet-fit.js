@@ -1,11 +1,14 @@
-/* Estimate sheet print/PDF fit: keep the full sheet (especially the price
+/* Estimate sheet print/PDF fit v2: keep the full sheet (especially the price
    and footer) inside a 0.5in safe inset on Letter paper so browser print
    margins and printer unprintable areas cannot clip the total. Long sheets
    scale down to one page until 0.70, then break to a second page without
-   splitting the total box. */
+   splitting the total box. This installer always wins over older baked-in
+   Download PDF functions in saved History sheets, and captures the sheet
+   inside the viewport so a short laptop popup cannot clip the price. */
 (function(global){
   var SAFE_MARGIN = 0.5; // inches
   var MIN_FIT = 0.70;
+  var AGB_SHEET_FIT_V = '2';
 
   function pageSize(){
     var landscape=false;
@@ -17,6 +20,16 @@
       }
     }catch(_){}
     return landscape ? {w:11,h:8.5,orient:'landscape'} : {w:8.5,h:11,orient:'portrait'};
+  }
+
+  function pxPerIn(doc){
+    doc=doc||document;
+    var d=doc.createElement('div');
+    d.style.cssText='position:absolute;left:-9999px;top:0;width:1in;height:1in;margin:0;padding:0;border:0;';
+    (doc.body||doc.documentElement).appendChild(d);
+    var n=d.getBoundingClientRect().width;
+    d.parentNode.removeChild(d);
+    return (n>0)?n:96;
   }
 
   function installPrintCss(doc){
@@ -89,9 +102,10 @@
     clearSheetPrintScale();
     installPrintCss(document);
     var pg=pageSize();
+    var ppi=pxPerIn(document);
     unclampSheet(sheet, pg);
     var maxW=pg.w-2*SAFE_MARGIN, maxH=pg.h-2*SAFE_MARGIN;
-    var hIn=Math.max(sheet.scrollHeight, sheet.getBoundingClientRect().height)/96;
+    var hIn=Math.max(sheet.scrollHeight, sheet.getBoundingClientRect().height)/ppi;
     if(!(hIn>0)) hIn=pg.h;
     var fit=Math.min(maxW/pg.w, maxH/hIn, 1);
 
@@ -108,7 +122,7 @@
       wrap.style.overflow='visible';
       sheet.style.transformOrigin='top left';
       sheet.style.transform='translate('+SAFE_MARGIN+'in,'+SAFE_MARGIN+'in) scale('+sw+')';
-      sheet.style.marginBottom=((sw-1)*hIn*96+SAFE_MARGIN*96)+'px';
+      sheet.style.marginBottom=((sw-1)*hIn*ppi+SAFE_MARGIN*ppi)+'px';
       return;
     }
 
@@ -120,11 +134,39 @@
     sheet.style.transform='translate('+tx+'in,'+ty+'in) scale('+fit+')';
   }
 
+  function isDownloadPdfControl(el){
+    if(!el || !el.getAttribute) return false;
+    var oc=el.getAttribute('onclick')||'';
+    if(/downloadEstimatePdf/.test(oc)) return true;
+    var label=((el.textContent||'')+' '+(el.getAttribute('aria-label')||'')+' '+(el.id||'')+' '+(el.className||'')).replace(/\s+/g,' ');
+    if(/download\s*pdf/i.test(label)) return true;
+    if(/\bdownload\b/i.test(el.className||'') && /pdf/i.test(label+oc)) return true;
+    return false;
+  }
+
+  function bindDownloadButtons(doc){
+    doc=doc||document;
+    var nodes=doc.querySelectorAll('button, a, input[type="button"], [onclick]');
+    for(var i=0;i<nodes.length;i++){
+      var el=nodes[i];
+      if(!isDownloadPdfControl(el)) continue;
+      try{ el.setAttribute('onclick','return false;'); }catch(_){}
+      el.onclick=function(ev){
+        if(ev){ try{ ev.preventDefault(); ev.stopPropagation(); ev.stopImmediatePropagation(); }catch(_){} }
+        downloadEstimatePdf();
+        return false;
+      };
+    }
+  }
+
   async function downloadEstimatePdf(){
     var sheet=document.querySelector('.sheet');
     if(!sheet) return;
     var filename=(document.title||'Absolute Garage Builders Estimate').replace(/[\\/:*?"<>|]+/g,'-')+'.pdf';
     var exportHost=null;
+    var prevHtmlOverflow='';
+    var prevBodyOverflow='';
+    var prevScrollX=0, prevScrollY=0;
     var isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
     var canvasScale=isIOS?1.5:2;
     try{
@@ -137,7 +179,7 @@
 
       exportHost=document.createElement('div');
       exportHost.id='pdfExportHost';
-      exportHost.style.cssText='position:absolute;left:-20000px;top:0;background:#fff;overflow:visible;';
+      exportHost.style.cssText='position:absolute;left:0;top:0;background:#fff;overflow:visible;z-index:2147483646;';
       document.body.appendChild(exportHost);
 
       var clone=sheet.cloneNode(true);
@@ -202,6 +244,7 @@
       }));
       await new Promise(function(resolve){requestAnimationFrame(function(){requestAnimationFrame(resolve);});});
 
+      var ppi=pxPerIn(document);
       var rect=clone.getBoundingClientRect();
       var fullWidth=Math.ceil(Math.max(
         rect.width, clone.scrollWidth||0,
@@ -215,15 +258,37 @@
           try{ return el.getBoundingClientRect().bottom-rect.top; }catch(_){ return 0; }
         })))
       ));
+      var pad=Math.round(0.08*ppi);
+      var footer=clone.querySelector('.footer');
+      var total=clone.querySelector('.total-box');
+      if(footer){
+        var fb=footer.getBoundingClientRect().bottom-rect.top;
+        if(fb+pad>fullHeight) fullHeight=Math.ceil(fb+pad);
+      }else if(total){
+        var tb=total.getBoundingClientRect().bottom-rect.top;
+        if(tb+pad>fullHeight) fullHeight=Math.ceil(tb+pad);
+      }
+      fullHeight=Math.ceil(fullHeight+pad);
       exportHost.style.width=fullWidth+'px';
       exportHost.style.height=fullHeight+'px';
+
+      // Keep the clone in the viewport during capture. html2canvas otherwise
+      // clips a full letter sheet to a short popup (window.open 1000x1000).
+      prevHtmlOverflow=document.documentElement.style.overflow;
+      prevBodyOverflow=document.body.style.overflow;
+      prevScrollX=window.scrollX||0;
+      prevScrollY=window.scrollY||0;
+      document.documentElement.style.overflow='visible';
+      document.body.style.overflow='visible';
+      window.scrollTo(0,0);
+      var crect=clone.getBoundingClientRect();
 
       var worker=global.html2pdf().set({
         margin:0,
         image:{type:'jpeg', quality:0.92},
         html2canvas:{
           scale:canvasScale, useCORS:true, allowTaint:false, backgroundColor:'#ffffff',
-          logging:false, scrollX:0, scrollY:0, x:0, y:0,
+          logging:false, scrollX:-crect.left, scrollY:-crect.top, x:0, y:0,
           width:fullWidth, height:fullHeight, windowWidth:fullWidth, windowHeight:fullHeight
         },
         jsPDF:{unit:'in',format:'letter',orientation:pg.orient,compress:true}
@@ -239,8 +304,8 @@
 
       var pageW=pg.w, pageH=pg.h, margin=SAFE_MARGIN;
       var maxW=pageW-2*margin, maxH=pageH-2*margin;
-      var widthIn=fullWidth/96, heightIn=fullHeight/96;
-      if(!widthIn || !heightIn){ widthIn=canvas.width/96; heightIn=canvas.height/96; }
+      var widthIn=fullWidth/ppi, heightIn=fullHeight/ppi;
+      if(!widthIn || !heightIn){ widthIn=canvas.width/(canvasScale*ppi/2||96); heightIn=canvas.height/(canvasScale*ppi/2||96); }
       var fit=Math.min(maxW/widthIn, maxH/heightIn);
 
       var pdf=await worker.toPdf().get('pdf');
@@ -255,6 +320,8 @@
       if(fit>=MIN_FIT){
         var drawW=widthIn*fit, drawH=heightIn*fit;
         var x=(pageW-drawW)/2, y=(pageH-drawH)/2;
+        if(y<margin) y=margin;
+        if(x<margin) x=margin;
         fillPage();
         pdf.addImage(imgData, 'JPEG', x, y, drawW, drawH, undefined, 'FAST');
       }else{
@@ -263,8 +330,6 @@
         var sliceCanvasPx=maxH/s*pxPerInC;
         var cloneRect=clone.getBoundingClientRect();
         var scaleY=canvas.height/fullHeight;
-        var total=clone.querySelector('.total-box');
-        var footer=clone.querySelector('.footer');
         var keepTop=total ? (total.getBoundingClientRect().top-cloneRect.top)*scaleY : canvas.height;
         var keepBottom=footer ? (footer.getBoundingClientRect().bottom-cloneRect.top)*scaleY : (total? (total.getBoundingClientRect().bottom-cloneRect.top)*scaleY : canvas.height);
         var y0=0, first=true;
@@ -302,17 +367,49 @@
           : msg
       ));
     }finally{
+      try{
+        document.documentElement.style.overflow=prevHtmlOverflow;
+        document.body.style.overflow=prevBodyOverflow;
+        window.scrollTo(prevScrollX, prevScrollY);
+      }catch(_){}
       if(exportHost && exportHost.parentNode) exportHost.parentNode.removeChild(exportHost);
     }
+  }
+
+  function bindCaptureClick(win, doc){
+    if(win.__agbFitClickBound) return;
+    win.__agbFitClickBound=true;
+    doc.addEventListener('click', function(ev){
+      var el=ev.target;
+      while(el && el!==doc){
+        if(isDownloadPdfControl(el)){
+          try{ ev.preventDefault(); ev.stopPropagation(); ev.stopImmediatePropagation(); }catch(_){}
+          downloadEstimatePdf();
+          return;
+        }
+        el=el.parentNode;
+      }
+    }, true);
   }
 
   function install(win){
     win=win||global;
     var doc=win.document;
+    if(!doc) return;
     installPrintCss(doc);
     win.fitSheetToOnePrintedPage=fitSheetToOnePrintedPage;
     win.clearSheetPrintScale=clearSheetPrintScale;
     win.downloadEstimatePdf=downloadEstimatePdf;
+    win.__agbSheetFitV=AGB_SHEET_FIT_V;
+    try{
+      Object.defineProperty(win, 'downloadEstimatePdf', {
+        configurable:true, enumerable:true, writable:true, value:downloadEstimatePdf
+      });
+    }catch(_){
+      win.downloadEstimatePdf=downloadEstimatePdf;
+    }
+    bindDownloadButtons(doc);
+    bindCaptureClick(win, doc);
     try{
       win.removeEventListener('beforeprint', fitSheetToOnePrintedPage);
       win.removeEventListener('afterprint', clearSheetPrintScale);
@@ -321,10 +418,25 @@
     win.addEventListener('afterprint', clearSheetPrintScale);
   }
 
+  function scheduleInstall(win){
+    function go(){ try{ install(win); }catch(_){} }
+    var doc=win.document;
+    if(doc && doc.readyState==='loading'){
+      doc.addEventListener('DOMContentLoaded', go);
+    }else{
+      go();
+    }
+    if(win.addEventListener){
+      win.addEventListener('load', go);
+    }
+    try{
+      win.setTimeout(go, 0);
+      win.setTimeout(go, 250);
+    }catch(_){}
+  }
+
   global.agbInstallEstimateSheetFit=install;
-  if(global.document && global.document.readyState==='loading'){
-    global.document.addEventListener('DOMContentLoaded', function(){ install(global); });
-  }else{
-    try{ install(global); }catch(_){}
+  if(global.document){
+    scheduleInstall(global);
   }
 })(typeof window!=='undefined'?window:this);

@@ -234,6 +234,7 @@ body.estimator-mode .estimator-exit{display:block}
   <button class="tab" data-view="personalCalendar" onclick="setView('personalCalendar',this)">Personal Calendar</button>
   <button id="allPersonalCalendarsTab" class="tab hidden" data-view="allPersonalCalendars" onclick="setView('allPersonalCalendars',this)">All Personal Calendars</button>
   <button class="tab" data-view="estimator" onclick="window.location.href='estimator.html?v='+Date.now()">Estimator</button>
+  <button class="tab" type="button" onclick="window.location.href='site-measure.html?v='+Date.now()">Site Measure</button>
   <button class="tab" type="button" onclick="window.location.href='repair.html?v='+Date.now()">Repair</button>
   <button class="tab" data-view="drawing" onclick="window.location.href='Drawing.html?v='+Date.now()">Drawing</button>
   <button id="carpenterTab" class="tab" type="button" onclick="window.location.href='Carpenter.html?v='+Date.now()">Carpenter</button>
@@ -716,6 +717,7 @@ function renderHomeTiles(){
     ['Map','All jobs on a map',V('map'),'Sell'],
     ['Commissions & Stats',commissionAdmin()?'Sales, commission and stats':'Your sales, commission and stats',V('commission'),'Sell'],
     ['Estimator','Price a garage',L('estimator.html?v='),'Sell'],
+    ['Site Measure','Measure a garage or site on the phone',L('site-measure.html?v='),'Sell'],
     ['Repair','Price a repair',L('repair.html?v='),'Sell'],
     ['Repair History','Saved repair sheets','openRepairHistory()','Sell'],
     ['Drawing','Site sketch — starts blank',L('Drawing.html?fresh=1&v='),'Sell'],

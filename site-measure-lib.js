@@ -12,7 +12,11 @@
     { id: "oh9", label: "9' overhead door", short: "9' door", widthFt: 9, heightFt: 7, kind: "door" },
     { id: "oh8", label: "8' overhead door", short: "8' door", widthFt: 8, heightFt: 7, kind: "door" },
     { id: "service", label: "36\" service door", short: "36\" door", widthFt: 3, heightFt: 80 / 12, kind: "door" },
-    { id: "tape", label: "Custom tape length", short: "Tape", widthFt: null, heightFt: null, kind: "tape" }
+    { id: "ruler12", label: "12\" ruler", short: "12\" ruler", widthFt: 1, heightFt: null, kind: "small" },
+    { id: "tape6", label: "6\" tape", short: "6\" tape", widthFt: 0.5, heightFt: null, kind: "small" },
+    { id: "tape24", label: "24\" tape", short: "24\" tape", widthFt: 2, heightFt: null, kind: "small" },
+    { id: "brick8", label: "Standard brick (8\")", short: "8\" brick", widthFt: 8 / 12, heightFt: null, kind: "small" },
+    { id: "tape", label: "Custom tape length", short: "Custom", widthFt: null, heightFt: null, kind: "tape" }
   ];
 
   var DOOR_HEIGHTS = [
@@ -38,6 +42,8 @@
     "Pad width",
     "Driveway width",
     "Overhang / soffit",
+    "Edge to edge",
+    "Laser / tape",
     "Other"
   ];
 
@@ -90,23 +96,55 @@
     return Math.sqrt(dx * dx + dy * dy);
   }
 
+  /* Round a positive inch value to the nearest 1/16 and simplify. Returns {whole, num, den}. */
+  function inchParts(inches) {
+    var abs = Math.abs(inches);
+    var sixteenths = Math.round(abs * 16);
+    var whole = Math.floor(sixteenths / 16 + 1e-12);
+    var num = sixteenths - whole * 16;
+    var den = 16;
+    if (num === 0) return { whole: whole, num: 0, den: 1 };
+    while (num % 2 === 0 && den % 2 === 0) { num /= 2; den /= 2; }
+    return { whole: whole, num: num, den: den };
+  }
+
+  function formatInchesOnly(inches) {
+    var sign = inches < 0 ? "-" : "";
+    var p = inchParts(inches);
+    if (p.whole === 0 && p.num === 0) return "0\"";
+    if (p.num === 0) return sign + p.whole + "\"";
+    if (p.whole === 0) return sign + p.num + "/" + p.den + "\"";
+    return sign + p.whole + " " + p.num + "/" + p.den + "\"";
+  }
+
+  /* Short runs (< 2 ft) as 6 1/4" or 1' 6". Longer runs as 22'-4" or 22'-4 1/2". */
   function formatFeetInches(feet) {
     if (feet == null || !isFinite(feet)) return "—";
     var sign = feet < 0 ? "-" : "";
     var abs = Math.abs(feet);
-    var f = Math.floor(abs + 1e-10);
-    var inches = Math.round((abs - f) * 12);
-    if (inches === 12) {
-      f += 1;
-      inches = 0;
+    var totalSixteenth = Math.round(abs * 12 * 16);
+    if (totalSixteenth === 0) return "0\"";
+    var totalIn = totalSixteenth / 16;
+    if (abs < 2 - 1e-9) {
+      var ft = Math.floor(totalIn / 12 + 1e-12);
+      var rem = totalIn - ft * 12;
+      if (ft === 0) return sign + formatInchesOnly(rem);
+      var inchTxt = formatInchesOnly(rem);
+      if (inchTxt === "0\"") return sign + ft + "' 0\"";
+      return sign + ft + "' " + inchTxt;
     }
-    return sign + f + "'-" + inches + "\"";
+    var f = Math.floor(totalIn / 12 + 1e-12);
+    var rem = totalIn - f * 12;
+    if (Math.abs(rem) < 1e-9) return sign + f + "'-0\"";
+    var p = inchParts(rem);
+    if (p.num === 0) return sign + f + "'-" + p.whole + "\"";
+    if (p.whole === 0) return sign + f + "'-" + p.num + "/" + p.den + "\"";
+    return sign + f + "'-" + p.whole + " " + p.num + "/" + p.den + "\"";
   }
 
   function formatFeetInchesLong(feet) {
     if (feet == null || !isFinite(feet)) return "—";
-    var s = formatFeetInches(feet).replace("\"", " in").replace("'-", " ft ");
-    return s;
+    return formatFeetInches(feet).replace("\"", " in").replace(/'-/, " ft ").replace("' ", " ft ");
   }
 
   function parseFeetInches(str) {
@@ -123,6 +161,20 @@
     if (m) return parseFloat(m[1]) / 12;
     m = s.match(/^(-?\d+(?:\.\d+)?)\s*(?:x|by)?$/);
     if (m) return parseFloat(m[1]);
+    /* 6 1/4" or 6-1/4" */
+    m = s.match(/^(-)?(\d+)\s*-?\s*(\d+)\s*\/\s*(\d+)\s*(?:"|in|inch|inches)?$/);
+    if (m) {
+      var v = parseFloat(m[2]) + parseFloat(m[3]) / parseFloat(m[4]);
+      return (m[1] ? -1 : 1) * v / 12;
+    }
+    /* 1' 6" or 1' 6 1/4" */
+    m = s.match(/^(-?\d+)\s*(?:'|ft|feet)\s*-?\s*(\d+)(?:\s+(\d+)\s*\/\s*(\d+))?\s*(?:"|in|inch|inches)?$/);
+    if (m) {
+      var inches = parseFloat(m[2]) + (m[3] ? parseFloat(m[3]) / parseFloat(m[4]) : 0);
+      return parseFloat(m[1]) + inches / 12;
+    }
+    if (/foot and a half|foot ?& ?a half|one and a half feet|1\.5 feet|eighteen inches/.test(s)) return 1.5;
+    if (/^(six inches|6 in)$/.test(s)) return 0.5;
     var n = parseFloat(s);
     return isFinite(n) ? n : NaN;
   }
@@ -607,6 +659,84 @@
     return steps;
   }
 
+  function stitchSegments(segments) {
+    var feet = 0, i;
+    var list = segments || [];
+    for (i = 0; i < list.length; i++) {
+      var f = Number(list[i] && list[i].feet);
+      if (!isFinite(f) || f < 0) return null;
+      feet += f;
+    }
+    return { feet: feet, parts: list.length, method: "stitch" };
+  }
+
+  /* How well a 4-corner door maps to a rectangle, and whether the measure stays near that door. */
+  function planeConfidence(H, doorCorners, measureP1, measureP2, widthFt, heightFt) {
+    if (!H || !doorCorners || doorCorners.length < 4) {
+      return { level: "check", label: "Check the photo", detail: "Set all 4 door corners first." };
+    }
+    var pts = [];
+    var i;
+    for (i = 0; i < 4; i++) {
+      var q = applyHomography(H, doorCorners[i].x, doorCorners[i].y);
+      if (!q) return { level: "check", label: "Check the photo", detail: "Those door corners could not be mapped." };
+      pts.push(q);
+    }
+    var w1 = dist(pts[0], pts[1]), w2 = dist(pts[3], pts[2]);
+    var h1 = dist(pts[1], pts[2]), h2 = dist(pts[0], pts[3]);
+    var widthErr = Math.max(Math.abs(w1 - widthFt), Math.abs(w2 - widthFt)) / widthFt;
+    var heightErr = Math.max(Math.abs(h1 - heightFt), Math.abs(h2 - heightFt)) / heightFt;
+    function angleErr(a, b, c) {
+      var abx = b.x - a.x, aby = b.y - a.y, cbx = b.x - c.x, cby = b.y - c.y;
+      var d = Math.sqrt(abx * abx + aby * aby) * Math.sqrt(cbx * cbx + cby * cby);
+      if (d < 1e-9) return 90;
+      var cos = Math.max(-1, Math.min(1, (abx * cbx + aby * cby) / d));
+      return Math.abs(90 - Math.acos(cos) * 180 / Math.PI);
+    }
+    var ang = Math.max(angleErr(pts[0], pts[1], pts[2]), angleErr(pts[1], pts[2], pts[3]), angleErr(pts[2], pts[3], pts[0]), angleErr(pts[3], pts[0], pts[1]));
+    var span = 0;
+    if (measureP1 && measureP2) {
+      var a = applyHomography(H, measureP1.x, measureP1.y);
+      var b = applyHomography(H, measureP2.x, measureP2.y);
+      if (a && b) {
+        var mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+        var doorCx = widthFt / 2, doorCy = heightFt / 2;
+        span = Math.sqrt((mid.x - doorCx) * (mid.x - doorCx) + (mid.y - doorCy) * (mid.y - doorCy));
+      }
+    }
+    var far = span > Math.max(widthFt, heightFt) * 1.25;
+    if (widthErr > 0.08 || heightErr > 0.08 || ang > 8) {
+      return { level: "check", label: "Check the photo", detail: "The door looks skewed. Stand more straight-on and remark the 4 corners." };
+    }
+    if (widthErr > 0.03 || heightErr > 0.03 || ang > 3.5 || far) {
+      return { level: "medium", label: "Fair", detail: far ? "The run goes well past the door. A straight-on shot or a two-photo stitch is more reliable." : "The door reference is usable. A straighter shot would tighten this." };
+    }
+    return { level: "high", label: "Good", detail: "The door mapped cleanly and this reading is on that same wall plane." };
+  }
+
+  /* Exact tape/laser lengths spoken or typed, including “6 inches” and “a foot and a half”. */
+  function parseExactLength(text) {
+    var raw = String(text || "").replace(/\s+/g, " ").trim();
+    if (!raw) return null;
+    var s = raw.toLowerCase();
+    s = s.replace(/one half|a half|½/g, "1/2").replace(/and a 1\/2/g, "and 1/2");
+    if (/foot and 1\/2|foot and a half|one and 1\/2 feet|eighteen inches|18 inches|1(?:st)?\.5 feet/.test(s) || /^(?:a )?foot and 1\/2$/.test(s)) {
+      return { feet: 1.5, raw: raw };
+    }
+    if (/^(?:a )?foot$/.test(s) || /^12\s*(?:inches|inch|in|")$/.test(s)) return { feet: 1, raw: raw };
+    if (/^(?:six inches|6 inches|6 in|6")$/.test(s)) return { feet: 0.5, raw: raw };
+    var n = parseFeetInches(s);
+    if (isFinite(n)) return { feet: n, raw: raw };
+    /* bare “6” in an inches context, or “22” as feet if large */
+    var m = s.match(/^(-?\d+(?:\.\d+)?)$/);
+    if (m) {
+      var v = parseFloat(m[1]);
+      if (v <= 36) return { feet: v / 12, raw: raw, assumed: "inches" };
+      return { feet: v, raw: raw, assumed: "feet" };
+    }
+    return null;
+  }
+
   /* Accuracy copy shown in the UI. */
   var ACCURACY = {
     photoScale: "Photo measure with a 2-point reference is reliable only on the same flat plane as the reference (the door or tape). Expect a few inches of error when the camera is reasonably square to that plane; off-angle shots and anything that recedes in the photo (the side wall, the slab in the same picture) will be off.",
@@ -615,7 +745,11 @@
     walkGps: "GPS on a phone is typically off by 10–16 feet (often more next to a building). It is not useful for garage-length measurements. It may be a rough check only on longer site distances.",
     walkImu: "The phone's motion sensors drift several feet over a short walk when used alone. Not used as the reported distance.",
     arWebXR: "On Android Chrome, live AR hit-test measuring can be within a couple of inches on a textured surface in good light, sometimes closer. Shiny, blank, or dark surfaces are worse. Confirm tight numbers with a tape.",
-    arIos: "iPhone Safari cannot run WebXR AR. For true walk-to-corner accuracy like Apple's Measure app, a native iOS app using ARKit (and LiDAR on a 16 Pro Max) would be required. This page uses photo measure instead."
+    arIos: "iPhone Safari cannot run WebXR AR. For true live walk-to-corner accuracy like Apple's Measure app, a native iOS app using ARKit (and LiDAR on a 16 Pro Max) would be required. This page uses photo measure, two-photo stitch, or a typed laser/tape reading instead.",
+    edge: "Edge to edge is measured on a wide, straight-on photo of the wall. Mark all 4 corners of a known door, then tap the two wall corners. That corrects perspective on that wall. If the whole wall will not fit in one straight-on shot, use two-photo stitch or enter a laser/tape reading.",
+    stitch: "Two-photo stitch: measure from one end to a shared landmark (a door edge or downspout) in photo A, then from that same landmark to the other end in photo B, and add the two segments.",
+    small: "For 6\" to about 2 ft, take a close-up, keep the camera square-on, and put the ruler, tape, or brick right beside what you are measuring.",
+    laser: "A laser or tape reading you type or speak is stored as the exact number you entered. Confirm it before any price."
   };
 
   return {
@@ -631,7 +765,12 @@
     dist: dist,
     formatFeetInches: formatFeetInches,
     formatFeetInchesLong: formatFeetInchesLong,
+    formatInchesOnly: formatInchesOnly,
+    inchParts: inchParts,
     parseFeetInches: parseFeetInches,
+    parseExactLength: parseExactLength,
+    stitchSegments: stitchSegments,
+    planeConfidence: planeConfidence,
     scaleFromReference: scaleFromReference,
     measureScaled: measureScaled,
     solveLinearSystem: solveLinearSystem,

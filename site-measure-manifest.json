@@ -1,7 +1,7 @@
 {
   "name": "AGB Site Measure",
   "short_name": "Site Measure",
-  "start_url": "site-measure-sample.html",
+  "start_url": "site-measure.html",
   "display": "standalone",
   "background_color": "#0b1f3a",
   "theme_color": "#0b1f3a",

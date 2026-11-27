@@ -9,7 +9,7 @@
   var MODES_MOBILE = [
     { id: "visit", label: "Visit", ico: "⌂" },
     { id: "photo", label: "Photo", ico: "📷" },
-    { id: "walk", label: "Walk", ico: "↝" },
+    { id: "edge", label: "Edge", ico: "↔" },
     { id: "pads", label: "Pads", ico: "▭" },
     { id: "notes", label: "Notes", ico: "✦" }
   ];
@@ -17,7 +17,7 @@
     { id: "visit", label: "Visit" },
     { id: "photo", label: "Photo" },
     { id: "pads", label: "Pads & concrete" },
-    { id: "walk", label: "Walk" },
+    { id: "edge", label: "Edge to edge" },
     { id: "ar", label: "AR" },
     { id: "layout", label: "Layout" },
     { id: "notes", label: "Notes & AI" }
@@ -36,16 +36,21 @@
     pendingLabel: "Width",
     finding: false
   };
-  var walk = {
-    perm: false, running: false, pose: "unknown", steps: 0, lastStepT: 0,
-    above: false, stride: 2.4, startedAt: 0, gpsPts: [], watchId: null, motionOn: false
+  var edge = { sub: "one", stitchSide: "a", stitchLabel: "Edge to edge", laserFt: "", laserIn: "", laserVoice: "", laserLabel: "Laser / tape" };
+  var stitch = {
+    a: { recId: null, points: [], refId: "oh16", refMode: "four", customFt: 16, customIn: 0, doorH: 7 },
+    b: { recId: null, points: [], refId: "oh16", refMode: "four", customFt: 16, customIn: 0, doorH: 7 }
   };
+  var cam = { scale: 1, x: 0, y: 0 };
+  var pointers = {};
+  var pinch = { active: false, startDist: 0, startScale: 1, startX: 0, startY: 0 };
+  var pendingPt = null;
   var ar = { supported: false, session: null, points: [], lastHit: null, feet: null };
   var toastTimer = 0;
 
   function defaultState() {
     return {
-      jobName: "", village: "", fields: {}, notes: "", photos: [], pads: [], walks: [],
+      jobName: "", village: "", fields: {}, notes: "", photos: [], pads: [], walks: [], stitches: [], tapes: [],
       proposedW: null, proposedD: null, lotW: null, lotD: null,
       setL: null, setR: null, setRear: null, setFront: null,
       limits: {}, layoutPlace: "center", voiceLog: []
@@ -97,9 +102,16 @@
     (state.photos || []).forEach(function (p) {
       (p.measures || []).forEach(function (m) { out.push(m); });
     });
+    (state.stitches || []).forEach(function (m) { out.push(m); });
+    (state.tapes || []).forEach(function (m) { out.push(m); });
     return out;
   }
-  function setMode(id) { mode = id; render(); }
+  function setMode(id) {
+    if (id === "walk") id = "edge";
+    if (id === "edge" && edge.sub === "one") photo.refMode = "four";
+    mode = id;
+    render();
+  }
 
   function renderChrome() {
     $("jobName").value = state.jobName || "";
@@ -119,14 +131,15 @@
     try {
       if (mode === "visit") root.innerHTML = viewVisit();
       else if (mode === "photo") root.innerHTML = viewPhoto();
-      else if (mode === "walk") root.innerHTML = viewWalk();
+      else if (mode === "edge") root.innerHTML = viewEdge();
       else if (mode === "pads") root.innerHTML = viewPads();
       else if (mode === "ar") root.innerHTML = viewAR();
       else if (mode === "layout") root.innerHTML = viewLayout();
       else root.innerHTML = viewNotes();
       bindView();
-      if (mode === "photo") drawPhoto();
+      if (mode === "photo" || (mode === "edge" && edge.sub !== "laser")) drawPhoto();
       if (mode === "layout") drawLayout();
+      applyCam();
     } catch (err) {
       console.error("render failed", mode, err);
       root.innerHTML = "<div class='card'><h2>Couldn’t open this section</h2><p class='small'>" + esc(String(err && err.message ? err.message : err)) + "</p></div>";
@@ -138,10 +151,10 @@
     var v = visitFromState();
     var miss = M.missingMeasurements(v);
     var have = M.CHECKLIST.length - miss.length;
-    var measN = collectMeasurements().length + state.pads.length + state.walks.length;
+    var measN = collectMeasurements().length + state.pads.length;
     var tiles = [
       { mode: "photo", t: "Photo measure", d: "Take a picture, tap a known door or tape, then measure." },
-      { mode: "walk", t: "Walk edge to edge", d: "Flip the phone flat, walk, stand it up. Rough estimate only." },
+      { mode: "edge", t: "Edge to edge", d: "Wide straight-on photo, 4 door corners, then the two wall corners. Or stitch two photos, or enter a laser/tape reading." },
       { mode: "pads", t: "Pads & concrete", d: "Existing or proposed pads, aprons, driveways — SF and yards." },
       { mode: "ar", t: "Live AR (Android)", d: "Tap points in the camera on Android Chrome. iPhone uses photo measure." },
       { mode: "layout", t: "Quick layout", d: "See which garage sizes fit the lot you measured." },
@@ -177,19 +190,23 @@
   function viewPhoto() {
     var rec = currentPhotoRecord();
     var measures = rec && rec.measures ? rec.measures : [];
-    var refChips = M.REFS.map(function (r) {
+    var doorChips = M.REFS.filter(function (r) { return r.kind === "door" || r.id === "tape"; }).map(function (r) {
+      return "<button type='button' class='chip" + (photo.refId === r.id ? " on" : "") + "' data-ref='" + r.id + "'>" + esc(r.short) + "</button>";
+    }).join("");
+    var smallChips = M.REFS.filter(function (r) { return r.kind === "small"; }).map(function (r) {
       return "<button type='button' class='chip" + (photo.refId === r.id ? " on" : "") + "' data-ref='" + r.id + "'>" + esc(r.short) + "</button>";
     }).join("");
     var hChips = M.DOOR_HEIGHTS.map(function (h) {
       return "<button type='button' class='chip" + (photo.doorH === h.ft ? " on" : "") + "' data-dh='" + h.ft + "'>" + esc(h.label) + "</button>";
     }).join("");
     var need = photo.refMode === "four" ? 4 : 2;
+    var small = isSmallRef();
     var hint;
-    if (!photo.img) hint = "Take or upload a photo of the garage or site.";
+    if (!photo.img) hint = small ? "Get close and square-on. Keep the ruler, tape, or brick in the same picture as what you are measuring." : "Take or upload a photo of the garage or site.";
     else if (photo.points.length < need) {
       hint = photo.refMode === "four"
         ? "Tap all 4 corners of the door, starting at the top left, then top right, bottom right, bottom left."
-        : "Tap the two ends of your " + (M.REFS.find(function (r) { return r.id === photo.refId; }) || { label: "reference" }).label + ".";
+        : "Zoom in if you need to, then tap the two ends of your " + (M.REFS.find(function (r) { return r.id === photo.refId; }) || { label: "reference" }).label + ".";
     } else hint = "Reference is set. Tap two points to measure anything on the same plane.";
 
     var custom = photo.refId === "tape" ? (
@@ -199,33 +216,40 @@
 
     var list = measures.length ? measures.map(function (m, i) {
       return "<div class='meas-row'><div class='meta'><strong>" + esc(m.label) + "</strong><br>" + esc(m.method === "plane" ? "Same-wall plane" : "2-point scale") +
+        (m.confidenceLabel ? " · " + esc(m.confidenceLabel) : "") +
         (m.rough ? " · rough" : "") + "</div><div><div class='val'>" + M.formatFeetInches(m.feet) + "</div>" +
         "<div class='btns'><button type='button' class='btn light sm' data-apply-meas='" + i + "'>Use in visit</button>" +
         "<button type='button' class='btn light sm' data-del-meas='" + i + "'>Delete</button></div></div></div>";
     }).join("") : "<p class='small muted'>No distances saved on this photo yet.</p>";
 
+    var conf = lastConfidence();
+    var acc = small ? M.ACCURACY.small : (photo.refMode === "four" ? M.ACCURACY.photoPlane : M.ACCURACY.photoScale);
+
     return (
       "<div class='card'><h2>Photo measure</h2>" +
-      "<p class='small muted'>Best method on iPhone and every other phone. Use something you already know the size of — a door or a tape on the wall or slab.</p>" +
+      "<p class='small muted'>Best method on iPhone and every other phone. Use something you already know the size of — a door, a tape, a 12\" ruler, or a brick. For 6\" or 1½\', get close and keep the reference in the same picture.</p>" +
       "<div class='photo-tools'>" +
       "<label class='btn primary sm'>Take photo<input id='camInput' class='sr-only' type='file' accept='image/*' capture='environment'></label>" +
       "<label class='btn light sm'>Upload<input id='fileInput' class='sr-only' type='file' accept='image/*'></label>" +
       "<button type='button' class='btn light sm' id='btnSamplePhoto'>Sample photo</button>" +
       "</div>" +
-      "<div class='stage' id='photoStage'><canvas id='photoCanvas'></canvas><div class='hint' id='photoHint'>" + esc(hint) + "</div></div>" +
+      stageHtml(hint) +
       "<div class='photo-tools'>" +
       "<button type='button' class='btn light sm' id='btnFindDoor'>Find door edges</button>" +
       "<button type='button' class='btn light sm' id='btnResetPts'>Reset points</button>" +
       "<button type='button' class='btn light sm' id='btnNewPhotoMeas'>New measurement</button>" +
       "</div>" +
-      "<div class='chips'>" + refChips + "</div>" + custom +
+      "<p class='small muted'>Doors and known sizes</p><div class='chips'>" + doorChips + "</div>" +
+      "<p class='small muted'>Short references, for 6\" or 1½\'</p><div class='chips'>" + smallChips + "</div>" + custom +
+      (small ? "<div class='okbox'>Close-up tip: hold the phone square to the wall or slab, fill the frame with the reference and the short distance, then zoom in to tap the edges.</div>" : "") +
       "<div class='chips'>" +
       "<button type='button' class='chip" + (photo.refMode === "two" ? " on" : "") + "' data-refmode='two'>2-point reference</button>" +
-      "<button type='button' class='chip" + (photo.refMode === "four" ? " on" : "") + "' data-refmode='four'>4 corners of the door (better)</button>" +
+      "<button type='button' class='chip" + (photo.refMode === "four" && !small ? " on" : "") + "' data-refmode='four'>4 corners of the door (better)</button>" +
       "</div>" +
-      (photo.refMode === "four" ? "<p class='small muted'>Door height used for the wall plane:</p><div class='chips'>" + hChips + "</div>" : "") +
-      "<div class='warn'><strong>Accuracy:</strong> " + esc(photo.refMode === "four" ? M.ACCURACY.photoPlane : M.ACCURACY.photoScale) + "</div>" +
-      (photo.points.length >= need ? (
+      (photo.refMode === "four" && !small ? "<p class='small muted'>Door height used for the wall plane:</p><div class='chips'>" + hChips + "</div>" : "") +
+      "<div class='warn'><strong>Accuracy:</strong> " + esc(acc) + "</div>" +
+      confHtml(conf) +
+      (photo.points.length >= need + 2 ? (
         "<div class='row row-2' style='margin-top:10px'><div class='field'><label class='lbl'>Label this distance</label>" +
         "<select id='measLabel'>" + M.MEASURE_LABELS.map(function (l) {
           return "<option" + (photo.pendingLabel === l ? " selected" : "") + ">" + esc(l) + "</option>";
@@ -237,47 +261,247 @@
     );
   }
 
-  function viewWalk() {
-    var live = walkLiveFeet();
-    var pose = walk.pose;
-    var gps = walkGpsFeet();
-    return (
-      "<div class='card'><h2>Walk edge to edge</h2>" +
-      "<div class='rough'><strong>Rough estimate — not for pricing.</strong> On a 20–24 ft garage this is often off by about 2–6 feet.</div>" +
-      "<p>Stand at one edge with the phone upright. Flip it <strong>flat / horizontal</strong> to start, walk to the other end, then stand it back up — or press Stop.</p>" +
-      "<div class='live-num' id='walkLive'>" + (live != null ? M.formatFeetInches(live) : "0'-0\"") + "</div>" +
-      "<div class='live-sub small muted' id='walkSub'>" + (walk.running ? (walk.steps + " step" + (walk.steps === 1 ? "" : "s") + " · stride " + walk.stride + " ft") : "Ready") + "</div>" +
-      "<div class='walk-pose'>" +
-      "<span class='pill " + (pose === "upright" ? "ok" : "info") + "'>Upright " + (pose === "upright" ? "•" : "") + "</span>" +
-      "<span class='pill " + (pose === "flat" ? "gold" : "info") + "'>Flat " + (pose === "flat" ? "• measuring" : "") + "</span>" +
-      (pose === "tilted" ? "<span class='pill info'>Tilted</span>" : "") +
-      (walk.running ? "<span class='pill rough'>Live</span>" : "") +
-      "</div>" +
-      "<div class='field'><label class='lbl'>Your stride (feet)</label><input id='strideFt' type='number' inputmode='decimal' min='1.5' max='3.5' step='0.05' value='" + walk.stride + "'></div>" +
-      "<div class='btns'>" +
-      "<button type='button' class='btn primary' id='btnMotion'>" + (walk.perm ? "Motion on" : "Enable motion (required on iPhone)") + "</button>" +
-      "<button type='button' class='btn gold' id='btnWalkStart'>Start</button>" +
-      "<button type='button' class='btn light' id='btnWalkStop'>Stop</button>" +
-      "</div>" +
-      (gps ? "<p class='small muted'>GPS check: " + M.formatFeetInches(gps.feet) + " (typical accuracy ±" + M.formatFeetInches(gps.accuracyFt || 16) + "). " + esc(M.ACCURACY.walkGps) + "</p>" : "<p class='small muted'>" + esc(M.ACCURACY.walkGps) + "</p>") +
-      "<p class='small muted'>" + esc(M.ACCURACY.walkImu) + " " + esc(M.ACCURACY.arIos) + "</p>" +
-      "<div class='btns'><button type='button' class='btn light' id='btnSaveWalk'>Save as rough estimate…</button></div></div>" +
-      "<div class='card'><h3>Saved walks</h3>" + walkList() + "</div>"
-    );
+  function confHtml(conf) {
+    if (!conf) return "";
+    return "<div class='conf " + esc(conf.level) + "'><strong>" + esc(conf.label) + "</strong> — " + esc(conf.detail) + "</div>";
   }
-  function walkList() {
-    if (!state.walks.length) return "<p class='small muted'>None yet.</p>";
-    return "<div class='meas-list'>" + state.walks.map(function (w) {
-      var tag = w.method === "webxr" ? "<span class='pill ok'>AR</span>" : "<span class='pill rough'>Rough · not for pricing</span>";
-      return "<div class='meas-row'><div class='meta'><strong>" + esc(w.label || "Walk") + "</strong><br>" + tag + "</div>" +
-        "<div class='val'>" + M.formatFeetInches(w.feet) + "</div></div>";
+  function lastConfidence() {
+    var m = lastOpenMeasure();
+    var cal = calibration();
+    if (!m || !cal || !cal.H) return null;
+    return M.planeConfidence(cal.H, photo.points.slice(0, 4), m.p1, m.p2, cal.widthFt, cal.heightFt);
+  }
+  function isSmallRef(id) {
+    var r = M.REFS.find(function (x) { return x.id === (id || photo.refId); });
+    return !!(r && r.kind === "small");
+  }
+  function refChipsHtml(kind) {
+    return M.REFS.filter(function (r) { return !kind || r.kind === kind || (kind === "door" && r.kind === "custom") || (kind === "door" && r.id === "tape"); }).map(function (r) {
+      return "<button type='button' class='chip" + (photo.refId === r.id ? " on" : "") + "' data-ref='" + r.id + "'>" + esc(r.short) + "</button>";
+    }).join("");
+  }
+  function stageHtml(hint) {
+    return "<div class='zoom-bar'>" +
+      "<button type='button' class='btn light sm' id='btnZoomOut' aria-label='Zoom out'>−</button>" +
+      "<button type='button' class='btn light sm' id='btnZoomIn' aria-label='Zoom in'>+</button>" +
+      "<button type='button' class='btn light sm' id='btnZoomReset'>Reset zoom</button>" +
+      "<span class='small muted'>Pinch to zoom. Hold a point, then lift to place it.</span></div>" +
+      "<div class='stage' id='photoStage'><div class='stage-inner' id='stageInner'><canvas id='photoCanvas'></canvas></div>" +
+      "<div class='hint' id='photoHint'>" + esc(hint) + "</div>" +
+      "<div class='loupe' id='loupe'><canvas id='loupeCanvas'></canvas></div></div>";
+  }
+
+  function viewEdge() {
+    var tabs = [
+      { id: "one", label: "One photo" },
+      { id: "stitch", label: "Two-photo stitch" },
+      { id: "laser", label: "Laser / tape" }
+    ];
+    var tabHtml = "<div class='chips'>" + tabs.map(function (t) {
+      return "<button type='button' class='chip" + (edge.sub === t.id ? " on" : "") + "' data-edge-sub='" + t.id + "'>" + esc(t.label) + "</button>";
+    }).join("") + "</div>";
+    var body = edge.sub === "laser" ? viewLaser() : (edge.sub === "stitch" ? viewStitch() : viewEdgeOne());
+    return "<div class='card'><h2>Edge to edge</h2>" +
+      "<p class='small muted'>For a long wall or the full width of a garage. Take a wide, straight-on photo, mark the 4 corners of a known door, then tap the two wall corners. If the run won’t fit in one straight-on shot, stitch two photos at a shared landmark. If you already have the number from a laser or tape, enter it here.</p>" +
+      tabHtml + body + "</div>" + savedEdgeList();
+  }
+
+  function edgeStepIndex() {
+    if (!photo.img) return 0;
+    if (photo.points.length < 4) return 1;
+    if (photo.points.length < 6) return 2;
+    return 3;
+  }
+  function stepsHtml(idx, labels) {
+    return "<div class='steps'>" + labels.map(function (lab, i) {
+      var cls = i === idx ? " on" : (i < idx ? " done" : "");
+      return "<span class='step-pill" + cls + "'>" + (i + 1) + ". " + esc(lab) + "</span>";
     }).join("") + "</div>";
   }
-  function walkLiveFeet() { return M.estimateWalkSteps(walk.steps, walk.stride).feet; }
-  function walkGpsFeet() {
-    var g = M.estimateWalkGps(walk.gpsPts);
-    return g && g.feet > 1 ? g : null;
+
+  function viewEdgeOne() {
+    photo.refMode = "four";
+    var hChips = M.DOOR_HEIGHTS.map(function (h) {
+      return "<button type='button' class='chip" + (photo.doorH === h.ft ? " on" : "") + "' data-dh='" + h.ft + "'>" + esc(h.label) + "</button>";
+    }).join("");
+    var hint;
+    if (!photo.img) hint = "Stand back and take a wide, straight-on photo of the whole wall, with a known door in the frame.";
+    else if (photo.points.length < 4) hint = "Tap all 4 corners of the door: top left, top right, bottom right, bottom left.";
+    else if (photo.points.length === 4) hint = "Door plane is set. Tap one wall corner (the first edge).";
+    else if (photo.points.length === 5) hint = "Tap the other wall corner (the far edge).";
+    else hint = "Edge-to-edge is ready. Check the confidence, then save.";
+    var m = lastOpenMeasure();
+    var conf = lastConfidence();
+    var custom = photo.refId === "tape" ? (
+      "<div class='row row-2' style='margin:8px 0'><div class='field'><label class='lbl'>Door width, feet</label><input id='tapeFt' type='number' inputmode='decimal' min='0' step='0.01' value='" + esc(photo.customFt) + "'></div>" +
+      "<div class='field'><label class='lbl'>Inches</label><input id='tapeIn' type='number' inputmode='decimal' min='0' max='11.99' step='0.125' value='" + esc(photo.customIn) + "'></div></div>"
+    ) : "";
+    return stepsHtml(edgeStepIndex(), ["Wide straight-on photo", "4 door corners", "Two wall corners", "Save"]) +
+      "<div class='photo-tools'>" +
+      "<label class='btn primary sm'>Take photo<input id='camInput' class='sr-only' type='file' accept='image/*' capture='environment'></label>" +
+      "<label class='btn light sm'>Upload<input id='fileInput' class='sr-only' type='file' accept='image/*'></label>" +
+      "<button type='button' class='btn light sm' id='btnSamplePhoto'>Sample photo</button></div>" +
+      stageHtml(hint) +
+      "<div class='photo-tools'>" +
+      "<button type='button' class='btn light sm' id='btnFindDoor'>Find door edges</button>" +
+      "<button type='button' class='btn light sm' id='btnResetPts'>Reset points</button>" +
+      "<button type='button' class='btn light sm' id='btnNewPhotoMeas'>Retake corners</button></div>" +
+      "<p class='small muted'>Known door on this wall:</p><div class='chips'>" + refChipsHtml("door") + "</div>" + custom +
+      "<p class='small muted'>Door height:</p><div class='chips'>" + hChips + "</div>" +
+      "<div class='warn'><strong>Accuracy:</strong> " + esc(M.ACCURACY.edge) + "</div>" +
+      (m ? (confHtml(conf) + "<div class='live-num'>" + M.formatFeetInches(m.feet) + "</div>" +
+        "<div class='row row-2' style='margin-top:10px'><div class='field'><label class='lbl'>Label</label>" +
+        "<select id='measLabel'>" + M.MEASURE_LABELS.map(function (l) {
+          return "<option" + ((photo.pendingLabel || "Edge to edge") === l ? " selected" : "") + ">" + esc(l) + "</option>";
+        }).join("") + "</select></div>" +
+        "<div class='field'><label class='lbl'>Then</label><button type='button' class='btn gold' id='btnSaveMeas'>Save edge to edge</button></div></div>") : "");
   }
+
+  function viewStitch() {
+    var side = edge.stitchSide;
+    rememberStitchSide(false);
+    var aFt = stitchSegmentFeet(stitch.a);
+    var bFt = stitchSegmentFeet(stitch.b);
+    var total = (aFt != null && bFt != null) ? M.stitchSegments([{ feet: aFt }, { feet: bFt }]) : null;
+    var hint;
+    if (!photo.img) hint = "Photo " + side.toUpperCase() + ": take a straight-on shot of this half of the wall, with a known door and the shared landmark in the frame.";
+    else if ((photo.refMode === "four" ? photo.points.length < 4 : photo.points.length < 2)) hint = "Set the reference on photo " + side.toUpperCase() + " first.";
+    else if ((photo.refMode === "four" ? photo.points.length === 4 : photo.points.length === 2)) hint = side === "a" ? "Tap the start corner, then the shared landmark (door edge or downspout)." : "Tap the shared landmark, then the end corner.";
+    else if ((photo.refMode === "four" ? photo.points.length === 5 : photo.points.length === 3)) hint = side === "a" ? "Tap the shared landmark." : "Tap the end corner.";
+    else hint = "Segment " + side.toUpperCase() + " is ready. Switch photos or save the total.";
+    var custom = photo.refId === "tape" ? (
+      "<div class='row row-2' style='margin:8px 0'><div class='field'><label class='lbl'>Reference feet</label><input id='tapeFt' type='number' inputmode='decimal' min='0' step='0.01' value='" + esc(photo.customFt) + "'></div>" +
+      "<div class='field'><label class='lbl'>Inches</label><input id='tapeIn' type='number' inputmode='decimal' min='0' max='11.99' step='0.125' value='" + esc(photo.customIn) + "'></div></div>"
+    ) : "";
+    var hChips = M.DOOR_HEIGHTS.map(function (h) {
+      return "<button type='button' class='chip" + (photo.doorH === h.ft ? " on" : "") + "' data-dh='" + h.ft + "'>" + esc(h.label) + "</button>";
+    }).join("");
+    return "<p class='small'>Take photo A and photo B of the same wall. Each photo needs its own door or tape reference, plus a shared landmark you can tap in both — a door edge or a downspout. The app adds the two segments.</p>" +
+      "<div class='chips'>" +
+      "<button type='button' class='chip" + (side === "a" ? " on" : "") + "' data-stitch-side='a'>Photo A" + (aFt != null ? " · " + M.formatFeetInches(aFt) : "") + "</button>" +
+      "<button type='button' class='chip" + (side === "b" ? " on" : "") + "' data-stitch-side='b'>Photo B" + (bFt != null ? " · " + M.formatFeetInches(bFt) : "") + "</button></div>" +
+      "<div class='photo-tools'>" +
+      "<label class='btn primary sm'>Take photo " + side.toUpperCase() + "<input id='camInput' class='sr-only' type='file' accept='image/*' capture='environment'></label>" +
+      "<label class='btn light sm'>Upload<input id='fileInput' class='sr-only' type='file' accept='image/*'></label></div>" +
+      stageHtml(hint) +
+      "<div class='photo-tools'>" +
+      "<button type='button' class='btn light sm' id='btnFindDoor'>Find door edges</button>" +
+      "<button type='button' class='btn light sm' id='btnResetPts'>Reset points</button></div>" +
+      "<div class='chips'>" + refChipsHtml("door") + "</div>" + custom +
+      "<div class='chips'>" +
+      "<button type='button' class='chip" + (photo.refMode === "two" ? " on" : "") + "' data-refmode='two'>2-point reference</button>" +
+      "<button type='button' class='chip" + (photo.refMode === "four" ? " on" : "") + "' data-refmode='four'>4 corners of the door (better)</button></div>" +
+      (photo.refMode === "four" ? "<p class='small muted'>Door height:</p><div class='chips'>" + hChips + "</div>" : "") +
+      "<div class='warn'><strong>Accuracy:</strong> " + esc(M.ACCURACY.stitch) + "</div>" +
+      (total ? "<div class='okbox'><strong>Total edge to edge:</strong> " + M.formatFeetInches(total.feet) + " <span class='small muted'>(" + M.formatFeetInches(aFt) + " + " + M.formatFeetInches(bFt) + ")</span></div>" +
+        "<div class='row row-2' style='margin-top:10px'><div class='field'><label class='lbl'>Label</label><select id='stitchLabel'>" +
+        M.MEASURE_LABELS.map(function (l) {
+          return "<option" + ((edge.stitchLabel || "Edge to edge") === l ? " selected" : "") + ">" + esc(l) + "</option>";
+        }).join("") + "</select></div>" +
+        "<div class='field'><label class='lbl'>Then</label><button type='button' class='btn gold' id='btnSaveStitch'>Save stitched length</button></div></div>" : "");
+  }
+
+  function viewLaser() {
+    return "<p class='small'>Type the exact reading from a laser or tape, or say it — “twenty two feet four inches,” “6 inches,” or “a foot and a half.” This is an exact entry, not a photo estimate.</p>" +
+      "<div class='row row-2'><div class='field'><label class='lbl'>Feet</label><input id='laserFt' type='number' inputmode='decimal' min='0' step='0.01' value='" + esc(edge.laserFt) + "'></div>" +
+      "<div class='field'><label class='lbl'>Inches</label><input id='laserIn' type='number' inputmode='decimal' min='0' step='0.125' value='" + esc(edge.laserIn) + "'></div></div>" +
+      "<div class='field'><label class='lbl'>Or say / type the length</label><input id='laserVoice' type='text' placeholder='22 feet 4 inches' value='" + esc(edge.laserVoice) + "'></div>" +
+      "<div class='btns'><button type='button' class='btn primary' id='btnLaserTalk'>Talk the number</button>" +
+      "<button type='button' class='btn light' id='btnLaserTalkStop'>Stop</button></div>" +
+      "<p class='small' id='laserTalkStatus'></p>" +
+      "<div class='field'><label class='lbl'>Label</label><select id='laserLabel'>" +
+      M.MEASURE_LABELS.map(function (l) {
+        return "<option" + ((edge.laserLabel || "Laser / tape") === l ? " selected" : "") + ">" + esc(l) + "</option>";
+      }).join("") + "</select></div>" +
+      "<div id='laserPreview'></div>" +
+      "<div class='warn'><strong>Accuracy:</strong> " + esc(M.ACCURACY.laser) + "</div>" +
+      "<div class='btns'><button type='button' class='btn gold' id='btnSaveLaser'>Save exact length</button></div>";
+  }
+
+  function savedEdgeList() {
+    var rows = [];
+    (state.stitches || []).forEach(function (s, i) {
+      rows.push("<div class='meas-row'><div class='meta'><strong>" + esc(s.label) + "</strong><br>Two-photo stitch · " + M.formatFeetInches(s.aFeet) + " + " + M.formatFeetInches(s.bFeet) + "</div><div><div class='val'>" + M.formatFeetInches(s.feet) + "</div>" +
+        "<div class='btns'><button type='button' class='btn light sm' data-apply-stitch='" + i + "'>Use in visit</button>" +
+        "<button type='button' class='btn light sm' data-del-stitch='" + i + "'>Delete</button></div></div></div>");
+    });
+    (state.tapes || []).forEach(function (s, i) {
+      rows.push("<div class='meas-row'><div class='meta'><strong>" + esc(s.label) + "</strong><br>Laser / tape entry</div><div><div class='val'>" + M.formatFeetInches(s.feet) + "</div>" +
+        "<div class='btns'><button type='button' class='btn light sm' data-apply-tape='" + i + "'>Use in visit</button>" +
+        "<button type='button' class='btn light sm' data-del-tape='" + i + "'>Delete</button></div></div></div>");
+    });
+    (state.photos || []).forEach(function (p) {
+      (p.measures || []).forEach(function (m, i) {
+        if (m.label === "Edge to edge" || m.kind === "edge") {
+          rows.push("<div class='meas-row'><div class='meta'><strong>" + esc(m.label) + "</strong><br>One-photo plane" + (m.confidenceLabel ? " · " + esc(m.confidenceLabel) : "") + "</div><div><div class='val'>" + M.formatFeetInches(m.feet) + "</div></div></div>");
+        }
+      });
+    });
+    return "<div class='card'><h3>Saved edge-to-edge and tape readings</h3><div class='meas-list'>" +
+      (rows.length ? rows.join("") : "<p class='small muted'>None yet.</p>") + "</div></div>";
+  }
+
+  function sideKnownWidth(s) {
+    if (s.refId === "tape") return (Number(s.customFt) || 0) + (Number(s.customIn) || 0) / 12;
+    var r = M.REFS.find(function (x) { return x.id === s.refId; });
+    return r && r.widthFt ? r.widthFt : 0;
+  }
+  function stitchSegmentFeet(s) {
+    if (!s) return null;
+    var w = sideKnownWidth(s);
+    if (w <= 0) return null;
+    if (s.refMode === "four") {
+      if (!s.points || s.points.length < 6) return null;
+      var plane = M.planeFromDoor(s.points.slice(0, 4), w, Number(s.doorH) || 7);
+      if (!plane) return null;
+      return M.measureOnPlane(plane.H, s.points[4], s.points[5]);
+    }
+    if (!s.points || s.points.length < 4) return null;
+    var scale = M.scaleFromReference(s.points[0], s.points[1], w);
+    if (!scale) return null;
+    return M.measureScaled(s.points[2], s.points[3], scale);
+  }
+  function rememberStitchSide(writePhoto) {
+    if (writePhoto === false && !photo.img && !(stitch[edge.stitchSide] && stitch[edge.stitchSide].recId)) {
+      /* nothing to remember yet */
+    }
+    var s = stitch[edge.stitchSide];
+    if (!s) return;
+    s.points = photo.points.slice();
+    s.refId = photo.refId;
+    s.refMode = photo.refMode;
+    s.customFt = photo.customFt;
+    s.customIn = photo.customIn;
+    s.doorH = photo.doorH;
+    if (photo.img && photo.img._recId) s.recId = photo.img._recId;
+  }
+  function activateStitchSide(side) {
+    rememberStitchSide();
+    edge.stitchSide = side;
+    var s = stitch[side];
+    photo.refId = s.refId || "oh16";
+    photo.refMode = s.refMode || "four";
+    photo.customFt = s.customFt;
+    photo.customIn = s.customIn;
+    photo.doorH = s.doorH || 7;
+    photo.points = (s.points || []).slice();
+    cam.scale = 1; cam.x = 0; cam.y = 0;
+    if (s.recId) loadPhotoRecord(s.recId, false);
+    else { photo.img = null; render(); }
+  }
+  function loadPhotoRecord(id, resetPts) {
+    var rec = (state.photos || []).find(function (p) { return p.id === id; });
+    if (!rec) { photo.img = null; render(); return; }
+    var image = new Image();
+    image.onload = function () {
+      image._recId = id;
+      photo.img = image;
+      if (resetPts) photo.points = [];
+      render();
+    };
+    image.src = rec.dataUrl;
+  }
+
 
   function viewPads() {
     var tot = M.totalYards(state.pads);
@@ -320,7 +544,7 @@
         "<div class='btns'><button type='button' class='btn gold' id='btnStartAR'>Start AR measure</button></div>";
     } else if (ios) {
       body = "<div class='warn'><strong>iPhone Safari can't do live AR measuring.</strong> " + esc(M.ACCURACY.arIos) + "</div>" +
-        "<p>Use <strong>Photo measure</strong> on this phone — it's the accurate web method. Walk mode is only a rough check.</p>" +
+        "<p>Use <strong>Photo measure</strong> or <strong>Edge to edge</strong> on this phone — those are the accurate web methods.</p>" +
         "<div class='btns'><button type='button' class='btn primary' data-go='photo'>Go to photo measure</button></div>";
     } else {
       body = "<p>Live AR measuring runs in <strong>Android Chrome</strong> when the phone supports WebXR. This device or browser does not.</p>" +
@@ -409,7 +633,7 @@
       "<div class='field'><label class='lbl'>Your notes</label><textarea id='freeNotes'>" + esc(state.notes || "") + "</textarea></div>" +
       "<div class='btns'><button type='button' class='btn light' id='btnSaveNotes'>Save notes</button></div></div>" +
       "<div class='card'><h3>Ideas for later</h3><ul class='small' style='margin:0;padding-left:18px;line-height:1.5'>" +
-      "<li>A real iPhone app with LiDAR / RoomPlan that sends exact walks into this page.</li>" +
+      "<li>A real iPhone app with LiDAR / RoomPlan for Apple Measure–level accuracy, for later.</li>" +
       "<li>One-tap “send to Estimator” after you confirm each number.</li>" +
       "<li>Drop the proposed garage onto a plat or site photo.</li>" +
       "<li>Auto-check height, SF, and setbacks against the village sheet once those code updates are applied.</li>" +
@@ -437,7 +661,7 @@
     $("village").oninput = function () { state.village = this.value; saveState(); };
     if ($("btnSamplePhoto")) $("btnSamplePhoto").onclick = function () { loadSamplePhoto(); };
     if (mode === "photo") bindPhoto();
-    if (mode === "walk") bindWalk();
+    if (mode === "edge") bindEdge();
     if (mode === "pads") bindPads();
     if (mode === "ar") bindAR();
     if (mode === "layout") bindLayout();
@@ -453,7 +677,12 @@
     if ($("camInput")) $("camInput").onchange = function () { onFile(this); };
     if ($("fileInput")) $("fileInput").onchange = function () { onFile(this); };
     document.querySelectorAll("[data-ref]").forEach(function (b) {
-      b.onclick = function () { photo.refId = b.getAttribute("data-ref"); photo.points = []; render(); };
+      b.onclick = function () {
+        photo.refId = b.getAttribute("data-ref");
+        if (isSmallRef(photo.refId)) photo.refMode = "two";
+        photo.points = [];
+        render();
+      };
     });
     document.querySelectorAll("[data-refmode]").forEach(function (b) {
       b.onclick = function () { photo.refMode = b.getAttribute("data-refmode"); photo.points = []; render(); };
@@ -464,8 +693,7 @@
     if ($("tapeFt")) $("tapeFt").oninput = function () { photo.customFt = parseFloat(this.value) || 0; };
     if ($("tapeIn")) $("tapeIn").oninput = function () { photo.customIn = parseFloat(this.value) || 0; };
     if ($("measLabel")) $("measLabel").onchange = function () { photo.pendingLabel = this.value; };
-    var canvas = $("photoCanvas");
-    if (canvas) canvas.addEventListener("pointerdown", onPhotoPointer);
+    bindZoomAndLoupe();
     if ($("btnResetPts")) $("btnResetPts").onclick = function () { photo.points = []; render(); };
     if ($("btnNewPhotoMeas")) $("btnNewPhotoMeas").onclick = function () {
       var need = photo.refMode === "four" ? 4 : 2;
@@ -549,9 +777,18 @@
     var rec = currentPhotoRecord();
     if (!rec) { toast("Photo is not saved yet."); return; }
     rec.measures = rec.measures || [];
+    var conf = null;
+    if (m.method === "plane") {
+      var cal = calibration();
+      if (cal && cal.H) conf = M.planeConfidence(cal.H, photo.points.slice(0, 4), m.p1, m.p2, cal.widthFt, cal.heightFt);
+    }
     rec.measures.push({
       label: ($("measLabel") && $("measLabel").value) || photo.pendingLabel || "Other",
-      feet: m.feet, method: m.method, p1: m.p1, p2: m.p2, planeWarn: true
+      feet: m.feet, method: m.method, p1: m.p1, p2: m.p2, planeWarn: true,
+      kind: mode === "edge" ? "edge" : "photo",
+      confidence: conf && conf.level,
+      confidenceLabel: conf && conf.label,
+      confidenceDetail: conf && conf.detail
     });
     saveState();
     toast("Saved " + M.formatFeetInches(m.feet));
@@ -668,6 +905,7 @@
       image._recId = id;
       photo.img = image;
       photo.points = (preset && preset.points) ? preset.points.slice() : [];
+      cam.scale = 1; cam.x = 0; cam.y = 0;
       if (preset) {
         if (preset.refMode) photo.refMode = preset.refMode;
         if (preset.refId) photo.refId = preset.refId;
@@ -675,7 +913,14 @@
         if (preset.measures) rec.measures = preset.measures;
         saveState();
       }
-      setMode("photo");
+      if (mode === "edge") {
+        if (edge.sub === "one") photo.refMode = "four";
+        if (edge.sub === "stitch") {
+          stitch[edge.stitchSide].recId = id;
+          if (!preset) stitch[edge.stitchSide].points = [];
+        }
+        setMode("edge");
+      } else setMode("photo");
     };
     image.src = dataUrl;
   }
@@ -791,121 +1036,309 @@
     render();
   }
 
-  function bindWalk() {
-    if ($("strideFt")) $("strideFt").oninput = function () { walk.stride = parseFloat(this.value) || 2.4; };
-    if ($("btnMotion")) $("btnMotion").onclick = enableMotion;
-    if ($("btnWalkStart")) $("btnWalkStart").onclick = function () { startWalk(true); };
-    if ($("btnWalkStop")) $("btnWalkStop").onclick = function () { stopWalk(); render(); };
-    if ($("btnSaveWalk")) $("btnSaveWalk").onclick = saveWalkConfirm;
+  function bindZoomAndLoupe() {
+    if ($("btnZoomIn")) $("btnZoomIn").onclick = function () { cam.scale = Math.min(6, cam.scale * 1.4); applyCam(); };
+    if ($("btnZoomOut")) $("btnZoomOut").onclick = function () { cam.scale = Math.max(1, cam.scale / 1.4); if (cam.scale === 1) { cam.x = 0; cam.y = 0; } applyCam(); };
+    if ($("btnZoomReset")) $("btnZoomReset").onclick = function () { cam.scale = 1; cam.x = 0; cam.y = 0; applyCam(); };
+    var stage = $("photoStage");
+    if (!stage) return;
+    stage.addEventListener("pointerdown", onStagePointerDown);
+    stage.addEventListener("pointermove", onStagePointerMove);
+    stage.addEventListener("pointerup", onStagePointerUp);
+    stage.addEventListener("pointercancel", onStagePointerUp);
+    stage.addEventListener("wheel", onStageWheel, { passive: false });
+    applyCam();
+  }
+  function applyCam() {
+    var inner = $("stageInner");
+    if (!inner) return;
+    if (cam.scale <= 1) { cam.scale = 1; cam.x = 0; cam.y = 0; }
+    inner.style.transform = "translate(" + cam.x + "px," + cam.y + "px) scale(" + cam.scale + ")";
+  }
+  function pointerList() {
+    var out = [], k;
+    for (k in pointers) { if (Object.prototype.hasOwnProperty.call(pointers, k)) out.push(pointers[k]); }
+    return out;
+  }
+  function ptrDist(a, b) {
+    var dx = a.x - b.x, dy = a.y - b.y;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+  function imagePointFromEvent(ev) {
+    var canvas = $("photoCanvas");
+    if (!canvas || !canvas.width) return null;
+    var r = canvas.getBoundingClientRect();
+    if (!r.width || !r.height) return null;
+    return {
+      x: (ev.clientX - r.left) * (canvas.width / r.width),
+      y: (ev.clientY - r.top) * (canvas.height / r.height)
+    };
+  }
+  function onStageWheel(ev) {
+    ev.preventDefault();
+    var before = cam.scale;
+    cam.scale = Math.max(1, Math.min(6, cam.scale * (ev.deltaY < 0 ? 1.12 : 1 / 1.12)));
+    if (cam.scale === 1) { cam.x = 0; cam.y = 0; }
+    else if (before !== cam.scale) {
+      /* keep zoom centered on pointer later if needed */
+    }
+    applyCam();
+  }
+  function onStagePointerDown(ev) {
+    if (!photo.img) return;
+    if (ev.target && ev.target.closest && ev.target.closest(".hint")) return;
+    ev.preventDefault();
+    var stage = $("photoStage");
+    try { stage.setPointerCapture(ev.pointerId); } catch (e) {}
+    pointers[ev.pointerId] = { x: ev.clientX, y: ev.clientY };
+    var pts = pointerList();
+    if (pts.length >= 2) {
+      pendingPt = null;
+      hideLoupe();
+      pinch.active = true;
+      pinch.startDist = ptrDist(pts[0], pts[1]);
+      pinch.startScale = cam.scale;
+      pinch.startX = cam.x;
+      pinch.startY = cam.y;
+      return;
+    }
+    pendingPt = imagePointFromEvent(ev);
+    if (pendingPt) showLoupe(ev, pendingPt);
+  }
+  function onStagePointerMove(ev) {
+    if (pointers[ev.pointerId]) pointers[ev.pointerId] = { x: ev.clientX, y: ev.clientY };
+    var pts = pointerList();
+    if (pinch.active && pts.length >= 2) {
+      var d = ptrDist(pts[0], pts[1]);
+      if (pinch.startDist > 8) {
+        cam.scale = Math.max(1, Math.min(6, pinch.startScale * (d / pinch.startDist)));
+        if (cam.scale === 1) { cam.x = 0; cam.y = 0; }
+        applyCam();
+      }
+      return;
+    }
+    if (pendingPt) {
+      pendingPt = imagePointFromEvent(ev) || pendingPt;
+      showLoupe(ev, pendingPt);
+    }
+  }
+  function onStagePointerUp(ev) {
+    var wasPinch = pinch.active;
+    delete pointers[ev.pointerId];
+    if (pointerList().length < 2) pinch.active = false;
+    if (wasPinch) { pendingPt = null; hideLoupe(); return; }
+    if (pendingPt && photo.img) commitPhotoPoint(pendingPt);
+    pendingPt = null;
+    hideLoupe();
+  }
+  function hideLoupe() {
+    var loupe = $("loupe");
+    if (loupe) loupe.classList.remove("show");
+  }
+  function showLoupe(ev, pt) {
+    var loupe = $("loupe");
+    var lc = $("loupeCanvas");
+    var canvas = $("photoCanvas");
+    var stage = $("photoStage");
+    if (!loupe || !lc || !canvas || !stage || !pt) return;
+    var sr = stage.getBoundingClientRect();
+    var r = canvas.getBoundingClientRect();
+    var lx = ev.clientX - sr.left - 56;
+    var ly = ev.clientY - sr.top - 128;
+    if (ly < 4) ly = ev.clientY - sr.top + 28;
+    lx = Math.max(4, Math.min(sr.width - 116, lx));
+    loupe.style.left = lx + "px";
+    loupe.style.top = ly + "px";
+    loupe.classList.add("show");
+    lc.width = 112;
+    lc.height = 112;
+    var ctx = lc.getContext("2d");
+    var cssPerImg = r.width / canvas.width;
+    var src = 112 / (2.6 * cssPerImg);
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(canvas, pt.x - src / 2, pt.y - src / 2, src, src, 0, 0, 112, 112);
+    ctx.strokeStyle = "#c9a227";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(56, 0); ctx.lineTo(56, 112);
+    ctx.moveTo(0, 56); ctx.lineTo(112, 56);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(56, 56, 4, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  function commitPhotoPoint(pt) {
+    photo.points.push({ x: pt.x, y: pt.y });
+    drawPhoto();
+    var hint = $("photoHint");
+    var need = photo.refMode === "four" ? 4 : 2;
+    if (hint) {
+      if (photo.points.length < need) hint.textContent = "Point " + photo.points.length + " of " + need + " for the reference.";
+      else if (photo.points.length === need) hint.textContent = mode === "edge" ? "Reference set. Tap the first edge or landmark." : "Reference set. Tap two points to measure.";
+      else if (photo.points.length === need + 1) hint.textContent = mode === "edge" ? "Tap the other edge or landmark." : "Tap the end point.";
+      else {
+        var m = lastOpenMeasure();
+        hint.textContent = m != null ? ("Last distance: " + M.formatFeetInches(m.feet) + " — save it below, or keep tapping pairs.") : "Tap two points to measure.";
+      }
+    }
+    if (mode === "edge" && edge.sub === "stitch") rememberStitchSide();
+    if (photo.points.length === need + 2) render();
   }
 
-  function enableMotion() {
-    var go = function (ok) {
-      walk.perm = !!ok;
-      if (!ok) { toast("Motion permission was not granted."); render(); return; }
-      attachMotion();
-      toast("Motion is on. Flip the phone flat to start.");
+  function bindEdge() {
+    document.querySelectorAll("[data-edge-sub]").forEach(function (b) {
+      b.onclick = function () {
+        var prev = edge.sub;
+        if (prev === "stitch") rememberStitchSide();
+        edge.sub = b.getAttribute("data-edge-sub");
+        if (edge.sub === "one") photo.refMode = "four";
+        if (edge.sub === "stitch") {
+          var s = stitch[edge.stitchSide];
+          if (!s.recId && photo.img) {
+            rememberStitchSide();
+          } else {
+            photo.refId = s.refId || photo.refId;
+            photo.refMode = s.refMode || "four";
+            photo.customFt = s.customFt;
+            photo.customIn = s.customIn;
+            photo.doorH = s.doorH || photo.doorH;
+            photo.points = (s.points || []).slice();
+            if (s.recId && (!photo.img || photo.img._recId !== s.recId)) { loadPhotoRecord(s.recId, false); return; }
+          }
+        }
+        render();
+      };
+    });
+    document.querySelectorAll("[data-stitch-side]").forEach(function (b) {
+      b.onclick = function () { activateStitchSide(b.getAttribute("data-stitch-side")); };
+    });
+    function onFile(input) {
+      var f = input.files && input.files[0];
+      if (f) ingestFile(f);
+      input.value = "";
+    }
+    if ($("camInput")) $("camInput").onchange = function () { onFile(this); };
+    if ($("fileInput")) $("fileInput").onchange = function () { onFile(this); };
+    document.querySelectorAll("[data-ref]").forEach(function (b) {
+      b.onclick = function () {
+        photo.refId = b.getAttribute("data-ref");
+        if (isSmallRef(photo.refId)) photo.refMode = "two";
+        photo.points = [];
+        render();
+      };
+    });
+    document.querySelectorAll("[data-refmode]").forEach(function (b) {
+      b.onclick = function () { photo.refMode = b.getAttribute("data-refmode"); photo.points = []; render(); };
+    });
+    document.querySelectorAll("[data-dh]").forEach(function (b) {
+      b.onclick = function () { photo.doorH = parseFloat(b.getAttribute("data-dh")); render(); };
+    });
+    if ($("tapeFt")) $("tapeFt").oninput = function () { photo.customFt = parseFloat(this.value) || 0; };
+    if ($("tapeIn")) $("tapeIn").oninput = function () { photo.customIn = parseFloat(this.value) || 0; };
+    if ($("measLabel")) $("measLabel").onchange = function () { photo.pendingLabel = this.value; };
+    if ($("btnResetPts")) $("btnResetPts").onclick = function () { photo.points = []; render(); };
+    if ($("btnNewPhotoMeas")) $("btnNewPhotoMeas").onclick = function () {
+      var need = photo.refMode === "four" ? 4 : 2;
+      photo.points = photo.points.slice(0, need);
       render();
     };
-    try {
-      var p = Promise.resolve("granted");
-      if (typeof DeviceMotionEvent !== "undefined" && typeof DeviceMotionEvent.requestPermission === "function") {
-        p = DeviceMotionEvent.requestPermission();
-      }
-      p.then(function (r) {
-        var p2 = Promise.resolve("granted");
-        if (typeof DeviceOrientationEvent !== "undefined" && typeof DeviceOrientationEvent.requestPermission === "function") {
-          p2 = DeviceOrientationEvent.requestPermission();
-        }
-        return p2.then(function (r2) { go(r === "granted" && r2 === "granted"); });
-      }).catch(function () { go(false); });
-    } catch (e) { go(true); attachMotion(); }
+    if ($("btnFindDoor")) $("btnFindDoor").onclick = function () { findDoorEdges(); };
+    if ($("btnSaveMeas")) $("btnSaveMeas").onclick = function () {
+      if (mode === "edge") photo.pendingLabel = ($("measLabel") && $("measLabel").value) || "Edge to edge";
+      saveLastMeasure();
+    };
+    if ($("stitchLabel")) $("stitchLabel").onchange = function () { edge.stitchLabel = this.value; };
+    if ($("btnSaveStitch")) $("btnSaveStitch").onclick = saveStitch;
+    if ($("laserFt")) $("laserFt").oninput = function () { edge.laserFt = this.value; updateLaserPreview(); };
+    if ($("laserIn")) $("laserIn").oninput = function () { edge.laserIn = this.value; updateLaserPreview(); };
+    if ($("laserVoice")) $("laserVoice").oninput = function () { edge.laserVoice = this.value; updateLaserPreview(); };
+    if ($("laserLabel")) $("laserLabel").onchange = function () { edge.laserLabel = this.value; };
+    if ($("btnLaserTalk")) $("btnLaserTalk").onclick = startLaserTalk;
+    if ($("btnLaserTalkStop")) $("btnLaserTalkStop").onclick = stopTalk;
+    if ($("btnSaveLaser")) $("btnSaveLaser").onclick = saveLaser;
+    document.querySelectorAll("[data-del-stitch]").forEach(function (b) {
+      b.onclick = function () { state.stitches.splice(parseInt(b.getAttribute("data-del-stitch"), 10), 1); saveState(); render(); };
+    });
+    document.querySelectorAll("[data-del-tape]").forEach(function (b) {
+      b.onclick = function () { state.tapes.splice(parseInt(b.getAttribute("data-del-tape"), 10), 1); saveState(); render(); };
+    });
+    document.querySelectorAll("[data-apply-stitch]").forEach(function (b) {
+      b.onclick = function () { confirmApplyMeasure(state.stitches[parseInt(b.getAttribute("data-apply-stitch"), 10)]); };
+    });
+    document.querySelectorAll("[data-apply-tape]").forEach(function (b) {
+      b.onclick = function () { confirmApplyMeasure(state.tapes[parseInt(b.getAttribute("data-apply-tape"), 10)]); };
+    });
+    bindZoomAndLoupe();
+    updateLaserPreview();
+  }
+  function currentLaserFeet() {
+    if (edge.laserVoice && String(edge.laserVoice).trim()) {
+      var parsed = M.parseExactLength(edge.laserVoice);
+      if (parsed && isFinite(parsed.feet)) return parsed.feet;
+    }
+    var ft = parseFloat(edge.laserFt);
+    var inch = parseFloat(edge.laserIn);
+    if (!isFinite(ft) && !isFinite(inch)) return null;
+    return (isFinite(ft) ? ft : 0) + (isFinite(inch) ? inch : 0) / 12;
+  }
+  function updateLaserPreview() {
+    var el = $("laserPreview");
+    if (!el) return;
+    var f = currentLaserFeet();
+    if (f == null || f < 0) { el.innerHTML = "<p class='small muted'>Enter a length to preview.</p>"; return; }
+    el.innerHTML = "<div class='okbox'>Will save <strong>" + M.formatFeetInches(f) + "</strong> as an exact laser/tape reading.</div>";
+  }
+  function startLaserTalk() {
+    var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) { toast("Voice isn’t available in this browser. Type the length instead."); return; }
+    stopTalk();
+    recognizer = new SR();
+    recognizer.lang = "en-US";
+    recognizer.interimResults = true;
+    recognizer.continuous = false;
+    recognizer.onresult = function (ev) {
+      var out = "", i;
+      for (i = ev.resultIndex; i < ev.results.length; i++) out += ev.results[i][0].transcript;
+      edge.laserVoice = out;
+      if ($("laserVoice")) $("laserVoice").value = out;
+      if ($("laserTalkStatus")) $("laserTalkStatus").textContent = "Heard: " + out;
+      updateLaserPreview();
+    };
+    recognizer.onerror = function (e) { if ($("laserTalkStatus")) $("laserTalkStatus").textContent = "Voice error: " + (e.error || "unknown"); };
+    recognizer.onend = function () { if ($("laserTalkStatus")) $("laserTalkStatus").textContent = "Stopped. Check the preview, then save."; };
+    recognizer.start();
+    if ($("laserTalkStatus")) $("laserTalkStatus").textContent = "Listening… say the length.";
+  }
+  function saveStitch() {
+    rememberStitchSide();
+    var aFt = stitchSegmentFeet(stitch.a);
+    var bFt = stitchSegmentFeet(stitch.b);
+    var total = (aFt != null && bFt != null) ? M.stitchSegments([{ feet: aFt }, { feet: bFt }]) : null;
+    if (!total) { toast("Set a reference and two points on both photos first."); return; }
+    state.stitches = state.stitches || [];
+    state.stitches.push({
+      label: ($("stitchLabel") && $("stitchLabel").value) || edge.stitchLabel || "Edge to edge",
+      feet: total.feet, aFeet: aFt, bFeet: bFt, method: "stitch", t: Date.now(),
+      aRecId: stitch.a.recId, bRecId: stitch.b.recId
+    });
+    saveState();
+    toast("Saved stitched length " + M.formatFeetInches(total.feet));
+    render();
+  }
+  function saveLaser() {
+    var f = currentLaserFeet();
+    if (f == null || f < 0) { toast("Enter or say a length first."); return; }
+    state.tapes = state.tapes || [];
+    state.tapes.push({
+      label: ($("laserLabel") && $("laserLabel").value) || edge.laserLabel || "Laser / tape",
+      feet: f, method: "laser", exact: true, raw: edge.laserVoice || "", t: Date.now()
+    });
+    saveState();
+    toast("Saved exact length " + M.formatFeetInches(f));
+    edge.laserFt = ""; edge.laserIn = ""; edge.laserVoice = "";
+    render();
   }
 
-  function attachMotion() {
-    if (walk.motionOn) return;
-    walk.motionOn = true;
-    window.addEventListener("deviceorientation", onOrient, true);
-    window.addEventListener("devicemotion", onMotion, true);
-  }
-  function onOrient(ev) {
-    var next = M.phonePose(ev.beta, ev.gamma);
-    var trans = M.walkTransition(walk.pose, next);
-    walk.pose = next;
-    if (trans === "start") startWalk(false);
-    if (trans === "stop") stopWalk();
-    if (mode === "walk") {
-      var live = $("walkLive");
-      if (live) live.textContent = M.formatFeetInches(walkLiveFeet());
-      var sub = $("walkSub");
-      if (sub && walk.running) sub.textContent = walk.steps + " step" + (walk.steps === 1 ? "" : "s") + " · stride " + walk.stride + " ft";
-    }
-  }
-  function onMotion(ev) {
-    if (!walk.running) return;
-    var a = ev.acceleration && ev.acceleration.x != null ? ev.acceleration : ev.accelerationIncludingGravity;
-    if (!a) return;
-    var mag = Math.sqrt((a.x || 0) * (a.x || 0) + (a.y || 0) * (a.y || 0) + (a.z || 0) * (a.z || 0));
-    if (!(ev.acceleration && ev.acceleration.x != null)) mag = Math.abs(mag - 9.8);
-    var t = Date.now();
-    var thresh = 1.1;
-    if (mag >= thresh && !walk.above && (t - walk.lastStepT) >= 300) {
-      walk.steps += 1;
-      walk.lastStepT = t;
-      walk.above = true;
-      if (mode === "walk" && $("walkLive")) {
-        $("walkLive").textContent = M.formatFeetInches(walkLiveFeet());
-        $("walkSub").textContent = walk.steps + " step" + (walk.steps === 1 ? "" : "s") + " · stride " + walk.stride + " ft";
-      }
-    } else if (mag < thresh * 0.6) walk.above = false;
-  }
-  function startWalk(manual) {
-    if (walk.running) return;
-    walk.running = true;
-    walk.steps = 0;
-    walk.lastStepT = 0;
-    walk.above = false;
-    walk.startedAt = Date.now();
-    walk.gpsPts = [];
-    attachMotion();
-    if (navigator.geolocation) {
-      try {
-        walk.watchId = navigator.geolocation.watchPosition(function (pos) {
-          walk.gpsPts.push({
-            lat: pos.coords.latitude, lon: pos.coords.longitude,
-            accuracyM: pos.coords.accuracy, t: Date.now()
-          });
-        }, function () {}, { enableHighAccuracy: true, maximumAge: 1000, timeout: 10000 });
-      } catch (e) {}
-    }
-    if (manual && mode === "walk") toast("Walk started. Flip the phone upright or press Stop at the other end.");
-    if (mode === "walk") render();
-  }
-  function stopWalk() {
-    if (!walk.running) return;
-    walk.running = false;
-    if (walk.watchId != null && navigator.geolocation) {
-      try { navigator.geolocation.clearWatch(walk.watchId); } catch (e) {}
-      walk.watchId = null;
-    }
-  }
-  function saveWalkConfirm() {
-    var feet = walkLiveFeet();
-    openModal("Save rough walk?",
-      "<div class='rough'><strong>This is a rough estimate, not for pricing.</strong> Typical error on a garage-length walk is about 2–6 feet. GPS is usually worse near a building.</div>" +
-      "<p>Distance from steps: <strong>" + M.formatFeetInches(feet) + "</strong> (" + walk.steps + " steps × " + walk.stride + " ft stride).</p>" +
-      "<label class='small' style='display:flex;gap:8px;align-items:flex-start'><input id='roughOk' type='checkbox' style='width:22px;height:22px;min-height:0;flex:0 0 22px'> I know this is a rough estimate and it must not be used for a price unless I confirm it later.</label>" +
-      "<div class='field' style='margin-top:10px'><label class='lbl'>Label</label><select id='walkLabel'>" +
-      M.MEASURE_LABELS.map(function (l) { return "<option>" + esc(l) + "</option>"; }).join("") + "</select></div>",
-      function () {
-        if (!$("roughOk").checked) { toast("Check the box to confirm you know it’s a rough estimate."); return; }
-        state.walks.push({ feet: feet, steps: walk.steps, stride: walk.stride, label: $("walkLabel").value, method: "steps", rough: true, confirmed: true, t: Date.now() });
-        saveState();
-        toast("Saved as a rough estimate.");
-        closeModal();
-        render();
-      });
-  }
 
   function bindPads() {
     function preview() {
@@ -1241,7 +1674,7 @@
 
   window.addEventListener("resize", function () {
     renderChrome();
-    if (mode === "photo") drawPhoto();
+    if (mode === "photo" || (mode === "edge" && edge.sub !== "laser")) { drawPhoto(); applyCam(); }
     if (mode === "layout") drawLayout();
   });
 
